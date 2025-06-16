@@ -29,7 +29,7 @@ module.exports = {
                     scope: context.scope.join(' '),
                     state: context.ticket,
                     access_type: 'offline',
-                    approval_prompt: 'force'
+                    prompt: 'consent'
                 }).toString();
 
                 return `https://accounts.google.com/o/oauth2/auth?${params}`;
@@ -53,51 +53,41 @@ module.exports = {
 
             requestAccessToken: async function(context) {
 
-                const data = {
-                    code: context.authorizationCode,
-                    client_id: initData.clientId,
-                    client_secret: initData.clientSecret,
-                    redirect_uri: context.callbackUrl,
-                    grant_type: 'authorization_code'
-                };
-
-                const response = await context.httpRequest({
+                const { data } = await context.httpRequest({
                     method: 'POST',
                     url: 'https://oauth2.googleapis.com/token',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    data
+                    data: {
+                        code: context.authorizationCode,
+                        client_id: initData.clientId,
+                        client_secret: initData.clientSecret,
+                        redirect_uri: context.callbackUrl,
+                        grant_type: 'authorization_code'
+                    }
                 });
 
                 return {
-                    accessToken: response.data.access_token,
-                    accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000),
-                    refreshToken: response.data.refresh_token
+                    accessToken: data.access_token,
+                    accessTokenExpDate: new Date(Date.now() + data.expires_in * 1000),
+                    refreshToken: data.refresh_token
                 };
             },
 
             refreshAccessToken: async function(context) {
 
-                const data = {
-                    client_id: initData.clientId,
-                    client_secret: initData.clientSecret,
-                    refresh_token: context.refreshToken,
-                    grant_type: 'refresh_token'
-                };
-
-                const response = await context.httpRequest({
+                const { data } = await context.httpRequest({
                     method: 'POST',
                     url: 'https://oauth2.googleapis.com/token',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    data
+                    data: {
+                        client_id: initData.clientId,
+                        client_secret: initData.clientSecret,
+                        refresh_token: context.refreshToken,
+                        grant_type: 'refresh_token'
+                    }
                 });
 
                 return {
-                    accessToken: response.data.access_token,
-                    accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000)
+                    accessToken: data.access_token,
+                    accessTokenExpDate: new Date(Date.now() + data.expires_in * 1000)
                 };
             },
 

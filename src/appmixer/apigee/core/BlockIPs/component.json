@@ -1,7 +1,8 @@
 {
-    "name": "appmixer.apigee.core.ListKeyValueMaps",
+    "name": "appmixer.apigee.core.BlockIPs",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of all key value maps in a specific environment. This endpoint is useful for obtaining the available maps that can contain IP blocking entries.",
+    "label": "Block IPs",
+    "description": "Add a new entry to the key value map to block an IP address with a specified TTL (time to live). This endpoint allows you to dynamically update Apigee configurations to enforce IP blocking rules.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -58,7 +59,35 @@
     },
     "inPorts": [
         {
-            "name": "in"
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "ips": {
+                        "type": "string"
+                    },
+                    "ttl": {
+                        "type": "integer"
+                    }
+                },
+                "required": ["ips"]
+            },
+            "inspector": {
+                "inputs": {
+                    "ips": {
+                        "type": "text",
+                        "tooltip": "Enter a single IPv4 or IPv6 address, or multiple IP addresses separated by commas. JSON format is also supported, for example: [\"1.1.1.1\", \"2.2.2.2\"].",
+                        "label": "IPs",
+                        "index": 0
+                    },
+                    "ttl": {
+                        "type": "number",
+                        "label": "TTL",
+                        "tooltip": "Time to live in seconds. The IPs will be automatically removed after this duration. If not set, the IPs will remain permanent.",
+                        "index": 1
+                    }
+                }
+            }
         }
     ],
     "outPorts": [

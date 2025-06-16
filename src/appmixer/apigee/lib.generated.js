@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'everart-objects-export';
+const DEFAULT_PREFIX = 'apigee-objects-export';
 
 module.exports = {
 
@@ -52,7 +52,6 @@ module.exports = {
     getProperty(obj, path) {
         return path.split('.').reduce((acc, part) => acc?.[part], obj);
     },
-
     getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
 
         if (outputType === 'object' || outputType === 'first') {
@@ -92,7 +91,34 @@ module.exports = {
         if (outputType === 'file') {
             return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
         }
+    },
+    parseIPs: function(input) {
+
+        let ips = [];
+
+        if (typeof input === 'string') {
+            // Check if the string is a JSON array
+            try {
+                const parsed = JSON.parse(input);
+                if (Array.isArray(parsed)) {
+                    ips = parsed;
+                } else {
+                    ips = input.split(/\s+|,/)
+                        .filter(item => item)
+                        .map(ip => ip.trim());
+                }
+            } catch (e) {
+                ips = input.split(/\s+|,/)
+                    .filter(item => item)
+                    .map(ip => ip.trim());
+            }
+        } else if (Array.isArray(input)) {
+            ips = input;
+        }
+
+        return ips;
     }
+
 };
 
 /**
@@ -116,3 +142,4 @@ const toCsv = (array) => {
 
     ].join('\n');
 };
+

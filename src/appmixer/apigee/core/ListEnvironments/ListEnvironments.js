@@ -3,7 +3,7 @@
 module.exports = {
     async receive(context) {
 
-        const { org } = context.messages.in.content;
+        const { org } = context.properties;
 
         // https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/v1/organizations.environments/list
         const { data } = await context.httpRequest({
@@ -15,5 +15,11 @@ module.exports = {
         });
 
         return context.sendJson(data, 'out');
+    },
+
+    toSelectOptions(out = []) {
+        return out.map(item => {
+            return { label: item, value: item };
+        });
     }
 };
