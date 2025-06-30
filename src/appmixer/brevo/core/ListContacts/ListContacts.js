@@ -30,9 +30,6 @@ module.exports = {
 
             if (offset === 0) {
                 count = data.count;
-                if (!count) {
-                    return context.sendJson({}, 'notFound');
-                }
             }
 
             allContacts = allContacts.concat(data.contacts);
