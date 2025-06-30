@@ -1,4 +1,4 @@
-const lib = require('../lib.generated');
+const lib = require('../../lib.generated');
 const schema = {
     'kind': { 'type': 'string', 'title': 'Kind' },
     'id': { 'type': 'string', 'title': 'Id' },
