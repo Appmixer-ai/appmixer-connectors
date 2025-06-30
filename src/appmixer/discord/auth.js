@@ -1,5 +1,7 @@
 'use strict';
 
+const { splitScopesAndPermissions } = require('../discord/permission-calculator');
+
 module.exports = {
 
     type: 'oauth2',
@@ -13,11 +15,12 @@ module.exports = {
             scope: ['bot'],
 
             authUrl: (context) => {
+                const scopesAndPermissions = splitScopesAndPermissions(context.scope);
 
                 return 'https://discord.com/oauth2/authorize?' +
                     `client_id=${encodeURIComponent(context.clientId)}&` +
-                    `scope=${context.scope.join('+')}&` +
-                    'permissions=26038250577&' +
+                    `scope=${scopesAndPermissions.scopes.join('+')}&` +
+                    `permissions=${scopesAndPermissions.permissions}&` +
                     `redirect_uri=${encodeURIComponent(context.callbackUrl)}&` +
                     'response_type=code&' +
                     `state=${encodeURIComponent(context.ticket)}`;
@@ -69,7 +72,10 @@ module.exports = {
                 };
             },
 
-            accountNameFromProfileInfo: 'application.name',
+            accountNameFromProfileInfo: (context) => {
+
+                return `${context.profileInfo.application.name} (${context.profileInfo.user.username})`;
+            },
 
             validateAccessToken: 'https://discord.com/api/oauth2/@me',
 

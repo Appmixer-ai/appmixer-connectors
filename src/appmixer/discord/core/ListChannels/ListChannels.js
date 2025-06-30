@@ -34,10 +34,6 @@ module.exports = {
                 }
             });
 
-            if (!Array.isArray(data) || !data.length) {
-                return context.sendJson({}, 'notFound');
-            }
-
             if (isSource) {
                 await context.staticCache.set(
                     cacheKey,
