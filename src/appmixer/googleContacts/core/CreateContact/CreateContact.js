@@ -1,3 +1,4 @@
+'use strict';
 
 module.exports = {
     async receive(context) {
@@ -14,6 +15,7 @@ module.exports = {
             type: phone.type ?? undefined
         }));
 
+        // https://developers.google.com/people/api/rest/v1/people/createContact
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://people.googleapis.com/v1/people:createContact',

@@ -1,3 +1,5 @@
+'use strict';
+
 const lib = require('../../lib.generated');
 const { personSchema } = require('../../schemas');
 
@@ -9,9 +11,10 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'results', value: 'result' });
         }
 
+        // https://developers.google.com/people/api/rest/v1/people/searchDirectoryPeople
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://people.googleapis.com/v1/people:listDirectoryPeople',
+            url: 'https://people.googleapis.com/v1/people:searchDirectoryPeople',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },

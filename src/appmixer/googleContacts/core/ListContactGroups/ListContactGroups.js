@@ -1,3 +1,5 @@
+'use strict';
+
 const lib = require('../../lib.generated');
 const { contactGroupSchema } = require('../../schemas');
 
@@ -9,6 +11,7 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, contactGroupSchema, { label: 'Contact Groups', value: 'result' });
         }
 
+        // https://developers.google.com/people/api/rest/v1/contactGroups/list
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://people.googleapis.com/v1/contactGroups',

@@ -1,7 +1,10 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
         const { name } = context.messages.in.content;
 
+        // https://developers.google.com/people/api/rest/v1/contactGroups/create
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://people.googleapis.com/v1/contactGroups',

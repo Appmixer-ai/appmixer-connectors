@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
         const { contactId, firstName, familyName, emails, phones, notes } = context.messages.in.content;
@@ -25,6 +27,7 @@ module.exports = {
             type: phone.type ?? undefined
         }));
 
+        // https://developers.google.com/people/api/rest/v1/people/updateContact
         const { data } = await context.httpRequest({
             method: 'PATCH',
             url: `https://people.googleapis.com/v1/people/${contactId}/:updateContact`,
