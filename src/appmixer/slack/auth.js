@@ -34,8 +34,6 @@ module.exports = {
                 let params = new URLSearchParams([
                     ['client_id', context.clientId],
                     ['redirect_uri', context.callbackUrl],
-                    // Also add the default 'scope' param with the 'chat:write' value. Needed when sending messages as a bot.
-                    ['scope', botScopes.join(',')],
                     ['state', context.ticket]
                 ]);
                 if (Array.isArray(context.scope) && context.scope.length > 0) {
@@ -44,6 +42,11 @@ module.exports = {
                     // not in the default Oauth2 'scope' param.
                     context.scope.push('groups:history');
                     params.append('user_scope', context.scope.join(','));
+
+                    if (context.scope.includes('chat:write')) {
+                        // When sending messages, we need to add the bot scopes as well.
+                        params.append('scope', botScopes.join(','));
+                    }
                 }
                 urlObject.search = params;
                 return urlObject.toString();
