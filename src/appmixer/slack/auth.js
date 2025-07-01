@@ -12,6 +12,7 @@ module.exports = {
 
         let userId = null;
         let teamName = null;
+        let botToken = null;
 
         return {
 
@@ -25,7 +26,8 @@ module.exports = {
                     // New Slack apps do not begin life with the ability to post in all public channels.
                     // For your new Slack app to gain the ability to post in all public channels, request the chat:write.public scope.
                     'chat:write.public',
-                    'chat:write'
+                    'chat:write.customize',
+                    [...context.scope || []] // Include any additional scopes requested by the component
                 ];
 
                 let urlObject = new URL('https://slack.com/oauth/v2/authorize');
@@ -70,6 +72,12 @@ module.exports = {
                     }
                     userId = response.data['authed_user']['id'];
                     teamName = response.data['team']['name'];
+
+                    // If doing OAuth2 for a bot, store the bot token.
+                    if (response.data['token_type'] === 'bot') {
+                        botToken = response.data['access_token'];
+                    }
+
                     return {
                         accessToken: response.data['authed_user']['access_token'],
                         refreshToken: null
@@ -81,7 +89,9 @@ module.exports = {
 
                 return {
                     'id': userId + (teamName ? ' - ' + teamName : '')
-                        || Math.random().toString().replace('0.', '')
+                        || Math.random().toString().replace('0.', ''),
+                    // botToken coming from the requestAccessToken method, received from Slack API when exchanging the authorization code.
+                    botToken
                 };
             },
 

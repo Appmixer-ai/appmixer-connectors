@@ -27,7 +27,9 @@ module.exports = {
         let username;
         if (asBot === true) {
             // Make sure the bot token is used.
-            token = context.config?.botToken;
+            // Backward compatibility - 4.1.3 uses config.botToken
+            // 4.1.4+ uses context.auth.profileInfo.botToken
+            token = context.auth.profileInfo?.botToken || context.config?.botToken;
             if (!token && !context.config?.usesAuthHub) {
                 throw new context.CancelError('Bot token is required for sending messages as bot. Please provide it in the connector configuration.');
             }
