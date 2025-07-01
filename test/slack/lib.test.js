@@ -166,5 +166,15 @@ describe('lib.js', () => {
                 text: message
             });
         });
+
+        it('should prefer context.auth.profileInfo.botToken over context.config.botToken', async () => {
+            context.config.botToken = 'testBotToken';
+            context.auth.profileInfo = { botToken: 'profileBotToken' };
+            const result = await sendMessage(context, channelId, message, true);
+            // The mockWebClient is constructed with the token, so we can check which token was used
+            assert.equal(mockWebClient.token, 'profileBotToken');
+            assert.equal(mockWebClient.chat.postMessage.callCount, 1);
+            assert.deepEqual(result, { text: 'testMessage' });
+        });
     });
 });
