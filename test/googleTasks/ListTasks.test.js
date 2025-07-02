@@ -2,9 +2,9 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('FindTasks Component', function() {
+describe('ListTasks Component', function() {
     let context;
-    let FindTasks;
+    let ListTasks;
 
     this.timeout(30000);
 
@@ -14,7 +14,7 @@ describe('FindTasks Component', function() {
             this.skip();
         }
 
-        FindTasks = require(path.join(__dirname, '../../src/appmixer/googleTasks/core/FindTasks/FindTasks.js'));
+        ListTasks = require(path.join(__dirname, '../../src/appmixer/googleTasks/core/ListTasks/ListTasks.js'));
 
         context = {
             auth: {
@@ -44,13 +44,12 @@ describe('FindTasks Component', function() {
             tasklist: process.env.GOOGLE_TASKS_TASKLIST_ID
         };
 
-        const result = await FindTasks.receive(context);
+        const result = await ListTasks.receive(context);
 
-        console.log('FindTasks result:', JSON.stringify(result, null, 2));
+        console.log('ListTasks result:', JSON.stringify(result, null, 2));
 
         assert(result && typeof result === 'object', 'Expected result to be an object');
         assert(result.data && Array.isArray(result.data), 'Expected result.data to be an array');
         assert.strictEqual(result.port, 'out');
     });
 });
-        
