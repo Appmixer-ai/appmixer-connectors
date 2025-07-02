@@ -1,0 +1,150 @@
+{
+    "name": "appmixer.sonarqube.core.FindProjectQualityGateStatus",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieves the quality gate status for a specified project or analysis. One of 'analysisId', 'projectId' or 'projectKey' must be provided along with optional branch or pull request identifiers.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:sonarqube"
+    },
+    "quota": {
+        "manager": "appmixer:sonarqube",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "analysisId": {
+                        "type": "string"
+                    },
+                    "branch": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "projectKey": {
+                        "type": "string"
+                    },
+                    "pullRequest": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "analysisId": {
+                        "type": "text",
+                        "tooltip": "Optional analysis identifier.",
+                        "label": "Analysis Id",
+                        "index": 0
+                    },
+                    "branch": {
+                        "type": "text",
+                        "tooltip": "Optional branch key (supported since 7.7).",
+                        "label": "Branch",
+                        "index": 1
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "tooltip": "Optional project UUID. Not used with branches or pull requests.",
+                        "label": "Project Id",
+                        "index": 2
+                    },
+                    "projectKey": {
+                        "type": "text",
+                        "tooltip": "Optional project key.",
+                        "label": "Project Key",
+                        "index": 3
+                    },
+                    "pullRequest": {
+                        "type": "text",
+                        "tooltip": "Optional pull request identifier (supported since 7.7).",
+                        "label": "Pull Request",
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Project Status",
+                    "value": "projectStatus",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "title": "Project Status.Status"
+                            },
+                            "ignoredConditions": {
+                                "type": "boolean",
+                                "title": "Project Status.Ignored Conditions"
+                            },
+                            "caycStatus": {
+                                "type": "string",
+                                "title": "Project Status.Cayc Status"
+                            },
+                            "conditions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "title": "Project Status.Conditions.Status"
+                                        },
+                                        "metricKey": {
+                                            "type": "string",
+                                            "title": "Project Status.Conditions.Metric Key"
+                                        },
+                                        "comparator": {
+                                            "type": "string",
+                                            "title": "Project Status.Conditions.Comparator"
+                                        },
+                                        "errorThreshold": {
+                                            "type": "string",
+                                            "title": "Project Status.Conditions.Error Threshold"
+                                        },
+                                        "actualValue": {
+                                            "type": "string",
+                                            "title": "Project Status.Conditions.Actual Value"
+                                        }
+                                    }
+                                },
+                                "title": "Project Status.Conditions"
+                            },
+                            "period": {
+                                "type": "object",
+                                "properties": {
+                                    "mode": {
+                                        "type": "string",
+                                        "title": "Project Status.Period.Mode"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "title": "Project Status.Period.Date"
+                                    },
+                                    "parameter": {
+                                        "type": "string",
+                                        "title": "Project Status.Period.Parameter"
+                                    }
+                                },
+                                "title": "Project Status.Period"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTQgMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxLjQxNCI+PHBhdGggZD0iTTExLjkzOSAxMy4yODJoLS43NTZDMTEuMTgzIDcuMjAzIDYuMTY3IDIuMjU2IDAgMi4yNTZ2LS43NTVjNi41ODUgMCAxMS45MzkgNS4yODYgMTEuOTM5IDExLjc4MXptLjUyMi00LjA1M2MtLjkwNi0zLjgxNi0zLjk5Ny03LTcuODcyLTguMTExbC4xNzMtLjYwM2M0LjA5IDEuMTc0IDcuMzUzIDQuNTM4IDguMzExIDguNTdsLS42MTIuMTQ0em0uNTgxLTMuNTc1QTExLjU3MiAxMS41NzIgMCAwIDAgOC41NjIuNjQ4bC4yNjEtLjQzYTEyLjA4MSAxMi4wODEgMCAwIDEgNC42NzcgNS4yMmwtLjQ1OC4yMTZ6IiBmaWxsPSIjNGU5YmNkIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4=",
+    "genv2": true
+}
