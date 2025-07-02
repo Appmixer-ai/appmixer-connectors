@@ -4,7 +4,7 @@ module.exports = {
     async receive(context) {
 
         const { tasklist } = context.messages.in.content;
-        
+
         // https://developers.google.com/workspace/tasks/reference/rest/v1/tasks/list
 
         const { data } = await context.httpRequest({
