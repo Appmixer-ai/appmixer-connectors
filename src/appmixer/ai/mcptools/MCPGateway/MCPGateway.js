@@ -11,7 +11,7 @@ module.exports = {
     start: async function(context) {
 
         const tools = await this.collectTools(context);
-        await context.service.stateAddToSet(`user:${context.userId}`, {
+        await context.service.stateAddToSet(`mcpgateways:user:${context.userId}`, {
             flowId: context.flowId,
             componentId: context.componentId,
             tools,
@@ -27,7 +27,7 @@ module.exports = {
     stop: async function(context) {
 
         const tools = await context.stateGet('tools');
-        await context.service.stateRemoveFromSet(`user:${context.userId}`, {
+        await context.service.stateRemoveFromSet(`mcpgateways:user:${context.userId}`, {
             flowId: context.flowId,
             componentId: context.componentId,
             tools,

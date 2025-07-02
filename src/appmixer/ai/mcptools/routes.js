@@ -48,7 +48,7 @@ module.exports = (context) => {
                 const userId = user.getId();
 
                 // Get all MCP Gateways for this user.
-                const components = await context.service.stateGet(`user:${userId}`) || [];
+                const components = await context.service.stateGet(`mcpgateways:user:${userId}`) || [];
                 return components;
             }
         }
