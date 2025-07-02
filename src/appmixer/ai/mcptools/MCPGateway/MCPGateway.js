@@ -118,10 +118,7 @@ module.exports = {
         }
         const category = component.type.split('.').slice(0, 2).join('.');
         const type = component.type.split('.').at(-1);
-        if (category === 'appmixer.mcpservers' && type === 'MCPServer') {
-            return true;
-        }
-        return false;
+        return category === 'appmixer.mcpservers' && type === 'MCPServer';
     },
 
     getMCPToolsDefinition: async function(context) {
