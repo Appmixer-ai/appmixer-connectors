@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:googleTasks"
+        "service": "appmixer:googleTasks",
+        "scope": [
+            "https://www.googleapis.com/auth/tasks"
+        ]
     },
     "quota": {
         "manager": "appmixer:googleTasks",
@@ -23,21 +26,37 @@
                     "task": {
                         "type": "string"
                     }
-                }
+                },
+                "required": ["tasklist", "task"]
             },
             "inspector": {
                 "inputs": {
                     "tasklist": {
                         "type": "text",
-                        "tooltip": "Identifier of the task list containing the task (path parameter).",
-                        "label": "Tasklist",
-                        "index": 0
+                        "tooltip": "Select the task list or insert the task list ID to delete task.",
+                        "label": "Tasklist ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/googleTasks/core/ListTaskLists?outPort=out",
+                            "data": {
+                                "transform": "./ListTaskLists#taskListsToSelectArray"
+                            }
+                        }
                     },
                     "task": {
                         "type": "text",
-                        "tooltip": "Identifier of the task to be deleted (path parameter).",
-                        "label": "Task",
-                        "index": 1
+                        "tooltip": "Select the task or insert the task ID to delete task.",
+                        "label": "Task ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/googleTasks/core/ListTasks?outPort=out",
+                            "data": {
+                                "transform": "./ListTasks#tasksToSelectArray",
+                                "messages": {
+                                    "in/tasklist": "inputs/in/tasklist"
+                                }
+                            }
+                        }
                     }
                 }
             }

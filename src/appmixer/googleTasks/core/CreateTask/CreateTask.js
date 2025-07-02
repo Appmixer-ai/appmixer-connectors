@@ -5,14 +5,6 @@ module.exports = {
 
         const { tasklist, title, notes, due, status } = context.messages.in.content;
 
-        if (!tasklist) {
-            throw new context.CancelError('Tasklist ID is required');
-        }
-
-        if (!title) {
-            throw new context.CancelError('Title is required');
-        }
-
         // Build the task object
         const taskData = {
             title: title

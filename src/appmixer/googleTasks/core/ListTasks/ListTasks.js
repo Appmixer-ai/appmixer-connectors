@@ -1,19 +1,12 @@
-
 'use strict';
-
-const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'title':{ 'type':'string','title':'Title' } };
 
 module.exports = {
     async receive(context) {
 
-        const { tasklist, outputType } = context.messages.in.content;
-
-        if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'items' });
-        }
-
+        const { tasklist } = context.messages.in.content;
+        
         // https://developers.google.com/workspace/tasks/reference/rest/v1/tasks/list
+
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://tasks.googleapis.com/tasks/v1/lists/${tasklist}/tasks`,
@@ -21,19 +14,14 @@ module.exports = {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }
         });
+        return context.sendJson(data.items || [], 'out');
+    },
 
-        if (outputType === 'object') {
-            // One by one
-            const items = data.items || [];
-            for (let index = 0; index < items.length; index++) {
-                context.sendJson(
-                    { ...items[index], index, count: items.length },
-                    'out'
-                );
-            }
-        } else {
-            // Array output (default)
-            return context.sendJson(data.items || [], 'out');
-        }
+    tasksToSelectArray(tasks) {
+        if (!Array.isArray(tasks)) return [];
+        return tasks.map(task => ({
+            label: task.title || 'Unnamed Task',
+            value: task.id || ''
+        }));
     }
 };

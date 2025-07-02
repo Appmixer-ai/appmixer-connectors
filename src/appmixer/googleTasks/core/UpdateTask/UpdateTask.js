@@ -4,15 +4,6 @@ module.exports = {
     async receive(context) {
 
         const { tasklist, task, title, notes, due, status } = context.messages.in.content;
-
-        if (!tasklist) {
-            throw new context.CancelError('Tasklist ID is required');
-        }
-
-        if (!task) {
-            throw new context.CancelError('Task ID is required');
-        }
-
         // Build the update data object
         const updateData = {};
 

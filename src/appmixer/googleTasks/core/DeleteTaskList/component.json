@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:googleTasks"
+        "service": "appmixer:googleTasks",
+        "scope": [
+            "https://www.googleapis.com/auth/tasks"
+        ]
     },
     "quota": {
         "manager": "appmixer:googleTasks",
@@ -20,15 +23,22 @@
                     "tasklist": {
                         "type": "string"
                     }
-                }
+                },
+                "required": ["tasklist"]
             },
             "inspector": {
                 "inputs": {
                     "tasklist": {
                         "type": "text",
-                        "tooltip": "Identifier of the task list to delete (path parameter).",
-                        "label": "Tasklist",
-                        "index": 0
+                        "tooltip": "Select the task list or insert the task list ID to delete.",
+                        "label": "Tasklist ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/googleTasks/core/ListTaskLists?outPort=out",
+                            "data": {
+                                "transform": "./ListTaskLists#taskListsToSelectArray"
+                            }
+                        }
                     }
                 }
             }
