@@ -2,13 +2,13 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('FindTasks Component', function () {
+describe('FindTasks Component', function() {
     let context;
     let FindTasks;
 
     this.timeout(30000);
 
-    before(function () {
+    before(function() {
         if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN || !process.env.GOOGLE_TASKS_TASKLIST_ID) {
             console.log('Skipping test - required env vars not set');
             this.skip();
@@ -26,7 +26,7 @@ describe('FindTasks Component', function () {
                 }
             },
             properties: {},
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -39,7 +39,7 @@ describe('FindTasks Component', function () {
         };
     });
 
-    it('should list all tasks in a tasklist', async function () {
+    it('should list all tasks in a tasklist', async function() {
         context.messages.in.content = {
             tasklist: process.env.GOOGLE_TASKS_TASKLIST_ID
         };

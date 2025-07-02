@@ -2,13 +2,13 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('UpdateTaskList Component', function () {
+describe('UpdateTaskList Component', function() {
     let context;
     let UpdateTaskList;
 
     this.timeout(30000);
 
-    before(function () {
+    before(function() {
         if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN || !process.env.GOOGLE_TASKS_TASKLIST_ID) {
             console.log('Skipping tests - required env vars not set');
             this.skip();
@@ -25,7 +25,7 @@ describe('UpdateTaskList Component', function () {
                     content: {}
                 }
             },
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -38,7 +38,7 @@ describe('UpdateTaskList Component', function () {
         };
     });
 
-    it('should update a tasklist title', async function () {
+    it('should update a tasklist title', async function() {
         context.messages.in.content = {
             tasklist: process.env.GOOGLE_TASKS_TASKLIST_ID,
             title: 'Updated TaskList Title ' + Date.now()

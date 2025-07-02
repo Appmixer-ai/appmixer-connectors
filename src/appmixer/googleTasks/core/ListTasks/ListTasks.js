@@ -7,16 +7,16 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'title':{ 'type':'string'
 module.exports = {
     async receive(context) {
 
-        const { search, outputType } = context.messages.in.content;
+        const { tasklist, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Task Lists', value: 'items' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'items' });
         }
 
-        // https://developers.google.com/workspace/tasks/reference/rest/v1/tasklists/list
+        // https://developers.google.com/workspace/tasks/reference/rest/v1/tasks/list
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://tasks.googleapis.com/tasks/v1/users/@me/lists',
+            url: `https://tasks.googleapis.com/tasks/v1/lists/${tasklist}/tasks`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }

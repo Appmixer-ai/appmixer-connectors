@@ -2,13 +2,13 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('CreateTaskList Component', function () {
+describe('CreateTaskList Component', function() {
     let context;
     let CreateTaskList;
 
     this.timeout(30000);
 
-    before(function () {
+    before(function() {
         if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN) {
             console.log('Skipping test - GOOGLE_TASKS_ACCESS_TOKEN not set');
             this.skip();
@@ -25,7 +25,7 @@ describe('CreateTaskList Component', function () {
                     content: {}
                 }
             },
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -38,7 +38,7 @@ describe('CreateTaskList Component', function () {
         };
     });
 
-    it('should create a new task list with a title', async function () {
+    it('should create a new task list with a title', async function() {
         context.messages.in.content = {
             title: 'New Task List ' + Date.now()
         };
@@ -53,7 +53,7 @@ describe('CreateTaskList Component', function () {
         assert.strictEqual(result.port, 'out');
     });
 
-    it('should throw CancelError if title is missing', async function () {
+    it('should throw CancelError if title is missing', async function() {
         context.messages.in.content = {};
 
         try {

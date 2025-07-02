@@ -1,7 +1,5 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
@@ -12,7 +10,7 @@ module.exports = {
         }
 
         // https://developers.google.com/workspace/tasks/reference/rest/v1/tasklists/delete
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
             url: `https://tasks.googleapis.com/tasks/v1/users/@me/lists/${tasklist}`,
             headers: {

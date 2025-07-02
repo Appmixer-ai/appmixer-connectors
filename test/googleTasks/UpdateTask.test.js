@@ -2,19 +2,25 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('UpdateTask Component', function () {
+describe('UpdateTask Component', function() {
     let context;
     let UpdateTask;
 
     this.timeout(30000);
 
-    before(function () {
-        if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN || !process.env.GOOGLE_TASKS_TASKLIST_ID || !process.env.GOOGLE_TASKS_TASK_ID) {
+    before(function() {
+        if (
+            !process.env.GOOGLE_TASKS_ACCESS_TOKEN ||
+            !process.env.GOOGLE_TASKS_TASKLIST_ID ||
+            !process.env.GOOGLE_TASKS_TASK_ID
+        ) {
             console.log('Skipping tests - required env vars not set');
             this.skip();
         }
 
-        UpdateTask = require(path.join(__dirname, '../../src/appmixer/googleTasks/core/UpdateTask/UpdateTask.js'));
+        UpdateTask = require(
+            path.join(__dirname, '../../src/appmixer/googleTasks/core/UpdateTask/UpdateTask.js')
+        );
 
         context = {
             auth: {
@@ -25,7 +31,7 @@ describe('UpdateTask Component', function () {
                     content: {}
                 }
             },
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -38,7 +44,7 @@ describe('UpdateTask Component', function () {
         };
     });
 
-    it('should update a task title', async function () {
+    it('should update a task title', async function() {
         context.messages.in.content = {
             tasklist: process.env.GOOGLE_TASKS_TASKLIST_ID,
             task: process.env.GOOGLE_TASKS_TASK_ID,
@@ -56,7 +62,7 @@ describe('UpdateTask Component', function () {
         assert.strictEqual(result.port, 'out');
     });
 
-    it('should update a task with all fields', async function () {
+    it('should update a task with all fields', async function() {
         const timestamp = Date.now();
 
         context.messages.in.content = {

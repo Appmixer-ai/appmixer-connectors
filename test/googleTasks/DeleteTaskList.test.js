@@ -2,14 +2,14 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('DeleteTaskList Component', function () {
+describe('DeleteTaskList Component', function() {
     let context;
     let DeleteTaskList;
     let CreateTaskList;
 
     this.timeout(30000);
 
-    before(function () {
+    before(function() {
         if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN) {
             console.log('Skipping test - required env vars not set');
             this.skip();
@@ -27,7 +27,7 @@ describe('DeleteTaskList Component', function () {
                     content: {}
                 }
             },
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -40,15 +40,15 @@ describe('DeleteTaskList Component', function () {
         };
     });
 
-    it('should delete a tasklist', async function () {
+    it('should delete a tasklist', async function() {
         // First create a task list to delete
         context.messages.in.content = {
             title: `Test TaskList for Deletion ${Date.now()}`
         };
-        
+
         const createResult = await CreateTaskList.receive(context);
         const taskListId = createResult.data.id;
-        
+
         // Now delete the created task list
         context.messages.in.content = {
             tasklist: taskListId
@@ -63,7 +63,7 @@ describe('DeleteTaskList Component', function () {
         assert.strictEqual(result.data.success, true);
     });
 
-    it('should throw CancelError if tasklist is missing', async function () {
+    it('should throw CancelError if tasklist is missing', async function() {
         context.messages.in.content = {};
 
         try {
@@ -74,4 +74,3 @@ describe('DeleteTaskList Component', function () {
         }
     });
 });
-    

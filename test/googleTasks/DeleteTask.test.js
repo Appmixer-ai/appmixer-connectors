@@ -2,19 +2,28 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('DeleteTask Component', function () {
+describe('DeleteTask Component', function() {
     let context;
     let DeleteTask;
 
     this.timeout(30000);
 
-    before(function () {
-        if (!process.env.GOOGLE_TASKS_ACCESS_TOKEN || !process.env.GOOGLE_TASKS_TASKLIST_ID || !process.env.GOOGLE_TASKS_TASK_ID) {
+    before(function() {
+        if (
+            !process.env.GOOGLE_TASKS_ACCESS_TOKEN ||
+            !process.env.GOOGLE_TASKS_TASKLIST_ID ||
+            !process.env.GOOGLE_TASKS_TASK_ID
+        ) {
             console.log('Skipping test - required env vars not set');
             this.skip();
         }
 
-        DeleteTask = require(path.join(__dirname, '../../src/appmixer/googleTasks/core/DeleteTask/DeleteTask.js'));
+        DeleteTask = require(
+            path.join(
+                __dirname,
+                '../../src/appmixer/googleTasks/core/DeleteTask/DeleteTask.js'
+            )
+        );
 
         context = {
             auth: {
@@ -25,7 +34,7 @@ describe('DeleteTask Component', function () {
                     content: {}
                 }
             },
-            sendJson: function (data, port) {
+            sendJson: function(data, port) {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
@@ -38,7 +47,7 @@ describe('DeleteTask Component', function () {
         };
     });
 
-    it('should delete a task from a tasklist', async function () {
+    it('should delete a task from a tasklist', async function() {
         context.messages.in.content = {
             tasklist: process.env.GOOGLE_TASKS_TASKLIST_ID,
             task: process.env.GOOGLE_TASKS_TASK_ID
@@ -53,7 +62,7 @@ describe('DeleteTask Component', function () {
         assert.strictEqual(result.port, 'out');
     });
 
-    it('should throw CancelError if tasklist or task is missing', async function () {
+    it('should throw CancelError if tasklist or task is missing', async function() {
         context.messages.in.content = {};
 
         try {
