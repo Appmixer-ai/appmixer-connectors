@@ -1,4 +1,4 @@
-// Discord's permission bitflags, per docs 
+// Discord's permission bitflags, per docs
 // https://discord.com/developers/docs/topics/permissions#permissions-bitwise-permission-flags
 const PERMISSIONS = {
     CREATE_INSTANT_INVITE: 1,
@@ -42,6 +42,10 @@ const PERMISSIONS = {
     SEND_MESSAGES_IN_THREADS: 274877906944,
     USE_EMBEDDED_ACTIVITIES: 549755813888,
     MODERATE_MEMBERS: 1099511627776,
+    VIEW_CREATOR_MONETIZATION_ANALYTICS: 1 << 41,
+    USE_SOUNDBOARD: 1 << 42,
+    CREATE_GUILD_EXPRESSIONS: 1 << 43,
+    CREATE_EVENTS: 17592186044416
 };
 
 function splitScopesAndPermissions(arr) {

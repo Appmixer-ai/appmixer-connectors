@@ -9,10 +9,16 @@ module.exports = {
     definition: () => {
 
         let guildId;
+        let guildName;
 
         return {
 
-            scope: ['bot'],
+            scope: [
+                'bot', 'CREATE_INSTANT_INVITE', 'MANAGE_CHANNELS', 'MANAGE_MESSAGES',
+                'MANAGE_ROLES', 'VIEW_CHANNEL', 'MANAGE_EVENTS', 'ADD_REACTIONS',
+                'MANAGE_THREADS', 'SEND_MESSAGES', 'MANAGE_WEBHOOKS', 'CREATE_EVENTS',
+                'CREATE_PUBLIC_THREADS', 'SEND_MESSAGES_IN_THREADS'
+            ],
 
             authUrl: (context) => {
                 const scopesAndPermissions = splitScopesAndPermissions(context.scope);
@@ -45,6 +51,7 @@ module.exports = {
                 });
 
                 guildId = data.guild.id;
+                guildName = data.guild.name;
 
                 const expDate = new Date();
                 expDate.setTime(expDate.getTime() + (data.expires_in * 1000));
@@ -68,13 +75,14 @@ module.exports = {
 
                 return {
                     ...data,
-                    guildId
+                    guildId,
+                    guildName
                 };
             },
 
             accountNameFromProfileInfo: (context) => {
 
-                return `${context.profileInfo.application.name} (${context.profileInfo.user.username})`;
+                return `${context.profileInfo.application.name} (${context.profileInfo.user.username} [${context.profileInfo.guildName}])`;
             },
 
             validateAccessToken: 'https://discord.com/api/oauth2/@me',
