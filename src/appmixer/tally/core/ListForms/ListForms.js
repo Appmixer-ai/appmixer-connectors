@@ -10,7 +10,7 @@ module.exports = {
         const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Forms', value: 'items' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Forms', value: 'result' });
         }
 
         // https://developers.tally.so/api-reference/endpoint/forms/list
@@ -22,6 +22,6 @@ module.exports = {
             }
         });
 
-        return lib.sendArrayOutput({ context, records: data.items, outputType, arrayPropertyValue: 'items' });
+        return lib.sendArrayOutput({ context, records: data.items, outputType });
     }
 };
