@@ -6,15 +6,14 @@ module.exports = {
     async receive(context) {
 
         const { key } = context.messages.in.content;
-        const url = `${context.serverUrl.replace(/\/$/, '')}/api/duplications/show`;
-        const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.apiKey + ':').toString('base64')
-        };
+        const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/duplications/show`;
         const params = { key };
         const { data } = await context.httpRequest({
             method: 'GET',
             url,
-            headers,
+            headers: {
+                'Authorization': 'Bearer ' + context.auth.apiKey
+            },
             params
         });
 

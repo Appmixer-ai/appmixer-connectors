@@ -1,20 +1,17 @@
-
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
         const { analysisId, branch, projectId, projectKey, pullRequest } = context.messages.in.content;
-        const url = `${context.serverUrl.replace(/\/$/, '')}/api/qualitygates/project_status`;
-        const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.apiKey + ':').toString('base64')
-        };
+        const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/qualitygates/project_status`;
         const params = { analysisId, branch, projectId, projectKey, pullRequest };
         const { data } = await context.httpRequest({
             method: 'GET',
             url,
-            headers,
+            headers: {
+                'Authorization': 'Bearer ' + context.auth.apiKey
+            },
             params
         });
 
