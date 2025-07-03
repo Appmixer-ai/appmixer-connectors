@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { campaignId, subject, to, contentType, body, bcc, cc } = context.messages.in.content;
+        const { campaignId, to, body } = context.messages.in.content;
 
         // https://developers.brevo.com/reference/sendreport-1
         const { data } = await context.httpRequest({
@@ -14,11 +14,7 @@ module.exports = {
             data: {
                 email: {
                     body,
-                    contentType,
-                    subject,
-                    to: to?.split(','),
-                    bcc: bcc?.split(','),
-                    cc: cc?.split(',')
+                    to: to?.split(',')
                 }
             }
         });

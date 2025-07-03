@@ -23,6 +23,6 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({ ...data, email }, 'out');
     }
 };

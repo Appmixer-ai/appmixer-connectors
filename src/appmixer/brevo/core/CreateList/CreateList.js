@@ -12,7 +12,7 @@ module.exports = {
                 'api-key': `${context.auth.apiKey}`
             },
             data: {
-                name, folderId
+                name, folderId: +folderId
             }
         });
 
