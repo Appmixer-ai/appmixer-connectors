@@ -54,6 +54,7 @@ module.exports = {
                     username,
                     channelId,
                     text: entities.decode(message),
+                    token,
                     ...(thread_ts ? { thread_ts } : {}),
                     ...(typeof reply_broadcast === 'boolean' ? { reply_broadcast } : {})
                 }
