@@ -79,7 +79,7 @@ module.exports = {
                         items: { type: 'object', properties: itemSchema }
                     }
                 }], 'out');
-            }
+        }
 
         if (outputType === 'file') {
             return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
