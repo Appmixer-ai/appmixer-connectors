@@ -9,7 +9,8 @@ module.exports = {
             text,
             model_id,
             language_code,
-            seed
+            seed,
+            filename
         } = context.messages.in.content;
 
         // https://elevenlabs.io/docs/api-reference/text-to-speech/convert
@@ -45,10 +46,10 @@ module.exports = {
             throw new Error(`Failed to synthesize speech: ${message}`);
         }
 
-        // For example: 1701980838697_elevenlabs_createSpeechSynthesis
-        const filename = `${Date.now()}_${context.componentType.split('.')[1]}_${context.componentType.split('.')[3]}`;
-        const file = await context.saveFileStream(filename, data); // data is a binary buffer
+        // Use provided filename or default
+        const outFilename = filename || `${Date.now()}_elevenlabs_speechsynthesis`;
+        const file = await context.saveFileStream(outFilename, data); // data is a binary buffer
 
-        return context.sendJson(file, 'out');
+        return context.sendJson({ fileId: file.fileId, fileSize: file.length, input: text }, 'out');
     }
 };
