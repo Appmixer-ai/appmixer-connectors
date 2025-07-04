@@ -47,7 +47,7 @@ module.exports = {
         }
 
         // Use provided filename or default
-        const outFilename = filename || `${Date.now()}_${context.componentType.split('.')[1]}_${context.componentType.split('.')[3]}`;
+        const outFilename = filename || `${Date.now()}_elevenlabs_speechsynthesis`;
         const file = await context.saveFileStream(outFilename, data); // data is a binary buffer
 
         return context.sendJson({ fileId: file.fileId, fileSize: file.length, input: text }, 'out');
