@@ -20,9 +20,7 @@ describe('ReadBarcode Component', function() {
 
         // Mock context
         context = {
-            auth: {
-                apiToken: process.env.PDFCO_API_TOKEN
-            },
+            apiKey: process.env.PDFCO_API_TOKEN,
             messages: {
                 in: {
                     content: {}
@@ -38,7 +36,7 @@ describe('ReadBarcode Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should read barcode from image file', async function() {

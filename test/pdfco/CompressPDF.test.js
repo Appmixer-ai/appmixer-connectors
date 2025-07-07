@@ -20,9 +20,7 @@ describe('CompressPDF Component', function() {
 
         // Mock context
         context = {
-            auth: {
-                apiToken: process.env.PDFCO_API_TOKEN
-            },
+            apiKey: process.env.PDFCO_API_TOKEN,
             messages: {
                 in: {
                     content: {}
@@ -38,7 +36,7 @@ describe('CompressPDF Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should compress PDF with default compression level', async function() {
@@ -50,7 +48,7 @@ describe('CompressPDF Component', function() {
 
         // Mock PDF file URL - in real usage this would be a valid PDF file URL
         context.messages.in.content = {
-            file: 'https://bytescout.com/sample-files/pdfs/sample.pdf'
+            file: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-to-csv/sample.pdf'
         };
 
         try {
@@ -90,7 +88,7 @@ describe('CompressPDF Component', function() {
         };
 
         context.messages.in.content = {
-            file: 'https://bytescout.com/sample-files/pdfs/sample.pdf',
+            file: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-to-csv/sample.pdf',
             compressionLevel: 3
         };
 

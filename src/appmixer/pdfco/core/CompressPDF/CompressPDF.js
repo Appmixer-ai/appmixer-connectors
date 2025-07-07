@@ -7,13 +7,24 @@ module.exports = {
 
         const { file, compressionLevel } = context.messages.in.content;
 
-        // https://apidocs.pdf.co/?#pdf-compress
+        if (!file) {
+            throw new Error('File parameter is required');
+        }
+
+        const requestBody = { url: file };
+        if (compressionLevel !== undefined) {
+            requestBody.compressionLevel = compressionLevel;
+        }
+
+        // https://apidocs.pdf.co/?#pdf-optimize
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.pdf.co/v1/pdf/compress',
+            url: 'https://api.pdf.co/v1/pdf/optimize',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'x-api-key': context.apiKey,
+                'Content-Type': 'application/json'
+            },
+            data: requestBody
         });
 
         return context.sendJson(data, 'out');

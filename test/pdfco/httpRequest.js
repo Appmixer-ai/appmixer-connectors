@@ -12,6 +12,16 @@ module.exports = async function httpRequest(config) {
     } catch (error) {
         if (error.response) {
             // Server responded with error status
+            console.log('HTTP Request Error Details:');
+            console.log('Status:', error.response.status);
+            console.log('Data:', JSON.stringify(error.response.data, null, 2));
+            console.log('Request Config:', JSON.stringify({
+                method: config.method,
+                url: config.url,
+                headers: config.headers,
+                data: config.data
+            }, null, 2));
+            
             const newError = new Error(error.message);
             newError.response = {
                 status: error.response.status,

@@ -20,9 +20,7 @@ describe('GetPDFInfo Component', function() {
 
         // Mock context
         context = {
-            auth: {
-                apiToken: process.env.PDFCO_API_TOKEN
-            },
+            apiKey: process.env.PDFCO_API_TOKEN,
             messages: {
                 in: {
                     content: {}
@@ -38,7 +36,7 @@ describe('GetPDFInfo Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should get PDF information from valid file', async function() {
@@ -50,7 +48,7 @@ describe('GetPDFInfo Component', function() {
 
         // Mock PDF file URL - in real usage this would be a valid PDF file URL
         context.messages.in.content = {
-            file: 'https://bytescout.com/sample-files/pdfs/sample.pdf'
+            file: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-to-csv/sample.pdf'
         };
 
         try {
@@ -62,34 +60,35 @@ describe('GetPDFInfo Component', function() {
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
             
             if (!data.error) {
-                // Check for expected PDF info properties
-                assert(typeof data.pageCount === 'number', 'Expected data.pageCount to be a number');
-                assert(data.pageCount > 0, 'Expected pageCount to be greater than 0');
+                // Check for expected PDF info properties (nested under 'info' object)
+                assert(data.info && typeof data.info === 'object', 'Expected data.info to be an object');
+                assert(typeof data.info.PageCount === 'number', 'Expected data.info.PageCount to be a number');
+                assert(data.info.PageCount > 0, 'Expected PageCount to be greater than 0');
                 
                 // Optional properties that might be present
-                if (data.title !== undefined) {
-                    assert(typeof data.title === 'string', 'Expected data.title to be a string');
+                if (data.info.Title !== undefined) {
+                    assert(typeof data.info.Title === 'string', 'Expected data.info.Title to be a string');
                 }
-                if (data.author !== undefined) {
-                    assert(typeof data.author === 'string', 'Expected data.author to be a string');
+                if (data.info.Author !== undefined) {
+                    assert(typeof data.info.Author === 'string', 'Expected data.info.Author to be a string');
                 }
-                if (data.subject !== undefined) {
-                    assert(typeof data.subject === 'string', 'Expected data.subject to be a string');
+                if (data.info.Subject !== undefined) {
+                    assert(typeof data.info.Subject === 'string', 'Expected data.info.Subject to be a string');
                 }
-                if (data.keywords !== undefined) {
-                    assert(typeof data.keywords === 'string', 'Expected data.keywords to be a string');
+                if (data.info.Keywords !== undefined) {
+                    assert(typeof data.info.Keywords === 'string', 'Expected data.info.Keywords to be a string');
                 }
-                if (data.creator !== undefined) {
-                    assert(typeof data.creator === 'string', 'Expected data.creator to be a string');
+                if (data.info.Creator !== undefined) {
+                    assert(typeof data.info.Creator === 'string', 'Expected data.info.Creator to be a string');
                 }
-                if (data.producer !== undefined) {
-                    assert(typeof data.producer === 'string', 'Expected data.producer to be a string');
+                if (data.info.Producer !== undefined) {
+                    assert(typeof data.info.Producer === 'string', 'Expected data.info.Producer to be a string');
                 }
-                if (data.creationDate !== undefined) {
-                    assert(typeof data.creationDate === 'string', 'Expected data.creationDate to be a string');
+                if (data.info.CreationDate !== undefined) {
+                    assert(typeof data.info.CreationDate === 'string', 'Expected data.info.CreationDate to be a string');
                 }
-                if (data.modificationDate !== undefined) {
-                    assert(typeof data.modificationDate === 'string', 'Expected data.modificationDate to be a string');
+                if (data.info.ModificationDate !== undefined) {
+                    assert(typeof data.info.ModificationDate === 'string', 'Expected data.info.ModificationDate to be a string');
                 }
                 
                 // Optional: Check if credits were used

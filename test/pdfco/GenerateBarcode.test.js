@@ -20,9 +20,7 @@ describe('GenerateBarcode Component', function() {
 
         // Mock context
         context = {
-            auth: {
-                apiToken: process.env.PDFCO_API_TOKEN
-            },
+            apiKey: process.env.PDFCO_API_TOKEN,
             messages: {
                 in: {
                     content: {}
@@ -38,7 +36,7 @@ describe('GenerateBarcode Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should generate QR code barcode', async function() {
@@ -211,6 +209,98 @@ describe('GenerateBarcode Component', function() {
             }
             // Some errors are expected for missing parameters
             console.log('Expected error for missing text parameter:', error.message);
+        }
+    });
+
+    it('should handle missing type parameter', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in.content = {
+            text: 'Test Text'
+        };
+
+        try {
+            await GenerateBarcode.receive(context);
+
+            // Should not reach here
+            assert.fail('Expected error for missing type parameter');
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                throw new Error('Authentication failed: API token is invalid');
+            }
+            
+            // Expected behavior: should throw error for missing type
+            assert(error.message === 'Type parameter is required', 'Expected specific error message for missing type');
+            console.log('Expected error for missing type parameter:', error.message);
+        }
+    });
+
+    it('should handle empty string parameters', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in.content = {
+            type: '',
+            text: ''
+        };
+
+        try {
+            await GenerateBarcode.receive(context);
+
+            // Should not reach here
+            assert.fail('Expected error for empty parameters');
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                throw new Error('Authentication failed: API token is invalid');
+            }
+            
+            // Expected behavior: should throw error for empty type
+            assert(error.message === 'Type parameter is required', 'Expected error for empty type parameter');
+            console.log('Expected error for empty parameters:', error.message);
+        }
+    });
+
+    it('should generate barcode with valid supported types', async function() {
+        const supportedTypes = ['qrcode', 'code128', 'code39'];
+        
+        for (const barcodeType of supportedTypes) {
+            let data;
+            context.sendJson = function(output, port) {
+                data = output;
+                return { data: output, port };
+            };
+
+            context.messages.in.content = {
+                type: barcodeType,
+                text: 'Test123'
+            };
+
+            try {
+                await GenerateBarcode.receive(context);
+
+                console.log(`GenerateBarcode ${barcodeType} result:`, JSON.stringify(data, null, 2));
+
+                assert(data && typeof data === 'object', `Expected data to be an object for ${barcodeType}`);
+                assert(typeof data.error === 'boolean', `Expected data.error to be a boolean for ${barcodeType}`);
+                
+                if (!data.error) {
+                    assert(typeof data.url === 'string', `Expected data.url to be a string for ${barcodeType}`);
+                    assert(data.url.length > 0, `Expected data.url to not be empty for ${barcodeType}`);
+                }
+            } catch (error) {
+                if (error.response && error.response.status === 401) {
+                    throw new Error('Authentication failed: API token is invalid');
+                }
+                console.log(`Error testing ${barcodeType}:`, error.message);
+                // Some barcode types might not be supported by the API
+            }
         }
     });
 });

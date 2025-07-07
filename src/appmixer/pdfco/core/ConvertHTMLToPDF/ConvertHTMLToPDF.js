@@ -7,13 +7,39 @@ module.exports = {
 
         const { html, url, paperSize, orientation } = context.messages.in.content;
 
-        // https://apidocs.pdf.co/?#html-to-pdf
+        if (!html && !url) {
+            throw new Error('Either html or url parameter is required');
+        }
+
+        let endpoint, requestBody;
+        
+        if (url) {
+            // URL to PDF conversion
+            endpoint = 'https://api.pdf.co/v1/pdf/convert/from/url';
+            requestBody = { url };
+        } else {
+            // HTML to PDF conversion
+            endpoint = 'https://api.pdf.co/v1/pdf/convert/from/html';
+            requestBody = { html };
+        }
+        
+        // Add common optional parameters
+        if (paperSize) {
+            requestBody.paperSize = paperSize;
+        }
+        if (orientation) {
+            requestBody.orientation = orientation;
+        }
+
+        // https://apidocs.pdf.co/?#html-to-pdf or #url-to-pdf
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.pdf.co/v1/pdf/convert/from/html',
+            url: endpoint,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'x-api-key': context.apiKey,
+                'Content-Type': 'application/json'
+            },
+            data: requestBody
         });
 
         return context.sendJson(data, 'out');

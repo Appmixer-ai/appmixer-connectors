@@ -20,9 +20,7 @@ describe('MergePDF Component', function() {
 
         // Mock context
         context = {
-            auth: {
-                apiToken: process.env.PDFCO_API_TOKEN
-            },
+            apiKey: process.env.PDFCO_API_TOKEN,
             messages: {
                 in: {
                     content: {}
@@ -38,7 +36,7 @@ describe('MergePDF Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should merge multiple PDF files', async function() {
@@ -51,8 +49,8 @@ describe('MergePDF Component', function() {
         // Mock PDF file URLs - in real usage these would be valid PDF file URLs
         context.messages.in.content = {
             files: [
-                'https://bytescout.com/sample-files/pdfs/sample.pdf',
-                'https://bytescout.com/sample-files/pdfs/sample.pdf'
+                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf',
+                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf'
             ]
         };
 
@@ -94,8 +92,8 @@ describe('MergePDF Component', function() {
 
         context.messages.in.content = {
             files: [
-                'https://bytescout.com/sample-files/pdfs/sample.pdf',
-                'https://bytescout.com/sample-files/pdfs/sample.pdf'
+                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf',
+                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf'
             ],
             name: 'merged-document.pdf'
         };
@@ -128,7 +126,7 @@ describe('MergePDF Component', function() {
         };
 
         context.messages.in.content = {
-            files: ['https://bytescout.com/sample-files/pdfs/sample.pdf']
+            files: ['https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf']
         };
 
         try {
