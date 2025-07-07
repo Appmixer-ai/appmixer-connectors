@@ -11,7 +11,7 @@ module.exports = {
 
         const expiration = ttl && ttl > 0 ? new Date(Date.now() + ttl * 1000).valueOf() : null;
 
-        const keyName = context?.config.kvmBlockedIPsKeyName || 'blocked-ip';
+        const keyName = context?.config.kvmBlockedIPsKeyName || 'blocked-ips';
 
         const entry = await getOrCreateList(context, keyName);
 
