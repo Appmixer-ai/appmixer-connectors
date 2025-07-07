@@ -8,14 +8,6 @@ module.exports = {
 
         const { type, text, format } = context.messages.in.content;
 
-        // Validate required parameters
-        if (!type) {
-            throw new Error('Type parameter is required');
-        }
-        if (!text) {
-            throw new Error('Text parameter is required');
-        }
-
         // Validate type parameter (common barcode types)
         const validTypes = [
             'qrcode', 'code128', 'code39', 'code93', 'codabar', 'ean8', 'ean13',

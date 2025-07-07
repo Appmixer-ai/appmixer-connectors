@@ -8,11 +8,6 @@ module.exports = {
 
         const { jobId } = context.messages.in.content;
 
-        // Validate required parameters
-        if (!jobId) {
-            throw new Error('JobId parameter is required');
-        }
-
         try {
             // https://apidocs.pdf.co/?#job-status
             const { data } = await context.httpRequest({

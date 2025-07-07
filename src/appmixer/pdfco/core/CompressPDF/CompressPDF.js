@@ -8,11 +8,6 @@ module.exports = {
 
         const { file, compressionLevel } = context.messages.in.content;
 
-        // Validate required parameters
-        if (!file) {
-            throw new Error('File parameter is required');
-        }
-
         // Prepare request body
         const requestBody = { url: file };
         if (compressionLevel !== undefined) {

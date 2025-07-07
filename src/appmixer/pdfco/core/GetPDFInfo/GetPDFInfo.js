@@ -8,11 +8,6 @@ module.exports = {
 
         const { file } = context.messages.in.content;
 
-        // Validate required parameters
-        if (!file) {
-            throw new Error('File parameter is required');
-        }
-
         const requestBody = { url: file };
 
         try {

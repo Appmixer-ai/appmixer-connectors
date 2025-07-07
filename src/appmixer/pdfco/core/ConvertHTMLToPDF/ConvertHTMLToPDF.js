@@ -8,11 +8,6 @@ module.exports = {
 
         const { html, url, paperSize, orientation } = context.messages.in.content;
 
-        // Validate required parameters
-        if (!html && !url) {
-            throw new Error('Either html or url parameter is required');
-        }
-
         let endpoint, requestBody;
         
         if (url) {
