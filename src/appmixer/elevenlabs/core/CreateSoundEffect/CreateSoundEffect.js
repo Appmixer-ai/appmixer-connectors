@@ -4,7 +4,7 @@
 module.exports = {
     async receive(context) {
 
-        const { text, duration_seconds, prompt_influence, output_format } = context.messages.in.content;
+        const { text, duration_seconds, prompt_influence, output_format, filename } = context.messages.in.content;
 
         // https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert
         let data;
@@ -39,9 +39,9 @@ module.exports = {
             throw new Error(`Failed to generate sound effect: ${message}`);
         }
 
-        const filename = `${Date.now()}_elevenlabs_soundeffect`;
-        const file = await context.saveFileStream(filename, data);
+        const outFilename = filename || `${Date.now()}_elevenlabs_soundeffect`;
+        const file = await context.saveFileStream(outFilename, data);
 
-        return context.sendJson(file, 'out');
+        return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
     }
 };
