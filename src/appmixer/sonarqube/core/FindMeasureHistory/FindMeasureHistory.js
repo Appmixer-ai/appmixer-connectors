@@ -6,7 +6,7 @@ module.exports = {
         const { component, metrics, branch, from, to } = context.messages.in.content;
         const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/measures/search_history`;
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.auth.apiKey + ':').toString('base64')
+            'Authorization': 'Bearer ' + context.auth.apiKey
         };
         const params = { component, metrics, branch, from, to };
         const { data } = await context.httpRequest({

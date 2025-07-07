@@ -5,7 +5,7 @@ module.exports = {
         const { key } = context.messages.in.content;
         const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/duplications/show`;
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.auth.apiKey + ':').toString('base64')
+            'Authorization': 'Bearer ' + context.auth.apiKey
         };
         const params = { key };
         const { data } = await context.httpRequest({

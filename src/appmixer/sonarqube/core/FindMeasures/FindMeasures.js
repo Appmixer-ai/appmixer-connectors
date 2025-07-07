@@ -5,7 +5,7 @@ module.exports = {
         const { metricKeys, projectKeys } = context.messages.in.content;
         const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/measures/search`;
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.auth.apiKey + ':').toString('base64')
+            'Authorization': 'Bearer ' + context.auth.apiKey
         };
         const params = { metricKeys, projectKeys };
         const { data } = await context.httpRequest({

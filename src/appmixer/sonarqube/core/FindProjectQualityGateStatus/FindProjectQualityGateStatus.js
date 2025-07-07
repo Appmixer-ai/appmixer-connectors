@@ -6,7 +6,7 @@ module.exports = {
         const { analysisId, branch, projectId, projectKey, pullRequest } = context.messages.in.content;
         const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/qualitygates/project_status`;
         const headers = {
-            'Authorization': 'Basic ' + Buffer.from(context.auth.apiKey + ':').toString('base64')
+            'Authorization': 'Bearer ' + context.auth.apiKey
         };
         const params = { analysisId, branch, projectId, projectKey, pullRequest };
         const { data } = await context.httpRequest({
