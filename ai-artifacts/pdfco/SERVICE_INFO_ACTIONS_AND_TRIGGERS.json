@@ -1,0 +1,312 @@
+{
+    "actions": [
+        {
+            "title": "UploadFile",
+            "description": "Uploads a file to PDF.co temporary cloud storage.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#file-upload",
+            "endpointUrl": "https://api.pdf.co/v1/file/upload",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "url": "https://storage.pdf.co/temporary/filename.ext",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for uploading a file.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "The content of the file encoded in Base64 or a URL to the file."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The desired name for the file being uploaded."
+                    }
+                },
+                "required": [
+                    "file",
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "ConvertHTMLToPDF",
+            "description": "Converts raw HTML code or a public URL to a PDF document.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#html-to-pdf",
+            "endpointUrl": "https://api.pdf.co/v1/pdf/convert/from/html",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "url": "https://storage.pdf.co/converted/document.pdf",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for converting HTML or a URL to PDF.",
+                "properties": {
+                    "html": {
+                        "type": "string",
+                        "description": "Raw HTML content. Optional if 'url' is provided."
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "A public URL pointing to the HTML content. Optional if 'html' is provided."
+                    },
+                    "paperSize": {
+                        "type": "string",
+                        "description": "Paper size for the generated PDF (e.g., A4, Letter)."
+                    },
+                    "orientation": {
+                        "type": "string",
+                        "description": "Page orientation for the PDF (Portrait or Landscape)."
+                    }
+                },
+                "required": [
+                    "paperSize",
+                    "orientation"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "MergePDF",
+            "description": "Merges multiple PDFs or supported documents into a single PDF document.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#pdf-merge",
+            "endpointUrl": "https://api.pdf.co/v1/pdf/merge",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "url": "https://storage.pdf.co/merged/result.pdf",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for merging multiple PDF files.",
+                "properties": {
+                    "files": {
+                        "type": "array",
+                        "description": "An array of file URLs (strings) that need to be merged.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name for the resulting merged PDF file."
+                    }
+                },
+                "required": [
+                    "files",
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetPDFInfo",
+            "description": "Retrieves metadata and details about a PDF file such as page count, author, and more.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#pdf-info",
+            "endpointUrl": "https://api.pdf.co/v1/pdf/info",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "pageCount": 10,
+                "author": "Unknown",
+                "title": "Document Title",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for retrieving PDF metadata.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "The URL of the PDF file to inspect or its Base64 content."
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "CheckJobStatus",
+            "description": "Checks the processing status of an asynchronous job submitted to PDF.co.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#job-status",
+            "endpointUrl": "https://api.pdf.co/v1/job/check",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "GET",
+            "sampleResponse": {
+                "status": "working",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters to check the status of an asynchronous job.",
+                "properties": {
+                    "jobId": {
+                        "type": "string",
+                        "description": "The unique identifier of the job to be checked."
+                    }
+                },
+                "required": [
+                    "jobId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GenerateBarcode",
+            "description": "Generates a barcode in the form of an image or a PDF document.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#barcode-generate",
+            "endpointUrl": "https://api.pdf.co/v1/barcode/generate",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "url": "https://storage.pdf.co/barcode/result.pdf",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for generating a barcode.",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "The type of barcode to generate (e.g., QR, Code128, EAN)."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The text or data to encode in the barcode."
+                    },
+                    "format": {
+                        "type": "string",
+                        "description": "Output format type, can be 'image' or 'pdf'."
+                    }
+                },
+                "required": [
+                    "type",
+                    "text",
+                    "format"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "ReadBarcode",
+            "description": "Reads and decodes barcode information from a provided PDF or image file.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#barcode-read",
+            "endpointUrl": "https://api.pdf.co/v1/barcode/read",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "barcodes": [
+                    {
+                        "type": "QR",
+                        "value": "https://example.com"
+                    }
+                ],
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for reading a barcode.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "The URL of the PDF or image file containing the barcode or its Base64 representation."
+                    },
+                    "types": {
+                        "type": "array",
+                        "description": "Optional array specifying the barcode types to look for (e.g., [\"QR\", \"EAN\"]).",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "CompressPDF",
+            "description": "Compresses and reduces the file size of a PDF document.",
+            "type": "action",
+            "documentation": "https://apidocs.pdf.co/?#pdf-compress",
+            "endpointUrl": "https://api.pdf.co/v1/pdf/compress",
+            "apiBaseUrl": "https://api.pdf.co/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "url": "https://storage.pdf.co/compressed/result.pdf",
+                "error": false,
+                "errorMessage": ""
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for compressing a PDF file.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "The URL of the PDF file to compress or its Base64 encoded content."
+                    },
+                    "compressionLevel": {
+                        "type": "number",
+                        "description": "Optional parameter to specify compression level (e.g., 1-5)."
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "https://app.pdf.co/login",
+        "tokenUrl": "https://api.pdf.co/v1/token",
+        "profileInfoUrl": "https://api.pdf.co/v1/user/profile"
+    },
+    "serviceJson": {
+        "name": "pdfco",
+        "label": "PDF.co",
+        "category": "applications",
+        "description": "Integration with PDF.co service offering file uploads, HTML to PDF conversion, PDF merging, metadata extraction, barcode generation and reading, and PDF compression.",
+        "version": "1.0.0",
+        "icon": "https://pdf.co/img/pdfco-logo.svg"
+    }
+}
