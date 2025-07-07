@@ -1,21 +1,19 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
-
         const { metricKeys, projectKeys } = context.messages.in.content;
-
-        // https://sonar.appmixer.cloud/web_api/api/measures/search
+        const url = `${context.auth.serverUrl.replace(/\/$/, '')}/api/measures/search`;
+        const headers = {
+            'Authorization': 'Basic ' + Buffer.from(context.auth.apiKey + ':').toString('base64')
+        };
+        const params = { metricKeys, projectKeys };
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/api/measures/search',
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+            url,
+            headers,
+            params
         });
-
         return context.sendJson(data, 'out');
     }
 };
