@@ -14,6 +14,8 @@ module.exports = {
             }
         });
 
+        context.log({ step: 'test' });
+
         return context.sendJson(data, 'out');
     }
 };
