@@ -26,47 +26,17 @@ module.exports = {
             requestBody.orientation = orientation;
         }
 
-        try {
-            // https://apidocs.pdf.co/?#html-to-pdf or #url-to-pdf
-            const { data } = await context.httpRequest({
-                method: 'POST',
-                url: endpoint,
-                headers: {
-                    'x-api-key': context.apiKey,
-                    'Content-Type': 'application/json'
-                },
-                data: requestBody
-            });
+        // https://apidocs.pdf.co/?#html-to-pdf or #url-to-pdf
+        const { data } = await context.httpRequest({
+            method: 'POST',
+            url: endpoint,
+            headers: {
+                'x-api-key': context.apiKey,
+                'Content-Type': 'application/json'
+            },
+            data: requestBody
+        });
 
-            // Check if the API returned an error
-            if (data.error === true) {
-                console.error('PDFco API returned error:', data.message || 'Unknown error');
-            }
-
-            return context.sendJson(data, 'out');
-        } catch (error) {
-            // Handle HTTP errors and API errors
-            if (error.response) {
-                const { status, data: errorData } = error.response;
-                console.error(`PDFco API error [${status}]:`, errorData);
-
-                // Return error response in the expected format
-                return context.sendJson({
-                    error: true,
-                    status: status,
-                    message: errorData?.message || errorData?.error || `HTTP ${status} error`,
-                    url: null,
-                    pageCount: 0,
-                    credits: 0,
-                    remainingCredits: 0,
-                    duration: 0,
-                    name: null,
-                    outputLinkValidTill: null
-                }, 'out');
-            }
-
-            // Re-throw other errors (network issues, etc.)
-            throw error;
-        }
+        return context.sendJson(data, 'out');
     }
 };
