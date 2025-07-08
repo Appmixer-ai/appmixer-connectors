@@ -3,7 +3,13 @@
 module.exports = {
     async receive(context) {
 
-        const { customer, collectionMethod, description, autoAdvance, dueDate, daysUntilDue } = context.messages.in.content;
+        const { customer,
+            collectionMethod,
+            description,
+            autoAdvance,
+            dueDate,
+            daysUntilDue
+        } = context.messages.in.content;
 
         // https://stripe.com/docs/api/invoices/create
         const invoiceData = {};
