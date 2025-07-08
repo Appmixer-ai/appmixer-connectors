@@ -67,7 +67,7 @@ describe('POST /send-message handler', () => {
         const sendMessageHandler = context.http.router.register.getCall(1).args[0].options.handler;
 
         // Mock successful message sending
-        context.config.botToken = 'mock_bot_token';
+        context.auth.profileInfo = { botToken: 'mock_bot_token' };
 
         // Create request with valid params
         const req = {
@@ -112,7 +112,7 @@ describe('POST /send-message handler', () => {
 
     it('auth-hub/send-message with thread_ts and reply_broadcast', async () => {
         const sendMessageHandler = context.http.router.register.getCall(1).args[0].options.handler;
-        context.config.botToken = 'mock_bot_token';
+        context.auth.profileInfo = { botToken: 'mock_bot_token' };
         const req = {
             payload: {
                 iconUrl: 'http://example.com/icon.png',
@@ -120,6 +120,7 @@ describe('POST /send-message handler', () => {
                 channelId: 'C12345',
                 text: 'Test message',
                 thread_ts: '1234567890.123456',
+                token: 'bot_token',
                 reply_broadcast: true
             }
         };
@@ -140,7 +141,7 @@ describe('POST /send-message handler', () => {
 
     it('auth-hub/send-message without thread_ts and reply_broadcast', async () => {
         const sendMessageHandler = context.http.router.register.getCall(1).args[0].options.handler;
-        context.config.botToken = 'mock_bot_token';
+        context.auth.profileInfo = { botToken: 'mock_bot_token' };
         const req = {
             payload: {
                 iconUrl: 'http://example.com/icon.png',
@@ -160,5 +161,24 @@ describe('POST /send-message handler', () => {
             channel: 'C12345',
             text: 'Test message'
         });
+    });
+
+    // Do not use `context.config.botToken` when sending a bot message via AuthHub.
+    it('should use context.auth.profileInfo.botToken when sending a bot message', async () => {
+
+        context.config.botToken = 'should-not-be-used';
+        // Get the handler for the POST /auth-hub/send-message route
+        const sendMessageHandler = context.http.router.register.getCall(1).args[0].options.handler;
+        const req = { payload: { iconUrl: '', username: '', channelId: 'C1', text: 'hi', token: 'profileBotToken' } };
+        await sendMessageHandler(req, h);
+
+        assert.equal(mockWebClient.chat.postMessage.callCount, 1);
+        assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
+            icon_url: '',
+            username: '',
+            channel: 'C1',
+            text: 'hi'
+        });
+        assert.equal(mockWebClient.token, 'profileBotToken', 'The bot token should be the one from profileInfo, not config');
     });
 });
