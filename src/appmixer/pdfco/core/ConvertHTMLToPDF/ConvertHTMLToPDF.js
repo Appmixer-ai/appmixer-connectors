@@ -1,14 +1,12 @@
-
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
     async receive(context) {
 
         const { html, url, paperSize, orientation } = context.messages.in.content;
 
-        let endpoint, requestBody;
+        let endpoint;
+        let requestBody;
         
         if (url) {
             // URL to PDF conversion

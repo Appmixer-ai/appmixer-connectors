@@ -1,7 +1,4 @@
-
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
     async receive(context) {
@@ -13,8 +10,9 @@ module.exports = {
             throw new Error('File parameter is required');
         }
 
-        let endpoint, requestBody;
-        
+        let endpoint;
+        let requestBody;
+
         try {
             // Determine the appropriate upload method based on file format
             if (file.startsWith('data:')) {
@@ -41,7 +39,7 @@ module.exports = {
                 if (name) {
                     formData.append('name', name);
                 }
-                
+
                 const { data } = await context.httpRequest({
                     method: 'POST',
                     url: endpoint,
@@ -51,12 +49,12 @@ module.exports = {
                     },
                     data: formData
                 });
-                
+
                 // Check if the API returned an error
                 if (data.error === true) {
                     console.error('PDFco API returned error:', data.message || 'Unknown error');
                 }
-                
+
                 return context.sendJson(data, 'out');
             }
 
@@ -82,7 +80,7 @@ module.exports = {
             if (error.response) {
                 const { status, data: errorData } = error.response;
                 console.error(`PDFco API error [${status}]:`, errorData);
-                
+
                 // Return error response in the expected format
                 return context.sendJson({
                     error: true,
@@ -96,7 +94,7 @@ module.exports = {
                     duration: 0
                 }, 'out');
             }
-            
+
             // Re-throw other errors (network issues, etc.)
             throw error;
         }

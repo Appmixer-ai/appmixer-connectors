@@ -1,7 +1,4 @@
-
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
     async receive(context) {
@@ -42,7 +39,7 @@ module.exports = {
             if (error.response) {
                 const { status, data: errorData } = error.response;
                 console.error(`PDFco API error [${status}]:`, errorData);
-                
+
                 // Return error response in the expected format
                 return context.sendJson({
                     error: true,
@@ -57,7 +54,7 @@ module.exports = {
                     outputLinkValidTill: null
                 }, 'out');
             }
-            
+
             // Re-throw other errors (network issues, etc.)
             throw error;
         }

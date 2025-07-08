@@ -14,7 +14,7 @@ describe('MergePDF Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         MergePDF = require(path.join(__dirname, '../../src/appmixer/pdfco/core/MergePDF/MergePDF.js'));
 
@@ -61,7 +61,7 @@ describe('MergePDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -105,7 +105,7 @@ describe('MergePDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -136,7 +136,7 @@ describe('MergePDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Single file merge should still work
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
@@ -167,7 +167,7 @@ describe('MergePDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for invalid files
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -200,7 +200,7 @@ describe('MergePDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for empty files array
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');

@@ -1,7 +1,4 @@
-
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
     async receive(context) {
