@@ -1,21 +1,6 @@
 'use strict';
 
-/**
- * Component to search measures history of a component.
- * @extends {Component}
- */
 module.exports = {
-    /**
-     * @param {Object} context
-     * @param {Object} context.messages
-     * @param {Object} context.messages.in
-     * @param {Object} context.messages.in.content
-     * @param {string} context.messages.in.content.component - Component key
-     * @param {string} context.messages.in.content.metrics - Comma-separated list of metric keys
-     * @param {string} context.messages.in.content.branch - Optional branch key
-     * @param {string} context.messages.in.content.from - Optional start date (inclusive)
-     * @param {string} context.messages.in.content.to - Optional end date (inclusive)
-     */
     async receive(context) {
         const { component, metrics, branch, from, to } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
