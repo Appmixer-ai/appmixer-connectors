@@ -36,6 +36,11 @@ module.exports = {
             data: params
         });
 
+        // Check if no results found and send to notFound port
+        if (!data.data || data.data.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records: data.data, outputType, arrayPropertyValue: 'data' });
     }
 };

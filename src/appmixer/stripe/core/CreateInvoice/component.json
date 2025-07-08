@@ -32,10 +32,39 @@
                     },
                     "autoAdvance": {
                         "type": "boolean"
+                    },
+                    "dueDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "daysUntilDue": {
+                        "type": "number"
                     }
                 },
                 "required": [
                     "customer"
+                ],
+
+                "allOf": [
+                    {
+                        "if": {
+                            "properties": {
+                                "collectionMethod": {
+                                    "const": "send_invoice"
+                                }
+                            }
+                        },
+                        "then": {
+                            "anyOf": [
+                                {
+                                    "required": ["dueDate"]
+                                },
+                                {
+                                    "required": ["daysUntilDue"]
+                                }
+                            ]
+                        }
+                    }
                 ]
             },
             "inspector": {
@@ -74,6 +103,18 @@
                         "index": 3,
                         "defaultValue": false,
                         "tooltip": "If true, the invoice will be automatically finalized and sent to the customer."
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "label": "Due Date",
+                        "tooltip": "The date on which payment for this invoice is due. Required if collection method is 'Send Invoice'.",
+                        "index": 4
+                    },
+                    "daysUntilDue": {
+                        "type": "number",
+                        "label": "Days Until Due",
+                        "tooltip": "Number of days from when the invoice is sent until it is due. Required if collection method is 'Send Invoice' and Due Date is not provided.",
+                        "index": 5
                     }
                 }
             }

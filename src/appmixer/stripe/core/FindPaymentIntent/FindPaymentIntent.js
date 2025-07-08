@@ -27,23 +27,49 @@ module.exports = {
             });
         }
 
-        // Stripe: https://stripe.com/docs/api/payment_intents/search
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api.stripe.com/v1/payment_intents/search',
-            headers: {
-                Authorization: `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            params: {
-                query,
-                limit: 100 // Default limit, can be adjusted as needed
-            }
-        });
+        let response;
+        if (query && query.trim()) {
+            // If query is present, use search endpoint
+            // Stripe: https://stripe.com/docs/api/payment_intents/search
+            response = await context.httpRequest({
+                method: 'GET',
+                url: 'https://api.stripe.com/v1/payment_intents/search',
+                headers: {
+                    Authorization: `Bearer ${context.auth.apiKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                params: {
+                    query,
+                    limit: 100 // Default limit, can be adjusted as needed
+                }
+            });
+        } else {
+            // If no query, use list endpoint
+            // Stripe: https://stripe.com/docs/api/payment_intents/list
+            response = await context.httpRequest({
+                method: 'GET',
+                url: 'https://api.stripe.com/v1/payment_intents',
+                headers: {
+                    Authorization: `Bearer ${context.auth.apiKey}`,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                params: {
+                    limit: 100 // Default limit, can be adjusted as needed
+                }
+            });
+        }
+
+        // Adjust for response structure: { data: { data: [...] } }
+        const paymentIntents = response.data && response.data.data ? response.data.data : [];
+
+        // Check if no results found and send to notFound port
+        if (paymentIntents.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({
             context,
-            records: data.data,
+            records: paymentIntents,
             outputType,
             arrayPropertyValue: 'data'
         });
