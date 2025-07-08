@@ -81,7 +81,7 @@ describe('FindMeasures', function() {
 
             // Check auth header
             const authHeader = requestOptions.headers.Authorization;
-            assert.ok(authHeader.startsWith('Basic '));
+            assert.ok(authHeader.startsWith('Bearer '));
 
             // Assert that sendJson was called with the response data
             assert.strictEqual(context.sendJson.callCount, 1);
