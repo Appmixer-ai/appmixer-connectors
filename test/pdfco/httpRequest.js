@@ -21,7 +21,7 @@ module.exports = async function httpRequest(config) {
                 headers: config.headers,
                 data: config.data
             }, null, 2));
-            
+
             const newError = new Error(error.message);
             newError.response = {
                 status: error.response.status,

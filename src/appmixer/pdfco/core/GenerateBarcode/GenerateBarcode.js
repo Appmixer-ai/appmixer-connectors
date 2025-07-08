@@ -10,7 +10,7 @@ module.exports = {
             'qrcode', 'code128', 'code39', 'code93', 'codabar', 'ean8', 'ean13',
             'upca', 'upce', 'i25', 'datamatrix', 'pdf417', 'aztec'
         ];
-        
+
         if (!validTypes.includes(type.toLowerCase())) {
             console.warn(`Warning: '${type}' may not be a valid barcode type. Valid types include: ${validTypes.join(', ')}`);
         }
@@ -44,7 +44,7 @@ module.exports = {
             if (error.response) {
                 const { status, data: errorData } = error.response;
                 console.error(`PDFco API error [${status}]:`, errorData);
-                
+
                 // Return error response in the expected format
                 return context.sendJson({
                     error: true,
@@ -58,10 +58,9 @@ module.exports = {
                     duration: 0
                 }, 'out');
             }
-            
+
             // Re-throw other errors (network issues, etc.)
             throw error;
         }
     }
 };
-

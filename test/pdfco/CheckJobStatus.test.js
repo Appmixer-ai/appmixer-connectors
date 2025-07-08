@@ -14,7 +14,7 @@ describe('CheckJobStatus Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CheckJobStatus = require(path.join(__dirname, '../../src/appmixer/pdfco/core/CheckJobStatus/CheckJobStatus.js'));
 
@@ -58,17 +58,17 @@ describe('CheckJobStatus Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 // Check for expected job status properties
                 assert(typeof data.status === 'string', 'Expected data.status to be a string');
-                
+
                 // Common status values: "working", "completed", "failed", "aborted"
                 const validStatuses = ['working', 'completed', 'failed', 'aborted'];
                 if (validStatuses.includes(data.status)) {
                     console.log('Valid job status:', data.status);
                 }
-                
+
                 // Optional properties that might be present
                 if (data.url !== undefined) {
                     assert(typeof data.url === 'string', 'Expected data.url to be a string');
@@ -83,7 +83,7 @@ describe('CheckJobStatus Component', function() {
                 if (data.duration !== undefined) {
                     assert(typeof data.duration === 'number', 'Expected data.duration to be a number');
                 }
-                
+
                 // Optional: Check if remaining credits were provided
                 if (data.remainingCredits !== undefined) {
                     assert(typeof data.remainingCredits === 'number', 'Expected remainingCredits to be a number');
@@ -120,7 +120,7 @@ describe('CheckJobStatus Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for invalid job ID
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -151,7 +151,7 @@ describe('CheckJobStatus Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for missing job ID
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -184,7 +184,7 @@ describe('CheckJobStatus Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for empty job ID
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -217,7 +217,7 @@ describe('CheckJobStatus Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for malformed job ID
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');

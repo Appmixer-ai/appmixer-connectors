@@ -14,7 +14,7 @@ describe('GenerateBarcode Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GenerateBarcode = require(path.join(__dirname, '../../src/appmixer/pdfco/core/GenerateBarcode/GenerateBarcode.js'));
 
@@ -58,7 +58,7 @@ describe('GenerateBarcode Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -99,7 +99,7 @@ describe('GenerateBarcode Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -132,7 +132,7 @@ describe('GenerateBarcode Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -164,7 +164,7 @@ describe('GenerateBarcode Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for invalid type
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -197,7 +197,7 @@ describe('GenerateBarcode Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for missing text
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -213,9 +213,7 @@ describe('GenerateBarcode Component', function() {
     });
 
     it('should handle missing type parameter', async function() {
-        let data;
         context.sendJson = function(output, port) {
-            data = output;
             return { data: output, port };
         };
 
@@ -232,7 +230,7 @@ describe('GenerateBarcode Component', function() {
             if (error.response && error.response.status === 401) {
                 throw new Error('Authentication failed: API token is invalid');
             }
-            
+
             // Expected behavior: should throw error for missing type
             assert(error.message === 'Type parameter is required', 'Expected specific error message for missing type');
             console.log('Expected error for missing type parameter:', error.message);
@@ -240,9 +238,7 @@ describe('GenerateBarcode Component', function() {
     });
 
     it('should handle empty string parameters', async function() {
-        let data;
         context.sendJson = function(output, port) {
-            data = output;
             return { data: output, port };
         };
 
@@ -260,7 +256,7 @@ describe('GenerateBarcode Component', function() {
             if (error.response && error.response.status === 401) {
                 throw new Error('Authentication failed: API token is invalid');
             }
-            
+
             // Expected behavior: should throw error for empty type
             assert(error.message === 'Type parameter is required', 'Expected error for empty type parameter');
             console.log('Expected error for empty parameters:', error.message);
@@ -269,7 +265,7 @@ describe('GenerateBarcode Component', function() {
 
     it('should generate barcode with valid supported types', async function() {
         const supportedTypes = ['qrcode', 'code128', 'code39'];
-        
+
         for (const barcodeType of supportedTypes) {
             let data;
             context.sendJson = function(output, port) {
@@ -289,7 +285,7 @@ describe('GenerateBarcode Component', function() {
 
                 assert(data && typeof data === 'object', `Expected data to be an object for ${barcodeType}`);
                 assert(typeof data.error === 'boolean', `Expected data.error to be a boolean for ${barcodeType}`);
-                
+
                 if (!data.error) {
                     assert(typeof data.url === 'string', `Expected data.url to be a string for ${barcodeType}`);
                     assert(data.url.length > 0, `Expected data.url to not be empty for ${barcodeType}`);

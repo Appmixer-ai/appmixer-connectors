@@ -14,7 +14,7 @@ describe('CompressPDF Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CompressPDF = require(path.join(__dirname, '../../src/appmixer/pdfco/core/CompressPDF/CompressPDF.js'));
 
@@ -58,7 +58,7 @@ describe('CompressPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -99,7 +99,7 @@ describe('CompressPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -130,7 +130,7 @@ describe('CompressPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for invalid file
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');

@@ -7,7 +7,7 @@ module.exports = {
 
         let endpoint;
         let requestBody;
-        
+
         if (url) {
             // URL to PDF conversion
             endpoint = 'https://api.pdf.co/v1/pdf/convert/from/url';
@@ -17,7 +17,7 @@ module.exports = {
             endpoint = 'https://api.pdf.co/v1/pdf/convert/from/html';
             requestBody = { html };
         }
-        
+
         // Add common optional parameters
         if (paperSize) {
             requestBody.paperSize = paperSize;
@@ -49,7 +49,7 @@ module.exports = {
             if (error.response) {
                 const { status, data: errorData } = error.response;
                 console.error(`PDFco API error [${status}]:`, errorData);
-                
+
                 // Return error response in the expected format
                 return context.sendJson({
                     error: true,
@@ -64,10 +64,9 @@ module.exports = {
                     outputLinkValidTill: null
                 }, 'out');
             }
-            
+
             // Re-throw other errors (network issues, etc.)
             throw error;
         }
     }
 };
-

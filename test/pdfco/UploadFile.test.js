@@ -14,7 +14,7 @@ describe('UploadFile Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         UploadFile = require(path.join(__dirname, '../../src/appmixer/pdfco/core/UploadFile/UploadFile.js'));
 
@@ -59,7 +59,7 @@ describe('UploadFile Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -95,7 +95,7 @@ describe('UploadFile Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should still work without explicit name
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');

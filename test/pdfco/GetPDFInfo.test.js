@@ -14,7 +14,7 @@ describe('GetPDFInfo Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetPDFInfo = require(path.join(__dirname, '../../src/appmixer/pdfco/core/GetPDFInfo/GetPDFInfo.js'));
 
@@ -58,13 +58,13 @@ describe('GetPDFInfo Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 // Check for expected PDF info properties (nested under 'info' object)
                 assert(data.info && typeof data.info === 'object', 'Expected data.info to be an object');
                 assert(typeof data.info.PageCount === 'number', 'Expected data.info.PageCount to be a number');
                 assert(data.info.PageCount > 0, 'Expected PageCount to be greater than 0');
-                
+
                 // Optional properties that might be present
                 if (data.info.Title !== undefined) {
                     assert(typeof data.info.Title === 'string', 'Expected data.info.Title to be a string');
@@ -90,7 +90,7 @@ describe('GetPDFInfo Component', function() {
                 if (data.info.ModificationDate !== undefined) {
                     assert(typeof data.info.ModificationDate === 'string', 'Expected data.info.ModificationDate to be a string');
                 }
-                
+
                 // Optional: Check if credits were used
                 if (data.remainingCredits !== undefined) {
                     assert(typeof data.remainingCredits === 'number', 'Expected remainingCredits to be a number');
@@ -127,7 +127,7 @@ describe('GetPDFInfo Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for invalid file
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
@@ -158,7 +158,7 @@ describe('GetPDFInfo Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should return error for missing file
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');

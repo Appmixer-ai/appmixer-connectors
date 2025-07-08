@@ -14,7 +14,7 @@ describe('ConvertHTMLToPDF Component', function() {
             console.log('Skipping tests - PDFCO_API_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         ConvertHTMLToPDF = require(path.join(__dirname, '../../src/appmixer/pdfco/core/ConvertHTMLToPDF/ConvertHTMLToPDF.js'));
 
@@ -57,7 +57,7 @@ describe('ConvertHTMLToPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -97,7 +97,7 @@ describe('ConvertHTMLToPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -130,7 +130,7 @@ describe('ConvertHTMLToPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             if (!data.error) {
                 assert(typeof data.url === 'string', 'Expected data.url to be a string');
                 assert(data.url.length > 0, 'Expected data.url to not be empty');
@@ -161,7 +161,7 @@ describe('ConvertHTMLToPDF Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.error === 'boolean', 'Expected data.error to be a boolean');
-            
+
             // Should still work with plain text or may return error
             if (data.error) {
                 assert(typeof data.message === 'string', 'Expected error message');
