@@ -14,7 +14,7 @@ module.exports = {
         return {
 
             scope: [
-                'bot', 'CREATE_INSTANT_INVITE', 'MANAGE_CHANNELS', 'MANAGE_MESSAGES',
+                'identify', 'bot', 'CREATE_INSTANT_INVITE', 'MANAGE_CHANNELS', 'MANAGE_MESSAGES',
                 'MANAGE_ROLES', 'VIEW_CHANNEL', 'MANAGE_EVENTS', 'ADD_REACTIONS',
                 'MANAGE_THREADS', 'SEND_MESSAGES', 'MANAGE_WEBHOOKS', 'CREATE_EVENTS',
                 'CREATE_PUBLIC_THREADS', 'SEND_MESSAGES_IN_THREADS'
@@ -72,6 +72,8 @@ module.exports = {
                         'Content-Type': 'application/json'
                     }
                 });
+
+                console.log('user data: ', data);
 
                 return {
                     ...data,
