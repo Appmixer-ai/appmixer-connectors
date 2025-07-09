@@ -19,7 +19,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.pdf.co/v1/pdf/optimize',
             headers: {
-                'x-api-key': context.apiKey,
+                'x-api-key': context.auth.apiKey,
                 'Content-Type': 'application/json'
             },
             data: requestBody

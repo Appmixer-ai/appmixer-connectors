@@ -10,7 +10,7 @@ module.exports = {
             method: 'GET',
             url: `https://api.pdf.co/v1/job/check?jobid=${encodeURIComponent(jobId)}`,
             headers: {
-                'x-api-key': context.apiKey
+                'x-api-key': context.auth.apiKey
             }
         });
 

@@ -6,20 +6,21 @@ module.exports = {
         const { files, name, async } = context.messages.in.content;
 
         // Prepare request body
-        const requestBody = { url: files.ADD.map(f => f.url).join(',') };
+        const requestBody = { url: files.ADD.map(f => f.files_item).join(',') };
+
         if (name) {
             requestBody.name = name;
         }
         if (async === true) {
             requestBody.async = true;
         }
-
+        context.log({ step: 'RequestBody', data: requestBody });
         // https://apidocs.pdf.co/?#pdf-merge
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.pdf.co/v1/pdf/merge',
             headers: {
-                'x-api-key': context.apiKey,
+                'x-api-key': context.auth.apiKey,
                 'Content-Type': 'application/json'
             },
             data: requestBody

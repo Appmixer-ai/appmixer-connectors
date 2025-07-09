@@ -34,7 +34,7 @@ module.exports = {
             method: 'POST',
             url: endpoint,
             headers: {
-                'x-api-key': context.apiKey,
+                'x-api-key': context.auth.apiKey,
                 'Content-Type': 'application/json'
             },
             data: requestBody

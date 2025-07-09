@@ -8,7 +8,7 @@ module.exports = {
         // Prepare request body
         const requestBody = { url: file };
         if (types && Array.isArray(types) && types.length > 0) {
-            requestBody.types = types;
+            requestBody.types = types.join(',');
         }
         if (async === true) {
             requestBody.async = true;
@@ -19,7 +19,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.pdf.co/v1/barcode/read/from/url',
             headers: {
-                'x-api-key': context.apiKey,
+                'x-api-key': context.auth.apiKey,
                 'Content-Type': 'application/json'
             },
             data: requestBody
