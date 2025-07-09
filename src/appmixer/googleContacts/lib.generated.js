@@ -1,3 +1,5 @@
+'use strict';
+
 const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'googleContacts-objects-export';

@@ -12,6 +12,7 @@ module.exports = {
 
         let userId = null;
         let teamName = null;
+        let botToken = null;
 
         return {
 
@@ -25,15 +26,14 @@ module.exports = {
                     // New Slack apps do not begin life with the ability to post in all public channels.
                     // For your new Slack app to gain the ability to post in all public channels, request the chat:write.public scope.
                     'chat:write.public',
-                    'chat:write'
+                    'chat:write.customize',
+                    [...context.scope || []] // Include any additional scopes requested by the component
                 ];
 
                 let urlObject = new URL('https://slack.com/oauth/v2/authorize');
                 let params = new URLSearchParams([
                     ['client_id', context.clientId],
                     ['redirect_uri', context.callbackUrl],
-                    // Also add the default 'scope' param with the 'chat:write' value. Needed when sending messages as a bot.
-                    ['scope', botScopes.join(',')],
                     ['state', context.ticket]
                 ]);
                 if (Array.isArray(context.scope) && context.scope.length > 0) {
@@ -42,6 +42,11 @@ module.exports = {
                     // not in the default Oauth2 'scope' param.
                     context.scope.push('groups:history');
                     params.append('user_scope', context.scope.join(','));
+
+                    if (context.scope.includes('chat:write')) {
+                        // When sending messages, we need to add the bot scopes as well.
+                        params.append('scope', botScopes.join(','));
+                    }
                 }
                 urlObject.search = params;
                 return urlObject.toString();
@@ -70,6 +75,12 @@ module.exports = {
                     }
                     userId = response.data['authed_user']['id'];
                     teamName = response.data['team']['name'];
+
+                    // If doing OAuth2 for a bot, store the bot token.
+                    if (response.data['token_type'] === 'bot') {
+                        botToken = response.data['access_token'];
+                    }
+
                     return {
                         accessToken: response.data['authed_user']['access_token'],
                         refreshToken: null
@@ -81,7 +92,9 @@ module.exports = {
 
                 return {
                     'id': userId + (teamName ? ' - ' + teamName : '')
-                        || Math.random().toString().replace('0.', '')
+                        || Math.random().toString().replace('0.', ''),
+                    // botToken coming from the requestAccessToken method, received from Slack API when exchanging the authorization code.
+                    botToken
                 };
             },
 
