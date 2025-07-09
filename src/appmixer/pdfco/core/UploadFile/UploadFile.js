@@ -3,7 +3,7 @@
 module.exports = {
     async receive(context) {
 
-        const { file, name } = context.messages.in.content;
+        const { file, name, async } = context.messages.in.content;
 
         let endpoint;
         let requestBody;
@@ -16,12 +16,18 @@ module.exports = {
             if (name) {
                 requestBody.name = name;
             }
+            if (async) {
+                requestBody.async = async;
+            }
         } else if (file.startsWith('http://') || file.startsWith('https://')) {
             // URL - use URL upload endpoint
             endpoint = 'https://api.pdf.co/v1/file/upload/url';
             requestBody = { url: file };
             if (name) {
                 requestBody.name = name;
+            }
+            if (async) {
+                requestBody.async = async;
             }
         } else {
             // Assume it's file content for small file upload
@@ -32,6 +38,9 @@ module.exports = {
             formData.append('file', file);
             if (name) {
                 formData.append('name', name);
+            }
+            if (async) {
+                formData.append('async', async);
             }
 
             const { data } = await context.httpRequest({

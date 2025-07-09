@@ -3,7 +3,7 @@
 module.exports = {
     async receive(context) {
 
-        const { html, url, paperSize, orientation } = context.messages.in.content;
+        const { html, url, paperSize, orientation, async } = context.messages.in.content;
 
         let endpoint;
         let requestBody;
@@ -24,6 +24,9 @@ module.exports = {
         }
         if (orientation) {
             requestBody.orientation = orientation;
+        }
+        if (async === true) {
+            requestBody.async = true;
         }
 
         // https://apidocs.pdf.co/?#html-to-pdf or #url-to-pdf

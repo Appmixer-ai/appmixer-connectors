@@ -3,12 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { file, types } = context.messages.in.content;
+        const { file, types, async } = context.messages.in.content;
 
         // Prepare request body
         const requestBody = { url: file };
         if (types && Array.isArray(types) && types.length > 0) {
             requestBody.types = types;
+        }
+        if (async === true) {
+            requestBody.async = true;
         }
 
         // https://apidocs.pdf.co/?#barcode-reader (correct endpoint: /v1/barcode/read/from/url)

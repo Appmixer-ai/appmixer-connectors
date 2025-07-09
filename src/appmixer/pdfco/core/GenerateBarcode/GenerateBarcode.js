@@ -3,12 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { type, text, format } = context.messages.in.content;
+        const { type, text, format, async } = context.messages.in.content;
 
         // Prepare request body
         const requestBody = { type, value: text };
         if (format) {
             requestBody.format = format;
+        }
+        if (async === true) {
+            requestBody.async = true;
         }
 
         // https://apidocs.pdf.co/?#barcode-generate

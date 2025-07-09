@@ -3,12 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { files, name } = context.messages.in.content;
+        const { files, name, async } = context.messages.in.content;
 
         // Prepare request body
         const requestBody = { url: files.ADD.map(f => f.url).join(',') };
         if (name) {
             requestBody.name = name;
+        }
+        if (async === true) {
+            requestBody.async = true;
         }
 
         // https://apidocs.pdf.co/?#pdf-merge

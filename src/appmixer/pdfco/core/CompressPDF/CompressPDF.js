@@ -3,12 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { file, compressionLevel } = context.messages.in.content;
+        const { file, compressionLevel, async } = context.messages.in.content;
 
         // Prepare request body
         const requestBody = { url: file };
         if (compressionLevel !== undefined) {
             requestBody.compressionLevel = compressionLevel;
+        }
+        if (async === true) {
+            requestBody.async = true;
         }
 
         // https://apidocs.pdf.co/?#pdf-optimize

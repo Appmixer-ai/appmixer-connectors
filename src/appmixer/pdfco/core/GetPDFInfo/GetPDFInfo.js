@@ -3,9 +3,12 @@
 module.exports = {
     async receive(context) {
 
-        const { file } = context.messages.in.content;
+        const { file, async } = context.messages.in.content;
 
         const requestBody = { url: file };
+        if (async === true) {
+            requestBody.async = true;
+        }
 
         // https://apidocs.pdf.co/?#pdf-info
         const { data } = await context.httpRequest({
