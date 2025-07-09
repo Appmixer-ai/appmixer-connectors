@@ -20,7 +20,9 @@ describe('MergePDF Component', function() {
 
         // Mock context
         context = {
-            apiKey: process.env.PDFCO_API_TOKEN,
+            auth: {
+                apiKey: process.env.PDFCO_API_TOKEN
+            },
             messages: {
                 in: {
                     content: {}
@@ -36,7 +38,7 @@ describe('MergePDF Component', function() {
             }
         };
 
-        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should merge multiple PDF files', async function() {
@@ -48,10 +50,12 @@ describe('MergePDF Component', function() {
 
         // Mock PDF file URLs - in real usage these would be valid PDF file URLs
         context.messages.in.content = {
-            files: [
-                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf',
-                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf'
-            ]
+            files: {
+                ADD: [
+                    { files_item: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf' },
+                    { files_item: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf' }
+                ]
+            }
         };
 
         try {
@@ -91,10 +95,12 @@ describe('MergePDF Component', function() {
         };
 
         context.messages.in.content = {
-            files: [
-                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf',
-                'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf'
-            ],
+            files: {
+                ADD: [
+                    { files_item: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf' },
+                    { files_item: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample2.pdf' }
+                ]
+            },
             name: 'merged-document.pdf'
         };
 
@@ -126,7 +132,11 @@ describe('MergePDF Component', function() {
         };
 
         context.messages.in.content = {
-            files: ['https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf']
+            files: {
+                ADD: [
+                    { files_item: 'https://pdfco-test-files.s3.us-west-2.amazonaws.com/pdf-merge/sample1.pdf' }
+                ]
+            }
         };
 
         try {
@@ -157,7 +167,12 @@ describe('MergePDF Component', function() {
         };
 
         context.messages.in.content = {
-            files: ['invalid-url-1', 'invalid-url-2']
+            files: {
+                ADD: [
+                    { files_item: 'invalid-url-1' },
+                    { files_item: 'invalid-url-2' }
+                ]
+            }
         };
 
         try {
@@ -190,7 +205,9 @@ describe('MergePDF Component', function() {
         };
 
         context.messages.in.content = {
-            files: []
+            files: {
+                ADD: []
+            }
         };
 
         try {

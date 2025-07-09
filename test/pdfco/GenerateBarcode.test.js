@@ -20,7 +20,9 @@ describe('GenerateBarcode Component', function() {
 
         // Mock context
         context = {
-            apiKey: process.env.PDFCO_API_TOKEN,
+            auth: {
+                apiKey: process.env.PDFCO_API_TOKEN
+            },
             messages: {
                 in: {
                     content: {}
@@ -36,7 +38,7 @@ describe('GenerateBarcode Component', function() {
             }
         };
 
-        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should generate QR code barcode', async function() {

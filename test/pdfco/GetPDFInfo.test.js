@@ -20,7 +20,9 @@ describe('GetPDFInfo Component', function() {
 
         // Mock context
         context = {
-            apiKey: process.env.PDFCO_API_TOKEN,
+            auth: {
+                apiKey: process.env.PDFCO_API_TOKEN
+            },
             messages: {
                 in: {
                     content: {}
@@ -36,7 +38,7 @@ describe('GetPDFInfo Component', function() {
             }
         };
 
-        assert(context.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'PDFCO_API_TOKEN environment variable is required for tests');
     });
 
     it('should get PDF information from valid file', async function() {

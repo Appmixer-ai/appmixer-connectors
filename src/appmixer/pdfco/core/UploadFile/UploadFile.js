@@ -1,5 +1,7 @@
 'use strict';
 
+const FormData = require('form-data');
+
 module.exports = {
     async receive(context) {
 
@@ -33,7 +35,6 @@ module.exports = {
             // Assume it's file content for small file upload
             endpoint = 'https://api.pdf.co/v1/file/upload';
             // For small file upload, use form-data instead of JSON
-            const FormData = require('form-data');
             const formData = new FormData();
             formData.append('file', file);
             if (name) {
