@@ -86,9 +86,9 @@ describe('FindProjectQualityGateStatus', function() {
             const authHeader = requestOptions.headers.Authorization;
             assert.ok(authHeader.startsWith('Bearer '));
 
-            // Assert that sendJson was called with the response data
+            // Assert that sendJson was called with the unwrapped projectStatus object
             assert.strictEqual(context.sendJson.callCount, 1);
-            assert.deepStrictEqual(context.sendJson.args[0][0], mockResponse.data);
+            assert.deepStrictEqual(context.sendJson.args[0][0], mockResponse.data.projectStatus);
             assert.strictEqual(context.sendJson.args[0][1], 'out');
         });
 
