@@ -1,23 +1,37 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
-    async receive(context) {        
+    async receive(context) {
+        const {
+            slug,
+            name,
+            attribution
+        } = context.messages.in.content;
 
-        const { slug, name, attribution|sessionReferrer, attribution|landingPage, attribution|pageBeforeConversionPage, attribution|utm|utmSource, attribution|utm|utmMedium, attribution|utm|utmCampaign, attribution|utm|utmTerm } = context.messages.in.content;
+        const requestData = {
+            slug: slug
+        };
 
+        if (name) {
+            requestData.name = name;
+        }
+
+        if (attribution) {
+            requestData.attribution = attribution;
+        }
 
         // https://spec.speakeasy.com/vercel/vercel-docs/vercel-oas-with-code-samples
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: '/v1/teams',
+            url: 'https://api.vercel.com/v1/teams',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiToken}`,
+                'Content-Type': 'application/json'
+            },
+            data: requestData
         });
-    
 
-return context.sendJson(data, 'out');
+        return context.sendJson(data, 'out');
     }
 };
