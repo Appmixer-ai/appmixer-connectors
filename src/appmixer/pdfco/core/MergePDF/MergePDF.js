@@ -14,7 +14,6 @@ module.exports = {
         if (async === true) {
             requestBody.async = true;
         }
-        context.log({ step: 'RequestBody', data: requestBody });
         // https://apidocs.pdf.co/?#pdf-merge
         const { data } = await context.httpRequest({
             method: 'POST',
