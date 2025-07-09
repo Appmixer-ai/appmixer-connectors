@@ -1,38 +1,71 @@
 # Appmixer
 
-Appmixer is a workflow engine together with a web user interface that allows end-users to create business processes in an easy-to-use drag&drop UI without writing a single line of code.
+## Overview
 
-# Architecture
-- Use `src/appmixer` for source code of connectors.
-- Folder `src/examples` is only for examples and not real-world components.
-- Use `test/` for tests.
-- Use `test/utils.js` for Appmixer stub.
+Appmixer is a workflow engine with a web user interface that allows end-users to create business processes using a
+drag-and-drop UI without writing code.
 
-## Connectors
-Connector consists of files service.json, auth.js, and bundle.json. The service.json file describes the service, auth.js handles authentication, and bundle.json contains metadata about the connector. Connectors are located in the `src/appmixer` folder.
+## Project Structure
 
-Example folder structure for Twilio connector:
+```
+src/
+├── appmixer/           # Source code for connectors
+└── examples/           # Example components (not for production)
+test/
+├── utils.js           # Appmixer stub for testing
+└── [test files]
+```
 
-twilio/
-├── auth.js
-├── package.json
-├── service.json
-└── core
-  ├── ListFromNumbers
-  │   ├── ListFromNumbers.js  // behavior file, javascript file that contains the logic of the component
-  │   └── component.json
-  └── SendSMS
-    ├── SendSMS.js // behavior file, javascript file that contains the logic of the component
-    └── component.json
+# Connectors
+
+## Overview
+
+Connectors are integrations with external services. Each connector contains authentication logic, service metadata, and
+one or more components that perform specific actions.
+
+## Connector Structure
+
+```
+connector_name/
+├── service.json       # Service metadata and description
+├── auth.js           # Authentication configuration
+├── bundle.json       # Bundle metadata and changelog
+├── package.json      # Dependencies (optional)
+├── quota.js          # Rate limiting rules (optional)
+└── core/             # Default module for components
+    ├── ComponentName/
+    │   ├── ComponentName.js    # Component behavior/logic
+    │   └── component.json      # Component configuration
+    └── AnotherComponent/
+        ├── AnotherComponent.js
+        └── component.json
+```
 
 documentation: https://docs.appmixer.com/building-connectors/example-component#component-behaviour-sms-sendsms-sendsms.js
 
-**package.json**
+## Core Configuration Files
+
+### package.json (Optional)
+
 Optional file that contains dependencies.
 
-**service.json**
+### service.json
 
-json schema
+Describes the connector service and its metadata.
+
+```json
+{
+    "name": "appmixer.connectorname",
+    "label": "Connector Display Name",
+    "category": "applications",
+    "description": "Description of what this connector does",
+    "version": "1.0.0",
+    "icon": "https://example.com/icon.svg"
+}
+```
+
+json schema of the service.json file:
+
 ```json
 {
     "type": "object",
@@ -56,7 +89,7 @@ json schema
         },
         "version": {
             "type": "string",
-            "description": "The version of the service, use 1.0.0 by default"
+            "description": "Semantic version (e.g., 1.0.0)"
         },
         "icon": {
             "type": "string",
@@ -66,40 +99,240 @@ json schema
 }
 ```
 
-**quota.js**
-An example of a quota module:
-```js
+### bundle.json
+
+Contains bundle metadata and version history.
+
+```json
+{
+    "name": "appmixer.connectorname",
+    "version": "1.0.0",
+    "changelog": {
+        "1.0.0": ["Initial release"],
+        "1.0.1": ["Bug fixes and improvements"],
+        "2.0.0": ["(breaking change) Updated API integration"]
+    }
+}
+```
+json schema of the bundle.json file:
+
+```json
+{
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "The name of the bundle, lower case, use the `appmixer.${CONNECTOR_NAME}` format. This is the same as the name in service.json file."
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the bundle, use 1.0.0 by default"
+        },
+        "changelog": {
+            "type": "object",
+            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
+        }
+    },
+    "required": ["name", "version", "changelog"]
+}
+```
+
+### quota.js
+
+Defines rate limiting rules to prevent API quota violations.
+
+```javascript
 module.exports = {
     rules: [
         {
-            limit: 2000,
-            throttling: 'window-sliding',
-            window: 1000 * 60 * 60 * 24,
-            scope: 'userId',
-            resource: 'messages.send'
+            limit: 2000,                          // Max calls per window
+            throttling: 'window-sliding',         // Throttling method
+            window: 1000 * 60 * 60 * 24,        // 24 hours in ms
+            scope: 'userId',                      // Per user limits
+            resource: 'messages.send'             // Resource identifier
         },
         {
             limit: 3,
-            window: 1000,
+            window: 1000,                         // 1 second
             throttling: 'window-sliding',
             queueing: 'fifo',
             resource: 'messages.send',
             scope: 'userId'
         }
     ]
-}; 
+};
 ```
+
 **rules**: An array of rules that define usage limits. Each rule can have the following properties:
 **limit**: Maximum number of calls in the time window specified by window.
 **window**: The time window in milliseconds.
-**throttling**: The throttling mechanism. Can be either a string 'window-sliding' or an object with type and getStartOfNextWindow function.
-**resource**: An identifier of the resource to which the rule applies. The resource is a way for a component to pick rules that apply to that specific component. This can be done in the component manifest file in the quota.resources section.
+**throttling**: The throttling mechanism. Can be either a string 'window-sliding' or an object with type and
+getStartOfNextWindow function.
+**resource**: An identifier of the resource to which the rule applies. The resource is a way for a component to pick
+rules that apply to that specific component. This can be done in the component manifest file in the quota.resources
+section.
 
-**auth.js**
+# Authentication
 
-**type**: The type of authentication mechanism. Any of `apiKey`, `pwd`, `oauth2`.
+## Overview
 
-type `apiKey` example from Freshdesk connector:
+Appmixer supports multiple authentication methods. The `auth.js` file defines how users authenticate with the external service.
+
+## Authentication Types
+
+### API Key Authentication
+
+For services that use API keys or tokens.
+
+```javascript
+module.exports = {
+    type: 'apiKey',
+    definition: {
+        tokenType: 'authentication-token',
+        
+        // Authentication fields shown to user
+        auth: {
+            domain: {
+                type: 'text',
+                name: 'Domain',
+                tooltip: 'Your subdomain (e.g., "example" for example.service.com)'
+            },
+            apiKey: {
+                type: 'text',
+                name: 'API Key',
+                tooltip: 'Find your API key in your account settings'
+            }
+        },
+
+        // How to extract account name from profile
+        accountNameFromProfileInfo: 'contact.email',
+
+        // Fetch user profile information
+        requestProfileInfo: async (context) => {
+            return context.httpRequest({
+                method: 'GET',
+                url: `https://${context.domain}.service.com/api/v1/me`,
+                auth: {
+                    user: context.apiKey,
+                    password: 'X'
+                },
+                json: true
+            });
+        },
+
+        // Validate credentials
+        validate: async (context) => {
+            const credentials = `${context.apiKey}:X`;
+            const encoded = Buffer.from(credentials).toString('base64');
+            
+            await context.httpRequest({
+                method: 'GET',
+                url: `https://${context.domain}.service.com/api/v1/me`,
+                headers: {
+                    'Authorization': `Basic ${encoded}`
+                }
+            });
+            
+            return true; // If request succeeds, credentials are valid
+        }
+    }
+};
+```
+
+### OAuth 2.0 Authentication
+
+For services using OAuth 2.0 flow.
+
+```javascript
+module.exports = {
+    type: 'oauth2',
+    definition: () => ({
+        clientId: 'your-client-id',
+        clientSecret: 'your-client-secret',
+        scope: ['profile', 'email'],
+
+        // Extract account info from profile
+        accountNameFromProfileInfo: (context) => context.profileInfo.email,
+        
+        emailFromProfileInfo: (context) => context.profileInfo.email,
+
+        // Authorization URL
+        authUrl: (context) => {
+            const params = new URLSearchParams({
+                client_id: 'your-client-id',
+                redirect_uri: context.callbackUrl,
+                response_type: 'code',
+                scope: context.scope.join(' '),
+                state: context.ticket,
+                access_type: 'offline'
+            });
+            return `https://service.com/oauth/authorize?${params}`;
+        },
+
+        // Exchange authorization code for access token
+        requestAccessToken: async (context) => {
+            const response = await context.httpRequest({
+                method: 'POST',
+                url: 'https://service.com/oauth/token',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                data: {
+                    code: context.authorizationCode,
+                    client_id: 'your-client-id',
+                    client_secret: 'your-client-secret',
+                    redirect_uri: context.callbackUrl,
+                    grant_type: 'authorization_code'
+                }
+            });
+
+            return {
+                accessToken: response.data.access_token,
+                accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000),
+                refreshToken: response.data.refresh_token
+            };
+        },
+
+        // Get user profile
+        requestProfileInfo: async (context) => {
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: 'https://service.com/api/v1/userinfo',
+                headers: { Authorization: `Bearer ${context.accessToken}` }
+            });
+            return response.data;
+        },
+
+        // Refresh expired access token
+        refreshAccessToken: async (context) => {
+            const response = await context.httpRequest({
+                method: 'POST',
+                url: 'https://service.com/oauth/token',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                data: {
+                    client_id: 'your-client-id',
+                    client_secret: 'your-client-secret',
+                    refresh_token: context.refreshToken,
+                    grant_type: 'refresh_token'
+                }
+            });
+
+            return {
+                accessToken: response.data.access_token,
+                accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000)
+            };
+        },
+
+        // Validate access token
+        validateAccessToken: async (context) => {
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: 'https://service.com/api/v1/tokeninfo',
+                params: { access_token: context.accessToken }
+            });
+            return !!response.data.expires_in;
+        }
+    })
+};
+```
 
 ```js
 
@@ -313,42 +546,26 @@ module.exports = {
 
 ```
 
-**bundle.json**
-schema:
-```json
-{
-    "type": "object",
-    "properties": {
-        "name": {
-            "type": "string",
-            "description": "The name of the bundle, lower case, use the `appmixer.${CONNECTOR_NAME}` format. This is the same as the name in service.json file."
-        },
-        "version": {
-            "type": "string",
-            "description": "The version of the bundle, use 1.0.0 by default"
-        },
-        "changelog": {
-            "type": "object",
-            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
-        }
-    },
-    "required": ["name", "version", "changelog"]
-}
-```
 
-### Components
-A component is a self-contained unit of functionality that can be used in Appmixer workflows. It can have multiple inPorts and outPorts, and it can be used to process data, trigger actions, or perform other tasks.
+# Components
+
+## Overview
+
+Components are the building blocks of workflows. Each component performs a specific action like sending an email, creating a task, or fetching data.
+A component is a self-contained unit of functionality that can be used in Appmixer workflows. It can have multiple
+inPorts and outPorts, and it can be used to process data, trigger actions, or perform other tasks.
 A component is defined by a `component.json` file and a "behavior" file with the same name as the component folder.
 
-#### When adding new field to component.json
-> Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
-- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow json schema format.
-- Add the fields to behavior JS file, especially in `context.httpRequest` call.
+## Component Structure
 
+Each component consists of:
+- `component.json` - Configuration and metadata
+- `ComponentName.js` - Behavior and logic
 
-**component.json**
+### component.json
 
-schema
+json schema of the component.json
+
 ```json
 {
     "type": "object",
@@ -356,7 +573,6 @@ schema
         "name": {
             "type": "string", "pattern": "^[\\w]+\\.[\\w]+\\.[\\w]+\\.[\\w]+$",
             "description": "Component name in the format 'vendor.connectorName.module.componentName'. Use 'core' as default module name"
-            "description": "Component name in the format 'vendor.connectorName.core.componentName'"
         },
         "label": {
             "type": "string",
@@ -593,34 +809,161 @@ schema
 }
 ```
 
-# Code style
-- Add one empty line after function definition.
-- Use 4 spaces for indentation.
+### Component Behavior (JavaScript)
 
-**behavior file**
+The behavior file contains the component's logic.
 
-JavaScript file that contains the logic of the component. It can be used to handle input and output data, call external APIs, and perform other actions. The behavior file is where the main functionality of the component is implemented.
+#### Basic Structure
 
-**receive**
+##### `receive`
 function is called when the component receives data from the input port.
 
-- do not check for the required properties, required properties are checked in the input schema in the component.json file.
+```javascript
+module.exports = {
+    async receive(context) {
+        
+        // Get input data
+        const { message, priority, count } = context.messages.in;
+        
+        // Perform the action
+        const response = await context.httpRequest({
+            method: 'POST',
+            url: 'https://api.service.com/messages',
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            data: {
+                text: message,
+                priority: priority,
+                count: count
+            }
+        });
 
-TODO:
-- purge, add descriptions to schema https://github.com/clientIO/appmixer-core/blob/3747601f0bc455f38bd252fff58f41cf92de5f63/gridvalidator/schemas/component-schema.json#L19
-- input file (type: filepicker)
-- select input with different source component
-- outputType
+        // Return the result
+        return context.sendJson(response.data, 'out');
+    }
+};
+```
+
+#### `context` Object
+
+#### Advanced Features
+
+##### Trigger Components
+
+```javascript
+module.exports = {
+    async tick(context) {
+        // Called periodically for polling
+        const newItems = await fetchNewItems(context);
+        
+        for (const item of newItems) {
+            await context.sendJson(item, 'out');
+        }
+    }
+};
+```
+
+##### Webhook Components
+
+```javascript
+module.exports = {
+    async receive(context) {
+        const webhookUrl = context.getWebhookUrl();
+        
+        // Register webhook with external service
+        await registerWebhook(context, webhookUrl);
+        
+        return context.sendJson({ webhookUrl }, 'out');
+    },
+    
+    async webhook(context) {
+        // Handle incoming webhook
+        const payload = context.messages.webhook;
+        return context.sendJson(payload, 'out');
+    }
+};
+```
+
+# Best Practices
+
+## Code Style Guidelines
+
+- Use 4 spaces for indentation
+- Add one empty line after function definitions
+- Use camelCase for variable and function names
+- Follow consistent formatting patterns
+
+## Development Guidelines
+
+- **Validation**: Don't check required properties in behavior code - use schema validation
+- **Error Handling**: Always handle API errors gracefully
+- **Authentication**: Store sensitive data in auth configuration, not component code
+- **Rate Limiting**: Use quota.js to prevent API abuse
+- **Documentation**: Provide clear descriptions and tooltips for all fields
+
+## Performance Considerations
+
+- **Caching**: Cache frequently accessed data (e.g., user lists, configuration)
+- **Pagination**: Handle large datasets with proper pagination
+- **Locking**: Use locking mechanisms for shared resources
+- **Batching**: Batch API calls when possible to reduce requests
+
+## Common Patterns
+
+### When adding new field to component.json
+
+> Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
+
+- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow json schema format.
+- Add the fields to behavior JS file, especially in `context.httpRequest` call.
 
 
-TODO:
-- input
-    - properties vs messages
-- output
-    - return empty response (202, 204, DELETED) - done as a prompt
-    - return Appmixer file - done as a prompt
-    - outputType
-- main
-    - pagination
-    - caching (Airtable bases, HubSpot properties)
-    - locking (goes in hand with caching usually, not always)
+### Dynamic Field Options
+
+Use `source` property to populate field options dynamically:
+
+```json
+{
+    "inspector": {
+        "inputs": {
+            "projectId": {
+                "type": "select",
+                "source": {
+                    "url": "/component/appmixer/service/core/ListProjects?outPort=out",
+                    "data": {
+                        "transform": "./transformers#projectsToOptions"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### File Handling
+
+For file input components:
+
+```json
+{
+    "schema": {
+        "properties": {
+            "file": {
+                "type": "string",
+                "format": "data-url",
+                "title": "File"
+            }
+        }
+    },
+    "inspector": {
+        "inputs": {
+            "file": {
+                "type": "filepicker",
+                "index": 1
+            }
+        }
+    }
+}
+```
