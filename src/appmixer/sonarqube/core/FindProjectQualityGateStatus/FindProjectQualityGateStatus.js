@@ -2,10 +2,11 @@
 
 module.exports = {
     async receive(context) {
+
         const { analysisId, branch, projectId, projectKey, pullRequest } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
 
-        // https://sonar.appmixer.cloud/web_api/api/qualitygates/project_status
+        // SonarQube API endpoint: /api/qualitygates/project_status
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `${serverUrl}/api/qualitygates/project_status`,
