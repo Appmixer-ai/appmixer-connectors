@@ -587,6 +587,7 @@ json schema of the component.json
         "inPorts": { "$ref": "#/definitions/inPorts" },
         "outPorts": { "$ref": "#/definitions/ports" },
         "auth": { "$ref": "#/definitions/auth" },
+        "version": { "type": "string", "description": "The version of the component, e.g. '1.0.0'" },
         "tick": {
             "type": "boolean",
             "description": "When set to true, the component will receive signals in regular intervals from the engine. The tick() Component Virtual method will be called in those intervals (see Component Behaviour). This is especially useful for trigger-type of components that need to poll a certain API for changes. The polling interval can be set by the COMPONENT_POLLING_INTERVAL environment variable (for custom on-prem installations only). The default is 60000 (ms), i.e. 1 minute."
@@ -626,7 +627,7 @@ json schema of the component.json
                 "inspector": { "$ref": "#/definitions/inspector" }
             }
         },
-        "version": { "type": "string", "description": "The version of the component, e.g. '1.0.0'" }
+        "icon": { "type": "string", "description": "Link to svg icon. The icon representing the component in the UI." }
     },
     "additionalProperties": false,
     "required": ["name"],
@@ -808,6 +809,18 @@ json schema of the component.json
     }
 }
 ```
+
+Desired order of attributes in `component.json`:
+1. `name`
+2. `label`
+3. `description`
+4. `author`
+5. `version`
+6. `auth`
+7. `inPorts`
+8. `properties`
+9. `outPorts`
+10. `icon`
 
 ### Component Behavior (JavaScript)
 
