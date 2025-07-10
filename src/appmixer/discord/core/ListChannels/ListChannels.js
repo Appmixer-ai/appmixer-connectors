@@ -30,7 +30,7 @@ module.exports = {
                 method: 'GET',
                 url: `https://discord.com/api/v10/guilds/${auth.profileInfo.guildId}/channels`,
                 headers: {
-                    'Authorization': `Bot ${auth.botToken}`
+                    'Authorization': `Bot ${context.config.botToken}`
                 }
             });
 

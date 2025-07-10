@@ -16,7 +16,7 @@ module.exports = {
             method: 'GET',
             url: `https://discord.com/api/v10/guilds/${context.auth.profileInfo.guildId}/scheduled-events`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             },
             params: {
                 with_user_count: withUserCount

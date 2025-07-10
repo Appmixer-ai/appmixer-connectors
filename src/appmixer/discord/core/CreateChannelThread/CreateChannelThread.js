@@ -9,7 +9,7 @@ module.exports = {
             method: 'POST',
             url: `https://discord.com/api/v10/channels/${channelId}/threads`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             },
             data: {
                 name

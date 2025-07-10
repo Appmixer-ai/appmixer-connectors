@@ -9,7 +9,7 @@ module.exports = {
             method: 'POST',
             url: `https://discord.com/api/v10/guilds/${context.auth.profileInfo.guildId}/channels`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             },
             data: {
                 name, type, rate_limit_per_user: rateLimitPerUser, position, parent_id: parentId, nsfw

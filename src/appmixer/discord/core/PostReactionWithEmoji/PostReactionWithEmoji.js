@@ -9,7 +9,7 @@ module.exports = {
             method: 'PUT',
             url: `https://discord.com/api/v10/channels/${channelId}/messages/${messageId}/reactions/${emojiId}/@me`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             }
         });
 

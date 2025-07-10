@@ -9,7 +9,7 @@ module.exports = {
             method: 'PUT',
             url: `https://discord.com/api/v10/guilds/${context.auth.profileInfo.guildId}/members/${userId}/roles/${roleId}`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             }
         });
 

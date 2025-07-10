@@ -73,8 +73,6 @@ module.exports = {
                     }
                 });
 
-                console.log('user data: ', data);
-
                 return {
                     ...data,
                     guildId,

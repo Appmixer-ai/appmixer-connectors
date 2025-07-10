@@ -9,7 +9,7 @@ module.exports = {
             method: 'PATCH',
             url: `https://discord.com/api/v10/channels/${channelId ?? threadId}/messages/${messageId}`,
             headers: {
-                'Authorization': `Bot ${context.auth.botToken}`
+                'Authorization': `Bot ${context.config.botToken}`
             },
             data: {
                 content
