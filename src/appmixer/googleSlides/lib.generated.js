@@ -4,7 +4,13 @@ const DEFAULT_PREFIX = 'googleSlides-objects-export';
 
 module.exports = {
 
-    async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [] }) {
+    async sendArrayOutput({
+        context,
+        outputPortName = 'out',
+        outputType = 'array',
+        records = []
+    }) {
+
         if (outputType === 'first') {
             if (records.length === 0) {
                 throw new context.CancelError('No records available for first output type');
@@ -43,7 +49,7 @@ module.exports = {
     },
 
     getProperty(obj, path) {
-        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        return path.split('.').reduce((acc, part) => acc?.[part], obj);
     },
 
     getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
