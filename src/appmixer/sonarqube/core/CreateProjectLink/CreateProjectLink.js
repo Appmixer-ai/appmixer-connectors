@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const { name, projectId, projectKey, url } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
 
@@ -29,9 +30,6 @@ module.exports = {
         });
 
         // Drop the wrapping 'link' object if present
-        if (data && data.link) {
-            return context.sendJson(data.link, 'out');
-        }
-        return context.sendJson(data, 'out');
+        return context.sendJson(data?.link || data, 'out');
     }
 };

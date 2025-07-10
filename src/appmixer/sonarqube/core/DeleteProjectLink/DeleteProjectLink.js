@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const { id } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
 
@@ -14,8 +15,7 @@ module.exports = {
             method: 'POST',
             url: `${serverUrl}/api/project_links/delete`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: new URLSearchParams({
                 id
