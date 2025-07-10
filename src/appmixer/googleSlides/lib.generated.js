@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'google-slides-objects-export';
+const DEFAULT_PREFIX = 'googleSlides-objects-export';
 
 module.exports = {
 
