@@ -67,7 +67,7 @@ const getOrCreateList = async (context, name) => {
         }
 
         context.log({ step: 'Error getting entry', error: error?.response?.data, message: error?.message });
-        throw error
+        throw error;
     }
 };
 
