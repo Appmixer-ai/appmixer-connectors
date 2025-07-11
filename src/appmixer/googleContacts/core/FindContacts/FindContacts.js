@@ -25,8 +25,6 @@ module.exports = {
             }
         });
 
-        context.log({ step: 'responseData', data });
-
         if (!Array.isArray(data.results) || !data.results.length) {
             return context.sendJson({}, 'notFound');
         }
