@@ -45,7 +45,7 @@ module.exports = {
                 biographies: [
                     { contentType: 'TEXT_PLAIN', value: notes }
                 ],
-                emails: emailAddresses, phoneNumbers,
+                emailAddresses, phoneNumbers,
                 memberships: currentData.memberships
             }
         });

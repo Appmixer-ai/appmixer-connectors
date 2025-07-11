@@ -21,7 +21,7 @@ module.exports = {
         });
 
         let records = [];
-        if (Array.isArray(data.contactGroup) || data.contactGroups?.length) {
+        if (Array.isArray(data.contactGroup) && data.contactGroups?.length) {
             records = data.contactGroups.map((contactGroup) => {
                 return {
                     id: contactGroup.resourceName.split('/')[1],
