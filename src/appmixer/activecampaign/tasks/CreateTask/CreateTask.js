@@ -24,7 +24,7 @@ module.exports = {
         const dueDate = moment(due);
         const eDate = dueDate.add(duration, durationUnits);
 
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
         const body = {
             title,
