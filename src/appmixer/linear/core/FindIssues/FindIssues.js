@@ -68,7 +68,7 @@ module.exports = {
         `;
 
         const variables = {};
-        if (query && query.trim()) {
+        if (query?.trim()) {
             variables.filter = {
                 or: [
                     {
