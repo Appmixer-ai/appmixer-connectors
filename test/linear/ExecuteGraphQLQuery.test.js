@@ -97,7 +97,7 @@ describe('ExecuteGraphQLQuery Component', function() {
         try {
             const result = await ExecuteGraphQLQuery.receive(context);
 
-            console.log('ExecuteGraphQLQuery with object variables result - issues count:', 
+            console.log('ExecuteGraphQLQuery with object variables result - issues count:',
                 result.data.issues ? result.data.issues.nodes.length : 0);
 
             assert(result && typeof result === 'object', 'Expected result to be an object');
@@ -105,7 +105,7 @@ describe('ExecuteGraphQLQuery Component', function() {
             assert(result.data.issues && typeof result.data.issues === 'object', 'Expected result.data.issues to be an object');
             assert(Array.isArray(result.data.issues.nodes), 'Expected result.data.issues.nodes to be an array');
             assert(result.data.issues.nodes.length <= 5, 'Expected at most 5 issues based on first variable');
-            
+
             if (result.data.issues.nodes.length > 0) {
                 const issue = result.data.issues.nodes[0];
                 assert(issue.id && typeof issue.id === 'string', 'Expected issue.id to be a string');
@@ -142,7 +142,7 @@ describe('ExecuteGraphQLQuery Component', function() {
         try {
             const result = await ExecuteGraphQLQuery.receive(context);
 
-            console.log('ExecuteGraphQLQuery with string variables result - teams count:', 
+            console.log('ExecuteGraphQLQuery with string variables result - teams count:',
                 result.data.teams ? result.data.teams.nodes.length : 0);
 
             assert(result && typeof result === 'object', 'Expected result to be an object');
@@ -150,7 +150,7 @@ describe('ExecuteGraphQLQuery Component', function() {
             assert(result.data.teams && typeof result.data.teams === 'object', 'Expected result.data.teams to be an object');
             assert(Array.isArray(result.data.teams.nodes), 'Expected result.data.teams.nodes to be an array');
             assert(result.data.teams.nodes.length <= 3, 'Expected at most 3 teams based on first variable');
-            
+
             if (result.data.teams.nodes.length > 0) {
                 const team = result.data.teams.nodes[0];
                 assert(team.id && typeof team.id === 'string', 'Expected team.id to be a string');
@@ -212,24 +212,24 @@ describe('ExecuteGraphQLQuery Component', function() {
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.issues && typeof result.data.issues === 'object', 'Expected result.data.issues to be an object');
             assert(Array.isArray(result.data.issues.nodes), 'Expected result.data.issues.nodes to be an array');
-            
+
             if (result.data.issues.nodes.length > 0) {
                 const issue = result.data.issues.nodes[0];
                 assert(issue.id && typeof issue.id === 'string', 'Expected issue.id to be a string');
                 assert(issue.title && typeof issue.title === 'string', 'Expected issue.title to be a string');
-                
+
                 // Verify nested objects structure if they exist
                 if (issue.state) {
                     assert(issue.state.id && typeof issue.state.id === 'string', 'Expected state.id to be a string');
                     assert(issue.state.name && typeof issue.state.name === 'string', 'Expected state.name to be a string');
                 }
-                
+
                 if (issue.team) {
                     assert(issue.team.id && typeof issue.team.id === 'string', 'Expected team.id to be a string');
                     assert(issue.team.name && typeof issue.team.name === 'string', 'Expected team.name to be a string');
                     assert(issue.team.key && typeof issue.team.key === 'string', 'Expected team.key to be a string');
                 }
-                
+
                 if (issue.labels) {
                     assert(Array.isArray(issue.labels.nodes), 'Expected labels.nodes to be an array');
                 }
@@ -259,7 +259,7 @@ describe('ExecuteGraphQLQuery Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing query
             console.log('Correctly failed with missing query:', error.message);
             assert(
@@ -290,7 +290,7 @@ describe('ExecuteGraphQLQuery Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to invalid GraphQL
             console.log('Correctly failed with invalid GraphQL:', error.message);
             // Accept any error since invalid GraphQL should indeed cause an error
@@ -319,7 +319,7 @@ describe('ExecuteGraphQLQuery Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to invalid JSON
             console.log('Correctly failed with invalid JSON variables:', error.message);
             assert(

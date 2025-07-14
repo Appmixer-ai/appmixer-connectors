@@ -92,7 +92,7 @@ describe('GetComment Component', function() {
 
     it('should get a comment by ID', async function() {
         const commentId = await getTestCommentId();
-        
+
         context.messages.in.content = {
             commentId: commentId
         };
@@ -104,7 +104,7 @@ describe('GetComment Component', function() {
 
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
-            assert.strictEqual(result.data.id, commentId, `Expected result.data.id to match input commentId`);
+            assert.strictEqual(result.data.id, commentId, 'Expected result.data.id to match input commentId');
             assert(result.data.body && typeof result.data.body === 'string', 'Expected result.data.body to be a string');
             assert(result.data.createdAt && typeof result.data.createdAt === 'string', 'Expected result.data.createdAt to be a string');
             assert(result.data.updatedAt && typeof result.data.updatedAt === 'string', 'Expected result.data.updatedAt to be a string');
@@ -132,14 +132,14 @@ describe('GetComment Component', function() {
 
     it('should handle non-existent comment ID gracefully', async function() {
         const nonExistentId = 'non-existent-comment-id-12345';
-        
+
         context.messages.in.content = {
             commentId: nonExistentId
         };
 
         try {
             const result = await GetComment.receive(context);
-            
+
             // If no error is thrown, the result should be null or indicate not found
             if (result && result.data) {
                 assert.fail('Expected GetComment to handle non-existent ID gracefully, but got a result');
@@ -152,12 +152,12 @@ describe('GetComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This is expected behavior for non-existent IDs
             console.log('Correctly failed with non-existent comment ID:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
-                error.message.includes('not found') || 
+                error.message.includes('GraphQL errors') ||
+                error.message.includes('not found') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid/not found comment'
             );
@@ -178,7 +178,7 @@ describe('GetComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing commentId
             console.log('Correctly failed with missing commentId:', error.message);
             // Accept any error since missing commentId should indeed cause an error
@@ -200,11 +200,11 @@ describe('GetComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to empty commentId
             console.log('Correctly failed with empty commentId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('empty') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid comment ID'

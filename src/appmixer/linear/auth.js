@@ -2,11 +2,11 @@
 
 module.exports = {
     type: 'oauth2',
-    
+
     definition: {
 
         scope: ['read', 'write'],
-        
+
         scopeDelimiter: ',',
 
         /**
@@ -76,7 +76,7 @@ module.exports = {
 
             return {
                 accessToken: response.data.access_token,
-                accessTokenExpDate: expDate,
+                accessTokenExpDate: expDate
                 // Linear OAuth tokens are long-lived and don't include refresh tokens by default
             };
         },

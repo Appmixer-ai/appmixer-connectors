@@ -92,7 +92,7 @@ describe('GetIssue Component', function() {
 
     it('should get an issue by ID', async function() {
         const issueId = await getTestIssueId();
-        
+
         context.messages.in.content = {
             issueId: issueId
         };
@@ -104,7 +104,7 @@ describe('GetIssue Component', function() {
 
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
-            assert.strictEqual(result.data.id, issueId, `Expected result.data.id to match input issueId`);
+            assert.strictEqual(result.data.id, issueId, 'Expected result.data.id to match input issueId');
             assert(result.data.title && typeof result.data.title === 'string', 'Expected result.data.title to be a string');
             assert(result.data.createdAt && typeof result.data.createdAt === 'string', 'Expected result.data.createdAt to be a string');
             assert(result.data.updatedAt && typeof result.data.updatedAt === 'string', 'Expected result.data.updatedAt to be a string');
@@ -153,14 +153,14 @@ describe('GetIssue Component', function() {
 
     it('should handle non-existent issue ID gracefully', async function() {
         const nonExistentId = 'non-existent-issue-id-12345';
-        
+
         context.messages.in.content = {
             issueId: nonExistentId
         };
 
         try {
             const result = await GetIssue.receive(context);
-            
+
             // If no error is thrown, the result should be null or indicate not found
             if (result && result.data) {
                 assert.fail('Expected GetIssue to handle non-existent ID gracefully, but got a result');
@@ -173,13 +173,13 @@ describe('GetIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This is expected behavior for non-existent IDs
             // Linear GraphQL API might return errors or null for non-existent resources
             console.log('Correctly failed with non-existent issue ID:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
-                error.message.includes('not found') || 
+                error.message.includes('GraphQL errors') ||
+                error.message.includes('not found') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid/not found issue'
             );
@@ -200,7 +200,7 @@ describe('GetIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing issueId
             console.log('Correctly failed with missing issueId:', error.message);
             // Accept any error since missing issueId should indeed cause an error
@@ -222,11 +222,11 @@ describe('GetIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to empty issueId
             console.log('Correctly failed with empty issueId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('empty') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid issue ID'

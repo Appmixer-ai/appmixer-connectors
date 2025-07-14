@@ -95,7 +95,7 @@ describe('DeleteIssue Component', function() {
     async function createTestIssue() {
         const teamId = await getTestTeamId();
         const timestamp = Date.now();
-        
+
         const createContext = {
             ...context,
             messages: {
@@ -126,7 +126,7 @@ describe('DeleteIssue Component', function() {
         }
 
         const issueId = await createTestIssue();
-        
+
         context.messages.in.content = {
             issueId: issueId
         };
@@ -153,7 +153,7 @@ describe('DeleteIssue Component', function() {
 
     it('should handle non-existent issue ID gracefully', async function() {
         const nonExistentId = 'non-existent-issue-id-12345';
-        
+
         context.messages.in.content = {
             issueId: nonExistentId
         };
@@ -167,12 +167,12 @@ describe('DeleteIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This is expected behavior for non-existent IDs
             console.log('Correctly failed with non-existent issue ID:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
-                error.message.includes('not found') || 
+                error.message.includes('GraphQL errors') ||
+                error.message.includes('not found') ||
                 error.message.includes('Invalid') ||
                 error.message.includes('Failed to delete'),
                 'Expected error message to indicate invalid/not found issue or deletion failure'
@@ -194,7 +194,7 @@ describe('DeleteIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing issueId
             console.log('Correctly failed with missing issueId:', error.message);
             // Accept any error since missing issueId should indeed cause an error
@@ -216,11 +216,11 @@ describe('DeleteIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to empty issueId
             console.log('Correctly failed with empty issueId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('empty') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid issue ID'
@@ -236,7 +236,7 @@ describe('DeleteIssue Component', function() {
         }
 
         const issueId = await createTestIssue();
-        
+
         // First, delete the issue
         context.messages.in.content = {
             issueId: issueId

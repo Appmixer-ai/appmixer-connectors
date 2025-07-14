@@ -1,15 +1,13 @@
-const path = require('path');
-
 // Import all Linear test files
 describe('Linear Connector Tests', function() {
-    
+
     // Set overall timeout for all tests
     this.timeout(60000);
 
     before(function() {
         console.log('🔧 Starting Linear Connector Test Suite');
         console.log('📋 Testing OAuth2 authentication and GraphQL API integration');
-        
+
         if (!process.env.LINEAR_ACCESS_TOKEN) {
             console.log('⚠️  LINEAR_ACCESS_TOKEN not set - skipping all tests');
             console.log('💡 To run tests, add LINEAR_ACCESS_TOKEN to test/.env file');

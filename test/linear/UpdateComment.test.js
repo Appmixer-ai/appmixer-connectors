@@ -94,7 +94,7 @@ describe('UpdateComment Component', function() {
     async function createTestComment() {
         const issueId = await getTestIssueId();
         const timestamp = Date.now();
-        
+
         const createContext = {
             ...context,
             messages: {
@@ -174,7 +174,7 @@ describe('UpdateComment Component', function() {
 
         const timestamp = Date.now();
         const newBody = `Updated comment body - ${timestamp}`;
-        
+
         context.messages.in.content = {
             commentId: commentId,
             body: newBody
@@ -235,7 +235,7 @@ console.log('Updated at: ${new Date(timestamp).toISOString()}');
 > This is a blockquote
 
 Updated at: ${new Date(timestamp).toISOString()}`;
-        
+
         context.messages.in.content = {
             commentId: commentId,
             body: markdownBody
@@ -264,7 +264,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
         // Create a fresh comment for this test
         const testComment = await createTestComment();
         const commentId = testComment.id;
-        
+
         context.messages.in.content = {
             commentId: commentId,
             body: ''
@@ -285,7 +285,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // Some APIs might not allow empty comment bodies, this is acceptable
             if (error.message.includes('GraphQL errors') && error.message.includes('body')) {
                 console.log('Expected failure: Linear API does not allow empty comment body');
@@ -297,7 +297,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
 
     it('should handle non-existent comment ID gracefully', async function() {
         const nonExistentId = 'non-existent-comment-id-12345';
-        
+
         context.messages.in.content = {
             commentId: nonExistentId,
             body: 'Updated body for non-existent comment'
@@ -312,12 +312,12 @@ Updated at: ${new Date(timestamp).toISOString()}`;
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This is expected behavior for non-existent IDs
             console.log('Correctly failed with non-existent comment ID:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
-                error.message.includes('not found') || 
+                error.message.includes('GraphQL errors') ||
+                error.message.includes('not found') ||
                 error.message.includes('Invalid') ||
                 error.message.includes('Failed to update'),
                 'Expected error message to indicate invalid/not found comment or update failure'
@@ -340,7 +340,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing commentId
             console.log('Correctly failed with missing commentId:', error.message);
             // Accept any error since missing commentId should indeed cause an error
@@ -357,7 +357,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
             const testComment = await createTestComment();
             commentId = testComment.id;
         }
-        
+
         context.messages.in.content = {
             commentId: commentId
             // Missing body
@@ -372,11 +372,11 @@ Updated at: ${new Date(timestamp).toISOString()}`;
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing body
             console.log('Correctly failed with missing body:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('body') ||
                 error.message.includes('required'),
                 'Expected error message to mention body or GraphQL errors'
@@ -391,7 +391,7 @@ Updated at: ${new Date(timestamp).toISOString()}`;
 
         const timestamp = Date.now();
         const updatedBody = `Verified updated comment - ${timestamp}`;
-        
+
         // Update the comment
         context.messages.in.content = {
             commentId: commentId,

@@ -94,7 +94,7 @@ describe('DeleteComment Component', function() {
     async function createTestComment() {
         const issueId = await getTestIssueId();
         const timestamp = Date.now();
-        
+
         const createContext = {
             ...context,
             messages: {
@@ -124,7 +124,7 @@ describe('DeleteComment Component', function() {
         }
 
         const commentId = await createTestComment();
-        
+
         context.messages.in.content = {
             commentId: commentId
         };
@@ -151,7 +151,7 @@ describe('DeleteComment Component', function() {
 
     it('should handle non-existent comment ID gracefully', async function() {
         const nonExistentId = 'non-existent-comment-id-12345';
-        
+
         context.messages.in.content = {
             commentId: nonExistentId
         };
@@ -165,12 +165,12 @@ describe('DeleteComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This is expected behavior for non-existent IDs
             console.log('Correctly failed with non-existent comment ID:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
-                error.message.includes('not found') || 
+                error.message.includes('GraphQL errors') ||
+                error.message.includes('not found') ||
                 error.message.includes('Invalid') ||
                 error.message.includes('Failed to delete'),
                 'Expected error message to indicate invalid/not found comment or deletion failure'
@@ -192,7 +192,7 @@ describe('DeleteComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing commentId
             console.log('Correctly failed with missing commentId:', error.message);
             // Accept any error since missing commentId should indeed cause an error
@@ -214,11 +214,11 @@ describe('DeleteComment Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to empty commentId
             console.log('Correctly failed with empty commentId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('empty') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid comment ID'
@@ -234,7 +234,7 @@ describe('DeleteComment Component', function() {
         }
 
         const commentId = await createTestComment();
-        
+
         // First, delete the comment
         context.messages.in.content = {
             commentId: commentId

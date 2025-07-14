@@ -67,7 +67,7 @@ describe('FindIssues Component', function() {
                 const issue = data.result[0];
                 assert(issue.id, 'Expected issue to have id property');
                 assert(issue.title, 'Expected issue to have title property');
-                
+
                 // Verify required fields are present
                 const requiredFields = ['id', 'title', 'createdAt', 'updatedAt'];
                 for (const field of requiredFields) {

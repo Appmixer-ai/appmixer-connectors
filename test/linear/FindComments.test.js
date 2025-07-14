@@ -67,7 +67,7 @@ describe('FindComments Component', function() {
                 const comment = data.result[0];
                 assert(comment.id, 'Expected comment to have id property');
                 assert('body' in comment, 'Expected comment to have body property (can be empty)');
-                
+
                 // Verify required fields are present
                 const requiredFields = ['id', 'body', 'createdAt', 'updatedAt'];
                 for (const field of requiredFields) {
@@ -190,7 +190,7 @@ describe('FindComments Component', function() {
                     assert(typeof call.data.count === 'number', `Expected call ${i} data to have count property (number)`);
                     assert.strictEqual(call.port, 'out', `Expected call ${i} port to be "out"`);
                     // Check that the comment data is present
-                    assert(call.data.id && ('body' in call.data), `Expected call ${i} data to have comment properties (id, body)`);    
+                    assert(call.data.id && ('body' in call.data), `Expected call ${i} data to have comment properties (id, body)`);
                 }
                 console.log(`All ${callsToCheck} checked calls have correct structure.`);
             } else {

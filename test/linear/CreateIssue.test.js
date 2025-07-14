@@ -94,7 +94,7 @@ describe('CreateIssue Component', function() {
     it('should create an issue with title and team only', async function() {
         const teamId = await getTestTeamId();
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             title: `Test Issue - ${timestamp}`,
             teamId: teamId
@@ -126,7 +126,7 @@ describe('CreateIssue Component', function() {
     it('should create an issue with title, description, and team', async function() {
         const teamId = await getTestTeamId();
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             title: `Test Issue with Description - ${timestamp}`,
             description: `This is a test issue description created at ${new Date(timestamp).toISOString()}`,
@@ -141,8 +141,8 @@ describe('CreateIssue Component', function() {
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'string', 'Expected result.data.id to be a string');
-            assert.strictEqual(result.data.title, context.messages.in.content.title, `Expected title to match input`);
-            assert.strictEqual(result.data.description, context.messages.in.content.description, `Expected description to match input`);
+            assert.strictEqual(result.data.title, context.messages.in.content.title, 'Expected title to match input');
+            assert.strictEqual(result.data.description, context.messages.in.content.description, 'Expected description to match input');
             assert(result.data.team && result.data.team.id === teamId, 'Expected result.data.team.id to match input teamId');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -157,7 +157,7 @@ describe('CreateIssue Component', function() {
     it('should create an issue with priority', async function() {
         const teamId = await getTestTeamId();
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             title: `High Priority Test Issue - ${timestamp}`,
             teamId: teamId,
@@ -172,7 +172,7 @@ describe('CreateIssue Component', function() {
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'string', 'Expected result.data.id to be a string');
-            assert.strictEqual(result.data.title, context.messages.in.content.title, `Expected title to match input`);
+            assert.strictEqual(result.data.title, context.messages.in.content.title, 'Expected title to match input');
             assert(result.data.team && result.data.team.id === teamId, 'Expected result.data.team.id to match input teamId');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -186,7 +186,7 @@ describe('CreateIssue Component', function() {
 
     it('should fail when missing required title', async function() {
         const teamId = await getTestTeamId();
-        
+
         context.messages.in.content = {
             teamId: teamId
             // Missing title
@@ -209,7 +209,7 @@ describe('CreateIssue Component', function() {
 
     it('should fail when missing required teamId', async function() {
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             title: `Test Issue without Team - ${timestamp}`
             // Missing teamId
@@ -224,7 +224,7 @@ describe('CreateIssue Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            // This should throw an error due to missing teamId  
+            // This should throw an error due to missing teamId
             console.log('Correctly failed with missing teamId:', error.message);
             console.log('Error type:', error.constructor.name);
             // Accept any error since missing teamId should indeed cause an error

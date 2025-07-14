@@ -2,7 +2,7 @@
 
 /**
  * Linear Connector Test Runner
- * 
+ *
  * This script runs the Linear connector tests using the Appmixer test utilities.
  * It can be used to run specific tests or the entire test suite.
  */
@@ -31,7 +31,7 @@ const testConfigs = {
         env: {}
     },
     comments: {
-        description: 'Run comment management tests', 
+        description: 'Run comment management tests',
         files: ['FindComments.test.js', 'CreateComment.test.js', 'GetComment.test.js', 'UpdateComment.test.js', 'DeleteComment.test.js'],
         env: {}
     },
@@ -96,7 +96,6 @@ console.log(`⏱️  Timeout: ${TEST_TIMEOUT}ms`);
 console.log('');
 
 // Prepare test command
-const testFiles = config.files.join(' ');
 const mochaArgs = [
     '--timeout', TEST_TIMEOUT.toString(),
     '--reporter', 'spec',

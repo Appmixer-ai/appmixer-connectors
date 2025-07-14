@@ -93,7 +93,7 @@ describe('CreateComment Component', function() {
     it('should create a comment on an issue', async function() {
         const issueId = await getTestIssueId();
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             issueId: issueId,
             body: `Test comment created at ${new Date(timestamp).toISOString()}`
@@ -107,7 +107,7 @@ describe('CreateComment Component', function() {
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'string', 'Expected result.data.id to be a string');
-            assert.strictEqual(result.data.body, context.messages.in.content.body, `Expected body to match input`);
+            assert.strictEqual(result.data.body, context.messages.in.content.body, 'Expected body to match input');
             assert(result.data.createdAt && typeof result.data.createdAt === 'string', 'Expected result.data.createdAt to be a string');
             assert(result.data.updatedAt && typeof result.data.updatedAt === 'string', 'Expected result.data.updatedAt to be a string');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
@@ -136,7 +136,7 @@ describe('CreateComment Component', function() {
     it('should create a comment with markdown content', async function() {
         const issueId = await getTestIssueId();
         const timestamp = Date.now();
-        
+
         context.messages.in.content = {
             issueId: issueId,
             body: `# Test Comment with Markdown
@@ -161,7 +161,7 @@ Created at: ${new Date(timestamp).toISOString()}`
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'string', 'Expected result.data.id to be a string');
-            assert.strictEqual(result.data.body, context.messages.in.content.body, `Expected body to match input markdown`);
+            assert.strictEqual(result.data.body, context.messages.in.content.body, 'Expected body to match input markdown');
             assert(result.data.issue && result.data.issue.id === issueId, 'Expected issue.id to match input issueId');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -175,7 +175,7 @@ Created at: ${new Date(timestamp).toISOString()}`
 
     it('should create a comment with empty body', async function() {
         const issueId = await getTestIssueId();
-        
+
         context.messages.in.content = {
             issueId: issueId,
             body: ''
@@ -196,7 +196,7 @@ Created at: ${new Date(timestamp).toISOString()}`
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // Some APIs might not allow empty comments, this is acceptable
             if (error.message.includes('GraphQL errors') && error.message.includes('body')) {
                 console.log('Expected failure: Linear API does not allow empty comment body');
@@ -221,11 +221,11 @@ Created at: ${new Date(timestamp).toISOString()}`
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing issueId
             console.log('Correctly failed with missing issueId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('issueId') ||
                 error.message.includes('required'),
                 'Expected error message to mention issueId or GraphQL errors'
@@ -235,7 +235,7 @@ Created at: ${new Date(timestamp).toISOString()}`
 
     it('should fail when missing required body', async function() {
         const issueId = await getTestIssueId();
-        
+
         context.messages.in.content = {
             issueId: issueId
             // Missing body
@@ -250,11 +250,11 @@ Created at: ${new Date(timestamp).toISOString()}`
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to missing body
             console.log('Correctly failed with missing body:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('body') ||
                 error.message.includes('required'),
                 'Expected error message to mention body or GraphQL errors'
@@ -264,7 +264,7 @@ Created at: ${new Date(timestamp).toISOString()}`
 
     it('should fail with non-existent issueId', async function() {
         const nonExistentId = 'non-existent-issue-id-12345';
-        
+
         context.messages.in.content = {
             issueId: nonExistentId,
             body: 'Test comment on non-existent issue'
@@ -279,11 +279,11 @@ Created at: ${new Date(timestamp).toISOString()}`
                 console.log('Error details:', error.response.data);
                 throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the LINEAR_ACCESS_TOKEN in .env file');
             }
-            
+
             // This should throw an error due to non-existent issueId
             console.log('Correctly failed with non-existent issueId:', error.message);
             assert(
-                error.message.includes('GraphQL errors') || 
+                error.message.includes('GraphQL errors') ||
                 error.message.includes('not found') ||
                 error.message.includes('Invalid'),
                 'Expected error message to indicate invalid/not found issue'
