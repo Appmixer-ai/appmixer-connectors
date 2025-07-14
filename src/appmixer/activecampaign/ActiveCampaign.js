@@ -34,7 +34,7 @@ class ActiveCampaign {
             return await this.context.httpRequest(payload);
         } catch (err) {
             const { response } = err;
-            if (response && response.status === 422) {
+            if (response?.status === 422) {
                 if (response.data?.errors) {
                     const errors = response.data.errors.map(err => err.title).join(', ');
                     const msg = `Your request have the following errors:\n${errors}`;
