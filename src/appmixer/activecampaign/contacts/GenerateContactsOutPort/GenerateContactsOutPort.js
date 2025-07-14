@@ -7,7 +7,7 @@ module.exports = {
 
         const { auth } = context;
 
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
         const { data } = await ac.call('get', 'fields');
 
         return context.sendJson({ fields: data.fields }, 'out');

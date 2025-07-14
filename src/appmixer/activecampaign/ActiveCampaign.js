@@ -1,12 +1,12 @@
 'use strict';
-const axios = require('axios');
 
 class ActiveCampaign {
 
-    constructor(url, apiKey) {
+    constructor(url, apiKey, context) {
         const removedTrailingSlash = url.replace(/\/$/, '');
         this.url = `${removedTrailingSlash}/api/3`;
         this.apiKey = apiKey;
+        this.context = context;
     }
 
     static get MAX_RECORDS_PER_PAGE() {
@@ -18,6 +18,7 @@ class ActiveCampaign {
 
         const payload = {
             method,
+            url: `${this.url}/${path}`,
             headers: {
                 'Api-Token': this.apiKey
             }
@@ -30,10 +31,10 @@ class ActiveCampaign {
         }
 
         try {
-            return await axios(`${this.url}/${path}`, payload);
+            return await this.context.httpRequest(payload);
         } catch (err) {
             const { response } = err;
-            if (response.status === 422) {
+            if (response?.status === 422) {
                 if (response.data?.errors) {
                     const errors = response.data.errors.map(err => err.title).join(', ');
                     const msg = `Your request have the following errors:\n${errors}`;

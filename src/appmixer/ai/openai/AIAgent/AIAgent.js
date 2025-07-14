@@ -256,7 +256,24 @@ module.exports = {
                 // Get back the original compoennt UUID back from the short version.
                 componentId = shortuuid().toUUID(componentId);
             }
-            const args = JSON.parse(toolCall.function.arguments);
+            let args;
+            try {
+                args = JSON.parse(toolCall.function.arguments);
+            } catch (err) {
+                await context.log({
+                    step: 'tool-call-json-parse-error',
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.function.name,
+                    arguments: toolCall.function.arguments,
+                    error: err.message
+                });
+                // Add error response for malformed JSON arguments
+                outputs.push({
+                    tool_call_id: toolCall.id,
+                    output: `Error: Failed to parse tool arguments - ${err.message}. Raw arguments: ${toolCall.function.arguments}`
+                });
+                continue;
+            }
             if (this.isMCPserver(context, componentId)) {
                 // MCP Server. Get output directly.
                 let output;
@@ -294,21 +311,46 @@ module.exports = {
             const pollStart = Date.now();
             const pollTimeout = context.config.TOOLS_OUTPUT_POLL_TIMEOUT || TOOLS_OUTPUT_POLL_TIMEOUT;
             const pollInterval = context.config.TOOLS_OUTPUT_POLL_INTERVAL || TOOLS_OUTPUT_POLL_INTERVAL;
+            const collectedToolCallIds = new Set();
+
             while (
-                (outputs.length < toolCalls.length) &&
+                (collectedToolCallIds.size < toolCalls.length) &&
                 (Date.now() - pollStart < pollTimeout)
             ) {
                 for (const toolCall of toolCalls) {
-                    const result = await context.flow.stateGet(toolCall.id);
-                    if (result) {
-                        outputs.push({ tool_call_id: toolCall.id, output: result.output });
-                        await context.flow.stateUnset(toolCall.id);
+                    if (!collectedToolCallIds.has(toolCall.id)) {
+                        const result = await context.flow.stateGet(toolCall.id);
+                        if (result) {
+                            outputs.push({ tool_call_id: toolCall.id, output: result.output });
+                            collectedToolCallIds.add(toolCall.id);
+                            await context.flow.stateUnset(toolCall.id);
+                        }
                     }
                 }
                 // Sleep.
                 await new Promise((resolve) => setTimeout(resolve, pollInterval));
             }
             await context.log({ step: 'collected-tools-output', outputs });
+        }
+
+        // Ensure we have responses for ALL tool calls
+        // OpenAI requires a response to every tool_call_id
+        const providedToolCallIds = new Set(outputs.map(output => output.tool_call_id));
+        for (const toolCall of modelToolCalls) {
+            if (!providedToolCallIds.has(toolCall.id)) {
+                // Add error response for missing tool calls
+                const pollTimeout = context.config.TOOLS_OUTPUT_POLL_TIMEOUT || TOOLS_OUTPUT_POLL_TIMEOUT;
+                outputs.push({
+                    tool_call_id: toolCall.id,
+                    output: `Error: Tool call ${toolCall.function.name} timed out or failed to respond within ${pollTimeout}ms`
+                });
+                await context.log({
+                    step: 'tool-call-timeout',
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.function.name,
+                    timeout: pollTimeout
+                });
+            }
         }
 
         return outputs;
@@ -358,7 +400,10 @@ module.exports = {
                 return { messages, answer: message.content, turns: i + 1 };
             }
         }
-        return { messages, answer: 'The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input.' };
+        return {
+            messages,
+            answer: 'The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input.'
+        };
     },
 
     createStreamCompletion: async function(context, client, completion) {
@@ -388,10 +433,17 @@ module.exports = {
                     const { index } = toolCall;
 
                     if (!finalToolCalls[index]) {
-                        finalToolCalls[index] = toolCall;
+                        finalToolCalls[index] = {
+                            id: toolCall.id,
+                            type: toolCall.type,
+                            function: {
+                                name: toolCall.function.name,
+                                arguments: toolCall.function.arguments || ''
+                            }
+                        };
+                    } else {
+                        finalToolCalls[index].function.arguments += toolCall.function.arguments || '';
                     }
-
-                    finalToolCalls[index].function.arguments += toolCall.function.arguments;
                 }
             } else if (delta.content) {
                 finalContent += delta.content;

@@ -1,0 +1,137 @@
+{
+    "name": "appmixer.sonarqube.core.FindMeasureHistory",
+    "label": "Find Measure History",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Searches for the historical measures of a specific component. This endpoint returns the changes of the measures over time for specified metrics.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:sonarqube"
+    },
+    "quota": {
+        "manager": "appmixer:sonarqube",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "component": {
+                        "type": "string"
+                    },
+                    "metrics": {
+                        "type": "string"
+                    },
+                    "branch": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    }
+                },
+                "required": ["component", "metrics"]
+            },
+            "inspector": {
+                "inputs": {
+                    "component": {
+                        "type": "text",
+                        "tooltip": "Component key for which historical measures are required (required).",
+                        "label": "Component",
+                        "index": 0
+                    },
+                    "metrics": {
+                        "type": "text",
+                        "tooltip": "Comma-separated list of metric keys (required). Example: ncloc,coverage,new_violations",
+                        "label": "Metrics",
+                        "index": 1
+                    },
+                    "branch": {
+                        "type": "text",
+                        "tooltip": "Optional branch key (available since 6.6).",
+                        "label": "Branch",
+                        "index": 2
+                    },
+                    "from": {
+                        "type": "text",
+                        "tooltip": "Optional start date (inclusive) for filtering measures. Format: YYYY-MM-DD or datetime.",
+                        "label": "From",
+                        "index": 3
+                    },
+                    "to": {
+                        "type": "text",
+                        "tooltip": "Optional end date (inclusive) for filtering measures. Format: YYYY-MM-DD or datetime.",
+                        "label": "To",
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Paging",
+                    "value": "paging",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "pageIndex": {
+                                "type": "number",
+                                "title": "Paging.Page Index"
+                            },
+                            "pageSize": {
+                                "type": "number",
+                                "title": "Paging.Page Size"
+                            },
+                            "total": {
+                                "type": "number",
+                                "title": "Paging.Total"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Measures",
+                    "value": "measures",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "metric": {
+                                    "type": "string",
+                                    "title": "Measures.Metric"
+                                },
+                                "history": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "date": {
+                                                "type": "string",
+                                                "title": "Measures.History.Date"
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "title": "Measures.History.Value"
+                                            }
+                                        }
+                                    },
+                                    "title": "Measures.History"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTQgMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxLjQxNCI+PHBhdGggZD0iTTExLjkzOSAxMy4yODJoLS43NTZDMTEuMTgzIDcuMjAzIDYuMTY3IDIuMjU2IDAgMi4yNTZ2LS43NTVjNi41ODUgMCAxMS45MzkgNS4yODYgMTEuOTM5IDExLjc4MXptLjUyMi00LjA1M2MtLjkwNi0zLjgxNi0zLjk5Ny03LTcuODcyLTguMTExbC4xNzMtLjYwM2M0LjA5IDEuMTc0IDcuMzUzIDQuNTM4IDguMzExIDguNTdsLS42MTIuMTQ0em0uNTgxLTMuNTc1QTExLjU3MiAxMS41NzIgMCAwIDAgOC41NjIuNjQ4bC4yNjEtLjQzYTEyLjA4MSAxMi4wODEgMCAwIDEgNC42NzcgNS4yMmwtLjQ1OC4yMTZ6IiBmaWxsPSIjNGU5YmNkIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4="
+}

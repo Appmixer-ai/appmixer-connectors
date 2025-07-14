@@ -20,25 +20,26 @@ module.exports = {
             },
             params: {
                 query,
+                sources: 'READ_SOURCE_TYPE_CONTACT',
                 readMask: 'addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined'
             }
         });
 
-        if (!Array.isArray(data.connections) || !data.connections.length) {
+        if (!Array.isArray(data.results) || !data.results.length) {
             return context.sendJson({}, 'notFound');
         }
 
-        const records = data.connections.map((contact) => {
+        const records = data.results.map((contact) => {
             return {
-                id: contact.resourceName.split('/')[1],
-                etag: contact.etag,
-                updateTime: contact.metadata.sources[0].updateTime,
-                displayName: contact.names[0].displayName,
-                givenName: contact.names[0].givenName,
-                displayNameLastFirst: contact.names[0].displayNameLastFirst,
-                unstructuredName: contact.names[0].unstructuredName,
-                photoUrl: contact.photos[0].url,
-                memberships: contact.memberships
+                id: contact.person.resourceName.split('/')[1],
+                etag: contact.person.etag,
+                updateTime: contact.person.metadata.sources[0].updateTime,
+                displayName: contact.person.names[0].displayName,
+                givenName: contact.person.names[0].givenName,
+                displayNameLastFirst: contact.person.names[0].displayNameLastFirst,
+                unstructuredName: contact.person.names[0].unstructuredName,
+                photoUrl: contact.person.photos[0].url,
+                memberships: contact.person.memberships
             };
         });
 

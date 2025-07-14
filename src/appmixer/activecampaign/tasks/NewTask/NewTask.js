@@ -12,7 +12,7 @@ module.exports = {
     async registerWebhook(context) {
 
         const { auth } = context;
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
         const { data } = await ac.registerWebhook('AppmixerNewTaskWebhook', context.getWebhookUrl(), [
             'deal_task_add'
@@ -30,7 +30,7 @@ module.exports = {
 
         const { webhookId } = await context.loadState();
         const { auth } = context;
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
         return ac.unregisterWebhook(webhookId);
     },
 
@@ -41,7 +41,7 @@ module.exports = {
             const { data } = context.messages.webhook.content;
             const id = data['task[id]'];
 
-            const ac = new ActiveCampaign(auth.url, auth.apiKey);
+            const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
             const { data: getTask } = await ac.call('get', `dealTasks/${id}`);
             const { dealTask } = getTask;

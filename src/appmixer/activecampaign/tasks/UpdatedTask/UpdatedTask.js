@@ -12,7 +12,7 @@ module.exports = {
         let since = new Date();
         let updated = new Set();
 
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
         const tasks = await ac.getTasks({
             'orders[udate]': 'DESC'

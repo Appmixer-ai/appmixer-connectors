@@ -20,16 +20,19 @@ module.exports = {
             }
         });
 
-        const records = data.contactGroups.map((contactGroup) => {
-            return {
-                id: contactGroup.resourceName.split('/')[1],
-                etag: contactGroup.etag ?? undefined,
-                updateTime: contactGroup.metadata?.updateTime,
-                groupType: contactGroup.groupType,
-                name: contactGroup.name,
-                formattedName: contactGroup.formattedName
-            };
-        });
+        let records = [];
+        if (Array.isArray(data.contactGroups) && data.contactGroups?.length) {
+            records = data.contactGroups.map((contactGroup) => {
+                return {
+                    id: contactGroup.resourceName.split('/')[1],
+                    etag: contactGroup.etag ?? undefined,
+                    updateTime: contactGroup.metadata?.updateTime,
+                    groupType: contactGroup.groupType,
+                    name: contactGroup.name,
+                    formattedName: contactGroup.formattedName
+                };
+            });
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

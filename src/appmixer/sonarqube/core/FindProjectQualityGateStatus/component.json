@@ -1,0 +1,166 @@
+{
+    "name": "appmixer.sonarqube.core.FindProjectQualityGateStatus",
+    "label": "Find Project Quality Gate Status",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieves the quality gate status for a specified project or analysis. One of 'analysisId', 'projectId' or 'projectKey' must be provided along with optional branch or pull request identifiers.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:sonarqube"
+    },
+    "quota": {
+        "manager": "appmixer:sonarqube",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "analysisId": {
+                        "type": "string"
+                    },
+                    "branch": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "projectKey": {
+                        "type": "string"
+                    },
+                    "pullRequest": {
+                        "type": "string"
+                    }
+                },
+                "anyOf": [
+                    { "required": ["analysisId"] },
+                    { "required": ["projectId"] },
+                    { "required": ["projectKey"] }
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "analysisId": {
+                        "type": "text",
+                        "tooltip": "Optional analysis identifier.",
+                        "label": "Analysis Id",
+                        "index": 0
+                    },
+                    "branch": {
+                        "type": "text",
+                        "tooltip": "Optional branch key (supported since 7.7).",
+                        "label": "Branch",
+                        "index": 1
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "tooltip": "Optional project UUID. Not used with branches or pull requests.",
+                        "label": "Project Id",
+                        "index": 2
+                    },
+                    "projectKey": {
+                        "type": "text",
+                        "tooltip": "Optional project key.",
+                        "label": "Project Key",
+                        "index": 3
+                    },
+                    "pullRequest": {
+                        "type": "text",
+                        "tooltip": "Optional pull request identifier (supported since 7.7).",
+                        "label": "Pull Request",
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "string",
+                        "title": "Status"
+                    }
+                },
+                {
+                    "label": "Ignored Conditions",
+                    "value": "ignoredConditions",
+                    "schema": {
+                        "type": "boolean",
+                        "title": "Ignored Conditions"
+                    }
+                },
+                {
+                    "label": "Cayc Status",
+                    "value": "caycStatus",
+                    "schema": {
+                        "type": "string",
+                        "title": "Cayc Status"
+                    }
+                },
+                {
+                    "label": "Conditions",
+                    "value": "conditions",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "status": {
+                                    "type": "string",
+                                    "title": "Conditions.Status"
+                                },
+                                "metricKey": {
+                                    "type": "string",
+                                    "title": "Conditions.Metric Key"
+                                },
+                                "comparator": {
+                                    "type": "string",
+                                    "title": "Conditions.Comparator"
+                                },
+                                "errorThreshold": {
+                                    "type": "string",
+                                    "title": "Conditions.Error Threshold"
+                                },
+                                "actualValue": {
+                                    "type": "string",
+                                    "title": "Conditions.Actual Value"
+                                }
+                            }
+                        },
+                        "title": "Conditions"
+                    }
+                },
+                {
+                    "label": "Period",
+                    "value": "period",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "mode": {
+                                "type": "string",
+                                "title": "Period.Mode"
+                            },
+                            "date": {
+                                "type": "string",
+                                "title": "Period.Date"
+                            },
+                            "parameter": {
+                                "type": "string",
+                                "title": "Period.Parameter"
+                            }
+                        },
+                        "title": "Period"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTQgMTQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxLjQxNCI+PHBhdGggZD0iTTExLjkzOSAxMy4yODJoLS43NTZDMTEuMTgzIDcuMjAzIDYuMTY3IDIuMjU2IDAgMi4yNTZ2LS43NTVjNi41ODUgMCAxMS45MzkgNS4yODYgMTEuOTM5IDExLjc4MXptLjUyMi00LjA1M2MtLjkwNi0zLjgxNi0zLjk5Ny03LTcuODcyLTguMTExbC4xNzMtLjYwM2M0LjA5IDEuMTc0IDcuMzUzIDQuNTM4IDguMzExIDguNTdsLS42MTIuMTQ0em0uNTgxLTMuNTc1QTExLjU3MiAxMS41NzIgMCAwIDAgOC41NjIuNjQ4bC4yNjEtLjQzYTEyLjA4MSAxMi4wODEgMCAwIDEgNC42NzcgNS4yMmwtLjQ1OC4yMTZ6IiBmaWxsPSIjNGU5YmNkIiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L3N2Zz4="
+}

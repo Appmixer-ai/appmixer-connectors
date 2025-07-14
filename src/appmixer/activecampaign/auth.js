@@ -26,14 +26,14 @@ module.exports = {
 
         requestProfileInfo: async context => {
 
-            const ac = new ActiveCampaign(context.url, context.apiKey);
+            const ac = new ActiveCampaign(context.url, context.apiKey, context);
             const { data } = await ac.call('get', 'users/me');
             return data;
         },
 
         validate: async context => {
 
-            const ac = new ActiveCampaign(context.url, context.apiKey);
+            const ac = new ActiveCampaign(context.url, context.apiKey, context);
             const { status } = await ac.call('get', 'users/me');
             return status === 200;
         }
