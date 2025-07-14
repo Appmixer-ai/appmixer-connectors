@@ -21,7 +21,7 @@ module.exports = {
         const { schema, table } = context.properties;
         const data = await snowflake.consumeStream(context, schema, table, 'update');
         const mid = data.length / 2;
-        for (let i = 0; i < mid; i++) {{
+        for (let i = 0; i < mid; i++) {
 
             const oldRow = { ...data[i + mid] };
             delete oldRow.METADATA$ACTION;
