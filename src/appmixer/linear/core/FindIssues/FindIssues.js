@@ -70,9 +70,18 @@ module.exports = {
         const variables = {};
         if (query && query.trim()) {
             variables.filter = {
-                title: {
-                    containsIgnoreCase: query
-                }
+                or: [
+                    {
+                        title: {
+                            containsIgnoreCase: query
+                        }
+                    },
+                    {
+                        description: {
+                            containsIgnoreCase: query
+                        }
+                    }
+                ]
             };
         }
 

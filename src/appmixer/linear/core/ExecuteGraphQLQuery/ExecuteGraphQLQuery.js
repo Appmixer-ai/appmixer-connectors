@@ -43,6 +43,6 @@ module.exports = {
             throw new Error('GraphQL errors: ' + JSON.stringify(data.errors));
         }
 
-        return context.sendJson(data.data, 'out');
+        return context.sendJson({ data: data.data }, 'out');
     }
 };
