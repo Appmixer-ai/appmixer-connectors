@@ -21,9 +21,6 @@ module.exports = {
 
     httpRequest: async function(context) {
 
-        // eslint-disable-next-line no-unused-vars
-        const input = context.messages.in.content;
-
         let url = lib.getBaseUrl(context) + '/app/sb/api/projects/simple-list';
 
         const headers = {};

@@ -24,13 +24,13 @@ module.exports = {
         for (let i = 0; i < mid; i++) {
 
             const {
-                // eslint-disable-next-line no-unused-vars
-                METADATA$ACTION: oldAction, METADATA$ISUPDATE: oldUpdate, METADATA$ROW_ID: oldId,
+                /* eslint-disable-next-line no-unused-vars */
+                METADATA$ACTION: _oldAction, METADATA$ISUPDATE: _oldUpdate, METADATA$ROW_ID: _oldId,
                 ...oldRow
             } = data[i + mid];
             const {
-                // eslint-disable-next-line no-unused-vars
-                METADATA$ACTION: updatedAction, METADATA$ISUPDATE: updatedUpdate, METADATA$ROW_ID: updatedId,
+                /* eslint-disable-next-line no-unused-vars */
+                METADATA$ACTION: _updatedAction, METADATA$ISUPDATE: _updatedUpdate, METADATA$ROW_ID: _updatedId,
                 ...updatedRow
             } = data[i];
             await context.sendJson({ oldRow, updatedRow }, 'out');
