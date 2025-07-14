@@ -21,18 +21,18 @@ module.exports = {
         const { schema, table } = context.properties;
         const data = await snowflake.consumeStream(context, schema, table, 'update');
         const mid = data.length / 2;
-        for (let i = 0; i < mid; i++) {
+        for (let i = 0; i < mid; i++) {{
 
-            const {
-                /* eslint-disable-next-line no-unused-vars */
-                METADATA$ACTION: _oldAction, METADATA$ISUPDATE: _oldUpdate, METADATA$ROW_ID: _oldId,
-                ...oldRow
-            } = data[i + mid];
-            const {
-                /* eslint-disable-next-line no-unused-vars */
-                METADATA$ACTION: _updatedAction, METADATA$ISUPDATE: _updatedUpdate, METADATA$ROW_ID: _updatedId,
-                ...updatedRow
-            } = data[i];
+            const oldRow = { ...data[i + mid] };
+            delete oldRow.METADATA$ACTION;
+            delete oldRow.METADATA$ISUPDATE;
+            delete oldRow.METADATA$ROW_ID;
+
+            const updatedRow = { ...data[i] };
+            delete updatedRow.METADATA$ACTION;
+            delete updatedRow.METADATA$ISUPDATE;
+            delete updatedRow.METADATA$ROW_ID;
+
             await context.sendJson({ oldRow, updatedRow }, 'out');
         }
     }
