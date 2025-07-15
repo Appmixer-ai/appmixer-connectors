@@ -7,7 +7,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('FindProjects', () => {
     let component;
-    
+
     before(() => {
         component = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
     });
@@ -30,11 +30,11 @@ describe('FindProjects', () => {
                     method: options.method,
                     headers: options.headers
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {
@@ -65,16 +65,16 @@ describe('FindProjects', () => {
             },
             httpRequest: async (options) => {
                 assert(options.url.includes('search=test'));
-                
+
                 const response = await fetch(options.url, {
                     method: options.method,
                     headers: options.headers
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {

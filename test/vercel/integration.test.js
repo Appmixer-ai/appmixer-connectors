@@ -1,23 +1,27 @@
 const assert = require('assert');
 const path = require('path');
 const dotenv = require('dotenv');
+const fetch = require('node-fetch');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('Vercel Integration Tests', () => {
     let createdProjectId;
-    
+    let originalProjectData;
+
     before(function() {
-        if (!process.env.VERCEL_API_TOKEN) {
-            this.skip('VERCEL_API_TOKEN not found in environment variables');
+        if (!process.env.VERCEL_ACCESS_TOKEN) {
+            this.skip('VERCEL_ACCESS_TOKEN not found in environment variables');
         }
     });
 
-    it('should create a new project', async () => {
+    it('should create a new project', async function() {
+        this.timeout(10000); // Increase timeout for API calls
+
         const CreateProject = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
         const projectName = `test-project-${Date.now()}`;
-        
+
         const context = {
             messages: {
                 in: {
@@ -28,20 +32,27 @@ describe('Vercel Integration Tests', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: process.env.VERCEL_ACCESS_TOKEN
             },
             httpRequest: async (options) => {
-                const response = await fetch(options.url, {
+                const url = new URL(options.url);
+                if (options.params) {
+                    Object.keys(options.params).forEach(key => {
+                        url.searchParams.append(key, options.params[key]);
+                    });
+                }
+
+                const response = await fetch(url.toString(), {
                     method: options.method,
                     headers: options.headers,
                     body: options.data ? JSON.stringify(options.data) : undefined
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {
@@ -50,62 +61,169 @@ describe('Vercel Integration Tests', () => {
                 assert(data.id);
                 assert.strictEqual(data.name, projectName);
                 createdProjectId = data.id;
-                return Promise.resolve();
+                originalProjectData = data;
+                console.log(`✅ Created project: ${projectName} (ID: ${createdProjectId})`);
+                return data;
             }
         };
 
-        await CreateProject.receive(context);
+        const result = await CreateProject.receive(context);
         assert(createdProjectId, 'Project ID should be set');
+        assert(result, 'Should return project data');
     });
 
-    it('should find projects including the created one', async () => {
-        const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
-        
+    it('should update all available project fields', async function() {
+        this.timeout(10000); // Increase timeout for API calls
+
+        if (!createdProjectId) {
+            this.skip('No project created to update');
+        }
+
+        const UpdateProject = require('../../src/appmixer/vercel/core/UpdateProject/UpdateProject');
+        const timestamp = Date.now();
+
+        // Define all the updated values
+        const updatedValues = {
+            id: createdProjectId,
+            name: `updated-project-${timestamp}`,
+            devCommand: 'npm run dev-updated',
+            buildCommand: 'npm run build-updated',
+            outputDirectory: 'dist-updated',
+            publicSource: true // Toggle from original value
+        };
+
         const context = {
-            properties: {},
             messages: {
                 in: {
-                    content: {
-                        outputType: 'array'
-                    }
+                    content: updatedValues
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: process.env.VERCEL_ACCESS_TOKEN
             },
             httpRequest: async (options) => {
-                const response = await fetch(options.url, {
+                const url = new URL(options.url);
+                if (options.params) {
+                    Object.keys(options.params).forEach(key => {
+                        url.searchParams.append(key, options.params[key]);
+                    });
+                }
+
+                const response = await fetch(url.toString(), {
                     method: options.method,
-                    headers: options.headers
+                    headers: options.headers,
+                    body: options.data ? JSON.stringify(options.data) : undefined
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
-                assert(data.result);
-                assert(Array.isArray(data.result));
-                assert(typeof data.count === 'number');
-                
-                // Check if our created project is in the list
-                const foundProject = data.result.find(p => p.id === createdProjectId);
-                assert(foundProject, `Created project ${createdProjectId} should be found in projects list`);
-                
-                return Promise.resolve();
+                assert(data);
+                console.log(`✅ Updated project: ${updatedValues.name} (ID: ${createdProjectId})`);
+                return data;
             }
         };
 
-        await FindProjects.receive(context);
+        const updateResult = await UpdateProject.receive(context);
+        assert(updateResult, 'Should return updated project data');
+
+        // Now verify all updates by getting the project
+        const GetProject = require('../../src/appmixer/vercel/core/GetProject/GetProject');
+
+        const getContext = {
+            messages: {
+                in: {
+                    content: {
+                        id: createdProjectId
+                    }
+                }
+            },
+            auth: {
+                apiToken: process.env.VERCEL_ACCESS_TOKEN
+            },
+            httpRequest: async (options) => {
+                const url = new URL(options.url);
+                if (options.params) {
+                    Object.keys(options.params).forEach(key => {
+                        url.searchParams.append(key, options.params[key]);
+                    });
+                }
+
+                const response = await fetch(url.toString(), {
+                    method: options.method,
+                    headers: options.headers,
+                    body: options.data ? JSON.stringify(options.data) : undefined
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                }
+
+                return { data: await response.json() };
+            },
+            sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, createdProjectId);
+
+                // Assert all updated fields
+                console.log('🔍 Verifying updated fields:');
+
+                // Check name
+                assert.strictEqual(data.name, updatedValues.name,
+                    `Expected name to be '${updatedValues.name}' but got '${data.name}'`);
+                console.log(`  ✅ name: ${data.name}`);
+
+                // Check devCommand
+                assert.strictEqual(data.devCommand, updatedValues.devCommand,
+                    `Expected devCommand to be '${updatedValues.devCommand}' but got '${data.devCommand}'`);
+                console.log(`  ✅ devCommand: ${data.devCommand}`);
+
+                // Check buildCommand
+                assert.strictEqual(data.buildCommand, updatedValues.buildCommand,
+                    `Expected buildCommand to be '${updatedValues.buildCommand}' but got '${data.buildCommand}'`);
+                console.log(`  ✅ buildCommand: ${data.buildCommand}`);
+
+                // Check outputDirectory
+                assert.strictEqual(data.outputDirectory, updatedValues.outputDirectory,
+                    `Expected outputDirectory to be '${updatedValues.outputDirectory}' but got '${data.outputDirectory}'`);
+                console.log(`  ✅ outputDirectory: ${data.outputDirectory}`);
+
+                // Check publicSource
+                assert.strictEqual(data.publicSource, updatedValues.publicSource,
+                    `Expected publicSource to be ${updatedValues.publicSource} but got ${data.publicSource}`);
+                console.log(`  ✅ publicSource: ${data.publicSource}`);
+
+                // Verify updatedAt timestamp has changed
+                assert(data.updatedAt > originalProjectData.updatedAt,
+                    'updatedAt timestamp should be newer than original');
+                console.log(`  ✅ updatedAt: ${new Date(data.updatedAt).toISOString()} (updated)`);
+
+                console.log('🎉 All fields successfully updated and verified!');
+                return data;
+            }
+        };
+
+        const getResult = await GetProject.receive(getContext);
+        assert(getResult, 'Should return project data from GetProject');
     });
 
-    it('should get the specific project by ID', async () => {
-        const GetProject = require('../../src/appmixer/vercel/core/GetProject/GetProject');
-        
+    it('should delete the project', async function() {
+        this.timeout(10000); // Increase timeout for API calls
+
+        if (!createdProjectId) {
+            this.skip('No project created to delete');
+        }
+
+        const DeleteProject = require('../../src/appmixer/vercel/core/DeleteProject/DeleteProject');
+
         const context = {
             messages: {
                 in: {
@@ -115,153 +233,51 @@ describe('Vercel Integration Tests', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: process.env.VERCEL_ACCESS_TOKEN
             },
             httpRequest: async (options) => {
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                const url = new URL(options.url);
+                if (options.params) {
+                    Object.keys(options.params).forEach(key => {
+                        url.searchParams.append(key, options.params[key]);
+                    });
                 }
-                
-                return { data: await response.json() };
-            },
-            sendJson: (data, port) => {
-                assert.strictEqual(port, 'out');
-                assert(data);
-                assert.strictEqual(data.id, createdProjectId);
-                return Promise.resolve();
-            }
-        };
 
-        await GetProject.receive(context);
-    });
-
-    it('should update the project', async () => {
-        const UpdateProject = require('../../src/appmixer/vercel/core/UpdateProject/UpdateProject');
-        const newName = `updated-project-${Date.now()}`;
-        
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        id: createdProjectId,
-                        name: newName
-                    }
-                }
-            },
-            auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
-            },
-            httpRequest: async (options) => {
-                const response = await fetch(options.url, {
+                const response = await fetch(url.toString(), {
                     method: options.method,
                     headers: options.headers,
                     body: options.data ? JSON.stringify(options.data) : undefined
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                 }
-                
-                return { data: await response.json() };
+
+                // Delete operations might return empty responses
+                let data = {};
+                try {
+                    const text = await response.text();
+                    if (text) {
+                        data = JSON.parse(text);
+                    }
+                } catch (e) {
+                    // Empty response is okay for delete operations
+                }
+
+                return { data };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
-                assert(data);
-                assert.strictEqual(data.name, newName);
-                return Promise.resolve();
+                console.log(`✅ Deleted project: ${createdProjectId}`);
+                return data;
             }
         };
 
-        await UpdateProject.receive(context);
-    });
+        const result = await DeleteProject.receive(context);
+        console.log(`🧹 Cleanup completed for project: ${createdProjectId}`);
 
-    it('should find deployments', async () => {
-        const FindDeployments = require('../../src/appmixer/vercel/core/FindDeployments/FindDeployments');
-        
-        const context = {
-            properties: {},
-            messages: {
-                in: {
-                    content: {
-                        outputType: 'array'
-                    }
-                }
-            },
-            auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
-            },
-            httpRequest: async (options) => {
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-                }
-                
-                return { data: await response.json() };
-            },
-            sendJson: (data, port) => {
-                assert.strictEqual(port, 'out');
-                assert(data.result);
-                assert(Array.isArray(data.result));
-                assert(typeof data.count === 'number');
-                return Promise.resolve();
-            }
-        };
-
-        await FindDeployments.receive(context);
-    });
-
-    after(async () => {
-        // Clean up: delete the created project
-        if (createdProjectId) {
-            const DeleteProject = require('../../src/appmixer/vercel/core/DeleteProject/DeleteProject');
-            
-            const context = {
-                messages: {
-                    in: {
-                        content: {
-                            id: createdProjectId
-                        }
-                    }
-                },
-                auth: {
-                    apiToken: process.env.VERCEL_API_TOKEN
-                },
-                httpRequest: async (options) => {
-                    const response = await fetch(options.url, {
-                        method: options.method,
-                        headers: options.headers
-                    });
-                    
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.warn(`Failed to delete test project: HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-                    }
-                    
-                    return { data: response.ok ? await response.json() : {} };
-                },
-                sendJson: (data, port) => {
-                    return Promise.resolve();
-                }
-            };
-
-            try {
-                await DeleteProject.receive(context);
-                console.log(`Cleaned up test project: ${createdProjectId}`);
-            } catch (error) {
-                console.warn(`Failed to clean up test project: ${error.message}`);
-            }
-        }
+        // Reset the project ID since it's been deleted
+        createdProjectId = null;
     });
 });

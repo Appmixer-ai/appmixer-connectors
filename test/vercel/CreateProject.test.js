@@ -7,14 +7,14 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('CreateProject', () => {
     let component;
-    
+
     before(() => {
         component = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
     });
 
     it('should create a project with required name', async () => {
         const projectName = `test-project-${Date.now()}`;
-        
+
         const context = {
             messages: {
                 in: {
@@ -33,17 +33,17 @@ describe('CreateProject', () => {
                 assert(options.data);
                 assert.strictEqual(options.data.name, projectName);
                 assert.strictEqual(options.data.framework, 'nextjs');
-                
+
                 const response = await fetch(options.url, {
                     method: options.method,
                     headers: options.headers,
                     body: JSON.stringify(options.data)
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {
@@ -80,7 +80,7 @@ describe('CreateProject', () => {
     it('should handle team parameter', async () => {
         const projectName = `test-team-project-${Date.now()}`;
         const teamId = 'team_test123';
-        
+
         const context = {
             messages: {
                 in: {
@@ -95,17 +95,17 @@ describe('CreateProject', () => {
             },
             httpRequest: async (options) => {
                 assert(options.url.includes(`teamId=${teamId}`));
-                
+
                 const response = await fetch(options.url, {
                     method: options.method,
                     headers: options.headers,
                     body: JSON.stringify(options.data)
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
-                
+
                 return { data: await response.json() };
             },
             sendJson: (data, port) => {
