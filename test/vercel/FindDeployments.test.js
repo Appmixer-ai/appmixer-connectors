@@ -40,6 +40,7 @@ describe('FindDeployments', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate request structure
                 assert.strictEqual(options.method, 'GET');
@@ -90,6 +91,7 @@ describe('FindDeployments', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate that projectId is included in URL
                 assert(options.url.includes(`projectId=${projectId}`));
@@ -137,6 +139,7 @@ describe('FindDeployments', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate that filters are included in URL
                 assert(options.url.includes(`state=${state}`));
@@ -168,6 +171,7 @@ describe('FindDeployments', () => {
                     }
                 }
             },
+            CancelError: Error,
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(Array.isArray(data));

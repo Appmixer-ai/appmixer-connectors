@@ -29,6 +29,7 @@ describe('CreateProject', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate the request structure
                 assert.strictEqual(options.method, 'POST');
@@ -64,7 +65,8 @@ describe('CreateProject', () => {
             },
             auth: {
                 apiToken: 'mock_token'
-            }
+            },
+            CancelError: Error
         };
 
         try {
@@ -97,6 +99,7 @@ describe('CreateProject', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate team parameter is included in URL
                 assert(options.url.includes(`teamId=${teamId}`));

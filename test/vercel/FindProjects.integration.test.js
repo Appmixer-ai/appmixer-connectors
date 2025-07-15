@@ -252,7 +252,7 @@ describe('FindProjects Integration Tests', () => {
         const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
 
         // Use the name from the deleted project to ensure it's no longer found
-        const deletedProjectName = `findprojects-test-${Date.now()}`;
+        const deletedProjectName = createdProjectName || `findprojects-test-${Date.now()}`;
 
         const context = {
             properties: {},

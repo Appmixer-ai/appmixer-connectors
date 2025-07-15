@@ -40,6 +40,7 @@ describe('FindProjects', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate request structure
                 assert.strictEqual(options.method, 'GET');
@@ -88,6 +89,7 @@ describe('FindProjects', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate that search parameter is included in URL
                 assert(options.url.includes('search=test'));
@@ -118,6 +120,7 @@ describe('FindProjects', () => {
                     }
                 }
             },
+            CancelError: Error,
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(Array.isArray(data));

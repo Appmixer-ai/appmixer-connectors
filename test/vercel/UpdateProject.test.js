@@ -30,6 +30,7 @@ describe('UpdateProject', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate request structure
                 assert.strictEqual(options.method, 'PATCH');
@@ -66,7 +67,8 @@ describe('UpdateProject', () => {
             },
             auth: {
                 apiToken: 'mock_token'
-            }
+            },
+            CancelError: Error
         };
 
         try {
@@ -98,6 +100,7 @@ describe('UpdateProject', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate that only defined fields are included
                 assert(options.data);
@@ -141,6 +144,7 @@ describe('UpdateProject', () => {
             auth: {
                 apiToken: 'mock_token'
             },
+            CancelError: Error,
             httpRequest: async (options) => {
                 // Validate boolean value is correctly included
                 assert(options.data);
