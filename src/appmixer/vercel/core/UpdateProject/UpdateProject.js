@@ -9,7 +9,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Project ID is required');
+            throw new context.CancelError('Project ID is required');
         }
 
         // Build request body with only defined values

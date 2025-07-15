@@ -7,7 +7,7 @@ module.exports = {
         const { id, teamId } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Project ID is required');
+            throw new context.CancelError('Project ID is required');
         }
 
         // Build query parameters

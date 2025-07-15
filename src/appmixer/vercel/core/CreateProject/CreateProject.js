@@ -9,7 +9,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!name) {
-            throw new Error('Project name is required');
+            throw new context.CancelError('Project name is required');
         }
 
         // Build request body

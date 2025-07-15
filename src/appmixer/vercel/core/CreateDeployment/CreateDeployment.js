@@ -7,7 +7,7 @@ module.exports = {
         const { projectId, name, deploymentConfig, teamId } = context.messages.in.content;
 
         if (!projectId && !name) {
-            throw new Error('Either projectId or name is required');
+            throw new context.CancelError('Either projectId or name is required');
         }
 
         // Build request body
