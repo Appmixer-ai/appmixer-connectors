@@ -1,9 +1,4 @@
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('UpdateProject', () => {
     let component;
@@ -15,6 +10,12 @@ describe('UpdateProject', () => {
     it('should update project with provided fields', async () => {
         const projectId = 'test-project-id';
         const newName = 'updated-project-name';
+        const mockUpdatedProject = {
+            id: projectId,
+            name: newName,
+            devCommand: 'npm run dev-updated',
+            updatedAt: Date.now()
+        };
 
         const context = {
             messages: {
@@ -22,36 +23,31 @@ describe('UpdateProject', () => {
                     content: {
                         id: projectId,
                         name: newName,
-                        framework: 'react'
+                        devCommand: 'npm run dev-updated'
                     }
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate request structure
                 assert.strictEqual(options.method, 'PATCH');
                 assert(options.url.includes(`/v9/projects/${projectId}`));
                 assert(options.data);
                 assert.strictEqual(options.data.name, newName);
-                assert.strictEqual(options.data.framework, 'react');
+                assert.strictEqual(options.data.devCommand, 'npm run dev-updated');
+                assert(options.headers['Authorization'].includes('Bearer'));
+                assert.strictEqual(options.headers['Content-Type'], 'application/json');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers,
-                    body: JSON.stringify(options.data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockUpdatedProject };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(data);
-                assert(typeof data === 'object');
+                assert.strictEqual(data.id, projectId);
+                assert.strictEqual(data.name, newName);
+                assert.strictEqual(data.devCommand, 'npm run dev-updated');
                 return Promise.resolve();
             }
         };
@@ -69,7 +65,7 @@ describe('UpdateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             }
         };
 
@@ -83,6 +79,11 @@ describe('UpdateProject', () => {
 
     it('should only include defined fields in request body', async () => {
         const projectId = 'test-project-id';
+        const mockUpdatedProject = {
+            id: projectId,
+            name: 'new-name',
+            updatedAt: Date.now()
+        };
 
         const context = {
             messages: {
@@ -95,27 +96,24 @@ describe('UpdateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate that only defined fields are included
                 assert(options.data);
                 assert.strictEqual(options.data.name, 'new-name');
                 assert(!options.data.hasOwnProperty('devCommand'));
                 assert(!options.data.hasOwnProperty('buildCommand'));
+                assert(!options.data.hasOwnProperty('framework'));
+                assert.strictEqual(options.method, 'PATCH');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers,
-                    body: JSON.stringify(options.data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockUpdatedProject };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, projectId);
+                assert.strictEqual(data.name, 'new-name');
                 return Promise.resolve();
             }
         };
@@ -125,6 +123,11 @@ describe('UpdateProject', () => {
 
     it('should handle boolean values correctly', async () => {
         const projectId = 'test-project-id';
+        const mockUpdatedProject = {
+            id: projectId,
+            publicSource: false,
+            updatedAt: Date.now()
+        };
 
         const context = {
             messages: {
@@ -136,25 +139,21 @@ describe('UpdateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate boolean value is correctly included
                 assert(options.data);
                 assert.strictEqual(options.data.publicSource, false);
+                assert.strictEqual(options.method, 'PATCH');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers,
-                    body: JSON.stringify(options.data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockUpdatedProject };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, projectId);
+                assert.strictEqual(data.publicSource, false);
                 return Promise.resolve();
             }
         };

@@ -1,9 +1,4 @@
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('GetProject', () => {
     let component;
@@ -14,6 +9,17 @@ describe('GetProject', () => {
 
     it('should get project by ID', async () => {
         const projectId = 'test-project-id';
+        const mockProject = {
+            id: projectId,
+            name: 'test-project',
+            framework: 'nextjs',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            link: {
+                type: 'github',
+                repo: 'test/repo'
+            }
+        };
 
         const context = {
             messages: {
@@ -24,27 +30,22 @@ describe('GetProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate request structure
                 assert.strictEqual(options.method, 'GET');
                 assert(options.url.includes(`/v9/projects/${projectId}`));
+                assert(options.headers['Authorization'].includes('Bearer'));
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockProject };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(data);
-                assert(typeof data === 'object');
+                assert.strictEqual(data.id, projectId);
+                assert.strictEqual(data.name, 'test-project');
+                assert.strictEqual(data.framework, 'nextjs');
                 return Promise.resolve();
             }
         };
@@ -60,7 +61,7 @@ describe('GetProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             }
         };
 
@@ -75,6 +76,11 @@ describe('GetProject', () => {
     it('should handle team parameter', async () => {
         const projectId = 'test-project-id';
         const teamId = 'team_test123';
+        const mockProject = {
+            id: projectId,
+            name: 'team-project',
+            teamId: teamId
+        };
 
         const context = {
             messages: {
@@ -86,23 +92,21 @@ describe('GetProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate team parameter is included in URL
                 assert(options.url.includes(`teamId=${teamId}`));
+                assert.strictEqual(options.method, 'GET');
+                assert(options.url.includes(`/v9/projects/${projectId}`));
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockProject };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, projectId);
+                assert.strictEqual(data.teamId, teamId);
                 return Promise.resolve();
             }
         };
@@ -112,6 +116,11 @@ describe('GetProject', () => {
 
     it('should properly encode project ID in URL', async () => {
         const projectId = 'project with spaces';
+        const encodedProjectId = encodeURIComponent(projectId);
+        const mockProject = {
+            id: projectId,
+            name: 'encoded-project'
+        };
 
         const context = {
             messages: {
@@ -122,23 +131,19 @@ describe('GetProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
-                assert(options.url.includes(encodeURIComponent(projectId)));
+                // Validate that project ID is properly encoded in URL
+                assert(options.url.includes(encodedProjectId));
+                assert.strictEqual(options.method, 'GET');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockProject };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, projectId);
                 return Promise.resolve();
             }
         };

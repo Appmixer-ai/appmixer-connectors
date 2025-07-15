@@ -1,9 +1,4 @@
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('CreateProject', () => {
     let component;
@@ -14,6 +9,13 @@ describe('CreateProject', () => {
 
     it('should create a project with required name', async () => {
         const projectName = `test-project-${Date.now()}`;
+        const mockResponse = {
+            id: 'prj_test123',
+            name: projectName,
+            framework: 'nextjs',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
 
         const context = {
             messages: {
@@ -25,31 +27,27 @@ describe('CreateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate the request structure
                 assert.strictEqual(options.method, 'POST');
                 assert(options.url.includes('/v9/projects'));
                 assert(options.data);
                 assert.strictEqual(options.data.name, projectName);
                 assert.strictEqual(options.data.framework, 'nextjs');
+                assert(options.headers['Authorization'].includes('Bearer'));
+                assert.strictEqual(options.headers['Content-Type'], 'application/json');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers,
-                    body: JSON.stringify(options.data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                // Return mock response
+                return { data: mockResponse };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(data);
-                assert(typeof data === 'object');
+                assert.strictEqual(data.id, mockResponse.id);
+                assert.strictEqual(data.name, projectName);
+                assert.strictEqual(data.framework, 'nextjs');
                 return Promise.resolve();
             }
         };
@@ -65,7 +63,7 @@ describe('CreateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             }
         };
 
@@ -80,6 +78,12 @@ describe('CreateProject', () => {
     it('should handle team parameter', async () => {
         const projectName = `test-team-project-${Date.now()}`;
         const teamId = 'team_test123';
+        const mockResponse = {
+            id: 'prj_team_test456',
+            name: projectName,
+            teamId: teamId,
+            createdAt: Date.now()
+        };
 
         const context = {
             messages: {
@@ -91,24 +95,22 @@ describe('CreateProject', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate team parameter is included in URL
                 assert(options.url.includes(`teamId=${teamId}`));
+                assert.strictEqual(options.method, 'POST');
+                assert(options.data);
+                assert.strictEqual(options.data.name, projectName);
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers,
-                    body: JSON.stringify(options.data)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockResponse };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data);
+                assert.strictEqual(data.id, mockResponse.id);
+                assert.strictEqual(data.name, projectName);
                 return Promise.resolve();
             }
         };

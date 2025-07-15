@@ -1,9 +1,4 @@
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('FindProjects', () => {
     let component;
@@ -13,6 +8,26 @@ describe('FindProjects', () => {
     });
 
     it('should find projects and return array output', async () => {
+        const mockProjects = {
+            projects: [
+                {
+                    id: 'prj_test123',
+                    name: 'test-project',
+                    framework: 'nextjs',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                },
+                {
+                    id: 'prj_test456',
+                    name: 'another-project',
+                    framework: 'react',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                }
+            ],
+            pagination: { count: 2, next: null, prev: null }
+        };
+
         const context = {
             properties: {},
             messages: {
@@ -23,25 +38,24 @@ describe('FindProjects', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
+                // Validate request structure
+                assert.strictEqual(options.method, 'GET');
+                assert(options.url.includes('/v9/projects'));
+                assert(options.headers['Authorization'].includes('Bearer'));
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockProjects };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(data.result);
                 assert(Array.isArray(data.result));
                 assert(typeof data.count === 'number');
+                assert.strictEqual(data.count, 2);
+                assert.strictEqual(data.result.length, 2);
+                assert.strictEqual(data.result[0].id, 'prj_test123');
                 return Promise.resolve();
             }
         };
@@ -50,6 +64,17 @@ describe('FindProjects', () => {
     });
 
     it('should handle search filter', async () => {
+        const mockProjects = {
+            projects: [
+                {
+                    id: 'prj_search_test',
+                    name: 'test-search-project',
+                    framework: 'vue'
+                }
+            ],
+            pagination: { count: 1, next: null, prev: null }
+        };
+
         const context = {
             properties: {},
             messages: {
@@ -61,23 +86,19 @@ describe('FindProjects', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate that search parameter is included in URL
                 assert(options.url.includes('search=test'));
+                assert.strictEqual(options.method, 'GET');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockProjects };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data.result);
+                assert(Array.isArray(data.result));
                 return Promise.resolve();
             }
         };

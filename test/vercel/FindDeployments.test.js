@@ -1,9 +1,4 @@
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('FindDeployments', () => {
     let component;
@@ -13,6 +8,26 @@ describe('FindDeployments', () => {
     });
 
     it('should find deployments and return array output', async () => {
+        const mockDeployments = {
+            deployments: [
+                {
+                    uid: 'dpl_test123',
+                    name: 'test-deployment',
+                    state: 'READY',
+                    url: 'test-deployment.vercel.app',
+                    created: Date.now()
+                },
+                {
+                    uid: 'dpl_test456',
+                    name: 'another-deployment',
+                    state: 'BUILDING',
+                    url: 'another-deployment.vercel.app',
+                    created: Date.now()
+                }
+            ],
+            pagination: { count: 2, next: null, prev: null }
+        };
+
         const context = {
             properties: {},
             messages: {
@@ -23,25 +38,24 @@ describe('FindDeployments', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
+                // Validate request structure
+                assert.strictEqual(options.method, 'GET');
+                assert(options.url.includes('/v6/deployments'));
+                assert(options.headers['Authorization'].includes('Bearer'));
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockDeployments };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
                 assert(data.result);
                 assert(Array.isArray(data.result));
                 assert(typeof data.count === 'number');
+                assert.strictEqual(data.count, 2);
+                assert.strictEqual(data.result.length, 2);
+                assert.strictEqual(data.result[0].uid, 'dpl_test123');
                 return Promise.resolve();
             }
         };
@@ -51,6 +65,17 @@ describe('FindDeployments', () => {
 
     it('should handle project filter', async () => {
         const projectId = 'test-project';
+        const mockDeployments = {
+            deployments: [
+                {
+                    uid: 'dpl_project_test',
+                    name: 'project-deployment',
+                    state: 'READY',
+                    projectId: projectId
+                }
+            ],
+            pagination: { count: 1, next: null, prev: null }
+        };
 
         const context = {
             properties: {},
@@ -63,23 +88,19 @@ describe('FindDeployments', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate that projectId is included in URL
                 assert(options.url.includes(`projectId=${projectId}`));
+                assert.strictEqual(options.method, 'GET');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockDeployments };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data.result);
+                assert(Array.isArray(data.result));
                 return Promise.resolve();
             }
         };
@@ -90,6 +111,17 @@ describe('FindDeployments', () => {
     it('should handle state and target filters', async () => {
         const state = 'READY';
         const target = 'production';
+        const mockDeployments = {
+            deployments: [
+                {
+                    uid: 'dpl_filtered_test',
+                    name: 'filtered-deployment',
+                    state: state,
+                    target: target
+                }
+            ],
+            pagination: { count: 1, next: null, prev: null }
+        };
 
         const context = {
             properties: {},
@@ -103,24 +135,20 @@ describe('FindDeployments', () => {
                 }
             },
             auth: {
-                apiToken: process.env.VERCEL_API_TOKEN
+                apiToken: 'mock_token'
             },
             httpRequest: async (options) => {
+                // Validate that filters are included in URL
                 assert(options.url.includes(`state=${state}`));
                 assert(options.url.includes(`target=${target}`));
+                assert.strictEqual(options.method, 'GET');
 
-                const response = await fetch(options.url, {
-                    method: options.method,
-                    headers: options.headers
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-
-                return { data: await response.json() };
+                return { data: mockDeployments };
             },
             sendJson: (data, port) => {
+                assert.strictEqual(port, 'out');
+                assert(data.result);
+                assert(Array.isArray(data.result));
                 return Promise.resolve();
             }
         };
