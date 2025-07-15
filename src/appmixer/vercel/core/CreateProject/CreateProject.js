@@ -23,7 +23,7 @@ module.exports = {
         // Build query parameters
         const params = new URLSearchParams();
         if (teamId) params.append('teamId', teamId);
-        
+
         const url = `https://api.vercel.com/v9/projects${params.toString() ? '?' + params.toString() : ''}`;
 
         // https://vercel.com/docs/rest-api/reference/projects#create-project
