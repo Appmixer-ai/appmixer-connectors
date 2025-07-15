@@ -1,11 +1,12 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { name, accountId, framework, devCommand, buildCommand, outputDirectory, publicSource, teamId } = context.messages.in.content;
+        const {
+            name, accountId, framework, devCommand, buildCommand, outputDirectory, publicSource, teamId
+        } = context.messages.in.content;
 
         if (!name) {
             throw new Error('Project name is required');

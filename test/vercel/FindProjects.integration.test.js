@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 describe('FindProjects Integration Tests', () => {
     let createdProjectId;
     let createdProjectName;
-    
+
     before(function() {
         if (!process.env.VERCEL_ACCESS_TOKEN) {
             this.skip('VERCEL_ACCESS_TOKEN not found in environment variables');
@@ -31,12 +31,12 @@ describe('FindProjects Integration Tests', () => {
                 headers: options.headers,
                 body: options.data ? JSON.stringify(options.data) : undefined
             });
-            
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
             }
-            
+
             // Handle empty responses (common for DELETE operations)
             let data = {};
             try {
@@ -47,17 +47,17 @@ describe('FindProjects Integration Tests', () => {
             } catch (e) {
                 // Empty response is okay for some operations
             }
-            
+
             return { data };
         };
     }
 
     it('should return no results when searching for non-existing project', async function() {
         this.timeout(10000);
-        
+
         const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
         const nonExistingProjectName = `non-existing-project-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-        
+
         const context = {
             properties: {},
             messages: {
@@ -78,23 +78,23 @@ describe('FindProjects Integration Tests', () => {
                 assert(Array.isArray(data.result));
                 assert.strictEqual(data.count, 0, 'Expected no projects to be found');
                 assert.strictEqual(data.result.length, 0, 'Expected empty results array');
-                
+
                 console.log(`🔍 Search for '${nonExistingProjectName}': Found ${data.count} projects (expected 0) ✅`);
                 return Promise.resolve(data);
             }
         };
 
-        const result = await FindProjects.receive(context);
+        await FindProjects.receive(context);
         // Note: The actual assertion is done in the sendJson callback above
         // The component uses lib.sendArrayOutput which calls sendJson internally
     });
 
     it('should create a project for search testing', async function() {
         this.timeout(10000);
-        
+
         const CreateProject = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
         createdProjectName = `findprojects-test-${Date.now()}`;
-        
+
         const context = {
             messages: {
                 in: {
@@ -120,12 +120,12 @@ describe('FindProjects Integration Tests', () => {
                     headers: options.headers,
                     body: options.data ? JSON.stringify(options.data) : undefined
                 });
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
                 }
-                
+
                 // For create operations, we expect JSON response
                 return { data: await response.json() };
             },
@@ -147,17 +147,17 @@ describe('FindProjects Integration Tests', () => {
 
     it('should find exactly one project when searching for the created project', async function() {
         this.timeout(15000); // Increase timeout for API delays
-        
+
         if (!createdProjectId || !createdProjectName) {
             this.skip('No project created for search testing');
         }
-        
+
         // Wait a bit for Vercel to index the newly created project
         console.log('⏳ Waiting 3 seconds for Vercel to index the new project...');
         await new Promise(resolve => setTimeout(resolve, 3000));
-        
+
         const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
-        
+
         const context = {
             properties: {},
             messages: {
@@ -176,45 +176,45 @@ describe('FindProjects Integration Tests', () => {
                 assert.strictEqual(port, 'out');
                 assert(data.result);
                 assert(Array.isArray(data.result));
-                
+
                 console.log(`🔍 Search for '${createdProjectName}': Found ${data.count} project(s)`);
-                
+
                 if (data.count === 0) {
                     console.log('⚠️  No projects found - this might be due to Vercel search indexing delay');
                     console.log('   This is a known limitation where newly created projects may not be immediately searchable');
                     // Don't fail the test due to indexing delays, just log the issue
                     return Promise.resolve(data);
                 }
-                
+
                 assert.strictEqual(data.count, 1, 'Expected exactly one project to be found');
                 assert.strictEqual(data.result.length, 1, 'Expected exactly one project in results array');
-                
+
                 // Verify the found project is the one we created
                 const foundProject = data.result[0];
                 assert.strictEqual(foundProject.id, createdProjectId, 'Found project ID should match created project ID');
                 assert.strictEqual(foundProject.name, createdProjectName, 'Found project name should match created project name');
-                
+
                 console.log(`  📦 Found project: ${foundProject.name} (ID: ${foundProject.id})`);
-                console.log(`  🎯 Project match verified: ID and name both correct ✅`);
-                
+                console.log('  🎯 Project match verified: ID and name both correct ✅');
+
                 return Promise.resolve(data);
             }
         };
 
-        const result = await FindProjects.receive(context);
+        await FindProjects.receive(context);
         // Note: The actual assertion is done in the sendJson callback above
         // The component uses lib.sendArrayOutput which calls sendJson internally
     });
 
     it('should delete the test project (cleanup)', async function() {
         this.timeout(10000);
-        
+
         if (!createdProjectId) {
             this.skip('No project created to delete');
         }
-        
+
         const DeleteProject = require('../../src/appmixer/vercel/core/DeleteProject/DeleteProject');
-        
+
         const context = {
             messages: {
                 in: {
@@ -234,9 +234,9 @@ describe('FindProjects Integration Tests', () => {
             }
         };
 
-        const result = await DeleteProject.receive(context);
-        console.log(`🧹 Cleanup completed for FindProjects test suite`);
-        
+        await DeleteProject.receive(context);
+        console.log('🧹 Cleanup completed for FindProjects test suite');
+
         // Reset the project tracking variables
         createdProjectId = null;
         createdProjectName = null;
@@ -244,16 +244,16 @@ describe('FindProjects Integration Tests', () => {
 
     it('should verify project is no longer findable after deletion', async function() {
         this.timeout(10000);
-        
+
         if (createdProjectName) {
             this.skip('Project was not properly deleted in previous test');
         }
-        
+
         const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
-        
+
         // Use the name from the deleted project to ensure it's no longer found
         const deletedProjectName = `findprojects-test-${Date.now()}`;
-        
+
         const context = {
             properties: {},
             messages: {
@@ -274,13 +274,13 @@ describe('FindProjects Integration Tests', () => {
                 assert(Array.isArray(data.result));
                 assert.strictEqual(data.count, 0, 'Deleted project should not be findable');
                 assert.strictEqual(data.result.length, 0, 'No results should be returned for deleted project');
-                
+
                 console.log(`🔍 Post-deletion search for deleted project pattern: Found ${data.count} projects (expected 0) ✅`);
                 return Promise.resolve(data);
             }
         };
 
-        const result = await FindProjects.receive(context);
+        await FindProjects.receive(context);
         // Note: The actual assertion is done in the sendJson callback above
         // The component uses lib.sendArrayOutput which calls sendJson internally
     });
