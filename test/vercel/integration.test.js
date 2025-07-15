@@ -274,7 +274,7 @@ describe('Vercel Integration Tests', () => {
             }
         };
 
-        const result = await DeleteProject.receive(context);
+        await DeleteProject.receive(context);
         console.log(`🧹 Cleanup completed for project: ${createdProjectId}`);
 
         // Reset the project ID since it's been deleted
