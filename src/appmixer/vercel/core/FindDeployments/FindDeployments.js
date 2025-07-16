@@ -11,7 +11,7 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { projectId, state, target, teamId, outputType } = context.messages.in.content;
+        const { projectId, state, target, teamId, since, until, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, {
@@ -27,6 +27,23 @@ module.exports = {
         if (target) params.append('target', target);
         if (teamId) params.append('teamId', teamId);
 
+        // Convert since/until to numbers if they're provided as date strings
+        if (since) {
+            // Convert ISO date string to timestamp if needed
+            const sinceTimestamp = isNaN(since) ? new Date(since).getTime() : Number(since);
+            if (!isNaN(sinceTimestamp)) {
+                params.append('since', sinceTimestamp);
+            }
+        }
+
+        if (until) {
+            // Convert ISO date string to timestamp if needed
+            const untilTimestamp = isNaN(until) ? new Date(until).getTime() : Number(until);
+            if (!isNaN(untilTimestamp)) {
+                params.append('until', untilTimestamp);
+            }
+        }
+
         const url = `https://api.vercel.com/v6/deployments${params.toString() ? '?' + params.toString() : ''}`;
 
         // https://vercel.com/docs/rest-api/reference/deployments#list-deployments
@@ -34,12 +51,16 @@ module.exports = {
             method: 'GET',
             url: url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiToken}`
             }
         });
 
         const records = data.deployments || [];
+
+        if (records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };
