@@ -16,11 +16,13 @@ module.exports = {
         // https://www.figma.com/developers/api#file-versions-get
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.figma.com/v1/files/{file_id}/versions',
+            url: `https://api.figma.com/v1/files/${file_id}/versions`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.accessToken}`
             }
         });
+
+        const records = data.versions || [];
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

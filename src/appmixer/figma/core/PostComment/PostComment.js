@@ -10,9 +10,13 @@ module.exports = {
         // https://www.figma.com/developers/api#comments-post
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.figma.com/v1/files/{file_id}/comments',
+            url: `https://api.figma.com/v1/files/${file_id}/comments`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            data: {
+                message: message
             }
         });
 

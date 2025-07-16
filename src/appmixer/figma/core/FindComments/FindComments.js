@@ -16,11 +16,20 @@ module.exports = {
         // https://www.figma.com/developers/api#comments-get
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.figma.com/v1/files/{file_id}/comments',
+            url: `https://api.figma.com/v1/files/${file_id}/comments`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.accessToken}`
             }
         });
+
+        let records = data.comments || [];
+        
+        // Apply query filter if provided
+        if (query && query.trim()) {
+            records = records.filter(comment => 
+                comment.message && comment.message.toLowerCase().includes(query.toLowerCase())
+            );
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }
