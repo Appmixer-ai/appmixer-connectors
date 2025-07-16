@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -11,13 +10,15 @@ module.exports = {
         }
 
         // Build query parameters
-        const params = new URLSearchParams();
-        if (teamId) params.append('teamId', teamId);
+        let url = `https://api.vercel.com/v9/projects/${encodeURIComponent(id)}`;
 
-        const url = `https://api.vercel.com/v9/projects/${encodeURIComponent(id)}${params.toString() ? '?' + params.toString() : ''}`;
+        // Add team ID as query parameter if provided
+        if (teamId) {
+            url += `?teamId=${encodeURIComponent(teamId)}`;
+        }
 
         // https://vercel.com/docs/rest-api/reference/projects#delete-project
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
             url: url,
             headers: {
@@ -26,6 +27,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -17,7 +16,7 @@ module.exports = {
         const url = `https://api.vercel.com/v13/deployments/${encodeURIComponent(id)}${params.toString() ? '?' + params.toString() : ''}`;
 
         // https://vercel.com/docs/rest-api/reference/deployments#delete-deployment
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
             url: url,
             headers: {
@@ -26,6 +25,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
