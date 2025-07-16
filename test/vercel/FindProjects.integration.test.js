@@ -73,13 +73,13 @@ describe('FindProjects Integration Tests', () => {
             },
             httpRequest: createHttpRequestContext(),
             sendJson: (data, port) => {
-                assert.strictEqual(port, 'out');
-                assert(data.result);
-                assert(Array.isArray(data.result));
-                assert.strictEqual(data.count, 0, 'Expected no projects to be found');
-                assert.strictEqual(data.result.length, 0, 'Expected empty results array');
+                assert.strictEqual(port, 'notFound');
+                // The port is 'notFound' when no projects are found
+                // For notFound port, there's no data.result or data.count
+                // Instead we just check that we got an empty object as expected
+                assert.deepStrictEqual(data, {});
 
-                console.log(`🔍 Search for '${nonExistingProjectName}': Found ${data.count} projects (expected 0) ✅`);
+                console.log(`🔍 Search for '${nonExistingProjectName}': No projects found ✅`);
                 return Promise.resolve(data);
             }
         };
@@ -173,15 +173,29 @@ describe('FindProjects Integration Tests', () => {
             },
             httpRequest: createHttpRequestContext(),
             sendJson: (data, port) => {
+                console.log(`🔍 Search for '${createdProjectName}': Port = ${port}`);
+
+                // Handle two possible scenarios:
+                // 1. The project is found -> port is 'out' and data contains array results
+                // 2. The project is not found yet due to indexing delay -> port is 'notFound' and data is empty
+
+                if (port === 'notFound') {
+                    // This is acceptable due to Vercel search indexing delay
+                    console.log('⚠️  No projects found - this might be due to Vercel search indexing delay');
+                    console.log('   This is a known limitation where newly created projects may not be immediately searchable');
+                    // Don't fail the test due to indexing delays, just log the issue
+                    return Promise.resolve(data);
+                }
+
+                // If we get here, port should be 'out'
                 assert.strictEqual(port, 'out');
                 assert(data.result);
                 assert(Array.isArray(data.result));
 
-                console.log(`🔍 Search for '${createdProjectName}': Found ${data.count} project(s)`);
+                console.log(`Found ${data.count} project(s)`);
 
                 if (data.count === 0) {
-                    console.log('⚠️  No projects found - this might be due to Vercel search indexing delay');
-                    console.log('   This is a known limitation where newly created projects may not be immediately searchable');
+                    console.log('⚠️  Zero projects returned on "out" port - unusual but acceptable');
                     // Don't fail the test due to indexing delays, just log the issue
                     return Promise.resolve(data);
                 }
@@ -269,13 +283,12 @@ describe('FindProjects Integration Tests', () => {
             },
             httpRequest: createHttpRequestContext(),
             sendJson: (data, port) => {
-                assert.strictEqual(port, 'out');
-                assert(data.result);
-                assert(Array.isArray(data.result));
-                assert.strictEqual(data.count, 0, 'Deleted project should not be findable');
-                assert.strictEqual(data.result.length, 0, 'No results should be returned for deleted project');
+                assert.strictEqual(port, 'notFound');
+                // The port is 'notFound' when no projects are found
+                // For notFound port, we expect an empty object
+                assert.deepStrictEqual(data, {});
 
-                console.log(`🔍 Post-deletion search for deleted project pattern: Found ${data.count} projects (expected 0) ✅`);
+                console.log('🔍 Post-deletion search for deleted project pattern: No projects found ✅');
                 return Promise.resolve(data);
             }
         };
