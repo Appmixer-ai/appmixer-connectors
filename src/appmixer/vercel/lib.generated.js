@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'everart-objects-export';
+const DEFAULT_PREFIX = 'vercel-objects-export';
 
 module.exports = {
 
@@ -100,6 +100,11 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
+    if (!array || array.length === 0) {
+        return '';
+    }
+
     const headers = Object.keys(array[0]);
 
     return [
