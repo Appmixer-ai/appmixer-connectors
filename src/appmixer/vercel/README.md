@@ -81,15 +81,12 @@ The connector provides detailed error messages for common scenarios:
 - **429 Rate Limit**: Too many requests, try again later
 
 ## Future Enhancements
-
 Additional components planned for future releases:
-- CreateProject, UpdateProject, DeleteProject
-- CreateDeployment, CancelDeployment, DeleteDeployment  
+- CreateDeployment
 - AddDomain, UpdateDomain, DeleteDomain, VerifyDomain
 - Environment variable management
 - Webhook management
 - Deployment logs and events
-
 ## API Documentation
 
 For detailed information about Vercel's API, visit: https://vercel.com/docs/rest-api
