@@ -1,35 +1,97 @@
 'use strict';
 
+const getBasicAuthHeader = (context) => {
+    const credentials = `${context.clientId}:${context.clientSecret}`;
+    return Buffer.from(credentials).toString('base64');
+};
+
 module.exports = {
-    type: 'apiKey',
+    type: 'oauth2',
+
     definition: {
-        auth: {
-            apiKey: {
-                type: 'text',
-                name: 'Personal Access Token',
-                tooltip: 'Log into your Figma account and generate a <i>Personal Access Token</i> from your account settings.'
+
+        scope: [
+            'current_user:read',
+            'file_comments:read',
+            'file_comments:write',
+            'file_content:read',
+            'file_dev_resources:read',
+            'file_dev_resources:write',
+            'file_metadata:read',
+            'file_variables:read',
+            'file_versions:read',
+            'library_assets:read',
+            'library_content:read',
+            'projects:read',
+            'team_library_content:read',
+            'webhooks:read',
+            'webhooks:write'
+        ],
+
+        accountNameFromProfileInfo: context => context.profileInfo.email,
+
+        emailFromProfileInfo: context => context.profileInfo.email,
+
+        authUrl: (context) => {
+            const state = context.ticket;
+
+            const authorizationUrl = new URL('https://www.figma.com/oauth');
+            authorizationUrl.searchParams.set('client_id', context.clientId);
+            authorizationUrl.searchParams.set('redirect_uri', context.callbackUrl);
+            authorizationUrl.searchParams.set('response_type', 'code');
+            authorizationUrl.searchParams.set('scope', context.scope.join(' '));
+            authorizationUrl.searchParams.set('state', state);
+
+            return authorizationUrl.toString();
+        },
+
+        requestAccessToken: async (context) => {
+            const options = {
+                method: 'POST',
+                url: 'https://api.figma.com/v1/oauth/token',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Authorization: `Basic ${getBasicAuthHeader(context)}`
+                },
+                data: {
+                    code: context.authorizationCode,
+                    redirect_uri: context.callbackUrl,
+                    client_id: context.clientId,
+                    client_secret: context.clientSecret,
+                    grant_type: 'authorization_code'
+                }
+            };
+            const { data } = await context.httpRequest(options);
+
+            let accessTokenExpDate = new Date();
+            accessTokenExpDate.setTime(accessTokenExpDate.getTime() + (data.expires_in || 3600) * 1000);
+
+            return {
+                accessToken: data.access_token,
+                refreshToken: data.refresh_token,
+                accessTokenExpDate
+            };
+        },
+
+        refreshAccessToken: 'https://api.figma.com/v1/oauth/refresh',
+
+
+        requestProfileInfo: {
+            method: 'GET',
+            url: 'https://api.figma.com/v1/me',
+            headers: {
+                Authorization: 'Bearer {{accessToken}}'
             }
         },
 
-        async requestProfileInfo(context) {
-            const apiKey = context.apiKey;
-            return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
-            };
-        },
-        accountNameFromProfileInfo: 'key',
-
-        validate: async (context) => {
-            const response = await context.httpRequest({
+        validateAccessToken: async (context) => {
+            await context.httpRequest({
                 method: 'GET',
                 url: 'https://api.figma.com/v1/me',
                 headers: {
-                    'X-Figma-Token': context.apiKey
+                    Authorization: `Bearer ${context.accessToken}`
                 }
             });
-            if (!response.data || !response.data.email) {
-                throw new Error('Authentication failed: Could not retrieve user profile.');
-            }
             return true;
         }
     }
