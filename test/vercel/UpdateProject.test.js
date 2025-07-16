@@ -105,9 +105,9 @@ describe('UpdateProject', () => {
                 // Validate that only defined fields are included
                 assert(options.data);
                 assert.strictEqual(options.data.name, 'new-name');
-                assert(!options.data.hasOwnProperty('devCommand'));
-                assert(!options.data.hasOwnProperty('buildCommand'));
-                assert(!options.data.hasOwnProperty('framework'));
+                assert(!Object.hasOwn(options.data, 'devCommand'));
+                assert(!Object.hasOwn(options.data, 'buildCommand'));
+                assert(!Object.hasOwn(options.data, 'framework'));
                 assert.strictEqual(options.method, 'PATCH');
 
                 return { data: mockUpdatedProject };
