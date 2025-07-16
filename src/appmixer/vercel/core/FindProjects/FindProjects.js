@@ -32,6 +32,11 @@ module.exports = {
         });
 
         const records = data.projects || [];
+
+        if (records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };
