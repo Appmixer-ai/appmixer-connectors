@@ -34,6 +34,14 @@ module.exports = {
         });
 
         const records = data.versions || [];
+        
+        // Send to notFound port if no versions are found
+        if (records.length === 0) {
+            return context.sendJson({
+                message: 'No file versions found',
+                fileId: fileId
+            }, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }
