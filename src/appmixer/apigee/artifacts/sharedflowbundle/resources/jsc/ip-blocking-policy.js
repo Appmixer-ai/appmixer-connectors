@@ -66,10 +66,10 @@ var isBlocked = individualIPs.indexOf(clientIP) > -1;
 
 // Check CIDR ranges if not already blocked
 if (!isBlocked && cidrRanges.length > 0) {
-    for (var i = 0; i < cidrRanges.length; i++) {
-        if (isIPInCIDR(clientIP, cidrRanges[i])) {
+    for (const cidrRange of cidrRanges) {
+        if (isIPInCIDR(clientIP, cidrRange)) {
             isBlocked = true;
-            print('IP blocked by CIDR range: ' + cidrRanges[i]);
+            print('IP blocked by CIDR range: ' + cidrRange);
             break;
         }
     }

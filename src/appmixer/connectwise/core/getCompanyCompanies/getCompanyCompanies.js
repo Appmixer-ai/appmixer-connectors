@@ -1530,8 +1530,8 @@ module.exports = {
         }
         const parts = header.split(',');
         // Parse each part into a named link.
-        for (let i = 0; i < parts.length; i++) {
-            const section = parts[i].split(';');
+        for (const part of parts) {
+            const section = part.split(';');
             if (section.length !== 2) {
                 throw new Error('Section could not be split on ";". Link header: ' + JSON.stringify(header));
             }

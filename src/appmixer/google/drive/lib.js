@@ -248,8 +248,7 @@ const getChangedFiles = async (
             // Check for file type restrictions.
             if (fileTypesRestriction?.length) {
                 let isAllowed = false;
-                for (let i = 0; i < fileTypesRestriction.length; i++) {
-                    const allowedType = fileTypesRestriction[i];
+                for (const allowedType of fileTypesRestriction) {
                     isAllowed = allowedType === '#FILE' ? false : mimeType.startsWith(allowedType);
                     if (isAllowed) break; // No need to search further since we found a match.
                 }
