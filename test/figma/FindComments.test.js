@@ -52,7 +52,7 @@ describe('FindComments Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'array'
         };
 
@@ -111,7 +111,7 @@ describe('FindComments Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID
+            fileId: process.env.FIGMA_FILE_ID
         };
 
         try {
@@ -147,7 +147,7 @@ describe('FindComments Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             query: 'feedback',
             outputType: 'array'
         };
@@ -183,7 +183,7 @@ describe('FindComments Component', function() {
         }
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'object'
         };
 
@@ -237,7 +237,7 @@ describe('FindComments Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'first'
         };
 

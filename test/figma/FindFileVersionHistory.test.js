@@ -52,7 +52,7 @@ describe('FindFileVersionHistory Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'array'
         };
 
@@ -106,7 +106,7 @@ describe('FindFileVersionHistory Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID
+            fileId: process.env.FIGMA_FILE_ID
         };
 
         try {
@@ -137,7 +137,7 @@ describe('FindFileVersionHistory Component', function() {
         }
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'object'
         };
 
@@ -191,7 +191,7 @@ describe('FindFileVersionHistory Component', function() {
         };
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             outputType: 'first'
         };
 

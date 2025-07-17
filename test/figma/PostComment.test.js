@@ -54,7 +54,7 @@ describe('PostComment Component', function() {
         const testMessage = `Test comment from automated test - ${new Date().toISOString()}`;
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             message: testMessage
         };
 
@@ -99,7 +99,7 @@ describe('PostComment Component', function() {
         }
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             message: ''
         };
 
@@ -127,20 +127,20 @@ describe('PostComment Component', function() {
         }
     });
 
-    it('should handle invalid file_id', async function() {
+    it('should handle invalid fileId', async function() {
         context.messages.in.content = {
-            file_id: 'invalid-file-id',
+            fileId: 'invalid-file-id',
             message: 'Test comment'
         };
 
         try {
             await PostComment.receive(context);
             // If this succeeds unexpectedly, that's an issue
-            assert.fail('Expected an error for invalid file_id');
+            assert.fail('Expected an error for invalid fileId');
         } catch (error) {
             if (error.response && (error.response.status === 404 || error.response.status === 400)) {
-                console.log('Expected error for invalid file_id:', error.response.data);
-                // This is expected behavior for invalid file_id
+                console.log('Expected error for invalid fileId:', error.response.data);
+                // This is expected behavior for invalid fileId
                 return;
             }
             if (error.response && error.response.status === 401) {
@@ -167,7 +167,7 @@ describe('PostComment Component', function() {
         const longMessage = `This is a long test comment that includes multiple sentences and various characters. It tests whether the Figma API can handle longer comment messages. Generated at ${new Date().toISOString()}. Lorem ipsum dolor sit amet, consectetur adipiscing elit.`;
 
         context.messages.in.content = {
-            file_id: process.env.FIGMA_FILE_ID,
+            fileId: process.env.FIGMA_FILE_ID,
             message: longMessage
         };
 
