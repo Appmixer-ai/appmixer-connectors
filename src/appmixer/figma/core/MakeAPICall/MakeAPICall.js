@@ -3,18 +3,18 @@
 module.exports = {
     async receive(context) {
 
-        const { resource, method = 'GET', body } = context.messages.in.content;
+        const { resource, method = 'GET', body } = context.messages?.in?.content || {};
 
         const requestConfig = {
-            method: method.toUpperCase(),
-            url: `https://api.figma.com/v1/${resource}`,
+            method: method?.toUpperCase() || 'GET',
+            url: `https://api.figma.com/v1/${resource || ''}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
+                'Authorization': `Bearer ${context.auth?.accessToken}`
             }
         };
 
         // Add Content-Type and body for POST/PUT/PATCH requests
-        if (['POST', 'PUT', 'PATCH'].includes(method.toUpperCase()) && body) {
+        if (['POST', 'PUT', 'PATCH'].includes(method?.toUpperCase() || 'GET') && body) {
             requestConfig.headers['Content-Type'] = 'application/json';
             if (typeof body === 'string') {
                 try {
@@ -30,6 +30,6 @@ module.exports = {
         // https://www.figma.com/developers/api
         const { data } = await context.httpRequest(requestConfig);
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(data || {}, 'out');
     }
 };

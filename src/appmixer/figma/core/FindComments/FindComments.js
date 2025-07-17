@@ -86,15 +86,15 @@ module.exports = {
             method: 'GET',
             url: `https://api.figma.com/v1/files/${fileId}/comments`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
+                'Authorization': `Bearer ${context.auth?.accessToken}`
             }
         });
 
-        let records = data.comments || [];
+        let records = data?.comments || [];
         // Apply query filter if provided
         if (query && query.trim()) {
             records = records.filter(comment =>
-                comment.message && comment.message.toLowerCase().includes(query.toLowerCase())
+                comment?.message?.toLowerCase().includes(query.toLowerCase())
             );
         }
         // Send to notFound port if no records are found
