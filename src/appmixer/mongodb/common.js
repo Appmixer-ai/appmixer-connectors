@@ -192,14 +192,10 @@ module.exports = {
         }
 
         if (options.tls && options.tlsCAFileContent) {
-            try {
-                tmpDir = tmp.dirSync();
-                tmpFile = `${tmpDir.name}/key.crt`;
-                fs.writeFileSync(tmpFile, options.tlsCAFileContent);
-                options.tlsCAFile = tmpFile;
-            } catch (err) {
-                throw err;
-            }
+            tmpDir = tmp.dirSync();
+            tmpFile = `${tmpDir.name}/key.crt`;
+            fs.writeFileSync(tmpFile, options.tlsCAFileContent);
+            options.tlsCAFile = tmpFile;
         }
 
         const client = new MongoClient(connectionUri, options);
@@ -207,8 +203,6 @@ module.exports = {
         try {
             await client.connect();
             return client;  // Temporary client returned directly for auth
-        } catch (err) {
-            throw err;
         } finally {
             if (tmpDir) {
                 fs.rm(tmpDir.name, { recursive: true }, () => {});

@@ -26,18 +26,13 @@ module.exports = {
 
         // await context.log({ step: 'Registering webhook subscription.', body });
 
-        try {
-            const { data } = await makeRequest(context, {
-                method: 'POST',
-                path: '/subscriptions',
-                data: body
-            });
-            await context.saveState({ subscriptionId: data.id });
-            // await context.log({ step: 'Response for subscription received.', data });
-        } catch (err) {
-            // await context.log({ error: err.toString(), response: err.response?.data });
-            throw err;
-        }
+        const { data } = await makeRequest(context, {
+            method: 'POST',
+            path: '/subscriptions',
+            data: body
+        });
+        await context.saveState({ subscriptionId: data.id });
+        // await context.log({ step: 'Response for subscription received.', data });
 
         // Fire a moment before expirationDateTime to ensure the subscription is renewed in time.
         return context.setTimeout({}, expirationDateTime - Date.now() - renewBeforeExpirationMs);
@@ -67,16 +62,11 @@ module.exports = {
             const expirationDateTime = getSubscriptionExpirationDateTime();
             const body = { expirationDateTime: expirationDateTime.toISOString() };
 
-            try {
-                await makeRequest(context, {
-                    method: 'PATCH',
-                    path: `/subscriptions/${subscriptionId}`,
-                    data: body
-                });
-            } catch (err) {
-                // await context.log({ error: 'Renewing subscription failed.', response: err.response?.data });
-                throw err;
-            }
+            await makeRequest(context, {
+                method: 'PATCH',
+                path: `/subscriptions/${subscriptionId}`,
+                data: body
+            });
 
             // await context.log({
             //     step: 'Notification subscription successfully renewed.',

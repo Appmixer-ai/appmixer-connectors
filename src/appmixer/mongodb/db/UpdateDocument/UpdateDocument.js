@@ -33,29 +33,25 @@ module.exports = {
             ? { _id: ObjectId.isValid(id) ? new ObjectId(id) : (+id || id) }
             : JSON.parse(filter || '{}');
 
-        try {
-            const collection = getCollection(client, context.auth.database, collectionName);
-            const updateMethod = quantity === 'One' ? 'updateOne' : 'updateMany';
-            const options = { upsert };
+        const collection = getCollection(client, context.auth.database, collectionName);
+        const updateMethod = quantity === 'One' ? 'updateOne' : 'updateMany';
+        const options = { upsert };
 
-            const {
-                matchedCount,
-                modifiedCount,
-                upsertedCount,
-                upsertedId,
-                acknowledged
-            } = await collection[updateMethod](query, { $set: data }, options);
+        const {
+            matchedCount,
+            modifiedCount,
+            upsertedCount,
+            upsertedId,
+            acknowledged
+        } = await collection[updateMethod](query, { $set: data }, options);
 
-            await context.sendJson({
-                document: { id, ...data },
-                acknowledged,
-                matchedCount,
-                modifiedCount,
-                upsertedCount,
-                upsertedId
-            }, 'out');
-        } catch (error) {
-            throw error;
-        }
+        await context.sendJson({
+            document: { id, ...data },
+            acknowledged,
+            matchedCount,
+            modifiedCount,
+            upsertedCount,
+            upsertedId
+        }, 'out');
     }
 };

@@ -27,18 +27,14 @@ module.exports = {
 
         const { collection: collectionName, operation, query } = context.messages.in.content;
 
-        try {
-            const collection = getCollection(client, context.auth.database, collectionName);
-            const result = await collection[operation](JSON.parse(query));
+        const collection = getCollection(client, context.auth.database, collectionName);
+        const result = await collection[operation](JSON.parse(query));
 
-            let documents = result;
-            if (operation != 'findOne') {
-                documents = await result.limit(1000).toArray();
-            }
-
-            await context.sendJson({ documents }, 'out');
-        } catch (error) {
-            throw error;
+        let documents = result;
+        if (operation != 'findOne') {
+            documents = await result.limit(1000).toArray();
         }
+
+        await context.sendJson({ documents }, 'out');
     }
 };
