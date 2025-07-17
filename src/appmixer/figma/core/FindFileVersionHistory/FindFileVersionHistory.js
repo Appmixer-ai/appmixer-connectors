@@ -1,8 +1,19 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'created_at':{ 'type':'string','title':'Created At' } };
+const schema = {
+    'id': { 'type': 'string', 'title': 'Id' },
+    'created_at': { 'type': 'string', 'title': 'Created At' },
+    'label': { 'type': 'string', 'title': 'Label' },
+    'description': { 'type': 'string', 'title': 'Description' },
+    'user': {
+        'type': 'object',
+        'properties': {
+            'handle': { 'type': 'string', 'title': 'User.Handle' }
+        },
+        'title': 'User'
+    }
+};
 
 module.exports = {
     async receive(context) {
@@ -10,7 +21,7 @@ module.exports = {
         const { file_id, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'versions', value: 'versions' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Versions', value: 'result' });
         }
 
         // https://www.figma.com/developers/api#file-versions-get

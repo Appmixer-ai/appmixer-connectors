@@ -1,16 +1,84 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'message':{ 'type':'string','title':'Message' },'user':{ 'type':'object','properties':{ 'handle':{ 'type':'string','title':'User.Handle' } },'title':'User' } };
+const schema = {
+    'id': {
+        'type': 'string',
+        'title': 'Id'
+    },
+    'uuid': {
+        'type': 'null',
+        'title': 'Uuid'
+    },
+    'file_key': {
+        'type': 'string',
+        'title': 'File Key'
+    },
+    'parent_id': {
+        'type': 'string',
+        'title': 'Parent Id'
+    },
+    'user': {
+        'type': 'object',
+        'properties': {
+            'handle': {
+                'type': 'string',
+                'title': 'User.Handle'
+            },
+            'img_url': {
+                'type': 'string',
+                'title': 'User.Img Url'
+            },
+            'id': {
+                'type': 'string',
+                'title': 'User.Id'
+            }
+        },
+        'title': 'User'
+    },
+    'created_at': {
+        'type': 'string',
+        'title': 'Created At'
+    },
+    'resolved_at': {
+        'type': 'null',
+        'title': 'Resolved At'
+    },
+    'message': {
+        'type': 'string',
+        'title': 'Message'
+    },
+    'reactions': {
+        'type': 'array',
+        'items': {},
+        'title': 'Reactions'
+    },
+    'client_meta': {
+        'type': 'object',
+        'properties': {
+            'x': {
+                'type': 'number',
+                'title': 'Client Meta.X'
+            },
+            'y': {
+                'type': 'number',
+                'title': 'Client Meta.Y'
+            }
+        },
+        'title': 'Client Meta'
+    },
+    'order_id': {
+        'type': 'string',
+        'title': 'Order Id'
+    }
+};
 
 module.exports = {
     async receive(context) {
-
         const { file_id, query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'comments', value: 'comments' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments', value: 'result' });
         }
 
         // https://www.figma.com/developers/api#comments-get
@@ -23,7 +91,6 @@ module.exports = {
         });
 
         let records = data.comments || [];
-        
         // Apply query filter if provided
         if (query && query.trim()) {
             records = records.filter(comment => 
@@ -31,6 +98,10 @@ module.exports = {
             );
         }
 
-        return lib.sendArrayOutput({ context, records, outputType });
+        return lib.sendArrayOutput({ 
+            context, 
+            records, 
+            outputType
+        });
     }
 };
