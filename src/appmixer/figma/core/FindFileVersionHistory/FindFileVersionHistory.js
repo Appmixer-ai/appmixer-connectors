@@ -18,7 +18,7 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { file_id, outputType } = context.messages.in.content;
+        const { fileId, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Versions', value: 'result' });
@@ -27,7 +27,7 @@ module.exports = {
         // https://www.figma.com/developers/api#file-versions-get
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.figma.com/v1/files/${file_id}/versions`,
+            url: `https://api.figma.com/v1/files/${fileId}/versions`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }
