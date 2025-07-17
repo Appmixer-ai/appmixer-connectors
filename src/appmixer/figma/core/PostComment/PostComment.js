@@ -1,16 +1,14 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { file_id, message } = context.messages.in.content;
+        const { fileId, message } = context.messages.in.content;
 
         // https://www.figma.com/developers/api#comments-post
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.figma.com/v1/files/${file_id}/comments`,
+            url: `https://api.figma.com/v1/files/${fileId}/comments`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'

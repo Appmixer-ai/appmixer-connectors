@@ -75,7 +75,7 @@ const schema = {
 
 module.exports = {
     async receive(context) {
-        const { file_id, query, outputType } = context.messages.in.content;
+        const { fileId, query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments', value: 'result' });
@@ -84,7 +84,7 @@ module.exports = {
         // https://www.figma.com/developers/api#comments-get
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.figma.com/v1/files/${file_id}/comments`,
+            url: `https://api.figma.com/v1/files/${fileId}/comments`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }
@@ -93,14 +93,14 @@ module.exports = {
         let records = data.comments || [];
         // Apply query filter if provided
         if (query && query.trim()) {
-            records = records.filter(comment => 
+            records = records.filter(comment =>
                 comment.message && comment.message.toLowerCase().includes(query.toLowerCase())
             );
         }
 
-        return lib.sendArrayOutput({ 
-            context, 
-            records, 
+        return lib.sendArrayOutput({
+            context,
+            records,
             outputType
         });
     }

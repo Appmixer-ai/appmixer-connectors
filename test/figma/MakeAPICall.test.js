@@ -243,7 +243,7 @@ describe('MakeAPICall Component', function() {
 
     it('should handle different HTTP methods', async function() {
         const methods = ['GET', 'POST', 'PUT', 'DELETE'];
-        
+
         for (const method of methods) {
             context.messages.in.content = {
                 resource: 'me',
