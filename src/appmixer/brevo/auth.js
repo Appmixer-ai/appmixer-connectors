@@ -20,7 +20,7 @@ module.exports = {
                     'accept': 'application/json'
                 }
             });
-            if (data && data.email) {
+            if (data?.email) {
                 return data;
             } else {
                 throw new Error('Could not retrieve Brevo account info.');

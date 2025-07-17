@@ -50,7 +50,7 @@ module.exports = {
             q = [...(escapedQuery ? [escapedQuery] : [])];
         }
 
-        if (fileTypes && fileTypes.length) {
+        if (fileTypes?.length) {
             const mimeTypeQuery = fileTypes.map(fileType => `mimeType contains '${fileType}'`).join(' or ');
             q.push(`(${mimeTypeQuery})`);
         }

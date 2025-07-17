@@ -126,7 +126,7 @@ module.exports = {
             const url = new URL(`https://forms.googleapis.com/v1/forms/${formId}/responses`);
 
             // Add filter parameter if provided
-            if (filter && filter.trim()) {
+            if (filter?.trim()) {
                 url.searchParams.append('filter', filter.trim());
             }
 
@@ -156,7 +156,7 @@ module.exports = {
             return lib.sendArrayOutput({ context, records, outputType });
 
         } catch (error) {
-            if (error.response && error.response.status === 404) {
+            if (error.response?.status === 404) {
                 throw new context.CancelError('Form not found or no responses available');
             }
             throw error;

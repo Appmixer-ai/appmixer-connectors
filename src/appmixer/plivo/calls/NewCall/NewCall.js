@@ -8,7 +8,7 @@ async function registerWebhook(context, client) {
         'plivo-calls-NewCall-' + context.componentId,
         { answerUrl: context.getWebhookUrl() }
     );
-    if (response && response.message === 'created') {
+    if (response?.message === 'created') {
         await context.saveState({ appId: response.appId });
         return response;
     } else {

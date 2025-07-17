@@ -72,7 +72,7 @@ module.exports = {
 
         const queryParameters = {};
 
-        if (override && override.query) {
+        if (override?.query) {
             Object.keys(override.query).forEach(parameter => {
                 queryParameters[parameter] = override.query[parameter];
             });

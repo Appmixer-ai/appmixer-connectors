@@ -18,7 +18,7 @@ module.exports = {
         );
 
         const promises = [];
-        if (found && found.issues) {
+        if (found?.issues) {
             if (sendWholeArray) {
                 return context.sendJson({ issues: found.issues }, 'issue');
             }

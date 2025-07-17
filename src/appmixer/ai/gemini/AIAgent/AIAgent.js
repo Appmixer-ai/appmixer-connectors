@@ -32,7 +32,7 @@ module.exports = {
             systemInstruction: instructions || 'You are a helpful assistant. If you detect you cannot use any tool, always reply directly as if no tools were given to you.'
         };
         const functionDeclarations = await context.stateGet('functionDeclarations');
-        if (functionDeclarations && functionDeclarations.length) {
+        if (functionDeclarations?.length) {
             params.tools = { functionDeclarations };
             params.functionCallingConfig = {
                 mode: 'AUTO' // Options: 'AUTO', 'ANY', 'NONE'
@@ -54,7 +54,7 @@ module.exports = {
             const result = await client.generateContent({ contents: messages });
 
             let functionCalls = result.response.functionCalls();
-            if (functionCalls && functionCalls.length) {
+            if (functionCalls?.length) {
 
                 messages.push({ role: 'model', parts: functionCalls.map(call => ({ functionCall: call })) });
 
@@ -93,7 +93,7 @@ module.exports = {
                 await context.log({ step: 'collected-tools-output', threadId, outputs });
 
                 // Submit tool outputs to the assistant.
-                if (outputs && outputs.length) {
+                if (outputs?.length) {
                     await context.log({ step: 'tool-outputs', tools: calls, outputs });
                     // Send all function results back to the AI.
                     messages.push(

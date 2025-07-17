@@ -61,7 +61,7 @@ module.exports = {
         if (context.messages.webhook) {
             const { query, data } = context.messages.webhook.content;
 
-            if (query && query.validationToken) {
+            if (query?.validationToken) {
                 return context.response(query.validationToken);
             }
 

@@ -148,7 +148,7 @@ const createDocument = function(context) {
 
     /*
     Ignore vulnerabilityFindings
-    if (vulnerabilityFindings && vulnerabilityFindings.AND.length) {
+    if (vulnerabilityFindings?.AND.length) {
         asset.vulnerabilityFindings = vulnerabilityFindings.AND.map(finding => {
             return { ...finding };
         });

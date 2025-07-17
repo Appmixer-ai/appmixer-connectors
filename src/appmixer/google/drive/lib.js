@@ -111,7 +111,7 @@ const registerWebhook = async (context, { includeRemoved } = {}) => {
         await unregisterWebhook(context);
     } catch (err) {
         if (!err.response || err.response.status !== 404) {
-            lock && lock.unlock();
+            lock?.unlock();
             throw err;
         }
     }
@@ -147,7 +147,7 @@ const registerWebhook = async (context, { includeRemoved } = {}) => {
         await context.stateSet('webhookId', data.resourceId);
         await context.stateSet('expiration', expiration);
     } finally {
-        lock && lock.unlock();
+        lock?.unlock();
     }
 };
 
@@ -246,7 +246,7 @@ const getChangedFiles = async (
             }
 
             // Check for file type restrictions.
-            if (fileTypesRestriction && fileTypesRestriction.length) {
+            if (fileTypesRestriction?.length) {
                 let isAllowed = false;
                 for (let i = 0; i < fileTypesRestriction.length; i++) {
                     const allowedType = fileTypesRestriction[i];

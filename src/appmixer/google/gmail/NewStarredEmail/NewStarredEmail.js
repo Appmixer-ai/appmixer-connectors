@@ -36,7 +36,7 @@ module.exports = {
                     method: 'GET',
                     params: { format: 'full' }
                 }).then(response => response.data).catch(err => {
-                    if (err && err.response && err.response.status === 404) {
+                    if (err?.response?.status === 404) {
                         return null;
                     }
                     throw err;
@@ -44,7 +44,7 @@ module.exports = {
             }, { concurrency: 10 });
 
             await Promise.each(emails || [], async email => {
-                if (!email || !email.labelIds) {
+                if (!email?.labelIds) {
                     throw new context.CancelError('Invalid email or email label');
                 }
                 await context.sendJson(emailCommons.normalizeEmail(email), 'out');

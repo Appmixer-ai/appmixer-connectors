@@ -12,7 +12,7 @@ module.exports = {
         let toolCallId;
         for (const componentId of Object.keys(scope)) {
             const component = flowDescriptor[componentId];
-            if (component && component.type === 'appmixer.ai.agenttools.ToolStart') {
+            if (component?.type === 'appmixer.ai.agenttools.ToolStart') {
                 const key = componentId + ':' + context.messages.in.correlationId;
                 toolCallId = await context.flow.stateGet(key);
                 await context.flow.stateUnset(key);

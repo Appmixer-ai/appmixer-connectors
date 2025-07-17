@@ -29,9 +29,9 @@ module.exports = {
         async requestProfileInfo(context) {
             const data = await this.getUserProfile(context);
 
-            if (data && data.fullName) {
+            if (data?.fullName) {
                 return { name: data.fullName };
-            } else if (data && data.email) {
+            } else if (data?.email) {
                 return { name: data.email };
             }
 

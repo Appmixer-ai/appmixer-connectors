@@ -51,7 +51,7 @@ module.exports = {
 
                 await context.stateSet(correlationId, correlationIdState);
             } finally {
-                lock && lock.unlock();
+                lock?.unlock();
             }
         }
 
@@ -77,7 +77,7 @@ module.exports = {
                     arrived: (correlationIdState.inputMessages || []).length
                 }, 'timeout');
             } finally {
-                lock && lock.unlock();
+                lock?.unlock();
             }
         }
 
@@ -108,7 +108,7 @@ module.exports = {
                     return context.sendJson({ items: correlationIdState.inputMessages }, 'out');
                 }
             } finally {
-                lock && lock.unlock();
+                lock?.unlock();
             }
         }
     }

@@ -36,7 +36,7 @@ module.exports = {
             },
             json: notification
         }).then(response => {
-            if (response && response.errors) {
+            if (response?.errors) {
                 throw new context.CancelError(response.errors[0]);
             }
             return context.sendJson(response, 'out');

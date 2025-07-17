@@ -12,7 +12,7 @@ module.exports = {
                     if (err) {
                         return reject(err);
                     }
-                    if (body && response && response.statusCode === 200) {
+                    if (body && response?.statusCode === 200) {
                         let known = context.state.known;
                         if (known && JSON.stringify(known) !== JSON.stringify(body)) {
                             await context.sendJson(body, 'account');
@@ -20,7 +20,7 @@ module.exports = {
                         await context.saveState({ known: body });
                     } else if (!response || response.statusCode !== 200) {
                         return reject(
-                            new Error('Fakturoid get account failed with status code ' + (response && response.statusCode)));
+                            new Error('Fakturoid get account failed with status code ' + response?.statusCode));
                     }
                     resolve();
                 } catch (err) {

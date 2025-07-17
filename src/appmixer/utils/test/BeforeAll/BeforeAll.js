@@ -39,7 +39,7 @@ module.exports = {
                 await context.clearTimeout(context.state.timeoutId);
             }
         } finally {
-            lock && lock.unlock();
+            lock?.unlock();
         }
     },
 

@@ -97,12 +97,12 @@ module.exports = {
                     }
 
                     googleApi.refreshAccessToken((error, tokens) => {
-                        if (error && error.message === 'invalid_grant') {
+                        if (error?.message === 'invalid_grant') {
                             return reject(new context.InvalidTokenError('invalid_grant while refreshing', {
                                 googleErr: error
                             }));
                         }
-                        if (error && error.message === 'unauthorized_client') {
+                        if (error?.message === 'unauthorized_client') {
                             return reject(new context.InvalidTokenError(error.message));
                         }
                         if (error) {
@@ -124,12 +124,12 @@ module.exports = {
                     oauth2.tokeninfo({
                         ['access_token']: context.accessToken
                     }, (error, response) => {
-                        if (error && error.message === 'invalid_grant') {
+                        if (error?.message === 'invalid_grant') {
                             return reject(new context.InvalidTokenError('invalid_grant while validating', {
                                 googleErr: error
                             }));
                         }
-                        if (error && error.message === 'unauthorized_client') {
+                        if (error?.message === 'unauthorized_client') {
                             return reject(new context.InvalidTokenError(error.message));
                         }
                         if (error) {
