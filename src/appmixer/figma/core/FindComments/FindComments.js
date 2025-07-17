@@ -97,7 +97,6 @@ module.exports = {
                 comment.message && comment.message.toLowerCase().includes(query.toLowerCase())
             );
         }
-        
         // Send to notFound port if no records are found
         if (records.length === 0) {
             return context.sendJson({
