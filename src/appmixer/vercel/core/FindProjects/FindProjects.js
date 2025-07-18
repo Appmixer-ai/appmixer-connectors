@@ -1,8 +1,11 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string','title':'Name' },'framework':{ 'type':'string','title':'Framework' } };
+const schema = {
+    'id': { 'type': 'string', 'title': 'Id' },
+    'name': { 'type': 'string', 'title': 'Name' },
+    'framework': { 'type': 'string', 'title': 'Framework' }
+};
 
 module.exports = {
     async receive(context) {

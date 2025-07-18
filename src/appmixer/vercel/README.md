@@ -87,6 +87,63 @@ Additional components planned for future releases:
 - Environment variable management
 - Webhook management
 - Deployment logs and events
+## Validation Results
+
+The following components have been successfully validated and are working correctly:
+
+### Project Management Components
+
+```bash
+# List all projects
+appmixer test component src/appmixer/vercel/core/FindProjects -i '{"in":{}}'
+```
+
+```bash
+# Create a new project
+appmixer test component src/appmixer/vercel/core/CreateProject -i '{"in":{"name":"test-project-validation","framework":"nextjs"}}'
+```
+
+```bash
+# Get project details
+appmixer test component src/appmixer/vercel/core/GetProject -i '{"in":{"id":"prj_VM3Y9F2bO1ZbS8BW2i9hfcRlU8CH"}}'
+```
+
+```bash
+# Update project
+appmixer test component src/appmixer/vercel/core/UpdateProject -i '{"in":{"id":"prj_VM3Y9F2bO1ZbS8BW2i9hfcRlU8CH","name":"test-project-validation-updated"}}'
+```
+
+```bash
+# Delete project
+appmixer test component src/appmixer/vercel/core/DeleteProject -i '{"in":{"id":"prj_VM3Y9F2bO1ZbS8BW2i9hfcRlU8CH"}}'
+```
+
+### Deployment Management Components
+
+```bash
+# List all deployments
+appmixer test component src/appmixer/vercel/core/FindDeployments -i '{"in":{}}'
+```
+
+```bash
+# Get deployment details
+appmixer test component src/appmixer/vercel/core/GetDeployment -i '{"in":{"id":"dpl_9sHxqcTZJMnv3hLDaHqGQ4jbV6Bp"}}'
+```
+
+```bash
+# Cancel deployment (requires a deployment in BUILDING state)
+appmixer test component src/appmixer/vercel/core/CancelDeployment -i '{"in":{"id":"dpl_deploymentId"}}'
+```
+
+```bash
+# Delete deployment
+appmixer test component src/appmixer/vercel/core/DeleteDeployment -i '{"in":{"id":"dpl_deploymentId"}}'
+```
+
+### Test Environment Variable
+
+All tests require the `VERCEL_API_TOKEN` environment variable to be set with a valid Vercel API token.
+
 ## API Documentation
 
 For detailed information about Vercel's API, visit: https://vercel.com/docs/rest-api
