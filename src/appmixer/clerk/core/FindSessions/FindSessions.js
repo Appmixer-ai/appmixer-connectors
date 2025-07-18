@@ -1,16 +1,15 @@
 
 'use strict';
+
 module.exports = {
     async receive(context) {
-
-        // Get input parameters
         const { userId, limit } = context.messages.in.content;
         const params = {};
-        
+
         if (userId) {
             params.user_id = userId;
         }
-        
+
         if (limit) {
             params.limit = limit;
         }
@@ -19,12 +18,10 @@ module.exports = {
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.clerk.com/v1/sessions',
-            params: params,
+            params,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            json: true
+                'Authorization': `Bearer ${context.auth.apiKey}`
+            }
         });
 
         // Always return an object with a 'sessions' array
@@ -34,6 +31,7 @@ module.exports = {
         } else if (data && Array.isArray(data.sessions)) {
             sessions = data.sessions;
         }
+
         return context.sendJson({ sessions }, 'out');
     }
 };

@@ -1,4 +1,6 @@
 
+'use strict';
+
 module.exports = {
     async receive(context) {
         const { id, userId, role = 'org:member' } = context.messages.in.content;
@@ -12,20 +14,18 @@ module.exports = {
         }
 
         // Make API request to add user to organization
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/organizations/${id}/memberships`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: {
                 user_id: userId,
-                role: role
-            },
-            json: true
+                role
+            }
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data, 'out');
     }
 };

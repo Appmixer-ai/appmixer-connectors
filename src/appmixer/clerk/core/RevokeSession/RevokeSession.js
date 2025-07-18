@@ -1,8 +1,8 @@
 
 'use strict';
+
 module.exports = {
     async receive(context) {
-
         const { sessionId } = context.messages.in.content;
 
         // https://clerk.com/docs/references/backend/overview#sessions
@@ -10,10 +10,8 @@ module.exports = {
             method: 'POST',
             url: `https://api.clerk.com/v1/sessions/${sessionId}/revoke`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            json: true
+                'Authorization': `Bearer ${context.auth.apiKey}`
+            }
         });
 
         return context.sendJson(data, 'out');

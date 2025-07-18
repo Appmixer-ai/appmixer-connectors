@@ -1,8 +1,8 @@
+
 'use strict';
 
 module.exports = {
     async receive(context) {
-
         const {
             emailAddress,
             phoneNumber,
@@ -22,15 +22,12 @@ module.exports = {
 
         // Prepare the request body
         const body = {};
-
         // Email addresses (array of strings)
         body.email_address = emailAddress ? [emailAddress] : undefined;
-
         // Phone numbers (array of strings)
         if (phoneNumber) {
             body.phone_number = [phoneNumber];
         }
-
         // Other properties
         if (username) body.username = username;
         if (password) body.password = password;

@@ -1,4 +1,7 @@
 
+
+'use strict';
+
 module.exports = {
     async receive(context) {
         const { id, userId } = context.messages.in.content;
@@ -13,16 +16,14 @@ module.exports = {
 
         // Make API request to remove user from organization
         // The endpoint expects the user_id, not the membership ID
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'DELETE',
             url: `https://api.clerk.com/v1/organizations/${id}/memberships/${userId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            json: true
+                'Authorization': `Bearer ${context.auth.apiKey}`
+            }
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data, 'out');
     }
 };
