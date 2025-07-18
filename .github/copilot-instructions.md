@@ -836,7 +836,7 @@ module.exports = {
     async receive(context) {
         
         // Get input data
-        const { message, priority, count } = context.messages.in;
+        const { message, priority, count } = context.messages.in.content;
         
         // Perform the action
         const response = await context.httpRequest({
