@@ -53,7 +53,7 @@ module.exports = {
         return path.split('.').reduce((acc, part) => acc?.[part], obj);
     },
 
-    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+    getOutputPortOptions(context, outputType, itemSchema, { label }) {
 
         if (outputType === 'object' || outputType === 'first') {
             const options = Object.keys(itemSchema)
@@ -80,11 +80,18 @@ module.exports = {
 
         if (outputType === 'array') {
             return context.sendJson([{
-                label,
-                value,
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
+            }, {
+                label: label,
+                value: 'result',
                 schema: {
                     type: 'array',
-                    items: { type: 'object', properties: itemSchema }
+                    items: {
+                        type: 'object',
+                        properties: itemSchema
+                    }
                 }
             }], 'out');
         }
