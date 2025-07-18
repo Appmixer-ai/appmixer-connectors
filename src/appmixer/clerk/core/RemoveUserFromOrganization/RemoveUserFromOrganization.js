@@ -5,12 +5,12 @@ const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { id } = context.messages.in.content;
+        const { id, userId } = context.messages.in.content;
 
-        // https://clerk.com/docs/references/backend/overview#users
+        // https://clerk.com/docs/references/backend/overview#organizations
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: '/users/{id}',
+            method: 'POST',
+            url: '/organizations/{id}/remove_user',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`
             }

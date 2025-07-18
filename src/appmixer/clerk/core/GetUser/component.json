@@ -1,19 +1,15 @@
 {
     "name": "appmixer.clerk.core.GetUser",
-    "label": "Get User",
-    "description": "Retrieves details for a specific user from your Clerk application.",
     "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieve details of a specific user identified by user ID.",
     "version": "1.0.0",
-    "icon": "https://clerk.com/favicon/favicon.svg",
+    "private": false,
     "auth": {
         "service": "appmixer:clerk"
     },
     "quota": {
         "manager": "appmixer:clerk",
-        "resources": "default",
-        "scope": {
-            "userId": "{{userId}}"
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -21,19 +17,18 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "userId": {
-                        "type": "string",
-                        "title": "User ID",
-                        "description": "ID of the user to retrieve"
+                    "id": {
+                        "type": "string"
                     }
-                },
-                "required": ["userId"]
+                }
             },
             "inspector": {
                 "inputs": {
-                    "userId": {
+                    "id": {
                         "type": "text",
-                        "index": 1
+                        "tooltip": "Unique identifier of the user.",
+                        "label": "Id",
+                        "index": 0
                     }
                 }
             }
@@ -42,64 +37,37 @@
     "outPorts": [
         {
             "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "title": "ID"
-                    },
-                    "firstName": {
-                        "type": "string",
-                        "title": "First Name"
-                    },
-                    "lastName": {
-                        "type": "string",
-                        "title": "Last Name"
-                    },
-                    "username": {
-                        "type": "string",
-                        "title": "Username"
-                    },
-                    "emailAddresses": {
-                        "type": "array",
-                        "title": "Email Addresses",
-                        "items": {
-                            "type": "object"
-                        }
-                    },
-                    "phoneNumbers": {
-                        "type": "array",
-                        "title": "Phone Numbers",
-                        "items": {
-                            "type": "object"
-                        }
-                    },
-                    "externalAccounts": {
-                        "type": "array",
-                        "title": "External Accounts",
-                        "items": {
-                            "type": "object"
-                        }
-                    },
-                    "publicMetadata": {
-                        "type": "object",
-                        "title": "Public Metadata"
-                    },
-                    "privateMetadata": {
-                        "type": "object",
-                        "title": "Private Metadata"
-                    },
-                    "createdAt": {
-                        "type": "number",
-                        "title": "Created At"
-                    },
-                    "updatedAt": {
-                        "type": "number",
-                        "title": "Updated At"
+            "options": [
+                {
+                    "label": "Id",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Email",
+                    "value": "email",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "First Name",
+                    "value": "firstName",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Last Name",
+                    "value": "lastName",
+                    "schema": {
+                        "type": "string"
                     }
                 }
-            }
+            ]
         }
-    ]
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"
 }

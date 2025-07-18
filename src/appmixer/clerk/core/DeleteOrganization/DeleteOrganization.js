@@ -7,10 +7,10 @@ module.exports = {
 
         const { id } = context.messages.in.content;
 
-        // https://clerk.com/docs/references/backend/overview#users
+        // https://clerk.com/docs/references/backend/overview#organizations
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: '/users/{id}',
+            method: 'DELETE',
+            url: '/organizations/{id}',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`
             }

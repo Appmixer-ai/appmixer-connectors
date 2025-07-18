@@ -9,8 +9,8 @@ module.exports = {
 
         // https://clerk.com/docs/references/backend/overview#users
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: '/users/{id}',
+            method: 'POST',
+            url: '/users/{id}/unban',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`
             }
