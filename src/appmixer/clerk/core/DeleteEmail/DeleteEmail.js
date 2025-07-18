@@ -1,21 +1,23 @@
-
-'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
-
-        const { id } = context.messages.in.content;
-
-        // https://clerk.com/docs/references/backend/overview#emails
+        const { emailId } = context.messages.in.content;
+        
+        if (!emailId) {
+            throw new Error('Email ID is required');
+        }
+        
+        // Make API request
         const { data } = await context.httpRequest({
             method: 'DELETE',
-            url: '/emails/{id}',
+            url: `https://api.clerk.com/v1/email_addresses/${emailId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            json: true
         });
-
+        
+        // Return the result
         return context.sendJson(data, 'out');
     }
 };

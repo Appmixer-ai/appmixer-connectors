@@ -1,9 +1,9 @@
 {
     "name": "appmixer.clerk.core.CreateUser",
+    "label": "Create User",
     "author": "Appmixer <info@appmixer.com>",
     "description": "Create a new user with the provided information.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:clerk"
     },
@@ -17,45 +17,92 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "email": {
-                        "type": "string"
+                    "emailAddress": {
+                        "type": "string",
+                        "title": "Email Address",
+                        "description": "Email address of the new user"
                     },
                     "firstName": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "First Name",
+                        "description": "First name of the new user"
                     },
                     "lastName": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Last Name",
+                        "description": "Last name of the new user"
                     },
                     "password": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Password",
+                        "description": "Password for the new user"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "title": "Phone Number",
+                        "description": "Phone number for the new user"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username",
+                        "description": "Username for the new user"
+                    },
+                    "publicMetadata": {
+                        "type": "object",
+                        "title": "Public Metadata",
+                        "description": "Public metadata for the user"
+                    },
+                    "privateMetadata": {
+                        "type": "object",
+                        "title": "Private Metadata",
+                        "description": "Private metadata for the user"
+                    },
+                    "skipPasswordChecks": {
+                        "type": "boolean",
+                        "title": "Skip Password Checks",
+                        "description": "Skip password policy checks",
+                        "default": false
                     }
-                }
+                },
+                "required": ["emailAddress"]
             },
             "inspector": {
                 "inputs": {
-                    "email": {
+                    "emailAddress": {
                         "type": "text",
-                        "tooltip": "Email address of the new user.",
-                        "label": "Email",
-                        "index": 0
+                        "index": 1
                     },
                     "firstName": {
                         "type": "text",
-                        "tooltip": "First name of the new user.",
-                        "label": "First Name",
-                        "index": 1
+                        "index": 2
                     },
                     "lastName": {
                         "type": "text",
-                        "tooltip": "Last name of the new user.",
-                        "label": "Last Name",
-                        "index": 2
+                        "index": 3
                     },
                     "password": {
+                        "type": "password",
+                        "index": 4
+                    },
+                    "phoneNumber": {
                         "type": "text",
-                        "tooltip": "Password for the new user.",
-                        "label": "Password",
-                        "index": 3
+                        "index": 5
+                    },
+                    "username": {
+                        "type": "text",
+                        "index": 6
+                    },
+                    "publicMetadata": {
+                        "type": "code",
+                        "index": 7
+                    },
+                    "privateMetadata": {
+                        "type": "code",
+                        "index": 8
+                    },
+                    "skipPasswordChecks": {
+                        "type": "checkbox",
+                        "index": 9
                     }
                 }
             }
@@ -64,37 +111,31 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Id",
-                    "value": "id",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Email",
-                    "value": "email",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "First Name",
-                    "value": "firstName",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Last Name",
-                    "value": "lastName",
-                    "schema": {
-                        "type": "string"
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "ID"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "First Name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Last Name"
+                    },
+                    "email_addresses": {
+                        "type": "array",
+                        "title": "Email Addresses",
+                        "items": {
+                            "type": "object"
+                        }
                     }
                 }
-            ]
+            }
         }
     ],
-    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"
+    "icon": "https://clerk.com/favicon/favicon.svg"
 }

@@ -1,15 +1,18 @@
 {
     "name": "appmixer.clerk.core.FindUsers",
+    "label": "Find Users",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of users with optional search criteria. This endpoint allows filtering via a query parameter.",
+    "description": "Retrieve a list of users with optional search criteria.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:clerk"
     },
     "quota": {
         "manager": "appmixer:clerk",
-        "resources": "requests"
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
     },
     "inPorts": [
         {
@@ -17,18 +20,65 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string"
+                    "limit": {
+                        "type": "number",
+                        "title": "Limit",
+                        "description": "Maximum number of users to return (1-500)",
+                        "default": 10
+                    },
+                    "offset": {
+                        "type": "number",
+                        "title": "Offset",
+                        "description": "Number of users to skip",
+                        "default": 0
+                    },
+                    "emailAddress": {
+                        "type": "string",
+                        "title": "Email Address",
+                        "description": "Filter users by email address"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username",
+                        "description": "Filter users by username"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "title": "Phone Number",
+                        "description": "Filter users by phone number"
+                    },
+                    "userId": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "Filter users by user ID"
                     }
                 }
             },
             "inspector": {
                 "inputs": {
-                    "query": {
+                    "limit": {
+                        "type": "number",
+                        "index": 1
+                    },
+                    "offset": {
+                        "type": "number",
+                        "index": 2
+                    },
+                    "emailAddress": {
                         "type": "text",
-                        "tooltip": "Search query for filtering users by name or email.",
-                        "label": "Query",
-                        "index": 0
+                        "index": 3
+                    },
+                    "username": {
+                        "type": "text",
+                        "index": 4
+                    },
+                    "phoneNumber": {
+                        "type": "text",
+                        "index": 5
+                    },
+                    "userId": {
+                        "type": "text",
+                        "index": 6
                     }
                 }
             }
@@ -37,37 +87,41 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Users",
-                    "value": "users",
-                    "schema": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "data": {
                         "type": "array",
+                        "title": "Users",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "id": {
                                     "type": "string",
-                                    "title": "Users.Id"
+                                    "title": "ID"
                                 },
-                                "email": {
+                                "first_name": {
                                     "type": "string",
-                                    "title": "Users.Email"
+                                    "title": "First Name"
                                 },
-                                "firstName": {
+                                "last_name": {
                                     "type": "string",
-                                    "title": "Users.First Name"
+                                    "title": "Last Name"
                                 },
-                                "lastName": {
-                                    "type": "string",
-                                    "title": "Users.Last Name"
+                                "email_addresses": {
+                                    "type": "array",
+                                    "title": "Email Addresses"
                                 }
                             }
                         }
+                    },
+                    "total_count": {
+                        "type": "number",
+                        "title": "Total Count"
                     }
                 }
-            ]
+            }
         }
     ],
-    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"
+    "icon": "https://clerk.com/favicon/favicon.svg"
 }

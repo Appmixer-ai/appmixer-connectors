@@ -1,21 +1,25 @@
-
-'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
-
-        const { query } = context.messages.in.content;
-
-        // https://clerk.com/docs/references/backend/overview#organizations
-        const { data } = await context.httpRequest({
+        const { limit = 10, offset = 0 } = context.messages.in.content;
+        
+        // Build query parameters
+        const queryParams = new URLSearchParams();
+        
+        if (limit) queryParams.append('limit', limit);
+        if (offset) queryParams.append('offset', offset);
+        
+        // Make API request
+        const response = await context.httpRequest({
             method: 'GET',
-            url: '/organizations',
+            url: `https://api.clerk.com/v1/organizations${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            json: true
         });
-
-        return context.sendJson(data, 'out');
+        
+        // Return the results
+        return context.sendJson(response.data, 'out');
     }
 };

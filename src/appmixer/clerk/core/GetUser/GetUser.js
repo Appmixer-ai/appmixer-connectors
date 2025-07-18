@@ -1,21 +1,23 @@
-
-'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
-
-        const { id } = context.messages.in.content;
-
-        // https://clerk.com/docs/references/backend/overview#users
-        const { data } = await context.httpRequest({
+        const { userId } = context.messages.in.content;
+        
+        if (!userId) {
+            throw new Error('User ID is required');
+        }
+        
+        // Make API request
+        const response = await context.httpRequest({
             method: 'GET',
-            url: '/users/{id}',
+            url: `https://api.clerk.com/v1/users/${userId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            json: true
         });
-
-        return context.sendJson(data, 'out');
+        
+        // Return the user details
+        return context.sendJson(response.data, 'out');
     }
 };

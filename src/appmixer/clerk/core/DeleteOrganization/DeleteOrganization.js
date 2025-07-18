@@ -1,21 +1,23 @@
-
-'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
-
-        const { id } = context.messages.in.content;
-
-        // https://clerk.com/docs/references/backend/overview#organizations
-        const { data } = await context.httpRequest({
+        const { organizationId } = context.messages.in.content;
+        
+        if (!organizationId) {
+            throw new Error('Organization ID is required');
+        }
+        
+        // Make API request
+        const response = await context.httpRequest({
             method: 'DELETE',
-            url: '/organizations/{id}',
+            url: `https://api.clerk.com/v1/organizations/${organizationId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            json: true
         });
-
-        return context.sendJson(data, 'out');
+        
+        // Return the result
+        return context.sendJson(response.data, 'out');
     }
 };
