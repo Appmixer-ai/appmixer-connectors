@@ -1,11 +1,14 @@
 {
     "name": "appmixer.zoom.core.CreateMeeting",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new meeting for a user. Accepts meeting details such as topic, start time, duration, password, agenda, and additional settings.",
+    "description": "Create a new meeting for a user.",
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:zoom"
+        "service": "appmixer:zoom",
+        "scope": [
+            "meeting:write"
+        ]
     },
     "quota": {
         "manager": "appmixer:zoom",
@@ -17,13 +20,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "userId": {
-                        "type": "string"
-                    },
                     "topic": {
                         "type": "string"
                     },
-                    "start_time": {
+                    "startTime": {
                         "type": "string"
                     },
                     "duration": {
@@ -34,55 +34,40 @@
                     },
                     "agenda": {
                         "type": "string"
-                    },
-                    "settings": {
-                        "type": "object"
                     }
                 }
             },
             "inspector": {
                 "inputs": {
-                    "userId": {
-                        "type": "text",
-                        "tooltip": "The ID of the user creating the meeting",
-                        "label": "User Id",
-                        "index": 0
-                    },
                     "topic": {
                         "type": "text",
                         "tooltip": "The topic or title of the meeting",
                         "label": "Topic",
-                        "index": 1
+                        "index": 0
                     },
-                    "start_time": {
-                        "type": "text",
-                        "tooltip": "The start time of the meeting in ISO8601 format",
+                    "startTime": {
+                        "type": "date-time",
+                        "tooltip": "The start time of the meeting",
                         "label": "Start Time",
-                        "index": 2
+                        "index": 1
                     },
                     "duration": {
                         "type": "number",
                         "tooltip": "The duration of the meeting in minutes",
                         "label": "Duration",
-                        "index": 3
+                        "index": 2
                     },
                     "password": {
                         "type": "text",
                         "tooltip": "The password required to join the meeting",
                         "label": "Password",
-                        "index": 4
+                        "index": 3
                     },
                     "agenda": {
                         "type": "text",
                         "tooltip": "The agenda or a brief description of the meeting",
                         "label": "Agenda",
-                        "index": 5
-                    },
-                    "settings": {
-                        "type": "text",
-                        "tooltip": "Additional settings for the meeting (e.g., video options, join before host)",
-                        "label": "Settings",
-                        "index": 6
+                        "index": 4
                     }
                 }
             }
@@ -93,7 +78,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Meeting ID",
                     "value": "id",
                     "schema": {
                         "type": "string"

@@ -1,11 +1,14 @@
 {
     "name": "appmixer.zoom.core.CreateWebinar",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new webinar for a user. Accepts details such as topic, start time, duration, agenda, and additional settings.",
+    "description": "Create a new webinar for a user.",
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:zoom"
+        "service": "appmixer:zoom",
+        "scope": [
+            "webinar:write"
+        ]
     },
     "quota": {
         "manager": "appmixer:zoom",
@@ -17,13 +20,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "userId": {
-                        "type": "string"
-                    },
                     "topic": {
                         "type": "string"
                     },
-                    "start_time": {
+                    "startTime": {
                         "type": "string"
                     },
                     "duration": {
@@ -32,47 +32,50 @@
                     "agenda": {
                         "type": "string"
                     },
-                    "settings": {
-                        "type": "object"
+                    "password": {
+                        "type": "string"
+                    },
+                    "defaultPasscode": {
+                        "type": "boolean"
                     }
                 }
             },
             "inspector": {
                 "inputs": {
-                    "userId": {
-                        "type": "text",
-                        "tooltip": "The ID of the user creating the webinar",
-                        "label": "User Id",
-                        "index": 0
-                    },
                     "topic": {
                         "type": "text",
                         "tooltip": "The topic or title of the webinar",
                         "label": "Topic",
-                        "index": 1
+                        "index": 0
                     },
-                    "start_time": {
-                        "type": "text",
-                        "tooltip": "The start time of the webinar in ISO8601 format",
+                    "startTime": {
+                        "type": "date-time",
+                        "tooltip": "The start time of the webinar",
                         "label": "Start Time",
-                        "index": 2
+                        "index": 1
                     },
                     "duration": {
                         "type": "number",
                         "tooltip": "The duration of the webinar in minutes",
                         "label": "Duration",
-                        "index": 3
+                        "index": 2
                     },
                     "agenda": {
                         "type": "text",
                         "tooltip": "The agenda or a brief description of the webinar",
                         "label": "Agenda",
+                        "index": 3
+                    },
+                    "password": {
+                        "type": "text",
+                        "tooltip": "The webinar password",
+                        "label": "Password",
                         "index": 4
                     },
-                    "settings": {
-                        "type": "text",
-                        "tooltip": "Additional settings for the webinar (e.g., Q&A options, panelists)",
-                        "label": "Settings",
+                    "defaultPasscode": {
+                        "type": "toggle",
+                        "tooltip": "Determines whether to automatically generate a passcode for the webinar when no passcode is provided and the user's Passcode setting is enabled",
+                        "label": "Default Passcode",
                         "index": 5
                     }
                 }
@@ -84,7 +87,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Webinar ID",
                     "value": "id",
                     "schema": {
                         "type": "string"

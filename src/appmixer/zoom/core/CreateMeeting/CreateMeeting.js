@@ -1,30 +1,25 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { userId = 'me', topic, start_time, duration, password, agenda, settings } = context.messages.in.content;
+        const { topic, startTime, duration, password, agenda } = context.messages.in.content;
 
         // Build request body
-        const requestBody = {};
-        if (topic) requestBody.topic = topic;
-        if (start_time) requestBody.start_time = start_time;
-        if (duration) requestBody.duration = duration;
-        if (password) requestBody.password = password;
-        if (agenda) requestBody.agenda = agenda;
-        if (settings) {
-            requestBody.settings = typeof settings === 'string' ? JSON.parse(settings) : settings;
-        }
+        const requestBody = {
+            topic,
+            start_time: startTime,
+            duration,
+            password,
+            agenda
+        };
 
-        // https://marketplace.zoom.us/docs/api-reference/zoom-api/meetings/meetingcreate
+        // https://developers.zoom.us/docs/api/meetings/#tag/meetings/POST/users/{userId}/meetings
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.zoom.us/v2/users/${userId}/meetings`,
+            url: `https://api.zoom.us/v2/users/me/meetings`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: requestBody
         });

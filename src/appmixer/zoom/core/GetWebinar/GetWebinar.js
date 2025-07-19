@@ -3,12 +3,12 @@
 module.exports = {
     async receive(context) {
 
-        const { meetingId } = context.messages.in.content;
+        const { webinarId } = context.messages.in.content;
 
-        // https://developers.zoom.us/docs/api/meetings/#tag/meetings/GET/meetings/{meetingId}
+        // https://developers.zoom.us/docs/api/meetings/#tag/webinars/GET/webinars/{webinarId}
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.zoom.us/v2/meetings/${meetingId}`,
+            url: `https://api.zoom.us/v2/webinars/${webinarId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }
