@@ -8,7 +8,7 @@ module.exports = {
             throw new context.CancelError('Missing required input: id');
         }
 
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/users/${id}/unlock`,
             headers: {
@@ -16,6 +16,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

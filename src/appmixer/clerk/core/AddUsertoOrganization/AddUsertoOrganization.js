@@ -12,7 +12,7 @@ module.exports = {
             throw new context.CancelError('Missing required input: userId');
         }
 
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/organizations/${id}/memberships`,
             headers: {
@@ -24,6 +24,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

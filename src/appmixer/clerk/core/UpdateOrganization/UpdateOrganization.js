@@ -13,7 +13,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!organizationId) {
-            throw new Error('Organization ID is required');
+            throw new context.CancelError('Organization ID is required');
         }
 
         // Prepare the request body
@@ -26,7 +26,7 @@ module.exports = {
         if (privateMetadata !== undefined) body.private_metadata = privateMetadata;
 
         // Make API request
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PATCH',
             url: `https://api.clerk.com/v1/organizations/${organizationId}`,
             headers: {
@@ -36,6 +36,6 @@ module.exports = {
         });
 
         // Return the updated organization
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

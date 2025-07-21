@@ -6,7 +6,7 @@ module.exports = {
         const { id } = context.messages.in.content;
 
         // https://clerk.com/docs/references/backend/overview#sessions
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/sessions/${id}/revoke`,
             headers: {
@@ -14,6 +14,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

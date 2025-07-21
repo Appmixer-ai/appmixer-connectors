@@ -12,7 +12,7 @@ module.exports = {
         const body = {};
         if (reason) body.reason = reason;
 
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/users/${id}/ban`,
             headers: {
@@ -21,6 +21,6 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
