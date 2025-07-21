@@ -13,9 +13,6 @@ module.exports = {
             username,
             password,
             passwordDigest,
-            skipPasswordChecks,
-            skipPasswordRequirement,
-            backupCodes,
             deleteSelfEnabled
         } = context.messages.in.content;
 
@@ -23,7 +20,7 @@ module.exports = {
         const textareaToArray = (value) => {
             if (!value) return undefined;
             if (Array.isArray(value)) return value;
-            return value.split('\n').map(item => item.trim()).filter(item => item.length > 0);
+            return value.split(/\r?\n|,/).map(item => item.trim()).filter(item => item.length > 0);
         };
 
         const body = {};
@@ -52,14 +49,7 @@ module.exports = {
             body.web3_wallet = walletArray;
         }
 
-        const backupCodesArray = textareaToArray(backupCodes);
-        if (backupCodesArray && backupCodesArray.length > 0) {
-            body.backup_codes = backupCodesArray;
-        }
-
         // Boolean fields
-        if (skipPasswordChecks !== undefined) body.skip_password_checks = skipPasswordChecks;
-        if (skipPasswordRequirement !== undefined) body.skip_password_requirement = skipPasswordRequirement;
         if (deleteSelfEnabled !== undefined) body.delete_self_enabled = deleteSelfEnabled;
 
         // Validation: At least one identifier must be provided
