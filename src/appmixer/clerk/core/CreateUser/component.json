@@ -2,7 +2,7 @@
     "name": "appmixer.clerk.core.CreateUser",
     "label": "Create User",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new user with the provided information.",
+    "description": "Creates a new user. Your user management settings determine how you should setup your user model. Any email address and phone number created using this method will be marked as verified.",
     "version": "1.0.0",
     "auth": {
         "service": "appmixer:clerk"
@@ -17,92 +17,126 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "emailAddress": {
-                        "type": "string",
-                        "title": "Email Address",
-                        "description": "Email address of the new user"
+                    "externalId": {
+                        "type": "string"
                     },
                     "firstName": {
-                        "type": "string",
-                        "title": "First Name",
-                        "description": "First name of the new user"
+                        "type": "string"
                     },
                     "lastName": {
-                        "type": "string",
-                        "title": "Last Name",
-                        "description": "Last name of the new user"
+                        "type": "string"
                     },
-                    "password": {
-                        "type": "string",
-                        "title": "Password",
-                        "description": "Password for the new user"
+                    "emailAddresses": {
+                        "type": "string"
                     },
-                    "phoneNumber": {
-                        "type": "string",
-                        "title": "Phone Number",
-                        "description": "Phone number for the new user"
+                    "phoneNumbers": {
+                        "type": "string"
+                    },
+                    "web3Wallets": {
+                        "type": "string"
                     },
                     "username": {
-                        "type": "string",
-                        "title": "Username",
-                        "description": "Username for the new user"
+                        "type": "string"
                     },
-                    "publicMetadata": {
-                        "type": "object",
-                        "title": "Public Metadata",
-                        "description": "Public metadata for the user"
+                    "password": {
+                        "type": "string"
                     },
-                    "privateMetadata": {
-                        "type": "object",
-                        "title": "Private Metadata",
-                        "description": "Private metadata for the user"
+                    "passwordDigest": {
+                        "type": "string"
                     },
                     "skipPasswordChecks": {
-                        "type": "boolean",
-                        "title": "Skip Password Checks",
-                        "description": "Skip password policy checks",
-                        "default": false
+                        "type": "boolean"
+                    },
+                    "skipPasswordRequirement": {
+                        "type": "boolean"
+                    },
+                    "backupCodes": {
+                        "type": "string"
+                    },
+                    "deleteSelfEnabled": {
+                        "type": "boolean"
                     }
-                },
-                "required": ["emailAddress"]
+                }
             },
             "inspector": {
                 "inputs": {
-                    "emailAddress": {
+                    "externalId": {
                         "type": "text",
+                        "label": "External ID",
+                        "tooltip": "The ID of the user as used in your external systems or your previous authentication solution. Must be unique across your instance.",
                         "index": 1
                     },
                     "firstName": {
                         "type": "text",
+                        "label": "First Name",
+                        "tooltip": "The first name to assign to the user.",
                         "index": 2
                     },
                     "lastName": {
                         "type": "text",
+                        "label": "Last Name", 
+                        "tooltip": "The last name to assign to the user.",
                         "index": 3
                     },
-                    "password": {
-                        "type": "password",
+                    "emailAddresses": {
+                        "type": "textarea",
+                        "label": "Email Addresses",
+                        "tooltip": "Email addresses to add to the user (one per line or comma separated). Must be unique across your instance. The first email address will be set as the user's primary email address.",
                         "index": 4
                     },
-                    "phoneNumber": {
-                        "type": "text",
+                    "phoneNumbers": {
+                        "type": "textarea",
+                        "label": "Phone Numbers",
+                        "tooltip": "Phone numbers to add to the user (one per line or comma separated). Must be unique across your instance. The first phone number will be set as the user's primary phone number.",
                         "index": 5
+                    },
+                    "web3Wallets": {
+                        "type": "textarea",
+                        "label": "Web3 Wallets",
+                        "tooltip": "Web3 wallets to add to the user (one per line or comma separated). Must be unique across your instance. The first wallet will be set as the user's primary wallet.",
+                        "index": 6
                     },
                     "username": {
                         "type": "text",
-                        "index": 6
-                    },
-                    "publicMetadata": {
-                        "type": "code",
+                        "label": "Username",
+                        "tooltip": "The username to give to the user. It must be unique across your instance.",
                         "index": 7
                     },
-                    "privateMetadata": {
-                        "type": "code",
+                    "password": {
+                        "type": "text",
+                        "label": "Password",
+                        "tooltip": "The plaintext password to give the user. Must be at least 8 characters long, and can not be in any list of hacked passwords.",
                         "index": 8
                     },
-                    "skipPasswordChecks": {
-                        "type": "checkbox",
+                    "passwordDigest": {
+                        "type": "text",
+                        "label": "Password Digest",
+                        "tooltip": "In case you already have the password digests and not the passwords, you can use them for the newly created user via this property.",
                         "index": 9
+                    },
+                    "skipPasswordChecks": {
+                        "type": "toggle",
+                        "label": "Skip Password Checks",
+                        "tooltip": "When set to true all password checks are skipped. It is recommended to use this method only when migrating plaintext passwords to Clerk.",
+                        "index": 10
+                    },
+                    "skipPasswordRequirement": {
+                        "type": "toggle",
+                        "label": "Skip Password Requirement",
+                        "tooltip": "When set to true, password is not required anymore when creating the user and can be omitted. This is useful when you are trying to create a user that doesn't have a password.",
+                        "index": 11
+                    },
+                    "backupCodes": {
+                        "type": "textarea",
+                        "label": "Backup Codes",
+                        "tooltip": "If Backup Codes are configured on the instance, you can provide them to enable it on the newly created user (one per line).",
+                        "index": 13
+                    },
+                    "deleteSelfEnabled": {
+                        "type": "toggle",
+                        "label": "Delete Self Enabled",
+                        "tooltip": "If enabled, user can delete themselves via FAPI.",
+                        "index": 17
                     }
                 }
             }
@@ -111,30 +145,127 @@
     "outPorts": [
         {
             "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "title": "ID"
-                    },
-                    "first_name": {
-                        "type": "string",
-                        "title": "First Name"
-                    },
-                    "last_name": {
-                        "type": "string",
-                        "title": "Last Name"
-                    },
-                    "email_addresses": {
-                        "type": "array",
-                        "title": "Email Addresses",
-                        "items": {
-                            "type": "object"
-                        }
+            "options": [
+                {
+                    "label": "ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "External ID",
+                    "value": "external_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "First Name",
+                    "value": "first_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Last Name",
+                    "value": "last_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Username",
+                    "value": "username",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Email Addresses",
+                    "value": "email_addresses",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                {
+                    "label": "Phone Numbers",
+                    "value": "phone_numbers",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                {
+                    "label": "Web3 Wallets",
+                    "value": "web3_wallets",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                {
+                    "label": "Public Metadata",
+                    "value": "public_metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Private Metadata", 
+                    "value": "private_metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Unsafe Metadata",
+                    "value": "unsafe_metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at", 
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Profile Image URL",
+                    "value": "profile_image_url",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Primary Email Address ID",
+                    "value": "primary_email_address_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Primary Phone Number ID",
+                    "value": "primary_phone_number_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Primary Web3 Wallet ID",
+                    "value": "primary_web3_wallet_id",
+                    "schema": {
+                        "type": "string"
                     }
                 }
-            }
+            ]
         }
     ],
     "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"

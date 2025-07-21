@@ -1,9 +1,8 @@
+'use strict';
+
 module.exports = {
     type: 'apiKey',
     definition: {
-        tokenType: 'authentication-token',
-
-        // Authentication fields shown to user
         auth: {
             apiKey: {
                 type: 'text',
@@ -13,20 +12,9 @@ module.exports = {
         },
 
         // How to extract account name from profile info
-        accountNameFromProfileInfo: 'email',
-
-        // Fetch user profile information
-        requestProfileInfo: async (context) => {
-            // Get user's own profile using the backend API
-            return context.httpRequest({
-                method: 'GET',
-                url: 'https://api.clerk.com/v1/me',
-                headers: {
-                    'Authorization': `Bearer ${context.apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                json: true
-            });
+        accountNameFromProfileInfo: (context) => {
+            const apiKey = context.apiKey;
+            return apiKey.substr(0, 6) + '...' + apiKey.substr(-6);
         },
 
         // Validate credentials
