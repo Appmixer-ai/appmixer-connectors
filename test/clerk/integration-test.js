@@ -15,7 +15,7 @@ describe('Clerk Connector Integration Tests', function() {
     // Skip this if no auth is set
     before(function() {
         try {
-            const appmixerJsonLoc = path.join(os.homedir(), '.config', 'configsdtore', 'appmixer.json');
+            const appmixerJsonLoc = path.join(os.homedir(), '.config', 'configstore', 'appmixer.json');
             const fs = require('fs');
             const content = fs.readFileSync(appmixerJsonLoc, 'utf8');
             const config = JSON.parse(content);
