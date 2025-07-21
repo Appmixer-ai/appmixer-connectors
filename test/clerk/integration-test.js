@@ -250,7 +250,7 @@ describe('Clerk Connector Integration Tests', function() {
 
     it('FindOrganizations', async function() {
         const { execSync } = require('child_process');
-        const input = `{"in":{}}`;
+        const input = '{"in":{}}';
         const cmd = `appmixer test component src/appmixer/clerk/core/FindOrganizations -i '${input}' --json`;
         let output;
         try {
