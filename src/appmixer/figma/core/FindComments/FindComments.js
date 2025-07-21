@@ -78,7 +78,7 @@ module.exports = {
         const { fileId, query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments' });
         }
 
         // https://www.figma.com/developers/api#comments-get

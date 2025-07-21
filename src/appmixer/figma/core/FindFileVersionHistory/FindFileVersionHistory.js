@@ -21,7 +21,7 @@ module.exports = {
         const { fileId, outputType } = context.messages?.in?.content || {};
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Versions', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Versions' });
         }
 
         // https://www.figma.com/developers/api#file-versions-get
