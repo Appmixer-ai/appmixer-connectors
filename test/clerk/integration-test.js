@@ -120,45 +120,6 @@ describe('Clerk Connector Integration Tests', function() {
         console.log('CreateEmail result:', result);
     });
 
-    it('VerifyEmail', async function() {
-        if (!emailId) {
-            throw new Error('No emailId available from CreateEmail test');
-        }
-        const { execSync } = require('child_process');
-        const input = `{"in":{"emailId":"${emailId}"}}`;
-        const cmd = `appmixer test component src/appmixer/clerk/core/VerifyEmail -i '${input}' --json`;
-        let output;
-        try {
-            output = execSync(cmd, { encoding: 'utf8' });
-        } catch (err) {
-            // If 404, treat as non-fatal and log warning
-            if (err.stdout && err.stdout.includes('404')) {
-                console.warn('VerifyEmail: 404 Not Found (non-fatal, expected in some test environments)');
-                return;
-            }
-            throw new Error(`VerifyEmail failed: ${err.stdout || err.message}`);
-        }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id || result.id !== emailId) {
-            throw new Error('VerifyEmail did not return the expected email id');
-        }
-        console.log('VerifyEmail result:', result);
-    });
-
     it('DeleteEmail', async function() {
         if (!emailId) {
             throw new Error('No emailId available from CreateEmail test');

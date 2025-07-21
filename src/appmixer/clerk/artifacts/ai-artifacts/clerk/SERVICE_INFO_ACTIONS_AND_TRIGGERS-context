@@ -44,7 +44,6 @@ Authentication details:
 
 ### Email Management
 1. **CreateEmail** - Create a new email address for a user
-2. **VerifyEmail** - Verify an email address
 3. **DeleteEmail** - Delete an email address
 
 ## API Endpoints
