@@ -817,10 +817,11 @@ Desired order of attributes in `component.json`:
 4. `author`
 5. `version`
 6. `auth`
-7. `inPorts`
-8. `properties`
-9. `outPorts`
-10. `icon`
+7. `quota`
+8. `inPorts`
+9. `properties`
+10. `outPorts`
+11. `icon`
 
 ### Component Behavior (JavaScript)
 
