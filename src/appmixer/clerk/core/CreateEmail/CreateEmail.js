@@ -2,14 +2,15 @@
 
 module.exports = {
     async receive(context) {
+
         const { userId, email } = context.messages.in.content;
 
         if (!userId) {
-            throw new Error('User ID is required');
+            throw new context.CancelError('User ID is required');
         }
 
         if (!email) {
-            throw new Error('Email address is required');
+            throw new context.CancelError('Email address is required');
         }
 
         // Prepare the request body

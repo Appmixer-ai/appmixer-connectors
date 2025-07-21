@@ -26,7 +26,7 @@ module.exports = {
                     ? JSON.parse(requestHeaders)
                     : requestHeaders;
             } catch (error) {
-                throw new Error('Invalid JSON format for request headers');
+                throw new context.CancelError('Invalid JSON format for request headers');
             }
         }
 
@@ -43,8 +43,7 @@ module.exports = {
             method: 'POST',
             url: `https://api.clerk.com/v1/sessions/${sessionId}/refresh`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: requestBody
         });
