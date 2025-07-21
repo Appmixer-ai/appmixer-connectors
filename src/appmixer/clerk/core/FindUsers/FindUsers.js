@@ -157,7 +157,6 @@ module.exports = {
             emailAddress,
             username,
             phoneNumber,
-            userId,
             outputType = 'array'
         } = context.messages.in.content;
 
@@ -169,10 +168,9 @@ module.exports = {
 
         // Build query parameters
         const queryParams = new URLSearchParams();
-        if (emailAddress) queryParams.append('email_address', emailAddress);
-        if (username) queryParams.append('username', username);
-        if (phoneNumber) queryParams.append('phone_number', phoneNumber);
-        if (userId) queryParams.append('user_id', userId);
+        if (emailAddress) queryParams.append('email_address_query', emailAddress);
+        if (username) queryParams.append('username_query', username);
+        if (phoneNumber) queryParams.append('phone_number_query', phoneNumber);
 
         // Make API request
         const { data } = await context.httpRequest({
@@ -186,8 +184,9 @@ module.exports = {
         // Extract users array from response
         const users = data && Array.isArray(data) ? data : [];
 
-        // For Find components, we return empty arrays instead of going to notFound
-        // This is the expected behavior for search/find operations
+        if (users.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         // Use lib function to handle different output types
         return lib.sendArrayOutput({ context, records: users, outputType });

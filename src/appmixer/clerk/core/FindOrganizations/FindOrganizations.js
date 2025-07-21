@@ -74,24 +74,21 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Organizations' });
         }
 
-        // Build query parameters
-        const queryParams = new URLSearchParams();
-        if (query) queryParams.append('query', query);
-
-        // Make API request
+        // Make API request with optional query parameter
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.clerk.com/v1/organizations${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+            url: `https://api.clerk.com/v1/organizations${query ? `?query=${encodeURIComponent(query)}` : ''}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
         // Extract organizations array from response
-        const organizations = data && Array.isArray(data) ? data : [];
+        const organizations = Array.isArray(data?.data) ? data?.data : [];
 
-        // For Find components, we return empty arrays instead of going to notFound
-        // This is the expected behavior for search/find operations
+        if (organizations.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         // Use lib function to handle different output types
         return lib.sendArrayOutput({ context, records: organizations, outputType });

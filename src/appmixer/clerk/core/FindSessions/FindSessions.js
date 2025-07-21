@@ -74,6 +74,11 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Sessions' });
         }
 
+        // At least one of client_id or user_id parameters should be provided.
+        if (!userId && !clientId) {
+            throw new context.CancelError('At least one of User ID or Client ID is required');
+        }
+
         // Build query parameters
         const queryParams = new URLSearchParams();
         if (userId) queryParams.append('user_id', userId);
