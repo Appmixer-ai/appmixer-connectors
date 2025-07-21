@@ -1,10 +1,8 @@
 /**
  * Integration test for Clerk connector
  * This test runs components in sequence to test their interactions
+ * It required a valid Clerk API set during `appmixer test auth login`
  */
-
-
-'use strict';
 
 describe('Clerk Connector Integration Tests', function() {
     this.timeout(10000); // 10 second timeout
