@@ -103,8 +103,9 @@ module.exports = {
             return context.sendJson({ sessions }, 'out');
         }
 
-        // For Find components, we don't go to notFound for empty arrays
-        // Instead we return empty results in the specified format
+        if (sessions.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         // Use lib function to handle different output types
         return lib.sendArrayOutput({ context, records: sessions, outputType });
