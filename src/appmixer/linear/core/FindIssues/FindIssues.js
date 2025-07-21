@@ -21,7 +21,7 @@ module.exports = {
         const { query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Issues', value: 'data.issues' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Issues' });
         }
 
         // Build GraphQL query for finding issues

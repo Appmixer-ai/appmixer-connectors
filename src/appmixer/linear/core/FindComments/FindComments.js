@@ -16,7 +16,7 @@ module.exports = {
         const { query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments', value: 'data.comments' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments' });
         }
 
         // Build GraphQL query for finding comments
