@@ -6,11 +6,16 @@ module.exports = {
 
     definition: {
 
-        scope: [],
+        scope: ['user:read:user'],
 
-        scopeDelimiter: ' ',
-
-        authUrl: 'https://zoom.us/oauth/authorize',
+        authUrl: (context) => {
+            return 'https://zoom.us/oauth/authorize?' +
+                'response_type=code&' +
+                `client_id=${encodeURIComponent(context.clientId)}&` +
+                `redirect_uri=${encodeURIComponent(context.callbackUrl)}&` +
+                `state=${encodeURIComponent(context.ticket)}&` +
+                `scope=${context.scope.join(',')}`;
+        },
 
         requestAccessToken: 'https://zoom.us/oauth/token',
 

@@ -20,7 +20,7 @@ module.exports = {
         // https://developers.zoom.us/docs/api/meetings/#tag/webinars/GET/users/{userId}/webinars
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.zoom.us/v2/users/me/webinars`,
+            url: 'https://api.zoom.us/v2/users/me/webinars',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },
