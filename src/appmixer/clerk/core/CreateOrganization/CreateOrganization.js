@@ -1,19 +1,22 @@
+/* eslint-disable camelcase */
 
 'use strict';
 
 module.exports = {
     async receive(context) {
-        const { name, slug, maxAllowedMemberships, publicMetadata, privateMetadata } = context.messages.in.content;
 
-        // Prepare the request body
-        const body = {};
-        if (name) body.name = name;
-        if (slug) body.slug = slug;
-        if (maxAllowedMemberships) body.max_allowed_memberships = maxAllowedMemberships;
-        if (publicMetadata) body.public_metadata = publicMetadata;
-        if (privateMetadata) body.private_metadata = privateMetadata;
+        const {
+            name,
+            slug,
+            max_allowed_memberships
+        } = context.messages.in.content;
 
-        // Make API request
+        if (!name) {
+            throw new context.CancelError('Missing required input: name');
+        }
+
+        const body = { name, slug, max_allowed_memberships };
+
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.clerk.com/v1/organizations',
@@ -23,7 +26,6 @@ module.exports = {
             data: body
         });
 
-        // Return the created organization
         return context.sendJson(data, 'out');
     }
 };

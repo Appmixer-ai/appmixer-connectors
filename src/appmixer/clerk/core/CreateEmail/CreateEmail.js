@@ -3,20 +3,20 @@
 
 module.exports = {
     async receive(context) {
-        const { userId, emailAddress } = context.messages.in.content;
+        const { userId, email } = context.messages.in.content;
 
         if (!userId) {
             throw new Error('User ID is required');
         }
 
-        if (!emailAddress) {
+        if (!email) {
             throw new Error('Email address is required');
         }
 
         // Prepare the request body
         const body = {
             user_id: userId,
-            email_address: emailAddress
+            email_address: email
         };
 
         // Make API request
