@@ -7,6 +7,93 @@ const path = require('path');
  * It required a valid Clerk API set during `appmixer test auth login`
  */
 
+/**
+ * Helper function to extract the last valid JSON object with an id from output string
+ * @param {string} output - Command output string to parse
+ * @param {Object} [options] - Additional options
+ * @param {string} [options.requiredId] - If provided, will only match objects with this specific id
+ * @param {function} [options.validate] - Custom validation function for the parsed object
+ * @returns {Object} Parsed JSON object
+ * @throws {Error} If no valid JSON object is found
+ */
+function extractLastJsonWithId(output, options = {}) {
+    let result = null;
+    const lines = output.split(/\r?\n/).reverse();
+
+    for (const line of lines) {
+        try {
+            // Try parsing the entire line as JSON first
+            const obj = JSON.parse(line);
+
+            // Check if object is valid based on different test scenarios
+            if (obj) {
+                // If obj is an array, try to find a valid object in it
+                if (Array.isArray(obj)) {
+                    const validObj = obj.find(item =>
+                        item && (item.id ||
+                                 (options.validate && options.validate(item)) ||
+                                 item.result ||
+                                 item.count !== undefined)
+                    );
+                    if (validObj) {
+                        result = validObj;
+                        break;
+                    }
+                }
+
+                // Direct object validation
+                if (
+                    obj.id ||
+                    (options.validate && options.validate(obj)) ||
+                    obj.result ||
+                    obj.count !== undefined
+                ) {
+                    // If requiredId is provided, check for exact match
+                    if (options.requiredId && obj.id !== options.requiredId) {
+                        continue;
+                    }
+
+                    result = obj;
+                    break;
+                }
+            }
+        } catch (e) {
+            // If not a full JSON line, try parsing from first '{' onwards
+            const jsonStart = line.indexOf('{');
+            if (jsonStart !== -1) {
+                const jsonStr = line.slice(jsonStart);
+                try {
+                    const obj = JSON.parse(jsonStr);
+                    if (obj) {
+                        if (
+                            obj.id ||
+                            (options.validate && options.validate(obj)) ||
+                            obj.result ||
+                            obj.count !== undefined
+                        ) {
+                            // If requiredId is provided, check for exact match
+                            if (options.requiredId && obj.id !== options.requiredId) {
+                                continue;
+                            }
+
+                            result = obj;
+                            break;
+                        }
+                    }
+                } catch (parseError) {
+                    // Skip if parsing fails
+                }
+            }
+        }
+    }
+
+    if (!result) {
+        console.error('Parsing failed. Full output:', output);
+        throw new Error('No valid JSON object found in output');
+    }
+    return result;
+}
+
 describe('Clerk Connector Integration Tests', function() {
     this.timeout(10000); // 10 second timeout
 
@@ -41,26 +128,8 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`CreateUser failed: ${err.stdout || err.message}`);
         }
-        // Find the last valid JSON object in the output (the result)
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            // Try to extract JSON substring from the line
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('No JSON output with id found from CreateUser');
-        }
+
+        const result = extractLastJsonWithId(output);
         userId = result.id;
         console.log('CreateUser result:', result);
     });
@@ -78,24 +147,11 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`GetUser failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id === userId) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id || result.id !== userId) {
-            throw new Error('GetUser did not return the expected user id');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            requiredId: userId,
+            validate: obj => obj.id === userId
+        });
         console.log('GetUser result:', result);
     });
 
@@ -112,25 +168,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`FindUsers failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    // FindUsers now returns {result: [...], count: X} format
-                    if (obj && (Array.isArray(obj.result) || obj.count !== undefined)) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('FindUsers did not return expected result format');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => (Array.isArray(obj.result) || obj.count !== undefined)
+        });
         console.log('FindUsers result:', result);
     });
 
@@ -152,24 +193,8 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`CreateEmail failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id) {
-            throw new Error('CreateEmail did not return an email id');
-        }
+
+        const result = extractLastJsonWithId(output);
         emailId = result.id;
         console.log('CreateEmail result:', result);
     });
@@ -204,24 +229,8 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`CreateOrganization failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id) {
-            throw new Error('CreateOrganization did not return an organization id');
-        }
+
+        const result = extractLastJsonWithId(output);
         organizationId = result.id;
         console.log('CreateOrganization result:', result);
     });
@@ -245,24 +254,11 @@ describe('Clerk Connector Integration Tests', function() {
             }
             throw new Error(`GetOrganization failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id || result.id !== organizationId) {
-            throw new Error('GetOrganization did not return the expected organization id');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            requiredId: organizationId,
+            validate: obj => obj.id === organizationId
+        });
         console.log('GetOrganization result:', result);
     });
 
@@ -276,25 +272,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`FindOrganizations failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    // FindOrganizations now returns {result: [...], count: X} format
-                    if (obj && (Array.isArray(obj.result) || obj.count !== undefined)) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('FindOrganizations did not return expected result format');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => (Array.isArray(obj.result) || obj.count !== undefined)
+        });
         console.log('FindOrganizations result:', result);
     });
 
@@ -346,24 +327,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`FindSessions failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && Array.isArray(obj.sessions)) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !Array.isArray(result.sessions)) {
-            throw new Error('FindSessions did not return a sessions array');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => Array.isArray(obj.sessions)
+        });
         console.log('FindSessions result:', result);
     });
 
@@ -388,24 +355,8 @@ describe('Clerk Connector Integration Tests', function() {
             }
             throw new Error(`CreateSession failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id) {
-            throw new Error('CreateSession did not return a session id');
-        }
+
+        const result = extractLastJsonWithId(output);
         sessionId = result.id;
         console.log('CreateSession result:', result);
     });
@@ -425,24 +376,11 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`GetSession failed: ${err.stdout || err.message}`);
         }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj && obj.id === sessionId) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result || !result.id || result.id !== sessionId) {
-            throw new Error('GetSession did not return the expected session id');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            requiredId: sessionId,
+            validate: obj => obj.id === sessionId
+        });
         console.log('GetSession result:', result);
     });
 
@@ -535,25 +473,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`LockUser failed: ${err.stdout || err.message}`);
         }
-        // LockUser may return empty object on success or user object
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('LockUser did not return any result');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => obj !== null
+        });
         console.log('LockUser result:', result);
     });
 
@@ -570,25 +493,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`UnlockUser failed: ${err.stdout || err.message}`);
         }
-        // UnlockUser may return empty object on success or user object
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('UnlockUser did not return any result');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => obj !== null
+        });
         console.log('UnlockUser result:', result);
     });
 
@@ -605,25 +513,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`BanUser failed: ${err.stdout || err.message}`);
         }
-        // BanUser may return empty object on success or user object
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('BanUser did not return any result');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => obj !== null
+        });
         console.log('BanUser result:', result);
     });
 
@@ -640,25 +533,10 @@ describe('Clerk Connector Integration Tests', function() {
         } catch (err) {
             throw new Error(`UnbanUser failed: ${err.stdout || err.message}`);
         }
-        // UnbanUser may return empty object on success or user object
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        if (!result) {
-            throw new Error('UnbanUser did not return any result');
-        }
+
+        const result = extractLastJsonWithId(output, {
+            validate: obj => obj !== null
+        });
         console.log('UnbanUser result:', result);
     });
 
