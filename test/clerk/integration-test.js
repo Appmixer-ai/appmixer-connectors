@@ -9,6 +9,20 @@ describe('Clerk Connector Integration Tests', function() {
 
     let userId;
 
+    // Skip this if no auth is set
+    before(function() {
+        const os = require('os');
+        const path = require('path');
+        const appmixerJsonLoc = path.join(os.homedir(), '.config', 'configstore', 'appmixer.json');
+        const fs = require('fs');
+        const content = fs.readFileSync(appmixerJsonLoc, 'utf8');
+        const config = JSON.parse(content);
+        if (!config['appmixer:clerk'] || !config['appmixer:clerk'].authFields || !config['appmixer:clerk'].authFields.apiKey) {
+            console.warn('Skipping Clerk integration tests: No API key set in appmixer.json');
+            this.skip();
+        }
+    });
+
     it('CreateUser', async function() {
         const { execSync } = require('child_process');
         const uniqueEmail = `test.user+${Date.now()}@example.com`;
