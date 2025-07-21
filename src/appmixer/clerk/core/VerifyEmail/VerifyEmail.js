@@ -6,7 +6,7 @@ module.exports = {
         const { emailId, code } = context.messages.in.content;
 
         if (!emailId) {
-            throw new Error('Email ID is required');
+            throw new context.CancelError('Email ID is required');
         }
 
         // Prepare the request body

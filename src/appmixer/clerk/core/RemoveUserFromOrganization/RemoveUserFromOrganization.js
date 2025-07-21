@@ -7,10 +7,10 @@ module.exports = {
         const { id, userId } = context.messages.in.content;
 
         if (!id) {
-            throw new context.CancelError('Missing required input: id');
+            throw new context.CancelError('Organization ID is required');
         }
         if (!userId) {
-            throw new context.CancelError('Missing required input: userId');
+            throw new context.CancelError('User ID is required');
         }
 
         await context.httpRequest({
