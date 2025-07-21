@@ -1,16 +1,19 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
-        const { id } = context.messages.in.content;
+        const { userId } = context.messages.in.content;
 
         // https://clerk.com/docs/references/backend/overview#sessions
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.clerk.com/v1/sessions/${id}/revoke`,
+            url: 'https://api.clerk.com/v1/sessions',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            data: {
+                user_id: userId
             }
         });
 
