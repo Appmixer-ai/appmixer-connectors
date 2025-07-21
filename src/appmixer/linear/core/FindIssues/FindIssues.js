@@ -105,6 +105,11 @@ module.exports = {
 
         const records = data.data.issues.nodes || [];
 
+        // Send to notFound port if no issues are found
+        if (records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };
