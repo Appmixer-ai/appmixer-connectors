@@ -40,7 +40,7 @@ var clientIP = context.getVariable('request.header.X-Forwarded-For') ||
 
 print('Raw client IP: ' + clientIP);
 
-if (clientIP && clientIP.indexOf(',') > -1) {
+if (clientIP?.indexOf(',') > -1) {
     clientIP = clientIP.split(',')[0].trim();
 }
 

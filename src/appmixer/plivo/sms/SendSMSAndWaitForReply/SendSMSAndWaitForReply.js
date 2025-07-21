@@ -14,7 +14,7 @@ async function registerWebhook(context, client) {
         { messageUrl: context.getWebhookUrl() }
     );
 
-    if (response && response.message === 'created') {
+    if (response?.message === 'created') {
         await context.stateSet('appId', response.appId);
         return response;
     } else {

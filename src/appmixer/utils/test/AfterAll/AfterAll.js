@@ -125,7 +125,7 @@ module.exports = {
                     });
                 }
             } finally {
-                lock && lock.unlock();
+                lock?.unlock();
             }
         }
     },
@@ -178,7 +178,7 @@ module.exports = {
                 await context.stateSet('scope', state.scope);
             }
         } finally {
-            lock && lock.unlock();
+            lock?.unlock();
         }
     }
 };

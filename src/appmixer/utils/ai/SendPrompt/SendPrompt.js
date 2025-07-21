@@ -35,7 +35,7 @@ module.exports = {
 
         let answer = '';
 
-        if (data && data.choices) {
+        if (data?.choices) {
             answer = data.choices[0].message.content;
         }
 

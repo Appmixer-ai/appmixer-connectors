@@ -19,8 +19,8 @@ module.exports = {
             if (note.tagGuids) {
                 let check = false;
                 if (note.tagGuids.length) {
-                    for (let i = 0; i < note.tagGuids.length; i++) {
-                        if (note.tagGuids[i] === tag) {
+                    for (const tagGuid of note.tagGuids) {
+                        if (tagGuid === tag) {
                             check = true;
                         }
                     }

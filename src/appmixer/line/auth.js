@@ -20,7 +20,7 @@ module.exports = {
                 'Authorization': `Bearer ${context.channelAccessToken}`
             };
             const { data } = await context.httpRequest({ url, method: 'GET', headers });
-            if (data && data.userId) {
+            if (data?.userId) {
                 return data;
             } else {
                 throw new Error('Could not retrieve LINE bot info.');

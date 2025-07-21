@@ -140,7 +140,7 @@ class ZohoClient {
         }
         const arrayRecord = response[arrayDataKey];
         const result = Array.isArray(arrayRecord) ? arrayRecord.pop() : null;
-        if (result && result.status && result.status === 'error') {
+        if (result?.status === 'error') {
             const error = new Error(result.message);
             error.code = result.code;
             error.data = result;
@@ -193,7 +193,7 @@ class ZohoClient {
         return this.client(request)
             .then(response => response.data)
             .catch(e => {
-                if (e.response && e.response.data) {
+                if (e.response?.data) {
                     if (Array.isArray(e.response.data)) {
                         const errorData = e.response.data[0];
                         throw errorData;

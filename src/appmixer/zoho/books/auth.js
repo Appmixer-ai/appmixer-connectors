@@ -83,7 +83,7 @@ module.exports = {
             const user = await validateUser(context);
             if (region) {
                 user.region = region;
-            } else if (context.profileInfo && context.profileInfo.region) {
+            } else if (context.profileInfo?.region) {
                 user.region = context.profileInfo.region;
             }
             return user;

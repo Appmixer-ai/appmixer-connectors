@@ -76,9 +76,9 @@ module.exports = {
         let deletedItems = await context.store.find(storeId, { query: { key: { $nin: rowIds } } });
         deletedItems = JSON.parse(JSON.stringify(deletedItems));
 
-        for (let i = 0; i < deletedItems.length; i++) {
-            await context.store.remove(storeId, deletedItems[i].key + '');
-            await context.sendJson({ row: deletedItems[i].value }, 'out');
+        for (const deletedItem of deletedItems) {
+            await context.store.remove(storeId, deletedItem.key + '');
+            await context.sendJson({ row: deletedItem.value }, 'out');
         }
     },
 

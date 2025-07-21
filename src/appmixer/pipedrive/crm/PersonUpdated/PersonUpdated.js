@@ -13,7 +13,7 @@ module.exports = {
 
     async receive(context) {
         const { data } = context.messages.webhook.content;
-        if (data && data.meta && data.meta.action === 'change' && data.meta.entity === 'person') {
+        if (data?.meta && data.meta.action === 'change' && data.meta.entity === 'person') {
             const addTime = new Date(data.data.add_time).getTime();
             const updateTime = new Date(data.data.update_time).getTime();
 

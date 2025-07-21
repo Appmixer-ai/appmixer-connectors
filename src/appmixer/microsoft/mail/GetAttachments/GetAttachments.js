@@ -21,8 +21,7 @@ module.exports = {
             return context.sendJson(value, 'out');
         } else {
             // one attachment at a time.
-            for (let i = 0; i < value.length; i++) {
-                const attachment = value[i];
+            for (const attachment of value) {
                 await context.sendJson(attachment, 'out');
             }
         }

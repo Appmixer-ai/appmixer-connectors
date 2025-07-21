@@ -81,7 +81,7 @@ module.exports = {
             'filter': input['filter']
         };
 
-        if (override && override.query) {
+        if (override?.query) {
             Object.keys(override.query).forEach(parameter => {
                 queryParameters[parameter] = override.query[parameter];
             });

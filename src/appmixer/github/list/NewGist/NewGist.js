@@ -1,5 +1,4 @@
 'use strict';
-const Promise = require('bluebird');
 const lib = require('../../lib');
 
 /**
@@ -16,9 +15,9 @@ module.exports = {
         const { diff, actual } = lib.getNewItems(known, res.data, 'id');
 
         if (diff.length) {
-            await Promise.map(diff, gist => {
+            await Promise.all(diff.map(gist => {
                 context.sendJson(gist, 'gist');
-            });
+            }));
         }
         await context.saveState({ known: actual });
     }

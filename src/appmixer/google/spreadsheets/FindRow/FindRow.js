@@ -31,7 +31,7 @@ function findRows(rows, content) {
                 break;
             }
             case 'contains': {
-                push = cell && cell.includes(content.value);
+                push = cell?.includes(content.value);
                 break;
             }
             case 'doesNotContain': {

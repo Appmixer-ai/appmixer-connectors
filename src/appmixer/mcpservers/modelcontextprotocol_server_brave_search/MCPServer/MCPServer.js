@@ -13,7 +13,7 @@ module.exports = {
             // Filter out tools that are not checked by the user.
             const selectedTools = context.properties.tools;
             let tools = result.tools || [];
-            if (selectedTools && selectedTools.length > 0) {
+            if (selectedTools?.length > 0) {
                 tools = tools.filter(tool => selectedTools.includes(tool.name));
             }
 

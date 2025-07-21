@@ -1,6 +1,5 @@
 'use strict';
 const lib = require('../../lib');
-const Promise = require('bluebird');
 
 /**
  * Component which triggers whenever new event is created
@@ -19,9 +18,10 @@ module.exports = {
         const { diff, actual } = lib.getNewItems(known, res.data, 'id');
 
         if (diff.length) {
-            await Promise.map(diff, event => {
+            await Promise.all(diff.map(event => {
                 return context.sendJson(event, 'event');
-            });
+
+            }));
         }
         await context.saveState({ known: actual });
     }

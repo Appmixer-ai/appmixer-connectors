@@ -92,15 +92,11 @@ module.exports = {
 
                 const changeStream = getChangeStream('update', collection, { resumeToken, startAtOperationTime });
 
-                try {
-                    while (await changeStream.hasNext()) {
-                        const next = await changeStream.next();
-                        const jsonDoc = JSON.parse(JSON.stringify(next.documentKey));
-                        await context.sendJson({ document: { ...jsonDoc, ...next.updateDescription } }, 'out');
-                        await context.stateSet('resumeToken', changeStream.resumeToken['_data']);
-                    }
-                } catch (error) {
-                    throw error;
+                while (await changeStream.hasNext()) {
+                    const next = await changeStream.next();
+                    const jsonDoc = JSON.parse(JSON.stringify(next.documentKey));
+                    await context.sendJson({ document: { ...jsonDoc, ...next.updateDescription } }, 'out');
+                    await context.stateSet('resumeToken', changeStream.resumeToken['_data']);
                 }
             } else {
                 const storeId = await context.stateGet('storeId');

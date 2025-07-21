@@ -104,7 +104,7 @@ async function writeInsert(context) {
         ? { timePartitioning: { type: timePartition, field: timePartitionField } }
         : {};
 
-    const clusteringOptions = clusteringFields && clusteringFields.length
+    const clusteringOptions = clusteringFields?.length
         ? { fields: clusteringFields }
         : {};
 

@@ -46,7 +46,7 @@ module.exports = {
             resource
         });
 
-        if (response && response.updates) {
+        if (response?.updates) {
             const updates = response.updates;
             return context.sendJson({
                 spreadsheetId: updates.spreadsheetId,
