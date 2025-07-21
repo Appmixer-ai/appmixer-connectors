@@ -1,129 +1,51 @@
 # Clerk Connector
 
-Clerk is a comprehensive authentication and user management service that provides features for user sign-up, sign-in, and profile management. This connector enables integration with Clerk's Backend API to manage users, organizations, and sessions.
+Clerk connector for Appmixer enables integration with Clerk's Backend API to manage users, organizations, and sessions.
 
 ## Authentication
 
-The connector uses API Key authentication. You will need a Clerk Secret Key to authenticate:
-
-1. Log in to your [Clerk Dashboard](https://dashboard.clerk.dev/)
-2. Navigate to the API Keys section
-3. Copy the Secret Key (never share this publicly)
+Requires a Clerk Secret Key from your [Clerk Dashboard](https://dashboard.clerk.dev/) API Keys section.
 
 ## Components
 
 ### User Management
-
-- **FindUsers** - Retrieve a list of users with optional filtering
-- **GetUser** - Get details for a specific user
-- **CreateUser** - Create a new user
+- **FindUsers** - Search users by email, username, phone number, or user ID
+- **GetUser** - Get user details by ID
+- **CreateUser** - Create new user
 - **UpdateUser** - Update user properties
-- **DeleteUser** - Delete a user
-- **BanUser** - Ban a user (revoke all sessions)
-- **UnbanUser** - Remove ban from a user
-- **CreateEmail** - Add an email address to a user
-- **DeleteEmail** - Delete an email address from a user
+- **DeleteUser** - Delete user
+- **BanUser** / **UnbanUser** - Ban/unban user
+- **LockUser** / **UnlockUser** - Lock/unlock user account
+- **CreateEmail** / **DeleteEmail** - Manage user email addresses
 
 ### Organization Management
-
-- **FindOrganizations** - Retrieve a list of organizations
-- **GetOrganization** - Get details for a specific organization
-- **CreateOrganization** - Create a new organization
+- **FindOrganizations** - Search organizations by query, user membership, or members count
+- **GetOrganization** - Get organization details by ID
+- **CreateOrganization** - Create new organization
 - **UpdateOrganization** - Update organization properties
-- **DeleteOrganization** - Delete an organization
-- **AddUsertoOrganization** - Add a user to an organization
-- **RemoveUserFromOrganization** - Remove a user from an organization
+- **DeleteOrganization** - Delete organization
+- **AddUsertoOrganization** / **RemoveUserFromOrganization** - Manage organization membership
 
 ### Session Management
+- **FindSessions** - Search sessions by user ID, client ID, or session ID
+- **GetSession** - Get session details by ID
+- **CreateSession** - Create session (testing only)
+- **RefreshSession** - Refresh existing session
+- **RevokeSession** - Revoke session
 
-- **FindSessions** - Retrieve a list of sessions
-- **GetSession** - Get details for a specific session
-- **RevokeSession** - Revoke a session
+## Find Components Features
 
-## Validation Instructions
+All Find components support multiple output formats:
+- **array** (default) - All items at once
+- **object** - Items one at a time
+- **first** - First matching item only
+- **file** - Save to CSV file
 
-To validate this connector, follow these steps:
-
-1. Set your Clerk API Key as an environment variable:
-   ```bash
-   export CLERK_API_KEY=your_secret_key_here
-   ```
-
-2. Login to the auth module:
-   ```bash
-   appmixer test auth login src/appmixer/clerk/auth.js
-   ```
-
-3. Run the connector tests:
-   ```bash
-   appmixer-dev:run_connector_tests -c clerk
-   ```
-
-## Validation Status
-
-All core components have been tested and validated:
-
-| Component | Status | 
-|-----------|--------|
-| FindUsers |  |
-| GetUser | ✅ |
-| CreateUser | ✅ |
-| UpdateUser |  |
-| DeleteUser | ✅ |
-| BanUser | ✅ |
-| UnbanUser | ✅ |
-| CreateEmail | ✅ |
-| DeleteEmail | ✅* |
-| CreateOrganization | ✅ |
-| GetOrganization | ✅ |
-| FindOrganizations |  |
-| DeleteOrganization | ✅ |
-| AddUsertoOrganization | ✅ |
-| RemoveUserFromOrganization | ✅ |
-| FindSessions | ✅ |
-| GetSession | ⏳ |
-| RevokeSession | ⏳ |
+Find components return all matching results without pagination limits.
 
 ## Rate Limits
 
-Clerk API has rate limits that this connector respects:
-- Create users endpoint: 20 requests per 10 seconds
-- All other endpoints: 100 requests per 10 seconds
+- Create users: 20 requests per 10 seconds
+- Other endpoints: 100 requests per 10 seconds
 
-These limits are configured in the `quota.js` file.
-
-## Fixed Issues
-
-1. Standardized all components with consistent patterns:
-   - Using `context.auth.apiKey` for authentication
-   - Using full URLs with the base API endpoint (https://api.clerk.com/v1/)
-   - Adding proper Content-Type headers
-   - Using consistent JSON parsing and response handling
-   - Properly retrieving inputs from `context.messages.in.content`
-
-2. Fixed syntax errors in the following components:
-   - DeleteUser
-   - FindOrganizations
-   - GetOrganization
-   - UpdateUser
-   - UpdateOrganization
-   - DeleteOrganization
-   - BanUser
-   - UnbanUser
-   - CreateEmail
-   - DeleteEmail
-   - FindSessions
-   - GetSession
-   - RevokeSession
-
-3. Fixed circular JSON errors in:
-   - CreateEmail - Now properly extracts data from response
-   - DeleteEmail - Now properly extracts data from response
-   - GetOrganization - Now properly extracts data from response
-
-4. Created comprehensive tests to validate component functionality:
-   - Test coverage for all User Management components
-   - Test coverage for core Organization Management components
-   - Test coverage for Session Management components
-
-The connector is now ready for production use.
+Rate limits are handled automatically by the connector's quota management.

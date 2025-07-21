@@ -1,58 +1,55 @@
 # Clerk Connector for Appmixer
 
 ## Overview
-Clerk is a comprehensive authentication and user management service that provides features for user sign-up, sign-in, and profile management. This connector will enable integration with Clerk's Backend API to manage users, organizations, and authentication.
+Clerk connector provides integration with Clerk's Backend API for user authentication, organization management, and session handling.
 
-## Authentication Method
-Clerk uses API Key authentication for its Backend API. The authentication requires a Secret Key that can be obtained from the Clerk Dashboard under API Keys section.
+## Authentication
+- **Type**: API Key (Secret Key from Clerk Dashboard)
+- **Header**: `Authorization: Bearer YOUR_SECRET_KEY`
+- **Source**: [Clerk Dashboard](https://dashboard.clerk.dev/) → API Keys
 
-Authentication details:
-- **Type**: API Key
-- **Key Location**: Authorization Header
-- **Format**: `Bearer YOUR_SECRET_KEY`
-- **Documentation**: [Clerk Backend API Authentication](https://clerk.com/docs/references/backend/overview)
-
-## How to obtain API Key
-1. Log in to the [Clerk Dashboard](https://dashboard.clerk.dev/)
-2. Navigate to API Keys section
-3. Copy the Secret Key (it should not be shared publicly)
-
-## Key Components to Implement
+## Components
 
 ### User Management
-1. **ListUsers** - Get a list of all users in the application
-2. **GetUser** - Retrieve details for a specific user
-3. **CreateUser** - Create a new user 
-4. **UpdateUser** - Update user properties
-5. **DeleteUser** - Delete a user
-6. **BanUser** - Ban a user (revoke all sessions)
-7. **UnbanUser** - Remove ban from a user
+- **FindUsers** - Search users with filtering by email, username, phone, or user ID
+- **GetUser** - Retrieve user by ID
+- **CreateUser** - Create new user with email addresses
+- **UpdateUser** - Update user properties and metadata
+- **DeleteUser** - Permanently delete user
+- **BanUser** / **UnbanUser** - Ban/unban user (revokes sessions)
+- **LockUser** / **UnlockUser** - Lock/unlock user account
+- **CreateEmail** / **DeleteEmail** - Manage user email addresses
 
 ### Organization Management
-1. **ListOrganizations** - Get a list of all organizations
-2. **GetOrganization** - Retrieve details for a specific organization
-3. **CreateOrganization** - Create a new organization
-4. **UpdateOrganization** - Update organization properties
-5. **DeleteOrganization** - Delete an organization
-6. **AddUserToOrganization** - Add a user to an organization
-7. **RemoveUserFromOrganization** - Remove a user from an organization
+- **FindOrganizations** - Search with query filters and membership criteria
+- **GetOrganization** - Retrieve organization by ID
+- **CreateOrganization** - Create new organization
+- **UpdateOrganization** - Update organization properties
+- **DeleteOrganization** - Permanently delete organization
+- **AddUsertoOrganization** - Add user with role
+- **RemoveUserFromOrganization** - Remove user from organization
 
 ### Session Management
-1. **ListSessions** - Get a list of all active sessions
-2. **GetSession** - Retrieve details for a specific session
-3. **RevokeSession** - Revoke a specific session
+- **FindSessions** - Search sessions by user, client, or session ID
+- **GetSession** - Retrieve session by ID
+- **CreateSession** - Create session (testing environments only)
+- **RefreshSession** - Refresh session tokens
+- **RevokeSession** - Invalidate session
 
-### Email Management
-1. **CreateEmail** - Create a new email address for a user
-3. **DeleteEmail** - Delete an email address
+## Find Components
+All Find components support flexible output types:
+- **array** - All results in single response
+- **object** - Stream results one at a time
+- **first** - Return first match only
+- **file** - Save results to CSV file
 
 ## API Endpoints
-The Clerk Backend API is available at: `https://api.clerk.com/v1/`
-
-Key endpoints for this connector:
+Base URL: `https://api.clerk.com/v1/`
 - Users: `/users`
 - Organizations: `/organizations`
 - Sessions: `/sessions`
 
 ## Rate Limiting
-Clerk API has rate limiting in place, and the connector should implement proper throttling to handle these limits gracefully.
+- Create users: 20 requests per 10 seconds
+- General API: 100 requests per 10 seconds
+- Managed automatically by connector quota system
