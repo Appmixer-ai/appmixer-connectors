@@ -6,14 +6,12 @@ module.exports = {
         const { id, userId, role = 'org:member' } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Organization ID is required');
+            throw new context.CancelError('Missing required input: id');
         }
-
         if (!userId) {
-            throw new Error('User ID is required');
+            throw new context.CancelError('Missing required input: userId');
         }
 
-        // Make API request to add user to organization
         const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api.clerk.com/v1/organizations/${id}/memberships`,

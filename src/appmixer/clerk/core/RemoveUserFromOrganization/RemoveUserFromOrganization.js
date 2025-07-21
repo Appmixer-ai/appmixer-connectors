@@ -7,16 +7,13 @@ module.exports = {
         const { id, userId } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Organization ID is required');
+            throw new context.CancelError('Missing required input: id');
         }
-
         if (!userId) {
-            throw new Error('User ID is required');
+            throw new context.CancelError('Missing required input: userId');
         }
 
-        // Make API request to remove user from organization
-        // The endpoint expects the user_id, not the membership ID
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
             url: `https://api.clerk.com/v1/organizations/${id}/memberships/${userId}`,
             headers: {
@@ -24,6 +21,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

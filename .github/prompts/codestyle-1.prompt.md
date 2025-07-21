@@ -1,7 +1,7 @@
 ---
 mode: agent
 description: Code style and refactoring rules for Appmixer connectors, specifically focusing on the component.json and behavior files. It is essential to follow these guidelines to ensure consistency and maintainability across all connectors.
-tools: ['codebase', 'editFiles', 'search']
+
 ---
 
 # Appmixer Connector Code Style Guide

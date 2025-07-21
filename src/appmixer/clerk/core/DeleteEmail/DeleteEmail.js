@@ -3,22 +3,20 @@
 
 module.exports = {
     async receive(context) {
-        const { emailId } = context.messages.in.content;
+        const { id } = context.messages.in.content;
 
-        if (!emailId) {
-            throw new Error('Email ID is required');
+        if (!id) {
+            throw new context.CancelError('Missing required input: id');
         }
 
-        // Make API request
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
-            url: `https://api.clerk.com/v1/email_addresses/${emailId}`,
+            url: `https://api.clerk.com/v1/email_addresses/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
-        // Return the result
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
