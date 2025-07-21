@@ -15,10 +15,10 @@ module.exports = {
         }
         const envelopeArgs = context.messages.in.content;
         let docs = envelopeArgs.documents.AND;
-        for (let i = 0; i < docs.length; i++) {
-            docs[i].doc = await context.loadFile(docs[i].document);
-            let fileInfo = await context.getFileInfo(docs[i].document);
-            docs[i].fileName = fileInfo?.filename.split('.')[0];
+        for (const doc of docs) {
+            doc.doc = await context.loadFile(doc.document);
+            let fileInfo = await context.getFileInfo(doc.document);
+            doc.fileName = fileInfo?.filename.split('.')[0];
         }
         const { base_uri: basePath, account_id: accountId } = context.profileInfo.accounts[0];
         let args = {

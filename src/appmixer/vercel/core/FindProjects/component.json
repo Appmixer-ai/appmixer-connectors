@@ -1,0 +1,104 @@
+{
+    "name": "appmixer.vercel.core.FindProjects",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Find Projects",
+    "description": "Retrieve all projects associated with the account or team. Supports filtering by a search query and repository URL.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:vercel"
+    },
+    "quota": {
+        "manager": "appmixer:vercel",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "search": {
+                        "type": "string"
+                    },
+                    "repoUrl": {
+                        "type": "string"
+                    },
+                    "teamId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "search": {
+                        "type": "text",
+                        "tooltip": "A search term to filter projects by name.",
+                        "label": "Search",
+                        "index": 0
+                    },
+                    "repoUrl": {
+                        "type": "text",
+                        "tooltip": "Filter projects by repository URL.",
+                        "label": "Repo Url",
+                        "index": 1
+                    },
+                    "teamId": {
+                        "type": "text",
+                        "tooltip": "Optional team identifier if filtering team projects.",
+                        "label": "Team Id",
+                        "index": 2
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/vercel/core/FindProjects?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMjAwMTA5MDQvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvVFIvMjAwMS9SRUMtU1ZHLTIwMDEwOTA0L0RURC9zdmcxMC5kdGQiPgo8c3ZnIHZlcnNpb249IjEuMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNTEyLjAwMDAwMHB0IiBoZWlnaHQ9IjUxMi4wMDAwMDBwdCIgdmlld0JveD0iMCAwIDUxMi4wMDAwMDAgNTEyLjAwMDAwMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCI+Cgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCw1MTIuMDAwMDAwKSBzY2FsZSgwLjEwMDAwMCwtMC4xMDAwMDApIiBmaWxsPSIjMDAwMDAwIiBzdHJva2U9Im5vbmUiPgo8cGF0aCBkPSJNMjMxMCA1MTA5IGMtNTAyIC01NSAtOTc0IC0yNDkgLTEzNTUgLTU1NiAtMTI5IC0xMDQgLTM0MCAtMzIxIC00MzMgLTQ0NSAtMjY1IC0zNTQgLTQzNCAtNzU4IC00OTggLTExOTMgLTIyIC0xNDcgLTI5IC00MjggLTE1IC01NzUgNDIgLTQzMyAxODAgLTgzMyA0MDUgLTExNzQgNDE0IC02MjkgMTA0NyAtMTAzMiAxNzkxIC0xMTQyIDE0NyAtMjIgNDI4IC0yOSA1NzUgLTE1IDQzMyA0MiA4MzMgMTgwIDExNzQgNDA1IDYyOSA0MTQgMTAzMiAxMDQ3IDExNDIgMTc5MSAyMiAxNDcgMjkgNDI4IDE1IDU3NSAtNTEgNTI0IC0yMzggOTg4IC01NTggMTM4NSAtMTA0IDEyOSAtMzIxIDM0MCAtNDQ1IDQzMyAtMzU0IDI2NSAtNzU1IDQzMiAtMTE5MyA0OTggLTEyMSAxOCAtNDg3IDI2IC02MDUgMTN6IG05MDkgLTIzNDggYzM0NyAtNjA3IDYzMSAtMTEwNSA2MzEgLTExMDcgMCAtMiAtNTY5IC00IC0xMjY1IC00IC02OTYgMCAtMTI2NSAyIC0xMjY1IDUgMCA4IDEyNjMgMjIxNiAxMjY2IDIyMTIgMSAtMSAyODcgLTQ5OSA2MzMgLTExMDZ6Ii8+CjwvZz4KPC9zdmc+"
+}

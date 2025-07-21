@@ -146,15 +146,6 @@ const createDocument = function(context) {
         asset.events = normalizeEvents(events.AND);
     }
 
-    /*
-    Ignore vulnerabilityFindings
-    if (vulnerabilityFindings?.AND.length) {
-        asset.vulnerabilityFindings = vulnerabilityFindings.AND.map(finding => {
-            return { ...finding };
-        });
-    }
-    */
-
     if (type === 'vulnerabilityFindings' && webAppVulnerabilityFindings?.AND?.length) {
         asset.webAppVulnerabilityFindings = webAppVulnerabilityFindings.AND.map(finding => {
             return { ...finding };

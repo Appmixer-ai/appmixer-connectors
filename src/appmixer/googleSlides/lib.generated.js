@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'google-slides-objects-export';
+const DEFAULT_PREFIX = 'googleSlides-objects-export';
 
 module.exports = {
 
@@ -43,7 +43,7 @@ module.exports = {
     },
 
     getProperty(obj, path) {
-        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+        return path.split('.').reduce((acc, part) => acc?.[part], obj);
     },
 
     getOutputPortOptions(context, outputType, itemSchema, { label, value }) {

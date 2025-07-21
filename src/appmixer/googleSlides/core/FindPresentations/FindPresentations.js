@@ -15,6 +15,19 @@ module.exports = {
             folderId = typeof folderLocation === 'string' ? folderLocation : folderLocation.id;
         }
 
+        // Build the query string for Google Drive API
+        let query = "mimeType = 'application/vnd.google-apps.presentation' and trashed = false";
+
+        // Add folder filter
+        query += ` and '${folderId ?? 'root'}' in parents`;
+
+        // Add search query filter if provided
+        if (searchQuery && searchQuery.trim()) {
+            // Escape single quotes in the search query and add name contains filter
+            const escapedQuery = searchQuery.replace(/'/g, "\\'");
+            query += ` and name contains '${escapedQuery}'`;
+        }
+
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://www.googleapis.com/drive/v3/files',
@@ -24,7 +37,7 @@ module.exports = {
             params: {
                 fields: '*',
                 pageSize: 1000,
-                q: `mimeType = 'application/vnd.google-apps.presentation' and trashed = false and '${folderId ?? 'root'}' in parents`,
+                q: query,
                 supportsAllDrives: true
             }
         });
