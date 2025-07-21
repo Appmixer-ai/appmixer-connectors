@@ -1,3 +1,6 @@
+const os = require('os');
+const path = require('path');
+
 /**
  * Integration test for Clerk connector
  * This test runs components in sequence to test their interactions
@@ -11,14 +14,17 @@ describe('Clerk Connector Integration Tests', function() {
 
     // Skip this if no auth is set
     before(function() {
-        const os = require('os');
-        const path = require('path');
-        const appmixerJsonLoc = path.join(os.homedir(), '.config', 'configstore', 'appmixer.json');
-        const fs = require('fs');
-        const content = fs.readFileSync(appmixerJsonLoc, 'utf8');
-        const config = JSON.parse(content);
-        if (!config['appmixer:clerk'] || !config['appmixer:clerk'].authFields || !config['appmixer:clerk'].authFields.apiKey) {
-            console.warn('Skipping Clerk integration tests: No API key set in appmixer.json');
+        try {
+            const appmixerJsonLoc = path.join(os.homedir(), '.config', 'configsdtore', 'appmixer.json');
+            const fs = require('fs');
+            const content = fs.readFileSync(appmixerJsonLoc, 'utf8');
+            const config = JSON.parse(content);
+            if (!config['appmixer:clerk'] || !config['appmixer:clerk'].authFields || !config['appmixer:clerk'].authFields.apiKey) {
+                console.warn('Skipping Clerk integration tests: No API key set in appmixer.json');
+                this.skip();
+            }
+        } catch (error) {
+            console.warn('Skipping Clerk integration tests: Could not read appmixer.json or no API key set');
             this.skip();
         }
     });
