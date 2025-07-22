@@ -911,8 +911,6 @@ module.exports = {
 
 ## Development Guidelines
 
-- **Validation**: Don't check required properties in behavior code - use schema validation
-- **Error Handling**: Always handle API errors gracefully
 - **Authentication**: Store sensitive data in auth configuration, not component code
 - **Rate Limiting**: Use quota.js to prevent API abuse
 - **Documentation**: Provide clear descriptions and tooltips for all fields
