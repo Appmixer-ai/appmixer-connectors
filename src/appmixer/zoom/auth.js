@@ -6,7 +6,20 @@ module.exports = {
 
     definition: {
 
-        scope: ['user:read:user'],
+        scope: [
+            'user:read:user',
+            'meeting:write:meeting',
+            'webinar:write:webinar',
+            'meeting:delete:meeting',
+            'webinar:delete:webinar',
+            'meeting:read:list_meetings',
+            'cloud_recording:read:list_user_recordings',
+            'webinar:read:list_webinars',
+            'meeting:read:meeting',
+            'webinar:read:webinar',
+            'meeting:update:meeting',
+            'webinar:update:webinar'
+        ],
 
         authUrl: (context) => {
             return 'https://zoom.us/oauth/authorize?' +
@@ -14,7 +27,8 @@ module.exports = {
                 `client_id=${encodeURIComponent(context.clientId)}&` +
                 `redirect_uri=${encodeURIComponent(context.callbackUrl)}&` +
                 `state=${encodeURIComponent(context.ticket)}&` +
-                `scope=${context.scope.join(',')}`;
+                `scope=${context.scope.join(',')}&` +
+                'include_granted_scopes';
         },
 
         requestAccessToken: 'https://zoom.us/oauth/token',

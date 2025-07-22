@@ -22,8 +22,7 @@ module.exports = {
             method: 'PATCH',
             url: `https://api.zoom.us/v2/webinars/${webinarId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: requestBody
         });
