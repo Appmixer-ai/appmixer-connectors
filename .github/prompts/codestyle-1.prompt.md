@@ -1,7 +1,6 @@
 ---
 mode: agent
 description: Code style and refactoring rules for Appmixer connectors, specifically focusing on the component.json and behavior files. It is essential to follow these guidelines to ensure consistency and maintainability across all connectors.
-
 ---
 
 # Appmixer Connector Code Style Guide
@@ -12,7 +11,6 @@ Read both the component.json and the behavior file (the .js file with the same n
 Every update and delete component must have `outPorts: ['out']` in the component.json.
 Every update and delete component must have at least one required input, which is the `id` of the entity being updated or deleted.
 Avoid changing `icon`.
-Add `label` as second attribute if not present.
 Every inspector input of type `toggle` must have a `defaultValue` set to `false` if not specified otherwise.
 
 # Refactor the behavior file to follow these rules:
@@ -24,5 +22,5 @@ When making HTTP requests with context.httpRequest, prefer destructuring the res
 Apply these changes to all components for the connector if not specified otherwise.
 Avoid `json: true` in the context.httpRequest options, as it is not needed.
 Avoid `'Content-Type': 'application/json'` in the headers of context.httpRequest, as it is not needed.
-Every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('Missing required input: <input_name>')`.
+Every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('<human_readable_input_name> is required!')`.
 Every update and delete component must return an empty object, eg `return context.sendJson({}, 'out');` at the end of the function.
