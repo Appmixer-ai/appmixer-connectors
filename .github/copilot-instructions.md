@@ -899,7 +899,7 @@ module.exports = {
 ```
 
 # Best Practices
-Inteded for AI assistance like Copilot, CodeRabbit, Claude, etc.
+Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ## Code Style Guidelines
 
