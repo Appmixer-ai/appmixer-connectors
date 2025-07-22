@@ -108,9 +108,9 @@ Contains bundle metadata and version history.
     "name": "appmixer.connectorname",
     "version": "1.0.0",
     "changelog": {
-        "1.0.0": ["Initial release"],
-        "1.0.1": ["Bug fixes and improvements"],
-        "2.0.0": ["(breaking change) Updated API integration"]
+        "1.0.0": ["Initial release."],
+        "1.0.1": ["Bug fixes and improvements."],
+        "2.0.0": ["(breaking change) Updated API integration."]
     }
 }
 ```
@@ -130,7 +130,7 @@ json schema of the bundle.json file:
         },
         "changelog": {
             "type": "object",
-            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
+            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release.\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
         }
     },
     "required": ["name", "version", "changelog"]
@@ -147,7 +147,7 @@ module.exports = {
         {
             limit: 2000,                          // Max calls per window
             throttling: 'window-sliding',         // Throttling method
-            window: 1000 * 60 * 60 * 24,        // 24 hours in ms
+            window: 1000 * 60 * 60 * 24,          // 24 hours in ms
             scope: 'userId',                      // Per user limits
             resource: 'messages.send'             // Resource identifier
         },
@@ -335,7 +335,6 @@ module.exports = {
 ```
 
 ```js
-
 module.exports = {
 
     type: 'apiKey',
@@ -583,7 +582,7 @@ json schema of the component.json
             "description": "Description of your component. The description is displayed in the Designer UI inspector panel. "
         },
         "author": { "type": "string", "description": "Appmixer <info@appmixer.com>" },
-        "trigger": { "type": "boolean", "description": "Whether the component is a trigger component." },
+        "trigger": { "type": "boolean", "description": "Whether the component is a trigger component. Only present if the component is a trigger." },
         "inPorts": { "$ref": "#/definitions/inPorts" },
         "outPorts": { "$ref": "#/definitions/ports" },
         "auth": { "$ref": "#/definitions/auth" },
