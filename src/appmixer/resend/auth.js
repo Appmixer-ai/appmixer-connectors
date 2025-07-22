@@ -16,19 +16,8 @@ module.exports = {
         accountNameFromProfileInfo: 'apiKey',
 
         requestProfileInfo: async (context) => {
-            const { data } = await context.httpRequest({
-                method: 'GET',
-                url: 'https://api.resend.com/v1/domains',
-                headers: {
-                    'Authorization': `Bearer ${context.apiKey}`
-                }
-            });
-
-            // Use the first domain's email or a default
             return {
-                email: data && data.data && data.data.length > 0
-                    ? `user@${data.data[0].name}`
-                    : 'user@resend.com'
+                apiKey: `${context.apiKey.substring(0, 8)}...`
             };
         },
         validate: async (context) => {
