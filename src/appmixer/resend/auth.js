@@ -13,7 +13,7 @@ module.exports = {
             }
         },
         
-        accountNameFromProfileInfo: 'email',
+        accountNameFromProfileInfo: 'apiKey',
         
         requestProfileInfo: async (context) => {
             const { data } = await context.httpRequest({
