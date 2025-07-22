@@ -905,82 +905,10 @@ module.exports = {
 
 - Use 4 spaces for indentation
 - Add one empty line after function definitions
-- Use camelCase for variable and function names
-- Follow consistent formatting patterns
+- Add one empty line after the `receive` function definition
+- Use underscores for variable names (e.g., `my_variable`)
 
 ## Development Guidelines
 
-- **Validation**: Don't check required properties in behavior code - use schema validation
-- **Error Handling**: Always handle API errors gracefully
-- **Authentication**: Store sensitive data in auth configuration, not component code
-- **Rate Limiting**: Use quota.js to prevent API abuse
-- **Documentation**: Provide clear descriptions and tooltips for all fields
-
-## Performance Considerations
-
-- **Caching**: Cache frequently accessed data (e.g., user lists, configuration)
-- **Pagination**: Handle large datasets with proper pagination
-- **Locking**: Use locking mechanisms for shared resources
-- **Batching**: Batch API calls when possible to reduce requests
-
-## Common Patterns
-
-### When editing existing or creating new component
-
-IMPORTANT! use the `instructions-component-standards` tool to get comprehensive guidelines on how to create or edit components in Appmixer.
-
-### When adding new field to component.json
-
-> Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
-
-- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow json schema format.
-- Add the fields to behavior JS file, especially in `context.httpRequest` call.
-
-
-### Dynamic Field Options
-
-Use `source` property to populate field options dynamically:
-
-```json
-{
-    "inspector": {
-        "inputs": {
-            "projectId": {
-                "type": "select",
-                "source": {
-                    "url": "/component/appmixer/service/core/ListProjects?outPort=out",
-                    "data": {
-                        "transform": "./transformers#projectsToOptions"
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-### File Handling
-
-For file input components:
-
-```json
-{
-    "schema": {
-        "properties": {
-            "file": {
-                "type": "string",
-                "format": "data-url",
-                "title": "File"
-            }
-        }
-    },
-    "inspector": {
-        "inputs": {
-            "file": {
-                "type": "filepicker",
-                "index": 1
-            }
-        }
-    }
-}
-```
+`auth.js` file with type `apiKey` MUST follow these rules:
+- `requestProfileInfo` MUST return an object with just the obfuscated apiKey
