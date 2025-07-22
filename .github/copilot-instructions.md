@@ -905,7 +905,7 @@ module.exports = {
 - Use 4 spaces for indentation
 - Add one empty line after function definitions
 - Add one empty line after the `receive` function definition
-- Use underscores for variable names (e.g., `my_variable`)
+- MUST use underscores for variable names (e.g., `my_variable`)
 
 ## Development Guidelines
 
