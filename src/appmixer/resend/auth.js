@@ -4,7 +4,7 @@ module.exports = {
     type: 'apiKey',
     definition: {
         tokenType: 'authentication-token',
-        
+
         auth: {
             apiKey: {
                 type: 'text',
@@ -12,9 +12,9 @@ module.exports = {
                 tooltip: 'Enter your Resend API key. You can find it in your Resend dashboard under API Keys.'
             }
         },
-        
+
         accountNameFromProfileInfo: 'apiKey',
-        
+
         requestProfileInfo: async (context) => {
             const { data } = await context.httpRequest({
                 method: 'GET',
@@ -23,7 +23,7 @@ module.exports = {
                     'Authorization': `Bearer ${context.apiKey}`
                 }
             });
-            
+
             // Use the first domain's email or a default
             return {
                 email: data && data.data && data.data.length > 0
@@ -31,7 +31,6 @@ module.exports = {
                     : 'user@resend.com'
             };
         },
-        
         validate: async (context) => {
             await context.httpRequest({
                 method: 'GET',
@@ -40,7 +39,7 @@ module.exports = {
                     'Authorization': `Bearer ${context.apiKey}`
                 }
             });
-            
+
             return true;
         }
     }
