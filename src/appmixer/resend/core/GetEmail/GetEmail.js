@@ -10,7 +10,7 @@ module.exports = {
         // https://resend.com/docs/api-reference#get-email
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.resend.com/v1/emails/{id}',
+            url: 'https://api.resend.com/emails/{id}',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`
             }

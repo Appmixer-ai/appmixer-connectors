@@ -23,7 +23,7 @@ module.exports = {
         validate: async (context) => {
             await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.resend.com/v1/domains',
+                url: 'https://api.resend.com/domains',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`
                 }

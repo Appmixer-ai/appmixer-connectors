@@ -10,7 +10,7 @@ module.exports = {
         // https://resend.com/docs/api-reference#create-domain
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.resend.com/v1/domains',
+            url: 'https://api.resend.com/domains',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`
             }

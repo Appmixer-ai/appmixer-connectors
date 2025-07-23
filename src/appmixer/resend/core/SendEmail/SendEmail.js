@@ -59,7 +59,7 @@ module.exports = {
         // Send the email
         const { data: responseData } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.resend.com/v1/emails',
+            url: 'https://api.resend.com/emails',
             headers: requestHeaders,
             data
         });

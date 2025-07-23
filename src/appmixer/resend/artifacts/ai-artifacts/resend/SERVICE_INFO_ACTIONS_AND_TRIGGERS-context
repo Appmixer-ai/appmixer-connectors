@@ -4,7 +4,7 @@
 Resend is an email API service for developers that provides simple, reliable email delivery. Key features include sending transactional emails, managing email templates, webhooks for email events, and domain verification. The service is designed to be developer-friendly with a RESTful API and comprehensive documentation.
 
 ## API Documentation
-- Base URL: https://api.resend.com/v1
+- Base URL: https://api.resend.com
 - Documentation: https://resend.com/docs/api-reference
 
 ## Authentication
