@@ -810,16 +810,16 @@ json schema of the component.json
 ```
 
 Desired order of attributes in `component.json`:
-1. `name`
-2. `label`
-3. `description`
-4. `author`
-5. `version`
-6. `auth`
-7. `inPorts`
-8. `properties`
-9. `outPorts`
-10. `icon`
+- `name`
+- `description`
+- `author`
+- `version`
+- `auth`
+- `quota`
+- `inPorts`
+- `properties`
+- `outPorts`
+- `icon`
 
 ### Component Behavior (JavaScript)
 
@@ -835,7 +835,7 @@ module.exports = {
     async receive(context) {
         
         // Get input data
-        const { message, priority, count } = context.messages.in;
+        const { message, priority, count } = context.messages.in.content;
         
         // Perform the action
         const response = await context.httpRequest({
