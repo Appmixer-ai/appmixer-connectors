@@ -11,16 +11,8 @@ module.exports = {
             }
         },
 
-        async requestProfileInfo(context) {
-            const apiKey = context.apiKey;
-            return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
-            };
-        },
-        accountNameFromProfileInfo: 'key',
-
-        validate: async (context) => {
-            const response = await context.httpRequest({
+        fetchUserInfo: async function (context) {
+            return context.httpRequest({
                 method: 'GET',
                 url: 'https://api.lemonsqueezy.com/v1/users/me',
                 headers: {
@@ -28,9 +20,17 @@ module.exports = {
                     'Accept': 'application/json'
                 }
             });
-            if (!response.data || !response.data.data || !response.data.data.email) {
-                throw new Error('Authentication failed: Invalid API Key or unexpected response.');
-            }
+        },
+
+        requestProfileInfo: async function (context) {
+            const userInfo = await this.fetchUserInfo(context);
+            return userInfo.data.data.attributes;
+        },
+
+        accountNameFromProfileInfo: 'email',
+
+        validate: async function (context) {
+            await this.fetchUserInfo(context);
             return true;
         }
     }

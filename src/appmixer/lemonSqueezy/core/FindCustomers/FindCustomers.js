@@ -13,15 +13,25 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
         }
 
+        // Build query parameters
+        const params = {};
+        if (query) {
+            params['filter[email]'] = query;
+        }
+
         // https://docs.lemonsqueezy.com/api/customers
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/customers',
+            url: 'https://api.lemonsqueezy.com/v1/customers',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json'
+            },
+            params
         });
 
+        const records = data.data || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

@@ -16,11 +16,20 @@ module.exports = {
         // https://docs.lemonsqueezy.com/api/stores
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/stores',
+            url: 'https://api.lemonsqueezy.com/v1/stores',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json'
             }
         });
+
+        const records = data.data || [];
+
+        // Send to notFound port if no stores are found
+        if (records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }
