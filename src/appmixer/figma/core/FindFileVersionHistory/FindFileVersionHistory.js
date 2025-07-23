@@ -16,12 +16,17 @@ const schema = {
 };
 
 module.exports = {
+
     async receive(context) {
 
-        const { fileId, outputType } = context.messages?.in?.content || {};
+        const { fileId, outputType } = context.messages.in.content || {};
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Versions' });
+        }
+
+        if (!fileId) {
+            throw new Error('fileId is required');
         }
 
         // https://www.figma.com/developers/api#file-versions-get
@@ -36,10 +41,7 @@ module.exports = {
         const records = data?.versions || [];
         // Send to notFound port if no versions are found
         if (records.length === 0) {
-            return context.sendJson({
-                message: 'No file versions found',
-                fileId: fileId
-            }, 'notFound');
+            return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records, outputType });

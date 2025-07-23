@@ -74,11 +74,17 @@ const schema = {
 };
 
 module.exports = {
+
     async receive(context) {
+
         const { fileId, query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Comments' });
+        }
+
+        if (!fileId) {
+            throw new Error('fileId is required');
         }
 
         // https://www.figma.com/developers/api#comments-get

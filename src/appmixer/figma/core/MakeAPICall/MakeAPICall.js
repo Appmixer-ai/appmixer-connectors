@@ -1,9 +1,18 @@
 'use strict';
 
 module.exports = {
+
     async receive(context) {
 
         const { resource, method = 'GET', body } = context.messages?.in?.content || {};
+
+        if (!resource) {
+            throw new Error('resource is required');
+        }
+
+        if (!method) {
+            throw new Error('method is required');
+        }
 
         const requestConfig = {
             method: method?.toUpperCase() || 'GET',
@@ -13,9 +22,8 @@ module.exports = {
             }
         };
 
-        // Add Content-Type and body for POST/PUT/PATCH requests
+        // Add body for POST/PUT/PATCH requests
         if (['POST', 'PUT', 'PATCH'].includes(method?.toUpperCase() || 'GET') && body) {
-            requestConfig.headers['Content-Type'] = 'application/json';
             if (typeof body === 'string') {
                 try {
                     requestConfig.data = JSON.parse(body);
