@@ -56,8 +56,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.linear.app/graphql',
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: {
                 query: graphqlQuery,

@@ -1,9 +1,18 @@
 'use strict';
 
 module.exports = {
+
     async receive(context) {
 
         const { commentId, body } = context.messages.in.content;
+
+        if (!commentId) {
+            throw new Error('commentId is required');
+        }
+
+        if (!body) {
+            throw new Error('body is required');
+        }
 
         // Build GraphQL mutation for updating a comment
         const graphqlMutation = `
@@ -38,8 +47,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.linear.app/graphql',
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: {
                 query: graphqlMutation,
@@ -55,6 +63,6 @@ module.exports = {
             throw new Error('Failed to update comment');
         }
 
-        return context.sendJson(data.data.commentUpdate.comment, 'out');
+        return context.sendJson({}, 'out');
     }
 };

@@ -1,9 +1,14 @@
 'use strict';
 
 module.exports = {
+
     async receive(context) {
 
         const { commentId } = context.messages.in.content;
+
+        if (!commentId) {
+            throw new Error('commentId is required');
+        }
 
         // Build GraphQL mutation for deleting a comment
         const graphqlMutation = `
@@ -19,8 +24,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.linear.app/graphql',
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: {
                 query: graphqlMutation,
@@ -36,6 +40,6 @@ module.exports = {
             throw new Error('Failed to delete comment');
         }
 
-        return context.sendJson({ success: true, deletedCommentId: commentId }, 'out');
+        return context.sendJson({}, 'out');
     }
 };
