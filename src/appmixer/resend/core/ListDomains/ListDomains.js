@@ -1,16 +1,18 @@
+
 'use strict';
 
-const lib = require('../../../lib');
+const lib = require('../../lib');
 
-// Schema for a single audience item
+// Schema for a single domain item
 const schema = {
     id: { type: 'string', title: 'ID' },
     name: { type: 'string', title: 'Name' },
-    created_at: { type: 'string', title: 'Created At' }
+    status: { type: 'string', title: 'Status' },
+    created_at: { type: 'string', title: 'Created At' },
+    region: { type: 'string', title: 'Region' }
 };
 
 module.exports = {
-
     async receive(context) {
         const { outputType = 'array' } = context.messages.in.content || {};
 
@@ -20,20 +22,26 @@ module.exports = {
                 context,
                 outputType,
                 schema,
-                { label: 'Audiences', value: 'result' }
+                { label: 'Domains', value: 'result' }
             );
         }
 
         // Make the API request
         const response = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.resend.com/audiences',
+            url: 'https://api.resend.com/domains',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
-        const items = response.data && Array.isArray(response.data) ? response.data : [];
+        // Accepts both { data: [...] } and { data: { data: [...] } }
+        let items = [];
+        if (Array.isArray(response.data)) {
+            items = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+            items = response.data.data;
+        }
 
         if (items.length === 0) {
             return context.sendJson({}, 'notFound');
@@ -45,5 +53,4 @@ module.exports = {
             outputType
         });
     }
-
 };
