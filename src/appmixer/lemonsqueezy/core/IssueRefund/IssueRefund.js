@@ -4,7 +4,7 @@ module.exports = {
 
     async receive(context) 
     {
-        const { orderId, amount, reason } = context.messages.in;
+        const { orderId, amount, reason } = context.messages.in.content;
 
         // Validate required fields
         if (!orderId) {
@@ -13,7 +13,8 @@ module.exports = {
 
         const requestData = {
             data: {
-                type: 'order-refunds',
+                type: 'orders',
+                id: orderId,
                 attributes: {}
             }
         };
@@ -27,26 +28,19 @@ module.exports = {
         }
 
         // https://docs.lemonsqueezy.com/api/order-refunds#create-order-refund
-        const { data } = await context.httpRequest({
+        const options = {
             method: 'POST',
-            url: `/orders/${orderId}/refunds`,
+            url: `https://api.lemonsqueezy.com/v1/orders/${orderId}/refund`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
                 'Content-Type': 'application/vnd.api+json'
             },
             data: requestData
-        });
+        };
 
-        return context.sendJson({
-            id: data?.data?.id,
-            orderId: orderId,
-            amount: data?.data?.attributes?.amount,
-            currency: data?.data?.attributes?.currency,
-            status: data?.data?.attributes?.status,
-            reason: data?.data?.attributes?.reason,
-            createdAt: data?.data?.attributes?.created_at,
-            updatedAt: data?.data?.attributes?.updated_at
-        }, 'out');
+        const { data } = await context.httpRequest(options);
+
+        return context.sendJson(data, 'out');
     }
 };

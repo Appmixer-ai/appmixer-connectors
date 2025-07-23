@@ -21,10 +21,12 @@ describe('GenerateOrderInvoice Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
-                in: {}
+                in: {
+                    content: {}
+                }
             },
             properties: {},
             httpRequest: require('./httpRequest.js'),
@@ -36,7 +38,7 @@ describe('GenerateOrderInvoice Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should generate an order invoice successfully', async function() {
@@ -46,8 +48,14 @@ describe('GenerateOrderInvoice Component', function() {
             return { data: output, port };
         };
 
-        context.messages.in = {
-            orderId: '1' // Replace with valid order ID
+        context.messages.in.content = {
+            orderId: '1', // Replace with valid order ID
+            name: 'John Doe',
+            address: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'US'
         };
 
         await GenerateOrderInvoice.receive(context);
@@ -59,8 +67,14 @@ describe('GenerateOrderInvoice Component', function() {
     });
 
     it('should handle missing order ID', async function() {
-        context.messages.in = {
+        context.messages.in.content = {
             // Missing required orderId
+            name: 'John Doe',
+            address: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'US'
         };
 
         try {
@@ -72,8 +86,14 @@ describe('GenerateOrderInvoice Component', function() {
     });
 
     it('should handle non-existent order ID', async function() {
-        context.messages.in = {
-            orderId: '999999' // Non-existent order ID
+        context.messages.in.content = {
+            orderId: '999999', // Non-existent order ID
+            name: 'John Doe',
+            address: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'US'
         };
 
         try {
@@ -81,6 +101,39 @@ describe('GenerateOrderInvoice Component', function() {
             assert.fail('Expected error for non-existent order');
         } catch (error) {
             assert(error.message.includes('404') || error.message.includes('not found'), 'Expected 404 error for non-existent order');
+        }
+    });
+
+    it('should handle missing customer name', async function() {
+        context.messages.in.content = {
+            orderId: '1',
+            address: '123 Main St',
+            city: 'New York',
+            state: 'NY',
+            zipCode: '10001',
+            country: 'US'
+        };
+
+        try {
+            await GenerateOrderInvoice.receive(context);
+            assert.fail('Expected error for missing customer name');
+        } catch (error) {
+            assert(error.message.includes('name') || error.message.includes('required'), 'Expected error about customer name');
+        }
+    });
+
+    it('should handle missing address fields', async function() {
+        context.messages.in.content = {
+            orderId: '1',
+            name: 'John Doe'
+            // Missing address fields
+        };
+
+        try {
+            await GenerateOrderInvoice.receive(context);
+            assert.fail('Expected error for missing address fields');
+        } catch (error) {
+            assert(error.message.includes('Address') || error.message.includes('required'), 'Expected error about missing address fields');
         }
     });
 });

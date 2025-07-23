@@ -13,12 +13,12 @@ module.exports = {
         // https://docs.lemonsqueezy.com/api/subscriptions#get-subscription
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/subscriptions/{id}',
+            url: `https://api.lemonsqueezy.com/v1/subscriptions/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(data.data, 'out');
     }
 };
