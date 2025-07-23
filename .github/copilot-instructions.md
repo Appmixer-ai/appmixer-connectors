@@ -604,7 +604,7 @@ json schema of the component.json
                 "manager": {
                     "type": "string", "description": "The name of the quota module where usage limit rules are defined."
                 },
-                "maxWait": { "type": "integer" },
+                "maxWait": { "type": "integer", "description": "MUST be lower than 120000 (2 minutes) which is the default TTL for the quota manager." },
                 "concurrency": { "type": "integer" },
                 "resources": {
                     "description": "One or more resources that identify rules from the quota module that apply to this component. Each rule in the quota module can have the resource property. quota.resources allow you to cherry-pick rules from the list of rules in the quota module that apply to this component. quota.resources can either be a string or an array of strings.",
