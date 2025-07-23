@@ -130,7 +130,7 @@ describe('FindOrders Component', function() {
 
         context.properties.generateOutputPortOptions = false;
         context.messages.in.content = {
-            store_id: process.env.LEMONSQUEEZY_STORE_ID,
+            storeId: process.env.LEMONSQUEEZY_STORE_ID,
             outputType: 'array'
         };
 

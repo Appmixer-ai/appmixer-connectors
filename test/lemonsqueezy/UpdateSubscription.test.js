@@ -114,10 +114,11 @@ describe('UpdateSubscription Component', function() {
             return { data: output, port };
         };
 
+        const expectedVariantId = parseInt(process.env.LEMONSQUEEZY_VARIANT_ID);
         context.messages.in = {
             content: {
                 subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
-                variantId: parseInt(process.env.LEMONSQUEEZY_VARIANT_ID)
+                variantId: expectedVariantId
             }
         };
 
@@ -126,7 +127,7 @@ describe('UpdateSubscription Component', function() {
         console.log('UpdateSubscription variant change output:', JSON.stringify(data, null, 2));
         assert(data, 'Expected data to be returned');
         assert(data.id, 'Expected subscription ID to be returned');
-        assert.strictEqual(data.variantId, 123456, 'Expected variant ID to be updated');
+        assert.strictEqual(data.variantId, expectedVariantId, 'Expected variant ID to be updated');
     });
 
     it('should update trial end date successfully', async function() {
