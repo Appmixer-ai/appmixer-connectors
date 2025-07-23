@@ -10,7 +10,6 @@ module.exports = {
         const lastName = context.messages.in.last_name;
         const unsubscribed = context.messages.in.unsubscribed;
 
-        // Validate required fields
         if (!audienceId) {
             throw new context.CancelError('Audience ID is required!');
         }
@@ -18,27 +17,23 @@ module.exports = {
             throw new context.CancelError('Email is required!');
         }
 
-        // Prepare request data
         const data = {
             email
         };
 
-        // Add optional fields if provided
         if (firstName) data.first_name = firstName;
         if (lastName) data.last_name = lastName;
         if (typeof unsubscribed === 'boolean') data.unsubscribed = unsubscribed;
 
-        // Make the API request
-        const response = await context.httpRequest({
+        const { data: responseData } = await context.httpRequest({
             method: 'POST',
             url: `https://api.resend.com/audiences/${audienceId}/contacts`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(responseData, 'out');
     }
 };
