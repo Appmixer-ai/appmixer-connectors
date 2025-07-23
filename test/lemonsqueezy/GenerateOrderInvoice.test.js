@@ -49,7 +49,7 @@ describe('GenerateOrderInvoice Component', function() {
         };
 
         context.messages.in.content = {
-            orderId: '1', // Replace with valid order ID
+            orderId: process.env.LEMONSQUEEZY_ORDER_ID,
             name: 'John Doe',
             address: '123 Main St',
             city: 'New York',

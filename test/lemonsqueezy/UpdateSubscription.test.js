@@ -47,9 +47,11 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            pauseMode: 'void',
-            pauseResumesAt: '2024-12-31T23:59:59Z'
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                pauseMode: 'void',
+                pauseResumesAt: '2024-12-31T23:59:59Z'
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -68,9 +70,11 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            pauseMode: 'free',
-            pauseResumesAt: '2024-12-31T23:59:59Z'
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                pauseMode: 'free',
+                pauseResumesAt: '2024-12-31T23:59:59Z'
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -89,8 +93,10 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            cancelled: true
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                cancelled: true
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -109,8 +115,10 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            variantId: 123456
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                variantId: parseInt(process.env.LEMONSQUEEZY_VARIANT_ID)
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -130,8 +138,10 @@ describe('UpdateSubscription Component', function() {
 
         const trialEndDate = '2024-12-31T23:59:59Z';
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            trialEndsAt: trialEndDate
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                trialEndsAt: trialEndDate
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -150,8 +160,10 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            billingAnchor: 15
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                billingAnchor: 15
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -170,8 +182,10 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            invoiceImmediately: true
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                invoiceImmediately: true
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -189,8 +203,10 @@ describe('UpdateSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            disableProrations: true
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                disableProrations: true
+            }
         };
 
         await UpdateSubscription.receive(context);
@@ -202,8 +218,10 @@ describe('UpdateSubscription Component', function() {
 
     it('should handle missing subscription ID', async function() {
         context.messages.in = {
-            // Missing required subscriptionId
-            cancelled: true
+            content: {
+                // Missing required subscriptionId
+                cancelled: true
+            }
         };
 
         try {
@@ -216,9 +234,11 @@ describe('UpdateSubscription Component', function() {
 
     it('should handle pause mode without resume date', async function() {
         context.messages.in = {
-            subscriptionId: '1',
-            pauseMode: 'void'
-            // Missing pauseResumesAt
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID,
+                pauseMode: 'void'
+                // Missing pauseResumesAt
+            }
         };
 
         try {
@@ -231,8 +251,10 @@ describe('UpdateSubscription Component', function() {
 
     it('should handle non-existent subscription ID', async function() {
         context.messages.in = {
-            subscriptionId: '999999', // Non-existent subscription ID
-            cancelled: true
+            content: {
+                subscriptionId: '999999', // Non-existent subscription ID
+                cancelled: true
+            }
         };
 
         try {

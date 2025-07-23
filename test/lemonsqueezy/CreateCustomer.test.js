@@ -21,7 +21,7 @@ describe('CreateCustomer Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
                 in: {}
@@ -36,7 +36,7 @@ describe('CreateCustomer Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should create a customer successfully', async function() {
@@ -47,12 +47,14 @@ describe('CreateCustomer Component', function() {
         };
 
         context.messages.in = {
-            storeId: '1', // Replace with valid store ID
-            name: 'Test Customer',
-            email: `test-${Date.now()}@example.com`,
-            city: 'Test City',
-            region: 'Test Region',
-            country: 'US'
+            content: {
+                storeId: process.env.LEMONSQUEEZY_STORE_ID, // Use real store ID
+                name: 'Test Customer',
+                email: `test-${Date.now()}@example.com`,
+                city: 'Test City',
+                region: 'Test Region',
+                country: 'US'
+            }
         };
 
         await CreateCustomer.receive(context);
@@ -66,9 +68,11 @@ describe('CreateCustomer Component', function() {
 
     it('should handle missing required fields', async function() {
         context.messages.in = {
-            // Missing required storeId
-            name: 'Test Customer',
-            email: 'test@example.com'
+            content: {
+                // Missing required storeId
+                name: 'Test Customer',
+                email: 'test@example.com'
+            }
         };
 
         try {
@@ -81,9 +85,11 @@ describe('CreateCustomer Component', function() {
 
     it('should handle invalid email format', async function() {
         context.messages.in = {
-            storeId: '1',
-            name: 'Test Customer',
-            email: 'invalid-email'
+            content: {
+                storeId: process.env.LEMONSQUEEZY_STORE_ID,
+                name: 'Test Customer',
+                email: 'invalid-email'
+            }
         };
 
         try {

@@ -21,7 +21,7 @@ describe('UpdateCustomer Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
                 in: {}
@@ -36,7 +36,7 @@ describe('UpdateCustomer Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should update a customer successfully', async function() {
@@ -47,12 +47,14 @@ describe('UpdateCustomer Component', function() {
         };
 
         context.messages.in = {
-            customerId: '1', // Replace with valid customer ID
-            name: 'Updated Customer Name',
-            email: `updated-${Date.now()}@example.com`,
-            city: 'Updated City',
-            region: 'Updated Region',
-            country: 'CA'
+            content: {
+                customerId: '1', // Replace with valid customer ID
+                name: 'Updated Customer Name',
+                email: `updated-${Date.now()}@example.com`,
+                city: 'Updated City',
+                region: 'Updated Region',
+                country: 'CA'
+            }
         };
 
         await UpdateCustomer.receive(context);
@@ -65,9 +67,11 @@ describe('UpdateCustomer Component', function() {
 
     it('should handle missing customer ID', async function() {
         context.messages.in = {
-            // Missing required customerId
-            name: 'Test Customer',
-            email: 'test@example.com'
+            content: {
+                // Missing required customerId
+                name: 'Test Customer',
+                email: 'test@example.com'
+            }
         };
 
         try {
@@ -80,8 +84,10 @@ describe('UpdateCustomer Component', function() {
 
     it('should handle non-existent customer ID', async function() {
         context.messages.in = {
-            customerId: '999999', // Non-existent customer ID
-            name: 'Test Customer'
+            content: {
+                customerId: '999999', // Non-existent customer ID
+                name: 'Test Customer'
+            }
         };
 
         try {

@@ -21,7 +21,7 @@ describe('CancelSubscription Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
                 in: {}
@@ -36,7 +36,7 @@ describe('CancelSubscription Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should cancel a subscription at end of billing period', async function() {
@@ -47,8 +47,9 @@ describe('CancelSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            cancelImmediately: false
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID // Replace with valid subscription ID
+            }
         };
 
         await CancelSubscription.receive(context);
@@ -67,8 +68,9 @@ describe('CancelSubscription Component', function() {
         };
 
         context.messages.in = {
-            subscriptionId: '1', // Replace with valid subscription ID
-            cancelImmediately: true
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID // Replace with valid subscription ID
+            }
         };
 
         await CancelSubscription.receive(context);
@@ -82,22 +84,24 @@ describe('CancelSubscription Component', function() {
 
     it('should handle missing subscription ID', async function() {
         context.messages.in = {
-            // Missing required subscriptionId
-            cancelImmediately: false
+            content: {
+                // Missing required subscriptionId
+            }
         };
 
         try {
             await CancelSubscription.receive(context);
             assert.fail('Expected error for missing subscription ID');
         } catch (error) {
-            assert(error.message.includes('subscription') || error.message.includes('ID'), 'Expected error about subscription ID');
+            assert(error.message.includes('Subscription ID is required'), 'Expected error about subscription ID');
         }
     });
 
     it('should handle non-existent subscription ID', async function() {
         context.messages.in = {
-            subscriptionId: '999999', // Non-existent subscription ID
-            cancelImmediately: false
+            content: {
+                subscriptionId: '999999' // Non-existent subscription ID
+            }
         };
 
         try {
@@ -110,8 +114,9 @@ describe('CancelSubscription Component', function() {
 
     it('should handle already cancelled subscription', async function() {
         context.messages.in = {
-            subscriptionId: '1', // Replace with already cancelled subscription ID
-            cancelImmediately: false
+            content: {
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID // Replace with already cancelled subscription ID
+            }
         };
 
         try {

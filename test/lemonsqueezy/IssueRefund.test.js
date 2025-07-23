@@ -21,7 +21,7 @@ describe('IssueRefund Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
                 in: {}
@@ -36,7 +36,7 @@ describe('IssueRefund Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should issue a full refund successfully', async function() {
@@ -47,8 +47,10 @@ describe('IssueRefund Component', function() {
         };
 
         context.messages.in = {
-            orderId: '1', // Replace with valid order ID
-            reason: 'Test refund'
+            content: {
+                orderId: process.env.LEMONSQUEEZY_ORDER_ID, // Use real order ID
+                reason: 'Test refund'
+            }
         };
 
         await IssueRefund.receive(context);
@@ -68,9 +70,11 @@ describe('IssueRefund Component', function() {
         };
 
         context.messages.in = {
-            orderId: '1', // Replace with valid order ID
-            amount: 10.00,
-            reason: 'Partial refund test'
+            content: {
+                orderId: process.env.LEMONSQUEEZY_ORDER_ID, // Use real order ID
+                amount: 10.00,
+                reason: 'Partial refund test'
+            }
         };
 
         await IssueRefund.receive(context);
@@ -83,8 +87,10 @@ describe('IssueRefund Component', function() {
 
     it('should handle missing order ID', async function() {
         context.messages.in = {
-            // Missing required orderId
-            amount: 10.00
+            content: {
+                // Missing required orderId
+                amount: 10.00
+            }
         };
 
         try {
@@ -97,7 +103,9 @@ describe('IssueRefund Component', function() {
 
     it('should handle non-existent order ID', async function() {
         context.messages.in = {
-            orderId: '999999' // Non-existent order ID
+            content: {
+                orderId: '999999' // Non-existent order ID
+            }
         };
 
         try {
