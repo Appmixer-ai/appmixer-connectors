@@ -1,15 +1,11 @@
 {
-    "name": "appmixer.resend.core.FindDomains",
+    "name": "appmixer.resend.core.FindContacts",
+    "label": "Find Contacts",
+    "description": "Show all contacts from an audience.",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of verified domains with optional filtering. Requires an API Key in the Authorization header as a Bearer token.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:resend"
-    },
-    "quota": {
-        "manager": "appmixer:resend",
-        "resources": "requests"
     },
     "inPorts": [
         {
@@ -17,18 +13,23 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string"
+                    "audience_id": {
+                        "type": "string",
+                        "title": "Audience ID",
+                        "description": "The Audience ID."
                     }
-                }
+                },
+                "required": [
+                    "audience_id"
+                ]
             },
             "inspector": {
                 "inputs": {
-                    "query": {
+                    "audience_id": {
                         "type": "text",
-                        "tooltip": "Query parameter for searching domains.",
-                        "label": "Query",
-                        "index": 0
+                        "index": 1,
+                        "tooltip": "The Audience ID.",
+                        "label": "Audience ID"
                     }
                 }
             }
@@ -39,8 +40,15 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Domains",
-                    "value": "domains",
+                    "label": "Object",
+                    "value": "object",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Data",
+                    "value": "data",
                     "schema": {
                         "type": "array",
                         "items": {
@@ -48,15 +56,27 @@
                             "properties": {
                                 "id": {
                                     "type": "string",
-                                    "title": "Domains.Id"
+                                    "title": "ID"
                                 },
-                                "domain": {
+                                "email": {
                                     "type": "string",
-                                    "title": "Domains.Domain"
+                                    "title": "Email"
                                 },
-                                "status": {
+                                "first_name": {
                                     "type": "string",
-                                    "title": "Domains.Status"
+                                    "title": "First Name"
+                                },
+                                "last_name": {
+                                    "type": "string",
+                                    "title": "Last Name"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "title": "Created At"
+                                },
+                                "unsubscribed": {
+                                    "type": "boolean",
+                                    "title": "Unsubscribed"
                                 }
                             }
                         }
