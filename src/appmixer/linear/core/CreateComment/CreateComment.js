@@ -5,6 +5,13 @@ module.exports = {
 
         const { issueId, body } = context.messages.in.content;
 
+        if (!issueId) {
+            throw new context.CancelError('Issue ID is required');
+        }
+        if (!body) {
+            throw new context.CancelError('Comment body is required');
+        }
+
         // Build GraphQL mutation for creating a comment
         const graphqlMutation = `
             mutation CommentCreate($input: CommentCreateInput!) {
@@ -30,8 +37,8 @@ module.exports = {
         `;
 
         const input = {
-            issueId: issueId,
-            body: body
+            issueId,
+            body
         };
 
         // https://linear.app/developers/graphql
@@ -43,7 +50,7 @@ module.exports = {
             },
             data: {
                 query: graphqlMutation,
-                variables: { input: input }
+                variables: { input }
             }
         });
 
