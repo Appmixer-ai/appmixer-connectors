@@ -1,10 +1,16 @@
 'use strict';
 
 module.exports = {
-    async receive(context) {
-        const { id } = context.messages.in.contents;
 
-        const { data } = await context.httpRequest({
+    async receive(context) {
+
+        const { id } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Domain ID is required.');
+        }
+
+        await context.httpRequest({
             method: 'DELETE',
             url: 'https://api.resend.com/domains/' + id,
             headers: {
@@ -12,6 +18,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
