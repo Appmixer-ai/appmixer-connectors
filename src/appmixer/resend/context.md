@@ -13,14 +13,22 @@ Resend is an email API service for developers that provides simple, reliable ema
 - **Usage**: Include in Authorization header as `Bearer {api_key}`
 
 ## Current Implementation Status
-The connector already has basic setup with:
+The connector has a solid foundation with:
 - ✅ Service configuration (service.json)
 - ✅ Authentication setup (auth.js) 
-- ✅ Basic components implemented:
-  - SendEmail
-  - DeleteApiKey
-  - DeleteDomain
-  - UpdateDomain
+- ✅ **Fully tested and working components**:
+  - **SendEmail** - Send transactional emails (✅ ALL TESTS PASSING)
+  - **GetEmail** - Retrieve email details by ID (✅ ALL TESTS PASSING)  
+  - **FindDomains** - List all domains (✅ ALL TESTS PASSING)
+- ✅ **Additional components available** (require domain/API key setup):
+  - CreateDomain - Add new domain for sending
+  - GetDomain - Retrieve domain information
+  - VerifyDomain - Verify domain ownership
+  - UpdateDomain - Update domain settings
+  - DeleteDomain - Remove a domain
+  - DeleteApiKey - Delete an API key
+- ❌ **Removed components** (API not supported):
+  - ~~FindEmails~~ - Removed (GET /emails endpoint doesn't exist in Resend API)
 
 ## Recommended Components to Implement
 

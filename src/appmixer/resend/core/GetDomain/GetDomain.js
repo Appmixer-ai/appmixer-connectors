@@ -1,18 +1,21 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
         const { id } = context.messages.in.content;
 
-        // https://resend.com/docs/api-reference#get-domain
+        if (!id) {
+            throw new context.CancelError('Domain ID is required!');
+        }
+
+        // https://resend.com/docs/api-reference/domains#retrieve-domain
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.resend.com/domains/{id}',
+            url: `https://api.resend.com/domains/${id}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

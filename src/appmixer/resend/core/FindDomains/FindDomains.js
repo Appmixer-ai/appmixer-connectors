@@ -1,18 +1,15 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { query } = context.messages.in.content;
-
-        // https://resend.com/docs/api-reference#get-domains
+        // https://resend.com/docs/api-reference/domains#list-domains
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.resend.com/domains',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
