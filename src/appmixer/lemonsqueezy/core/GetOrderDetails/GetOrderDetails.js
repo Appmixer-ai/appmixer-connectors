@@ -2,8 +2,7 @@
 'use strict';
 
 module.exports = {
-    async receive(context) 
-    {
+    async receive(context) {
         const { id } = context.messages.in.content;
 
         // Validate required fields

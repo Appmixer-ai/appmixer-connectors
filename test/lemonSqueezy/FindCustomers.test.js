@@ -14,7 +14,7 @@ describe('FindCustomers Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindCustomers = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindCustomers/FindCustomers.js'));
 

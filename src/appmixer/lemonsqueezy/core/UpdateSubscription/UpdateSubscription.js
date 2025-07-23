@@ -2,18 +2,17 @@
 
 module.exports = {
 
-    async receive(context) 
-    {
-        const { 
-            subscriptionId, 
-            variantId, 
-            pauseMode, 
-            pauseResumesAt, 
-            cancelled, 
-            trialEndsAt, 
-            billingAnchor, 
-            invoiceImmediately, 
-            disableProrations 
+    async receive(context) {
+        const {
+            subscriptionId,
+            variantId,
+            pauseMode,
+            pauseResumesAt,
+            cancelled,
+            trialEndsAt,
+            billingAnchor,
+            invoiceImmediately,
+            disableProrations
         } = context.messages.in.content;
 
         // Validate required fields

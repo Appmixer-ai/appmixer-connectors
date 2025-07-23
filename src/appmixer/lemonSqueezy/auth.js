@@ -11,7 +11,7 @@ module.exports = {
             }
         },
 
-        fetchUserInfo: async function (context) {
+        fetchUserInfo: async function(context) {
             return context.httpRequest({
                 method: 'GET',
                 url: 'https://api.lemonsqueezy.com/v1/users/me',
@@ -22,14 +22,14 @@ module.exports = {
             });
         },
 
-        requestProfileInfo: async function (context) {
+        requestProfileInfo: async function(context) {
             const userInfo = await this.fetchUserInfo(context);
             return userInfo.data.data.attributes;
         },
 
         accountNameFromProfileInfo: 'email',
 
-        validate: async function (context) {
+        validate: async function(context) {
             await this.fetchUserInfo(context);
             return true;
         }

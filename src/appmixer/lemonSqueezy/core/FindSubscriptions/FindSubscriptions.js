@@ -6,8 +6,9 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'attributes':{ 'type':'ob
 
 module.exports = {
     async receive(context) {
-
-        const { store_id, customer_id, order_id, product_id, variant_id, status, outputType } = context.messages.in.content;
+        const {
+            storeId, customerId, orderId, productId, variantId, status, outputType
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
@@ -15,20 +16,20 @@ module.exports = {
 
         // Build query parameters
         const params = {};
-        if (store_id) {
-            params['filter[store_id]'] = store_id;
+        if (storeId) {
+            params['filter[store_id]'] = storeId;
         }
-        if (customer_id) {
-            params['filter[customer_id]'] = customer_id;
+        if (customerId) {
+            params['filter[customer_id]'] = customerId;
         }
-        if (order_id) {
-            params['filter[order_id]'] = order_id;
+        if (orderId) {
+            params['filter[order_id]'] = orderId;
         }
-        if (product_id) {
-            params['filter[product_id]'] = product_id;
+        if (productId) {
+            params['filter[product_id]'] = productId;
         }
-        if (variant_id) {
-            params['filter[variant_id]'] = variant_id;
+        if (variantId) {
+            params['filter[variant_id]'] = variantId;
         }
         if (status) {
             params['filter[status]'] = status;

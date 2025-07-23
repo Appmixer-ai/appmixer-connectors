@@ -14,7 +14,7 @@ describe('FindProducts Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindProducts = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindProducts/FindProducts.js'));
 

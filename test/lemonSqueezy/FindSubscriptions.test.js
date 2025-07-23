@@ -14,7 +14,7 @@ describe('FindSubscriptions Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindSubscriptions = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindSubscriptions/FindSubscriptions.js'));
 

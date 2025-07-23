@@ -2,8 +2,7 @@
 
 module.exports = {
 
-    async receive(context) 
-    {
+    async receive(context) {
         const { customerId, name, email, city, region, country, archived } = context.messages.in.content;
 
         // Validate required fields
@@ -37,7 +36,7 @@ module.exports = {
             requestData.data.attributes.country = country;
         }
         if (archived === true) {
-            requestData.data.attributes.status = "archived";
+            requestData.data.attributes.status = 'archived';
         }
 
         // https://docs.lemonsqueezy.com/api/customers/update-customer

@@ -14,7 +14,7 @@ describe('CancelSubscription Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CancelSubscription = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/CancelSubscription/CancelSubscription.js'));
 
@@ -115,7 +115,8 @@ describe('CancelSubscription Component', function() {
     it('should handle already cancelled subscription', async function() {
         context.messages.in = {
             content: {
-                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID // Replace with already cancelled subscription ID
+                // Replace with already cancelled subscription ID
+                subscriptionId: process.env.LEMONSQUEEZY_SUBSCRIPTION_ID
             }
         };
 

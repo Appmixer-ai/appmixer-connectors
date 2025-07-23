@@ -8,7 +8,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { store_id, outputType } = context.messages.in.content;
+        const { storeId, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
@@ -16,8 +16,8 @@ module.exports = {
 
         // Build URL with optional store_id filter
         let url = 'https://api.lemonsqueezy.com/v1/products';
-        if (store_id) {
-            url += `?filter[store_id]=${store_id}`;
+        if (storeId) {
+            url += `?filter[store_id]=${storeId}`;
         }
 
         // https://docs.lemonsqueezy.com/api/products

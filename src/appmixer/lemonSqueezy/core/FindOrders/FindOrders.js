@@ -8,7 +8,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { store_id, customer_id, user_email, outputType } = context.messages.in.content;
+        const { storeId, customerId, userEmail, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
@@ -16,14 +16,14 @@ module.exports = {
 
         // Build query parameters
         const params = {};
-        if (store_id) {
-            params['filter[store_id]'] = store_id;
+        if (storeId) {
+            params['filter[store_id]'] = storeId;
         }
-        if (customer_id) {
-            params['filter[customer_id]'] = customer_id;
+        if (customerId) {
+            params['filter[customer_id]'] = customerId;
         }
-        if (user_email) {
-            params['filter[user_email]'] = user_email;
+        if (userEmail) {
+            params['filter[user_email]'] = userEmail;
         }
 
         // https://docs.lemonsqueezy.com/api/orders

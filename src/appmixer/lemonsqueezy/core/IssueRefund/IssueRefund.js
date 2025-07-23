@@ -2,8 +2,7 @@
 
 module.exports = {
 
-    async receive(context) 
-    {
+    async receive(context) {
         const { orderId, amount, reason } = context.messages.in.content;
 
         // Validate required fields

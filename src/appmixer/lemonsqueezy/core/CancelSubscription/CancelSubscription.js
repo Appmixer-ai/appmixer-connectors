@@ -2,8 +2,7 @@
 
 module.exports = {
 
-    async receive(context) 
-    {
+    async receive(context) {
         const { subscriptionId } = context.messages.in.content;
         // Validate required fields
         if (!subscriptionId) {

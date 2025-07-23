@@ -14,7 +14,7 @@ describe('GenerateOrderInvoice Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GenerateOrderInvoice = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/GenerateOrderInvoice/GenerateOrderInvoice.js'));
 

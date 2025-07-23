@@ -14,7 +14,7 @@ describe('CreateCustomer Component', function() {
             console.log('Skipping tests - LEMONSQUEEZY_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CreateCustomer = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/CreateCustomer/CreateCustomer.js'));
 
