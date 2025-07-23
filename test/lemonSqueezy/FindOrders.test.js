@@ -16,7 +16,7 @@ describe('FindOrders Component', function() {
         }
         
         // Load the component
-        FindOrders = require(path.join(__dirname, '../../src/appmixer/lemonSqueezy/core/FindOrders/FindOrders.js'));
+        FindOrders = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindOrders/FindOrders.js'));
 
         // Mock context
         context = {

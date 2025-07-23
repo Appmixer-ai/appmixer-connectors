@@ -16,7 +16,7 @@ describe('FindSubscriptions Component', function() {
         }
         
         // Load the component
-        FindSubscriptions = require(path.join(__dirname, '../../src/appmixer/lemonSqueezy/core/FindSubscriptions/FindSubscriptions.js'));
+        FindSubscriptions = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindSubscriptions/FindSubscriptions.js'));
 
         // Mock context
         context = {

@@ -16,7 +16,7 @@ describe('FindCustomers Component', function() {
         }
         
         // Load the component
-        FindCustomers = require(path.join(__dirname, '../../src/appmixer/lemonSqueezy/core/FindCustomers/FindCustomers.js'));
+        FindCustomers = require(path.join(__dirname, '../../src/appmixer/lemonsqueezy/core/FindCustomers/FindCustomers.js'));
 
         // Mock context
         context = {

@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'lemonSqueezy-objects-export';
+const DEFAULT_PREFIX = 'lemonsqueezy-objects-export';
 
 module.exports = {
 
