@@ -53,7 +53,7 @@ describe('CancelSubscription Component', function() {
 
         // Use primary subscription ID for end-of-billing-period cancellation
         const subscriptionId = process.env.LEMONSQUEEZY_SUBSCRIPTION_ID || process.env.LEMONSQUEEZY_SUBSCRIPTION_ID_1;
-        
+
         context.messages.in = {
             content: {
                 subscriptionId: subscriptionId
@@ -66,7 +66,7 @@ describe('CancelSubscription Component', function() {
         assert(data, 'Expected data to be returned');
         assert(data.id, 'Expected subscription ID to be returned');
         assert.strictEqual(data.cancelled, true, 'Expected subscription to be cancelled');
-        
+
         // For end-of-billing-period cancellation, subscription should still be active until the end date
         if (data.endsAt) {
             const endsAt = new Date(data.endsAt);
@@ -84,7 +84,7 @@ describe('CancelSubscription Component', function() {
 
         // Use secondary subscription ID for immediate cancellation, fallback to primary if not available
         const subscriptionId = process.env.LEMONSQUEEZY_SUBSCRIPTION_ID_2 || process.env.LEMONSQUEEZY_SUBSCRIPTION_ID;
-        
+
         context.messages.in = {
             content: {
                 subscriptionId: subscriptionId
@@ -97,7 +97,7 @@ describe('CancelSubscription Component', function() {
         assert(data, 'Expected data to be returned');
         assert(data.id, 'Expected subscription ID to be returned');
         assert.strictEqual(data.cancelled, true, 'Expected subscription to be cancelled');
-        
+
         // Note: Current Lemon Squeezy API implementation cancels at end of billing period by default
         // The presence of endsAt indicates when the subscription will actually end
         if (data.endsAt) {
