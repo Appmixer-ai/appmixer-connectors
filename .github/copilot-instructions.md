@@ -130,7 +130,7 @@ json schema of the bundle.json file:
         },
         "changelog": {
             "type": "object",
-            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release.\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
+            "description": "The changelog of the bundle, used to describe the changes in the bundle. For example: {\n        \"1.0.4\": [\n            \"Initial release.\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output variable name in ListBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
         }
     },
     "required": ["name", "version", "changelog"]
@@ -582,7 +582,7 @@ json schema of the component.json
             "description": "Description of your component. The description is displayed in the Designer UI inspector panel. "
         },
         "author": { "type": "string", "description": "Appmixer <info@appmixer.com>" },
-        "trigger": { "type": "boolean", "description": "Whether the component is a trigger component. Only present if the component is a trigger." },
+        "trigger": { "type": "boolean", "description": "Whether the component is a trigger component." },
         "inPorts": { "$ref": "#/definitions/inPorts" },
         "outPorts": { "$ref": "#/definitions/ports" },
         "auth": { "$ref": "#/definitions/auth" },
@@ -603,7 +603,7 @@ json schema of the component.json
                 "manager": {
                     "type": "string", "description": "The name of the quota module where usage limit rules are defined."
                 },
-                "maxWait": { "type": "integer" },
+                "maxWait": { "type": "integer", "description": "MUST be lower than 120000 (2 minutes) which is the default TTL for the quota manager." },
                 "concurrency": { "type": "integer" },
                 "resources": {
                     "description": "One or more resources that identify rules from the quota module that apply to this component. Each rule in the quota module can have the resource property. quota.resources allow you to cherry-pick rules from the list of rules in the quota module that apply to this component. quota.resources can either be a string or an array of strings.",
@@ -898,15 +898,14 @@ module.exports = {
 };
 ```
 
-# Best Practices
+# Best Practices (AI Assistance + Humans)
 Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ## Code Style Guidelines
-
 - Use 4 spaces for indentation
 - Add one empty line after function definitions
 - Add one empty line after the `receive` function definition
-- MUST use underscores for variable names (e.g., `my_variable`)
+- Use camelCase for variable and function names. Snake case is allowed for connectors that rely on external APIs that use snake case.
 
 ## Development Guidelines
 
@@ -920,3 +919,84 @@ Behavior JS file MUST follow these rules:
 `component.json` file MUST follow these rules:
 - update or delete component must have `outPorts: ['out']`.
 - update or delete component must have at least one required input, which is the ID of the entity being updated or deleted.
+
+# Best Practices (Humans)
+
+## Code Style Guidelines
+
+- Follow consistent formatting patterns
+
+## Development Guidelines
+
+- **Authentication**: Store sensitive data in auth configuration, not component code
+- **Rate Limiting**: Use quota.js to prevent API abuse
+- **Documentation**: Provide clear descriptions and tooltips for all fields
+
+## Performance Considerations
+
+- **Caching**: Cache frequently accessed data (e.g., user lists, configuration)
+- **Pagination**: Handle large datasets with proper pagination
+- **Locking**: Use locking mechanisms for shared resources
+- **Batching**: Batch API calls when possible to reduce requests
+
+## Common Patterns
+
+### When editing existing or creating new component
+
+IMPORTANT! use the `instructions-component-standards` tool to get comprehensive guidelines on how to create or edit components in Appmixer.
+
+### When adding new field to component.json
+
+> Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
+
+- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow json schema format.
+- Add the fields to behavior JS file, especially in `context.httpRequest` call.
+
+
+### Dynamic Field Options
+
+Use `source` property to populate field options dynamically:
+
+```json
+{
+    "inspector": {
+        "inputs": {
+            "projectId": {
+                "type": "select",
+                "source": {
+                    "url": "/component/appmixer/service/core/ListProjects?outPort=out",
+                    "data": {
+                        "transform": "./transformers#projectsToOptions"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### File Handling
+
+For file input components:
+
+```json
+{
+    "schema": {
+        "properties": {
+            "file": {
+                "type": "string",
+                "format": "data-url",
+                "title": "File"
+            }
+        }
+    },
+    "inspector": {
+        "inputs": {
+            "file": {
+                "type": "filepicker",
+                "index": 1
+            }
+        }
+    }
+}
+```
