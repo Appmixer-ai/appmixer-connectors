@@ -1,0 +1,135 @@
+{
+    "name": "appmixer.resend.email.SendBatchEmails",
+    "label": "Send Batch Emails",
+    "description": "Trigger up to 100 batch emails at once.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:resend"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "emails": {
+                        "type": "array",
+                        "title": "Emails",
+                        "description": "Array of email objects to send. Maximum 100 emails per batch.",
+                        "maxItems": 100,
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "from": {
+                                    "type": "string",
+                                    "title": "From",
+                                    "description": "Sender email address. To include a friendly name, use the format 'Your Name <sender@domain.com>'."
+                                },
+                                "to": {
+                                    "type": [
+                                        "string",
+                                        "array"
+                                    ],
+                                    "title": "To",
+                                    "description": "Recipient email address. For multiple addresses, send as an array of strings. Max 50."
+                                },
+                                "subject": {
+                                    "type": "string",
+                                    "title": "Subject",
+                                    "description": "Email subject."
+                                },
+                                "bcc": {
+                                    "type": [
+                                        "string",
+                                        "array"
+                                    ],
+                                    "title": "BCC",
+                                    "description": "BCC recipient email address. For multiple addresses, send as an array of strings."
+                                },
+                                "cc": {
+                                    "type": [
+                                        "string",
+                                        "array"
+                                    ],
+                                    "title": "CC",
+                                    "description": "CC recipient email address. For multiple addresses, send as an array of strings."
+                                },
+                                "reply_to": {
+                                    "type": [
+                                        "string",
+                                        "array"
+                                    ],
+                                    "title": "Reply To",
+                                    "description": "Reply-to email address. For multiple addresses, send as an array of strings."
+                                },
+                                "html": {
+                                    "type": "string",
+                                    "title": "HTML Content",
+                                    "description": "The HTML version of the message."
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "title": "Text Content",
+                                    "description": "The plain text version of the message."
+                                },
+                                "headers": {
+                                    "type": "object",
+                                    "title": "Headers",
+                                    "description": "Custom headers to add to the email."
+                                }
+                            },
+                            "required": ["from", "to", "subject"]
+                        }
+                    },
+                    "idempotency_key": {
+                        "type": "string",
+                        "title": "Idempotency Key",
+                        "description": "Add an idempotency key to prevent duplicated emails. Should be unique per API request. Maximum length of 256 characters."
+                    }
+                },
+                "required": ["emails"]
+            },
+            "inspector": {
+                "inputs": {
+                    "emails": {
+                        "type": "textarea",
+                        "tooltip": "Array of email objects to send (JSON format). Maximum 100 emails per batch.",
+                        "label": "Emails",
+                        "index": 0
+                    },
+                    "idempotency_key": {
+                        "type": "text",
+                        "tooltip": "Add an idempotency key to prevent duplicated emails. Should be unique per API request.",
+                        "label": "Idempotency Key",
+                        "index": 1
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Data",
+                    "value": "data",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Email ID"
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwMCIgaGVpZ2h0PSIxODAwIiB2aWV3Qm94PSIwIDAgMTgwMCAxODAwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTAwMC40NiA0NTBDMTE3NC43NyA0NTAgMTI3OC40MyA1NTMuNjY5IDEyNzguNDMgNjkxLjI4MkMxMjc4LjQzIDgyOC44OTYgMTE3NC43NyA5MzIuNTYzIDEwMDAuNDYgOTMyLjU2M0g5MTIuMzgyTDEzNTAgMTM1MEgxMDQwLjgyTDcwNy43OTQgMTAzMy40OEM2ODMuOTQ0IDEwMTEuNDcgNjcyLjkzNiA5ODUuNzgxIDY3Mi45MzUgOTYzLjc2NUM2NzIuOTM1IDkzMi41NzIgNjk0Ljk1OSA5MDUuMDQ5IDczNy4xNjEgODkzLjEyMkw5MDguNzEyIDg0Ny4yNDRDOTczLjg1IDgyOS44MTIgMTAxOC44MSA3NzkuMzUzIDEwMTguODEgNzEzLjI5OEMxMDE4LjggNjMyLjU2NyA5NTIuNzQ1IDU4NS43OCA4NzEuMDk1IDU4NS43OEg0NTBWNDUwSDEwMDAuNDZaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K"
+}
