@@ -4,8 +4,7 @@ module.exports = {
 
     async receive(context) 
     {
-        const { subscriptionId, cancelImmediately } = context.messages.in;
-
+        const { subscriptionId } = context.messages.in.content;
         // Validate required fields
         if (!subscriptionId) {
             throw new context.CancelError('Subscription ID is required');
@@ -21,15 +20,10 @@ module.exports = {
             }
         };
 
-        // If cancelImmediately is true, we also need to set ends_at to now
-        if (cancelImmediately) {
-            requestData.data.attributes.ends_at = new Date().toISOString();
-        }
-
         // https://docs.lemonsqueezy.com/api/subscriptions#cancel-subscription
         const { data } = await context.httpRequest({
             method: 'PATCH',
-            url: `/subscriptions/${subscriptionId}`,
+            url: `https://api.lemonsqueezy.com/v1/subscriptions/${subscriptionId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
