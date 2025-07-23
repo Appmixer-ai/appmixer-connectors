@@ -1,7 +1,6 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) 
     {
@@ -17,7 +16,7 @@ module.exports = {
             method: 'GET',
             url: '/orders/{id}',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

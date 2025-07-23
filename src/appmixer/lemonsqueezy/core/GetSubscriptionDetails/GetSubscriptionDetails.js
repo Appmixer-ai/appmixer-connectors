@@ -9,15 +9,15 @@ module.exports = {
 
         // Validate required fields
         if (!id) {
-            throw new context.CancelError('Product ID is required');
+            throw new context.CancelError('Subscription ID is required');
         }
 
-        // https://docs.lemonsqueezy.com/api/products#get-product
+        // https://docs.lemonsqueezy.com/api/subscriptions#get-subscription
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/products/{id}',
+            url: '/subscriptions/{id}',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

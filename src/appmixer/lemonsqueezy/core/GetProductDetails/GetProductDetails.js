@@ -1,7 +1,5 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) 
     {
@@ -9,15 +7,15 @@ module.exports = {
 
         // Validate required fields
         if (!id) {
-            throw new context.CancelError('Subscription ID is required');
+            throw new context.CancelError('Product ID is required');
         }
 
-        // https://docs.lemonsqueezy.com/api/subscriptions#get-subscription
+        // https://docs.lemonsqueezy.com/api/products#get-product
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/subscriptions/{id}',
+            url: '/products/{id}',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

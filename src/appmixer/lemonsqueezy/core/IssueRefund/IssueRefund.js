@@ -31,7 +31,7 @@ module.exports = {
             method: 'POST',
             url: `/orders/${orderId}/refunds`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
                 'Content-Type': 'application/vnd.api+json'
             },

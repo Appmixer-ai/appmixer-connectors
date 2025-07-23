@@ -36,7 +36,7 @@ module.exports = {
             method: 'PATCH',
             url: `/subscriptions/${subscriptionId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
                 'Content-Type': 'application/vnd.api+json'
             },
