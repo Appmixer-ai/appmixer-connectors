@@ -9,16 +9,11 @@ module.exports = {
         scope: [
             'user:read:user',
             'meeting:write:meeting',
-            'webinar:write:webinar',
             'meeting:delete:meeting',
-            'webinar:delete:webinar',
             'meeting:read:list_meetings',
             'cloud_recording:read:list_user_recordings',
-            'webinar:read:list_webinars',
             'meeting:read:meeting',
-            'webinar:read:webinar',
-            'meeting:update:meeting',
-            'webinar:update:webinar'
+            'meeting:update:meeting'
         ],
 
         authUrl: (context) => {
