@@ -21,7 +21,7 @@ describe('UpdateSubscription Component', function() {
         // Mock context
         context = {
             auth: {
-                accessToken: process.env.LEMONSQUEEZY_ACCESS_TOKEN
+                apiKey: process.env.LEMONSQUEEZY_ACCESS_TOKEN
             },
             messages: {
                 in: {}
@@ -36,10 +36,10 @@ describe('UpdateSubscription Component', function() {
             }
         };
 
-        assert(context.auth.accessToken, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'LEMONSQUEEZY_ACCESS_TOKEN environment variable is required for tests');
     });
 
-    it('should pause a subscription successfully', async function() {
+    it('should pause a subscription with void mode successfully', async function() {
         let data;
         context.sendJson = function(output, port) {
             data = output;
@@ -48,18 +48,19 @@ describe('UpdateSubscription Component', function() {
 
         context.messages.in = {
             subscriptionId: '1', // Replace with valid subscription ID
-            paused: true
+            pauseMode: 'void',
+            pauseResumesAt: '2024-12-31T23:59:59Z'
         };
 
         await UpdateSubscription.receive(context);
 
-        console.log('UpdateSubscription pause output:', JSON.stringify(data, null, 2));
+        console.log('UpdateSubscription pause void output:', JSON.stringify(data, null, 2));
         assert(data, 'Expected data to be returned');
         assert(data.id, 'Expected subscription ID to be returned');
-        assert.strictEqual(data.paused, true, 'Expected subscription to be paused');
+        assert(data.pause, 'Expected pause object to be returned');
     });
 
-    it('should unpause a subscription successfully', async function() {
+    it('should pause a subscription with free mode successfully', async function() {
         let data;
         context.sendJson = function(output, port) {
             data = output;
@@ -68,15 +69,77 @@ describe('UpdateSubscription Component', function() {
 
         context.messages.in = {
             subscriptionId: '1', // Replace with valid subscription ID
-            paused: false
+            pauseMode: 'free',
+            pauseResumesAt: '2024-12-31T23:59:59Z'
         };
 
         await UpdateSubscription.receive(context);
 
-        console.log('UpdateSubscription unpause output:', JSON.stringify(data, null, 2));
+        console.log('UpdateSubscription pause free output:', JSON.stringify(data, null, 2));
         assert(data, 'Expected data to be returned');
         assert(data.id, 'Expected subscription ID to be returned');
-        assert.strictEqual(data.paused, false, 'Expected subscription to be unpaused');
+        assert(data.pause, 'Expected pause object to be returned');
+    });
+
+    it('should cancel a subscription successfully', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in = {
+            subscriptionId: '1', // Replace with valid subscription ID
+            cancelled: true
+        };
+
+        await UpdateSubscription.receive(context);
+
+        console.log('UpdateSubscription cancel output:', JSON.stringify(data, null, 2));
+        assert(data, 'Expected data to be returned');
+        assert(data.id, 'Expected subscription ID to be returned');
+        assert.strictEqual(data.cancelled, true, 'Expected subscription to be cancelled');
+    });
+
+    it('should update variant ID successfully', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in = {
+            subscriptionId: '1', // Replace with valid subscription ID
+            variantId: 123456
+        };
+
+        await UpdateSubscription.receive(context);
+
+        console.log('UpdateSubscription variant change output:', JSON.stringify(data, null, 2));
+        assert(data, 'Expected data to be returned');
+        assert(data.id, 'Expected subscription ID to be returned');
+        assert.strictEqual(data.variantId, 123456, 'Expected variant ID to be updated');
+    });
+
+    it('should update trial end date successfully', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        const trialEndDate = '2024-12-31T23:59:59Z';
+        context.messages.in = {
+            subscriptionId: '1', // Replace with valid subscription ID
+            trialEndsAt: trialEndDate
+        };
+
+        await UpdateSubscription.receive(context);
+
+        console.log('UpdateSubscription trial end output:', JSON.stringify(data, null, 2));
+        assert(data, 'Expected data to be returned');
+        assert(data.id, 'Expected subscription ID to be returned');
+        assert.strictEqual(data.trialEndsAt, trialEndDate, 'Expected trial end date to be updated');
     });
 
     it('should update billing anchor successfully', async function() {
@@ -88,8 +151,7 @@ describe('UpdateSubscription Component', function() {
 
         context.messages.in = {
             subscriptionId: '1', // Replace with valid subscription ID
-            billingAnchor: 15,
-            proration: true
+            billingAnchor: 15
         };
 
         await UpdateSubscription.receive(context);
@@ -100,24 +162,77 @@ describe('UpdateSubscription Component', function() {
         assert.strictEqual(data.billingAnchor, 15, 'Expected billing anchor to be updated');
     });
 
+    it('should update with invoice immediately flag successfully', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in = {
+            subscriptionId: '1', // Replace with valid subscription ID
+            invoiceImmediately: true
+        };
+
+        await UpdateSubscription.receive(context);
+
+        console.log('UpdateSubscription invoice immediately output:', JSON.stringify(data, null, 2));
+        assert(data, 'Expected data to be returned');
+        assert(data.id, 'Expected subscription ID to be returned');
+    });
+
+    it('should update with disable prorations flag successfully', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+            return { data: output, port };
+        };
+
+        context.messages.in = {
+            subscriptionId: '1', // Replace with valid subscription ID
+            disableProrations: true
+        };
+
+        await UpdateSubscription.receive(context);
+
+        console.log('UpdateSubscription disable prorations output:', JSON.stringify(data, null, 2));
+        assert(data, 'Expected data to be returned');
+        assert(data.id, 'Expected subscription ID to be returned');
+    });
+
     it('should handle missing subscription ID', async function() {
         context.messages.in = {
             // Missing required subscriptionId
-            paused: true
+            cancelled: true
         };
 
         try {
             await UpdateSubscription.receive(context);
             assert.fail('Expected error for missing subscription ID');
         } catch (error) {
-            assert(error.message.includes('subscription') || error.message.includes('ID'), 'Expected error about subscription ID');
+            assert(error.message.includes('Subscription ID is required'), 'Expected error about subscription ID');
+        }
+    });
+
+    it('should handle pause mode without resume date', async function() {
+        context.messages.in = {
+            subscriptionId: '1',
+            pauseMode: 'void'
+            // Missing pauseResumesAt
+        };
+
+        try {
+            await UpdateSubscription.receive(context);
+            assert.fail('Expected error for missing pause resume date');
+        } catch (error) {
+            assert(error.message.includes('Pause Resumes At date is required'), 'Expected error about pause resume date');
         }
     });
 
     it('should handle non-existent subscription ID', async function() {
         context.messages.in = {
             subscriptionId: '999999', // Non-existent subscription ID
-            paused: true
+            cancelled: true
         };
 
         try {
