@@ -6,6 +6,11 @@ module.exports = {
     {
         const { orderId, amount, reason } = context.messages.in;
 
+        // Validate required fields
+        if (!orderId) {
+            throw new context.CancelError('Order ID is required');
+        }
+
         const requestData = {
             data: {
                 type: 'order-refunds',

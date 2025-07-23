@@ -6,6 +6,11 @@ module.exports = {
     {
         const { subscriptionId, paused, billingAnchor, proration } = context.messages.in;
 
+        // Validate required fields
+        if (!subscriptionId) {
+            throw new context.CancelError('Subscription ID is required');
+        }
+
         const requestData = {
             data: {
                 type: 'subscriptions',

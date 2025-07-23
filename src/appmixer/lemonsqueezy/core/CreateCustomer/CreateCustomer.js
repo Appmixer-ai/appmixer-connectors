@@ -2,9 +2,20 @@
 
 module.exports = {
 
-    async receive(context) {
-
+    async receive(context) 
+    {
         const { storeId, name, email, city, region, country } = context.messages.in.content;
+
+        // Validate required fields
+        if (!storeId) {
+            throw new context.CancelError('Store ID is required');
+        }
+        if (!name) {
+            throw new context.CancelError('Customer name is required');
+        }
+        if (!email) {
+            throw new context.CancelError('Customer email is required');
+        }
 
         // Build the request data
         const requestData = {

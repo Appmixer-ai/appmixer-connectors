@@ -6,6 +6,11 @@ module.exports = {
     {
         const { orderId } = context.messages.in;
 
+        // Validate required fields
+        if (!orderId) {
+            throw new context.CancelError('Order ID is required');
+        }
+
         // https://docs.lemonsqueezy.com/api/orders#generate-invoice
         const { data } = await context.httpRequest({
             method: 'POST',

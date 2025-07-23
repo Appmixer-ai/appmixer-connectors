@@ -3,9 +3,14 @@
 
 const lib = require('../../lib.generated');
 module.exports = {
-    async receive(context) {
-
+    async receive(context) 
+    {
         const { id } = context.messages.in.content;
+
+        // Validate required fields
+        if (!id) {
+            throw new context.CancelError('Subscription ID is required');
+        }
 
         // https://docs.lemonsqueezy.com/api/subscriptions#get-subscription
         const { data } = await context.httpRequest({

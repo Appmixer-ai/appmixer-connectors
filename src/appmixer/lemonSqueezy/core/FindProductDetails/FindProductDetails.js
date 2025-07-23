@@ -3,9 +3,14 @@
 
 const lib = require('../../lib.generated');
 module.exports = {
-    async receive(context) {
-
+    async receive(context) 
+    {
         const { id } = context.messages.in.content;
+
+        // Validate required fields
+        if (!id) {
+            throw new context.CancelError('Product ID is required');
+        }
 
         // https://docs.lemonsqueezy.com/api/products#get-product
         const { data } = await context.httpRequest({

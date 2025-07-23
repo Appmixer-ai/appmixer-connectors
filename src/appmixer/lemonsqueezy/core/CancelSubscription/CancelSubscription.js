@@ -6,6 +6,11 @@ module.exports = {
     {
         const { subscriptionId, cancelImmediately } = context.messages.in;
 
+        // Validate required fields
+        if (!subscriptionId) {
+            throw new context.CancelError('Subscription ID is required');
+        }
+
         let requestData = {
             data: {
                 type: 'subscriptions',
