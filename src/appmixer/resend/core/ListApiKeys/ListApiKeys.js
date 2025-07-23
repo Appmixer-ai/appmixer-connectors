@@ -9,8 +9,7 @@ module.exports = {
             method: 'GET',
             url: 'https://api.resend.com/api-keys',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

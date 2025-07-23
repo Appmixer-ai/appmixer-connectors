@@ -1,3 +1,4 @@
+
 /* eslint-disable camelcase */
 'use strict';
 
@@ -26,8 +27,7 @@ module.exports = {
             method: 'PATCH',
             url: 'https://api.resend.com/domains/' + id,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: update_data
         });

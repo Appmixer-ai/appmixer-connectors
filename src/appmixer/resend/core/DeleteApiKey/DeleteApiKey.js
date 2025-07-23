@@ -2,16 +2,21 @@
 
 module.exports = {
     async receive(context) {
-        const { id } = context.messages.in.contents;
 
-        const { data } = await context.httpRequest({
+        const { key } = context.messages.in.content;
+
+        if (!key) {
+            throw new context.CancelError('API Key ID is required!');
+        }
+
+        await context.httpRequest({
             method: 'DELETE',
-            url: 'https://api.resend.com/api-keys/' + id,
+            url: 'https://api.resend.com/api-keys/' + key,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

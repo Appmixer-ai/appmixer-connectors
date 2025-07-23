@@ -15,8 +15,7 @@ module.exports = {
             method: 'POST',
             url: `https://api.resend.com/emails/${id}/cancel`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

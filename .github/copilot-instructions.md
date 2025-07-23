@@ -575,7 +575,7 @@ json schema of the component.json
         },
         "label": {
             "type": "string",
-            "description": "The label of your component. If not label is specified, then last part of name will be used when component is dropped into Designer. If your component name is appmixer.twitter.statuses.CreateTweet then CreateTweet will be name of the component unless you specify label property. This allows you to use spaces as opposed to the name property. "
+            "description": "The label of your component. If no label is specified, then last part of name will be used when component is dropped into Designer. If your component name is appmixer.twitter.statuses.CreateTweet then Create Tweet will be name of the component unless you specify label property."
         },
         "description": {
             "type": "string",

@@ -39,14 +39,13 @@ module.exports = {
         }
 
         // Setup headers for the request
-        const request_headers = {
-            'Authorization': `Bearer ${context.auth.apiKey}`,
-            'Content-Type': 'application/json'
+        const requestHeaders = {
+            'Authorization': `Bearer ${context.auth.apiKey}`
         };
 
         // Add idempotency key if provided
         if (idempotency_key) {
-            request_headers['Idempotency-Key'] = idempotency_key;
+            requestHeaders['Idempotency-Key'] = idempotency_key;
         }
 
         // Process emails array to ensure proper format
@@ -72,7 +71,7 @@ module.exports = {
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.resend.com/emails/batch',
-            headers: request_headers,
+            headers: requestHeaders,
             data: formatted_emails
         });
 

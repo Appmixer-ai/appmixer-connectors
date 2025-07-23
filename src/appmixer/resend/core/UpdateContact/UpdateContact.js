@@ -35,8 +35,7 @@ module.exports = {
             method: 'PATCH',
             url: `https://api.resend.com/audiences/${audienceId}/contacts/${identifier}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data
         });
