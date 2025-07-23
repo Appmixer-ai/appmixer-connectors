@@ -6,7 +6,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'DELETE',
-            url: 'https://api.resend.com/v1/items/' + id,
+            url: 'https://api.resend.com/api-keys/' + id,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
