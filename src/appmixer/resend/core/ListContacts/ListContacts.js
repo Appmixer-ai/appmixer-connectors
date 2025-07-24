@@ -42,9 +42,10 @@ module.exports = {
 
         const items = response.data && Array.isArray(response.data) ? response.data : [];
 
-        if (items.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
+        // No searching supported yet, so we return all items
+        // if (items.length === 0) {
+        //     return context.sendJson({}, 'notFound');
+        // }
 
         return lib.sendArrayOutput({
             context,

@@ -43,9 +43,10 @@ module.exports = {
             items = response.data.data;
         }
 
-        if (items.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
+        // No searching supported yet, so we return all items
+        // if (items.length === 0) {
+        //     return context.sendJson({}, 'notFound');
+        // }
 
         return lib.sendArrayOutput({
             context,
