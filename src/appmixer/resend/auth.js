@@ -17,7 +17,7 @@ module.exports = {
 
         requestProfileInfo: async (context) => {
             return {
-                apiKey: `${context.apiKey.substring(0, 8)}...`
+                apiKey: `${context.apiKey.substring(0, 8)}...${context.apiKey.substring(context.apiKey.length - 4)}`
             };
         },
         validate: async (context) => {
