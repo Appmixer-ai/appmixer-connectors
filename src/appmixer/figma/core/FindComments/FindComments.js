@@ -84,7 +84,7 @@ module.exports = {
         }
 
         if (!fileId) {
-            throw new Error('fileId is required');
+            throw new context.CancelError('FileId is required');
         }
 
         // https://www.figma.com/developers/api#comments-get

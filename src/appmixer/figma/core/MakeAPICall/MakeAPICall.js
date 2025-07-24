@@ -7,11 +7,11 @@ module.exports = {
         const { resource, method = 'GET', body } = context.messages?.in?.content || {};
 
         if (!resource) {
-            throw new Error('resource is required');
+            throw new context.CancelError('Resource is required');
         }
 
         if (!method) {
-            throw new Error('method is required');
+            throw new context.CancelError('Method is required');
         }
 
         const requestConfig = {
