@@ -4,7 +4,7 @@ module.exports = {
 
     async receive(context) {
 
-        const audienceId = context.messages.in.audience_id;
+        const { audienceId } = context.messages.in.content;
 
         // Validate required fields
         if (!audienceId) {

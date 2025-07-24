@@ -4,11 +4,7 @@ module.exports = {
 
     async receive(context) {
 
-        const audienceId = context.messages.in.audience_id;
-        const email = context.messages.in.email;
-        const firstName = context.messages.in.first_name;
-        const lastName = context.messages.in.last_name;
-        const unsubscribed = context.messages.in.unsubscribed;
+        const { audienceId, email, firstName, lastName, unsubscribed } = context.messages.in.content;
 
         if (!audienceId) {
             throw new context.CancelError('Audience ID is required!');
