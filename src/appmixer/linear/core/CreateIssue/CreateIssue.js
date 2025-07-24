@@ -5,6 +5,14 @@ module.exports = {
 
         const { title, description, teamId, assigneeId, labelIds, stateId, priority } = context.messages.in.content;
 
+        if (!title) {
+            throw new context.CancelError('title is required');
+        }
+
+        if (!teamId) {
+            throw new context.CancelError('teamId is required');
+        }
+
         // Build GraphQL mutation for creating an issue
         const graphqlMutation = `
             mutation IssueCreate($input: IssueCreateInput!) {

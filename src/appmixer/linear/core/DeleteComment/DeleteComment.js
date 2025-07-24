@@ -7,7 +7,7 @@ module.exports = {
         const { commentId } = context.messages.in.content;
 
         if (!commentId) {
-            throw new Error('commentId is required');
+            throw new context.CancelError('commentId is required');
         }
 
         // Build GraphQL mutation for deleting a comment

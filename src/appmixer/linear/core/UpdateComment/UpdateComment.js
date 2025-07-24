@@ -7,11 +7,11 @@ module.exports = {
         const { commentId, body } = context.messages.in.content;
 
         if (!commentId) {
-            throw new Error('commentId is required');
+            throw new context.CancelError('commentId is required');
         }
 
         if (!body) {
-            throw new Error('body is required');
+            throw new context.CancelError('body is required');
         }
 
         // Build GraphQL mutation for updating a comment

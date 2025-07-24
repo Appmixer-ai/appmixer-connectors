@@ -7,7 +7,7 @@ module.exports = {
         const { issueId } = context.messages.in.content;
 
         if (!issueId) {
-            throw new Error('issueId is required');
+            throw new context.CancelError('issueId is required');
         }
 
         // Build GraphQL mutation for deleting an issue

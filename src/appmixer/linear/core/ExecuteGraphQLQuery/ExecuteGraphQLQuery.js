@@ -6,7 +6,7 @@ module.exports = {
         const { query, variables } = context.messages.in.content;
 
         if (!query) {
-            throw new Error('GraphQL query is required');
+            throw new context.CancelError('GraphQL query is required');
         }
 
         // Parse variables if they are provided as a string
@@ -16,7 +16,7 @@ module.exports = {
                 try {
                     parsedVariables = JSON.parse(variables);
                 } catch (error) {
-                    throw new Error('Invalid JSON format for variables: ' + error.message);
+                    throw new context.CancelError('Invalid JSON format for variables: ' + error.message);
                 }
             } else {
                 parsedVariables = variables;

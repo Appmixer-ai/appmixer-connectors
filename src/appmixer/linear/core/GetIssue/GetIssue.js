@@ -5,6 +5,10 @@ module.exports = {
 
         const { issueId } = context.messages.in.content;
 
+        if (!issueId) {
+            throw new context.CancelError('issueId is required');
+        }
+
         // Build GraphQL query for getting a specific issue
         const graphqlQuery = `
             query($id: String!) {

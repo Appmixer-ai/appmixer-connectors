@@ -5,6 +5,10 @@ module.exports = {
 
         const { commentId } = context.messages.in.content;
 
+        if (!commentId) {
+            throw new context.CancelError('commentId is required');
+        }
+
         // Build GraphQL query for getting a specific comment
         const graphqlQuery = `
             query($id: String!) {
