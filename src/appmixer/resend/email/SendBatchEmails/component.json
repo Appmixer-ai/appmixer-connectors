@@ -1,9 +1,9 @@
 {
     "name": "appmixer.resend.email.SendBatchEmails",
-    "label": "Send Batch Emails",
     "description": "Trigger up to 100 batch emails at once.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
+    "private": true,
     "auth": {
         "service": "appmixer:resend"
     },
@@ -22,78 +22,10 @@
                 "type": "object",
                 "properties": {
                     "emails": {
-                        "type": "array",
-                        "title": "Emails",
-                        "description": "Array of email objects to send. Maximum 100 emails per batch.",
-                        "maxItems": 100,
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "from": {
-                                    "type": "string",
-                                    "title": "From",
-                                    "description": "Sender email address. To include a friendly name, use the format 'Your Name <sender@domain.com>'."
-                                },
-                                "to": {
-                                    "type": [
-                                        "string",
-                                        "array"
-                                    ],
-                                    "title": "To",
-                                    "description": "Recipient email address. For multiple addresses, send as an array of strings. Max 50."
-                                },
-                                "subject": {
-                                    "type": "string",
-                                    "title": "Subject",
-                                    "description": "Email subject."
-                                },
-                                "bcc": {
-                                    "type": [
-                                        "string",
-                                        "array"
-                                    ],
-                                    "title": "BCC",
-                                    "description": "BCC recipient email address. For multiple addresses, send as an array of strings."
-                                },
-                                "cc": {
-                                    "type": [
-                                        "string",
-                                        "array"
-                                    ],
-                                    "title": "CC",
-                                    "description": "CC recipient email address. For multiple addresses, send as an array of strings."
-                                },
-                                "reply_to": {
-                                    "type": [
-                                        "string",
-                                        "array"
-                                    ],
-                                    "title": "Reply To",
-                                    "description": "Reply-to email address. For multiple addresses, send as an array of strings."
-                                },
-                                "html": {
-                                    "type": "string",
-                                    "title": "HTML Content",
-                                    "description": "The HTML version of the message."
-                                },
-                                "text": {
-                                    "type": "string",
-                                    "title": "Text Content",
-                                    "description": "The plain text version of the message."
-                                },
-                                "headers": {
-                                    "type": "object",
-                                    "title": "Headers",
-                                    "description": "Custom headers to add to the email."
-                                }
-                            },
-                            "required": ["from", "to", "subject"]
-                        }
+                        "type": "object"
                     },
                     "idempotency_key": {
-                        "type": "string",
-                        "title": "Idempotency Key",
-                        "description": "Add an idempotency key to prevent duplicated emails. Should be unique per API request. Maximum length of 256 characters."
+                        "type": "string"
                     }
                 },
                 "required": ["emails"]
@@ -101,16 +33,67 @@
             "inspector": {
                 "inputs": {
                     "emails": {
-                        "type": "textarea",
-                        "tooltip": "Array of email objects to send (JSON format). Maximum 100 emails per batch.",
+                        "type": "expression",
+                        "index": 1,
                         "label": "Emails",
-                        "index": 0
+                        "tooltip": "Add multiple emails to send in batch. Maximum 100 emails per batch.",
+                        "levels": [ "ADD" ],
+                        "fields": {
+                            "from": {
+                                "type": "text",
+                                "label": "From",
+                                "tooltip": "Sender email address. To include a friendly name, use the format 'Your Name <sender@domain.com>'.",
+                                "required": true
+                            },
+                            "to": {
+                                "type": "textarea",
+                                "label": "To",
+                                "tooltip": "Recipient email address. For multiple addresses, the values must be separated by a comma, space or newline. Max 50.",
+                                "required": true
+                            },
+                            "subject": {
+                                "type": "text",
+                                "label": "Subject",
+                                "tooltip": "Email subject.",
+                                "required": true
+                            },
+                            "html": {
+                                "type": "textarea",
+                                "label": "HTML Body",
+                                "tooltip": "The HTML version of the message."
+                            },
+                            "text": {
+                                "type": "textarea",
+                                "label": "Text Body",
+                                "tooltip": "The plain text version of the message."
+                            },
+                            "cc": {
+                                "type": "textarea",
+                                "label": "CC",
+                                "tooltip": "CC recipient email address. For multiple addresses, the values must be separated by a comma, space or newline."
+                            },
+                            "bcc": {
+                                "type": "textarea",
+                                "label": "BCC",
+                                "tooltip": "BCC recipient email address. For multiple addresses, the values must be separated by a comma, space or newline."
+                            },
+                            "reply_to": {
+                                "type": "textarea",
+                                "label": "Reply To",
+                                "tooltip": "Reply-to email address. For multiple addresses, the values must be separated by a comma, space or newline."
+                            },
+                            "headers": {
+                                "type": "textarea",
+                                "label": "Headers",
+                                "tooltip": "Custom headers to add to the email. Use JSON format, e.g., {\"X-Custom-Header\": \"Value\"}."
+                            }
+                        }
                     },
                     "idempotency_key": {
                         "type": "text",
-                        "tooltip": "Add an idempotency key to prevent duplicated emails. Should be unique per API request.",
+                        "index": 2,
                         "label": "Idempotency Key",
-                        "index": 1
+                        "tooltip": "Add an idempotency key to prevent duplicated emails. Should be unique per API request."
                     }
                 }
             }
@@ -121,7 +104,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Data",
+                    "label": "Email IDs",
                     "value": "data",
                     "schema": {
                         "type": "array",
@@ -134,6 +117,14 @@
                                 }
                             }
                         }
+                    }
+                },
+                {
+                    "label": "Batch Count",
+                    "value": "count",
+                    "schema": {
+                        "type": "integer",
+                        "title": "Number of emails sent"
                     }
                 }
             ]
