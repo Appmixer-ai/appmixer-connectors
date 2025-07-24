@@ -12,13 +12,11 @@ module.exports = {
             throw new context.CancelError('Audience ID is required!');
         }
 
-        // Make the API request
         await context.httpRequest({
             method: 'DELETE',
             url: `https://api.resend.com/audiences/${audience_id}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
