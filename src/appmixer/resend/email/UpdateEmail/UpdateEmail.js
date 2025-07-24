@@ -11,14 +11,6 @@ module.exports = {
             throw new context.CancelError('Email ID is required!');
         }
 
-        // Prepare request data
-        const data = {};
-
-        // Add optional fields if provided
-        if (scheduled_at) {
-            data.scheduled_at = scheduled_at;
-        }
-
         // https://resend.com/docs/api-reference/emails/update
         await context.httpRequest({
             method: 'PATCH',
@@ -26,7 +18,7 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             },
-            data
+            data: { scheduled_at }
         });
 
         return context.sendJson({}, 'out');

@@ -1,13 +1,14 @@
+/* eslint-disable camelcase */
 'use strict';
 
 module.exports = {
 
     async receive(context) {
 
-        const { audienceId, id: contactId, email } = context.messages.in.content;
+        const { audience_id, id: contactId, email } = context.messages.in.content;
 
         // Validate required fields
-        if (!audienceId) {
+        if (!audience_id) {
             throw new context.CancelError('Audience ID is required!');
         }
 
@@ -22,7 +23,7 @@ module.exports = {
         // Make the API request
         await context.httpRequest({
             method: 'DELETE',
-            url: `https://api.resend.com/audiences/${audienceId}/contacts/${identifier}`,
+            url: `https://api.resend.com/audiences/${audience_id}/contacts/${identifier}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

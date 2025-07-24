@@ -12,6 +12,7 @@ const schema = {
 module.exports = {
 
     async receive(context) {
+
         const { outputType = 'array' } = context.messages.in.content || {};
 
         // Generate output port options dynamically if requested
@@ -25,7 +26,7 @@ module.exports = {
         }
 
         // Make the API request
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.resend.com/audiences',
             headers: {
@@ -33,7 +34,7 @@ module.exports = {
             }
         });
 
-        const items = response.data && Array.isArray(response.data) ? response.data : [];
+        const items = Array.isArray(data?.data) ? data.data : [];
 
         // No searching supported yet, so we return all items
         // if (items.length === 0) {

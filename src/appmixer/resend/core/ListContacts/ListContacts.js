@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 'use strict';
 
 const lib = require('../../lib');
@@ -15,9 +16,9 @@ const schema = {
 module.exports = {
 
     async receive(context) {
-        const { audienceId, outputType = 'array' } = context.messages.in.content || {};
+        const { audience_id, outputType = 'array' } = context.messages.in.content || {};
 
-        if (!audienceId) {
+        if (!audience_id) {
             throw new context.CancelError('Audience ID is required!');
         }
 
@@ -34,7 +35,7 @@ module.exports = {
         // Make the API request
         const response = await context.httpRequest({
             method: 'GET',
-            url: `https://api.resend.com/audiences/${audienceId}/contacts`,
+            url: `https://api.resend.com/audiences/${audience_id}/contacts`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }

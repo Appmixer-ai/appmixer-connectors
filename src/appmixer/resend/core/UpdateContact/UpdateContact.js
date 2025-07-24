@@ -1,18 +1,14 @@
+/* eslint-disable camelcase */
 'use strict';
 
 module.exports = {
 
     async receive(context) {
 
-        const audienceId = context.messages.in.audience_id;
-        const contactId = context.messages.in.id;
-        const email = context.messages.in.email;
-        const firstName = context.messages.in.first_name;
-        const lastName = context.messages.in.last_name;
-        const unsubscribed = context.messages.in.unsubscribed;
+        const { audience_id, contactId, email, firstName, lastName, unsubscribed } = context.messages.in.content;
 
         // Validate required fields
-        if (!audienceId) {
+        if (!audience_id) {
             throw new context.CancelError('Audience ID is required!');
         }
 
@@ -33,7 +29,7 @@ module.exports = {
         // Make the API request
         await context.httpRequest({
             method: 'PATCH',
-            url: `https://api.resend.com/audiences/${audienceId}/contacts/${identifier}`,
+            url: `https://api.resend.com/audiences/${audience_id}/contacts/${identifier}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             },

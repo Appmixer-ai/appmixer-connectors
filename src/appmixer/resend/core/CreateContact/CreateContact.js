@@ -1,33 +1,28 @@
+/* eslint-disable camelcase */
 'use strict';
 
 module.exports = {
 
     async receive(context) {
 
-        const { audienceId, email, firstName, lastName, unsubscribed } = context.messages.in.content;
+        const { audience_id, email, first_name, last_name, unsubscribed } = context.messages.in.content;
 
-        if (!audienceId) {
+        if (!audience_id) {
             throw new context.CancelError('Audience ID is required!');
         }
         if (!email) {
             throw new context.CancelError('Email is required!');
         }
 
-        const data = {
-            email
-        };
-
-        if (firstName) data.first_name = firstName;
-        if (lastName) data.last_name = lastName;
-        if (typeof unsubscribed === 'boolean') data.unsubscribed = unsubscribed;
-
         const { data: responseData } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.resend.com/audiences/${audienceId}/contacts`,
+            url: `https://api.resend.com/audiences/${audience_id}/contacts`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             },
-            data
+            data: {
+                email, first_name, last_name, unsubscribed
+            }
         });
 
         return context.sendJson(responseData, 'out');
