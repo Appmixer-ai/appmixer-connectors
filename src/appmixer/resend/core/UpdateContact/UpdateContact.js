@@ -5,7 +5,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { audience_id, contactId, email, firstName, lastName, unsubscribed } = context.messages.in.content;
+        const { audience_id, id: contactId, email, first_name, last_name, unsubscribed } = context.messages.in.content;
 
         // Validate required fields
         if (!audience_id) {
@@ -22,8 +22,8 @@ module.exports = {
 
         // Prepare request data with only provided fields
         const data = {};
-        if (firstName) data.first_name = firstName;
-        if (lastName) data.last_name = lastName;
+        if (first_name) data.first_name = first_name;
+        if (last_name) data.last_name = last_name;
         if (typeof unsubscribed === 'boolean') data.unsubscribed = unsubscribed;
 
         // Make the API request

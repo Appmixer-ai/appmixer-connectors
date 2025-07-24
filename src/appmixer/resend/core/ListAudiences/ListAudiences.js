@@ -46,6 +46,16 @@ module.exports = {
             records: items,
             outputType
         });
+    },
+
+    toSelectArray(data) {
+        // Handle both array response and paginated response with data property
+        const audiences = Array.isArray(data) ? data : (data.result || data.data || []);
+
+        return audiences.map(audience => ({
+            label: audience.name,
+            value: audience.id
+        }));
     }
 
 };
