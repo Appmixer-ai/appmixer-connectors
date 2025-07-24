@@ -4,7 +4,7 @@ module.exports = {
 
     async receive(context) {
 
-        const name = context.messages.in.name;
+        const { name } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Audience name is required!');
