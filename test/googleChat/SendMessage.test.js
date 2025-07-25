@@ -45,7 +45,10 @@ describe('SendMessage Component', function() {
         // Try to get a space ID for testing
         if (!testSpaceId) {
             try {
-                const FindSpaces = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'));
+                const FindSpaces = require(path.join(
+                    __dirname,
+                    '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'
+                ));
                 let spacesData;
                 const findSpacesContext = {
                     ...context,
@@ -63,7 +66,7 @@ describe('SendMessage Component', function() {
                 };
 
                 await FindSpaces.receive(findSpacesContext);
-                
+
                 if (spacesData && spacesData.result && spacesData.result.length > 0) {
                     testSpaceId = spacesData.result[0].name;
                     console.log('Using test space ID:', testSpaceId);
@@ -135,7 +138,7 @@ describe('SendMessage Component', function() {
             console.log('SendMessage result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            
+
             // Check for message properties that should be returned
             if (data.name) {
                 assert(typeof data.name === 'string', 'Expected message name to be string');
@@ -150,10 +153,14 @@ describe('SendMessage Component', function() {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
             if (error.response && error.response.status === 403) {
-                console.log('Permission denied - the bot may not have access to the space or the space may not exist');
+                console.log('Permission denied - the bot may not have access to the space ' +
+                    'or the space may not exist');
                 console.log('Error details:', error.response.data);
                 // This is acceptable for testing - we don't have a guaranteed test space
                 return;
@@ -174,8 +181,7 @@ describe('SendMessage Component', function() {
             data = output;
         };
 
-        context.messages.in.content = {
-            space: testSpaceId,
+        context.messages.in.content = {            space: testSpaceId,
             text: 'Test threaded message from Appmixer test',
             threadKey: 'test-thread-key-123'
         };
@@ -186,7 +192,7 @@ describe('SendMessage Component', function() {
             console.log('SendMessage with thread result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            
+
             // Check for message properties that should be returned
             if (data.name) {
                 assert(typeof data.name === 'string', 'Expected message name to be string');
@@ -195,7 +201,8 @@ describe('SendMessage Component', function() {
                 assert(typeof data.text === 'string', 'Expected message text to be string');
             }
         } catch (error) {
-            if (error.response && (error.response.status === 401 || error.response.status === 403 || error.response.status === 404)) {
+            if (error.response && (error.response.status === 401 ||
+                error.response.status === 403 || error.response.status === 404)) {
                 console.log('Expected error for test space - this is acceptable');
                 console.log('Error details:', error.response.data);
                 return;

@@ -45,24 +45,29 @@ const messageSchema = {
 
 module.exports = {
     async receive(context) {
-        
+
         const { space, query, outputType } = context.messages.in.content;
-        
+
         // Input validation
         if (!space) {
             throw new context.CancelError('Space is required.');
         }
-        
+
         // Generate output port schema dynamically based on the outputType
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, messageSchema, { label: 'Messages' });
+            return lib.getOutputPortOptions(
+                context,
+                outputType,
+                messageSchema,
+                { label: 'Messages' }
+            );
         }
-        
+
         const params = {};
         if (query) {
             params.filter = query;
         }
-        
+
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages/list
         const { data } = await context.httpRequest({
             method: 'GET',
@@ -72,13 +77,13 @@ module.exports = {
             },
             params: params
         });
-        
+
         const messages = data.messages || [];
-        
+
         if (messages.length === 0) {
             return context.sendJson({}, 'notFound');
         }
-        
+
         return lib.sendArrayOutput({ context, records: messages, outputType });
     }
 };

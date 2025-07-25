@@ -3,19 +3,22 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 async function testFindSpaces() {
     console.log('Testing FindSpaces component...');
-    
+
     // Check if access token is available
     if (!process.env.GOOGLE_CHAT_ACCESS_TOKEN) {
         console.log('GOOGLE_CHAT_ACCESS_TOKEN not set - skipping test');
         return;
     }
-    
+
     console.log('Access token found, proceeding with test...');
-    
+
     try {
         // Load the component
-        const FindSpaces = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'));
-        
+        const FindSpaces = require(path.join(
+            __dirname,
+            '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'
+        ));
+
         // Create mock context
         const context = {
             auth: {
@@ -42,12 +45,12 @@ async function testFindSpaces() {
                 console.log('Data:', JSON.stringify(output, null, 2));
             }
         };
-        
+
         // Test the component
         await FindSpaces.receive(context);
-        
+
         console.log('✓ FindSpaces test completed successfully');
-        
+
     } catch (error) {
         console.error('✗ FindSpaces test failed:');
         console.error('Error:', error.message);

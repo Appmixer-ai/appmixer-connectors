@@ -45,7 +45,10 @@ describe('FindMessages Component', function() {
         // Try to get a space ID for testing
         if (!testSpaceId) {
             try {
-                const FindSpaces = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'));
+                const FindSpaces = require(path.join(
+                    __dirname,
+                    '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'
+                ));
                 let spacesData;
                 const findSpacesContext = {
                     ...context,
@@ -63,7 +66,7 @@ describe('FindMessages Component', function() {
                 };
 
                 await FindSpaces.receive(findSpacesContext);
-                
+
                 if (spacesData && spacesData.result && spacesData.result.length > 0) {
                     testSpaceId = spacesData.result[0].name;
                     console.log('Using test space ID:', testSpaceId);
@@ -122,9 +125,11 @@ describe('FindMessages Component', function() {
                 assert(data && typeof data === 'object', 'Expected data to be an object');
                 assert(Array.isArray(data.result), 'Expected data.result to be an array');
                 assert(typeof data.count === 'number', 'Expected data.count to be a number');
-                
+
                 // Verify the count matches array length
-                assert.strictEqual(data.count, data.result.length, `Expected count (${data.count}) to match result array length (${data.result.length})`);
+                const expectedMsg = `Expected count (${data.count}) to match result ` +
+                    `array length (${data.result.length})`;
+                assert.strictEqual(data.count, data.result.length, expectedMsg);
 
                 if (data.result.length > 0) {
                     const message = data.result[0];
@@ -140,9 +145,13 @@ describe('FindMessages Component', function() {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
-            if (error.response && (error.response.status === 403 || error.response.status === 404)) {
+            if (error.response && (error.response.status === 403 ||
+                error.response.status === 404)) {
                 console.log('Permission denied or space not found - this is acceptable for testing');
                 console.log('Error details:', error.response.data);
                 return;
@@ -183,15 +192,20 @@ describe('FindMessages Component', function() {
             for (let i = 0; i < callsToCheck; i++) {
                 const call = sendJsonCalls[i];
                 if (call.port === 'out') {
-                    assert(call.data && typeof call.data === 'object', `Expected call ${i} data to be an object`);
-                    assert(typeof call.data.index === 'number', `Expected call ${i} data to have index property (number)`);
-                    assert(typeof call.data.count === 'number', `Expected call ${i} data to have count property (number)`);
-                    assert(call.data.name, `Expected call ${i} data to have name property`);
+                    const msg1 = `Expected call ${i} data to be an object`;
+                    assert(call.data && typeof call.data === 'object', msg1);
+                    const msg2 = `Expected call ${i} data to have index property (number)`;
+                    assert(typeof call.data.index === 'number', msg2);
+                    const msg3 = `Expected call ${i} data to have count property (number)`;
+                    assert(typeof call.data.count === 'number', msg3);
+                    const msg4 = `Expected call ${i} data to have name property`;
+                    assert(call.data.name, msg4);
                 }
             }
             console.log(`All ${callsToCheck} checked calls have correct structure.`);
         } catch (error) {
-            if (error.response && (error.response.status === 401 || error.response.status === 403 || error.response.status === 404)) {
+            if (error.response && (error.response.status === 401 ||
+                error.response.status === 403 || error.response.status === 404)) {
                 console.log('Expected error for test space - this is acceptable');
                 console.log('Error details:', error.response.data);
                 return;

@@ -36,19 +36,24 @@ const spaceSchema = {
 
 module.exports = {
     async receive(context) {
-        
+
         const { query, outputType } = context.messages.in.content;
-        
+
         // Generate output port schema dynamically based on the outputType
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, spaceSchema, { label: 'Spaces' });
+            return lib.getOutputPortOptions(
+                context,
+                outputType,
+                spaceSchema,
+                { label: 'Spaces' }
+            );
         }
-        
+
         const params = {};
         if (query) {
             params.filter = query;
         }
-        
+
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces/list
         const { data } = await context.httpRequest({
             method: 'GET',
@@ -58,13 +63,13 @@ module.exports = {
             },
             params: params
         });
-        
+
         const spaces = data.spaces || [];
-        
+
         if (spaces.length === 0) {
             return context.sendJson({}, 'notFound');
         }
-        
+
         return lib.sendArrayOutput({ context, records: spaces, outputType });
     }
 };

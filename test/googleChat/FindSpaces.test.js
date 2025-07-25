@@ -60,12 +60,14 @@ describe('FindSpaces Component', function() {
             assert(typeof data.count === 'number', 'Expected data.count to be a number');
 
             // Verify the count matches array length
-            assert.strictEqual(data.count, data.result.length, `Expected count (${data.count}) to match result array length (${data.result.length})`);
+            const expectedMsg = `Expected count (${data.count}) to match result ` +
+                `array length (${data.result.length})`;
+            assert.strictEqual(data.count, data.result.length, expectedMsg);
 
             if (data.result.length > 0) {
                 const space = data.result[0];
                 assert(space.name, 'Expected space to have name property');
-                
+
                 // Verify required fields are present
                 const requiredFields = ['name'];
                 for (const field of requiredFields) {
@@ -76,7 +78,10 @@ describe('FindSpaces Component', function() {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
             throw error;
         }
@@ -100,12 +105,17 @@ describe('FindSpaces Component', function() {
             assert(typeof data.count === 'number', 'Expected data.count to be a number');
 
             // Verify the count matches array length
-            assert.strictEqual(data.count, data.result.length, `Expected count (${data.count}) to match result array length (${data.result.length})`);
+            const expectedMsg2 = `Expected count (${data.count}) to match result ` +
+                `array length (${data.result.length})`;
+            assert.strictEqual(data.count, data.result.length, expectedMsg2);
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
             throw error;
         }
@@ -150,7 +160,10 @@ describe('FindSpaces Component', function() {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
             throw error;
         }
@@ -179,10 +192,14 @@ describe('FindSpaces Component', function() {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file');
+                throw new Error(
+                    'Authentication failed: Access token is invalid or expired. ' +
+                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
+                );
             }
             if (error.name === 'CancelError' && error.message.includes('No records available')) {
-                console.log('No spaces found for first output type test - this is expected if no spaces exist');
+                console.log('No spaces found for first output type test - this is ' +
+                    'expected if no spaces exist');
                 return; // This is acceptable
             }
             throw error;
