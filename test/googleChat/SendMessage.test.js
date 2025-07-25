@@ -181,7 +181,8 @@ describe('SendMessage Component', function() {
             data = output;
         };
 
-        context.messages.in.content = {            space: testSpaceId,
+        context.messages.in.content = {
+            space: testSpaceId,
             text: 'Test threaded message from Appmixer test',
             threadKey: 'test-thread-key-123'
         };
