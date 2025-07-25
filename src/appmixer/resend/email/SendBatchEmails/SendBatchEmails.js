@@ -4,35 +4,39 @@
 module.exports = {
     async receive(context) {
 
-        const { emails: rawEmails, idempotency_key } = context.messages.in.content;
-
-        // Validate required fields
-        if (!rawEmails || !Array.isArray(rawEmails)) {
-            throw new context.CancelError('Emails array is required!');
+        const { emails: emailsExpression, idempotency_key } = context.messages.in.content;
+        const emailsExpressionArray = emailsExpression?.ADD || [];
+        // Always expect emails as array (expression field)
+        if (!Array.isArray(emailsExpressionArray)) {
+            throw new context.CancelError('Emails must be an array (expression field).');
         }
-
-        if (rawEmails.length === 0) {
+        if (emailsExpressionArray.length === 0) {
             throw new context.CancelError('At least one email is required!');
         }
-
-        if (rawEmails.length > 100) {
+        if (emailsExpressionArray.length > 100) {
+            // It is very unlikely that someone will be able to create 100 emails in the UI.
             throw new context.CancelError('Maximum 100 emails allowed per batch!');
         }
+        const emailsArr = emailsExpressionArray;
 
         // Helper function to normalize address fields (same as SendEmail)
         function normalizeAddresses(val) {
             if (Array.isArray(val)) return val;
             if (typeof val === 'string') {
                 // Split by comma, space, or newline, and trim each
-                return val.split(/[,\s\n]+/).map(s => s.trim()).filter(Boolean);
+                const arr = val.split(/[,,\s\n]+/).map(s => s.trim()).filter(Boolean);
+                if (arr.length > 50) {
+                    throw new context.CancelError('Maximum 50 addresses allowed per field (to/cc/bcc/reply_to).');
+                }
+                return arr;
             }
             return val;
         }
 
         // Process each email from the expression
         const processedEmails = [];
-        for (let i = 0; i < rawEmails.length; i++) {
-            const email = rawEmails[i];
+        for (let i = 0; i < emailsArr.length; i++) {
+            const email = emailsArr[i];
 
             // Validate required fields
             if (!email.from) {
@@ -84,8 +88,7 @@ module.exports = {
 
         // Setup headers for the request
         const requestHeaders = {
-            'Authorization': `Bearer ${context.auth.apiKey}`,
-            'Content-Type': 'application/json'
+            'Authorization': `Bearer ${context.auth.apiKey}`
         };
 
         // Add idempotency key if provided
@@ -104,7 +107,7 @@ module.exports = {
         // Return the result with count for better usability
         return context.sendJson({
             data: data,
-            count: data ? data.length : 0
+            count: data?.length ?? 0
         }, 'out');
     }
 };
