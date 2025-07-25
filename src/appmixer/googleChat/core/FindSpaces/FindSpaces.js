@@ -50,14 +50,14 @@ module.exports = {
         }
 
         const params = {};
-        
+
         // Build filter query from selected space types
         if (spaceTypes && Array.isArray(spaceTypes) && spaceTypes.length > 0) {
             // Filter out any invalid values and create OR query
-            const validTypes = spaceTypes.filter(type => 
+            const validTypes = spaceTypes.filter(type =>
                 ['SPACE', 'GROUP_CHAT', 'DIRECT_MESSAGE'].includes(type)
             );
-            
+
             if (validTypes.length > 0) {
                 if (validTypes.length === 1) {
                     params.filter = `spaceType = "${validTypes[0]}"`;
