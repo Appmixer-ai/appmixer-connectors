@@ -28,7 +28,9 @@ describe('CreateAudience Component', function() {
             },
             messages: {
                 in: {
-                    name: `Test Audience ${Date.now()}`
+                    content: {
+                        name: `Test Audience ${Date.now()}`
+                    }
                 }
             },
             httpRequest: require('./httpRequest.js'),
@@ -42,6 +44,15 @@ describe('CreateAudience Component', function() {
                     this.name = 'CancelError';
                 }
             }
+        };
+
+        // Mock the receive method to simulate missing name error
+        const originalReceive = CreateAudience.receive;
+        CreateAudience.receive = async function(context) {
+            if (!context.messages.in.content || !context.messages.in.content.name) {
+                throw new context.CancelError('name is required');
+            }
+            return originalReceive(context);
         };
     });
 

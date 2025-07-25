@@ -29,13 +29,15 @@ describe('CreateContact Component', function() {
 
         // Create a test audience first
         const audienceContext = {
-            auth: {
-                apiKey: process.env.RESEND_API_KEY
-            },
             messages: {
                 in: {
-                    name: `Test Audience for Contacts ${Date.now()}`
+                    content: {
+                        name: `Test Audience for Contacts ${Date.now()}`
+                    }
                 }
+            },
+            auth: {
+                apiKey: process.env.RESEND_API_KEY
             },
             httpRequest: require('./httpRequest.js'),
             sendJson: function(data, outputPort) {
@@ -50,7 +52,10 @@ describe('CreateContact Component', function() {
             }
         };
 
+        console.log('Debug: audienceContext before calling CreateAudience.receive:', audienceContext);
         await CreateAudience.receive(audienceContext);
+        console.log('Debug: audienceContext after calling CreateAudience.receive:', audienceContext);
+        console.log('Debug: audienceContext.lastSent:', audienceContext.lastSent);
         testAudienceId = audienceContext.lastSent.data.id;
         console.log('✓ Created test audience for contacts:', testAudienceId);
 
@@ -61,11 +66,13 @@ describe('CreateContact Component', function() {
             },
             messages: {
                 in: {
-                    audience_id: testAudienceId,
-                    email: 'test@example.com',
-                    first_name: 'Test',
-                    last_name: 'User',
-                    unsubscribed: false
+                    content: {
+                        audience_id: testAudienceId,
+                        email: 'test@example.com',
+                        first_name: 'Test',
+                        last_name: 'User',
+                        unsubscribed: false
+                    }
                 }
             },
             CancelError: class extends Error {
@@ -98,8 +105,10 @@ describe('CreateContact Component', function() {
             ...context,
             messages: {
                 in: {
-                    audience_id: testAudienceId,
-                    email: 'minimal@example.com'
+                    content: {
+                        audience_id: testAudienceId,
+                        email: 'minimal@example.com'
+                    }
                 }
             }
         };
@@ -118,7 +127,9 @@ describe('CreateContact Component', function() {
             ...context,
             messages: {
                 in: {
-                    email: 'test@example.com'
+                    content: {
+                        email: 'test@example.com'
+                    }
                 }
             }
         };
@@ -138,7 +149,9 @@ describe('CreateContact Component', function() {
             ...context,
             messages: {
                 in: {
-                    audience_id: '78261eea-8f8b-4381-83c6-79fa7120f1cf'
+                    content: {
+                        audience_id: '78261eea-8f8b-4381-83c6-79fa7120f1cf'
+                    }
                 }
             }
         };

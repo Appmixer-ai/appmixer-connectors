@@ -37,6 +37,9 @@ describe('ListAudiences Component', function() {
                 this.lastSent = { data, outputPort };
                 return Promise.resolve();
             },
+            lock: function() {
+                return Promise.resolve();
+            },
             CancelError: class extends Error {
                 constructor(message) {
                     super(message);

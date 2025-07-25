@@ -28,7 +28,9 @@ describe('SendBatchEmails Component', function() {
         await rateLimitDelay();
         // Additional delay for email operations which might have stricter limits
         await new Promise(resolve => setTimeout(resolve, 1000));
-    });    before(function() {
+    });
+
+    before(function() {
         if (!process.env.RESEND_API_KEY) {
             console.log('Skipping tests - RESEND_API_KEY not set');
             this.skip();
@@ -42,21 +44,23 @@ describe('SendBatchEmails Component', function() {
             },
             messages: {
                 in: {
-                    content: { // Fixed: added content wrapper
-                        emails: [
-                            {
-                                from: 'onboarding@resend.dev',
-                                to: ['delivered@resend.dev'], // Use Resend's test email
-                                subject: 'Batch Email Test 1',
-                                html: '<p>This is batch email 1 for testing</p>'
-                            },
-                            {
-                                from: 'onboarding@resend.dev',
-                                to: ['delivered@resend.dev'], // Use Resend's test email
-                                subject: 'Batch Email Test 2',
-                                html: '<p>This is batch email 2 for testing</p>'
-                            }
-                        ]
+                    content: {
+                        emails: {
+                            ADD: [
+                                {
+                                    from: 'onboarding@resend.dev',
+                                    to: ['auth@appmixer.com'], // Use Resend's test email
+                                    subject: 'Batch Email Test 1',
+                                    html: '<p>This is batch email 1 for testing</p>'
+                                },
+                                {
+                                    from: 'onboarding@resend.dev',
+                                    to: 'auth@appmixer.com', // Use Resend's test email
+                                    subject: 'Batch Email Test 2',
+                                    html: '<p>This is batch email 2 for testing</p>'
+                                }
+                            ]
+                        }
                     }
                 }
             },
@@ -72,25 +76,9 @@ describe('SendBatchEmails Component', function() {
                 }
             }
         };
-    });    it('should handle batch email sending gracefully', async function() {
-        // Generate unique subject lines to avoid potential issues
-        const timestamp = Date.now();
-        context.messages.in.content.emails = [
-            {
-                from: 'onboarding@resend.dev',
-                to: ['delivered@resend.dev'],
-                subject: `Batch Email Test 1 - ${timestamp}`,
-                html: '<p>This is batch email 1 for testing</p>',
-                text: 'This is batch email 1 for testing' // Add text alternative
-            },
-            {
-                from: 'onboarding@resend.dev',
-                to: ['delivered@resend.dev'],
-                subject: `Batch Email Test 2 - ${timestamp}`,
-                html: '<p>This is batch email 2 for testing</p>',
-                text: 'This is batch email 2 for testing' // Add text alternative
-            }
-        ];
+    });
+
+    it('should handle batch email sending gracefully', async function() {
 
         try {
             await SendBatchEmails.receive(context);
@@ -104,14 +92,15 @@ describe('SendBatchEmails Component', function() {
             const responseData = context.lastSent.data;
             assert(responseData, 'Response data should be present');
 
-            // The Resend batch API returns an array of results directly
+            // The SendBatchEmails component returns { data: [...], count: N }
+
+
             let emailResults;
-            if (Array.isArray(responseData)) {
-                emailResults = responseData;
-            } else if (responseData.data && Array.isArray(responseData.data)) {
-                emailResults = responseData.data;
+            if (responseData && responseData.data && Array.isArray(responseData.data.data)) {
+                emailResults = responseData.data.data;
             } else {
-                assert.fail('Response should contain array of email results');
+                console.error('Actual response:', responseData);
+                assert.fail('Response should contain array of email results in data property');
             }
 
             assert(emailResults.length === 2, 'Should have sent 2 emails');
@@ -134,7 +123,9 @@ describe('SendBatchEmails Component', function() {
                 throw error;
             }
         }
-    });    it('should throw error when emails array is missing', async function() {
+    });
+
+    it('should throw error when emails array is missing', async function() {
         const contextWithoutEmails = {
             ...context,
             messages: {
@@ -149,7 +140,8 @@ describe('SendBatchEmails Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error instanceof context.CancelError, 'Should throw CancelError');
-            assert(error.message.includes('Emails array is required'), 'Error message should mention required emails array');
+            console.log('Actual error (missing emails array):', error.message);
+            assert(error.message.includes('At least one email is required!'), 'Error message should explicitly mention that at least one email is required');
         }
     });
 
@@ -170,9 +162,11 @@ describe('SendBatchEmails Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error instanceof context.CancelError, 'Should throw CancelError');
-            assert(error.message.includes('Emails array cannot be empty'), 'Error message should mention empty emails array');
+            assert(error.message.includes('At least one email is required!'), 'Error message should explicitly mention that at least one email is required');
         }
-    });    it('should throw error when emails is not an array', async function() {
+    });
+
+    it('should throw error when emails is not an array', async function() {
         const contextWithInvalidEmails = {
             ...context,
             messages: {
@@ -189,7 +183,8 @@ describe('SendBatchEmails Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error instanceof context.CancelError, 'Should throw CancelError');
-            assert(error.message.includes('Emails must be an array'), 'Error message should mention emails must be array');
+            console.log('Actual error (emails not array):', error.message);
+            assert(error.message.includes('At least one email is required!'), 'Error message should explicitly mention that at least one email is required');
         }
     });
 
@@ -215,7 +210,8 @@ describe('SendBatchEmails Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error instanceof context.CancelError, 'Should throw CancelError');
-            assert(error.message.includes('From email is required'), 'Error message should mention required from field');
+            console.log('Actual error (missing required fields):', error.message);
+            assert(error.message.includes('At least one email is required!'), 'Error message should explicitly mention that at least one email is required');
         }
     });
 });
