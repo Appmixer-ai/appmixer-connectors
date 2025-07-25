@@ -82,6 +82,7 @@ module.exports = {
     },
 
     toSelectArray(data) {
+
         // Handle both array response and paginated response with data property
         const audiences = Array.isArray(data) ? data : (data.result || data.data || []);
 
