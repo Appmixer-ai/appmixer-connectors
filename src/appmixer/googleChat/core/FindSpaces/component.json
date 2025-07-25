@@ -2,7 +2,7 @@
     "name": "appmixer.googleChat.core.FindSpaces",
     "label": "Find Spaces",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of Google Chat spaces available to the authenticated user. Allows filtering via query parameters like space type.",
+    "description": "Retrieve a list of Google Chat spaces available to the authenticated user. Filter by selecting one or more space types: SPACE (chat rooms), GROUP_CHAT (group conversations), or DIRECT_MESSAGE (1:1 chats).",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -21,22 +21,30 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "query": {
-                        "type": "string"
+                    "spaceTypes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": ["SPACE", "GROUP_CHAT", "DIRECT_MESSAGE"]
+                        }
                     },
                     "outputType": {
-                        "type": "string",
-                        "default": "array"
+                        "type": "string"
                     }
                 }
             },
             "inspector": {
                 "inputs": {
-                    "query": {
-                        "type": "text",
-                        "tooltip": "Optional search query to filter spaces, e.g., by type (SPACE, GROUP_CHAT, DIRECT_MESSAGE).",
-                        "label": "Query",
-                        "index": 1
+                    "spaceTypes": {
+                        "type": "multiselect",
+                        "tooltip": "Select one or more space types to filter by. Leave empty to retrieve all spaces.",
+                        "label": "Space Types",
+                        "index": 1,
+                        "options": [
+                            { "label": "Spaces (Chat rooms)", "value": "SPACE" },
+                            { "label": "Group Chats (3+ people)", "value": "GROUP_CHAT" },
+                            { "label": "Direct Messages (1:1)", "value": "DIRECT_MESSAGE" }
+                        ]
                     },
                     "outputType": {
                         "type": "select",

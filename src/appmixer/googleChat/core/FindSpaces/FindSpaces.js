@@ -37,7 +37,7 @@ const spaceSchema = {
 module.exports = {
     async receive(context) {
 
-        const { query, outputType } = context.messages.in.content;
+        const { spaceTypes, outputType } = context.messages.in.content;
 
         // Generate output port schema dynamically based on the outputType
         if (context.properties.generateOutputPortOptions) {
@@ -50,8 +50,23 @@ module.exports = {
         }
 
         const params = {};
-        if (query) {
-            params.filter = query;
+        
+        // Build filter query from selected space types
+        if (spaceTypes && Array.isArray(spaceTypes) && spaceTypes.length > 0) {
+            // Filter out any invalid values and create OR query
+            const validTypes = spaceTypes.filter(type => 
+                ['SPACE', 'GROUP_CHAT', 'DIRECT_MESSAGE'].includes(type)
+            );
+            
+            if (validTypes.length > 0) {
+                if (validTypes.length === 1) {
+                    params.filter = `spaceType = "${validTypes[0]}"`;
+                } else {
+                    // Multiple types: use OR operator
+                    const typeQueries = validTypes.map(type => `spaceType = "${type}"`);
+                    params.filter = typeQueries.join(' OR ');
+                }
+            }
         }
 
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces/list
