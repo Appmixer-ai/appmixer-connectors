@@ -62,8 +62,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.clerk.com/v1/users',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: body
         });

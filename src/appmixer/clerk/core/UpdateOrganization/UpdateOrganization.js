@@ -2,16 +2,15 @@
 
 module.exports = {
     async receive(context) {
+
         const {
-            organizationId,
+            id,
             name,
             slug,
-            maxAllowedMemberships,
-            publicMetadata,
-            privateMetadata
+            maxAllowedMemberships
         } = context.messages.in.content;
 
-        if (!organizationId) {
+        if (!id) {
             throw new context.CancelError('Organization ID is required');
         }
 
@@ -21,13 +20,11 @@ module.exports = {
         if (name !== undefined) body.name = name;
         if (slug !== undefined) body.slug = slug;
         if (maxAllowedMemberships !== undefined) body.max_allowed_memberships = maxAllowedMemberships;
-        if (publicMetadata !== undefined) body.public_metadata = publicMetadata;
-        if (privateMetadata !== undefined) body.private_metadata = privateMetadata;
 
         // Make API request
         await context.httpRequest({
             method: 'PATCH',
-            url: `https://api.clerk.com/v1/organizations/${organizationId}`,
+            url: `https://api.clerk.com/v1/organizations/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             },

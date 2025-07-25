@@ -24,8 +24,7 @@ module.exports = {
                 method: 'GET',
                 url: 'https://api.clerk.com/v1/users?limit=1',
                 headers: {
-                    'Authorization': `Bearer ${context.apiKey}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${context.apiKey}`
                 }
             });
 
