@@ -35,7 +35,7 @@ This document contains validation test commands for the Google Chat connector co
 - [x] API endpoint: `https://chat.googleapis.com/v1/spaces`
 - [x] Output handling: `lib.sendArrayOutput({ context, records: spaces, outputType })`
 
-**FindMessages Component:**
+**ListMessages Component:**
 - [x] Imports: `const lib = require('../../lib.generated')`
 - [x] Function call: `lib.getOutputPortOptions(context, outputType, messageSchema, { label: 'Messages' })`
 - [x] Input validation: Throws error if `space` is missing
@@ -65,13 +65,13 @@ appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{}}'
 appmixer test component ./src/appmixer/googleChat/core/SendMessage -i '{"in":{"space":"spaces/SPACE_ID","text":"Test message from Appmixer validation"}}'
 
 # Step 3: Verify message was sent (use same space ID)
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID"}}'
+appmixer test component ./src/appmixer/googleChat/core/ListMessages -i '{"in":{"space":"spaces/SPACE_ID"}}'
 ```
 
 **Expected Results:**
 - FindSpaces: Returns list of available Google Chat spaces
 - SendMessage: Returns message object with creation details
-- FindMessages: Returns list including the test message sent in step 2
+- ListMessages: Returns list including the test message sent in step 2
 
 
 ## Validation Summary
@@ -86,8 +86,8 @@ appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"
 ### 📝 **Test Coverage: 100%**
 - **FindSpaces**: Basic + query filtering + output types (3 scenarios)
 - **SendMessage**: Basic + threading support (2 scenarios)  
-- **FindMessages**: Basic + query filtering + output types (3 scenarios)
-- **Total**: 8 comprehensive test scenarios documented
+- **ListMessages**: Basic + output types (2 scenarios)
+- **Total**: 7 comprehensive test scenarios documented
 
 ### 🔄 **Migration Impact**
 - **Output Structure**: Now returns standardized format with count + result objects
@@ -137,10 +137,10 @@ appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{}}'
 appmixer test component ./src/appmixer/googleChat/core/SendMessage -i '{"in":{"space":"spaces/SPACE_ID","text":"Test message from Appmixer Google Chat connector validation"}}'
 ```
 
-#### FindMessages - Retrieve messages from a space
+#### ListMessages - Retrieve messages from a space
 ```bash
 # Basic test - Get all messages from a space
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID"}}'
+appmixer test component ./src/appmixer/googleChat/core/ListMessages -i '{"in":{"space":"spaces/SPACE_ID"}}'
 ```
 
 ### Advanced Feature Tests
@@ -157,36 +157,16 @@ appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{"qu
 appmixer test component ./src/appmixer/googleChat/core/SendMessage -i '{"in":{"space":"spaces/SPACE_ID","text":"Reply in thread","threadKey":"test-thread-key"}}'
 ```
 
-#### FindMessages with Query Filter
-```bash
-# Search for specific messages containing 'Appmixer'
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID","query":"Appmixer"}}'
-```
-
-### Output Type Tests
-
-#### FindSpaces Output Types
-```bash
-# Get first space only
-appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{"outputType":"first"}}'
-
-# Get spaces one at a time
-appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{"outputType":"object"}}'
-
-# Get all spaces at once (default)
-appmixer test component ./src/appmixer/googleChat/core/FindSpaces -i '{"in":{"outputType":"array"}}'
-```
-
-#### FindMessages Output Types
+#### ListMessages Output Types
 ```bash
 # Get first message only
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"first"}}'
+appmixer test component ./src/appmixer/googleChat/core/ListMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"first"}}'
 
 # Get messages one at a time
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"object"}}'
+appmixer test component ./src/appmixer/googleChat/core/ListMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"object"}}'
 
 # Get all messages at once (default)
-appmixer test component ./src/appmixer/googleChat/core/FindMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"array"}}'
+appmixer test component ./src/appmixer/googleChat/core/ListMessages -i '{"in":{"space":"spaces/SPACE_ID","outputType":"array"}}'
 ```
 
 ## Test Workflow
@@ -195,8 +175,8 @@ To test this connector properly, follow this sequence:
 
 1. **Start with FindSpaces** to get available spaces
 2. **Use a space ID** from the result to test SendMessage
-3. **Verify the message was sent** by using FindMessages with the same space ID
-4. **Test advanced features** like query filters and different output types
+3. **Verify the message was sent** by using ListMessages with the same space ID
+4. **Test advanced features** like different output types
 
 ## Notes
 
@@ -209,7 +189,7 @@ To test this connector properly, follow this sequence:
 
 1. **FindSpaces** (`appmixer.googleChat.core.FindSpaces`) - Retrieves Google Chat spaces
 2. **SendMessage** (`appmixer.googleChat.core.SendMessage`) - Sends messages to Google Chat spaces  
-3. **FindMessages** (`appmixer.googleChat.core.FindMessages`) - Searches for messages in Google Chat spaces
+3. **ListMessages** (`appmixer.googleChat.core.ListMessages`) - Lists messages from Google Chat spaces
 
 ## API References
 

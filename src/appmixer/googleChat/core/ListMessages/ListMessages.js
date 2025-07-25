@@ -46,7 +46,7 @@ const messageSchema = {
 module.exports = {
     async receive(context) {
 
-        const { space, query, outputType } = context.messages.in.content;
+        const { space, outputType } = context.messages.in.content;
 
         // Input validation
         if (!space) {
@@ -63,19 +63,13 @@ module.exports = {
             );
         }
 
-        const params = {};
-        if (query) {
-            params.filter = query;
-        }
-
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages/list
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://chat.googleapis.com/v1/${space}/messages`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params: params
+            }
         });
 
         const messages = data.messages || [];
