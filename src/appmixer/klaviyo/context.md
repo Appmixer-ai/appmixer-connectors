@@ -1,0 +1,247 @@
+# Klaviyo Connector - Context and Planning
+
+## Service Overview
+
+Klaviyo is a unified customer platform that gives online brands direct ownership of their consumer data and interactions. It focuses on email marketing, SMS marketing, and customer data management. The platform helps businesses create personalized marketing campaigns and track customer behavior across multiple touchpoints.
+
+**Official Documentation**: https://developers.klaviyo.com/en/reference/api_overview
+
+## Authentication Method
+
+**Type**: API Key Authentication (Private API Key)
+
+**Documentation**: https://developers.klaviyo.com/en/reference/api_overview#authentication
+
+**How to obtain API Key**:
+1. Log in to your Klaviyo account
+2. Navigate to Account > Settings > API Keys
+3. Click "Create Private API Key" 
+4. Give your API key a name and select the appropriate scopes/permissions
+5. Copy the generated private API key (starts with "pk_")
+
+**Authentication Details**:
+- The API key is passed in the `Authorization` header as `Klaviyo-API-Key {your-private-api-key}`
+- API keys have specific scopes that determine which endpoints they can access
+- Different operations require different permission scopes (read/write for different resources)
+
+**Base URL**: https://a.klaviyo.com/api
+
+## API Structure and Key Concepts
+
+### Core Resources
+- **Profiles**: Individual customer records with attributes and behaviors
+- **Lists**: Collections of profiles for segmentation
+- **Segments**: Dynamic groups based on profile properties and behaviors  
+- **Campaigns**: Email marketing campaigns
+- **Flows**: Automated email series triggered by events
+- **Events**: Customer actions and behaviors
+- **Templates**: Reusable email templates
+- **Metrics**: Event types that can be tracked
+
+### API Versioning
+- Current version: 2025-07-15 (passed in `revision` header)
+- Uses semantic versioning with date-based revisions
+- Backward compatibility maintained between revisions
+
+## Proposed Components
+
+### Profile Management
+1. **CreateProfile** - Create a new customer profile
+   - Endpoint: POST /profiles
+   - Description: Add a new customer profile with email, phone, and custom attributes
+   - Key fields: email, phone_number, first_name, last_name, properties
+
+2. **GetProfile** - Retrieve a specific profile
+   - Endpoint: GET /profiles/{id}
+   - Description: Get profile details by profile ID
+   - Output: Complete profile data including attributes and relationships
+
+3. **UpdateProfile** - Update an existing profile
+   - Endpoint: PATCH /profiles/{id}
+   - Description: Update profile attributes and properties
+   - Key fields: profile_id, attributes to update
+
+4. **SearchProfiles** - Search for profiles
+   - Endpoint: GET /profiles with filter parameters
+   - Description: Find profiles based on email, phone, or other criteria
+   - Supports filtering and pagination
+
+5. **DeleteProfile** - Remove a profile
+   - Endpoint: DELETE /profiles/{id}  
+   - Description: Delete a customer profile from Klaviyo
+
+### List Management
+6. **CreateList** - Create a new list
+   - Endpoint: POST /lists
+   - Description: Create a new static list for organizing profiles
+   - Key fields: name, description
+
+7. **GetLists** - Retrieve all lists
+   - Endpoint: GET /lists
+   - Description: Get all available lists with metadata
+   - Supports pagination and filtering
+
+8. **GetList** - Get specific list details
+   - Endpoint: GET /lists/{id}
+   - Description: Retrieve details of a specific list including profile count
+
+9. **AddProfilesToList** - Add profiles to a list
+   - Endpoint: POST /lists/{id}/relationships/profiles
+   - Description: Add one or more profiles to a specific list
+   - Key fields: list_id, profile_ids
+
+10. **RemoveProfilesFromList** - Remove profiles from list
+    - Endpoint: DELETE /lists/{id}/relationships/profiles
+    - Description: Remove profiles from a specific list
+    - Key fields: list_id, profile_ids
+
+### Segment Management
+11. **GetSegments** - Retrieve all segments
+    - Endpoint: GET /segments
+    - Description: Get all available segments with their criteria
+    - Output: Segment names, IDs, and profile counts
+
+12. **GetSegment** - Get specific segment details
+    - Endpoint: GET /segments/{id}
+    - Description: Retrieve details of a specific segment including criteria
+
+### Campaign Management
+13. **CreateCampaign** - Create a new email campaign
+    - Endpoint: POST /campaigns
+    - Description: Create a new email marketing campaign
+    - Key fields: name, subject, template_id, list_ids
+
+14. **GetCampaigns** - List all campaigns
+    - Endpoint: GET /campaigns
+    - Description: Retrieve all email campaigns with their status
+    - Supports filtering by status, date range
+
+15. **GetCampaign** - Get campaign details
+    - Endpoint: GET /campaigns/{id}
+    - Description: Get specific campaign details including performance metrics
+
+16. **SendCampaign** - Send a campaign
+    - Endpoint: POST /campaigns/{id}/send
+    - Description: Send an email campaign to its target audience
+    - Key fields: campaign_id, send_time (optional for scheduling)
+
+17. **UpdateCampaign** - Update campaign details
+    - Endpoint: PATCH /campaigns/{id}
+    - Description: Update campaign content, recipients, or settings
+    - Key fields: campaign_id, updates
+
+### Template Management
+18. **CreateTemplate** - Create email template
+    - Endpoint: POST /templates
+    - Description: Create a reusable email template
+    - Key fields: name, html_content, text_content
+
+19. **GetTemplates** - List all templates
+    - Endpoint: GET /templates
+    - Description: Retrieve all available email templates
+
+20. **GetTemplate** - Get specific template
+    - Endpoint: GET /templates/{id}
+    - Description: Retrieve template content and metadata
+
+### Event Tracking
+21. **CreateEvent** - Track a custom event
+    - Endpoint: POST /events
+    - Description: Track custom events for profiles (purchases, page views, etc.)
+    - Key fields: profile_email/profile_id, metric_name, properties, time
+
+22. **GetEvents** - Retrieve events
+    - Endpoint: GET /events
+    - Description: Get events for analysis and reporting
+    - Supports filtering by profile, metric, date range
+
+### Flow Management (Automation)
+23. **GetFlows** - List all flows
+    - Endpoint: GET /flows
+    - Description: Retrieve all automated email flows
+    - Output: Flow names, status, trigger conditions
+
+24. **GetFlow** - Get specific flow details
+    - Endpoint: GET /flows/{id}
+    - Description: Get flow configuration and performance metrics
+
+### Metrics and Analytics
+25. **GetMetrics** - List available metrics
+    - Endpoint: GET /metrics
+    - Description: Get all trackable event types/metrics
+    - Output: Metric names, IDs, and descriptions
+
+26. **GetCampaignMetrics** - Get campaign performance
+    - Endpoint: GET /campaigns/{id}/metrics
+    - Description: Retrieve performance data for a specific campaign
+    - Output: Open rates, click rates, deliverability stats
+
+## Implementation Priority
+
+**High Priority (MVP)**:
+1. CreateProfile, GetProfile, UpdateProfile, SearchProfiles
+2. CreateList, GetLists, AddProfilesToList, RemoveProfilesFromList  
+3. CreateCampaign, GetCampaigns, SendCampaign
+4. CreateEvent (for tracking)
+
+**Medium Priority**:
+5. Template management components
+6. Segment retrieval components
+7. Campaign metrics and analytics
+
+**Low Priority**:
+8. Advanced flow management
+9. Complex analytics and reporting
+
+## Technical Considerations
+
+### Rate Limits
+- Standard rate limits apply (specific limits not detailed in overview)
+- Implement proper quota management in quota.js
+- Use appropriate delays between requests
+
+### Data Format
+- JSON API specification compliant
+- All requests/responses use JSON format
+- Proper content-type headers required
+
+### Error Handling
+- Standard HTTP status codes
+- Detailed error messages in response body
+- Handle authentication errors, validation errors, and rate limits
+
+### Pagination
+- Cursor-based pagination for most endpoints
+- Page size limits (typically 20-100 items per page)
+- Include pagination metadata in responses
+
+### Required Headers
+- `Authorization: Klaviyo-API-Key {private-api-key}`
+- `revision: 2025-07-15` (API version)
+
+## Data Schema Considerations
+
+### Profile Structure
+- Email and phone are key identifiers
+- Custom properties stored in `properties` object
+- Location data supported (address, city, state, country)
+- Consent and subscription status tracking
+
+### List Structure  
+- Static lists vs dynamic segments
+- List membership relationships
+- Metadata like creation date, profile count
+
+### Campaign Structure
+- Template relationship
+- Audience targeting (lists/segments)
+- Scheduling and timing options
+- Performance tracking integration
+
+### Event Structure
+- Profile association (email or ID)
+- Metric/event type classification
+- Custom property support
+- Timestamp handling
+
+This context provides the foundation for implementing a comprehensive Klaviyo connector with essential customer data management, email marketing, and automation capabilities.

@@ -1,0 +1,46 @@
+'use strict';
+
+const lib = require('../../lib.generated');
+
+module.exports = {
+
+    async receive(context) {
+
+        const { id, send_time } = context.messages.in.content;
+
+        if (!id) {
+            throw new Error('Campaign ID is required');
+        }
+
+        const requestData = {
+            data: {
+                type: 'campaign-send-job',
+                attributes: {
+                    ...(send_time && { send_at: send_time })
+                }
+            }
+        };
+
+        const response = await context.httpRequest({
+            method: 'POST',
+            url: `https://a.klaviyo.com/api/campaigns/${id}/send/`,
+            headers: {
+                'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json',
+                'Revision': '2025-07-15'
+            },
+            data: requestData
+        });
+
+        const sendJob = response.data.data;
+        const outputData = {
+            job_id: sendJob.id,
+            campaign_id: id,
+            status: sendJob.attributes.status,
+            send_time: send_time || 'immediate'
+        };
+
+        return context.sendJson(outputData, 'out');
+    }
+};
