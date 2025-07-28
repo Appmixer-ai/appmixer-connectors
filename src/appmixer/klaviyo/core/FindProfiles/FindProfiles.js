@@ -42,13 +42,18 @@ module.exports = {
             }
         });
 
-        const profiles = response.data.data.map(profile => ({
+        const profilesData = response.data?.data;
+        if (!profilesData || !Array.isArray(profilesData)) {
+            return context.sendJson({}, 'notFound');
+        }
+
+        const profiles = profilesData.map(profile => ({
             id: profile.id,
-            email: profile.attributes.email,
-            phone_number: profile.attributes.phone_number,
-            first_name: profile.attributes.first_name,
-            last_name: profile.attributes.last_name,
-            properties: profile.attributes.properties || {}
+            email: profile.attributes?.email,
+            phone_number: profile.attributes?.phone_number,
+            first_name: profile.attributes?.first_name,
+            last_name: profile.attributes?.last_name,
+            properties: profile.attributes?.properties || {}
         }));
 
         if (profiles.length === 0) {

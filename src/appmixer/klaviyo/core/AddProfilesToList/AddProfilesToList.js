@@ -4,27 +4,27 @@ module.exports = {
 
     async receive(context) {
 
-        const { id, profile_ids } = context.messages.in.content;
+        const { listId, profileIds } = context.messages.in.content;
 
-        if (!id) {
+        if (!listId) {
             throw new context.CancelError('List ID is required!');
         }
 
-        if (!profile_ids) {
+        if (!profileIds) {
             throw new context.CancelError('Profile IDs are required!');
         }
 
         let profileIdArray = [];
-        if (typeof profile_ids === 'string') {
+        if (typeof profileIds === 'string') {
             try {
                 // Try to parse as JSON array first
-                profileIdArray = JSON.parse(profile_ids);
+                profileIdArray = JSON.parse(profileIds);
             } catch (e) {
                 // If not JSON, treat as comma-separated string
-                profileIdArray = profile_ids.split(',').map(id => id.trim()).filter(id => id);
+                profileIdArray = profileIds.split(',').map(id => id.trim()).filter(id => id);
             }
-        } else if (Array.isArray(profile_ids)) {
-            profileIdArray = profile_ids;
+        } else if (Array.isArray(profileIds)) {
+            profileIdArray = profileIds;
         } else {
             throw new context.CancelError('Profile IDs must be an array or comma-separated string!');
         }
@@ -42,7 +42,7 @@ module.exports = {
 
         await context.httpRequest({
             method: 'POST',
-            url: `https://a.klaviyo.com/api/lists/${id}/relationships/profiles/`,
+            url: `https://a.klaviyo.com/api/lists/${listId}/relationships/profiles/`,
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',

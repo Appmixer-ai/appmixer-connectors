@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { id, send_time } = context.messages.in.content;
+        const { id, sendTime } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Campaign ID is required!');
@@ -16,7 +16,7 @@ module.exports = {
             data: {
                 type: 'campaign-send-job',
                 attributes: {
-                    ...(send_time && { send_at: send_time })
+                    ...(sendTime && { send_at: sendTime })
                 }
             }
         };
@@ -33,11 +33,15 @@ module.exports = {
             data: requestData
         });
 
-        const sendJob = response.data.data;
+        const sendJob = response.data?.data;
+        if (!sendJob) {
+            throw new context.CancelError('Invalid response from Klaviyo API');
+        }
+
         const outputData = {
-            job_id: sendJob.id,
-            campaign_id: id,
-            sent_at: send_time || 'immediate'
+            jobId: sendJob.id,
+            campaignId: id,
+            sentAt: sendTime || 'immediate'
         };
 
         return context.sendJson(outputData, 'out');

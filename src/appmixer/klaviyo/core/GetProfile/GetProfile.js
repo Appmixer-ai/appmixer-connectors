@@ -22,14 +22,18 @@ module.exports = {
             }
         });
 
-        const profile = response.data.data;
+        const profile = response.data?.data;
+        if (!profile) {
+            throw new context.CancelError('Profile not found or invalid response from Klaviyo API');
+        }
+
         const outputData = {
             id: profile.id,
-            email: profile.attributes.email,
-            phone_number: profile.attributes.phone_number,
-            first_name: profile.attributes.first_name,
-            last_name: profile.attributes.last_name,
-            properties: profile.attributes.properties || {}
+            email: profile.attributes?.email,
+            phone_number: profile.attributes?.phone_number,
+            first_name: profile.attributes?.first_name,
+            last_name: profile.attributes?.last_name,
+            properties: profile.attributes?.properties || {}
         };
 
         return context.sendJson(outputData, 'out');

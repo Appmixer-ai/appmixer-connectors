@@ -1,12 +1,10 @@
 'use strict';
 
-const lib = require('../../lib.generated');
-
 module.exports = {
 
     async receive(context) {
 
-        const { name, subject, template_id, list_ids } = context.messages.in.content;
+        const { name, subject, templateId } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Campaign name is required!');
@@ -24,7 +22,7 @@ module.exports = {
                     subject,
                     from_email: 'your-email@domain.com', // This should be configurable
                     from_name: 'Your Name', // This should be configurable
-                    ...(template_id && { template_id })
+                    ...(templateId && { template_id: templateId })
                 }
             }
         };

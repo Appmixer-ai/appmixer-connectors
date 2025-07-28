@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { id, email, phone_number, first_name, last_name, properties } = context.messages.in.content;
+        const { id, email, phoneNumber, firstName, lastName, properties } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Profile ID is required!');
@@ -25,9 +25,9 @@ module.exports = {
                 id: id,
                 attributes: {
                     ...(email && { email }),
-                    ...(phone_number && { phone_number }),
-                    ...(first_name && { first_name }),
-                    ...(last_name && { last_name }),
+                    ...(phoneNumber && { phone_number: phoneNumber }),
+                    ...(firstName && { first_name: firstName }),
+                    ...(lastName && { last_name: lastName }),
                     ...(Object.keys(parsedProperties).length > 0 && { properties: parsedProperties })
                 }
             }

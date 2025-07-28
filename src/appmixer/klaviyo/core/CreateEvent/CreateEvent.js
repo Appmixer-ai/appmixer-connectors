@@ -6,14 +6,14 @@ module.exports = {
 
     async receive(context) {
 
-        const { profile_id, profile_email, metric_name, properties, time } = context.messages.in.content;
+        const { profileId, profileEmail, metricName, properties, time } = context.messages.in.content;
 
-        if (!metric_name) {
-            throw new Error('Metric name is required');
+        if (!metricName) {
+            throw new context.CancelError('Metric name is required!');
         }
 
-        if (!profile_id && !profile_email) {
-            throw new Error('Either profile_id or profile_email is required');
+        if (!profileId && !profileEmail) {
+            throw new context.CancelError('Either profileId or profileEmail is required!');
         }
 
         let parsedProperties = {};
@@ -30,14 +30,14 @@ module.exports = {
                     profile: {
                         data: {
                             type: 'profile',
-                            ...(profile_id ? { id: profile_id } : { attributes: { email: profile_email } })
+                            ...(profileId ? { id: profileId } : { attributes: { email: profileEmail } })
                         }
                     },
                     metric: {
                         data: {
                             type: 'metric',
                             attributes: {
-                                name: metric_name
+                                name: metricName
                             }
                         }
                     },
@@ -61,12 +61,12 @@ module.exports = {
 
         const event = response.data?.data;
         if (!event) {
-            throw new Error('Invalid response from Klaviyo API');
+            throw new context.CancelError('Invalid response from Klaviyo API');
         }
 
         const outputData = {
             id: event.id || 'unknown',
-            metric_name: event.attributes?.metric?.name || metric_name,
+            metricName: event.attributes?.metric?.name || metricName,
             timestamp: event.attributes?.timestamp || new Date().toISOString()
         };
 
