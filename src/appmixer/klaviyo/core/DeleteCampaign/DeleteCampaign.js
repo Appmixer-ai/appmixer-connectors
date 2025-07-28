@@ -1,23 +1,18 @@
-'use strict';
-
-const lib = require('../../lib.generated');
-
 module.exports = {
 
     async receive(context) {
 
-        const { id } = context.messages.in.content;
+        const { campaignId } = context.messages.in.content;
 
-        if (!id) {
-            throw new context.CancelError('Profile ID is required!');
+        if (!campaignId) {
+            throw new context.CancelError('Campaign ID is required!');
         }
 
         await context.httpRequest({
             method: 'DELETE',
-            url: `https://a.klaviyo.com/api/profiles/${id}/`,
+            url: `https://a.klaviyo.com/api/campaigns/${campaignId}/`,
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
-                'Accept': 'application/vnd.api+json',
                 'Revision': '2025-07-15'
             }
         });

@@ -44,21 +44,51 @@ appmixer test component src\\appmixer\\klaviyo\\core\\FindLists -i "{\"in\":{\"o
 ```
 ✅ **Status**: PASSED - Returns array of lists with profile counts
 
+#### GetList - Retrieves details about a specific list
+```bash
+appmixer test component ./src/appmixer/klaviyo/core/GetList -i '{"in":{"listId":"Si9H6v"}}'
+```
+✅ **Status**: PASSED - Returns complete list data for given ID
+
+#### ListListProfiles - Gets profiles in a specific list
+```bash
+appmixer test component ./src/appmixer/klaviyo/core/ListListProfiles -i '{"in":{"listId":"Si9H6v","pageSize":20}}'
+```
+✅ **Status**: PASSED - Returns profiles associated with the specified list
+
 #### AddProfilesToList - Adds profiles to a specific list
 ```bash
-appmixer test component src\\appmixer\\klaviyo\\core\\AddProfilesToList -i "{\"in\":{\"id\":\"Si9H6v\",\"profile_ids\":\"01K0WH4SDZGMY1QF5E598BHH50\"}}"
+appmixer test component ./src/appmixer/klaviyo/core/AddProfilesToList -i '{"in":{"id":"Si9H6v","profile_ids":"01K0WH4SDZGMY1QF5E598BHH50"}}'
 ```
+✅ **Status**: PASSED - Successfully adds profile to list
+
 #### RemoveProfilesFromList - Removes profiles from a specific list
 ```bash
-appmixer test component src\\appmixer\\klaviyo\\core\\RemoveProfilesFromList -i "{\"in\":{\"id\":\"Si9H6v\",\"profile_ids\":\"01K0WH4SDZGMY1QF5E598BHH50\"}}"
+appmixer test component ./src/appmixer/klaviyo/core/RemoveProfilesFromList -i '{"in":{"id":"Si9H6v","profile_ids":"01K0WH4SDZGMY1QF5E598BHH50"}}'
 ```
 ✅ **Status**: PASSED - Successfully removes profile from list
+
+### Additional List and Profile Management
+
+#### ListProfiles - Gets all profiles in your account
+```bash
+appmixer test component ./src/appmixer/klaviyo/core/ListProfiles -i '{"in":{"pageSize":10}}'
+```
+✅ **Status**: PASSED - Returns paginated list of all profiles
+
+### Metrics Management
+
+#### ListMetrics - Gets all metrics in your account
+```bash
+appmixer test component ./src/appmixer/klaviyo/core/ListMetrics -i '{"in":{"pageSize":10}}'
+```
+✅ **Status**: PASSED - Returns list of available metrics for tracking
 
 ### Campaign Management
 
 #### FindCampaigns - Retrieves email campaigns
 ```bash
-appmixer test component src\\appmixer\\klaviyo\\core\\FindCampaigns -i "{\"in\":{\"outputType\":\"array\"}}"
+appmixer test component ./src/appmixer/klaviyo/core/FindCampaigns -i '{"in":{"outputType":"array"}}'
 ```
 ✅ **Status**: PASSED - Returns array of email campaigns (filters by email channel)
 
@@ -115,7 +145,23 @@ The following components require additional testing or fixes:
 
 ---
 
-**Last Updated**: July 23, 2025  
-**Validation Status**: 9/13 components fully validated ✅  
+**Last Updated**: July 28, 2025  
+**Validation Status**: 14/23 components fully validated ✅  
 **API Limitations**: 1 component unsupported by Klaviyo API ❌  
-**Remaining Work**: 3 components need additional investigation ⚠️
+**Remaining Work**: 8 components need additional investigation ⚠️
+
+### Additional Fixes Applied (July 28, 2025)
+
+**Fixed Quota Configuration and Missing Labels:**
+- **GetList**: Updated quota format and added missing label
+- **ListListProfiles**: Updated quota format and added missing labels  
+- **ListSegmentProfiles**: Updated quota format and added missing labels
+- **UpdateCampaign**: Updated quota format and added missing labels
+
+All components now use the standardized quota format:
+```json
+"quota": {
+    "manager": "appmixer:klaviyo",
+    "resources": "requests"
+}
+```

@@ -47,6 +47,10 @@ module.exports = {
             profile_count: list.attributes.profile_count || 0
         }));
 
+        if (lists.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records: lists, outputType });
     }
 };

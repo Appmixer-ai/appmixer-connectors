@@ -9,11 +9,11 @@ module.exports = {
         const { id, profile_ids } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('List ID is required');
+            throw new context.CancelError('List ID is required!');
         }
 
         if (!profile_ids) {
-            throw new Error('Profile IDs are required');
+            throw new context.CancelError('Profile IDs are required!');
         }
 
         let profileIdArray = [];
@@ -28,11 +28,11 @@ module.exports = {
         } else if (Array.isArray(profile_ids)) {
             profileIdArray = profile_ids;
         } else {
-            throw new Error('Profile IDs must be an array or comma-separated string');
+            throw new context.CancelError('Profile IDs must be an array or comma-separated string!');
         }
 
         if (profileIdArray.length === 0) {
-            throw new Error('At least one profile ID is required');
+            throw new context.CancelError('At least one profile ID is required!');
         }
 
         const requestData = {
@@ -54,10 +54,6 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson({
-            status: 'success',
-            list_id: id,
-            profiles_removed: profileIdArray.length
-        }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

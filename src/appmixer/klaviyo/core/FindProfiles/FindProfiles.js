@@ -51,6 +51,10 @@ module.exports = {
             properties: profile.attributes.properties || {}
         }));
 
+        if (profiles.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records: profiles, outputType });
     }
 };

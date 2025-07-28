@@ -9,7 +9,7 @@ module.exports = {
         const { id, send_time } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Campaign ID is required');
+            throw new context.CancelError('Campaign ID is required!');
         }
 
         const requestData = {
@@ -37,8 +37,7 @@ module.exports = {
         const outputData = {
             job_id: sendJob.id,
             campaign_id: id,
-            status: sendJob.attributes.status,
-            send_time: send_time || 'immediate'
+            sent_at: send_time || 'immediate'
         };
 
         return context.sendJson(outputData, 'out');

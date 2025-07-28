@@ -9,7 +9,7 @@ module.exports = {
         const { id } = context.messages.in.content;
 
         if (!id) {
-            throw new Error('Profile ID is required');
+            throw new context.CancelError('Profile ID is required!');
         }
 
         const response = await context.httpRequest({

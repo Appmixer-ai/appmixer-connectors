@@ -9,11 +9,11 @@ module.exports = {
         const { name, subject, template_id, list_ids } = context.messages.in.content;
 
         if (!name) {
-            throw new Error('Campaign name is required');
+            throw new context.CancelError('Campaign name is required!');
         }
 
         if (!subject) {
-            throw new Error('Campaign subject is required');
+            throw new context.CancelError('Campaign subject is required!');
         }
 
         const requestData = {

@@ -18,11 +18,7 @@ module.exports = {
 
         let parsedProperties = {};
         if (properties && typeof properties === 'string') {
-            try {
-                parsedProperties = JSON.parse(properties);
-            } catch (e) {
-                throw new Error('Properties must be a valid JSON object');
-            }
+            parsedProperties = JSON.parse(properties);
         } else if (properties && typeof properties === 'object') {
             parsedProperties = properties;
         }

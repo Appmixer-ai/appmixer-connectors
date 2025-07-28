@@ -8,13 +8,13 @@ module.exports = {
 
         const { email, phone_number, first_name, last_name, properties } = context.messages.in.content;
 
+        if (!email && !phone_number) {
+            throw new context.CancelError('Email or phone number is required!');
+        }
+
         let parsedProperties = {};
         if (properties && typeof properties === 'string') {
-            try {
-                parsedProperties = JSON.parse(properties);
-            } catch (e) {
-                throw new Error('Properties must be a valid JSON object');
-            }
+            parsedProperties = JSON.parse(properties);
         } else if (properties && typeof properties === 'object') {
             parsedProperties = properties;
         }

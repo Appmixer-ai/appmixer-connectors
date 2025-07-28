@@ -9,7 +9,7 @@ module.exports = {
         const { name, description } = context.messages.in.content;
 
         if (!name) {
-            throw new Error('List name is required');
+            throw new context.CancelError('List name is required!');
         }
 
         const requestData = {
