@@ -40,6 +40,7 @@ module.exports = {
             }))
         };
 
+        // https://developers.klaviyo.com/en/reference/add_profiles_to_list
         await context.httpRequest({
             method: 'POST',
             url: `https://a.klaviyo.com/api/lists/${listId}/relationships/profiles/`,

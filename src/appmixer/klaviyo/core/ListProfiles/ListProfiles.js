@@ -2,10 +2,10 @@ module.exports = {
 
     async receive(context) {
 
-        const { pageSize = 20, filter } = context.messages.in;
+        const { filter } = context.messages.in;
 
         const params = {
-            'page[size]': pageSize
+            'page[size]': 200
         };
 
         if (filter) {
