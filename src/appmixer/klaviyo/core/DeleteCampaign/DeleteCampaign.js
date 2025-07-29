@@ -12,6 +12,7 @@ module.exports = {
             method: 'DELETE',
             url: `https://a.klaviyo.com/api/campaigns/${campaignId}/`,
             headers: {
+                'Accept': 'application/vnd.api+json',
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Revision': '2025-07-15'
             }

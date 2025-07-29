@@ -14,8 +14,6 @@ module.exports = {
         }
 
         const queryParams = {
-            'fields[list]': 'opt_in_process,created,name,updated',
-            'fields[tag]': 'name',
             filter,
             include: 'flow-triggers,tags',
             sort
@@ -45,7 +43,6 @@ module.exports = {
 
         return lib.sendArrayOutput({ context, records: lists, outputType });
     },
-
 
     toSelectArray({ result }) {
 

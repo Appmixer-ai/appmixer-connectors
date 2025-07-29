@@ -1,61 +1,196 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = {
-    'id': { 'type': 'string', 'title': 'Id' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'subject': { 'type': 'string', 'title': 'Subject' },
-    'status': { 'type': 'string', 'title': 'Status' },
-    'created_at': { 'type': 'string', 'title': 'Created At' }
-};
 
 module.exports = {
 
     async receive(context) {
 
-        const { query, outputType } = context.messages.in.content;
+        const { channelFilter, filter, sort, outputType } = context.messages.in.content;
+        const { generateOutputPortOptions, isSource } = context.properties;
 
-        if (context.properties.generateOutputPortOptions) {
+        if (generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
         }
 
-        let url = 'https://a.klaviyo.com/api/campaigns/';
-        const params = new URLSearchParams();
+        const queryParams = {
+            filter: `equals(messages.channel,'${channelFilter}')${filter?.length > 0 ? `,${filter}` : ''}`,
+            sort,
+            include: 'tags,campaign-messages',
+        };
 
-        // Klaviyo requires a channel filter for campaigns
-        params.append('filter', 'equals(messages.channel,"email")');
-
-        if (query) {
-            // Add name filter along with the required channel filter
-            params.append('filter', `contains(name,"${query}")`);
-        }
-
-        if (params.toString()) {
-            url += '?' + params.toString();
-        }
-
-        const response = await context.httpRequest({
+        // https://developers.klaviyo.com/en/reference/get_campaigns
+        const { data } = await context.httpRequest({
             method: 'GET',
-            url: url,
+            url: 'https://a.klaviyo.com/api/campaigns',
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
                 'Revision': '2025-07-15'
-            }
+            },
+            params: queryParams
         });
 
-        const campaigns = response.data.data.map(campaign => ({
-            id: campaign.id,
-            name: campaign.attributes.name,
-            subject: campaign.attributes.subject,
-            status: campaign.attributes.status,
-            created_at: campaign.attributes.created_at
-        }));
+        const campaigns = data.data;
+
+        if (isSource) {
+            return context.sendJson({ result: campaigns }, 'out');
+        }
 
         if (campaigns.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records: campaigns, outputType });
+    },
+
+    toSelectArray({ result }) {
+
+        return result.map(list => {
+            return { label: list.attributes.name, value: list.id };
+        });
+    }
+};
+
+const schema = {
+    'type': { 'type': 'string', 'title': 'Type' },
+    'id': { 'type': 'string', 'title': 'Id' },
+    'attributes': {
+        'type': 'object',
+        'title': 'Attributes',
+        'properties': {
+            'name': { 'type': 'string', 'title': 'Name' },
+            'status': { 'type': 'string', 'title': 'Status' },
+            'archived': { 'type': 'boolean', 'title': 'Archived' },
+            'audiences': {
+                'type': 'object',
+                'title': 'Audiences',
+                'properties': {
+                    'included': {
+                        'type': 'array',
+                        'title': 'Included',
+                        'items': { 'type': 'string', 'title': 'Included Item' }
+                    },
+                    'excluded': {
+                        'type': 'array',
+                        'title': 'Excluded',
+                        'items': { 'type': 'string', 'title': 'Excluded Item' }
+                    }
+                }
+            },
+            'send_options': {
+                'type': 'object',
+                'title': 'Send Options',
+                'properties': {
+                    'use_smart_sending': { 'type': 'boolean', 'title': 'Use Smart Sending' }
+                }
+            },
+            'tracking_options': {
+                'type': 'object',
+                'title': 'Tracking Options',
+                'properties': {
+                    'add_tracking_params': { 'type': 'boolean', 'title': 'Add Tracking Params' },
+                    'custom_tracking_params': {
+                        'type': 'array',
+                        'title': 'Custom Tracking Params',
+                        'items': {
+                            'type': 'object',
+                            'title': 'Custom Tracking Param',
+                            'properties': {
+                                'type': { 'type': 'string', 'title': 'Type' },
+                                'value': { 'type': 'string', 'title': 'Value' },
+                                'name': { 'type': 'string', 'title': 'Name' }
+                            }
+                        }
+                    },
+                    'is_tracking_clicks': { 'type': 'boolean', 'title': 'Is Tracking Clicks' },
+                    'is_tracking_opens': { 'type': 'boolean', 'title': 'Is Tracking Opens' }
+                }
+            },
+            'send_strategy': {
+                'type': 'object',
+                'title': 'Send Strategy',
+                'properties': {
+                    'method': { 'type': 'string', 'title': 'Method' },
+                    'datetime': { 'type': 'string', 'title': 'Datetime' },
+                    'options': {
+                        'type': 'object',
+                        'title': 'Options',
+                        'properties': {
+                            'send_past_recipients_immediately': { 'type': 'boolean', 'title': 'Send Past Recipients Immediately' }
+                        }
+                    }
+                }
+            },
+            'created_at': { 'type': 'string', 'title': 'Created At' },
+            'scheduled_at': { 'type': 'string', 'title': 'Scheduled At' },
+            'updated_at': { 'type': 'string', 'title': 'Updated At' },
+            'send_time': { 'type': 'string', 'title': 'Send Time' }
+        }
+    },
+    'links': {
+        'type': 'object',
+        'title': 'Links',
+        'properties': {
+            'self': { 'type': 'string', 'title': 'Self' }
+        }
+    },
+    'relationships': {
+        'type': 'object',
+        'title': 'Relationships',
+        'properties': {
+            'campaign-messages': {
+                'type': 'object',
+                'title': 'Campaign Messages',
+                'properties': {
+                    'data': {
+                        'type': 'array',
+                        'title': 'Data',
+                        'items': {
+                            'type': 'object',
+                            'title': 'Campaign Message Data',
+                            'properties': {
+                                'type': { 'type': 'string', 'title': 'Type' },
+                                'id': { 'type': 'string', 'title': 'Id' }
+                            }
+                        }
+                    },
+                    'links': {
+                        'type': 'object',
+                        'title': 'Links',
+                        'properties': {
+                            'self': { 'type': 'string', 'title': 'Self' },
+                            'related': { 'type': 'string', 'title': 'Related' }
+                        }
+                    }
+                }
+            },
+            'tags': {
+                'type': 'object',
+                'title': 'Tags',
+                'properties': {
+                    'data': {
+                        'type': 'array',
+                        'title': 'Data',
+                        'items': {
+                            'type': 'object',
+                            'title': 'Tag Data',
+                            'properties': {
+                                'type': { 'type': 'string', 'title': 'Type' },
+                                'id': { 'type': 'string', 'title': 'Id' }
+                            }
+                        }
+                    },
+                    'links': {
+                        'type': 'object',
+                        'title': 'Links',
+                        'properties': {
+                            'self': { 'type': 'string', 'title': 'Self' },
+                            'related': { 'type': 'string', 'title': 'Related' }
+                        }
+                    }
+                }
+            }
+        }
     }
 };

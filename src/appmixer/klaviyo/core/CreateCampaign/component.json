@@ -1,15 +1,14 @@
 {
     "name": "appmixer.klaviyo.core.CreateCampaign",
+    "description": "Create a new campaign with specified details including name, channel filter, audiences, and send strategy.",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new email campaign with specified details including name, subject, template, and target list IDs.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:klaviyo"
     },
     "quota": {
         "manager": "appmixer:klaviyo",
-        "resources": "requests"
+        "resources": "ten-requests"
     },
     "inPorts": [
         {
@@ -20,34 +19,260 @@
                     "name": {
                         "type": "string"
                     },
-                    "subject": {
+                    "channelFilter": {
+                        "type": "string",
+                        "enum": ["email", "sms", "mobile_push"]
+                    },
+                    "audiencesIncluded": {
+                        "type": "object"
+                    },
+                    "audiencesExcluded": {
+                        "type": "object"
+                    },
+                    "sendStrategyMethod": {
+                        "type": "string",
+                        "enum": ["static", "throttled", "immediate", "smart_send_time"]
+                    },
+                    "sendStrategyOptionsStaticDatetime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "sendStrategyOptionsStaticIsLocal": {
+                        "type": "boolean"
+                    },
+                    "sendStrategyOptionsStaticSendPastRecipientsImmediately": {
+                        "type": "boolean"
+                    },
+                    "sendStrategyOptionsThrottledDatetime": {
                         "type": "string"
                     },
-                    "templateId": {
+                    "sendStrategyOptionsThrottledThrottlePercentage": {
+                        "type": "number",
+                        "enum": [10, 11, 13, 14, 17, 20, 25, 33, 50]
+                    },
+                    "sendStrategyOptionsStoDate": {
                         "type": "string"
                     }
                 },
-                "required": ["name", "subject"]
+                "required": ["name", "channelFilter", "audiencesIncluded", "sendStrategyMethod"]
             },
             "inspector": {
                 "inputs": {
                     "name": {
                         "type": "text",
-                        "tooltip": "Name of the campaign.",
-                        "label": "Name",
-                        "index": 0
+                        "label": "Campaign Name",
+                        "index": 1,
+                        "tooltip": "The name of the campaign"
                     },
-                    "subject": {
-                        "type": "text",
-                        "tooltip": "Subject line of the email campaign.",
-                        "label": "Subject",
-                        "index": 1
+                    "channelFilter": {
+                        "type": "select",
+                        "label": "Channel Filter",
+                        "index": 2,
+                        "tooltip": "The channel type for the campaign",
+                        "options": [
+                            { "label": "Email", "value": "email" },
+                            { "label": "SMS", "value": "sms" },
+                            { "label": "Mobile Push", "value": "mobile_push" }
+                        ]
                     },
-                    "templateId": {
-                        "type": "text",
-                        "tooltip": "Identifier for the email template.",
-                        "label": "Template Id",
-                        "index": 2
+                    "audiencesIncluded": {
+                        "type": "expression",
+                        "label": "Included Audiences",
+                        "index": 3,
+                        "tooltip": "Array of audiences to include in the campaign. Each item should have 'type' (List or Segment) and 'id' properties.",
+                        "levels": ["ADD"],
+                        "fields": {
+                            "type": {
+                                "required": true,
+                                "type": "select",
+                                "label": "Type",
+                                "options": [
+                                    {
+                                        "value": "list",
+                                        "label": "List"
+                                    },
+                                    {
+                                        "value": "segment",
+                                        "label": "Segment"
+                                    }
+                                ]
+                            },
+                            "listId": {
+                                "type": "text",
+                                "label": "List ID",
+                                "when": {
+                                    "eq": {
+                                        "./type": "list"
+                                    }
+                                },
+                                "required": true,
+                                "source": {
+                                    "url": "/component/appmixer/klaviyo/core/FindLists?outPort=out",
+                                    "data": {
+                                        "message": {
+                                            "in/outputType": "array"
+                                        },
+                                        "properties": {
+                                            "isSource": true
+                                        },
+                                        "transform": "./FindLists#toSelectArray"
+                                    }
+                                }
+                            },
+                            "segmentId": {
+                                "type": "text",
+                                "label": "Segment ID",
+                                "when": {
+                                    "eq": {
+                                        "./type": "segment"
+                                    }
+                                },
+                                "required": true
+                            }
+                        }
+                    },
+                    "audiencesExcluded": {
+                        "type": "expression",
+                        "label": "Excluded Audiences",
+                        "index": 3,
+                        "tooltip": "Array of audiences to exclude in the campaign. Each item should have 'type' (List or Segment) and 'id' properties.",
+                        "levels": ["ADD"],
+                        "fields": {
+                            "type": {
+                                "type": "select",
+                                "label": "Type",
+                                "options": [
+                                    { "clearItem": true, "label": "<Empty>" },
+                                    {
+                                        "value": "list",
+                                        "label": "List"
+                                    },
+                                    {
+                                        "value": "segment",
+                                        "label": "Segment"
+                                    }
+                                ]
+                            },
+                            "listId": {
+                                "type": "text",
+                                "label": "List ID",
+                                "when": {
+                                    "eq": {
+                                        "./type": "list"
+                                    }
+                                },
+                                "required": true,
+                                "source": {
+                                    "url": "/component/appmixer/klaviyo/core/FindLists?outPort=out",
+                                    "data": {
+                                        "message": {
+                                            "in/outputType": "array"
+                                        },
+                                        "properties": {
+                                            "isSource": true
+                                        },
+                                        "transform": "./FindLists#toSelectArray"
+                                    }
+                                }
+                            },
+                            "segmentId": {
+                                "type": "text",
+                                "label": "Segment ID",
+                                "when": {
+                                    "eq": {
+                                        "./type": "segment"
+                                    }
+                                },
+                                "required": true
+                            }
+                        }
+                    },
+                    "sendStrategyMethod": {
+                        "type": "select",
+                        "label": "Send Strategy Method",
+                        "index": 5,
+                        "tooltip": "The method for sending the campaign",
+                        "options": [
+                            { "label": "Static", "value": "static" },
+                            { "label": "Throttled", "value": "throttled" },
+                            { "label": "Immediate", "value": "immediate" },
+                            { "label": "Smart Send Time", "value": "smart_send_time" }
+                        ]
+                    },
+                    "sendStrategyOptionsStaticDatetime": {
+                        "type": "date-time",
+                        "label": "Static Send Date/Time",
+                        "index": 6,
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "static"
+                            }
+                        }
+                    },
+                    "sendStrategyOptionsStaticIsLocal": {
+                        "type": "toggle",
+                        "label": "Use Local Time",
+                        "index": 7,
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "static"
+                            }
+                        }
+                    },
+                    "sendStrategyOptionsStaticSendPastRecipientsImmediately": {
+                        "type": "toggle",
+                        "label": "Send Past Recipients Immediately",
+                        "index": 8,
+                        "tooltip": "Whether to send to past recipients immediately",
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "static"
+                            }
+                        }
+                    },
+                    "sendStrategyOptionsThrottledDatetime": {
+                        "type": "date-time",
+                        "label": "Throttled Send Date/Time",
+                        "index": 9,
+                        "tooltip": "The date and time to start throttled sending",
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "throttled"
+                            }
+                        }
+                    },
+                    "sendStrategyOptionsThrottledThrottlePercentage": {
+                        "type": "select",
+                        "label": "Throttle Percentage",
+                        "index": 10,
+                        "tooltip": "The percentage to throttle the sending",
+                        "options": [
+                            { "label": "10%", "value": 10 },
+                            { "label": "11%", "value": 11 },
+                            { "label": "13%", "value": 13 },
+                            { "label": "14%", "value": 14 },
+                            { "label": "17%", "value": 17 },
+                            { "label": "20%", "value": 20 },
+                            { "label": "25%", "value": 25 },
+                            { "label": "33%", "value": 33 },
+                            { "label": "50%", "value": 50 }
+                        ],
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "throttled"
+                            }
+                        }
+                    },
+                    "sendStrategyOptionsStoDate": {
+                        "type": "date-time",
+                        "label": "Smart Send Time Date",
+                        "index": 11,
+                        "tooltip": "The date for smart send time optimization",
+                        "when": {
+                            "eq": {
+                                "./sendStrategyMethod": "smart_send_time"
+                            }
+                        }                        
                     }
                 }
             }
@@ -58,7 +283,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Campaign ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -72,10 +297,33 @@
                     }
                 },
                 {
-                    "label": "Subject",
-                    "value": "subject",
+                    "label": "Status",
+                    "value": "status",
                     "schema": {
                         "type": "string"
+                    }
+                },
+                {
+                    "label": "Channel Filter",
+                    "value": "channel_filter",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 }
             ]
