@@ -1,0 +1,311 @@
+{
+    "actions": [
+        {
+            "title": "CreateSubscriber",
+            "description": "Add a new subscriber to a mailing list. Requires subscriber email, name, and optional group IDs.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#subscribers",
+            "endpointUrl": "/api/subscribers",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "subscriber_id",
+                "email": "example@mail.com",
+                "name": "John Doe",
+                "groups": [
+                    {
+                        "id": "group_id",
+                        "name": "Group Name"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for creating a subscriber",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "Email address of the subscriber; must be unique and valid."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the subscriber."
+                    },
+                    "groups": {
+                        "type": "array",
+                        "description": "Array of group IDs to which the subscriber will be added.",
+                        "items": {
+                            "type": "string",
+                            "description": "Group ID"
+                        }
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindSubscribers",
+            "description": "Retrieve a list of subscribers based on search criteria. Use query parameters to filter by email or name.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#subscribers",
+            "endpointUrl": "/api/subscribers",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "subscriber_id",
+                        "email": "example@mail.com",
+                        "name": "John Doe"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for finding subscribers",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter subscribers by email or name."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "GetSubscriber",
+            "description": "Retrieve detailed information of a specific subscriber using their subscriber ID.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#subscribers",
+            "endpointUrl": "/api/subscribers/{subscriber_id}",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "subscriber_id",
+                "email": "example@mail.com",
+                "name": "John Doe",
+                "groups": [
+                    {
+                        "id": "group_id",
+                        "name": "Group Name"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter for retrieving a subscriber's details",
+                "properties": {
+                    "subscriber_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the subscriber."
+                    }
+                },
+                "required": [
+                    "subscriber_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindGroups",
+            "description": "Retrieve all available subscriber groups. Use search criteria to filter groups if needed.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#groups",
+            "endpointUrl": "/api/groups",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "group_id",
+                        "name": "Newsletter Subscribers"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for finding groups",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter groups by name."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "CreateCampaign",
+            "description": "Create a new email campaign with specified content and settings.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#campaigns-create",
+            "endpointUrl": "/api/campaigns",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "campaign_id",
+                "name": "Campaign Name",
+                "subject": "Email Subject",
+                "status": "draft"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for creating a campaign",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the campaign."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Subject line of the email campaign."
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "HTML or plain text content of the campaign."
+                    },
+                    "groups": {
+                        "type": "array",
+                        "description": "Array of group IDs to which the campaign will be sent.",
+                        "items": {
+                            "type": "string",
+                            "description": "Group ID"
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "subject",
+                    "content"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindCampaigns",
+            "description": "Retrieve a list of email campaigns optionally filtered by search criteria such as name or status.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#campaigns-get",
+            "endpointUrl": "/api/campaigns",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "campaign_id",
+                        "name": "Campaign Name",
+                        "subject": "Email Subject",
+                        "status": "draft"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for finding campaigns",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter campaigns by name or subject."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter campaigns by status (e.g., draft, sent, scheduled)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "SendCampaign",
+            "description": "Send or schedule an email campaign for delivery.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#campaigns-send",
+            "endpointUrl": "/api/campaigns/{campaign_id}/actions/send",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "POST",
+            "sampleResponse": {
+                "campaign_id": "campaign_id",
+                "status": "scheduled"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter to send a campaign",
+                "properties": {
+                    "campaign_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the campaign to be sent."
+                    }
+                },
+                "required": [
+                    "campaign_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetCampaignStats",
+            "description": "Retrieve performance metrics and statistics for a specific email campaign.",
+            "type": "action",
+            "documentation": "https://developers.mailerlite.com/docs/#campaigns-reports",
+            "endpointUrl": "/api/campaigns/{campaign_id}/reports",
+            "apiBaseUrl": "https://api.mailerlite.com",
+            "method": "GET",
+            "sampleResponse": {
+                "campaign_id": "campaign_id",
+                "opens": 150,
+                "clicks": 45,
+                "bounces": 2
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter to get campaign statistics",
+                "properties": {
+                    "campaign_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the campaign."
+                    }
+                },
+                "required": [
+                    "campaign_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "https://developers.mailerlite.com/docs/#authentication",
+        "tokenUrl": "https://developers.mailerlite.com/docs/#authentication",
+        "profileInfoUrl": "https://api.mailerlite.com/api/subscribers/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.mailerlite",
+        "label": "Mailerlite",
+        "category": "applications",
+        "description": "Integration with Mailerlite, an email marketing platform offering subscriber management, campaign creation, and analytics.",
+        "version": "1.0.0",
+        "icon": "https://example.com/mailerlite-icon.svg"
+    }
+}
