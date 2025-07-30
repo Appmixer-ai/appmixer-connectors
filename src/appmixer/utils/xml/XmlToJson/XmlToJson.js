@@ -42,7 +42,7 @@ module.exports = {
             ignoreDeclaration,
             ignorePiTags,
             isArray: (name, jpath, isLeafNode, isAttribute) => {
-                return alwaysArray && alwaysArray.split(',').indexOf(jpath) !== -1;
+                return alwaysArray?.split(',').indexOf(jpath) !== -1;
             },
             numberParseOptions: {
                 leadingZeros: numberParseLeadingZeros,

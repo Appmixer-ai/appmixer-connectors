@@ -8,7 +8,7 @@ async function registerWebhook(context, client) {
         'plivo-sms-NewSMS-' + context.componentId,
         { messageUrl: context.getWebhookUrl() }
     );
-    if (response && response.message === 'created') {
+    if (response?.message === 'created') {
         await context.saveState({ appId: response.appId });
         return response;
     } else {

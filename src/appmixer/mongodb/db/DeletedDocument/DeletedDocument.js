@@ -86,15 +86,11 @@ module.exports = {
 
                 const changeStream = getChangeStream('delete', collection, { resumeToken, startAtOperationTime });
 
-                try {
-                    while (await changeStream.hasNext()) {
-                        const next = await changeStream.next();
-                        const jsonDoc = JSON.parse(JSON.stringify(next.documentKey));
-                        await context.sendJson({ document: jsonDoc }, 'out');
-                        await context.stateSet('resumeToken', changeStream.resumeToken['_data']);
-                    }
-                } catch (error) {
-                    throw error;
+                while (await changeStream.hasNext()) {
+                    const next = await changeStream.next();
+                    const jsonDoc = JSON.parse(JSON.stringify(next.documentKey));
+                    await context.sendJson({ document: jsonDoc }, 'out');
+                    await context.stateSet('resumeToken', changeStream.resumeToken['_data']);
                 }
 
                 await new Promise(r => setTimeout(r, context.config.changeStreamsTimeout || 55000));

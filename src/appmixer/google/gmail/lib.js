@@ -8,7 +8,7 @@ const BASE_URL = 'https://gmail.googleapis.com/gmail/v1';
 function getGmailPartContent(part, _content) {
     _content = _content || { text: '', html: '' };
 
-    if (part.body && part.body.data) {
+    if (part.body?.data) {
         let contentType = (part.headers || []).find(h => {
             return h.name.toLowerCase() === 'content-type';
         });
@@ -260,7 +260,7 @@ module.exports = {
             } catch (err) {
                 // email can be deleted (permanently) in gmail between listNewMessages call and
                 // this getMessage call, in such case - ignore it and return null.
-                if (err && err.response && err.response.status === 404) {
+                if (err?.response?.status === 404) {
                     return null;
                 }
                 throw err;

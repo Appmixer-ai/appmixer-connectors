@@ -56,6 +56,7 @@ function createMockContext(options) {
     // Reset fake timers
     sinon.restore();
 
+    const mockState = {};
     const context = {
         clientId: 'testClientId',
         clientSecret: 'testClientSecret',
@@ -113,6 +114,22 @@ function createMockContext(options) {
                 }
             })
         },
+        stateGet: sinon.stub().callsFake((key) => {
+            if (mockState[key] instanceof Set) {
+                return Array.from(mockState[key]);
+            }
+            return mockState[key];
+        }),
+        stateSet: sinon.stub().callsFake((key, value) => { mockState[key] = value; }),
+        stateUnset: sinon.stub().callsFake((key) => {
+            delete mockState[key];
+        }),
+        stateAddToSet: sinon.stub().callsFake((key, value) => {
+            if (!mockState[key]) {
+                mockState[key] = new Set();
+            }
+            mockState[key].add(value);
+        }),
         componentStaticCall: sinon.stub(),
         getWebhookUrl: sinon.stub(),
         saveState: sinon.stub().returns({}),

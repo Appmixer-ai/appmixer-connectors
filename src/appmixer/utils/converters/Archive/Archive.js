@@ -61,7 +61,7 @@ module.exports = {
 
                 savedFile = await context.replaceFileStream(archiveFileID, streamPassThrough);
             } finally {
-                lock && lock.unlock();
+                lock?.unlock();
             }
         } else {
             archive.finalize();

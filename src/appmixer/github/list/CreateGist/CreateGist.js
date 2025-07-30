@@ -1,5 +1,4 @@
 'use strict';
-const Promise = require('bluebird');
 const lib = require('../../lib');
 
 /**
@@ -36,12 +35,12 @@ module.exports = {
         const fileIds = (files.ADD || [])
             .map(file => file.fileId || null)
             .filter(fileId => fileId !== null);
-        return await Promise.map(fileIds, async (fileId) => {
+        return await Promise.all(fileIds.map(async (fileId) => {
             const fileInfo = await context.getFileInfo(fileId);
             const fileStream = await context.getFileReadStream(fileId);
             const fileContent = fileStream.toString('base64');
 
             return { filename: fileInfo.filename, content: fileContent };
-        });
+        }));
     }
 };

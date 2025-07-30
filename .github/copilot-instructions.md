@@ -604,7 +604,7 @@ json schema of the component.json
                 "manager": {
                     "type": "string", "description": "The name of the quota module where usage limit rules are defined."
                 },
-                "maxWait": { "type": "integer" },
+                "maxWait": { "type": "integer", "description": "MUST be lower than 120000 (2 minutes) which is the default TTL for the quota manager." },
                 "concurrency": { "type": "integer" },
                 "resources": {
                     "description": "One or more resources that identify rules from the quota module that apply to this component. Each rule in the quota module can have the resource property. quota.resources allow you to cherry-pick rules from the list of rules in the quota module that apply to this component. quota.resources can either be a string or an array of strings.",
@@ -812,11 +812,11 @@ json schema of the component.json
 
 Desired order of attributes in `component.json`:
 1. `name`
-2. `label`
-3. `description`
-4. `author`
-5. `version`
-6. `auth`
+2. `description`
+3. `author`
+4. `version`
+5. `auth`
+6. `quota`
 7. `inPorts`
 8. `properties`
 9. `outPorts`
@@ -836,7 +836,7 @@ module.exports = {
     async receive(context) {
         
         // Get input data
-        const { message, priority, count } = context.messages.in;
+        const { message, priority, count } = context.messages.in.content;
         
         // Perform the action
         const response = await context.httpRequest({
@@ -910,8 +910,6 @@ module.exports = {
 
 ## Development Guidelines
 
-- **Validation**: Don't check required properties in behavior code - use schema validation
-- **Error Handling**: Always handle API errors gracefully
 - **Authentication**: Store sensitive data in auth configuration, not component code
 - **Rate Limiting**: Use quota.js to prevent API abuse
 - **Documentation**: Provide clear descriptions and tooltips for all fields
@@ -924,6 +922,10 @@ module.exports = {
 - **Batching**: Batch API calls when possible to reduce requests
 
 ## Common Patterns
+
+### When editing existing or creating new component
+
+IMPORTANT! use the `instructions-component-standards` tool to get comprehensive guidelines on how to create or edit components in Appmixer.
 
 ### When adding new field to component.json
 

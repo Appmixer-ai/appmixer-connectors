@@ -24,7 +24,7 @@ describe('wiz.uploadScan', () => {
             scheduleValue
         };
 
-        uploadScan.scheduleDrain(context, { previousDate: null });
+        await uploadScan.scheduleDrain(context, { previousDate: null });
         const diff = context.setTimeout.getCall(0).args[1];
         const expectedSeconds = scheduleValue * 60;
         assert.equal(Math.round(diff / 1000), expectedSeconds, 'Timeout should be set to the schedule value in milliseconds');
@@ -38,7 +38,7 @@ describe('wiz.uploadScan', () => {
             scheduleValue
         };
 
-        uploadScan.scheduleDrain(context, { previousDate: null });
+        await uploadScan.scheduleDrain(context, { previousDate: null });
         const diff = context.setTimeout.getCall(0).args[1];
         const expectedSeconds = scheduleValue * 60 * 60;
         assert.equal(Math.round(diff / 1000), expectedSeconds, 'Timeout should be set to the schedule value in milliseconds');
@@ -52,7 +52,7 @@ describe('wiz.uploadScan', () => {
             scheduleValue
         };
 
-        uploadScan.scheduleDrain(context, { previousDate: null });
+        await uploadScan.scheduleDrain(context, { previousDate: null });
         const diff = context.setTimeout.getCall(0).args[1];
         const expectedSeconds = scheduleValue * 60 * 60 * 24;
         assert.equal(Math.round(diff / 1000), expectedSeconds, 'Timeout should be set to the schedule value in milliseconds');

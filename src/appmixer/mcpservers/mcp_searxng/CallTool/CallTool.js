@@ -34,7 +34,7 @@ module.exports = {
 
         const inputs = {};
         tools.forEach(tool => {
-            if (tool.name === context.properties.tool && tool.inputSchema && tool.inputSchema.properties) {
+            if (tool.name === context.properties.tool && tool.inputSchema?.properties) {
                 let index = 1;
                 Object.keys(tool.inputSchema.properties).forEach(property => {
                     const propertySchema = tool.inputSchema.properties[property];

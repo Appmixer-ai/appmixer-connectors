@@ -7,14 +7,23 @@ module.exports = {
 
         // https://developers.google.com/workspace/tasks/reference/rest/v1/tasks/list
 
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://tasks.googleapis.com/tasks/v1/lists/${tasklist}/tasks`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
+        try {
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: `https://tasks.googleapis.com/tasks/v1/lists/${tasklist}/tasks`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+            return context.sendJson(data.items || [], 'out');
+        } catch (error) {
+            // Silence 400-level errors (like 400 Bad Request when tasklist is not available)
+            if (error.response && error.response.status >= 400 && error.response.status < 500) {
+                return context.sendJson([], 'out');
             }
-        });
-        return context.sendJson(data.items || [], 'out');
+            // Re-throw other errors
+            throw error;
+        }
     },
 
     tasksToSelectArray(tasks) {

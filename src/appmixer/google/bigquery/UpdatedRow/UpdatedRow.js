@@ -145,7 +145,7 @@ module.exports = {
 
             const item = context.messages.webhook.content.data.currentValue;
             if (JSON.stringify(item.value) !== JSON.stringify(item.oldValue)) {
-                if (referenceFields && referenceFields.trim()) {
+                if (referenceFields?.trim()) {
                     const referenceFieldsArray = (referenceFields || '').split(',').map(field => field.trim());
                     referenceFieldsArray.forEach(field => {
                         if (item.value[field] !== item.oldValue[field]) {

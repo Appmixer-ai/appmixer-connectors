@@ -32,7 +32,7 @@ module.exports = {
     generateWebFormPage: function(opt = {}, url) {
 
         let fieldsHTML = '';
-        const fields = (opt && opt.fields && opt.fields.ADD) ? opt.fields.ADD : [];
+        const fields = (opt?.fields && opt.fields.ADD) ? opt.fields.ADD : [];
 
         fields.sort((a, b) => {
             const aIndex = typeof a.index === 'number' ? a.index : Number.MAX_SAFE_INTEGER;

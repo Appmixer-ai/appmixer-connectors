@@ -19,10 +19,10 @@ module.exports = {
                     if (err) {
                         return reject(err);
                     }
-                    if (body && response && response.statusCode === 201) {
+                    if (body && response?.statusCode === 201) {
                         await context.sendJson(body, 'newContact');
                     } else if (!response || response.statusCode !== 201) {
-                        return reject(new Error('Fakturoid post subjects failed with status code ' + (response && response.statusCode)));
+                        return reject(new Error('Fakturoid post subjects failed with status code ' + response?.statusCode));
                     }
                     resolve();
                 } catch (err) {

@@ -28,7 +28,7 @@ module.exports = {
         }
 
         let response;
-        if (query && query.trim()) {
+        if (query?.trim()) {
             // If query is present, use search endpoint
             // Stripe: https://stripe.com/docs/api/payment_intents/search
             response = await context.httpRequest({

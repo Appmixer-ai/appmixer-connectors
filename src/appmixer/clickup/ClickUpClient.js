@@ -91,7 +91,7 @@ class ClickUpClient {
                 return response.data;
             })
             .catch((e) => {
-                if (e.response && e.response.data) {
+                if (e.response?.data) {
                     if (Array.isArray(e.response.data)) {
                         const errorData = e.response.data[0];
                         throw errorData;
