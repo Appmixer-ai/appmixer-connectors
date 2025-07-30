@@ -12,15 +12,14 @@ module.exports = {
         }
 
         // https://developers.mailerlite.com/docs/#campaigns-send
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://connect.mailerlite.com/api/campaigns/${campaign_id}/actions/send`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiToken}`
             }
         });
 
-        return context.sendJson(response.data.data || {}, 'out');
+        return context.sendJson(data.data || {}, 'out');
     }
 };

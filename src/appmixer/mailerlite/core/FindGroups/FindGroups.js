@@ -14,16 +14,15 @@ module.exports = {
         }
 
         // https://developers.mailerlite.com/docs/#groups
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/groups',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiToken}`
             }
         });
 
-        const records = response.data.data || [];
+        const records = data.data || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };
