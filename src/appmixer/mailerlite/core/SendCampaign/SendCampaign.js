@@ -7,15 +7,20 @@ module.exports = {
 
         const { campaign_id } = context.messages.in.content;
 
+        if (!campaign_id) {
+            throw new context.CancelError('Campaign ID is required!');
+        }
+
         // https://developers.mailerlite.com/docs/#campaigns-send
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
-            url: '/api/campaigns/{campaign_id}/actions/send',
+            url: `https://connect.mailerlite.com/api/campaigns/${campaign_id}/actions/send`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiToken}`,
+                'Content-Type': 'application/json'
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(response.data.data || {}, 'out');
     }
 };

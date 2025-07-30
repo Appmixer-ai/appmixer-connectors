@@ -2,7 +2,7 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string','title':'Name' },'subject':{ 'type':'string','title':'Subject' },'status':{ 'type':'string','title':'Status' } };
+const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string','title':'Name' },'type':{ 'type':'string','title':'Type' },'status':{ 'type':'string','title':'Status' },'created_at':{ 'type':'string','title':'Created At' },'updated_at':{ 'type':'string','title':'Updated At' } };
 
 module.exports = {
     async receive(context) {
@@ -10,18 +10,26 @@ module.exports = {
         const { query, status, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
+        }
+
+        const params = {};
+        if (status) {
+            params['filter[status]'] = status;
         }
 
         // https://developers.mailerlite.com/docs/#campaigns-get
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: '/api/campaigns',
+            url: 'https://connect.mailerlite.com/api/campaigns',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiToken}`,
+                'Content-Type': 'application/json'
+            },
+            params: params
         });
 
+        const records = response.data.data || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

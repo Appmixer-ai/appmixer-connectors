@@ -3,35 +3,41 @@
 module.exports = {
     type: 'apiKey',
     definition: {
+        tokenType: 'authentication-token',
+        
         auth: {
-            apiKey: {
+            apiToken: {
                 type: 'text',
-                name: 'API Key',
-                tooltip: 'Log into your MailerLite account and find your API Key in the Integrations or Developer API section.'
+                name: 'API Token',
+                tooltip: 'Your MailerLite API token. You can find it in your MailerLite account under Integrations > Developer API.'
             }
         },
 
-        async requestProfileInfo(context) {
-            const apiKey = context.apiKey;
-            return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
-            };
-        },
-        accountNameFromProfileInfo: 'key',
+        accountNameFromProfileInfo: 'email',
 
-        validate: async (context) => {
-            // MailerLite API v2: https://api.mailerlite.com/api/v2/me
-            // MailerLite API v2 expects the API key in the 'X-MailerLite-ApiKey' header
+        requestProfileInfo: async (context) => {
             const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.mailerlite.com/api/v2/me',
+                url: 'https://connect.mailerlite.com/api/me',
                 headers: {
-                    'X-MailerLite-ApiKey': context.apiKey
+                    'Authorization': `Bearer ${context.apiToken}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            if (!response.data || !response.data.email) {
-                throw new Error('Authentication failed: Invalid API Key or unexpected response.');
-            }
+            
+            return response.data;
+        },
+
+        validate: async (context) => {
+            await context.httpRequest({
+                method: 'GET',
+                url: 'https://connect.mailerlite.com/api/me',
+                headers: {
+                    'Authorization': `Bearer ${context.apiToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
             return true;
         }
     }

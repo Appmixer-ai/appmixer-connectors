@@ -5,17 +5,31 @@ const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { subscriber_id } = context.messages.in.content;
+        const { subscriber_id, email } = context.messages.in.content;
+
+        if (!subscriber_id && !email) {
+            throw new context.CancelError('Either Subscriber ID or Email is required!');
+        }
+
+        let url;
+        if (subscriber_id) {
+            url = `https://connect.mailerlite.com/api/subscribers/${subscriber_id}`;
+        } else {
+            // When using email, we need to encode it for the URL
+            const encodedEmail = encodeURIComponent(email);
+            url = `https://connect.mailerlite.com/api/subscribers/${encodedEmail}`;
+        }
 
         // https://developers.mailerlite.com/docs/#subscribers
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: '/api/subscribers/{subscriber_id}',
+            url: url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiToken}`,
+                'Content-Type': 'application/json'
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(response.data.data, 'out');
     }
 };

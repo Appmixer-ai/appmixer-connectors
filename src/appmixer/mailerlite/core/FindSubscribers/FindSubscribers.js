@@ -2,7 +2,7 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'email':{ 'type':'string','title':'Email' },'name':{ 'type':'string','title':'Name' } };
+const schema = { 'id':{ 'type':'string','title':'Id' },'email':{ 'type':'string','title':'Email' },'status':{ 'type':'string','title':'Status' },'created_at':{ 'type':'string','title':'Created At' },'updated_at':{ 'type':'string','title':'Updated At' } };
 
 module.exports = {
     async receive(context) {
@@ -10,18 +10,26 @@ module.exports = {
         const { query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Subscribers' });
+        }
+
+        const params = {};
+        if (query) {
+            params.filter = { email: query };
         }
 
         // https://developers.mailerlite.com/docs/#subscribers
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: '/api/subscribers',
+            url: 'https://connect.mailerlite.com/api/subscribers',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiToken}`,
+                'Content-Type': 'application/json'
+            },
+            params: params
         });
 
+        const records = response.data.data || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };
