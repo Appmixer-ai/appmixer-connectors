@@ -38,7 +38,7 @@ describe('SendCampaign Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should throw error when campaign ID is missing', async function() {
@@ -59,7 +59,7 @@ describe('SendCampaign Component', function() {
 
     it('should handle non-existent campaign ID (without sending)', async function() {
         context.messages.in.content = {
-            campaign_id: 'non-existent-campaign-12345'
+            campaignId: 'non-existent-campaign-12345'
         };
 
         try {
@@ -93,7 +93,7 @@ describe('SendCampaign Component', function() {
         }
 
         context.messages.in.content = {
-            campaign_id: global.testCampaignId
+            campaignId: global.testCampaignId
         };
 
         try {
@@ -132,7 +132,7 @@ describe('SendCampaign Component', function() {
         // Test that the component accepts the expected input format
         // without actually sending anything
         context.messages.in.content = {
-            campaign_id: 'test-validation-id-123'
+            campaignId: 'test-validation-id-123'
         };
 
         try {
@@ -143,7 +143,7 @@ describe('SendCampaign Component', function() {
                 throw error; // This would indicate an input validation issue
             }
             if (error.response && (error.response.status === 404 || error.response.status === 422 || error.response.status === 400)) {
-                console.log('Input validation passed, API returned expected error for non-existent/invalid campaign');
+                console.log('Input validation passed, API returned expected error for non-existent campaign');
                 return; // This is expected
             }
             if (error.response && error.response.status === 401) {

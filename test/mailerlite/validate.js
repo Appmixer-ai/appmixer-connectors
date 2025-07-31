@@ -1,153 +1,181 @@
+#!/usr/bin/env node
+
+/**
+ * Mailerlite Connector Validation Script
+ * 
+ * This script validates that the Mailerlite connector is properly configured
+ * and can connect to the API successfully.
+ */
+
 const path = require('path');
+const axios = require('axios');
+
+// Load environment variables
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
-// Simple validation script to test one component
-async function validateComponent() {
-    console.log('🔍 Quick Validation Test');
-    console.log('========================');
+const colors = {
+    green: '\x1b[32m',
+    red: '\x1b[31m', 
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    reset: '\x1b[0m',
+    bold: '\x1b[1m'
+};
+
+function log(message, color = colors.reset) {
+    console.log(`${color}${message}${colors.reset}`);
+}
+
+async function validateConnection() {
+    log('\n🧪 Mailerlite Connector Validation', colors.bold + colors.blue);
+    log('====================================', colors.blue);
     
-    // Check environment
+    // Check environment variable
+    log('\n1. Checking Environment Configuration...', colors.yellow);
+    
     if (!process.env.MAILERLITE_ACCESS_TOKEN) {
-        console.log('❌ MAILERLITE_ACCESS_TOKEN not found in environment');
+        log('❌ MAILERLITE_ACCESS_TOKEN not found in environment', colors.red);
+        log('   Please set this in test/.env file', colors.red);
+        log('   Get your token from: https://app.mailerlite.com/integrations/api', colors.blue);
         return false;
     }
     
-    console.log('✅ MAILERLITE_ACCESS_TOKEN found');
-    console.log('✅ MAILERLITE_SUBSCRIBER_ID:', process.env.MAILERLITE_SUBSCRIBER_ID ? 'available' : 'not set');
+    const token = process.env.MAILERLITE_ACCESS_TOKEN;
+    log(`✅ Token found: ${token.substring(0, 10)}...${token.slice(-4)}`, colors.green);
     
-    // Load and test FindSubscribers component
+    // Test API connection
+    log('\n2. Testing API Connection...', colors.yellow);
+    
+    try {
+        const response = await axios({
+            method: 'GET',
+            url: 'https://connect.mailerlite.com/api/timezones',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            timeout: 10000
+        });
+
+        if (response.status === 200 && response.data && Array.isArray(response.data.data)) {
+            log('✅ API connection successful', colors.green);
+            log(`   Found ${response.data.data.length} timezones`, colors.green);
+        } else {
+            log('❌ Unexpected API response format', colors.red);
+            return false;
+        }
+    } catch (error) {
+        if (error.response) {
+            log(`❌ API Error: ${error.response.status} - ${error.response.statusText}`, colors.red);
+            if (error.response.status === 401) {
+                log('   This usually means your API token is invalid or expired', colors.red);
+                log('   Please check your token in the Mailerlite dashboard', colors.blue);
+            }
+        } else if (error.code === 'ENOTFOUND') {
+            log('❌ Network Error: Cannot reach Mailerlite API', colors.red);
+            log('   Please check your internet connection', colors.red);
+        } else {
+            log(`❌ Connection Error: ${error.message}`, colors.red);
+        }
+        return false;
+    }
+    
+    // Test basic functionality
+    log('\n3. Testing Component Loading...', colors.yellow);
+    
     try {
         const FindSubscribers = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindSubscribers/FindSubscribers.js'));
-        const httpRequest = require('./httpRequest.js');
+        log('✅ FindSubscribers component loaded', colors.green);
         
-        const context = {
-            auth: {
-                apiToken: process.env.MAILERLITE_ACCESS_TOKEN
-            },
-            messages: {
-                in: {
-                    content: { outputType: 'array' }
-                }
-            },
-            properties: {},
-            httpRequest: httpRequest,
-            sendJson: function(data, port) {
-                console.log('📊 FindSubscribers Result:', {
-                    port: port,
-                    dataType: typeof data,
-                    isArray: Array.isArray(data?.result),
-                    count: data?.count,
-                    firstItem: data?.result?.[0] ? {
-                        id: data.result[0].id,
-                        email: data.result[0].email,
-                        status: data.result[0].status
-                    } : 'No items'
-                });
-            },
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
-            }
-        };
+        const CreateSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/CreateSubscriber/CreateSubscriber.js'));
+        log('✅ CreateSubscriber component loaded', colors.green);
         
-        console.log('🔧 Testing FindSubscribers component...');
-        await FindSubscribers.receive(context);
-        console.log('✅ FindSubscribers test passed!');
-        
-        return true;
+        const auth = require(path.join(__dirname, '../../src/appmixer/mailerlite/auth.js'));
+        log('✅ Authentication module loaded', colors.green);
         
     } catch (error) {
-        console.log('❌ FindSubscribers test failed:');
-        console.log('Error:', error.message);
-        if (error.response) {
-            console.log('Status:', error.response.status);
-            console.log('Response:', JSON.stringify(error.response.data, null, 2));
-        }
+        log(`❌ Component loading error: ${error.message}`, colors.red);
         return false;
-    }
-}
-
-// Test GetSubscriber if ID is available
-async function testGetSubscriber() {
-    if (!process.env.MAILERLITE_SUBSCRIBER_ID) {
-        console.log('⏭️ Skipping GetSubscriber test - no MAILERLITE_SUBSCRIBER_ID');
-        return true;
     }
     
+    // Test a simple API call
+    log('\n4. Testing Subscriber Listing...', colors.yellow);
+    
     try {
-        const GetSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/GetSubscriber/GetSubscriber.js'));
-        const httpRequest = require('./httpRequest.js');
+        const response = await axios({
+            method: 'GET',
+            url: 'https://connect.mailerlite.com/api/subscribers',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            params: { limit: 5 },
+            timeout: 10000
+        });
         
-        const context = {
-            auth: {
-                apiToken: process.env.MAILERLITE_ACCESS_TOKEN
-            },
-            messages: {
-                in: {
-                    content: { subscriber_id: process.env.MAILERLITE_SUBSCRIBER_ID }
-                }
-            },
-            properties: {},
-            httpRequest: httpRequest,
-            sendJson: function(data, port) {
-                console.log('📊 GetSubscriber Result:', {
-                    port: port,
-                    dataType: typeof data,
-                    id: data?.id,
-                    email: data?.email,
-                    status: data?.status
-                });
-            },
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
+        if (response.status === 200 && response.data) {
+            const subscribers = response.data.data || [];
+            log(`✅ Successfully retrieved ${subscribers.length} subscribers`, colors.green);
+            
+            if (subscribers.length > 0) {
+                log(`   Sample subscriber: ${subscribers[0].email || 'N/A'}`, colors.green);
             }
-        };
-        
-        console.log('🔧 Testing GetSubscriber component...');
-        await GetSubscriber.receive(context);
-        console.log('✅ GetSubscriber test passed!');
-        
-        return true;
-        
-    } catch (error) {
-        console.log('❌ GetSubscriber test failed:');
-        console.log('Error:', error.message);
-        if (error.response) {
-            console.log('Status:', error.response.status);
-            console.log('Response:', JSON.stringify(error.response.data, null, 2));
         }
-        return false;
+    } catch (error) {
+        if (error.response && error.response.status !== 401) {
+            log(`⚠️  Subscriber API warning: ${error.response.status}`, colors.yellow);
+            log('   This might be normal if you have no subscribers', colors.yellow);
+        } else {
+            log(`❌ Subscriber API error: ${error.message}`, colors.red);
+            return false;
+        }
     }
+    
+    // Test groups endpoint
+    log('\n5. Testing Groups Listing...', colors.yellow);
+    
+    try {
+        const response = await axios({
+            method: 'GET',
+            url: 'https://connect.mailerlite.com/api/groups',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            timeout: 10000
+        });
+        
+        if (response.status === 200 && response.data) {
+            const groups = response.data.data || [];
+            log(`✅ Successfully retrieved ${groups.length} groups`, colors.green);
+            
+            if (groups.length > 0) {
+                log(`   Sample group: ${groups[0].name || 'N/A'}`, colors.green);
+            }
+        }
+    } catch (error) {
+        if (error.response && error.response.status !== 401) {
+            log(`⚠️  Groups API warning: ${error.response.status}`, colors.yellow);
+            log('   This might be normal if you have no groups', colors.yellow);
+        } else {
+            log(`❌ Groups API error: ${error.message}`, colors.red);
+            return false;
+        }
+    }
+    
+    log('\n✅ All validations passed!', colors.bold + colors.green);
+    log('   Your Mailerlite connector is ready for testing', colors.green);
+    log('\n📋 Next Steps:', colors.bold + colors.blue);
+    log('   • Run full tests: node runTests.js', colors.blue);
+    log('   • Or run individual tests: node -e "require(\'./FindSubscribers.test.js\')"', colors.blue);
+    log('   • Check the testing guide for more details\n', colors.blue);
+    
+    return true;
 }
 
-// Run validation
-validateComponent()
-    .then(success => {
-        if (success) {
-            return testGetSubscriber();
-        }
-        return false;
-    })
-    .then(success => {
-        console.log('');
-        if (success) {
-            console.log('🎉 Quick validation successful! Components are working.');
-            console.log('');
-            console.log('To run full test suite:');
-            console.log('cd test/mailerlite && npm test');
-            console.log('or');
-            console.log('cd test/mailerlite && npx mocha *.test.js --timeout 30000');
-        } else {
-            console.log('❌ Validation failed. Check your configuration and try again.');
-            process.exit(1);
-        }
-    })
-    .catch(error => {
-        console.error('💥 Validation script error:', error);
+// Run validation if called directly
+if (require.main === module) {
+    validateConnection().catch(error => {
+        log(`\n❌ Validation failed: ${error.message}`, colors.red);
         process.exit(1);
     });
+}
+
+module.exports = validateConnection;

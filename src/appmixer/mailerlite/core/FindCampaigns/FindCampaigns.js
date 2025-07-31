@@ -7,7 +7,7 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string',
 module.exports = {
     async receive(context) {
 
-        const { query, status, outputType } = context.messages.in.content;
+        const { status, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });

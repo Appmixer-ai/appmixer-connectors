@@ -1,19 +1,17 @@
-
 'use strict';
 
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { subscriber_id, email } = context.messages.in.content;
+        const { subscriberId, email } = context.messages.in.content;
 
-        if (!subscriber_id && !email) {
+        if (!subscriberId && !email) {
             throw new context.CancelError('Either Subscriber ID or Email is required!');
         }
 
         let url;
-        if (subscriber_id) {
-            url = `https://connect.mailerlite.com/api/subscribers/${subscriber_id}`;
+        if (subscriberId) {
+            url = `https://connect.mailerlite.com/api/subscribers/${subscriberId}`;
         } else {
             // When using email, we need to encode it for the URL
             const encodedEmail = encodeURIComponent(email);

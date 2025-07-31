@@ -38,7 +38,7 @@ describe('GetSubscriber Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should get subscriber by ID', async function() {
@@ -54,7 +54,7 @@ describe('GetSubscriber Component', function() {
         };
 
         context.messages.in.content = {
-            subscriber_id: process.env.MAILERLITE_SUBSCRIBER_ID
+            subscriberId: process.env.MAILERLITE_SUBSCRIBER_ID
         };
 
         try {
@@ -143,13 +143,12 @@ describe('GetSubscriber Component', function() {
     });
 
     it('should handle non-existent subscriber ID', async function() {
-        let data;
         context.sendJson = function(output, port) {
-            data = output;
+            // Expected to fail, so output not used
         };
 
         context.messages.in.content = {
-            subscriber_id: 'non-existent-id-12345'
+            subscriberId: 'non-existent-id-12345'
         };
 
         try {

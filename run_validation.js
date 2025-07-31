@@ -53,7 +53,7 @@ console.log('==================================\\n');
 if (!process.env.MAILERLITE_ACCESS_TOKEN || process.env.MAILERLITE_ACCESS_TOKEN === 'your_actual_mailerlite_token_here') {
     console.log('❌ MAILERLITE_ACCESS_TOKEN not properly set in environment');
     console.log('Please set your Mailerlite API token in the environment or .env file');
-    return;
+    process.exit(1);
 }
 
 console.log('✅ MAILERLITE_ACCESS_TOKEN is set\\n');

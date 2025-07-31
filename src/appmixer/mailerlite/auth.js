@@ -4,7 +4,6 @@ module.exports = {
     type: 'apiKey',
     definition: {
         tokenType: 'apiKey',
-        
         auth: {
             apiKey: {
                 type: 'text',

@@ -14,7 +14,7 @@ describe('CreateCampaign Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CreateCampaign = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/CreateCampaign/CreateCampaign.js'));
 
