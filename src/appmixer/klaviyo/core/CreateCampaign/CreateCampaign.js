@@ -27,18 +27,25 @@ module.exports = {
             throw new context.CancelError('Channel filter is required!');
         }
 
-        context.log({ step: 'audiencesIncluded', audiencesIncluded });
-        if (!audiencesIncluded || audiencesIncluded.length === 0) {
+        const audiencesIncludedArr = audiencesIncluded.ADD;
+
+        if (!Array.isArray(audiencesIncludedArr) || audiencesIncludedArr.length === 0) {
             throw new context.CancelError('At least one included audience is required!');
         }
 
         // Validate each included audience
-        for (const audience of audiencesIncluded) {
+        for (const audience of audiencesIncludedArr) {
             if (!audience.type) {
                 throw new context.CancelError('Audience type is required for all included audiences!');
             }
-            if (!audience.id) {
-                throw new context.CancelError('Audience ID is required for all included audiences!');
+            if (audience.type === 'segment') {
+                if (!audience.segmentId) {
+                    throw new context.CancelError('Audience Segment ID is required for all included audiences!');
+                }
+            } else if (audience.type === 'list') {
+                if (!audience.listId) {
+                    throw new context.CancelError('Audience List ID is required for all included audiences!');
+                }
             }
         }
 
@@ -68,33 +75,43 @@ module.exports = {
         const audiences = {};
 
         // Add included audiences
-        if (audiencesIncluded && Array.isArray(audiencesIncluded)) {
-            audiences.included = audiencesIncluded.map(audience => ({
-                data: {
-                    type: audience.type.toLowerCase(),
-                    id: audience.id
+        if (audiencesIncludedArr && Array.isArray(audiencesIncludedArr)) {
+            audiences.included = audiencesIncludedArr.map(audience => {
+                if (audience.type === 'segment') {
+                    return audience.segmentId;
                 }
-            }));
+                if (audience.type === 'list') {
+                    return audience.listId;
+                };
+            });
         }
 
-        // Add excluded audiences if provided
-        if (audiencesExcluded && Array.isArray(audiencesExcluded) && audiencesExcluded.length > 0) {
-            // Validate each excluded audience
-            for (const audience of audiencesExcluded) {
-                if (!audience.type) {
-                    throw new context.CancelError('Audience type is required for all excluded audiences!');
-                }
-                if (!audience.id) {
-                    throw new context.CancelError('Audience ID is required for all excluded audiences!');
-                }
-            }
+        const audiencesExcludedArr = audiencesExcluded.ADD;
 
-            audiences.excluded = audiencesExcluded.map(audience => ({
-                data: {
-                    type: audience.type.toLowerCase(),
-                    id: audience.id
+        // Add excluded audiences if provided
+        if (audiencesExcludedArr && Array.isArray(audiencesExcludedArr) && audiencesExcludedArr.length > 0) {
+            const audiencesExcludedIds = [];
+
+            audiencesExcludedArr.forEach(audience => {
+                if (Object.keys(audience).length > 0) {
+                    if (audience.type === 'segment') {
+                        if (!audience.segmentId) {
+                            throw new context.CancelError('Audience Segment ID is required for all included audiences!');
+                        }
+                        audiencesExcludedIds.push(audience.segmentId);
+                    }
+                    if (audience.type === 'list') {
+                        if (!audience.listId) {
+                            throw new context.CancelError('Audience List ID is required for all included audiences!');
+                        }
+                        audiencesExcludedIds.push(audience.listId);
+                    };
+                } else {
+                    return;
                 }
-            }));
+            });
+
+            audiences.excluded = audiencesExcludedIds.length > 0 ? audiencesExcludedIds : undefined;
         }
 
         // Build send strategy
@@ -104,26 +121,24 @@ module.exports = {
 
         // Add method-specific options
         if (sendStrategyMethod === 'static') {
-            sendStrategy.options_static = {
-                datetime: sendStrategyOptionsStaticDatetime
-            };
+            sendStrategy.datetime = sendStrategyOptionsStaticDatetime;
 
             if (sendStrategyOptionsStaticIsLocal !== undefined) {
-                sendStrategy.options_static.is_local = sendStrategyOptionsStaticIsLocal;
+                sendStrategy.options = {
+                    is_local: sendStrategyOptionsStaticIsLocal
+                };
             }
 
             if (sendStrategyOptionsStaticSendPastRecipientsImmediately !== undefined) {
-                sendStrategy.options_static.send_past_recipients_immediately = sendStrategyOptionsStaticSendPastRecipientsImmediately;
+                sendStrategy.options = {
+                    send_past_recipients_immediately: sendStrategyOptionsStaticSendPastRecipientsImmediately
+                };
             }
         } else if (sendStrategyMethod === 'throttled') {
-            sendStrategy.options_throttled = {
-                datetime: sendStrategyOptionsThrottledDatetime,
-                throttle_percentage: sendStrategyOptionsThrottledThrottlePercentage
-            };
+            sendStrategy.datetime = sendStrategyOptionsThrottledDatetime;
+            sendStrategy.throttle_percentage = sendStrategyOptionsThrottledThrottlePercentage;
         } else if (sendStrategyMethod === 'smart_send_time') {
-            sendStrategy.options_sto = {
-                date: sendStrategyOptionsStoDate
-            };
+            sendStrategy.date = sendStrategyOptionsStoDate;
         }
 
         // Build the request payload
@@ -132,14 +147,27 @@ module.exports = {
                 type: 'campaign',
                 attributes: {
                     name,
-                    channel_filter: channelFilter,
                     audiences,
-                    send_strategy: sendStrategy
+                    send_strategy: sendStrategy,
+                    'campaign-messages': {
+                        data: [
+                            {
+                                type: 'campaign-message',
+                                attributes: {
+                                    definition: {
+                                        channel: channelFilter
+                                    }
+                                }
+                            }
+                        ]
+                    }
                 }
             }
         };
 
-        // Make the API request
+        context.log({ step: 'requestData', requestData });
+
+        // https://developers.klaviyo.com/en/reference/create_campaign
         const response = await context.httpRequest({
             method: 'POST',
             url: 'https://a.klaviyo.com/api/campaigns/',
@@ -154,6 +182,8 @@ module.exports = {
 
         // Extract and format the response
         const campaign = response.data.data;
+
+        context.log({ step: 'response', response: response.data });
 
         return context.sendJson(campaign, 'out');
     }
