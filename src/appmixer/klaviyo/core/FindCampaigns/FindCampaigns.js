@@ -9,6 +9,10 @@ module.exports = {
         const { channelFilter, filter, sort, outputType } = context.messages.in.content;
         const { generateOutputPortOptions, isSource } = context.properties;
 
+        if (!channelFilter) {
+            throw new context.CancelError('Channel Filter is required!');
+        }
+
         if (generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
         }
@@ -33,22 +37,11 @@ module.exports = {
 
         const campaigns = data.data;
 
-        if (isSource) {
-            return context.sendJson({ result: campaigns }, 'out');
-        }
-
         if (campaigns.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records: campaigns, outputType });
-    },
-
-    toSelectArray({ result }) {
-
-        return result.map(list => {
-            return { label: list.attributes.name, value: list.id };
-        });
     }
 };
 

@@ -1,36 +1,30 @@
+'use strict';
+
 module.exports = {
 
     async receive(context) {
 
-        const { campaignId, name } = context.messages.in.content;
+        const { campaignId } = context.messages.in.content;
 
-        // Validate required fields
         if (!campaignId) {
             throw new context.CancelError('Campaign ID is required!');
         }
 
-        if (!name) {
-            throw new context.CancelError('Campaign name is required!');
-        }
-
         const requestData = {
             data: {
-                type: 'campaign',
-                attributes: {
-                    new_name: name
-                },
+                type: 'campaign-send-job',
                 id: campaignId
             }
         };
 
-        // https://developers.klaviyo.com/en/reference/create_campaign_clone
+        // https://developers.klaviyo.com/en/reference/send_campaign
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://a.klaviyo.com/api/campaign-clone`,
+            url: `https://a.klaviyo.com/api/campaign-send-jobs/`,
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.api+json',
+                'Content-Type': 'application/vnd.api+json',
                 'Revision': '2025-07-15'
             },
             data: requestData

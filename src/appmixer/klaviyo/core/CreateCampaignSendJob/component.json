@@ -1,5 +1,5 @@
 {
-    "name": "appmixer.klaviyo.core.SendCampaign",
+    "name": "appmixer.klaviyo.core.CreateCampaignSendJob",
     "author": "Appmixer <info@appmixer.com>",
     "description": "Trigger sending of an email campaign to its target audience.",
     "version": "1.0.0",
@@ -9,7 +9,7 @@
     },
     "quota": {
         "manager": "appmixer:klaviyo",
-        "resources": "requests"
+        "resources": "ten-requests"
     },
     "inPorts": [
         {
@@ -17,28 +17,19 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "type": "string"
-                    },
-                    "sendTime": {
+                    "campaignId": {
                         "type": "string"
                     }
                 },
-                "required": ["id"]
+                "required": ["campaignId"]
             },
             "inspector": {
                 "inputs": {
-                    "id": {
+                    "campaignId": {
                         "type": "text",
                         "tooltip": "Unique identifier of the campaign to send.",
-                        "label": "Id",
+                        "label": "Campaign ID",
                         "index": 0
-                    },
-                    "sendTime": {
-                        "type": "text",
-                        "tooltip": "Optional scheduled send time in ISO 8601 format.",
-                        "label": "Send Time",
-                        "index": 1
                     }
                 }
             }
@@ -49,10 +40,43 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Sent At",
-                    "value": "sentAt",
+                    "label": "Type",
+                    "value": "type",
                     "schema": {
                         "type": "string"
+                    }
+                },
+                {
+                    "label": "Campaign ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Attributes",
+                    "value": "attributes",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "status": {
+                                "type": "string",
+                                "title": "Attributes.Status"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Links",
+                    "value": "links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string",
+                                "title": "Links.Self"
+                            }
+                        }
                     }
                 }
             ]

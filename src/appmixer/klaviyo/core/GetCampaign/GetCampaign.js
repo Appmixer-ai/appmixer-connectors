@@ -8,9 +8,9 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
-        // https://developers.klaviyo.com/en/reference/delete_campaign
-        await context.httpRequest({
-            method: 'DELETE',
+        // https://developers.klaviyo.com/en/reference/get_campaign
+        const { data } = await context.httpRequest({
+            method: 'GET',
             url: `https://a.klaviyo.com/api/campaigns/${campaignId}/`,
             headers: {
                 'Accept': 'application/vnd.api+json',
@@ -19,6 +19,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson({}, 'out');
+        return context.sendJson(data.data, 'out');
     }
 };

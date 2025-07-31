@@ -10,12 +10,12 @@ module.exports = {
             audiencesIncluded,
             audiencesExcluded,
             sendStrategyMethod,
-            sendStrategyOptionsStaticDatetime,
-            sendStrategyOptionsStaticIsLocal,
-            sendStrategyOptionsStaticSendPastRecipientsImmediately,
-            sendStrategyOptionsThrottledDatetime,
-            sendStrategyOptionsThrottledThrottlePercentage,
-            sendStrategyOptionsStoDate
+            staticDatetime,
+            staticIsLocal,
+            staticSendPastRecipientsImmediately,
+            throttledDatetime,
+            throttlePercentage,
+            stoDate
         } = context.messages.in.content;
 
         // Validate required fields
@@ -54,20 +54,20 @@ module.exports = {
         }
 
         // Validate conditional required fields based on send strategy method
-        if (sendStrategyMethod === 'static' && !sendStrategyOptionsStaticDatetime) {
+        if (sendStrategyMethod === 'static' && !staticDatetime) {
             throw new context.CancelError('Static send date/time is required when using static send strategy!');
         }
 
         if (sendStrategyMethod === 'throttled') {
-            if (!sendStrategyOptionsThrottledDatetime) {
+            if (!throttledDatetime) {
                 throw new context.CancelError('Throttled send date/time is required when using throttled send strategy!');
             }
-            if (!sendStrategyOptionsThrottledThrottlePercentage) {
+            if (!throttlePercentage) {
                 throw new context.CancelError('Throttle percentage is required when using throttled send strategy!');
             }
         }
 
-        if (sendStrategyMethod === 'smart_send_time' && !sendStrategyOptionsStoDate) {
+        if (sendStrategyMethod === 'smart_send_time' && !stoDate) {
             throw new context.CancelError('Smart send time date is required when using smart send time strategy!');
         }
 
@@ -121,24 +121,24 @@ module.exports = {
 
         // Add method-specific options
         if (sendStrategyMethod === 'static') {
-            sendStrategy.datetime = sendStrategyOptionsStaticDatetime;
+            sendStrategy.datetime = staticDatetime;
 
-            if (sendStrategyOptionsStaticIsLocal !== undefined) {
+            if (staticIsLocal !== undefined) {
                 sendStrategy.options = {
-                    is_local: sendStrategyOptionsStaticIsLocal
+                    is_local: staticIsLocal
                 };
             }
 
-            if (sendStrategyOptionsStaticSendPastRecipientsImmediately !== undefined) {
+            if (staticSendPastRecipientsImmediately !== undefined) {
                 sendStrategy.options = {
-                    send_past_recipients_immediately: sendStrategyOptionsStaticSendPastRecipientsImmediately
+                    send_past_recipients_immediately: staticSendPastRecipientsImmediately
                 };
             }
         } else if (sendStrategyMethod === 'throttled') {
-            sendStrategy.datetime = sendStrategyOptionsThrottledDatetime;
-            sendStrategy.throttle_percentage = sendStrategyOptionsThrottledThrottlePercentage;
+            sendStrategy.datetime = throttledDatetime;
+            sendStrategy.throttle_percentage = throttlePercentage;
         } else if (sendStrategyMethod === 'smart_send_time') {
-            sendStrategy.date = sendStrategyOptionsStoDate;
+            sendStrategy.date = stoDate;
         }
 
         // Build the request payload

@@ -33,48 +33,57 @@
                         "type": "string",
                         "enum": ["static", "throttled", "immediate", "smart_send_time"]
                     },
-                    "sendStrategyOptionsStaticDatetime": {
+                    "staticDatetime": {
                         "type": "string",
                         "format": "date-time"
                     },
-                    "sendStrategyOptionsStaticIsLocal": {
+                    "staticIsLocal": {
                         "type": "boolean"
                     },
-                    "sendStrategyOptionsStaticSendPastRecipientsImmediately": {
+                    "staticSendPastRecipientsImmediately": {
                         "type": "boolean"
                     },
-                    "sendStrategyOptionsThrottledDatetime": {
+                    "throttledDatetime": {
                         "type": "string"
                     },
-                    "sendStrategyOptionsThrottledThrottlePercentage": {
+                    "throttlePercentage": {
                         "type": "number",
                         "enum": [10, 11, 13, 14, 17, 20, 25, 33, 50]
                     },
-                    "sendStrategyOptionsStoDate": {
+                    "stoDate": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "name", "channelFilter", "audiencesIncluded", "sendStrategyMethod"
+                    "name", "channelFilter", "audiencesIncluded"
                 ],
-                "oneOf": [
-                    { "required": ["sendStrategyOptionsStaticDatetime"] },
-                    { "required": ["sendStrategyOptionsThrottledDatetime","sendStrategyOptionsThrottledThrottlePercentage"] },
-                    { "required": ["sendStrategyOptionsStoDate"] }
-                ]
+                "if": {
+                    "properties": {
+                        "sendStrategyMethod": { "const": "immediate" }
+                    },
+                    "required": ["sendStrategyMethod"]
+                },
+                "then": { "required": [] },
+                "else": {
+                    "anyOf": [
+                        { "required": ["staticDatetime"] },
+                        { "required": ["throttledDatetime","throttlePercentage"] },
+                        { "required": ["stoDate"] }
+                    ]
+                }
             },
             "inspector": {
                 "inputs": {
                     "name": {
                         "type": "text",
                         "label": "Campaign Name",
-                        "index": 1,
+                        "index": 0,
                         "tooltip": "The name of the campaign"
                     },
                     "channelFilter": {
                         "type": "select",
                         "label": "Channel Filter",
-                        "index": 2,
+                        "index": 1,
                         "tooltip": "The channel type for the campaign",
                         "options": [
                             { "label": "Email", "value": "email" },
@@ -85,7 +94,7 @@
                     "audiencesIncluded": {
                         "type": "expression",
                         "label": "Included Audiences",
-                        "index": 3,
+                        "index": 2,
                         "tooltip": "Array of audiences to include in the campaign. Each item should have 'type' (List or Segment) and 'id' properties.",
                         "levels": ["ADD"],
                         "fields": {
@@ -197,7 +206,7 @@
                     "sendStrategyMethod": {
                         "type": "select",
                         "label": "Send Strategy Method",
-                        "index": 5,
+                        "index": 4,
                         "tooltip": "The method for sending the campaign",
                         "options": [
                             { "label": "Static", "value": "static" },
@@ -206,7 +215,7 @@
                             { "label": "Smart Send Time", "value": "smart_send_time" }
                         ]
                     },
-                    "sendStrategyOptionsStaticDatetime": {
+                    "staticDatetime": {
                         "type": "date-time",
                         "label": "Static Send Date/Time",
                         "index": 6,
@@ -216,21 +225,21 @@
                             }
                         }
                     },
-                    "sendStrategyOptionsStaticIsLocal": {
+                    "staticIsLocal": {
                         "type": "toggle",
                         "label": "Use Local Time",
                         "tooltip": "Whether the campaign should be sent with local recipient timezone send (requires UTC time) or statically sent at the given time.",
-                        "index": 7,
+                        "index": 5,
                         "when": {
                             "eq": {
                                 "./sendStrategyMethod": "static"
                             }
                         }
                     },
-                    "sendStrategyOptionsStaticSendPastRecipientsImmediately": {
+                    "staticSendPastRecipientsImmediately": {
                         "type": "toggle",
                         "label": "Send Past Recipients Immediately",
-                        "index": 8,
+                        "index": 6,
                         "tooltip": "Whether to send to past recipients immediately",
                         "when": {
                             "eq": {
@@ -238,10 +247,10 @@
                             }
                         }
                     },
-                    "sendStrategyOptionsThrottledDatetime": {
+                    "throttledDatetime": {
                         "type": "date-time",
                         "label": "Throttled Send Date/Time",
-                        "index": 9,
+                        "index": 7,
                         "tooltip": "The date and time to start throttled sending",
                         "when": {
                             "eq": {
@@ -249,10 +258,10 @@
                             }
                         }
                     },
-                    "sendStrategyOptionsThrottledThrottlePercentage": {
+                    "throttlePercentage": {
                         "type": "select",
                         "label": "Throttle Percentage",
-                        "index": 10,
+                        "index": 8,
                         "tooltip": "The percentage to throttle the sending",
                         "options": [
                             { "label": "10%", "value": 10 },
@@ -271,10 +280,10 @@
                             }
                         }
                     },
-                    "sendStrategyOptionsStoDate": {
+                    "stoDate": {
                         "type": "date-time",
                         "label": "Smart Send Time Date",
-                        "index": 11,
+                        "index": 9,
                         "tooltip": "The date for smart send time optimization",
                         "when": {
                             "eq": {

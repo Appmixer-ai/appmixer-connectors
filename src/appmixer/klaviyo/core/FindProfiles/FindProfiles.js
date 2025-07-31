@@ -24,6 +24,7 @@ module.exports = {
             'additional-fields[profile]': 'subscriptions,predictive_analytics',
         };
 
+        // https://developers.klaviyo.com/en/reference/get_profiles
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://a.klaviyo.com/api/profiles',
