@@ -4,6 +4,7 @@ module.exports = {
 
         const { listId } = context.messages.in;
 
+        // https://developers.klaviyo.com/en/reference/get_list
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://a.klaviyo.com/api/lists/${listId}/`,

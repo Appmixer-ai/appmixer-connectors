@@ -1,14 +1,12 @@
 'use strict';
 
-const lib = require('../../lib.generated');
-
 module.exports = {
 
     async receive(context) {
 
-        const { id, profileIds } = context.messages.in.content;
+        const { listId, profileIds } = context.messages.in.content;
 
-        if (!id) {
+        if (!listId) {
             throw new context.CancelError('List ID is required!');
         }
 
@@ -42,9 +40,10 @@ module.exports = {
             }))
         };
 
+        // https://developers.klaviyo.com/en/reference/add_profiles_to_list
         await context.httpRequest({
-            method: 'DELETE',
-            url: `https://a.klaviyo.com/api/lists/${id}/relationships/profiles/`,
+            method: 'POST',
+            url: `https://a.klaviyo.com/api/lists/${listId}/relationships/profiles`,
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',

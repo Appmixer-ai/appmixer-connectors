@@ -40,10 +40,10 @@ module.exports = {
             }))
         };
 
-        // https://developers.klaviyo.com/en/reference/add_profiles_to_list
+        // https://developers.klaviyo.com/en/reference/remove_profiles_from_list
         await context.httpRequest({
-            method: 'POST',
-            url: `https://a.klaviyo.com/api/lists/${listId}/relationships/profiles/`,
+            method: 'DELETE',
+            url: `https://a.klaviyo.com/api/lists/${listId}/relationships/profiles`,
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
