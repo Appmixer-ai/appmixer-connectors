@@ -6,11 +6,11 @@ Creating a comprehensive Telegram Bot API connector for Appmixer with simple UX 
 ## Implementation Phases
 
 ### Phase 1: Basic Connector Structure ✅
-- [ ] Create connector directory structure (`src/appmixer/telegram/`)
-- [ ] Implement service manifest (`service.json`)
-- [ ] Create package dependencies (`package.json`)
-- [ ] Set up authentication module (`auth.js`) with Bot Token
-- [ ] Create basic quota configuration (`quota.js`)
+- [x] Create connector directory structure (`src/appmixer/telegram/`)
+- [x] Implement service manifest (`service.json`)
+- [x] Create package dependencies (`package.json`)
+- [x] Set up authentication module (`auth.js`) with Bot Token
+- [x] Create basic quota configuration (`quota.js`)
 
 ### Phase 2: Authentication & Bot Setup ✅
 - [ ] Implement API Key authentication for Bot Token
