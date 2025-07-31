@@ -38,7 +38,7 @@ describe('GetCampaignStats Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should get campaign stats for existing campaign', async function() {

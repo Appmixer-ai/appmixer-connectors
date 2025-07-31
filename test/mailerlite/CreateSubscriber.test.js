@@ -38,7 +38,7 @@ describe('CreateSubscriber Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
     });
 
     it('should create a subscriber with email only', async function() {
