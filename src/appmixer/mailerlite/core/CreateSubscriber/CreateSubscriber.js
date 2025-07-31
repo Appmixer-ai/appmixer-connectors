@@ -19,8 +19,9 @@ module.exports = {
             requestData.fields = { name: name };
         }
 
-        if (groups && groups.AND && Array.isArray(groups.AND) && groups.AND.length > 0) {
-            requestData.groups = groups.AND;
+        if (Array.isArray(groups?.AND) && groups.AND.length > 0) {
+            // Extract group IDs from the array of objects
+            requestData.groups = groups.AND.map(item => item.groups_item).filter(Boolean);
         }
 
         // https://developers.mailerlite.com/docs/#subscribers

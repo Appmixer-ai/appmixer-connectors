@@ -7,10 +7,15 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string',
 module.exports = {
     async receive(context) {
 
-        const { outputType } = context.messages.in.content;
+        const { query, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Groups' });
+        }
+
+        const params = {};
+        if (query) {
+            params['filter[name]'] = query;
         }
 
         // https://developers.mailerlite.com/docs/#groups
@@ -19,7 +24,8 @@ module.exports = {
             url: 'https://connect.mailerlite.com/api/groups',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
-            }
+            },
+            params: params
         });
 
         const records = data.data || [];

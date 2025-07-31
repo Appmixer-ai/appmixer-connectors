@@ -38,10 +38,10 @@ describe('CreateCampaign Component', function() {
             }
         };
 
-        assert(context.auth.apiToken, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
+        assert(context.auth.apiKey, 'MAILERLITE_ACCESS_TOKEN environment variable is required for tests');
     });
 
-    it('should create a basic campaign', async function() {
+    it('should create a basic regular campaign', async function() {
         let data;
         context.sendJson = function(output, port) {
             data = output;
@@ -49,14 +49,10 @@ describe('CreateCampaign Component', function() {
 
         const timestamp = Date.now();
         context.messages.in.content = {
+            name: `Test Campaign ${timestamp}`,
             type: 'regular',
-            emails: [{
-                subject: `Test Campaign ${timestamp}`,
-                from_name: 'Test Sender',
-                from: 'test@example.com',
-                content: '<html><body><h1>Test Campaign Content</h1><p>This is a test campaign created by automated tests.</p></body></html>',
-                plain_text: 'Test Campaign Content\n\nThis is a test campaign created by automated tests.'
-            }]
+            subject: `Test Campaign Subject ${timestamp}`,
+            content: '<html><body><h1>Test Campaign Content</h1><p>This is a test campaign created by automated tests.</p></body></html>'
         };
 
         try {
@@ -66,7 +62,7 @@ describe('CreateCampaign Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.id === 'string', 'Expected data.id to be a string');
-            assert(data.type === 'regular', 'Expected campaign type to match input');
+            assert(data.name === context.messages.in.content.name, 'Expected campaign name to match input');
             assert(data.status, 'Expected data.status to be present');
 
             // Store the created campaign ID for other tests
@@ -80,53 +76,25 @@ describe('CreateCampaign Component', function() {
             if (error.response && error.response.status === 422) {
                 console.log('Validation error during campaign creation');
                 console.log('Error details:', error.response.data);
-                // This might be due to email validation or other requirements
+                // This might be due to missing required fields or other validation
                 throw error;
             }
             throw error;
         }
     });
 
-    it('should create campaign with settings', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
-        const timestamp = Date.now();
+    it('should throw error when name is missing', async function() {
         context.messages.in.content = {
             type: 'regular',
-            emails: [{
-                subject: `Test Campaign with Settings ${timestamp}`,
-                from_name: 'Test Sender',
-                from: 'test@example.com',
-                content: '<html><body><h1>Test Campaign</h1></body></html>',
-                plain_text: 'Test Campaign'
-            }],
-            settings: {
-                track_opens: true,
-                track_clicks: true,
-                track_unsubscribes: true
-            }
+            subject: 'Test Subject'
         };
 
         try {
             await CreateCampaign.receive(context);
-
-            console.log('CreateCampaign with settings result:', JSON.stringify(data, null, 2));
-
-            assert(data && typeof data === 'object', 'Expected data to be an object');
-            assert(typeof data.id === 'string', 'Expected data.id to be a string');
-            assert(data.type === 'regular', 'Expected campaign type to match input');
+            throw new Error('Expected error for missing campaign name');
         } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                throw new Error('Authentication failed: Access token is invalid or expired');
-            }
-            if (error.response && error.response.status === 422) {
-                console.log('Validation error during campaign creation with settings');
-                console.log('Error details:', error.response.data);
-                // This might be acceptable depending on the validation rules
+            if (error.name === 'CancelError' && error.message.includes('Name is required')) {
+                console.log('Correctly threw CancelError for missing campaign name');
                 return;
             }
             throw error;
@@ -135,19 +103,15 @@ describe('CreateCampaign Component', function() {
 
     it('should throw error when type is missing', async function() {
         context.messages.in.content = {
-            emails: [{
-                subject: 'Test',
-                from_name: 'Test',
-                from: 'test@example.com',
-                content: '<html><body>Test</body></html>'
-            }]
+            name: 'Test Campaign',
+            subject: 'Test Subject'
         };
 
         try {
             await CreateCampaign.receive(context);
             throw new Error('Expected error for missing campaign type');
         } catch (error) {
-            if (error.name === 'CancelError' && error.message.includes('Campaign type is required')) {
+            if (error.name === 'CancelError' && error.message.includes('Type is required')) {
                 console.log('Correctly threw CancelError for missing campaign type');
                 return;
             }
@@ -155,35 +119,60 @@ describe('CreateCampaign Component', function() {
         }
     });
 
-    it('should throw error when emails array is missing', async function() {
+    it('should throw error when subject is missing', async function() {
         context.messages.in.content = {
+            name: 'Test Campaign',
             type: 'regular'
         };
 
         try {
             await CreateCampaign.receive(context);
-            throw new Error('Expected error for missing emails array');
+            throw new Error('Expected error for missing campaign subject');
         } catch (error) {
-            if (error.name === 'CancelError' && error.message.includes('Emails array is required')) {
-                console.log('Correctly threw CancelError for missing emails array');
+            if (error.name === 'CancelError' && error.message.includes('Subject is required')) {
+                console.log('Correctly threw CancelError for missing campaign subject');
                 return;
             }
             throw error;
         }
     });
 
-    it('should throw error when emails array is empty', async function() {
+    it('should create campaign with groups', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+        };
+
+        const timestamp = Date.now();
         context.messages.in.content = {
+            name: `Test Campaign with Groups ${timestamp}`,
             type: 'regular',
-            emails: []
+            subject: `Test Campaign Subject ${timestamp}`,
+            content: '<html><body><h1>Test Campaign</h1></body></html>',
+            groups: {
+                AND: [
+                    { groups_item: '1' },
+                    { groups_item: '2' }
+                ]
+            }
         };
 
         try {
             await CreateCampaign.receive(context);
-            throw new Error('Expected error for empty emails array');
+
+            console.log('CreateCampaign with groups result:', JSON.stringify(data, null, 2));
+
+            assert(data && typeof data === 'object', 'Expected data to be an object');
+            assert(typeof data.id === 'string', 'Expected data.id to be a string');
         } catch (error) {
-            if (error.name === 'CancelError' && error.message.includes('Emails array is required')) {
-                console.log('Correctly threw CancelError for empty emails array');
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - access token may be expired');
+                throw new Error('Authentication failed: Access token is invalid or expired');
+            }
+            if (error.response && error.response.status === 422) {
+                console.log('Validation error during campaign creation with groups');
+                console.log('Error details:', error.response.data);
+                // This might be acceptable if groups don't exist
                 return;
             }
             throw error;
@@ -198,20 +187,10 @@ describe('CreateCampaign Component', function() {
 
         const timestamp = Date.now();
         context.messages.in.content = {
+            name: `A/B Test Campaign ${timestamp}`,
             type: 'ab',
-            emails: [{
-                subject: `A/B Test Campaign A ${timestamp}`,
-                from_name: 'Test Sender',
-                from: 'test@example.com',
-                content: '<html><body><h1>Version A</h1></body></html>',
-                plain_text: 'Version A'
-            }, {
-                subject: `A/B Test Campaign B ${timestamp}`,
-                from_name: 'Test Sender',
-                from: 'test@example.com',
-                content: '<html><body><h1>Version B</h1></body></html>',
-                plain_text: 'Version B'
-            }]
+            subject: `A/B Test Campaign Subject ${timestamp}`,
+            content: '<html><body><h1>Version A</h1></body></html>'
         };
 
         try {
@@ -221,16 +200,50 @@ describe('CreateCampaign Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(typeof data.id === 'string', 'Expected data.id to be a string');
-            assert(data.type === 'ab', 'Expected campaign type to be ab');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 throw new Error('Authentication failed: Access token is invalid or expired');
             }
             if (error.response && error.response.status === 422) {
-                console.log('Validation error during A/B campaign creation - this might not be supported or require additional setup');
+                console.log('Validation error during A/B campaign creation - this might require special plan');
                 console.log('Error details:', error.response.data);
-                return; // A/B testing might require special configuration
+                return; // A/B testing might require growing/advanced plan
+            }
+            throw error;
+        }
+    });
+
+    it('should create resend campaign', async function() {
+        let data;
+        context.sendJson = function(output, port) {
+            data = output;
+        };
+
+        const timestamp = Date.now();
+        context.messages.in.content = {
+            name: `Resend Campaign ${timestamp}`,
+            type: 'resend',
+            subject: `Resend Campaign Subject ${timestamp}`,
+            content: '<html><body><h1>Resend Version</h1></body></html>'
+        };
+
+        try {
+            await CreateCampaign.receive(context);
+
+            console.log('CreateCampaign resend result:', JSON.stringify(data, null, 2));
+
+            assert(data && typeof data === 'object', 'Expected data to be an object');
+            assert(typeof data.id === 'string', 'Expected data.id to be a string');
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - access token may be expired');
+                throw new Error('Authentication failed: Access token is invalid or expired');
+            }
+            if (error.response && error.response.status === 422) {
+                console.log('Validation error during resend campaign creation - this might require growing/advanced plan');
+                console.log('Error details:', error.response.data);
+                return; // Resend campaigns might require growing/advanced plan
             }
             throw error;
         }

@@ -4,27 +4,41 @@
 module.exports = {
     async receive(context) {
 
-        const { name, subject, content, groups } = context.messages.in.content;
+        const { name, subject, senderName, fromAddress, content, groups } = context.messages.in.content;
 
         if (!name) {
-            throw new context.CancelError('Name is required!');
+            throw new context.CancelError('Campaign name is required!');
         }
         if (!subject) {
-            throw new context.CancelError('Subject is required!');
+            throw new context.CancelError('Email subject is required!');
+        }
+        if (!senderName) {
+            throw new context.CancelError('Email sender name is required!');
+        }
+        if (!fromAddress) {
+            throw new context.CancelError('Email from address is required!');
+        }
+        if (!content) {
+            throw new context.CancelError('Email content is required!');
         }
 
         const requestData = {
             name: name,
-            subject: subject
+            type: 'regular',
+            emails: [
+                {
+                    subject: subject,
+                    from_name: senderName,
+                    from: fromAddress,
+                    content: content
+                }
+            ]
         };
 
         // Add optional fields
-        if (content) {
-            requestData.content = content;
-        }
-
-        if (groups && groups.AND && Array.isArray(groups.AND) && groups.AND.length > 0) {
-            requestData.groups = groups.AND;
+            if (Array.isArray(groups?.AND) && groups.AND.length > 0) {
+            // Extract group IDs from the array of objects
+            requestData.groups = groups.AND.map(item => item.groups_item).filter(Boolean);
         }
 
         // https://developers.mailerlite.com/docs/#campaigns-create
