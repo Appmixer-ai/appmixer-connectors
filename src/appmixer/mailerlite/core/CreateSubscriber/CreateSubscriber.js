@@ -29,7 +29,7 @@ module.exports = {
             method: 'POST',
             url: 'https://connect.mailerlite.com/api/subscribers',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             data: requestData
         });

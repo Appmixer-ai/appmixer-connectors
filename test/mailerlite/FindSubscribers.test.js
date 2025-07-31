@@ -21,7 +21,7 @@ describe('FindSubscribers Component', function() {
         // Mock context
         context = {
             auth: {
-                apiToken: process.env.MAILERLITE_ACCESS_TOKEN
+                apiKey: process.env.MAILERLITE_ACCESS_TOKEN
             },
             messages: {
                 in: {

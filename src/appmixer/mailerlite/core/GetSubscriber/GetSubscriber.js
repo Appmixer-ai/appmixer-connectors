@@ -25,7 +25,7 @@ module.exports = {
             method: 'GET',
             url: url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

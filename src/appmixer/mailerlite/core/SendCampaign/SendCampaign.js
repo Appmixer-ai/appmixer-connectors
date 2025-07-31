@@ -16,7 +16,7 @@ module.exports = {
             method: 'POST',
             url: `https://connect.mailerlite.com/api/campaigns/${campaign_id}/actions/send`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

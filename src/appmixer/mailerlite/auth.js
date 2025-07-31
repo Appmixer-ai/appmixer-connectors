@@ -3,41 +3,37 @@
 module.exports = {
     type: 'apiKey',
     definition: {
-        tokenType: 'authentication-token',
+        tokenType: 'apiKey',
         
         auth: {
-            apiToken: {
+            apiKey: {
                 type: 'text',
-                name: 'API Token',
-                tooltip: 'Your MailerLite API token. You can find it in your MailerLite account under Integrations > Developer API.'
+                name: 'API Key',
+                tooltip: 'Your MailerLite API key. You can find it in your MailerLite account under Integrations > Developer API.'
             }
         },
 
-        accountNameFromProfileInfo: 'email',
+        accountNameFromProfileInfo: 'key',
 
-        requestProfileInfo: async (context) => {
-            const response = await context.httpRequest({
-                method: 'GET',
-                url: 'https://connect.mailerlite.com/api/me',
-                headers: {
-                    'Authorization': `Bearer ${context.apiToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            return response.data;
+        requestProfileInfo(context) {
+            const apiKey = context.apiKey;
+            return {
+                key: apiKey.substring(0, 12) + '...' + apiKey.slice(-4)
+            };
         },
 
         validate: async (context) => {
-            await context.httpRequest({
+            const { data } = await context.httpRequest({
                 method: 'GET',
-                url: 'https://connect.mailerlite.com/api/me',
+                url: 'https://connect.mailerlite.com/api/timezones',
                 headers: {
-                    'Authorization': `Bearer ${context.apiToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${context.apiKey}`
                 }
             });
-            
+
+            if (!data || !Array.isArray(data.data)) {
+                throw new Error('Authentication failed: Invalid API Key or unexpected response.');
+            }
             return true;
         }
     }

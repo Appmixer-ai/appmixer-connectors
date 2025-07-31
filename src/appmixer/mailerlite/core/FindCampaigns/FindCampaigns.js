@@ -23,7 +23,7 @@ module.exports = {
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/campaigns',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             },
             params: params
         });

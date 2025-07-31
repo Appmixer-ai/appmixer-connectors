@@ -18,7 +18,7 @@ module.exports = {
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/groups',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
