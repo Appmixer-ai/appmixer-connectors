@@ -36,7 +36,7 @@ module.exports = {
         };
 
         // Add optional fields
-            if (Array.isArray(groups?.AND) && groups.AND.length > 0) {
+        if (Array.isArray(groups?.AND) && groups.AND.length > 0) {
             // Extract group IDs from the array of objects
             requestData.groups = groups.AND.map(item => item.groups_item).filter(Boolean);
         }
