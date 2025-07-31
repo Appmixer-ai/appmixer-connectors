@@ -2,10 +2,14 @@ module.exports = {
 
     async receive(context) {
 
-        const { listId } = context.messages.in;
+        const { listId } = context.messages.in.content;
+
+        if (!listId) {
+            throw new context.CancelError('List ID is required!');
+        }
 
         // https://developers.klaviyo.com/en/reference/get_list
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://a.klaviyo.com/api/lists/${listId}/`,
             headers: {
@@ -15,6 +19,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data.data, 'out');
     }
 };

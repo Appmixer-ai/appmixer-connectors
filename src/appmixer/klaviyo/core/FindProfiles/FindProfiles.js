@@ -21,7 +21,7 @@ module.exports = {
             'page[size]': 100,
             filter,
             sort,
-            'additional-fields[profile]': 'subscriptions,predictive_analytics',
+            'additional-fields[profile]': 'subscriptions,predictive_analytics'
         };
 
         // https://developers.klaviyo.com/en/reference/get_profiles

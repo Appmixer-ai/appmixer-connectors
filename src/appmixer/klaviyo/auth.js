@@ -27,7 +27,11 @@ module.exports = {
                 }
             });
 
-            if (response.data && response.data.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+            if (response.data &&
+                response.data.data &&
+                Array.isArray(response.data.data) &&
+                response.data.data.length > 0
+            ) {
                 return response.data.data[0];
             }
 

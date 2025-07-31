@@ -7,7 +7,7 @@ module.exports = {
     async receive(context) {
 
         const { channelFilter, filter, sort, outputType } = context.messages.in.content;
-        const { generateOutputPortOptions, isSource } = context.properties;
+        const { generateOutputPortOptions } = context.properties;
 
         if (!channelFilter) {
             throw new context.CancelError('Channel Filter is required!');
