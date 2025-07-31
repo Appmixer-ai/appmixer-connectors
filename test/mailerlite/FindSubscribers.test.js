@@ -14,7 +14,7 @@ describe('FindSubscribers Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindSubscribers = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindSubscribers/FindSubscribers.js'));
 

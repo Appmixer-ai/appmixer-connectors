@@ -14,7 +14,7 @@ describe('GetCampaignStats Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetCampaignStats = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/GetCampaignStats/GetCampaignStats.js'));
 
@@ -64,7 +64,7 @@ describe('GetCampaignStats Component', function() {
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
             // Stats object might have various properties depending on campaign status
-            
+
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -103,7 +103,7 @@ describe('GetCampaignStats Component', function() {
 
         try {
             await GetCampaignStats.receive(context);
-            
+
             // If this succeeds, there might be an issue
             console.log('Unexpected success for non-existent campaign');
         } catch (error) {
@@ -126,7 +126,7 @@ describe('GetCampaignStats Component', function() {
 
         try {
             await GetCampaignStats.receive(context);
-            
+
             console.log('Campaign stats request succeeded with malformed ID');
         } catch (error) {
             if (error.response && (error.response.status === 404 || error.response.status === 400)) {

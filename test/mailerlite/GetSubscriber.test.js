@@ -14,7 +14,7 @@ describe('GetSubscriber Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/GetSubscriber/GetSubscriber.js'));
 
@@ -153,7 +153,7 @@ describe('GetSubscriber Component', function() {
 
         try {
             await GetSubscriber.receive(context);
-            
+
             // If this succeeds, there might be an issue
             console.log('Unexpected success for non-existent subscriber');
         } catch (error) {
@@ -176,7 +176,7 @@ describe('GetSubscriber Component', function() {
 
         try {
             await GetSubscriber.receive(context);
-            
+
             // If this succeeds, the email might actually exist
             console.log('Subscriber found for test email (unexpected but not an error)');
         } catch (error) {

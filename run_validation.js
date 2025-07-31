@@ -1,5 +1,4 @@
 const { execSync } = require('child_process');
-const path = require('path');
 
 // Set working directory to project root
 const projectRoot = '/Users/sayamnasir/Documents/GitHub/appmixer-connectors';
@@ -8,7 +7,6 @@ process.chdir(projectRoot);
 // Test data
 const testEmail = `test-validation-${Date.now()}@example.com`;
 let testSubscriberId = null;
-let testCampaignId = null;
 
 const tests = [
     {
@@ -19,7 +17,7 @@ const tests = [
     },
     {
         name: 'FindSubscribers',
-        path: './src/appmixer/mailerlite/core/FindSubscribers', 
+        path: './src/appmixer/mailerlite/core/FindSubscribers',
         input: '{"in":{"outputType":"array"}}',
         description: 'Lists all subscribers'
     },
@@ -61,26 +59,26 @@ console.log('✅ MAILERLITE_ACCESS_TOKEN is set\\n');
 for (const test of tests) {
     try {
         console.log(`🔧 Testing ${test.name} - ${test.description}`);
-        
+
         const command = `npx appmixer test component "${test.path}" -i '${test.input}'`;
         console.log(`Command: ${command}`);
-        
-        const result = execSync(command, { 
+
+        const result = execSync(command, {
             stdio: 'pipe',
             encoding: 'utf8',
             timeout: 30000,
             env: { ...process.env }
         });
-        
+
         console.log(`✅ ${test.name} - PASSED`);
         console.log(`Result: ${result.slice(0, 200)}...\\n`);
-        
+
         successfulTests.push({
             name: test.name,
             command: command,
             description: test.description
         });
-        
+
         // Extract useful data for next tests
         if (test.name === 'CreateSubscriber' && result.includes('id')) {
             try {
@@ -93,11 +91,11 @@ for (const test of tests) {
                 console.log('Could not extract subscriber ID');
             }
         }
-        
+
     } catch (error) {
         console.log(`❌ ${test.name} - FAILED`);
         console.log(`Error: ${error.message}\\n`);
-        
+
         failedTests.push({
             name: test.name,
             error: error.message,

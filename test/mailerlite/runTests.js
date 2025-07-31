@@ -5,11 +5,11 @@ const path = require('path');
 function runTests() {
     return new Promise((resolve, reject) => {
         const testDir = path.join(__dirname);
-        
+
         // Run mocha with the test files
-        const mocha = spawn('npx', ['mocha', 
+        const mocha = spawn('npx', ['mocha',
             'FindGroups.test.js',
-            'FindSubscribers.test.js', 
+            'FindSubscribers.test.js',
             'CreateSubscriber.test.js',
             'GetSubscriber.test.js',
             'FindCampaigns.test.js',

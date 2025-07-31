@@ -2,7 +2,7 @@
 
 /**
  * Mailerlite Connector Validation Script
- * 
+ *
  * This script validates that the Mailerlite connector is properly configured
  * and can connect to the API successfully.
  */
@@ -15,7 +15,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const colors = {
     green: '\x1b[32m',
-    red: '\x1b[31m', 
+    red: '\x1b[31m',
     yellow: '\x1b[33m',
     blue: '\x1b[34m',
     reset: '\x1b[0m',
@@ -29,23 +29,23 @@ function log(message, color = colors.reset) {
 async function validateConnection() {
     log('\n🧪 Mailerlite Connector Validation', colors.bold + colors.blue);
     log('====================================', colors.blue);
-    
+
     // Check environment variable
     log('\n1. Checking Environment Configuration...', colors.yellow);
-    
+
     if (!process.env.MAILERLITE_ACCESS_TOKEN) {
         log('❌ MAILERLITE_ACCESS_TOKEN not found in environment', colors.red);
         log('   Please set this in test/.env file', colors.red);
         log('   Get your token from: https://app.mailerlite.com/integrations/api', colors.blue);
         return false;
     }
-    
+
     const token = process.env.MAILERLITE_ACCESS_TOKEN;
     log(`✅ Token found: ${token.substring(0, 10)}...${token.slice(-4)}`, colors.green);
-    
+
     // Test API connection
     log('\n2. Testing API Connection...', colors.yellow);
-    
+
     try {
         const response = await axios({
             method: 'GET',
@@ -78,28 +78,28 @@ async function validateConnection() {
         }
         return false;
     }
-    
+
     // Test basic functionality
     log('\n3. Testing Component Loading...', colors.yellow);
-    
+
     try {
-        const FindSubscribers = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindSubscribers/FindSubscribers.js'));
+        require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindSubscribers/FindSubscribers.js'));
         log('✅ FindSubscribers component loaded', colors.green);
-        
-        const CreateSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/CreateSubscriber/CreateSubscriber.js'));
+
+        require(path.join(__dirname, '../../src/appmixer/mailerlite/core/CreateSubscriber/CreateSubscriber.js'));
         log('✅ CreateSubscriber component loaded', colors.green);
-        
-        const auth = require(path.join(__dirname, '../../src/appmixer/mailerlite/auth.js'));
+
+        require(path.join(__dirname, '../../src/appmixer/mailerlite/auth.js'));
         log('✅ Authentication module loaded', colors.green);
-        
+
     } catch (error) {
         log(`❌ Component loading error: ${error.message}`, colors.red);
         return false;
     }
-    
+
     // Test a simple API call
     log('\n4. Testing Subscriber Listing...', colors.yellow);
-    
+
     try {
         const response = await axios({
             method: 'GET',
@@ -110,11 +110,11 @@ async function validateConnection() {
             params: { limit: 5 },
             timeout: 10000
         });
-        
+
         if (response.status === 200 && response.data) {
             const subscribers = response.data.data || [];
             log(`✅ Successfully retrieved ${subscribers.length} subscribers`, colors.green);
-            
+
             if (subscribers.length > 0) {
                 log(`   Sample subscriber: ${subscribers[0].email || 'N/A'}`, colors.green);
             }
@@ -128,10 +128,10 @@ async function validateConnection() {
             return false;
         }
     }
-    
+
     // Test groups endpoint
     log('\n5. Testing Groups Listing...', colors.yellow);
-    
+
     try {
         const response = await axios({
             method: 'GET',
@@ -141,11 +141,11 @@ async function validateConnection() {
             },
             timeout: 10000
         });
-        
+
         if (response.status === 200 && response.data) {
             const groups = response.data.data || [];
             log(`✅ Successfully retrieved ${groups.length} groups`, colors.green);
-            
+
             if (groups.length > 0) {
                 log(`   Sample group: ${groups[0].name || 'N/A'}`, colors.green);
             }
@@ -159,14 +159,14 @@ async function validateConnection() {
             return false;
         }
     }
-    
+
     log('\n✅ All validations passed!', colors.bold + colors.green);
     log('   Your Mailerlite connector is ready for testing', colors.green);
     log('\n📋 Next Steps:', colors.bold + colors.blue);
     log('   • Run full tests: node runTests.js', colors.blue);
     log('   • Or run individual tests: node -e "require(\'./FindSubscribers.test.js\')"', colors.blue);
     log('   • Check the testing guide for more details\n', colors.blue);
-    
+
     return true;
 }
 

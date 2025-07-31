@@ -14,7 +14,7 @@ describe('FindCampaigns Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindCampaigns = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindCampaigns/FindCampaigns.js'));
 

@@ -14,7 +14,7 @@ describe('SendCampaign Component', function() {
             console.log('Skipping tests - MAILERLITE_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         SendCampaign = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/SendCampaign/SendCampaign.js'));
 
@@ -64,7 +64,7 @@ describe('SendCampaign Component', function() {
 
         try {
             await SendCampaign.receive(context);
-            
+
             // If this succeeds, there might be an issue
             console.log('Unexpected success for non-existent campaign');
         } catch (error) {
@@ -98,11 +98,11 @@ describe('SendCampaign Component', function() {
 
         try {
             await SendCampaign.receive(context);
-            
+
             console.log('⚠️ WARNING: Campaign send may have succeeded! Check your Mailerlite account');
             // If this succeeds, it means a campaign was actually sent
             // This should be rare in testing scenarios
-            
+
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -127,7 +127,7 @@ describe('SendCampaign Component', function() {
 
     // NOTE: We intentionally do NOT include a test that would actually send a real campaign
     // as that would send actual emails to real subscribers, which is not appropriate for automated tests.
-    
+
     it('should validate input structure without sending', async function() {
         // Test that the component accepts the expected input format
         // without actually sending anything
@@ -142,7 +142,8 @@ describe('SendCampaign Component', function() {
             if (error.name === 'CancelError') {
                 throw error; // This would indicate an input validation issue
             }
-            if (error.response && (error.response.status === 404 || error.response.status === 422 || error.response.status === 400)) {
+            const expectedStatuses = [404, 422, 400];
+            if (error.response && expectedStatuses.includes(error.response.status)) {
                 console.log('Input validation passed, API returned expected error for non-existent campaign');
                 return; // This is expected
             }
