@@ -10,7 +10,7 @@ module.exports = {
             filter,
             sort,
             outputType
-        } = context.messages.in;
+        } = context.messages.in.content;
         const { generateOutputPortOptions, isSource } = context.properties;
 
         if (generateOutputPortOptions) {
@@ -46,11 +46,7 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        return lib.sendArrayOutput({
-            context,
-            outputType,
-            records: profiles
-        });
+        return lib.sendArrayOutput({ context, outputType, records: profiles });
     },
 
     toSelectArray({ result }) {
@@ -63,7 +59,7 @@ module.exports = {
 
 const schema = {
     'type': { 'type': 'string', 'title': 'Type' },
-    'id': { 'type': 'string', 'title': 'ID' },
+    'id': { 'type': 'string', 'title': 'Profile ID' },
     'attributes': {
         'type': 'object',
         'title': 'Attributes',

@@ -42,11 +42,14 @@ module.exports = {
 
             await context.httpRequest({
                 method: 'GET',
-                url: 'https://a.klaviyo.com/api/accounts/',
+                url: 'https://a.klaviyo.com/api/profiles',
                 headers: {
                     'Authorization': `Klaviyo-API-Key ${context.apiKey}`,
                     'Accept': 'application/vnd.api+json',
                     'Revision': '2025-07-15'
+                },
+                params: {
+                    'page[size]': 1 // Limit to 1 profile to validate the API key
                 }
             });
 

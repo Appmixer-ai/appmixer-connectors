@@ -4,10 +4,10 @@ module.exports = {
 
     rules: [
         {
-            limit: 1,
+            limit: 3,
             window: 1000,
             queueing: 'fifo',
-            resource: 'requests'
+            resource: 'three-requests'
         },
         {
             limit: 10,
@@ -19,7 +19,13 @@ module.exports = {
             limit: 75,
             window: 1000,
             queueing: 'fifo',
-            resource: 'lists'
+            resource: 'seventy-five-requests'
+        },
+        {
+            limit: 1,
+            window: 1000,
+            queueing: 'fifo',
+            resource: 'requests'
         }
     ]
 };
