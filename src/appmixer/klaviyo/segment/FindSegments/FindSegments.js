@@ -33,8 +33,6 @@ module.exports = {
 
         const segments = data.data;
 
-        context.log({ step: 'segments', segments });
-
         if (isSource) {
             return context.sendJson({ result: segments }, 'out');
         }

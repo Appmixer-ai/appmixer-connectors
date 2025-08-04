@@ -36,7 +36,7 @@ module.exports = {
                         }
                     },
                     value: parseFloat(value).toFixed(2) || 0,
-                    value_currency: valueCurrency,
+                    value_currency: valueCurrency
                 }
             }
         };
