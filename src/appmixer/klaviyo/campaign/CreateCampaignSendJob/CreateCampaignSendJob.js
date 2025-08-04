@@ -20,7 +20,7 @@ module.exports = {
         // https://developers.klaviyo.com/en/reference/send_campaign
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://a.klaviyo.com/api/campaign-send-jobs/`,
+            url: 'https://a.klaviyo.com/api/campaign-send-jobs',
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',

@@ -26,7 +26,7 @@ module.exports = {
         // https://developers.klaviyo.com/en/reference/create_campaign_clone
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://a.klaviyo.com/api/campaign-clone`,
+            url: 'https://a.klaviyo.com/api/campaign-clone',
             headers: {
                 'Authorization': `Klaviyo-API-Key ${context.auth.apiKey}`,
                 'Accept': 'application/json',

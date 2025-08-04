@@ -59,8 +59,6 @@ module.exports = {
 
         const profile = data.data;
 
-        context.log({ step: 'profile created', profile });
-
         return context.sendJson(profile, 'out');
     }
 };

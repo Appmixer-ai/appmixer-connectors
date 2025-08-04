@@ -20,7 +20,7 @@ module.exports = {
         const queryParams = {
             filter: `equals(messages.channel,'${channelFilter}')${filter?.length > 0 ? `,${filter}` : ''}`,
             sort,
-            include: 'tags,campaign-messages',
+            include: 'tags,campaign-messages'
         };
 
         // https://developers.klaviyo.com/en/reference/get_campaigns

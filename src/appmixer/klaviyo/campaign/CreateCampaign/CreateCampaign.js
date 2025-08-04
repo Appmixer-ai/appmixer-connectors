@@ -165,8 +165,6 @@ module.exports = {
             }
         };
 
-        context.log({ step: 'requestData', requestData });
-
         // https://developers.klaviyo.com/en/reference/create_campaign
         const response = await context.httpRequest({
             method: 'POST',
@@ -180,10 +178,7 @@ module.exports = {
             data: requestData
         });
 
-        // Extract and format the response
         const campaign = response.data.data;
-
-        context.log({ step: 'response', response: response.data });
 
         return context.sendJson(campaign, 'out');
     }
