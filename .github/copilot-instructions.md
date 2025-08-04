@@ -215,8 +215,7 @@ module.exports = {
                 auth: {
                     user: context.apiKey,
                     password: 'X'
-                },
-                json: true
+                }
             });
         },
 
@@ -368,8 +367,7 @@ module.exports = {
                 auth: {
                     user: context.apiKey,
                     password: 'X'
-                },
-                json: true
+                }
             });
         },
 
@@ -910,7 +908,9 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 ## Development Guidelines
 
 `auth.js` file with type `apiKey` MUST follow these rules:
-- `requestProfileInfo` MUST return an object with just the obfuscated apiKey
+- `requestProfileInfo` MUST return either:
+    - an object with just the obfuscated apiKey (if a profile info is not available via API) or
+    - an object with the profile info
 
 Behavior JS file MUST follow these rules:
 - every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('<human_readable_input_name> is required!')`.
