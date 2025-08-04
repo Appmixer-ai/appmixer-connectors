@@ -29,22 +29,7 @@ module.exports = class CloudflareAPI {
 
     verify(context) {
 
-        if (this.isApiTokenType()) {
-            const headers = this.getHeaders();
-            return context.httpRequest({
-                method: 'GET',
-                url: 'https://api.cloudflare.com/client/v4/user/tokens/verify',
-                headers
-            });
-        }
-
-        return this.verifyGlobalApiKey(context);
-    }
-
-    verifyGlobalApiKey(context) {
-
         const headers = this.getHeaders();
-
         return context.httpRequest({
             method: 'GET',
             url: 'https://api.cloudflare.com/client/v4/accounts',

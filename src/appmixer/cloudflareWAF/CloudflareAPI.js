@@ -29,7 +29,7 @@ module.exports = class CloudflareAPI {
 
         return context.httpRequest({
             method: 'GET',
-            url: 'https://api.cloudflare.com/client/v4/user/tokens/verify',
+            url: 'https://api.cloudflare.com/client/v4/accounts',
             headers
         });
     }

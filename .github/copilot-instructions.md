@@ -810,16 +810,16 @@ json schema of the component.json
 ```
 
 Desired order of attributes in `component.json`:
-- `name`
-- `description`
-- `author`
-- `version`
-- `auth`
-- `quota`
-- `inPorts`
-- `properties`
-- `outPorts`
-- `icon`
+1. `name`
+2. `description`
+3. `author`
+4. `version`
+5. `auth`
+6. `quota`
+7. `inPorts`
+8. `properties`
+9. `outPorts`
+10. `icon`
 
 ### Component Behavior (JavaScript)
 
