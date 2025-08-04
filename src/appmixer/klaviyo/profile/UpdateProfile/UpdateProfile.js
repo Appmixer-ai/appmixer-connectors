@@ -6,7 +6,7 @@ module.exports = {
 
         const { profileId, email, phoneNumber, externalId, firstName, lastName,
             organization, title, image, address1, address2, city,
-            country, latitude, longtide, region, zip, timezone, ip
+            country, latitude, longitude, region, zip, timezone, ip
         } = context.messages.in.content;
 
         if (!profileId) {
@@ -32,7 +32,7 @@ module.exports = {
                         city,
                         country,
                         latitude: latitude ? parseFloat(latitude) : undefined,
-                        longitude: longtide ? parseFloat(longtide) : undefined,
+                        longitude: longitude ? parseFloat(longitude) : undefined,
                         region,
                         zip,
                         timezone,
