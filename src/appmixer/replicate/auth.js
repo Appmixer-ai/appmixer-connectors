@@ -3,6 +3,8 @@
 module.exports = {
     type: 'apiKey',
     definition: {
+        tokenType: 'authentication-token',
+        
         auth: {
             apiKey: {
                 type: 'text',
@@ -12,19 +14,31 @@ module.exports = {
         },
 
         async requestProfileInfo(context) {
+            // Get account information
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: 'https://api.replicate.com/v1/account',
+                headers: {
+                    'Authorization': `Bearer ${context.apiKey}`,
+                    'Accept': 'application/json'
+                }
+            });
 
-            const apiKey = context.apiKey;
             return {
-                key: apiKey.substring(0, 3) + '...' + apiKey.slice(-4)
+                id: response.data.username || response.data.name || 'unknown',
+                username: response.data.username,
+                name: response.data.name,
+                github_url: response.data.github_url
             };
         },
 
-        accountNameFromProfileInfo: 'key',
+        accountNameFromProfileInfo: 'username',
 
         async validate(context) {
+            // Validate by trying to access the account endpoint
             await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.replicate.com/v1/models',
+                url: 'https://api.replicate.com/v1/account',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`,
                     'Accept': 'application/json'

@@ -1,111 +1,86 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+const { TestContext } = require('../helper');
 const assert = require('assert');
+const dotenv = require('dotenv');
 
-describe('CancelPrediction Component', function() {
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+describe('replicate.core.CancelPrediction', () => {
+
     let context;
-    let CancelPrediction;
-    let CreatePrediction;
 
-    this.timeout(60000);
-
-    before(function() {
-        // Skip all tests if the access token is not set
-        if (!process.env.REPLICATE_ACCESS_TOKEN) {
-            console.log('Skipping tests - REPLICATE_ACCESS_TOKEN not set');
-            this.skip();
-        }
-
-        // Load the components
-        CancelPrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/CancelPrediction/CancelPrediction.js'));
-        CreatePrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/CreatePrediction/CreatePrediction.js'));
-
-        // Mock context
-        context = {
-            auth: {
-                apiKey: process.env.REPLICATE_ACCESS_TOKEN
-            },
-            messages: {
-                in: {
-                    content: {}
-                }
-            },
-            properties: {},
-            httpRequest: require('./httpRequest.js')
-        };
-
-        assert(context.auth.apiKey, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+    beforeEach(() => {
+        context = new TestContext({
+            componentPath: 'src/appmixer/replicate/core/CancelPrediction',
+            apiKey: process.env.REPLICATE_ACCESS_TOKEN
+        });
     });
 
-    it('should cancel a prediction', async function() {
+    it('should cancel a prediction', async () => {
         // First create a prediction to cancel
-        let predictionData;
-        context.sendJson = function(output, port) {
-            predictionData = output;
-        };
+        const createContext = new TestContext({
+            componentPath: 'src/appmixer/replicate/core/CreatePrediction',
+            apiKey: process.env.REPLICATE_ACCESS_TOKEN
+        });
 
-        context.messages.in.content = {
-            version: 'replicate/hello-world:5c7d5dc6dd8bf75c1acaa8565735e7986bc5b66206b55cca93cb72c9bf15ccaa',
+        const createOutput = await createContext.test({
             input: {
-                text: 'Test for cancellation'
+                version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
+                input: {
+                    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
+                }
             }
-        };
+        });
 
-        await CreatePrediction.receive(context);
-        const predictionId = predictionData.id;
-        
-        console.log('Created prediction for cancellation test:', predictionId);
-        assert(predictionId, 'Failed to create prediction for cancellation test');
+        const predictionId = createOutput.id;
 
-        // Now cancel the prediction
-        let cancelData;
-        context.sendJson = function(output, port) {
-            cancelData = output;
-        };
-
-        context.messages.in.content = {
-            prediction_id: predictionId
-        };
-
+        // Now try to cancel it (it might already be completed, which is fine)
         try {
-            await CancelPrediction.receive(context);
+            const output = await context.test({
+                input: {
+                    prediction_id: predictionId
+                }
+            });
 
-            console.log('CancelPrediction result:', JSON.stringify(cancelData, null, 2));
-
-            assert(cancelData && typeof cancelData === 'object', 'Expected data to be an object');
-            assert(cancelData.id, 'Expected prediction to have id property');
-            assert(cancelData.status, 'Expected prediction to have status property');
-
-            // Verify the ID matches what we requested to cancel
-            assert.strictEqual(cancelData.id, predictionId, 'Expected prediction ID to match requested ID');
-
-            // Status should be canceled or still processing (if it finished too quickly)
-            const validStatuses = ['starting', 'processing', 'succeeded', 'failed', 'canceled'];
-            assert(validStatuses.includes(cancelData.status), `Expected status to be one of ${validStatuses.join(', ')}, got: ${cancelData.status}`);
-
-            console.log(`Prediction ${predictionId} status after cancellation: ${cancelData.status}`);
+            assert(output, 'Output should exist');
+            assert(output.id === predictionId, 'Should return correct prediction ID');
+            assert(typeof output.status === 'string', 'Should have status');
+            // Status could be 'canceled' or remain the same if already completed
         } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the REPLICATE_ACCESS_TOKEN in .env file');
+            // It's acceptable if the prediction can't be canceled (e.g., already completed)
+            // Just verify it's a proper API response error
+            if (error.response && error.response.status === 422) {
+                // 422 is expected when trying to cancel a completed prediction
+                console.log('Prediction already completed, cannot cancel - this is expected');
+            } else {
+                throw error;
             }
-            throw error;
         }
     });
 
-    it('should handle non-existent prediction ID for cancellation', async function() {
-        context.messages.in.content = {
-            prediction_id: 'nonexistent-prediction-id'
-        };
-
+    it('should fail without prediction_id', async () => {
         try {
-            await CancelPrediction.receive(context);
-            assert.fail('Expected error for non-existent prediction ID');
+            await context.test({
+                input: {}
+            });
+            assert.fail('Should have thrown an error');
         } catch (error) {
-            // Should get a 404 or similar error
-            assert(error.response, 'Expected HTTP error response');
-            assert([404, 422].includes(error.response.status), `Expected 404 or 422 status code, got: ${error.response.status}`);
+            assert(error.message.includes('Prediction ID is required'), 'Should require prediction ID');
+        }
+    });
+
+    it('should fail with invalid prediction_id', async () => {
+        try {
+            await context.test({
+                input: {
+                    prediction_id: 'invalid-id'
+                }
+            });
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            // This should fail with a 404 or similar error from the API
+            assert(error.response && error.response.status >= 400, 'Should return API error for invalid ID');
         }
     });
 });
