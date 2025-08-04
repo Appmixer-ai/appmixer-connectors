@@ -35,13 +35,8 @@ module.exports = {
             }
         });
 
-        // Accepts both { data: [...] } and { data: { data: [...] } }
-        let items = [];
-        if (Array.isArray(response.data)) {
-            items = response.data;
-        } else if (response.data && Array.isArray(response.data.data)) {
-            items = response.data.data;
-        }
+        // Always nested: response.data.data is the domains array
+        const items = response.data?.data ?? [];
 
         // No searching supported yet, so we return all items
         // if (items.length === 0) {
