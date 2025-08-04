@@ -812,11 +812,11 @@ json schema of the component.json
 
 Desired order of attributes in `component.json`:
 1. `name`
-2. `label`
-3. `description`
-4. `author`
-5. `version`
-6. `auth`
+2. `description`
+3. `author`
+4. `version`
+5. `auth`
+6. `quota`
 7. `inPorts`
 8. `properties`
 9. `outPorts`
@@ -836,7 +836,7 @@ module.exports = {
     async receive(context) {
         
         // Get input data
-        const { message, priority, count } = context.messages.in;
+        const { message, priority, count } = context.messages.in.content;
         
         // Perform the action
         const response = await context.httpRequest({
@@ -910,8 +910,6 @@ module.exports = {
 
 ## Development Guidelines
 
-- **Validation**: Don't check required properties in behavior code - use schema validation
-- **Error Handling**: Always handle API errors gracefully
 - **Authentication**: Store sensitive data in auth configuration, not component code
 - **Rate Limiting**: Use quota.js to prevent API abuse
 - **Documentation**: Provide clear descriptions and tooltips for all fields
