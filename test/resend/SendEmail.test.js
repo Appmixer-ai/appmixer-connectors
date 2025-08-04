@@ -68,42 +68,37 @@ describe('SendEmail Component', function() {
 
     // Update test setup for successful email test
     it('should send an email successfully', async () => {
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        from: 'onboarding@resend.dev',
-                        to: 'auth@appmixer.com',
-                        subject: 'Test Subject',
-                        body: 'Test Body'
-                    }
+        // Use the context from before() and override only what is needed
+        const testContext = { ...context, sendJson: sinon.stub() };
+        testContext.messages = {
+            in: {
+                content: {
+                    from: 'onboarding@resend.dev',
+                    to: ['auth@appmixer.com'],
+                    subject: 'Test Subject',
+                    body: 'Test Body',
+                    html: '<h1>Hello from Appmixer!</h1><p>This is a test email sent through the Resend API.</p>'
                 }
-            },
-            auth: {
-                apiKey: process.env.RESEND_API_KEY
-            },
-            sendJson: sinon.stub()
+            }
         };
-        // Update test setup for successful email test to include required content
-        context.messages.in.content.html = '<h1>Hello from Appmixer!</h1><p>This is a test email sent through the Resend API.</p>';
-        // Ensure apiKey is set in the auth object for the successful email test
-        // Initialize auth object if undefined
-        if (!context.auth) {
-            context.auth = {};
-        }
-        context.httpRequest = require('./httpRequest.js');
 
-        await SendEmail.receive(context);
-        sinon.assert.calledOnce(context.sendJson);
+        await SendEmail.receive(testContext);
+
+        sinon.assert.calledOnce(testContext.sendJson);
     });
 
     // Adjust assertions for missing to field
     it('should fail without required to field', async function() {
         const testContext = { ...context };
-        testContext.messages.in.content = { from: 'test@example.com', subject: 'Test' };
+        testContext.messages = {
+            in: {
+                content: { from: 'test@example.com', subject: 'Test' }
+            }
+        };
 
         try {
             await SendEmail.receive(testContext);
+
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
@@ -114,10 +109,15 @@ describe('SendEmail Component', function() {
     // Adjust assertions for missing subject field
     it('should fail without required subject field', async function() {
         const testContext = { ...context };
-        testContext.messages.in.content = { from: 'test@example.com', to: ['test@example.com'] };
+        testContext.messages = {
+            in: {
+                content: { from: 'test@example.com', to: ['test@example.com'] }
+            }
+        };
 
         try {
             await SendEmail.receive(testContext);
+
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
