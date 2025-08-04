@@ -6,11 +6,11 @@ module.exports = {
 
         const { email, phoneNumber, externalId, firstName, lastName,
             organization, title, image, address1, address2, city,
-            country, latitude, longtide, region, zip, timezone, ip
+            country, latitude, longitude, region, zip, timezone, ip
         } = context.messages.in.content;
 
         if (!email && !phoneNumber && !externalId) {
-            throw new context.CancelError('Email or phone number or External ID is required!');
+            throw new context.CancelError('Email or Phone Number or External ID is required!');
         }
 
         const requestData = {
@@ -31,7 +31,7 @@ module.exports = {
                         city,
                         country,
                         latitude: latitude ? parseFloat(latitude) : undefined,
-                        longitude: longtide ? parseFloat(longtide) : undefined,
+                        longitude: longitude ? parseFloat(longitude) : undefined,
                         region,
                         zip,
                         timezone,
