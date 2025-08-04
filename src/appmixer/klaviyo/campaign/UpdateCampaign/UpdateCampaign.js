@@ -74,7 +74,11 @@ module.exports = {
                     const audiencesExcludedArr = audiencesExcluded ? audiencesExcluded.ADD : null;
 
                     // Add excluded audiences if provided
-                    if (audiencesExcludedArr && Array.isArray(audiencesExcludedArr) && audiencesExcludedArr.length > 0) {
+                    if (
+                        audiencesExcludedArr &&
+                        Array.isArray(audiencesExcludedArr) &&
+                        audiencesExcludedArr.length > 0
+                    ) {
                         const audiencesExcludedIds = [];
 
                         audiencesExcludedArr.forEach(audience => {
