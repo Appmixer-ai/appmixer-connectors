@@ -16,7 +16,7 @@ module.exports = {
         }
 
         const transport = new StreamableHTTPClientTransport(
-            new URL(mcpUrl),
+            new URL(url),
             {
                 requestInit: {
                     headers: headersParsed
