@@ -14,7 +14,7 @@ module.exports = {
         }
 
         if (!segmentId) {
-            throw new context.CancelError('List ID is required!');
+            throw new context.CancelError('Segment ID is required!');
         }
 
         // https://developers.klaviyo.com/en/reference/get_segments_for_profile

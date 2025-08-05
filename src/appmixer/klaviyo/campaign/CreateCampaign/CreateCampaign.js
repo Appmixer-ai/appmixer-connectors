@@ -82,7 +82,7 @@ module.exports = {
                 }
                 if (audience.type === 'list') {
                     return audience.listId;
-                };
+                }
             });
         }
 
@@ -96,13 +96,13 @@ module.exports = {
                 if (Object.keys(audience).length > 0) {
                     if (audience.type === 'segment') {
                         if (!audience.segmentId) {
-                            throw new context.CancelError('Audience Segment ID is required for all included audiences!');
+                            throw new context.CancelError('Audience Segment ID is required for all excluded audiences!');
                         }
                         audiencesExcludedIds.push(audience.segmentId);
                     }
                     if (audience.type === 'list') {
                         if (!audience.listId) {
-                            throw new context.CancelError('Audience List ID is required for all included audiences!');
+                            throw new context.CancelError('Audience List ID is required for all excluded audiences!');
                         }
                         audiencesExcludedIds.push(audience.listId);
                     };
@@ -124,15 +124,13 @@ module.exports = {
             sendStrategy.datetime = staticDatetime;
 
             if (staticIsLocal !== undefined) {
-                sendStrategy.options = {
-                    is_local: staticIsLocal
-                };
+                sendStrategy.options = sendStrategy.options || {};
+                sendStrategy.options.is_local = staticIsLocal;
             }
 
             if (staticSendPastRecipientsImmediately !== undefined) {
-                sendStrategy.options = {
-                    send_past_recipients_immediately: staticSendPastRecipientsImmediately
-                };
+                sendStrategy.options = sendStrategy.options || {};
+                sendStrategy.options.send_past_recipients_immediately = staticSendPastRecipientsImmediately;
             }
         } else if (sendStrategyMethod === 'throttled') {
             sendStrategy.datetime = throttledDatetime;
