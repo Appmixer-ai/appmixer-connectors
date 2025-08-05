@@ -1,6 +1,5 @@
 'use strict';
 const lib = require('../../lib');
-const Promise = require('bluebird');
 
 /**
  * Process issues to find newly created. The issues.get-for-repo Github API endpoint
@@ -42,9 +41,9 @@ module.exports = {
         res.data.items.forEach(processIssues.bind(null, known, actual, diff));
 
         if (diff.size) {
-            await Promise.map(diff, issue => {
+            await Promise.all(Array.from(diff).map(issue => {
                 return context.sendJson(issue, 'issue');
-            });
+            }));
         }
 
         await context.saveState({ known: Array.from(actual) });

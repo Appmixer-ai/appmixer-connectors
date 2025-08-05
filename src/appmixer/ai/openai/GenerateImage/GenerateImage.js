@@ -15,7 +15,7 @@ module.exports = {
         });
 
         let imageUrl;
-        if (data && data.data && data.data.length > 0) {
+        if (data?.data?.length > 0) {
             imageUrl = data.data[0].url;
         }
 

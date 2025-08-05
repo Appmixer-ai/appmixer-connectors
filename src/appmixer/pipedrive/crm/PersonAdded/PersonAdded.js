@@ -13,7 +13,7 @@ module.exports = {
 
     async receive(context) {
         const { data } = context.messages.webhook.content;
-        if (data && data.meta && data.meta.action === 'create' && data.meta.entity === 'person') {
+        if (data?.meta && data.meta.action === 'create' && data.meta.entity === 'person') {
             await context.sendJson(data.data, 'out');
             return context.response();
         }

@@ -25,7 +25,7 @@ module.exports = {
             return context.response('', 200);
         }
 
-        if (data && data.type === 'subscribe') {
+        if (data?.type === 'subscribe') {
             const subscriberData = mailchimpDriver.parseData(data);
             await context.sendJson(subscriberData, 'out');
         }

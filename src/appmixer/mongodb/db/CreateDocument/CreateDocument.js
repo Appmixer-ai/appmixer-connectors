@@ -24,12 +24,8 @@ module.exports = {
         const { collection: collectionName, document } = context.messages.in.content;
         const data = JSON.parse(document);
 
-        try {
-            const collection = getCollection(client, context.auth.database, collectionName);
-            const record = await collection.insertOne(data);
-            await context.sendJson({ document: { id: record.insertedId, ...data } }, 'out');
-        } catch (error) {
-            throw error;
-        }
+        const collection = getCollection(client, context.auth.database, collectionName);
+        const record = await collection.insertOne(data);
+        await context.sendJson({ document: { id: record.insertedId, ...data } }, 'out');
     }
 };

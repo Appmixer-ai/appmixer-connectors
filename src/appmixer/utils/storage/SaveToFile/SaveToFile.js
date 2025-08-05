@@ -127,7 +127,7 @@ module.exports = {
             const file = await context.saveFileStream(fileName, stream);
             return context.sendJson({ fileId: file.fileId, nRecords: count }, 'out');
         } finally {
-            cursor && cursor.close();
+            cursor?.close();
         }
     }
 };

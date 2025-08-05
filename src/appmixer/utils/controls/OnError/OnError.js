@@ -44,7 +44,7 @@ function addLabels(context, errors) {
     return errors.map(err => ({
         ...err,
         flowName: context.flowInfo.flowName,
-        componentLabel: err.componentId ? (context.flowDescriptor[err.componentId]?.label || err.componentType.split('.')[3]) : undefined
+        componentLabel: err.componentId ? (context.flowDescriptor[err.componentId]?.label || err.componentType?.split('.')[3]) : undefined
     }));
 }
 

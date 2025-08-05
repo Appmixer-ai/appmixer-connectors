@@ -162,12 +162,12 @@ module.exports = {
                 // Emit chunks of the desired size
                 let offset = 0;
                 while (offset + chunkSize <= combinedLength) {
-                    this.push(combined.slice(offset, offset + chunkSize));
+                    this.push(combined.subarray(offset, offset + chunkSize));
                     offset += chunkSize;
                 }
 
                 // Store leftover data
-                leftover = combined.slice(offset);
+                leftover = combined.subarray(offset);
 
                 callback();
             },

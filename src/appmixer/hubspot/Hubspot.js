@@ -58,7 +58,7 @@ class Hubspot {
         try {
             return await axios(url, payload);
         } catch (e) {
-            if (e.response && e.response.data && e.response.data.message) {
+            if (e.response?.data?.message) {
                 const error = new Error(e.response.data.message);
                 error.status = e.response.status;
                 error.data = e.response.data;
@@ -91,7 +91,7 @@ class Hubspot {
             data.after = after;
             const response = await this.call(method, url, data);
             const { results, paging } = response.data;
-            after = paging && paging.next ? paging.next.after : null;
+            after = paging?.next ? paging.next.after : null;
             records = records.concat(results);
         } while (after && records.length < recordLimit);
         return records;

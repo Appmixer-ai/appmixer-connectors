@@ -67,7 +67,7 @@ module.exports = {
         }).then(data => {
 
             let defaultReminder = getReminder(data.defaultReminders);
-            let events = (data || {}).items || [];
+            let events = data?.items || [];
 
             return Promise.map(events, event => {
                 if (shouldTrigger(event, context.properties.reminders, triggered, defaultReminder, tickPeriod)) {

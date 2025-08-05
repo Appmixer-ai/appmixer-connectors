@@ -86,7 +86,7 @@ module.exports = {
                 let userStore = client.getUserStore();
                 return userStore.getUser()
                     .catch(err => {
-                        if (err && err.errorCode === 9) {
+                        if (err?.errorCode === 9) {
                             throw new context.InvalidTokenError('Invalid token');
                         }
                         throw commons.verboseError(err);

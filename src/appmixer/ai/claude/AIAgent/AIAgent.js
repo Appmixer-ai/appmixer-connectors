@@ -37,7 +37,7 @@ module.exports = {
 
             // Prepare tool use for Anthropic if functionDeclarations exist
             let toolsConfig = undefined;
-            if (functionDeclarations && functionDeclarations.length) {
+            if (functionDeclarations?.length) {
                 toolsConfig = functionDeclarations;
             }
 
@@ -64,7 +64,7 @@ module.exports = {
 
             // Check for tool calls in the response
             const toolUse = data?.content?.find(part => part.type === 'tool_use');
-            if (toolUse && toolUse.id && toolUse.name) {
+            if (toolUse?.id && toolUse.name) {
                 // Anthropic tool call format: { id, name, input }
                 const callId = `${toolUse.name}:${correlationId}`;
                 const calls = [{
@@ -97,7 +97,7 @@ module.exports = {
                 await context.log({ step: 'collected-tools-output', threadId, outputs });
 
                 // Submit tool outputs to the assistant as a new message
-                if (outputs && outputs.length) {
+                if (outputs?.length) {
                     await context.log({ step: 'tool-outputs', tools: calls, outputs });
                     messages.push(
                         ...outputs.map(({ name, output }) => ({

@@ -100,7 +100,7 @@ module.exports = {
                     method: 'GET',
                     'relative_url': 'me'
                 }], (err, res) => {
-                    if (err && err.type === 'OAuthException') {
+                    if (err?.type === 'OAuthException') {
                         return reject(new context.InvalidTokenError(err.message));
                     }
                     if (err) {
