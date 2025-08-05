@@ -5,6 +5,10 @@ module.exports = {
 
         const { meetingId } = context.messages.in.content;
 
+        if (!meetingId) {
+            throw new context.CancelError('Meeting ID is required!');
+        }
+
         // https://developers.zoom.us/docs/api/meetings/#tag/meetings/GET/meetings/{meetingId}
         const { data } = await context.httpRequest({
             method: 'GET',
