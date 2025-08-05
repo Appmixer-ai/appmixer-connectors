@@ -25,8 +25,7 @@ module.exports = {
             method: 'DELETE',
             url: `https://api.resend.com/audiences/${audience_id}/contacts/${identifier}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
