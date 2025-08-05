@@ -23,9 +23,10 @@ module.exports = {
                 arguments: context.messages.in.content
             }]
         );
-        const output = typeof result?.content[0].text === 'string'
-            ? result?.content[0].text
-            : JSON.stringify(result?.content[0].text, null, 2);
+        const content = result?.content?.[0];
+        const output = typeof content?.text === 'string'
+            ? content.text
+            : JSON.stringify(content?.text || result, null, 2);
 
         return context.sendJson({ output }, 'out');
     },

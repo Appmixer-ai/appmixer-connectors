@@ -24,10 +24,11 @@ module.exports = {
             }
         );
         transport.onclose = async () => {
-            await mcp.close();
+            await client.close();
         };
         transport.onerror = async (err) => {
-            await mcp.close();
+            context.log({ step: 'error', error: err });
+            await client.close();
         };
 
         await client.connect(transport);
