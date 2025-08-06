@@ -20,28 +20,21 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { status, outputType } = context.messages.in.content;
+        const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Predictions' });
         }
 
         let url = 'https://api.replicate.com/v1/predictions';
-        let params = {};
-        
-        // Add status filter if provided
-        if (status && status.trim()) {
-            params.status = status.trim();
-        }
 
-        // https://replicate.com/docs/reference/http#predictions
+        // https://replicate.com/docs/reference/http#predictions.list
         const { data } = await context.httpRequest({
             method: 'GET',
             url,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
-            },
-            params: Object.keys(params).length > 0 ? params : undefined
+            }
         });
 
         const records = data.results || data || [];

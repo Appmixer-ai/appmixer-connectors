@@ -28,7 +28,7 @@ const schema = {
 
 module.exports = {
     async receive(context) {
-        const { search, limit, outputType } = context.messages.in.content;
+        const { outputType } = context.messages.in.content;
 
         // Generate output port schema dynamically based on the outputType
         // This is triggered by definition from the component.json outPorts.out.source
@@ -37,41 +37,20 @@ module.exports = {
         }
 
         let url = 'https://api.replicate.com/v1/models';
-        let params = {};
-
-        // If search is provided, use query parameters for search
-        if (search && search.trim()) {
-            params.search = search.trim();
-        }
-
-        // Add limit parameter if specified
-        if (limit && limit > 0) {
-            params.limit = Math.min(limit, 100); // Cap at 100 to prevent abuse
-        }
 
         let requestConfig = {
             method: 'GET',
             url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Accept': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         };
-
-        // Add params if any exist
-        if (Object.keys(params).length > 0) {
-            requestConfig.params = params;
-        }
 
         // https://replicate.com/docs/reference/http#models.list
         const { data } = await context.httpRequest(requestConfig);
 
         const records = data.results || data || [];
-        
-        if (records.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
-        
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

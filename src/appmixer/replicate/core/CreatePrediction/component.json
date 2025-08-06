@@ -1,6 +1,6 @@
 {
     "name": "appmixer.replicate.core.CreatePrediction",
-    "description": "Creates a new machine learning prediction using a specified model version or official model.",
+    "description": "Creates a new machine learning prediction using either an official model (owner/model-name format) or a specific model version (with version hash).",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -8,7 +8,7 @@
     },
     "quota": {
         "manager": "appmixer:replicate",
-        "resources": "predictions"
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -20,27 +20,27 @@
                         "type": "string"
                     },
                     "input": {
-                        "type": "object"
+                        "type": "string"
                     },
                     "webhook": {
                         "type": "string"
                     },
-                    "webhook_events_filter": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "webhookEventsFilter": {
+                        "type": "array"
                     }
                 },
-                "required": ["version", "input"]
+                "required": [
+                    "version",
+                    "input"
+                ]
             },
             "inspector": {
                 "inputs": {
                     "version": {
                         "type": "text",
-                        "label": "Version",
+                        "label": "Model Version or Official Model",
                         "index": 1,
-                        "tooltip": "Model version identifier (e.g., 'stability-ai/stable-diffusion:27b93a2413e7f36cd83da926f3656280b2931564ff050bf9575f1fdf9bcd7478') or official model name."
+                        "tooltip": "For official models, use format 'owner/model-name' (e.g., 'meta/meta-llama-3-70b-instruct'). For custom models, use the full version ID (e.g., 'owner/model:hash' or just the 64-character hash)."
                     },
                     "input": {
                         "type": "textarea",
@@ -54,11 +54,29 @@
                         "index": 3,
                         "tooltip": "Optional webhook URL to receive notifications when the prediction status changes."
                     },
-                    "webhook_events_filter": {
-                        "type": "textarea",
+                    "webhookEventsFilter": {
+                        "type": "multiselect",
                         "label": "Webhook Events Filter",
                         "index": 4,
-                        "tooltip": "Optional array of events to filter webhook notifications (e.g., [\"start\", \"output\", \"completed\"]). Provide as JSON array."
+                        "tooltip": "Select the events to filter.",
+                        "options": [
+                            {
+                                "label": "Start",
+                                "value": "start"
+                            },
+                            {
+                                "label": "Output",
+                                "value": "output"
+                            },
+                            {
+                                "label": "Completed",
+                                "value": "completed"
+                            },
+                            {
+                                "label": "Logs",
+                                "value": "logs"
+                            }
+                        ]
                     }
                 }
             }
@@ -69,22 +87,8 @@
             "name": "out",
             "options": [
                 {
-                    "label": "ID",
+                    "label": "Prediction Id",
                     "value": "id",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Status",
-                    "value": "status",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Version",
-                    "value": "version",
                     "schema": {
                         "type": "string"
                     }
@@ -97,48 +101,86 @@
                     }
                 },
                 {
+                    "label": "Version",
+                    "value": "version",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
                     "label": "Input",
                     "value": "input",
                     "schema": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {
+                            "text": {
+                                "type": "string",
+                                "title": "Input.Text"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Logs",
+                    "value": "logs",
+                    "schema": {
+                        "type": "string"
                     }
                 },
                 {
                     "label": "Output",
                     "value": "output",
                     "schema": {
-                        "type": "object"
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Data Removed",
+                    "value": "data_removed",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Error",
+                    "value": "error",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "string"
                     }
                 },
                 {
                     "label": "Created At",
                     "value": "created_at",
                     "schema": {
-                        "type": "string",
-                        "format": "date-time"
+                        "type": "string"
                     }
                 },
                 {
-                    "label": "Started At",
-                    "value": "started_at",
-                    "schema": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                {
-                    "label": "Completed At",
-                    "value": "completed_at",
-                    "schema": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                },
-                {
-                    "label": "URLs",
+                    "label": "Urls",
                     "value": "urls",
                     "schema": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {
+                            "cancel": {
+                                "type": "string",
+                                "title": "Urls.Cancel"
+                            },
+                            "get": {
+                                "type": "string",
+                                "title": "Urls.Get"
+                            },
+                            "web": {
+                                "type": "string",
+                                "title": "Urls.Web"
+                            }
+                        }
                     }
                 }
             ]
