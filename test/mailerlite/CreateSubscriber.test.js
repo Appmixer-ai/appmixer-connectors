@@ -17,7 +17,7 @@ describe('CreateSubscriber Component', function() {
             console.log('Skipping tests - MAILERLITE_API_KEY not set');
             this.skip();
         }
-        
+
         // Load the component
         CreateSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/CreateSubscriber/CreateSubscriber.js'));
     });

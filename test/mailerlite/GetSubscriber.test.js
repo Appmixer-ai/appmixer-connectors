@@ -17,7 +17,7 @@ describe('GetSubscriber Component', function() {
             console.log('Skipping tests - MAILERLITE_API_KEY not set');
             this.skip();
         }
-        
+
         // Load the component
         GetSubscriber = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/GetSubscriber/GetSubscriber.js'));
     });
@@ -51,20 +51,20 @@ describe('GetSubscriber Component', function() {
 
         // Check that sendJson was called
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
-        
+
         const [data, port] = context.sendJson.firstCall.args;
-        
+
         // Should send to 'out' port
         assert.strictEqual(port, 'out', 'Should send to out port');
-        
+
         // Data should be an object (single subscriber)
         assert.strictEqual(typeof data, 'object', 'Data should be an object');
         assert(!Array.isArray(data), 'Data should not be an array');
-        
+
         // Should have expected properties
         assert(data.id, 'Should have id property');
         assert(data.email, 'Should have email property');
-        
+
         console.log('Found subscriber:', data.email);
     });
 

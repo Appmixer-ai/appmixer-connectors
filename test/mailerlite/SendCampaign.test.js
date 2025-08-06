@@ -17,7 +17,7 @@ describe('SendCampaign Component', function() {
             console.log('Skipping tests - MAILERLITE_API_KEY not set');
             this.skip();
         }
-        
+
         // Load the component
         SendCampaign = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/SendCampaign/SendCampaign.js'));
     });
@@ -44,7 +44,7 @@ describe('SendCampaign Component', function() {
     it('should attempt to send a campaign or handle errors appropriately', async function() {
         // Note: This will likely fail with 422 due to insufficient credits or invalid campaign ID
         // We're testing that the component makes the correct API call structure
-        
+
         context.messages.in.content = {
             campaignId: '12345' // Test with a dummy ID
         };
@@ -62,7 +62,8 @@ describe('SendCampaign Component', function() {
             // 422 - Insufficient credits
             // 404 - Campaign not found
             // 400 - Invalid campaign state
-            if (error.response && (error.response.status === 422 || error.response.status === 404 || error.response.status === 400)) {
+            if (error.response && (error.response.status === 422 ||
+                error.response.status === 404 || error.response.status === 400)) {
                 console.log(`SendCampaign failed with expected error ${error.response.status} - this is normal for test accounts`);
                 assert.ok(true, 'Component correctly structured the API call');
             } else {

@@ -18,10 +18,10 @@ describe('GetCampaignStats Component', function() {
             console.log('Skipping tests - MAILERLITE_API_KEY not set');
             this.skip();
         }
-        
+
         // Load the component
         GetCampaignStats = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/GetCampaignStats/GetCampaignStats.js'));
-        
+
         // We need a campaign ID to test with. Let's use FindCampaigns to get one
         const FindCampaigns = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindCampaigns/FindCampaigns.js'));
         const findContext = {
@@ -42,16 +42,16 @@ describe('GetCampaignStats Component', function() {
             httpRequest: require('axios'),
             sendJson: sinon.stub()
         };
-        
+
         await FindCampaigns.receive(findContext);
-        
+
         if (findContext.sendJson.called) {
             const [output, outputPort] = findContext.sendJson.firstCall.args;
             if (outputPort === 'out' && output?.id) {
                 testCampaignId = output.id;
             }
         }
-        
+
         if (!testCampaignId) {
             console.log('No campaigns found to test with');
             this.skip();

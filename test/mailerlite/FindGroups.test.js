@@ -17,7 +17,7 @@ describe('FindGroups Component', function() {
             console.log('Skipping tests - MAILERLITE_API_KEY not set');
             this.skip();
         }
-        
+
         // Load the component
         FindGroups = require(path.join(__dirname, '../../src/appmixer/mailerlite/core/FindGroups/FindGroups.js'));
     });
@@ -50,10 +50,10 @@ describe('FindGroups Component', function() {
 
         assert(context.sendJson.called, 'sendJson should be called');
         const [data, port] = context.sendJson.firstCall.args;
-        
+
         // Should send to either 'out' or 'notFound' port
         assert(['out', 'notFound'].includes(port), `Should send to out or notFound port, got: ${port}`);
-        
+
         if (port === 'out') {
             if (context.messages.in.content.outputType === 'array') {
                 assert(typeof data === 'object', 'Data should be an object when outputType is array');
@@ -77,10 +77,10 @@ describe('FindGroups Component', function() {
 
         assert(context.sendJson.called, 'sendJson should be called');
         const [data, port] = context.sendJson.firstCall.args;
-        
+
         // Should send to either 'out' or 'notFound' port
         assert(['out', 'notFound'].includes(port), `Should send to out or notFound port, got: ${port}`);
-        
+
         if (port === 'out') {
             if (context.messages.in.content.outputType === 'array') {
                 assert(typeof data === 'object', 'Data should be an object when outputType is array');
@@ -104,10 +104,10 @@ describe('FindGroups Component', function() {
 
         assert(context.sendJson.called, 'sendJson should be called');
         const [data, port] = context.sendJson.firstCall.args;
-        
+
         // Should send to either 'out' or 'notFound' port
         assert(['out', 'notFound'].includes(port), `Should send to out or notFound port, got: ${port}`);
-        
+
         if (port === 'out') {
             if (context.messages.in.content.outputType === 'array') {
                 assert(typeof data === 'object', 'Data should be an object when outputType is array');
