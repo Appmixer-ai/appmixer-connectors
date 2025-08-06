@@ -108,9 +108,9 @@ Contains bundle metadata and version history.
     "name": "appmixer.connectorname",
     "version": "1.0.0",
     "changelog": {
-        "1.0.0": ["Initial release"],
-        "1.0.1": ["Bug fixes and improvements"],
-        "2.0.0": ["(breaking change) Updated API integration"]
+        "1.0.0": ["Initial release."],
+        "1.0.1": ["Bug fixes and improvements."],
+        "2.0.0": ["(breaking change) Updated API integration."]
     }
 }
 ```
@@ -130,7 +130,7 @@ json schema of the bundle.json file:
         },
         "changelog": {
             "type": "object",
-            "description": "The changelog of the bundle, used to describe the changes in the bundle. for example: {\n        \"1.0.4\": [\n            \"Initial release\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output varible name in LisBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
+            "description": "The changelog of the bundle, used to describe the changes in the bundle. For example: {\n        \"1.0.4\": [\n            \"Initial release.\"\n        ],\n        \"1.0.5\": [\n            \"Renamed output variable name in ListBases from Array to Bases and in ListTables from Array to Tables.\"\n        ],\n        \"2.0.1\": [\n            \"(breaking change) Fixed output schema for ListTables and ListBases.\"\n        ]"
         }
     },
     "required": ["name", "version", "changelog"]
@@ -147,7 +147,7 @@ module.exports = {
         {
             limit: 2000,                          // Max calls per window
             throttling: 'window-sliding',         // Throttling method
-            window: 1000 * 60 * 60 * 24,        // 24 hours in ms
+            window: 1000 * 60 * 60 * 24,          // 24 hours in ms
             scope: 'userId',                      // Per user limits
             resource: 'messages.send'             // Resource identifier
         },
@@ -215,8 +215,7 @@ module.exports = {
                 auth: {
                     user: context.apiKey,
                     password: 'X'
-                },
-                json: true
+                }
             });
         },
 
@@ -335,7 +334,6 @@ module.exports = {
 ```
 
 ```js
-
 module.exports = {
 
     type: 'apiKey',
@@ -369,8 +367,7 @@ module.exports = {
                 auth: {
                     user: context.apiKey,
                     password: 'X'
-                },
-                json: true
+                }
             });
         },
 
@@ -576,7 +573,7 @@ json schema of the component.json
         },
         "label": {
             "type": "string",
-            "description": "The label of your component. If not label is specified, then last part of name will be used when component is dropped into Designer. If your component name is appmixer.twitter.statuses.CreateTweet then CreateTweet will be name of the component unless you specify label property. This allows you to use spaces as opposed to the name property. "
+            "description": "The label of your component. If no label is specified, then last part of name will be used when component is dropped into Designer. If your component name is appmixer.twitter.statuses.CreateTweet then Create Tweet will be name of the component unless you specify label property."
         },
         "description": {
             "type": "string",
@@ -899,13 +896,34 @@ module.exports = {
 };
 ```
 
-# Best Practices
+# Best Practices (AI Assistance + Humans)
+Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
+
+## Code Style Guidelines
+- Use 4 spaces for indentation
+- Add one empty line after function definitions
+- Add one empty line after the `receive` function definition
+- Use camelCase for variable and function names. Snake case is allowed for connectors that rely on external APIs that use snake case.
+
+## Development Guidelines
+
+`auth.js` file with type `apiKey` MUST follow these rules:
+- `requestProfileInfo` MUST return either:
+    - an object with just the obfuscated apiKey (if a profile info is not available via API) or
+    - an object with the profile info
+
+Behavior JS file MUST follow these rules:
+- every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('<human_readable_input_name> is required!')`.
+- update or delete component must return an empty object, eg `return context.sendJson({}, 'out');` at the end of the function.
+
+`component.json` file MUST follow these rules:
+- update or delete component must have `outPorts: ['out']`.
+- update or delete component must have at least one required input, which is the ID of the entity being updated or deleted.
+
+# Best Practices (Humans)
 
 ## Code Style Guidelines
 
-- Use 4 spaces for indentation
-- Add one empty line after function definitions
-- Use camelCase for variable and function names
 - Follow consistent formatting patterns
 
 ## Development Guidelines
