@@ -20,7 +20,7 @@ describe('FindMessages Component', function() {
             console.log('Skipping tests - GOOGLE_CHAT_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindMessages = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindMessages/FindMessages.js'));
     });
@@ -28,7 +28,7 @@ describe('FindMessages Component', function() {
     beforeEach(() => {
         // Load the lib
         const lib = require(path.join(__dirname, '../../src/appmixer/googleChat/lib.generated.js'));
-        
+
         // Mock context
         context = {
             auth: {
@@ -45,7 +45,7 @@ describe('FindMessages Component', function() {
             sendJson: (data, port) => ({ messages: { [port]: { content: data, options: data } } }),
             CancelError: class extends Error { constructor(message) { super(message); this.name = 'CancelError'; } }
         };
-        
+
         // Add lib functions to the module context
         Object.assign(FindMessages, { lib });
     });
@@ -58,13 +58,13 @@ describe('FindMessages Component', function() {
         };
 
         const result = await FindMessages.receive(context);
-        
+
         assert(result, 'Result should exist');
         assert(result.messages, 'Result should have messages');
         assert(result.messages.out, 'Result should have out port');
         assert(result.messages.out.options, 'Result should have options for output port');
         assert(Array.isArray(result.messages.out.options), 'Options should be an array');
-        
+
         console.log('Output port options generated successfully:', result.messages.out.options.length, 'options');
     });
 
@@ -98,14 +98,14 @@ describe('FindMessages Component', function() {
         };
 
         await FindMessages.receive(context);
-        
+
         // Check if data was sent
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(sentData.result, 'Result should exist in sent data');
             assert(Array.isArray(sentData.result), 'Result should be an array');
             console.log(`Found ${sentData.result.length} messages`);
-            
+
             if (sentData.result.length > 0) {
                 const message = sentData.result[0];
                 assert(typeof message.name === 'string', 'Message name should be a string');
@@ -139,7 +139,7 @@ describe('FindMessages Component', function() {
         };
 
         await FindMessages.receive(context);
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(sentData.result, 'Result should exist in sent data');
@@ -173,17 +173,17 @@ describe('FindMessages Component', function() {
         };
 
         await FindMessages.receive(context);
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(sentData.result, 'Result should exist in sent data');
             assert(Array.isArray(sentData.result), 'Result should be an array');
             console.log(`Found ${sentData.result.length} messages in thread ${process.env.GOOGLE_CHAT_THREAD_NAME}`);
-            
+
             // Verify all messages are from the correct thread
             sentData.result.forEach(message => {
                 if (message.thread && message.thread.name) {
-                    assert(message.thread.name === process.env.GOOGLE_CHAT_THREAD_NAME, 
+                    assert(message.thread.name === process.env.GOOGLE_CHAT_THREAD_NAME,
                         `Expected thread ${process.env.GOOGLE_CHAT_THREAD_NAME}, got ${message.thread.name}`);
                 }
             });
@@ -209,7 +209,7 @@ describe('FindMessages Component', function() {
         };
 
         await FindMessages.receive(context);
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(typeof sentData === 'object', 'Message should be an object');

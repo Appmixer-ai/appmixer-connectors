@@ -87,7 +87,7 @@ module.exports = {
             );
 
             if (validTypes.length > 0) {
-                params.filter = validTypes.length === 1 
+                params.filter = validTypes.length === 1
                     ? `spaceType = "${validTypes[0]}"`
                     : validTypes.map(type => `spaceType = "${type}"`).join(' OR ');
             }

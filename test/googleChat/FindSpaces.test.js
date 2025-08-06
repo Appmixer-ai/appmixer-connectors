@@ -20,7 +20,7 @@ describe('FindSpaces Component', function() {
             console.log('Skipping tests - GOOGLE_CHAT_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindSpaces = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'));
     });
@@ -28,7 +28,7 @@ describe('FindSpaces Component', function() {
     beforeEach(() => {
         // Load the lib
         const lib = require(path.join(__dirname, '../../src/appmixer/googleChat/lib.generated.js'));
-        
+
         // Mock context
         context = {
             auth: {
@@ -45,7 +45,7 @@ describe('FindSpaces Component', function() {
             sendJson: (data, port) => ({ messages: { [port]: { content: data, options: data } } }),
             CancelError: class extends Error { constructor(message) { super(message); this.name = 'CancelError'; } }
         };
-        
+
         // Add lib functions to the module context
         Object.assign(FindSpaces, { lib });
     });
@@ -57,13 +57,13 @@ describe('FindSpaces Component', function() {
         };
 
         const result = await FindSpaces.receive(context);
-        
+
         assert(result, 'Result should exist');
         assert(result.messages, 'Result should have messages');
         assert(result.messages.out, 'Result should have out port');
         assert(result.messages.out.options, 'Result should have options for output port');
         assert(Array.isArray(result.messages.out.options), 'Options should be an array');
-        
+
         console.log('Output port options generated successfully:', result.messages.out.options.length, 'options');
     });
 
@@ -81,13 +81,13 @@ describe('FindSpaces Component', function() {
         };
 
         await FindSpaces.receive(context);
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(sentData.result, 'Result should exist in sent data');
             assert(Array.isArray(sentData.result), 'Result should be an array');
             console.log(`Found ${sentData.result.length} spaces`);
-            
+
             if (sentData.result.length > 0) {
                 const space = sentData.result[0];
                 assert(typeof space.name === 'string', 'Space name should be a string');
@@ -116,13 +116,13 @@ describe('FindSpaces Component', function() {
         };
 
         await FindSpaces.receive(context);
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(sentData.result, 'Result should exist in sent data');
             assert(Array.isArray(sentData.result), 'Result should be an array');
             console.log(`Found ${sentData.result.length} SPACE type spaces`);
-            
+
             // Verify all returned spaces are of type SPACE
             sentData.result.forEach(space => {
                 assert(space.spaceType === 'SPACE', `Expected SPACE type, got ${space.spaceType}`);
@@ -150,9 +150,9 @@ describe('FindSpaces Component', function() {
         };
 
         await FindSpaces.receive(context);
-        
+
         assert(sentData, 'Result should exist');
-        
+
         if (sentPort === 'out') {
             assert(sentData, 'Sent data should exist');
             assert(typeof sentData === 'object', 'Space should be an object');
@@ -161,7 +161,7 @@ describe('FindSpaces Component', function() {
             assert(typeof sentData.count === 'number', 'Should include count metadata');
             assert(typeof sentData.index === 'number', 'Should include index metadata');
             assert(sentData.index === 0, 'First item should have index 0');
-            console.log(`First space sent to port: out`);
+            console.log('First space sent to port: out');
             console.log(`First space: ${sentData.name}`);
         } else if (sentPort === 'notFound') {
             console.log('No spaces found');

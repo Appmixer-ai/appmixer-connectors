@@ -20,7 +20,7 @@ describe('SendMessage Component', function() {
             console.log('Skipping tests - GOOGLE_CHAT_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         SendMessage = require(path.join(__dirname, '../../src/appmixer/googleChat/core/SendMessage/SendMessage.js'));
     });
@@ -74,24 +74,24 @@ describe('SendMessage Component', function() {
 
     it('should send a message successfully', async () => {
         const testMessage = `Test message from Appmixer connector - ${new Date().toISOString()}`;
-        
+
         context.messages.in.content = {
             space: process.env.GOOGLE_CHAT_SPACE_ID,
             text: testMessage
         };
 
         const result = await SendMessage.receive(context);
-        
+
         assert(result, 'Result should exist');
         assert(result.messages, 'Result should have messages');
         assert(result.messages.out, 'Result should have out port');
-        
+
         const sentMessage = result.messages.out.content;
         assert(typeof sentMessage === 'object', 'Sent message should be an object');
         assert(typeof sentMessage.name === 'string', 'Message name should be a string');
         assert(typeof sentMessage.createTime === 'string', 'Create time should be a string');
         assert(sentMessage.text === testMessage, 'Message text should match what was sent');
-        
+
         console.log('Message sent successfully:', sentMessage.name);
         console.log('Message text:', sentMessage.text);
         console.log('Created at:', sentMessage.createTime);
@@ -99,44 +99,44 @@ describe('SendMessage Component', function() {
 
     it('should send a message with special characters', async () => {
         const testMessage = `Special chars test: 🚀 @mention #hashtag *bold* _italic_ \`code\` - ${new Date().toISOString()}`;
-        
+
         context.messages.in.content = {
             space: process.env.GOOGLE_CHAT_SPACE_ID,
             text: testMessage
         };
 
         const result = await SendMessage.receive(context);
-        
+
         assert(result, 'Result should exist');
         assert(result.messages, 'Result should have messages');
         assert(result.messages.out, 'Result should have out port');
-        
+
         const sentMessage = result.messages.out.content;
         assert(typeof sentMessage === 'object', 'Sent message should be an object');
         assert(sentMessage.text === testMessage, 'Message text should match what was sent');
-        
+
         console.log('Message with special characters sent successfully:', sentMessage.name);
     });
 
     it('should send a long message', async () => {
         const longText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(20);
         const testMessage = `Long message test: ${longText} - ${new Date().toISOString()}`;
-        
+
         context.messages.in.content = {
             space: process.env.GOOGLE_CHAT_SPACE_ID,
             text: testMessage
         };
 
         const result = await SendMessage.receive(context);
-        
+
         assert(result, 'Result should exist');
         assert(result.messages, 'Result should have messages');
         assert(result.messages.out, 'Result should have out port');
-        
+
         const sentMessage = result.messages.out.content;
         assert(typeof sentMessage === 'object', 'Sent message should be an object');
         assert(sentMessage.text === testMessage, 'Message text should match what was sent');
-        
+
         console.log('Long message sent successfully:', sentMessage.name);
         console.log('Message length:', sentMessage.text.length, 'characters');
     });
