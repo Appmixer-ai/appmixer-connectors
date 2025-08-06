@@ -14,7 +14,7 @@ module.exports = {
             method: 'POST',
             url: `https://api.mailerlite.com/api/v2/campaigns/${campaignId}/actions/send`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
+                'X-MailerLite-ApiKey': context.auth.apiKey
             }
         });
 
