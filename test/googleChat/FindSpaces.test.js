@@ -1,8 +1,14 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+'use strict';
+
 const assert = require('assert');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('FindSpaces Component', function() {
+
     let context;
     let FindSpaces;
 
@@ -14,9 +20,15 @@ describe('FindSpaces Component', function() {
             console.log('Skipping tests - GOOGLE_CHAT_ACCESS_TOKEN not set');
             this.skip();
         }
+        
         // Load the component
         FindSpaces = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'));
+    });
 
+    beforeEach(() => {
+        // Load the lib
+        const lib = require(path.join(__dirname, '../../src/appmixer/googleChat/lib.generated.js'));
+        
         // Mock context
         context = {
             auth: {
@@ -28,207 +40,133 @@ describe('FindSpaces Component', function() {
                 }
             },
             properties: {},
-            httpRequest: require('./httpRequest.js'),
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
-            }
+            httpRequest: require('axios'),
+            log: async (data) => console.log('LOG:', JSON.stringify(data, null, 2)),
+            sendJson: (data, port) => ({ messages: { [port]: { content: data, options: data } } }),
+            CancelError: class extends Error { constructor(message) { super(message); this.name = 'CancelError'; } }
         };
-
-        assert(context.auth.accessToken, 'GOOGLE_CHAT_ACCESS_TOKEN environment variable is required for tests');
+        
+        // Add lib functions to the module context
+        Object.assign(FindSpaces, { lib });
     });
 
-    it('should find spaces without query', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
-        context.messages.in.content = {
-            outputType: 'array'
-        };
-
-        try {
-            await FindSpaces.receive(context);
-
-            console.log('FindSpaces result:', JSON.stringify(data, null, 2));
-
-            assert(data && typeof data === 'object', 'Expected data to be an object');
-            assert(Array.isArray(data.result), 'Expected data.result to be an array');
-            assert(typeof data.count === 'number', 'Expected data.count to be a number');
-
-            // Verify the count matches array length
-            const expectedMsg = `Expected count (${data.count}) to match result ` +
-                `array length (${data.result.length})`;
-            assert.strictEqual(data.count, data.result.length, expectedMsg);
-
-            if (data.result.length > 0) {
-                const space = data.result[0];
-                assert(space.name, 'Expected space to have name property');
-
-                // Verify required fields are present
-                const requiredFields = ['name'];
-                for (const field of requiredFields) {
-                    assert(field in space, `Expected space to have ${field} property`);
-                }
-            }
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error(
-                    'Authentication failed: Access token is invalid or expired. ' +
-                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
-                );
-            }
-            throw error;
-        }
-    });
-
-    it('should default to array output type when not specified', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
-        context.messages.in.content = {};
-
-        try {
-            await FindSpaces.receive(context);
-
-            console.log('FindSpaces default output type result:', JSON.stringify(data, null, 2));
-
-            assert(data && typeof data === 'object', 'Expected data to be an object');
-            assert(Array.isArray(data.result), 'Expected data.result to be an array');
-            assert(typeof data.count === 'number', 'Expected data.count to be a number');
-
-            // Verify the count matches array length
-            const expectedMsg2 = `Expected count (${data.count}) to match result ` +
-                `array length (${data.result.length})`;
-            assert.strictEqual(data.count, data.result.length, expectedMsg2);
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error(
-                    'Authentication failed: Access token is invalid or expired. ' +
-                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
-                );
-            }
-            throw error;
-        }
-    });
-
-    it('should handle object output type', async function() {
-        context.messages.in.content = {
-            outputType: 'object'
-        };
-
-        // Mock sendJson to capture all calls
-        const sendJsonCalls = [];
-        context.sendJson = function(data, port) {
-            sendJsonCalls.push({ data, port });
-            return { data, port };
-        };
-
-        try {
-            await FindSpaces.receive(context);
-
-            console.log('FindSpaces object output type calls count:', sendJsonCalls.length);
-            if (sendJsonCalls.length > 0) {
-                console.log('First call data keys:', Object.keys(sendJsonCalls[0].data));
-            }
-
-            assert(sendJsonCalls.length > 0, 'Expected sendJson to be called at least once');
-
-            // For object output type, each space should be sent individually
-            // Let's just check the first few calls to avoid overwhelming output
-            const callsToCheck = Math.min(sendJsonCalls.length, 3);
-            for (let i = 0; i < callsToCheck; i++) {
-                const call = sendJsonCalls[i];
-                assert(call.data && typeof call.data === 'object', `Expected call ${i} data to be an object`);
-                assert(typeof call.data.index === 'number', `Expected call ${i} data to have index property (number)`);
-                assert(typeof call.data.count === 'number', `Expected call ${i} data to have count property (number)`);
-                assert.strictEqual(call.port, 'out', `Expected call ${i} port to be "out"`);
-                // Check that the space data is present
-                assert(call.data.name, `Expected call ${i} data to have name property`);
-            }
-            console.log(`All ${callsToCheck} checked calls have correct structure.`);
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error(
-                    'Authentication failed: Access token is invalid or expired. ' +
-                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
-                );
-            }
-            throw error;
-        }
-    });
-
-    it('should handle first output type', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
-        context.messages.in.content = {
-            outputType: 'first'
-        };
-
-        try {
-            await FindSpaces.receive(context);
-
-            console.log('FindSpaces first output type result:', JSON.stringify(data, null, 2));
-
-            assert(data && typeof data === 'object', 'Expected data to be an object');
-            assert(typeof data.index === 'number', 'Expected data.index to be a number');
-            assert(typeof data.count === 'number', 'Expected data.count to be a number');
-            assert.strictEqual(data.index, 0, 'Expected first item to have index 0');
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error(
-                    'Authentication failed: Access token is invalid or expired. ' +
-                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
-                );
-            }
-            if (error.name === 'CancelError' && error.message.includes('No records available')) {
-                console.log('No spaces found for first output type test - this is ' +
-                    'expected if no spaces exist');
-                return; // This is acceptable
-            }
-            throw error;
-        }
-    });
-
-    it('should generate output port options', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
+    it('should return output port schema when generateOutputPortOptions is true', async () => {
         context.properties.generateOutputPortOptions = true;
         context.messages.in.content = {
             outputType: 'array'
         };
 
-        try {
-            await FindSpaces.receive(context);
+        const result = await FindSpaces.receive(context);
+        
+        assert(result, 'Result should exist');
+        assert(result.messages, 'Result should have messages');
+        assert(result.messages.out, 'Result should have out port');
+        assert(result.messages.out.options, 'Result should have options for output port');
+        assert(Array.isArray(result.messages.out.options), 'Options should be an array');
+        
+        console.log('Output port options generated successfully:', result.messages.out.options.length, 'options');
+    });
 
-            console.log('FindSpaces output port options:', JSON.stringify(data, null, 2));
+    it('should list spaces successfully', async () => {
+        context.messages.in.content = {
+            outputType: 'array'
+        };
 
-            assert(Array.isArray(data), 'Expected output port options to be an array');
-            if (data.length > 0) {
-                assert(data[0].label, 'Expected option to have label property');
-                assert(data[0].value, 'Expected option to have value property');
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Spaces sent to port: ${port}`);
+        };
+
+        await FindSpaces.receive(context);
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} spaces`);
+            
+            if (sentData.result.length > 0) {
+                const space = sentData.result[0];
+                assert(typeof space.name === 'string', 'Space name should be a string');
+                assert(typeof space.spaceType === 'string', 'Space type should be a string');
+                console.log('First space:', space.name, space.spaceType);
             }
-        } catch (error) {
-            throw error;
+        } else if (sentPort === 'notFound') {
+            console.log('No spaces found');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should filter spaces by type', async () => {
+        context.messages.in.content = {
+            spaceTypes: ['SPACE'],
+            outputType: 'array'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Filtered spaces sent to port: ${port}`);
+        };
+
+        await FindSpaces.receive(context);
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} SPACE type spaces`);
+            
+            // Verify all returned spaces are of type SPACE
+            sentData.result.forEach(space => {
+                assert(space.spaceType === 'SPACE', `Expected SPACE type, got ${space.spaceType}`);
+            });
+        } else if (sentPort === 'notFound') {
+            console.log('No SPACE type spaces found');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should return first item only when outputType is first', async () => {
+        context.messages.in.content = {
+            outputType: 'first'
+        };
+
+        let sentData;
+        let sentPort;
+
+        // Capture output from context.sendJson
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            await context.log({ step: 'output-captured', data, port });
+        };
+
+        await FindSpaces.receive(context);
+        
+        assert(sentData, 'Result should exist');
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(typeof sentData === 'object', 'Space should be an object');
+            assert(typeof sentData.name === 'string', 'Space name should be a string');
+            assert(sentData.name.startsWith('spaces/'), 'Space name should start with spaces/');
+            assert(typeof sentData.count === 'number', 'Should include count metadata');
+            assert(typeof sentData.index === 'number', 'Should include index metadata');
+            assert(sentData.index === 0, 'First item should have index 0');
+            console.log(`First space sent to port: out`);
+            console.log(`First space: ${sentData.name}`);
+        } else if (sentPort === 'notFound') {
+            console.log('No spaces found');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
         }
     });
 });

@@ -89,10 +89,13 @@ module.exports = {
             params.filter = filter.trim();
         }
 
+        // Ensure space has the correct format
+        const spaceId = space.startsWith('spaces/') ? space : `spaces/${space}`;
+
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages/list
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://chat.googleapis.com/v1/spaces/${space}/messages`,
+            url: `https://chat.googleapis.com/v1/${spaceId}/messages`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },

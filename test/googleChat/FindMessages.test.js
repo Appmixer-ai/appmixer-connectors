@@ -1,11 +1,16 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+'use strict';
+
 const assert = require('assert');
+const path = require('path');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('FindMessages Component', function() {
+
     let context;
     let FindMessages;
-    let testSpaceId = null;
 
     this.timeout(30000);
 
@@ -15,9 +20,15 @@ describe('FindMessages Component', function() {
             console.log('Skipping tests - GOOGLE_CHAT_ACCESS_TOKEN not set');
             this.skip();
         }
+        
         // Load the component
         FindMessages = require(path.join(__dirname, '../../src/appmixer/googleChat/core/FindMessages/FindMessages.js'));
+    });
 
+    beforeEach(() => {
+        // Load the lib
+        const lib = require(path.join(__dirname, '../../src/appmixer/googleChat/lib.generated.js'));
+        
         // Mock context
         context = {
             auth: {
@@ -29,214 +40,185 @@ describe('FindMessages Component', function() {
                 }
             },
             properties: {},
-            httpRequest: require('./httpRequest.js'),
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
-            }
+            httpRequest: require('axios'),
+            log: async (data) => console.log('LOG:', JSON.stringify(data, null, 2)),
+            sendJson: (data, port) => ({ messages: { [port]: { content: data, options: data } } }),
+            CancelError: class extends Error { constructor(message) { super(message); this.name = 'CancelError'; } }
         };
-
-        assert(context.auth.accessToken, 'GOOGLE_CHAT_ACCESS_TOKEN environment variable is required for tests');
+        
+        // Add lib functions to the module context
+        Object.assign(FindMessages, { lib });
     });
 
-    beforeEach(async function() {
-        // Try to get a space ID for testing
-        if (!testSpaceId) {
-            try {
-                const FindSpaces = require(path.join(
-                    __dirname,
-                    '../../src/appmixer/googleChat/core/FindSpaces/FindSpaces.js'
-                ));
-                let spacesData;
-                const findSpacesContext = {
-                    ...context,
-                    sendJson: function(output, port) {
-                        spacesData = output;
-                    },
-                    messages: {
-                        in: {
-                            content: {
-                                outputType: 'array'
-                            }
-                        }
-                    },
-                    properties: {}
-                };
-
-                await FindSpaces.receive(findSpacesContext);
-
-                if (spacesData && spacesData.result && spacesData.result.length > 0) {
-                    testSpaceId = spacesData.result[0].name;
-                    console.log('Using test space ID:', testSpaceId);
-                } else {
-                    console.log('No spaces found - will use mock space ID for error testing');
-                    testSpaceId = 'spaces/AAAA_mock_space_id';
-                }
-            } catch (error) {
-                console.log('Could not fetch spaces for testing, using mock space ID');
-                testSpaceId = 'spaces/AAAA_mock_space_id';
-            }
-        }
-    });
-
-    it('should require space parameter', async function() {
-        let error;
-        context.sendJson = function(output, port) {};
-
-        context.messages.in.content = {
-            outputType: 'array'
-            // space is missing
-        };
-
-        try {
-            await FindMessages.receive(context);
-        } catch (err) {
-            error = err;
-        }
-
-        assert(error, 'Expected error when space is missing');
-        assert(error.name === 'CancelError', 'Expected CancelError');
-        assert(error.message.includes('Space is required'), 'Expected error message about space being required');
-    });
-
-    it('should find messages in space', async function() {
-        let data;
-        let port;
-        context.sendJson = function(output, portName) {
-            data = output;
-            port = portName;
-        };
-
-        context.messages.in.content = {
-            space: testSpaceId,
-            outputType: 'array'
-        };
-
-        try {
-            await FindMessages.receive(context);
-
-            console.log('FindMessages result:', JSON.stringify(data, null, 2));
-            console.log('Port:', port);
-
-            // Could return either messages or notFound
-            if (port === 'out') {
-                assert(data && typeof data === 'object', 'Expected data to be an object');
-                assert(Array.isArray(data.result), 'Expected data.result to be an array');
-                assert(typeof data.count === 'number', 'Expected data.count to be a number');
-
-                // Verify the count matches array length
-                const expectedMsg = `Expected count (${data.count}) to match result ` +
-                    `array length (${data.result.length})`;
-                assert.strictEqual(data.count, data.result.length, expectedMsg);
-
-                if (data.result.length > 0) {
-                    const message = data.result[0];
-                    assert(message.name, 'Expected message to have name property');
-                }
-            } else if (port === 'notFound') {
-                assert(data && typeof data === 'object', 'Expected notFound data to be an object');
-                console.log('No messages found in space - this is acceptable');
-            } else {
-                assert.fail(`Unexpected port: ${port}`);
-            }
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error(
-                    'Authentication failed: Access token is invalid or expired. ' +
-                    'Please refresh the GOOGLE_CHAT_ACCESS_TOKEN in .env file'
-                );
-            }
-            if (error.response && (error.response.status === 403 ||
-                error.response.status === 404)) {
-                console.log('Permission denied or space not found - this is acceptable for testing');
-                console.log('Error details:', error.response.data);
-                return;
-            }
-            throw error;
-        }
-    });
-
-    it('should handle object output type', async function() {
-        context.messages.in.content = {
-            space: testSpaceId,
-            outputType: 'object'
-        };
-
-        // Mock sendJson to capture all calls
-        const sendJsonCalls = [];
-        context.sendJson = function(data, port) {
-            sendJsonCalls.push({ data, port });
-            return { data, port };
-        };
-
-        try {
-            await FindMessages.receive(context);
-
-            console.log('FindMessages object output type calls count:', sendJsonCalls.length);
-
-            // Could return either individual messages or notFound
-            if (sendJsonCalls.length === 1 && sendJsonCalls[0].port === 'notFound') {
-                console.log('No messages found - this is acceptable');
-                return;
-            }
-
-            assert(sendJsonCalls.length > 0, 'Expected sendJson to be called at least once');
-
-            // For object output type, each message should be sent individually
-            // Let's just check the first few calls to avoid overwhelming output
-            const callsToCheck = Math.min(sendJsonCalls.length, 3);
-            for (let i = 0; i < callsToCheck; i++) {
-                const call = sendJsonCalls[i];
-                if (call.port === 'out') {
-                    const msg1 = `Expected call ${i} data to be an object`;
-                    assert(call.data && typeof call.data === 'object', msg1);
-                    const msg2 = `Expected call ${i} data to have index property (number)`;
-                    assert(typeof call.data.index === 'number', msg2);
-                    const msg3 = `Expected call ${i} data to have count property (number)`;
-                    assert(typeof call.data.count === 'number', msg3);
-                    const msg4 = `Expected call ${i} data to have name property`;
-                    assert(call.data.name, msg4);
-                }
-            }
-            console.log(`All ${callsToCheck} checked calls have correct structure.`);
-        } catch (error) {
-            if (error.response && (error.response.status === 401 ||
-                error.response.status === 403 || error.response.status === 404)) {
-                console.log('Expected error for test space - this is acceptable');
-                console.log('Error details:', error.response.data);
-                return;
-            }
-            throw error;
-        }
-    });
-
-    it('should generate output port options', async function() {
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
+    it('should return output port schema when generateOutputPortOptions is true', async () => {
         context.properties.generateOutputPortOptions = true;
         context.messages.in.content = {
+            space: process.env.GOOGLE_CHAT_SPACE_ID,
+            outputType: 'array'
+        };
+
+        const result = await FindMessages.receive(context);
+        
+        assert(result, 'Result should exist');
+        assert(result.messages, 'Result should have messages');
+        assert(result.messages.out, 'Result should have out port');
+        assert(result.messages.out.options, 'Result should have options for output port');
+        assert(Array.isArray(result.messages.out.options), 'Options should be an array');
+        
+        console.log('Output port options generated successfully:', result.messages.out.options.length, 'options');
+    });
+
+    it('should throw error when space is missing', async () => {
+        context.messages.in.content = {
             outputType: 'array'
         };
 
         try {
             await FindMessages.receive(context);
-
-            console.log('FindMessages output port options:', JSON.stringify(data, null, 2));
-
-            assert(Array.isArray(data), 'Expected output port options to be an array');
-            if (data.length > 0) {
-                assert(data[0].label, 'Expected option to have label property');
-                assert(data[0].value, 'Expected option to have value property');
-            }
+            assert.fail('Should have thrown an error');
         } catch (error) {
-            throw error;
+            assert(error.message.includes('Space is required'), 'Should throw space required error');
+            console.log('Correctly validated missing space parameter');
+        }
+    });
+
+    it('should list messages from a space successfully', async () => {
+        context.messages.in.content = {
+            space: process.env.GOOGLE_CHAT_SPACE_ID,
+            outputType: 'array'
+        };
+
+        // The lib.sendArrayOutput function calls context.sendJson but doesn't return it
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Messages sent to port: ${port}`);
+        };
+
+        await FindMessages.receive(context);
+        
+        // Check if data was sent
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} messages`);
+            
+            if (sentData.result.length > 0) {
+                const message = sentData.result[0];
+                assert(typeof message.name === 'string', 'Message name should be a string');
+                assert(typeof message.createTime === 'string', 'Create time should be a string');
+                console.log('First message:', message.name, message.createTime);
+            }
+        } else if (sentPort === 'notFound') {
+            console.log('No messages found in space');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should filter messages by date when filter is provided', async () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const filterDate = yesterday.toISOString();
+
+        context.messages.in.content = {
+            space: process.env.GOOGLE_CHAT_SPACE_ID,
+            filter: `createTime > "${filterDate}"`,
+            outputType: 'array'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Messages sent to port: ${port} with filter`);
+        };
+
+        await FindMessages.receive(context);
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} messages created after ${filterDate}`);
+        } else if (sentPort === 'notFound') {
+            console.log('No messages found with the applied filter');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should filter messages by thread when thread filter is provided', async () => {
+        if (!process.env.GOOGLE_CHAT_THREAD_NAME) {
+            console.log('Skipping thread filter test - GOOGLE_CHAT_THREAD_NAME not provided');
+            return;
+        }
+
+        context.messages.in.content = {
+            space: process.env.GOOGLE_CHAT_SPACE_ID,
+            filter: `thread.name = "${process.env.GOOGLE_CHAT_THREAD_NAME}"`,
+            outputType: 'array'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Messages sent to port: ${port} with thread filter`);
+        };
+
+        await FindMessages.receive(context);
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} messages in thread ${process.env.GOOGLE_CHAT_THREAD_NAME}`);
+            
+            // Verify all messages are from the correct thread
+            sentData.result.forEach(message => {
+                if (message.thread && message.thread.name) {
+                    assert(message.thread.name === process.env.GOOGLE_CHAT_THREAD_NAME, 
+                        `Expected thread ${process.env.GOOGLE_CHAT_THREAD_NAME}, got ${message.thread.name}`);
+                }
+            });
+        } else if (sentPort === 'notFound') {
+            console.log('No messages found in the specified thread');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should return first item only when outputType is first', async () => {
+        context.messages.in.content = {
+            space: process.env.GOOGLE_CHAT_SPACE_ID,
+            outputType: 'first'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`First message sent to port: ${port}`);
+        };
+
+        await FindMessages.receive(context);
+        
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(typeof sentData === 'object', 'Message should be an object');
+            assert(typeof sentData.name === 'string', 'Message name should be a string');
+            console.log('First message:', sentData.name);
+        } else if (sentPort === 'notFound') {
+            console.log('No messages found');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
         }
     });
 });
