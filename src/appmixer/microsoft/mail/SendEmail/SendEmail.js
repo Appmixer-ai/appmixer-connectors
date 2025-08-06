@@ -7,7 +7,7 @@ const { makeRequest } = require('../commons');
  * @param  {String} address
  * @return {{ emailAddress: { address: string }}}
  */
-const createAddress = (address) => ({ emailAddress: { address } });
+const createAddress = (address) => ({ emailAddress: { address: address?.trim() } });
 
 /**
  * Creates message JSON structured for Microsoft Mail endpoint.
