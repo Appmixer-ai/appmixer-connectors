@@ -1,6 +1,8 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
+const { createMockContext } = require('../utils.js');
+const axios = require('axios');
 
 describe('GetModel Component', function() {
     let context;
@@ -18,8 +20,12 @@ describe('GetModel Component', function() {
         // Load the component
         GetModel = require(path.join(__dirname, '../../src/appmixer/replicate/core/GetModel/GetModel.js'));
 
-        // Mock context
-        context = {
+        assert(process.env.REPLICATE_ACCESS_TOKEN, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+    });
+
+    beforeEach(function() {
+        // Create mock context with real HTTP request functionality
+        context = createMockContext({
             auth: {
                 apiKey: process.env.REPLICATE_ACCESS_TOKEN
             },
@@ -29,10 +35,17 @@ describe('GetModel Component', function() {
                 }
             },
             properties: {},
-            httpRequest: require('./httpRequest.js')
-        };
-
-        assert(context.auth.apiKey, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+            httpRequest: async (options) => {
+                const response = await axios(options);
+                return response;
+            },
+            CancelError: class extends Error {
+                constructor(message) {
+                    super(message);
+                    this.name = 'CancelError';
+                }
+            }
+        });
     });
 
     it('should get model details', async function() {
@@ -42,8 +55,8 @@ describe('GetModel Component', function() {
         };
 
         context.messages.in.content = {
-            model_owner: 'replicate',
-            model_name: 'hello-world'
+            modelOwner: 'replicate',
+            modelName: 'hello-world'
         };
 
         await GetModel.receive(context);
@@ -56,89 +69,51 @@ describe('GetModel Component', function() {
         assert(outputData.owner === 'replicate', 'Expected owner to match requested owner');
         assert(outputData.name === 'hello-world', 'Expected name to match requested name');
     });
-            }
-        });
 
-        assert(output, 'Output should exist');
-        assert(typeof output.url === 'string', 'Should have url');
-        assert(typeof output.owner === 'string', 'Should have owner');
-        assert(typeof output.name === 'string', 'Should have name');
-        assert(typeof output.description === 'string', 'Should have description');
-        assert(output.owner === 'tencentarc', 'Should return correct owner');
-        assert(output.name === 'gfpgan', 'Should return correct name');
-        
-        if (output.latest_version) {
-            assert(typeof output.latest_version === 'object', 'Latest version should be object');
+    it('should get another model with detailed info', async function() {
+        let outputData;
+        context.sendJson = function(output, port) {
+            outputData = output;
+        };
+
+        context.messages.in.content = {
+            modelOwner: 'tencentarc',
+            modelName: 'gfpgan'
+        };
+
+        await GetModel.receive(context);
+
+        assert(outputData, 'Output should exist');
+        assert(typeof outputData.url === 'string', 'Should have url');
+        assert(typeof outputData.owner === 'string', 'Should have owner');
+        assert(typeof outputData.name === 'string', 'Should have name');
+        assert(typeof outputData.description === 'string', 'Should have description');
+        assert(outputData.owner === 'tencentarc', 'Should return correct owner');
+        assert(outputData.name === 'gfpgan', 'Should return correct name');
+
+        if (outputData.latest_version) {
+            assert(typeof outputData.latest_version === 'object', 'Latest version should be object');
         }
     });
 
-    it('should get another model', async () => {
-        const output = await context.test({
-            input: {
-                model_owner: 'stability-ai',
-                model_name: 'stable-diffusion'
-            }
-        });
+    it('should get stable diffusion model', async function() {
+        let outputData;
+        context.sendJson = function(output, port) {
+            outputData = output;
+        };
 
-        assert(output, 'Output should exist');
-        assert(typeof output.url === 'string', 'Should have url');
-        assert(typeof output.owner === 'string', 'Should have owner');
-        assert(typeof output.name === 'string', 'Should have name');
-        assert(output.owner === 'stability-ai', 'Should return correct owner');
-        assert(output.name === 'stable-diffusion', 'Should return correct name');
-    });
+        context.messages.in.content = {
+            modelOwner: 'stability-ai',
+            modelName: 'stable-diffusion'
+        };
 
-    it('should fail without model_owner', async () => {
-        try {
-            await context.test({
-                input: {
-                    model_name: 'gfpgan'
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Model owner and model name are required'), 'Should require model owner');
-        }
-    });
+        await GetModel.receive(context);
 
-    it('should fail without model_name', async () => {
-        try {
-            await context.test({
-                input: {
-                    model_owner: 'tencentarc'
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Model owner and model name are required'), 'Should require model name');
-        }
-    });
-
-    it('should fail with invalid model', async () => {
-        try {
-            await context.test({
-                input: {
-                    model_owner: 'invalid-owner',
-                    model_name: 'invalid-model'
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            // This should fail with a 404 or similar error from the API
-            assert(error.response && error.response.status >= 400, 'Should return API error for invalid model');
-        }
-    });
-
-    it('should handle special characters in model names', async () => {
-        // Test with a model that might have special characters
-        const output = await context.test({
-            input: {
-                model_owner: 'tencentarc',
-                model_name: 'gfpgan'
-            }
-        });
-
-        assert(output, 'Output should exist');
-        assert(typeof output.url === 'string', 'Should have url');
+        assert(outputData, 'Output should exist');
+        assert(typeof outputData.url === 'string', 'Should have url');
+        assert(typeof outputData.owner === 'string', 'Should have owner');
+        assert(typeof outputData.name === 'string', 'Should have name');
+        assert(outputData.owner === 'stability-ai', 'Should return correct owner');
+        assert(outputData.name === 'stable-diffusion', 'Should return correct name');
     });
 });

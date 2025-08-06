@@ -1,10 +1,12 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
+const { createMockContext } = require('../utils.js');
+const axios = require('axios');
 
-describe('FindModels Component', function() {
+describe('ListPublicModels Component', function() {
     let context;
-    let FindModels;
+    let ListPublicModels;
 
     this.timeout(30000);
 
@@ -16,10 +18,14 @@ describe('FindModels Component', function() {
         }
 
         // Load the component
-        FindModels = require(path.join(__dirname, '../../src/appmixer/replicate/core/FindModels/FindModels.js'));
+        ListPublicModels = require(path.join(__dirname, '../../src/appmixer/replicate/core/ListPublicModels/ListPublicModels.js'));
 
-        // Mock context
-        context = {
+        assert(process.env.REPLICATE_ACCESS_TOKEN, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+    });
+
+    beforeEach(function() {
+        // Create mock context with real HTTP request functionality
+        context = createMockContext({
             auth: {
                 apiKey: process.env.REPLICATE_ACCESS_TOKEN
             },
@@ -29,13 +35,20 @@ describe('FindModels Component', function() {
                 }
             },
             properties: {},
-            httpRequest: require('./httpRequest.js')
-        };
-
-        assert(context.auth.apiKey, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+            httpRequest: async (options) => {
+                const response = await axios(options);
+                return response;
+            },
+            CancelError: class extends Error {
+                constructor(message) {
+                    super(message);
+                    this.name = 'CancelError';
+                }
+            }
+        });
     });
 
-    it('should find models without search query', async function() {
+    it('should list models with array output type', async function() {
         let outputData;
         context.sendJson = function(output, port) {
             outputData = output;
@@ -45,16 +58,16 @@ describe('FindModels Component', function() {
             outputType: 'array'
         };
 
-        await FindModels.receive(context);
-        
-        console.log('FindModels without search result count:', outputData.count);
+        await ListPublicModels.receive(context);
+
+        console.log('ListPublicModels array output result count:', outputData.count);
 
         assert(outputData, 'Expected output data');
         assert(typeof outputData === 'object', 'Expected data to be an object');
         assert(Array.isArray(outputData.result), 'Expected result to be an array');
         assert(typeof outputData.count === 'number', 'Expected count to be a number');
         assert(outputData.count > 0, 'Expected to find some models');
-        
+
         if (outputData.result.length > 0) {
             const model = outputData.result[0];
             assert(typeof model.url === 'string', 'Expected model to have url');
@@ -67,28 +80,6 @@ describe('FindModels Component', function() {
         }
     });
 
-    it('should find models with search query', async function() {
-        let outputData;
-        context.sendJson = function(output, port) {
-            outputData = output;
-        };
-
-        context.messages.in.content = {
-            search: 'diffusion',
-            outputType: 'array'
-        };
-
-        await FindModels.receive(context);
-        
-        console.log('FindModels with search query result count:', outputData.count);
-
-        assert(outputData, 'Expected output data');
-        assert(typeof outputData === 'object', 'Expected data to be an object');
-        assert(Array.isArray(outputData.result), 'Expected result to be an array');
-        assert(typeof outputData.count === 'number', 'Expected count to be a number');
-        assert(outputData.count > 0, 'Expected to find some models matching search');
-    });
-
     it('should handle object output type', async function() {
         let outputData = [];
         context.sendJson = function(output, port) {
@@ -99,12 +90,12 @@ describe('FindModels Component', function() {
             outputType: 'object'
         };
 
-        await FindModels.receive(context);
-        
-        console.log('FindModels object output type calls count:', outputData.length);
+        await ListPublicModels.receive(context);
+
+        console.log('ListPublicModels object output type calls count:', outputData.length);
 
         assert(outputData.length > 0, 'Expected to receive some data objects');
-        
+
         // For object output type, each item is sent individually with index and count
         if (outputData.length > 0) {
             const model = outputData[0];
@@ -127,14 +118,14 @@ describe('FindModels Component', function() {
             outputType: 'first'
         };
 
-        await FindModels.receive(context);
+        await ListPublicModels.receive(context);
 
         assert(outputData, 'Expected output data');
         assert(typeof outputData === 'object', 'Expected data to be an object');
         assert(typeof outputData.index === 'number', 'Expected index to be a number');
         assert(typeof outputData.count === 'number', 'Expected count to be a number');
         assert(outputData.index === 0, 'Expected first item to have index 0');
-        
+
         // Should have model properties plus index and count
         assert(typeof outputData.url === 'string', 'Expected model to have url');
         assert(typeof outputData.owner === 'string', 'Expected model to have owner');

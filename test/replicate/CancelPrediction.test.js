@@ -1,11 +1,12 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
+const { createMockContext } = require('../utils.js');
+const axios = require('axios');
 
 describe('CancelPrediction Component', function() {
     let context;
     let CancelPrediction;
-    let CreatePrediction;
 
     this.timeout(60000);
 
@@ -16,12 +17,15 @@ describe('CancelPrediction Component', function() {
             this.skip();
         }
 
-        // Load the components
+        // Load the component
         CancelPrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/CancelPrediction/CancelPrediction.js'));
-        CreatePrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/CreatePrediction/CreatePrediction.js'));
 
-        // Mock context
-        context = {
+        assert(process.env.REPLICATE_ACCESS_TOKEN, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
+    });
+
+    beforeEach(function() {
+        // Create mock context with real HTTP request functionality
+        context = createMockContext({
             auth: {
                 apiKey: process.env.REPLICATE_ACCESS_TOKEN
             },
@@ -31,21 +35,26 @@ describe('CancelPrediction Component', function() {
                 }
             },
             properties: {},
-            httpRequest: require('./httpRequest.js')
-        };
-
-        assert(context.auth.apiKey, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
-    });
-
-    it('should cancel a prediction', async function() {
-        // For this test, we'll skip the creation step due to billing requirements
-        // and test cancellation with a known prediction ID format
-        this.skip(); // Skip this test if models require payment
+            httpRequest: async (options) => {
+                const response = await axios(options);
+                return response;
+            },
+            CancelError: class extends Error {
+                constructor(message) {
+                    super(message);
+                    this.name = 'CancelError';
+                }
+            }
+        });
     });
 
     it('should handle non-existent prediction ID for cancellation', async function() {
+        context.sendJson = function(output, port) {
+            // Just capture the output without storing it
+        };
+
         context.messages.in.content = {
-            prediction_id: 'nonexistent-prediction-id'
+            predictionId: 'nonexistent-prediction-id'
         };
 
         try {

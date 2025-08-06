@@ -14,8 +14,8 @@ const schema = {
     'license_url': { 'type': 'string', 'title': 'License URL' },
     'cover_image_url': { 'type': 'string', 'title': 'Cover Image URL' },
     'default_example': { 'type': 'object', 'title': 'Default Example' },
-    'latest_version': { 
-        'type': 'object', 
+    'latest_version': {
+        'type': 'object',
         'title': 'Latest Version',
         'properties': {
             'id': { 'type': 'string', 'title': 'Latest Version.ID' },

@@ -4,7 +4,7 @@ module.exports = {
     type: 'apiKey',
     definition: {
         tokenType: 'authentication-token',
-        
+
         auth: {
             apiKey: {
                 type: 'text',
@@ -44,7 +44,7 @@ module.exports = {
                     'Accept': 'application/json'
                 }
             });
-            
+
             return true;
         }
     }

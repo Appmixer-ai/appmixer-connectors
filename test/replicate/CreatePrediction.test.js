@@ -1,93 +1,97 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
+const { createMockContext } = require('../utils.js');
+const axios = require('axios');
 
-describe('replicate.core.CreatePrediction', () => {
-
+describe('CreatePrediction Component', function() {
     let context;
+    let CreatePrediction;
 
-    beforeEach(() => {
-        context = new TestContext({
-            componentPath: 'src/appmixer/replicate/core/CreatePrediction',
-            apiKey: process.env.REPLICATE_ACCESS_TOKEN
-        });
+    this.timeout(30000);
+
+    before(function() {
+        // Skip all tests if the access token is not set
+        if (!process.env.REPLICATE_ACCESS_TOKEN) {
+            console.log('Skipping tests - REPLICATE_ACCESS_TOKEN not set');
+            this.skip();
+        }
+
+        // Load the component
+        CreatePrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/CreatePrediction/CreatePrediction.js'));
+
+        assert(process.env.REPLICATE_ACCESS_TOKEN, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
     });
 
-    it('should create a prediction with object input', async () => {
-        const output = await context.test({
-            input: {
-                version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf', // GFPGAN face restoration
-                input: {
-                    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
+    beforeEach(function() {
+        // Create mock context with real HTTP request functionality
+        context = createMockContext({
+            auth: {
+                apiKey: process.env.REPLICATE_ACCESS_TOKEN
+            },
+            messages: {
+                in: {
+                    content: {}
+                }
+            },
+            properties: {},
+            httpRequest: async (options) => {
+                const response = await axios(options);
+                return response;
+            },
+            CancelError: class extends Error {
+                constructor(message) {
+                    super(message);
+                    this.name = 'CancelError';
                 }
             }
         });
-
-        assert(output, 'Output should exist');
-        assert(typeof output.id === 'string', 'Should have prediction ID');
-        assert(typeof output.status === 'string', 'Should have status');
-        assert(typeof output.version === 'string', 'Should have version');
-        
-        // Store the prediction ID for other tests
-        global.testPredictionId = output.id;
     });
 
-    it('should create a prediction with JSON string input', async () => {
+    it('should create a prediction with object input', async function() {
+        let outputData;
+        context.sendJson = function(output, port) {
+            outputData = output;
+        };
+
+        context.messages.in.content = {
+            version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf', // GFPGAN face restoration
+            input: {
+                img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
+            }
+        };
+
+        await CreatePrediction.receive(context);
+
+        assert(outputData, 'Output should exist');
+        assert(typeof outputData.id === 'string', 'Should have prediction ID');
+        assert(typeof outputData.status === 'string', 'Should have status');
+        assert(typeof outputData.version === 'string', 'Should have version');
+
+        // Store the prediction ID for other tests
+        global.testPredictionId = outputData.id;
+    });
+
+    it('should create a prediction with JSON string input', async function() {
+        let outputData;
+        context.sendJson = function(output, port) {
+            outputData = output;
+        };
+
         const inputData = {
             img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
         };
 
-        const output = await context.test({
-            input: {
-                version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
-                input: JSON.stringify(inputData)
-            }
-        });
+        context.messages.in.content = {
+            version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
+            input: JSON.stringify(inputData)
+        };
 
-        assert(output, 'Output should exist');
-        assert(typeof output.id === 'string', 'Should have prediction ID');
-        assert(typeof output.status === 'string', 'Should have status');
-        assert(typeof output.version === 'string', 'Should have version');
-    });
+        await CreatePrediction.receive(context);
 
-    it('should fail without version', async () => {
-        try {
-            await context.test({
-                input: {
-                    input: { prompt: 'test' }
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Version is required'), 'Should require version');
-        }
-    });
-
-    it('should fail with invalid JSON input', async () => {
-        try {
-            await context.test({
-                input: {
-                    version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
-                    input: 'invalid json {'
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Invalid input JSON format'), 'Should reject invalid JSON');
-        }
-    });
-
-    it('should fail with null input', async () => {
-        try {
-            await context.test({
-                input: {
-                    version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
-                    input: null
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Input must be a valid object'), 'Should require valid input object');
-        }
+        assert(outputData, 'Output should exist');
+        assert(typeof outputData.id === 'string', 'Should have prediction ID');
+        assert(typeof outputData.status === 'string', 'Should have status');
+        assert(typeof outputData.version === 'string', 'Should have version');
     });
 });

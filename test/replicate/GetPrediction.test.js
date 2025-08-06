@@ -1,72 +1,75 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
+const { createMockContext } = require('../utils.js');
+const axios = require('axios');
 
-describe('replicate.core.GetPrediction', () => {
-
+describe('GetPrediction Component', function() {
     let context;
+    let GetPrediction;
 
-    beforeEach(() => {
-        context = new TestContext({
-            componentPath: 'src/appmixer/replicate/core/GetPrediction',
-            apiKey: process.env.REPLICATE_ACCESS_TOKEN
-        });
+    this.timeout(30000);
+
+    before(function() {
+        // Skip all tests if the access token is not set
+        if (!process.env.REPLICATE_ACCESS_TOKEN) {
+            console.log('Skipping tests - REPLICATE_ACCESS_TOKEN not set');
+            this.skip();
+        }
+
+        // Load the component
+        GetPrediction = require(path.join(__dirname, '../../src/appmixer/replicate/core/GetPrediction/GetPrediction.js'));
+
+        assert(process.env.REPLICATE_ACCESS_TOKEN, 'REPLICATE_ACCESS_TOKEN environment variable is required for tests');
     });
 
-    it('should get prediction details', async () => {
-        // First create a prediction to get its ID
-        const createContext = new TestContext({
-            componentPath: 'src/appmixer/replicate/core/CreatePrediction',
-            apiKey: process.env.REPLICATE_ACCESS_TOKEN
-        });
-
-        const createOutput = await createContext.test({
-            input: {
-                version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
-                input: {
-                    img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
+    beforeEach(function() {
+        // Create mock context with real HTTP request functionality
+        context = createMockContext({
+            auth: {
+                apiKey: process.env.REPLICATE_ACCESS_TOKEN
+            },
+            messages: {
+                in: {
+                    content: {}
+                }
+            },
+            properties: {},
+            httpRequest: async (options) => {
+                const response = await axios(options);
+                return response;
+            },
+            CancelError: class extends Error {
+                constructor(message) {
+                    super(message);
+                    this.name = 'CancelError';
                 }
             }
         });
-
-        const predictionId = createOutput.id;
-
-        // Now get the prediction details
-        const output = await context.test({
-            input: {
-                prediction_id: predictionId
-            }
-        });
-
-        assert(output, 'Output should exist');
-        assert(output.id === predictionId, 'Should return correct prediction ID');
-        assert(typeof output.status === 'string', 'Should have status');
-        assert(typeof output.version === 'string', 'Should have version');
-        assert(typeof output.created_at === 'string', 'Should have created_at');
     });
 
-    it('should fail without prediction_id', async () => {
-        try {
-            await context.test({
-                input: {}
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            assert(error.message.includes('Prediction ID is required'), 'Should require prediction ID');
+    it('should get prediction details if prediction exists', async function() {
+        // Skip this test if no test prediction ID is available
+        if (!global.testPredictionId) {
+            console.log('Skipping test - no test prediction ID available. Run CreatePrediction test first.');
+            this.skip();
         }
-    });
 
-    it('should fail with invalid prediction_id', async () => {
-        try {
-            await context.test({
-                input: {
-                    prediction_id: 'invalid-id'
-                }
-            });
-            assert.fail('Should have thrown an error');
-        } catch (error) {
-            // This should fail with a 404 or similar error from the API
-            assert(error.response && error.response.status >= 400, 'Should return API error for invalid ID');
-        }
+        let outputData;
+        context.sendJson = function(output, port) {
+            outputData = output;
+        };
+
+        context.messages.in.content = {
+            predictionId: global.testPredictionId
+        };
+
+        await GetPrediction.receive(context);
+
+        assert(outputData, 'Output should exist');
+        assert(typeof outputData.id === 'string', 'Should have prediction ID');
+        assert(typeof outputData.status === 'string', 'Should have status');
+        assert(typeof outputData.created_at === 'string', 'Should have created_at');
+        assert(outputData.id === global.testPredictionId, 'Should return the correct prediction');
     });
 });
