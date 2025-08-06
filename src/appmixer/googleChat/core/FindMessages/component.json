@@ -1,15 +1,14 @@
 {
-    "name": "appmixer.googleChat.core.ListMessages",
-    "label": "List Messages",
+    "name": "appmixer.googleChat.core.FindMessages",
+    "label": "Find Messages",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of messages from a specified Google Chat space.",
+    "description": "Retrieve a list of messages from a specified Google Chat space. Maximum 1000 messages can be fetched.",
     "version": "1.0.0",
     "private": false,
     "auth": {
         "service": "appmixer:googleChat",
         "scope": [
-            "https://www.googleapis.com/auth/chat.messages.readonly",
-            "https://www.googleapis.com/auth/chat.spaces.readonly"
+            "https://www.googleapis.com/auth/chat.messages.readonly"
         ]
     },
     "quota": {
@@ -25,6 +24,9 @@
                     "space": {
                         "type": "string"
                     },
+                    "filter": {
+                        "type": "string"
+                    },
                     "outputType": {
                         "type": "string",
                         "default": "array"
@@ -36,14 +38,20 @@
                 "inputs": {
                     "space": {
                         "type": "text",
-                        "tooltip": "The identifier of the space from which to retrieve messages (e.g., spaces/AAAAMpdlehM).",
-                        "label": "Space",
+                        "tooltip": "The identifier of the space from which to retrieve messages (e.g., AAAAMpdlehM).",
+                        "label": "Space Id",
                         "index": 1
+                    },
+                    "filter": {
+                        "type": "text",
+                        "tooltip": "Optional query filter to filter messages by date (createTime) and thread (thread.name).<br><br><strong>Examples:</strong><br>• <code>createTime > \"2023-04-21T11:30:00-04:00\"</code><br>• <code>thread.name = spaces/AAAAAAAAAAA/threads/123</code><br>• <code>createTime > \"2023-04-21T11:30:00-04:00\" AND thread.name = spaces/AAAAAAAAAAA/threads/123</code><br><br>For complete documentation, see: <a href=\"https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages/list\" target=\"_blank\">Google Chat Messages API Reference</a>",
+                        "label": "Filter",
+                        "index": 2
                     },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 2,
+                        "index": 3,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [

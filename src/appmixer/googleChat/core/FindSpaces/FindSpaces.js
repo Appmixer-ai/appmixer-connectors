@@ -5,33 +5,60 @@ const lib = require('../../lib.generated');
 
 // Schema for a single space item
 const spaceSchema = {
-    name: { type: 'string', title: 'Name' },
-    displayName: { type: 'string', title: 'Display Name' },
-    type: { type: 'string', title: 'Type' },
-    spaceType: { type: 'string', title: 'Space Type' },
-    singleUserBotDm: { type: 'boolean', title: 'Single User Bot DM' },
-    threaded: { type: 'boolean', title: 'Threaded' },
-    spaceDetails: {
+    name: {
+        type: 'string',
+        title: 'Name'
+    },
+    type: {
+        type: 'string',
+        title: 'Type'
+    },
+    displayName: {
+        type: 'string',
+        title: 'Display Name'
+    },
+    externalUserAllowed: {
+        type: 'boolean',
+        title: 'External User Allowed'
+    },
+    spaceThreadingState: {
+        type: 'string',
+        title: 'Space Threading State'
+    },
+    spaceType: {
+        type: 'string',
+        title: 'Space Type'
+    },
+    spaceHistoryState: {
+        type: 'string',
+        title: 'Space History State'
+    },
+    createTime: {
+        type: 'string',
+        title: 'Create Time'
+    },
+    lastActiveTime: {
+        type: 'string',
+        title: 'Last Active Time'
+    },
+    membershipCount: {
         type: 'object',
         properties: {
-            description: { type: 'string', title: 'Space Details.Description' },
-            guidelines: { type: 'string', title: 'Space Details.Guidelines' }
+            joinedDirectHumanUserCount: {
+                type: 'number',
+                title: 'Membership Count.Joined Direct Human User Count'
+            }
         },
-        title: 'Space Details'
+        title: 'Membership Count'
     },
-    spaceHistoryState: { type: 'string', title: 'Space History State' },
-    importMode: { type: 'boolean', title: 'Import Mode' },
-    createTime: { type: 'string', title: 'Create Time' },
-    adminInstalled: { type: 'boolean', title: 'Admin Installed' },
-    accessSettings: {
-        type: 'object',
-        properties: {
-            accessState: { type: 'string', title: 'Access Settings.Access State' },
-            audience: { type: 'string', title: 'Access Settings.Audience' }
-        },
-        title: 'Access Settings'
+    customer: {
+        type: 'string',
+        title: 'Customer'
     },
-    spaceUri: { type: 'string', title: 'Space URI' }
+    spaceUri: {
+        type: 'string',
+        title: 'Space Uri'
+    }
 };
 
 module.exports = {
@@ -49,23 +76,20 @@ module.exports = {
             );
         }
 
-        const params = {};
+        const params = {
+            pageSize: 1000
+        };
 
         // Build filter query from selected space types
-        if (spaceTypes && Array.isArray(spaceTypes) && spaceTypes.length > 0) {
-            // Filter out any invalid values and create OR query
+        if (spaceTypes?.length > 0) {
             const validTypes = spaceTypes.filter(type =>
                 ['SPACE', 'GROUP_CHAT', 'DIRECT_MESSAGE'].includes(type)
             );
 
             if (validTypes.length > 0) {
-                if (validTypes.length === 1) {
-                    params.filter = `spaceType = "${validTypes[0]}"`;
-                } else {
-                    // Multiple types: use OR operator
-                    const typeQueries = validTypes.map(type => `spaceType = "${type}"`);
-                    params.filter = typeQueries.join(' OR ');
-                }
+                params.filter = validTypes.length === 1 
+                    ? `spaceType = "${validTypes[0]}"`
+                    : validTypes.map(type => `spaceType = "${type}"`).join(' OR ');
             }
         }
 
@@ -76,14 +100,16 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },
-            params: params
+            params
         });
 
-        const spaces = data.spaces || [];
+        const spaces = data?.spaces || [];
 
         if (spaces.length === 0) {
             return context.sendJson({}, 'notFound');
         }
+
+        await context.log({ step: 'http-request-success', response: data });
 
         return lib.sendArrayOutput({ context, records: spaces, outputType });
     }

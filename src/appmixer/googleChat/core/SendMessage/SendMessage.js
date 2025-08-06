@@ -4,7 +4,7 @@
 module.exports = {
     async receive(context) {
 
-        const { space, text, threadKey } = context.messages.in.content;
+        const { space, text } = context.messages.in.content;
 
         if (!space) {
             throw new context.CancelError('Space is required.');
@@ -17,10 +17,6 @@ module.exports = {
             text: text
         };
 
-        if (threadKey) {
-            requestBody.threadKey = threadKey;
-        }
-
         // https://developers.google.com/workspace/chat/api/reference/rest/v1/spaces.messages/create
         const { data } = await context.httpRequest({
             method: 'POST',
@@ -30,6 +26,8 @@ module.exports = {
             },
             data: requestBody
         });
+
+        await context.log({ step: 'http-request-success', response: data });
 
         return context.sendJson(data, 'out');
     }
