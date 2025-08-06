@@ -7,7 +7,7 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string',
 module.exports = {
     async receive(context) {
 
-        const { query, outputType } = context.messages.in.content;
+        const { query, limit, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Groups' });
@@ -17,8 +17,9 @@ module.exports = {
         if (query) {
             params['filter[name]'] = query;
         }
+        params.limit = Math.min(limit || 100, 100);
 
-        // https://developers.mailerlite.com/docs/#groups
+        // https://developers.mailerlite.com/docs/groups.html#list-all-groups
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/groups',

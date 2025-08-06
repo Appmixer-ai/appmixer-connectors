@@ -9,15 +9,15 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
-        // https://developers.mailerlite.com/docs/#campaigns-send
+        // https://developers-classic.mailerlite.com/reference/campaign-actions-and-triggers
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://connect.mailerlite.com/api/campaigns/${campaignId}/actions/send`,
+            url: `https://api.mailerlite.com/api/v2/campaigns/${campaignId}/actions/send`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 
-        return context.sendJson(data.data || {}, 'out');
+        return context.sendJson(data || {}, 'out');
     }
 };

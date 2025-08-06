@@ -7,19 +7,26 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'email':{ 'type':'string'
 module.exports = {
     async receive(context) {
 
-        const { outputType } = context.messages.in.content;
+        const { outputType, status, limit } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Subscribers' });
         }
 
-        // https://developers.mailerlite.com/docs/#subscribers
+        const params = {};
+        if (status) {
+            params['filter[status]'] = status;
+        }
+        params.limit = Math.min(limit || 100, 100);
+
+        // https://developers.mailerlite.com/docs/subscribers.html#list-all-subscribers
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/subscribers',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
-            }
+            },
+            params: params
         });
 
         const records = data.data || [];

@@ -9,10 +9,10 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
-        // https://developers.mailerlite.com/docs/#campaigns-reports
+        // https://developers.mailerlite.com/docs/campaigns.html#get-a-campaign
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://connect.mailerlite.com/api/campaigns/${campaignId}/reports`,
+            url: `https://connect.mailerlite.com/api/campaigns/${campaignId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }

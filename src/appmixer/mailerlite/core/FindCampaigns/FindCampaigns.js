@@ -6,7 +6,7 @@ const schema = { 'id':{ 'type':'string','title':'Id' },'name':{ 'type':'string',
 module.exports = {
     async receive(context) {
 
-        const { status, outputType } = context.messages.in.content;
+        const { status, outputType, limit } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
@@ -16,8 +16,9 @@ module.exports = {
         if (status) {
             params['filter[status]'] = status;
         }
+        params.limit = Math.min(limit || 100, 100);
 
-        // https://developers.mailerlite.com/docs/#campaigns-get
+        // https://developers.mailerlite.com/docs/campaigns.html#campaign-list
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://connect.mailerlite.com/api/campaigns',

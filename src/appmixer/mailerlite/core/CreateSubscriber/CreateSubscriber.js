@@ -24,7 +24,7 @@ module.exports = {
             requestData.groups = groups.AND.map(item => item.groups_item).filter(Boolean);
         }
 
-        // https://developers.mailerlite.com/docs/#subscribers
+        // https://developers.mailerlite.com/docs/subscribers.html#create-upsert-subscriber
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://connect.mailerlite.com/api/subscribers',

@@ -18,7 +18,7 @@ module.exports = {
             url = `https://connect.mailerlite.com/api/subscribers/${encodedEmail}`;
         }
 
-        // https://developers.mailerlite.com/docs/#subscribers
+        // https://developers.mailerlite.com/docs/subscribers.html#fetch-a-subscriber
         const { data } = await context.httpRequest({
             method: 'GET',
             url: url,

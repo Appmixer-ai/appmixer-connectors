@@ -41,7 +41,7 @@ module.exports = {
             requestData.groups = groups.AND.map(item => item.groups_item).filter(Boolean);
         }
 
-        // https://developers.mailerlite.com/docs/#campaigns-create
+        // https://developers.mailerlite.com/docs/campaigns.html#create-a-campaign
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://connect.mailerlite.com/api/campaigns',
