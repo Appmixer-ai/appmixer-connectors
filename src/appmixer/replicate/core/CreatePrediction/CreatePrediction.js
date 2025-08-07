@@ -19,11 +19,11 @@ module.exports = {
         }
 
         // Parse input JSON string
-        let parsedInput;
+        let inputObject;
         try {
-            parsedInput = JSON.parse(input);
+            inputObject = JSON.parse(input);
         } catch (error) {
-            throw new context.CancelError('Invalid input JSON format: ' + error.message);
+            throw new context.CancelError('Invalid input JSON format. Please provide a valid JSON object. Example: {"prompt": "Hello world"}');
         }
 
         // Construct request data and endpoint
@@ -42,7 +42,7 @@ module.exports = {
         }
 
         const requestData = {
-            input: parsedInput,
+            input: inputObject,
             ...(isOfficialModel ? {} : { version }),
             ...(webhook?.trim() && { webhook: webhook.trim() }),
             ...(Array.isArray(webhookEventsFilter) && webhookEventsFilter.length > 0 && {

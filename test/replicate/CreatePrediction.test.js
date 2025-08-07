@@ -48,7 +48,7 @@ describe('CreatePrediction Component', function() {
         });
     });
 
-    it('should create a prediction with object input', async function() {
+    it('should create a prediction with JSON input for image model', async function() {
         let outputData;
         context.sendJson = function(output, port) {
             outputData = output;
@@ -56,9 +56,9 @@ describe('CreatePrediction Component', function() {
 
         context.messages.in.content = {
             version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf', // GFPGAN face restoration
-            input: {
+            input: JSON.stringify({
                 img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
-            }
+            })
         };
 
         await CreatePrediction.receive(context);
@@ -72,19 +72,18 @@ describe('CreatePrediction Component', function() {
         global.testPredictionId = outputData.id;
     });
 
-    it('should create a prediction with JSON string input', async function() {
+    it('should create a prediction with JSON input for text model', async function() {
         let outputData;
         context.sendJson = function(output, port) {
             outputData = output;
         };
 
-        const inputData = {
-            img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
-        };
-
         context.messages.in.content = {
-            version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf',
-            input: JSON.stringify(inputData)
+            version: 'meta/llama-2-7b-chat:8e6975e5ed6174911a6ff3d60540dfd4844201974602551e10e9e87ab143d81e7',
+            input: JSON.stringify({
+                prompt: 'Write a short poem about the color orange',
+                max_length: 100
+            })
         };
 
         await CreatePrediction.receive(context);

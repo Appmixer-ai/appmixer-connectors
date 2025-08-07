@@ -10,12 +10,16 @@ All components have been tested with real API calls and are working correctly:
 
 #### CreatePrediction
 - **Description**: Creates a new machine learning prediction using either an official model (owner/model-name format) or a specific model version (with version hash).
-- **Status**: ✅ Tested - Successfully creates predictions with both object and JSON string inputs
+- **Status**: ✅ Tested - Successfully creates predictions with flexible JSON input format
 - **Key Features**: 
   - Supports official models (e.g., "stability-ai/stable-diffusion")
   - Supports version-specific models using 64-character hashes
-  - Handles JSON string and object inputs
+  - Flexible JSON input format for any model type
   - Optional webhook support
+- **Input Format**: Accepts a JSON string representing the input object for the model. Examples:
+  - Text models: `{"prompt": "Hello world", "max_length": 100}`
+  - Image models: `{"img": "https://example.com/image.jpg"}`
+  - Any other model-specific parameters as documented in the model's API
 
 #### GetModel
 - **Description**: Retrieves detailed information about a specific model.
@@ -75,6 +79,53 @@ The connector uses API Key authentication with Bearer token format. All requests
 The connector includes quota management:
 - Create prediction: 600 requests per minute
 - All other endpoints: 3000 requests per minute
+
+## Usage Examples
+
+### CreatePrediction Component
+
+The CreatePrediction component uses a flexible JSON input format that works with any Replicate model. Simply provide the input object as a JSON string in the "Input Object" field.
+
+**For Text Generation Models (e.g., Llama, GPT):**
+```json
+{
+  "prompt": "Write a short poem about artificial intelligence",
+  "max_length": 200,
+  "temperature": 0.7
+}
+```
+
+**For Image Generation Models (e.g., DALL-E, Stable Diffusion):**
+```json
+{
+  "prompt": "A futuristic cityscape at sunset",
+  "width": 512,
+  "height": 512,
+  "num_inference_steps": 50
+}
+```
+
+**For Image Enhancement Models (e.g., GFPGAN, Real-ESRGAN):**
+```json
+{
+  "img": "https://example.com/your-image.jpg",
+  "scale": 2
+}
+```
+
+**For Audio Models:**
+```json
+{
+  "audio": "https://example.com/audio-file.mp3",
+  "prompt": "Transcribe this audio"
+}
+```
+
+**Important Notes:**
+- Always refer to the specific model's documentation on Replicate for the exact input parameters
+- The input must be valid JSON format
+- Different models require different parameters - the examples above are just common patterns
+- Use the model's Replicate page to find the correct input schema
 
 ## Validation Status ✅
 

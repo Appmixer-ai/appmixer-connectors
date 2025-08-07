@@ -69,9 +69,9 @@ describe('replicate connector integration test', function() {
                 in: {
                     content: {
                         version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf', // GFPGAN version
-                        input: {
+                        input: JSON.stringify({
                             img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Einstein_1921_by_F_Schmutzer_-_restoration.jpg/256px-Einstein_1921_by_F_Schmutzer_-_restoration.jpg'
-                        }
+                        })
                     }
                 }
             },
