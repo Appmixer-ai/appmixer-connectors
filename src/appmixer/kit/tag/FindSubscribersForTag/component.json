@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.kit.subscriber.FindSubscribers",
+    "name": "appmixer.kit.tag.FindSubscribersForTag",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve a list of subscribers.",
+    "description": "Retrieve a list of subscribers for a specific tag.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -17,10 +17,7 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "status": {
-                        "type": "string"
-                    },
-                    "emailAddress": {
+                    "tagId": {
                         "type": "string"
                     },
                     "createdAfter": {
@@ -29,30 +26,66 @@
                     "createdBefore": {
                         "type": "string"
                     },
-                    "updatedAfter": {
+                    "status": {
                         "type": "string"
                     },
-                    "updatedBefore": {
+                    "taggedAfter": {
+                        "type": "string"
+                    },
+                    "taggedBefore": {
                         "type": "string"
                     },
                     "outputType": {
                         "type": "string"
                     }
-                }
+                },
+                "required": ["tagId"]
             },
             "inspector": {
                 "inputs": {
-                    "emailAddress": {
+                    "tagId": {
                         "type": "text",
-                        "tooltip": "Filter subscribers by email address.",
-                        "label": "Email Address",
-                        "index": 0
+                        "tooltip": "Unique identifier of the tag.",
+                        "label": "Tag ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/tag/ListTags?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTags#toSelectArray"
+                            }
+                        }
+                    },
+                    "createdAfter": {
+                        "type": "date-time",
+                        "tooltip": "Filter subscribers created after this date.",
+                        "label": "Created After",
+                        "index": 1,
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "createdBefore": {
+                        "type": "date-time",
+                        "tooltip": "Filter subscribers created before this date.",
+                        "label": "Created Before",
+                        "index": 2,
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
                     },
                     "status": {
                         "type": "select",
                         "tooltip": "Filter subscribers by status.",
                         "label": "Status",
-                        "index": 1,
+                        "index": 3,
                         "defaultValue": "active",
                         "options": [
                             {
@@ -81,40 +114,20 @@
                             }
                         ]
                     },
-                    "createdAfter": {
+                    "taggedAfter": {
                         "type": "date-time",
-                        "tooltip": "Filter subscribers created after this date.",
-                        "label": "Created After",
-                        "index": 2,
-                        "config": {
-                            "enableTime": false,
-                            "format": "YYYY-MM-DD"
-                        }
-                    },
-                    "createdBefore": {
-                        "type": "date-time",
-                        "tooltip": "Filter subscribers created before this date.",
-                        "label": "Created Before",
-                        "index": 3,
-                        "config": {
-                            "enableTime": false,
-                            "format": "YYYY-MM-DD"
-                        }
-                    },
-                    "updatedAfter": {
-                        "type": "date-time",
-                        "tooltip": "Filter subscribers updated after this date.",
-                        "label": "Updated After",
+                        "tooltip": "Filter subscribers tagged after this date.",
+                        "label": "Tagged After",
                         "index": 4,
                         "config": {
                             "enableTime": false,
                             "format": "YYYY-MM-DD"
                         }
                     },
-                    "updatedBefore": {
+                    "taggedBefore": {
                         "type": "date-time",
-                        "tooltip": "Filter subscribers updated before this date.",
-                        "label": "Updated Before",
+                        "tooltip": "Filter subscribers tagged before this date.",
+                        "label": "Tagged Before",
                         "index": 5,
                         "config": {
                             "enableTime": false,
@@ -154,7 +167,7 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
+                "url": "/component/appmixer/kit/tag/FindSubscribersForTag?outPort=out",
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true

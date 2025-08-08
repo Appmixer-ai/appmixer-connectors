@@ -1,20 +1,23 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
-        const { subscriberId } = context.messages.in.content;
+        const { formId, subscriberId } = context.messages.in.content;
 
         // Validate required input
         if (!subscriberId) {
             throw new context.CancelError('Subscriber ID is required!');
         }
 
-        // https://developers.kit.com/api-reference/subscribers/get-a-subscriber
+        if (!formId) {
+            throw new context.CancelError('Form ID is required!');
+        }
+
+        // https://developers.kit.com/api-reference/forms/add-subscriber-to-form
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.kit.com/v4/subscribers/${subscriberId}`,
+            method: 'POST',
+            url: `https://api.kit.com/v4/forms/${formId}/subscribers/${subscriberId}`,
             headers: {
                 'X-Kit-Api-Key': context.auth.apiKey
             }

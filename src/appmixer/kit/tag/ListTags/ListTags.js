@@ -7,8 +7,9 @@ module.exports = {
     async receive(context) {
 
         const { outputType } = context.messages.in.content;
+        const { generateOutputPortOptions, isSource } = context.properties;
 
-        if (context.properties.generateOutputPortOptions) {
+        if (generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tags' });
         }
 
@@ -17,13 +18,24 @@ module.exports = {
             method: 'GET',
             url: 'https://api.kit.com/v4/tags',
             headers: {
-                'X-Kit-Api-Key': `${context.auth.apiKey}`
+                'X-Kit-Api-Key': context.auth.apiKey
             },
             params: {
                 per_page: 1000
             }
         });
 
+        if (isSource) {
+            return context.sendJson({ result: data.tags }, 'out');
+        }
+
         return lib.sendArrayOutput({ context, records: data.tags, outputType });
+    },
+
+    toSelectArray({ result }) {
+
+        return result.map(tag => {
+            return { label: tag.name, value: tag.id };
+        });
     }
 };

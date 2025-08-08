@@ -6,15 +6,20 @@ module.exports = {
     async receive(context) {
 
         const {
-            status,
-            emailAddress,
+            tagId,
             createdAfter,
             createdBefore,
-            updatedAfter,
-            updatedBefore,
+            status,
+            taggedAfter,
+            taggedBefore,
             outputType
         } = context.messages.in.content;
-        const { generateOutputPortOptions, isSource } = context.properties;
+        const { generateOutputPortOptions } = context.properties;
+
+        // Validate required input
+        if (!tagId) {
+            throw new context.CancelError('Tag ID is required!');
+        }
 
         if (generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Subscribers' });
@@ -28,48 +33,34 @@ module.exports = {
         if (status) {
             params.state = status;
         }
-        if (emailAddress) {
-            params.email_address = emailAddress;
-        }
         if (createdAfter) {
             params.created_after = createdAfter;
         }
         if (createdBefore) {
             params.created_before = createdBefore;
         }
-        if (updatedAfter) {
-            params.updated_after = updatedAfter;
+        if (taggedAfter) {
+            params.tagged_after = taggedAfter;
         }
-        if (updatedBefore) {
-            params.updated_before = updatedBefore;
+        if (taggedBefore) {
+            params.tagged_before = taggedBefore;
         }
 
         // https://developers.kit.com/api-reference/subscribers/list-subscribers
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.kit.com/v4/subscribers',
+            url: `https://api.kit.com/v4/tags/${tagId}/subscribers`,
             headers: {
                 'X-Kit-Api-Key': context.auth.apiKey
             },
             params
         });
 
-        if (isSource) {
-            return context.sendJson({ result: data.subscribers }, 'out');
-        }
-
         if (data.subscribers.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records: data.subscribers, outputType });
-    },
-
-    toSelectArray({ result }) {
-
-        return result.map(subscriber => {
-            return { label: subscriber.email_address, value: subscriber.id };
-        });
     }
 };
 
@@ -79,5 +70,6 @@ const schema = {
     'email_address': { 'type': 'string', 'title': 'Email Address' },
     'state': { 'type': 'string', 'title': 'State' },
     'created_at': { 'type': 'string', 'title': 'Created At' },
+    'tagged_at': { 'type': 'string', 'title': 'Tagged At' },
     'fields': { 'type': 'object', 'title': 'Fields' }
 };

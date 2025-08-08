@@ -20,7 +20,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.kit.com/v4/tags',
             headers: {
-                'X-Kit-Api-Key': `${context.auth.apiKey}`
+                'X-Kit-Api-Key': context.auth.apiKey
             },
             data: requestData
         });

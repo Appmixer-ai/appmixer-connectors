@@ -1,0 +1,52 @@
+{
+    "name": "appmixer.kit.subscriber.UnsubscribeSubscriber",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Mark a subscriber as unsubscribed using their unique identifier.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:kit"
+    },
+    "quota": {
+        "manager": "appmixer:kit",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "subscriberId": {
+                        "type": "string"
+                    }
+                },
+                "required": ["subscriberId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "subscriberId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the subscriber.",
+                        "label": "Subscriber ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindSubscribers#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAOCAYAAABO3B6yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAJ7SURBVEhLpZM9aBRBGIbfb+5MsrtccohcZxHFiFgYCIKWFwRTWFmIgpWFKCKkE8HWJiJBTSGaIIKQRgtBiIVwakAEAyIEUeIPRi3iX+Lt3c7u3e28Fslxu3NnJPjAFPO88818uzsrYeBPAhAkqZuxnr6+t82p1sv9CpuGjeGAykg+Nuqi67qLQfBzawZd1wkMA4gh8qC7xztNMqyF1YnUnquHPOp2c9MpGekK7aG1XwQAY/yCDvx7YeCbZF6trgwBQBj4D+3aMPCnSqVSNgz8sD0rX0sdDkDZookxZnM9lFklclhE0m+oicigrQAMFovFBoDHdqBUxjXGLxjjF1gub8F6DdSi6jgEA7ZPIsBT2xEyCwAx4wskw1RGnqhHslSPZCnKqnf4awMxt4E4bmubrh7vJMkbIBZAvIHB5e8/fp0HAM/Lz6lsZljAl3ZdEol0hbYk+Eoge9am30TkPtF6mkYsY57nfalr/0DDYFerEoDCvOPkSlpXRmC4AwCUyG4IjhJYFFn7NDF1t5c71/ES2iMM/EoYlCfI5XzyrLBavtNh7U0A0IF/tz3bwCVMIiKeiDpT09nnxvcLdv4/dGzAGF4yNFdIBKlAZGc9i6mU2xDiJmdar2zv2AAUZhy3d1TBjJA06VAOVasre9OuHSEj2wE4FgWVqzooj0e68kyYme/cwBpdbu+sADO2z6rMEdu1Iep1mxJxIDirRI0C2A9A1m0Aq//1kw5un+1sKI1pkjXb2/yzAQN+th3AftvYOE7+A8WcItmwsxZCRfAFgLnkUEp+txbxq52DXAAAUZn3bRnkY7PScfpuSYwhkpMgF0hGJGOCnwS8bWAO/gEX9K4U0ajT5gAAAABJRU5ErkJggg=="
+}

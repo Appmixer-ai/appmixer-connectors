@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.kit.subscriber.GetSubscriber",
+    "name": "appmixer.kit.form.AddSubscriberToForm",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Retrieve the details of a specific subscriber by their unique identifier.",
+    "description": "Adds a subscriber to a specified form.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -17,19 +17,40 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "formId": {
+                        "type": "string"
+                    },
                     "subscriberId": {
                         "type": "string"
                     }
                 },
-                "required": ["subscriberId"]
+                "required": ["formId", "subscriberId"]
             },
             "inspector": {
                 "inputs": {
+                    "formId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the form.",
+                        "label": "Form ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/form/FindForms?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindForms#toSelectArray"
+                            }
+                        }
+                    },
                     "subscriberId": {
                         "type": "text",
                         "tooltip": "Unique identifier of the subscriber.",
                         "label": "Subscriber ID",
-                        "index": 0,
+                        "index": 1,
                         "source": {
                             "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
                             "data": {
@@ -72,7 +93,6 @@
                         "type": "string"
                     }
                 },
-
                 {
                     "label": "State",
                     "value": "state",
@@ -88,10 +108,54 @@
                     }
                 },
                 {
-                    "label": "Custom Fields",
+                    "label": "Added At",
+                    "value": "added_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Fields",
                     "value": "fields",
                     "schema": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "label": "Referrer",
+                    "value": "referrer",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Referrer Utm Parameters",
+                    "value": "referrer_utm_parameters",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "source": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Source"
+                            },
+                            "medium": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Medium"
+                            },
+                            "campaign": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Campaign"
+                            },
+                            "term": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Term"
+                            },
+                            "content": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Content"
+                            }
+                        }
                     }
                 }
             ]

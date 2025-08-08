@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.kit.subscriber.UpdateSubscriber",
+    "name": "appmixer.kit.tag.RemoveTagFromSubscriber",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new subscriber or update an existing one based on a unique email (upsert behavior).",
+    "description": "Removes a tag from a specified subscriber.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -17,28 +17,40 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "tagId": {
+                        "type": "string"
+                    },
                     "subscriberId": {
                         "type": "string"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "firstName": {
-                        "type": "string"
-                    },
-                    "customFields": {
-                        "type": "object"
                     }
                 },
-                "required": ["subscriberId"]
+                "required": ["tagId", "subscriberId"]
             },
             "inspector": {
                 "inputs": {
+                    "tagId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the tag.",
+                        "label": "Tag ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/tag/ListTags?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTags#toSelectArray"
+                            }
+                        }
+                    },
                     "subscriberId": {
                         "type": "text",
                         "tooltip": "Unique identifier of the subscriber.",
                         "label": "Subscriber ID",
-                        "index": 0,
+                        "index": 1,
                         "source": {
                             "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
                             "data": {
@@ -51,24 +63,6 @@
                                 "transform": "./FindSubscribers#toSelectArray"
                             }
                         }
-                    },
-                    "email": {
-                        "type": "text",
-                        "tooltip": "Subscriber's email address.",
-                        "label": "Email",
-                        "index": 1
-                    },
-                    "firstName": {
-                        "type": "text",
-                        "tooltip": "Subscriber's first name.",
-                        "label": "First Name",
-                        "index": 2
-                    },
-                    "customFields": {
-                        "type": "key-value",
-                        "tooltip": "Optional key/value pairs for custom subscriber information.",
-                        "label": "Custom Fields",
-                        "index": 3
                     }
                 }
             }

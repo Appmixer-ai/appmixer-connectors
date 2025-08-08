@@ -1,20 +1,23 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
-        const { subscriberId } = context.messages.in.content;
+        const { tagId, subscriberId } = context.messages.in.content;
 
         // Validate required input
         if (!subscriberId) {
             throw new context.CancelError('Subscriber ID is required!');
         }
 
-        // https://developers.kit.com/api-reference/subscribers/get-a-subscriber
+        if (!tagId) {
+            throw new context.CancelError('Tag ID is required!');
+        }
+
+        // https://developers.kit.com/api-reference/tags/tag-a-subscriber
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.kit.com/v4/subscribers/${subscriberId}`,
+            method: 'POST',
+            url: `https://api.kit.com/v4/tags/${tagId}/subscribers/${subscriberId}`,
             headers: {
                 'X-Kit-Api-Key': context.auth.apiKey
             }

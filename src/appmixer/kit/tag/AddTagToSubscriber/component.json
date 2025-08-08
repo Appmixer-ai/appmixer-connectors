@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.kit.subscriber.CreateSubscriber",
+    "name": "appmixer.kit.tag.AddTagToSubscriber",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new subscriber or update an existing one based on a unique email (upsert behavior).",
+    "description": "Adds a tag to a specified subscriber.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -17,68 +17,52 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "email": {
+                    "tagId": {
                         "type": "string"
                     },
-                    "firstName": {
-                        "type": "string"
-                    },
-                    "state": {
-                        "type": "string"
-                    },
-                    "customFields": {
+                    "subscriberId": {
                         "type": "string"
                     }
                 },
-                "required": ["email"]
+                "required": ["tagId", "subscriberId"]
             },
             "inspector": {
                 "inputs": {
-                    "email": {
+                    "tagId": {
                         "type": "text",
-                        "tooltip": "Subscriber's email address.",
-                        "label": "Email",
-                        "index": 0
-                    },
-                    "firstName": {
-                        "type": "text",
-                        "tooltip": "Subscriber's first name.",
-                        "label": "First Name",
-                        "index": 1
-                    },
-                    "state": {
-                        "type": "text",
-                        "tooltip": "Create subscriber in this state.",
-                        "label": "State",
-                        "index": 2,
-                        "options": [
-                            {
-                                "label": "Active (Default)",
-                                "value": "active"
-                            },
-                            {
-                                "label": "Bounced",
-                                "value": "bounced"
-                            },
-                            {
-                                "label": "Cancelled",
-                                "value": "cancelled"
-                            },
-                            {
-                                "label": "Complained",
-                                "value": "complained"
-                            },
-                            {
-                                "label": "Inactive",
-                                "value": "inactive"
+                        "tooltip": "Unique identifier of the tag.",
+                        "label": "Tag ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/tag/ListTags?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTags#toSelectArray"
                             }
-                        ]
+                        }
                     },
-                    "customFields": {
-                        "type": "key-value",
-                        "tooltip": "Optional key/value pairs for custom subscriber information.",
-                        "label": "Custom Fields",
-                        "index": 3
+                    "subscriberId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the subscriber.",
+                        "label": "Subscriber ID",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindSubscribers#toSelectArray"
+                            }
+                        }
                     }
                 }
             }
@@ -109,7 +93,6 @@
                         "type": "string"
                     }
                 },
-
                 {
                     "label": "State",
                     "value": "state",
@@ -125,10 +108,18 @@
                     }
                 },
                 {
-                    "label": "Custom Fields",
+                    "label": "Added At",
+                    "value": "added_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Fields",
                     "value": "fields",
                     "schema": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {}
                     }
                 }
             ]

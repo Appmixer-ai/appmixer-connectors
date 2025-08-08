@@ -1,10 +1,9 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
-        const { email, firstName, lastName, customFields } = context.messages.in.content;
+        const { email, firstName, state, customFields } = context.messages.in.content;
 
         // Validate required inputs
         if (!email || !email.trim()) {
@@ -13,9 +12,9 @@ module.exports = {
 
         const requestData = {
             email_address: email.trim(),
-            ...(firstName && { first_name: firstName.trim() }),
-            ...(lastName && { last_name: lastName.trim() }),
-            ...(customFields && typeof customFields === 'object' && { fields: customFields })
+            first_name: firstName ? firstName.trim() : undefined,
+            state,
+            fields: customFields
         };
 
         // https://developers.kit.com/api-reference/subscribers/create-a-subscriber
@@ -23,8 +22,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.kit.com/v4/subscribers',
             headers: {
-                'X-Kit-Api-Key': context.auth.apiKey,
-                'Content-Type': 'application/json'
+                'X-Kit-Api-Key': context.auth.apiKey
             },
             data: requestData
         });
@@ -32,4 +30,3 @@ module.exports = {
         return context.sendJson(data.subscriber, 'out');
     }
 };
-

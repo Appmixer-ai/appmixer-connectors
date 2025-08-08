@@ -1,40 +1,32 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
-        const { id, firstName, lastName, customFields } = context.messages.in.content;
+        const { subscriberId, firstName, email, customFields } = context.messages.in.content;
 
         // Validate required input
-        if (!id || !id.trim()) {
+        if (!subscriberId) {
             throw new context.CancelError('Subscriber ID is required!');
         }
 
-        const requestData = {};
-
-        if (firstName !== undefined) {
-            requestData.first_name = firstName;
-        }
-        if (lastName !== undefined) {
-            requestData.last_name = lastName;
-        }
-        if (customFields && typeof customFields === 'object') {
-            requestData.fields = customFields;
-        }
+        const requestData = {
+            email_address: email.trim(),
+            first_name: firstName ? firstName.trim() : undefined,
+            fields: customFields
+        };
 
         // https://developers.kit.com/api-reference/subscribers/update-a-subscriber
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
-            url: `https://api.kit.com/v4/subscribers/${encodeURIComponent(id.trim())}`,
+            url: `https://api.kit.com/v4/subscribers/${subscriberId}`,
             headers: {
-                'X-Kit-Api-Key': context.auth.apiKey,
-                'Content-Type': 'application/json'
+                'X-Kit-Api-Key': context.auth.apiKey
             },
             data: requestData
         });
 
-        return context.sendJson(data.subscriber, 'out');
+        return context.sendJson({}, 'out');
     }
 };
 
