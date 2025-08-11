@@ -4,12 +4,15 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-describe('GetSubscriber', () => {
+describe('RemoveTagFromSubscriber', () => {
 
-    let GetSubscriber;
+    let RemoveTagFromSubscriber;
     let CreateSubscriber;
+    let CreateTag;
+    let AddTagToSubscriber;
     let context;
     let testSubscriberId;
+    let testTagId;
 
     before(async function() {
         // Skip all tests if the access token is not set
@@ -18,8 +21,10 @@ describe('GetSubscriber', () => {
             this.skip();
         }
 
-        GetSubscriber = require('../../src/appmixer/kit/subscriber/GetSubscriber/GetSubscriber');
+        RemoveTagFromSubscriber = require('../../src/appmixer/kit/tag/RemoveTagFromSubscriber/RemoveTagFromSubscriber');
         CreateSubscriber = require('../../src/appmixer/kit/subscriber/CreateSubscriber/CreateSubscriber');
+        CreateTag = require('../../src/appmixer/kit/tag/CreateTag/CreateTag');
+        AddTagToSubscriber = require('../../src/appmixer/kit/tag/AddTagToSubscriber/AddTagToSubscriber');
 
         context = {
             auth: {
@@ -42,31 +47,46 @@ describe('GetSubscriber', () => {
             }
         };
 
-        // Create a test subscriber first to use in tests
-        const testEmail = `test-get+${Date.now()}@example.com`;
+        // Create a test subscriber first
+        const testEmail = `test-removetag+${Date.now()}@example.com`;
         context.messages.in.content = {
             email: testEmail,
-            firstName: 'Get',
-            lastName: 'Test'
+            firstName: 'RemoveTag',
+            state: 'active'
         };
 
-        const createResult = await CreateSubscriber.receive(context);
-        testSubscriberId = createResult.data.id;
+        const createSubscriberResult = await CreateSubscriber.receive(context);
+        testSubscriberId = createSubscriberResult.data.id;
+
+        // Create a test tag
+        const testTagName = `Test Tag RemoveTag ${Date.now()}`;
+        context.messages.in.content = {
+            name: testTagName
+        };
+
+        const createTagResult = await CreateTag.receive(context);
+        testTagId = createTagResult.data.id;
+
+        // Add tag to subscriber first so we can remove it
+        context.messages.in.content = {
+            tagId: testTagId.toString(),
+            subscriberId: testSubscriberId.toString()
+        };
+
+        await AddTagToSubscriber.receive(context);
     });
 
-    it('should get subscriber successfully', async () => {
+    it('should remove tag from subscriber successfully', async () => {
         context.messages.in.content = {
+            tagId: testTagId.toString(),
             subscriberId: testSubscriberId.toString()
         };
 
         try {
-            const result = await GetSubscriber.receive(context);
+            const result = await RemoveTagFromSubscriber.receive(context);
             
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
-            assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');
-            assert.strictEqual(result.data.id, testSubscriberId, `Expected subscriber ID to match. Got: ${result.data.id}, Expected: ${testSubscriberId}`);
-            assert.strictEqual(result.data.first_name, 'Get', 'Expected first name to match');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -78,14 +98,29 @@ describe('GetSubscriber', () => {
         }
     });
 
-    it('should throw error when id is missing', async () => {
-        context.messages.in.content = {};
+    it('should throw error when subscriber ID is missing', async () => {
+        context.messages.in.content = {
+            tagId: testTagId.toString()
+        };
 
         try {
-            await GetSubscriber.receive(context);
+            await RemoveTagFromSubscriber.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.message.includes('Subscriber ID is required'), `Expected error message to contain "Subscriber ID is required", got: ${error.message}`);
+        }
+    });
+
+    it('should throw error when tag ID is missing', async () => {
+        context.messages.in.content = {
+            subscriberId: testSubscriberId.toString()
+        };
+
+        try {
+            await RemoveTagFromSubscriber.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.message.includes('Tag ID is required'), `Expected error message to contain "Tag ID is required", got: ${error.message}`);
         }
     });
 });

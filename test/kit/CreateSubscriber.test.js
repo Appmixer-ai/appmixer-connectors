@@ -4,21 +4,18 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-describe('GetSubscriber', () => {
+describe('CreateSubscriber', () => {
 
-    let GetSubscriber;
     let CreateSubscriber;
     let context;
-    let testSubscriberId;
 
-    before(async function() {
+    before(function() {
         // Skip all tests if the access token is not set
         if (!process.env.KIT_API_KEY) {
             console.log('Skipping tests - KIT_API_KEY not set');
             this.skip();
         }
 
-        GetSubscriber = require('../../src/appmixer/kit/subscriber/GetSubscriber/GetSubscriber');
         CreateSubscriber = require('../../src/appmixer/kit/subscriber/CreateSubscriber/CreateSubscriber');
 
         context = {
@@ -41,32 +38,25 @@ describe('GetSubscriber', () => {
                 }
             }
         };
-
-        // Create a test subscriber first to use in tests
-        const testEmail = `test-get+${Date.now()}@example.com`;
-        context.messages.in.content = {
-            email: testEmail,
-            firstName: 'Get',
-            lastName: 'Test'
-        };
-
-        const createResult = await CreateSubscriber.receive(context);
-        testSubscriberId = createResult.data.id;
     });
 
-    it('should get subscriber successfully', async () => {
+    it('should create subscriber successfully', async () => {
+        const testEmail = `test-create+${Date.now()}@example.com`;
+        
         context.messages.in.content = {
-            subscriberId: testSubscriberId.toString()
+            email: testEmail,
+            firstName: 'Create',
+            state: 'active'
         };
 
         try {
-            const result = await GetSubscriber.receive(context);
+            const result = await CreateSubscriber.receive(context);
             
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');
-            assert.strictEqual(result.data.id, testSubscriberId, `Expected subscriber ID to match. Got: ${result.data.id}, Expected: ${testSubscriberId}`);
-            assert.strictEqual(result.data.first_name, 'Get', 'Expected first name to match');
+            assert.strictEqual(result.data.email_address, testEmail, `Expected email to match input. Got: ${result.data.email_address}, Expected: ${testEmail}`);
+            assert.strictEqual(result.data.first_name, 'Create', 'Expected first name to match');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -78,14 +68,30 @@ describe('GetSubscriber', () => {
         }
     });
 
-    it('should throw error when id is missing', async () => {
-        context.messages.in.content = {};
+    it('should throw error when email is missing', async () => {
+        context.messages.in.content = {
+            firstName: 'Test'
+        };
 
         try {
-            await GetSubscriber.receive(context);
+            await CreateSubscriber.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
-            assert(error.message.includes('Subscriber ID is required'), `Expected error message to contain "Subscriber ID is required", got: ${error.message}`);
+            assert(error.message.includes('Email is required'), `Expected error message to contain "Email is required", got: ${error.message}`);
+        }
+    });
+
+    it('should throw error when email is empty', async () => {
+        context.messages.in.content = {
+            email: '',
+            firstName: 'Test'
+        };
+
+        try {
+            await CreateSubscriber.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.message.includes('Email is required'), `Expected error message to contain "Email is required", got: ${error.message}`);
         }
     });
 });

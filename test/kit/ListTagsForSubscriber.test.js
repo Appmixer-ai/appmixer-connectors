@@ -4,9 +4,9 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-describe('GetSubscriber', () => {
+describe('ListTagsForSubscriber', () => {
 
-    let GetSubscriber;
+    let ListTagsForSubscriber;
     let CreateSubscriber;
     let context;
     let testSubscriberId;
@@ -18,7 +18,7 @@ describe('GetSubscriber', () => {
             this.skip();
         }
 
-        GetSubscriber = require('../../src/appmixer/kit/subscriber/GetSubscriber/GetSubscriber');
+        ListTagsForSubscriber = require('../../src/appmixer/kit/subscriber/ListTagsForSubscriber/ListTagsForSubscriber');
         CreateSubscriber = require('../../src/appmixer/kit/subscriber/CreateSubscriber/CreateSubscriber');
 
         context = {
@@ -39,34 +39,35 @@ describe('GetSubscriber', () => {
                     super(message);
                     this.name = 'CancelError';
                 }
-            }
+            },
+            properties: {}
         };
 
         // Create a test subscriber first to use in tests
-        const testEmail = `test-get+${Date.now()}@example.com`;
+        const testEmail = `test-listtags+${Date.now()}@example.com`;
         context.messages.in.content = {
             email: testEmail,
-            firstName: 'Get',
-            lastName: 'Test'
+            firstName: 'ListTags',
+            state: 'active'
         };
 
         const createResult = await CreateSubscriber.receive(context);
         testSubscriberId = createResult.data.id;
     });
 
-    it('should get subscriber successfully', async () => {
+    it('should list tags for subscriber as array', async () => {
         context.messages.in.content = {
-            subscriberId: testSubscriberId.toString()
+            subscriberId: testSubscriberId.toString(),
+            outputType: 'array'
         };
 
         try {
-            const result = await GetSubscriber.receive(context);
+            const result = await ListTagsForSubscriber.receive(context);
             
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
-            assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');
-            assert.strictEqual(result.data.id, testSubscriberId, `Expected subscriber ID to match. Got: ${result.data.id}, Expected: ${testSubscriberId}`);
-            assert.strictEqual(result.data.first_name, 'Get', 'Expected first name to match');
+            assert(Array.isArray(result.data.result), 'Expected result.data.result to be an array');
+            assert(typeof result.data.count === 'number', 'Expected result.data.count to be a number');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
         } catch (error) {
             if (error.response && error.response.status === 401) {
@@ -78,11 +79,40 @@ describe('GetSubscriber', () => {
         }
     });
 
-    it('should throw error when id is missing', async () => {
-        context.messages.in.content = {};
+    it('should generate output port options', async () => {
+        context.messages.in.content = {
+            subscriberId: testSubscriberId.toString(),
+            outputType: 'array'
+        };
+        context.properties = {
+            generateOutputPortOptions: true
+        };
 
         try {
-            await GetSubscriber.receive(context);
+            const result = await ListTagsForSubscriber.receive(context);
+            
+            assert(result && typeof result === 'object', 'Expected result to be an object');
+            assert(Array.isArray(result.data), 'Expected result.data to be an array');
+            assert(result.data.length > 0, 'Expected result.data to have items');
+            assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - API key may be invalid');
+                console.log('Error details:', error.response.data);
+                throw new Error('Authentication failed: API key is invalid. Please check the KIT_API_KEY in .env file');
+            }
+            throw error;
+        }
+    });
+
+    it('should throw error when subscriber ID is missing', async () => {
+        context.messages.in.content = {
+            outputType: 'array'
+        };
+        context.properties = {};
+
+        try {
+            await ListTagsForSubscriber.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.message.includes('Subscriber ID is required'), `Expected error message to contain "Subscriber ID is required", got: ${error.message}`);

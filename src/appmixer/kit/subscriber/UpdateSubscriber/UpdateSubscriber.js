@@ -11,13 +11,20 @@ module.exports = {
         }
 
         const requestData = {
-            email_address: email.trim(),
+            email_address: email ? email.trim() : undefined,
             first_name: firstName ? firstName.trim() : undefined,
             fields: customFields
         };
 
+        // Remove undefined values to avoid sending them in the request
+        Object.keys(requestData).forEach(key => {
+            if (requestData[key] === undefined) {
+                delete requestData[key];
+            }
+        });
+
         // https://developers.kit.com/api-reference/subscribers/update-a-subscriber
-        await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'PUT',
             url: `https://api.kit.com/v4/subscribers/${subscriberId}`,
             headers: {
@@ -26,7 +33,7 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson({}, 'out');
+        return context.sendJson(data.subscriber || {}, 'out');
     }
 };
 

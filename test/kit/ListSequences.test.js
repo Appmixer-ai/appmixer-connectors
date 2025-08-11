@@ -4,9 +4,9 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-describe('ListTags', () => {
+describe('ListSequences', () => {
 
-    let ListTags;
+    let ListSequences;
     let context;
 
     before(function() {
@@ -16,7 +16,7 @@ describe('ListTags', () => {
             this.skip();
         }
 
-        ListTags = require('../../src/appmixer/kit/tag/ListTags/ListTags');
+        ListSequences = require('../../src/appmixer/kit/sequence/ListSequences/ListSequences');
 
         context = {
             auth: {
@@ -41,13 +41,13 @@ describe('ListTags', () => {
         };
     });
 
-    it('should list tags as array', async () => {
+    it('should list sequences as array', async () => {
         context.messages.in.content = {
             outputType: 'array'
         };
 
         try {
-            const result = await ListTags.receive(context);
+            const result = await ListSequences.receive(context);
             
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
@@ -73,11 +73,34 @@ describe('ListTags', () => {
         };
 
         try {
-            const result = await ListTags.receive(context);
+            const result = await ListSequences.receive(context);
             
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(Array.isArray(result.data), 'Expected result.data to be an array');
             assert(result.data.length > 0, 'Expected result.data to have items');
+            assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - API key may be invalid');
+                console.log('Error details:', error.response.data);
+                throw new Error('Authentication failed: API key is invalid. Please check the KIT_API_KEY in .env file');
+            }
+            throw error;
+        }
+    });
+
+    it('should work as source component', async () => {
+        context.messages.in.content = {};
+        context.properties = {
+            isSource: true
+        };
+
+        try {
+            const result = await ListSequences.receive(context);
+            
+            assert(result && typeof result === 'object', 'Expected result to be an object');
+            assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
+            assert(Array.isArray(result.data.result), 'Expected result.data.result to be an array');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');
         } catch (error) {
             if (error.response && error.response.status === 401) {

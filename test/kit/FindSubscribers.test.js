@@ -11,8 +11,8 @@ describe('FindSubscribers', () => {
 
     before(function() {
         // Skip all tests if the access token is not set
-        if (!process.env.KIT_TOKEN) {
-            console.log('Skipping tests - KIT_TOKEN not set');
+        if (!process.env.KIT_API_KEY) {
+            console.log('Skipping tests - KIT_API_KEY not set');
             this.skip();
         }
 
@@ -20,7 +20,7 @@ describe('FindSubscribers', () => {
 
         context = {
             auth: {
-                apiKey: process.env.KIT_TOKEN
+                apiKey: process.env.KIT_API_KEY
             },
             messages: {
                 in: {
@@ -59,7 +59,7 @@ describe('FindSubscribers', () => {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - API key may be invalid');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: API key is invalid. Please check the KIT_TOKEN in .env file');
+                throw new Error('Authentication failed: API key is invalid. Please check the KIT_API_KEY in .env file');
             }
             throw error;
         }
@@ -84,7 +84,7 @@ describe('FindSubscribers', () => {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - API key may be invalid');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: API key is invalid. Please check the KIT_TOKEN in .env file');
+                throw new Error('Authentication failed: API key is invalid. Please check the KIT_API_KEY in .env file');
             }
             throw error;
         }
