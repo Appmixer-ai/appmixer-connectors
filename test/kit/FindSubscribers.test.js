@@ -49,7 +49,7 @@ describe('FindSubscribers', () => {
 
         try {
             const result = await FindSubscribers.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(Array.isArray(result.data.result), 'Expected result.data.result to be an array');
@@ -75,7 +75,7 @@ describe('FindSubscribers', () => {
 
         try {
             const result = await FindSubscribers.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(Array.isArray(result.data), 'Expected result.data to be an array');
             assert(result.data.length > 0, 'Expected result.data to have items');

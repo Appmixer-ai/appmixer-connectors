@@ -42,7 +42,7 @@ describe('CreateSubscriber', () => {
 
     it('should create subscriber successfully', async () => {
         const testEmail = `test-create+${Date.now()}@example.com`;
-        
+
         context.messages.in.content = {
             email: testEmail,
             firstName: 'Create',
@@ -51,7 +51,7 @@ describe('CreateSubscriber', () => {
 
         try {
             const result = await CreateSubscriber.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');

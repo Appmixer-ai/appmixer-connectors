@@ -61,7 +61,7 @@ describe('UnsubscribeSubscriber', () => {
 
         try {
             const result = await UnsubscribeSubscriber.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             // Unsubscribe API returns empty response, so we just check that it succeeded

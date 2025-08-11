@@ -84,7 +84,7 @@ describe('RemoveTagFromSubscriber', () => {
 
         try {
             const result = await RemoveTagFromSubscriber.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert.strictEqual(result.port, 'out', 'Expected port to be "out"');

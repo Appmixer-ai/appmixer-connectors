@@ -88,9 +88,9 @@ describe('FindSubscribersForSequence', () => {
 
         try {
             const result = await FindSubscribersForSequence.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
-            
+
             if (result.port === 'notFound') {
                 // No subscribers found, which is valid for some sequences
                 assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
@@ -122,7 +122,7 @@ describe('FindSubscribersForSequence', () => {
 
         try {
             const result = await FindSubscribersForSequence.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(Array.isArray(result.data), 'Expected result.data to be an array');
             assert(result.data.length > 0, 'Expected result.data to have items');

@@ -79,7 +79,7 @@ describe('AddSubscriberToForm', () => {
 
         try {
             const result = await AddSubscriberToForm.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');

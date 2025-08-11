@@ -42,14 +42,14 @@ describe('CreateTag', () => {
 
     it('should create a tag successfully', async () => {
         const name = `Test Tag ${Date.now()}`;
-        
+
         context.messages.in.content = {
             name: name
         };
 
         try {
             const result = await CreateTag.receive(context);
-            
+
             assert(result && typeof result === 'object', 'Expected result to be an object');
             assert(result.data && typeof result.data === 'object', 'Expected result.data to be an object');
             assert(result.data.id && typeof result.data.id === 'number', 'Expected result.data.id to be a number');
