@@ -1,0 +1,122 @@
+{
+    "name": "appmixer.klaviyo.event.CreateEvent",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Track a custom event for a customer profile, such as a purchase or page view.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:klaviyo"
+    },
+    "quota": {
+        "manager": "appmixer:klaviyo",
+        "resources": "seventy-five-requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string"
+                    },
+                    "metricName": {
+                        "type": "string"
+                    },
+                    "time": {
+                        "type": "string"
+                    },
+                    "uniqueId": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "number"
+                    },
+                    "valueCurrency": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "type": "string"
+                    }
+                },
+                "required": ["profileId", "metricName"]
+            },
+            "inspector": {
+                "inputs": {
+                    "profileId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the customer profile.",
+                        "label": "Profile ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/klaviyo/profile/FindProfiles?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindProfiles#toSelectArray"
+                            }
+                        }
+                    },
+                    "metricName": {
+                        "type": "text",
+                        "tooltip": "Name of the event or metric to be tracked.",
+                        "label": "Metric Name",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/klaviyo/metric/FindMetrics?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindMetrics#toSelectArrayNames"
+                            }
+                        }
+                    },
+                    "time": {
+                        "type": "date-time",
+                        "tooltip": "Timestamp of the event in ISO 8601 format.",
+                        "label": "Time",
+                        "index": 2
+                    },
+                    "uniqueId": {
+                        "type": "text",
+                        "tooltip": "A unique identifier for an event. If the Unique ID is repeated for the same profile and metric, only the first processed event will be recorded.",
+                        "label": "Unique ID",
+                        "index": 3
+                    },
+                    "value": {
+                        "type": "number",
+                        "tooltip": "A numeric, monetary value to associate with this event. For example, the dollar amount of a purchase.",
+                        "label": "Value",
+                        "index": 4
+                    },
+                    "valueCurrency": {
+                        "type": "text",
+                        "tooltip": "The ISO 4217 currency code of the value associated with the event. For example, USD for US dollars.",
+                        "label": "Value Currency",
+                        "index": 5
+                    },
+                    "properties": {
+                        "type": "key-value",
+                        "tooltip": "Additional event properties in key-value format.",
+                        "label": "Properties",
+                        "index": 6,
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAEiSURBVFhH7ZIxToVAEIb/mZWwJEDCQkKLsZDa6jUeQFtbz0BiYecRNDFaegvvYTyEFFYU0mCCrIXZBKd/8xq+ZIr9KebPNwAbGweGANQAdvKDBlEUfQDAJQCvPcy8OOd2BytARE/BhHoBIuqdczkA8OokatR1fTMMw1d4qxqI4/h1XUbVADOPTdN0MlczUBTFrVyuZsAY89Z13YPMoWGAmX+qqjqTiwN7L2CtfZRLAyonsNYOMluzdwPMPOV5fiIXQ8vAsizxOI7PModWAQDw3l9kWXYtc2icIAwRfbZtW66XqxkAAO993ff9vczVDIRJ0/Q8LFc1EJim6QXAEQ5VYJ7n0yRJ7sJb/QT4+yG/y7JsCcAxgKv/HXUwxrzLbGNDnV+yVFeZnf5lVAAAAABJRU5ErkJggg=="
+}

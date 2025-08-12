@@ -12,7 +12,7 @@ Every update and delete component must have `outPorts: ['out']` in the component
 Every update and delete component must have at least one required input, which is the `id` of the entity being updated or deleted.
 Avoid changing `icon`.
 Every inspector input of type `toggle` must have a `defaultValue` set to `false` if not specified otherwise.
-For components with dynamic output ports (`source` in outPorts), all required input fields (from input schema) must be mapped in data.messages as `"in/<field>": "any"`. If no required inputs exist, only map `"in/outputType": "inputs/in/outputType"`.
+For components that define dynamic output ports (i.e., source is present inside an outPorts entry), ensure that the source.data.messages mapping follows this rule: If the input schema defines required fields (i.e., the "required" array is non-empty), then all required fields must be mapped using "in/<fieldName>": "any" (the value can be any valid expression or constant). If there are no required input fields, only include the minimal mapping: "in/outputType": "inputs/in/outputType". Do not include any additional mappings when no required fields are present. This ensures correct evaluation of dynamic output port options.
 
 # Refactor the behavior file to follow these rules
 The file begins with `'use strict';` (single quotes) on the first line.

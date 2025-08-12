@@ -1,0 +1,461 @@
+{
+    "name": "appmixer.lemonsqueezy.core.IssueRefund",
+    "label": "Issue Refund",
+    "description": "Issue a refund for an order. Refunds can be full or partial.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:lemonsqueezy"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "title": "Order ID",
+                        "description": "The ID of the order to refund"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "title": "Refund Amount",
+                        "description": "The amount to refund (leave empty for full refund)"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "title": "Refund Reason",
+                        "description": "Optional reason for the refund"
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "orderId": {
+                        "label": "Order ID",
+                        "type": "text",
+                        "index": 1,
+                        "tooltip": "Enter the ID of the order you want to refund"
+                    },
+                    "amount": {
+                        "label": "Refund Amount",
+                        "type": "number",
+                        "index": 2,
+                        "tooltip": "Enter the amount to refund (leave empty for full refund)"
+                    },
+                    "reason": {
+                        "label": "Refund Reason",
+                        "type": "text",
+                        "index": 3,
+                        "tooltip": "Optional reason for the refund"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Jsonapi",
+                    "value": "jsonapi",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "version": {
+                                "type": "string",
+                                "title": "Jsonapi.Version"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Links",
+                    "value": "links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string",
+                                "title": "Links.Self"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Data",
+                    "value": "data",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "title": "Data.Type"
+                            },
+                            "id": {
+                                "type": "string",
+                                "title": "Data.Id"
+                            },
+                            "attributes": {
+                                "type": "object",
+                                "properties": {
+                                    "store_id": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Store Id"
+                                    },
+                                    "customer_id": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Customer Id"
+                                    },
+                                    "identifier": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Identifier"
+                                    },
+                                    "order_number": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Order Number"
+                                    },
+                                    "user_name": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.User Name"
+                                    },
+                                    "user_email": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.User Email"
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Currency"
+                                    },
+                                    "currency_rate": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Currency Rate"
+                                    },
+                                    "tax_name": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Tax Name"
+                                    },
+                                    "tax_rate": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Tax Rate"
+                                    },
+                                    "tax_inclusive": {
+                                        "type": "boolean",
+                                        "title": "Data.Attributes.Tax Inclusive"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Status"
+                                    },
+                                    "status_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Status Formatted"
+                                    },
+                                    "refunded": {
+                                        "type": "boolean",
+                                        "title": "Data.Attributes.Refunded"
+                                    },
+                                    "refunded_at": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Refunded At"
+                                    },
+                                    "subtotal": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Subtotal"
+                                    },
+                                    "discount_total": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Discount Total"
+                                    },
+                                    "tax": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Tax"
+                                    },
+                                    "setup_fee": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Setup Fee"
+                                    },
+                                    "total": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Total"
+                                    },
+                                    "refunded_amount": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Refunded Amount"
+                                    },
+                                    "subtotal_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Subtotal Usd"
+                                    },
+                                    "discount_total_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Discount Total Usd"
+                                    },
+                                    "tax_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Tax Usd"
+                                    },
+                                    "setup_fee_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Setup Fee Usd"
+                                    },
+                                    "total_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Total Usd"
+                                    },
+                                    "refunded_amount_usd": {
+                                        "type": "number",
+                                        "title": "Data.Attributes.Refunded Amount Usd"
+                                    },
+                                    "subtotal_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Subtotal Formatted"
+                                    },
+                                    "discount_total_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Discount Total Formatted"
+                                    },
+                                    "tax_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Tax Formatted"
+                                    },
+                                    "setup_fee_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Setup Fee Formatted"
+                                    },
+                                    "total_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Total Formatted"
+                                    },
+                                    "refunded_amount_formatted": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Refunded Amount Formatted"
+                                    },
+                                    "first_order_item": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Id"
+                                            },
+                                            "order_id": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Order Id"
+                                            },
+                                            "product_id": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Product Id"
+                                            },
+                                            "variant_id": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Variant Id"
+                                            },
+                                            "price_id": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Price Id"
+                                            },
+                                            "product_name": {
+                                                "type": "string",
+                                                "title": "Data.Attributes.First Order Item.Product Name"
+                                            },
+                                            "variant_name": {
+                                                "type": "string",
+                                                "title": "Data.Attributes.First Order Item.Variant Name"
+                                            },
+                                            "price": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Price"
+                                            },
+                                            "quantity": {
+                                                "type": "number",
+                                                "title": "Data.Attributes.First Order Item.Quantity"
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "title": "Data.Attributes.First Order Item.Created At"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "title": "Data.Attributes.First Order Item.Updated At"
+                                            },
+                                            "test_mode": {
+                                                "type": "boolean",
+                                                "title": "Data.Attributes.First Order Item.Test Mode"
+                                            }
+                                        },
+                                        "title": "Data.Attributes.First Order Item"
+                                    },
+                                    "urls": {
+                                        "type": "object",
+                                        "properties": {
+                                            "receipt": {
+                                                "type": "string",
+                                                "title": "Data.Attributes.Urls.Receipt"
+                                            }
+                                        },
+                                        "title": "Data.Attributes.Urls"
+                                    },
+                                    "created_at": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Created At"
+                                    },
+                                    "updated_at": {
+                                        "type": "string",
+                                        "title": "Data.Attributes.Updated At"
+                                    },
+                                    "test_mode": {
+                                        "type": "boolean",
+                                        "title": "Data.Attributes.Test Mode"
+                                    }
+                                },
+                                "title": "Data.Attributes"
+                            },
+                            "relationships": {
+                                "type": "object",
+                                "properties": {
+                                    "store": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Store.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Store.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.Store.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.Store"
+                                    },
+                                    "customer": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Customer.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Customer.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.Customer.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.Customer"
+                                    },
+                                    "order-items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Order-Items.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Order-Items.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.Order-Items.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.Order-Items"
+                                    },
+                                    "subscriptions": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Subscriptions.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Subscriptions.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.Subscriptions.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.Subscriptions"
+                                    },
+                                    "license-keys": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.License-Keys.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.License-Keys.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.License-Keys.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.License-Keys"
+                                    },
+                                    "discount-redemptions": {
+                                        "type": "object",
+                                        "properties": {
+                                            "links": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "related": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Discount-Redemptions.Links.Related"
+                                                    },
+                                                    "self": {
+                                                        "type": "string",
+                                                        "title": "Data.Relationships.Discount-Redemptions.Links.Self"
+                                                    }
+                                                },
+                                                "title": "Data.Relationships.Discount-Redemptions.Links"
+                                            }
+                                        },
+                                        "title": "Data.Relationships.Discount-Redemptions"
+                                    }
+                                },
+                                "title": "Data.Relationships"
+                            },
+                            "links": {
+                                "type": "object",
+                                "properties": {
+                                    "self": {
+                                        "type": "string",
+                                        "title": "Data.Links.Self"
+                                    }
+                                },
+                                "title": "Data.Links"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNGRkQ5MTYiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik05IDQuNUE0LjUgNC41IDAgMDE0LjUgOUExIDEgMCAwMDEzIDlBMy41IDMuNSAwIDAwOS41IDEyLjVIMTFhMSAxIDAgMDEwIDJIOS41QTMuNSAzLjUgMCAwMDEzIDE4YTEgMSAwIDEwMi0wQTQuNSA0LjUgMCAwMDkgNC41eiIgZmlsbD0iIzFFMUUxRSIvPgo8L3N2Zz4KPC9zdmc+"
+}
