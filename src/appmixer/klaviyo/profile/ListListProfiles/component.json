@@ -1,0 +1,95 @@
+{
+    "name": "appmixer.klaviyo.profile.ListListProfiles",
+    "label": "List Profiles in List",
+    "description": "Get profiles in a specific list",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:klaviyo"
+    },
+    "quota": {
+        "manager": "appmixer:klaviyo",
+        "resources": "three-requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "listId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": ["listId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "listId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "List ID",
+                        "tooltip": "ID of the list",
+                        "source": {
+                            "url": "/component/appmixer/klaviyo/list/FindLists?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindLists#toSelectArray"
+                            }
+                        }
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time.",
+                        "options": [
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/klaviyo/profile/ListListProfiles?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAEiSURBVFhH7ZIxToVAEIb/mZWwJEDCQkKLsZDa6jUeQFtbz0BiYecRNDFaegvvYTyEFFYU0mCCrIXZBKd/8xq+ZIr9KebPNwAbGweGANQAdvKDBlEUfQDAJQCvPcy8OOd2QtARE/BhHoBIuqdczkA8OokatR1fTMMw1d4qxqI4/h1XUbVADOPTdN0MlczUBTFrVyuZsAY89Z13YPMoWGAmX+qqjqTiwN7L2CtfZRLAyonsNYOMluzdwPMPOV5fiIXQ8vAsizxOI7PModWAQDw3l9kWXYtc2icIAwRfbZtW66XqxkAAO993ff9vczVDIRJ0/Q8LFc1EJim6QXAEQ5VYJ7n0yRJ7sJb/QT4+yG/y7JsCcAxgKv/HXUwxrzLbGNDnV+yVFeZnf5lVAAAAABJRU5ErkJggg=="
+}

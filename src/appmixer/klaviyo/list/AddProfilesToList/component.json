@@ -1,0 +1,73 @@
+{
+    "name": "appmixer.klaviyo.list.AddProfilesToList",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Add one or more customer profile IDs to a specific list.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:klaviyo"
+    },
+    "quota": {
+        "manager": "appmixer:klaviyo",
+        "resources": "ten-requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "listId": {
+                        "type": "string"
+                    },
+                    "profileIds": {
+                        "type": "string"
+                    }
+                },
+                "required": ["listId", "profileIds"]
+            },
+            "inspector": {
+                "inputs": {
+                    "listId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the target list.",
+                        "label": "List ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/klaviyo/list/FindLists?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindLists#toSelectArray"
+                            }
+                        }
+                    },
+                    "profileIds": {
+                        "type": "text",
+                        "tooltip": "Comma-separated profile IDs to add to the list.",
+                        "label": "Profile IDs",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/klaviyo/profile/FindProfiles?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindProfiles#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAEiSURBVFhH7ZIxToVAEIb/mZWwJEDCQkKLsZDa6jUeQFtbz0BiYecRNDFaegvvYTyEFFYU0mCCrIXZBKd/8xq+ZIr9KebPNwAbGweGANQAdvKDBlEUfQDAJQCvPcy8OOd2BytARE/BhHoBIuqdczkA8OokatR1fTMMw1d4qxqI4/h1XUbVADOPTdN0MlczUBTFrVyuZsAY89Z13YPMoWGAmX+qqjqTiwN7L2CtfZRLAyonsNYOMluzdwPMPOV5fiIXQ8vAsizxOI7PModWAQDw3l9kWXYtc2icIAwRfbZtW66XqxkAAO993ff9vczVDIRJ0/Q8LFc1EJim6QXAEQ5VYJ7n0yRJ7sJb/QT4+yG/y7JsCcAxgKv/HXUwxrzLbGNDnV+yVFeZnf5lVAAAAABJRU5ErkJggg=="
+}
