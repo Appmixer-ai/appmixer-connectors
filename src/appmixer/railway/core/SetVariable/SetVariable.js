@@ -1,8 +1,6 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
-
 module.exports = {
     async receive(context) {
 
@@ -63,7 +61,7 @@ module.exports = {
         }
 
         // Return the upsert result with variable details
-        return context.sendJson({ 
+        return context.sendJson({
             success: !!data.data.variableUpsert,
             variableName: variableName,
             variableValue: variableValue

@@ -49,7 +49,6 @@ module.exports = {
         }
 
         // variableDelete returns a boolean indicating success
-        const success = data.data.variableDelete;
-        return context.sendJson({ success }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

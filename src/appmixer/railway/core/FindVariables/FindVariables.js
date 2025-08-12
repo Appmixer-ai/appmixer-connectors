@@ -2,7 +2,7 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 
+const schema = {
     'key': { 'type': 'string', 'title': 'Key' },
     'value': { 'type': 'string', 'title': 'Value' }
 };

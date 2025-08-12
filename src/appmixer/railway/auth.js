@@ -13,11 +13,11 @@ async function getUserProfile(context) {
             query: '{ me { id name email } }'
         }
     });
-    
+
     if (!response.data || !response.data.data || !response.data.data.me) {
         throw new Error('Authentication failed: Invalid API Key or unexpected response.');
     }
-    
+
     return response.data.data.me;
 }
 
@@ -37,7 +37,7 @@ module.exports = {
             const profile = await getUserProfile(context);
             return profile;
         },
-        
+
         accountNameFromProfileInfo: 'email',
 
         validate: async (context) => {

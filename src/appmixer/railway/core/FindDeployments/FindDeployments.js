@@ -1,7 +1,7 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 
+const schema = {
     'id': { 'type': 'string', 'title': 'Deployment Id' },
     'staticUrl': { 'type': 'string', 'title': 'Static URL' }
 };
