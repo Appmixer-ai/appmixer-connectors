@@ -1,0 +1,687 @@
+{
+    "actions": [
+        {
+            "title": "Find Projects",
+            "description": "Retrieve all projects accessible to the authenticated user.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "me": {
+                        "projects": {
+                            "edges": [
+                                {
+                                    "node": {
+                                        "id": "proj_123",
+                                        "name": "Example Project",
+                                        "services": [],
+                                        "environments": []
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Optional search string to filter projects."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data.me.projects.edges"
+            }
+        },
+        {
+            "title": "Create Project",
+            "description": "Create a new project with a given name, optional description, and team ID.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "projectCreate": {
+                        "project": {
+                            "id": "proj_124",
+                            "name": "New Project",
+                            "description": "Project description."
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the new project."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description for the project."
+                    },
+                    "teamId": {
+                        "type": "string",
+                        "description": "Optional team identifier to assign the project."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Remove Project",
+            "description": "Delete an existing project identified by its project ID.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "projectDelete": {
+                        "success": true
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project to delete."
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Service",
+            "description": "Create a new service within a project by specifying the project ID, source (GitHub repo or Docker image) and an optional service name.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-services",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "serviceCreate": {
+                        "service": {
+                            "id": "svc_123",
+                            "name": "New Service"
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project under which the service is created."
+                    },
+                    "source": {
+                        "type": "string",
+                        "description": "Source identifier like a GitHub repository URL or Docker image name."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Optional name for the service."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "source"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Services",
+            "description": "Retrieve services within a specific project.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-services",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "project": {
+                        "services": [
+                            {
+                                "id": "svc_123",
+                                "name": "Example Service"
+                            }
+                        ]
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project for which services are retrieved."
+                    },
+                    "search": {
+                        "type": "string",
+                        "description": "Optional search term to filter services."
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data.project.services"
+            }
+        },
+        {
+            "title": "Update Service",
+            "description": "Update configuration details for an existing service.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-services",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "serviceUpdate": {
+                        "service": {
+                            "id": "svc_123",
+                            "name": "Updated Service"
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Identifier of the service to be updated."
+                    },
+                    "configuration": {
+                        "type": "object",
+                        "description": "Object containing the updated configuration fields."
+                    }
+                },
+                "required": [
+                    "serviceId",
+                    "configuration"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Remove Service",
+            "description": "Delete a service from a project using its service ID.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-services",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "serviceDelete": {
+                        "success": true
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Identifier of the service to delete."
+                    }
+                },
+                "required": [
+                    "serviceId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Deploy Service",
+            "description": "Trigger a new deployment for a specific service in a designated environment.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-deployments",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "deploymentTrigger": {
+                        "deployment": {
+                            "id": "dep_123",
+                            "status": "pending"
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Identifier of the service to deploy."
+                    },
+                    "environmentId": {
+                        "type": "string",
+                        "description": "Identifier of the environment where the deployment will occur."
+                    }
+                },
+                "required": [
+                    "serviceId",
+                    "environmentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Deployments",
+            "description": "Retrieve deployment history for a service within a given project and environment.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-deployments",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "deployments": [
+                        {
+                            "id": "dep_123",
+                            "status": "success"
+                        }
+                    ]
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Identifier of the service whose deployments are being retrieved."
+                    },
+                    "environmentId": {
+                        "type": "string",
+                        "description": "Identifier of the environment for the deployments."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "serviceId",
+                    "environmentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data.deployments"
+            }
+        },
+        {
+            "title": "Restart Deployment",
+            "description": "Restart an existing deployment using its deployment ID.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-deployments",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "deploymentRestart": {
+                        "success": true
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "deploymentId": {
+                        "type": "string",
+                        "description": "Identifier of the deployment to restart."
+                    }
+                },
+                "required": [
+                    "deploymentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Variables",
+            "description": "Retrieve all environment variables for a given service or shared environment.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-variables",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "variables": [
+                        {
+                            "key": "ENV_VAR",
+                            "value": "value"
+                        }
+                    ]
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "environmentId": {
+                        "type": "string",
+                        "description": "Identifier of the environment."
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Optional service identifier if variables are service-specific."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "environmentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data.variables"
+            }
+        },
+        {
+            "title": "Set Variable",
+            "description": "Create or update an environment variable for a specific service or environment.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-variables",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "variableUpsert": {
+                        "success": true
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "environmentId": {
+                        "type": "string",
+                        "description": "Identifier of the environment."
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Optional service identifier if the variable is service-specific."
+                    },
+                    "variableName": {
+                        "type": "string",
+                        "description": "Name/key of the environment variable."
+                    },
+                    "variableValue": {
+                        "type": "string",
+                        "description": "Value of the environment variable."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "environmentId",
+                    "variableName",
+                    "variableValue"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Variable",
+            "description": "Remove an environment variable from a service or environment.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-variables",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "variableDelete": {
+                        "success": true
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "environmentId": {
+                        "type": "string",
+                        "description": "Identifier of the environment."
+                    },
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Optional service identifier if the variable is service-specific."
+                    },
+                    "variableName": {
+                        "type": "string",
+                        "description": "Name/key of the environment variable to delete."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "environmentId",
+                    "variableName"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Environments",
+            "description": "Retrieve all environments within a specified project.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "project": {
+                        "environments": [
+                            {
+                                "id": "env_123",
+                                "name": "Production"
+                            }
+                        ]
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project whose environments are to be retrieved."
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data.project.environments"
+            }
+        },
+        {
+            "title": "Create Environment",
+            "description": "Create a new environment within a project.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "environmentCreate": {
+                        "environment": {
+                            "id": "env_124",
+                            "name": "Staging"
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the new environment."
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Service Status",
+            "description": "Retrieve current status, health, and resource usage metrics for a specific service.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-services",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "serviceStatus": {
+                        "status": "running",
+                        "metrics": {
+                            "cpu": "20%",
+                            "memory": "512MB"
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "serviceId": {
+                        "type": "string",
+                        "description": "Identifier of the service whose status is being retrieved."
+                    }
+                },
+                "required": [
+                    "serviceId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Project Usage",
+            "description": "Retrieve usage metrics and billing information for a project.",
+            "type": "action",
+            "documentation": "https://docs.railway.com/guides/manage-projects",
+            "endpointUrl": "https://backboard.railway.com/graphql/v2",
+            "apiBaseUrl": "https://backboard.railway.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "projectUsage": {
+                        "cpuHours": 150,
+                        "bandwidth": "20GB"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string",
+                        "description": "Identifier of the project."
+                    },
+                    "timeRange": {
+                        "type": "string",
+                        "description": "Optional time range for the usage metrics (e.g., last 30 days)."
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "https://railway.com/account/tokens",
+        "tokenUrl": "https://railway.com/account/tokens",
+        "profileInfoUrl": "https://backboard.railway.com/graphql/v2?query=query%20%7B%20me%20%7B%20id%2C%20email%2C%20name%20%7D%20%7D"
+    },
+    "serviceJson": {
+        "name": "railway",
+        "label": "Railway",
+        "category": "applications",
+        "description": "Integration service for Railway Cloud Platform to manage projects, services, deployments, and environment variables using their GraphQL API.",
+        "version": "1.0.0",
+        "icon": "https://railway.com/icon.svg"
+    }
+}
