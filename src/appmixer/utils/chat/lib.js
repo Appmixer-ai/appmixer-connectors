@@ -7,7 +7,7 @@ const page = (baseUrl, endpoint) => {
         <!DOCTYPE html>
         <html>
         <body>
-        <script type="module" type="module" src="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.bundle.js"></script>
+        <script type="module" src="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.bundle.js"></script>
         <script type="module">
         initLauncher({
             mode: 'fullscreen',
