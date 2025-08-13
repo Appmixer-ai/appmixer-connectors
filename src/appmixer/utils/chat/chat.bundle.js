@@ -13947,7 +13947,7 @@ function tm(e) {
   e.setAttribute("data-visible", String(!t));
 }
 typeof window < "u" && (window.initLauncher = em);
-// eslint-disable-next-line no-restricted-exports
+// eslint-disable-next-line
 export {
   em as initLauncher
 };
