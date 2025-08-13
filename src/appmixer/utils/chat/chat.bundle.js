@@ -1,3 +1,4 @@
+/* eslint-disable */
 var sl = Object.defineProperty;
 var al = (e, t, n) => t in e ? sl(e, t, { enumerable: !0, configurable: !0, writable: !0, value: n }) : e[t] = n;
 var Pu = (e, t, n) => al(e, typeof t != "symbol" ? t + "" : t, n);
@@ -13947,7 +13948,6 @@ function tm(e) {
   e.setAttribute("data-visible", String(!t));
 }
 typeof window < "u" && (window.initLauncher = em);
-// eslint-disable-next-line
 export {
   em as initLauncher
 };
