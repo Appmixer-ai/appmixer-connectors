@@ -8,6 +8,26 @@ const { WebClient } = require('@slack/web-api');
 // const slackConnectorVersion = require('./bundle.json').version;
 
 module.exports = {
+    /**
+     * Normalize multiselect input (array or string) to comma-separated string for Slack API.
+     * @param {string|string[]} input
+     * @param {number} maxItems
+     * @param {object} context
+     * @param {string} fieldName
+     * @returns {string}
+     */
+    normalizeMultiselectInput(input, maxItems = 8, context, fieldName) {
+        if (Array.isArray(input)) {
+            if (input.length > maxItems) {
+                throw new context.CancelError(`You can send a message to a maximum of ${maxItems} users at once`);
+            }
+            return input.join(',');
+        } else if (typeof input === 'string') {
+            return input;
+        } else {
+            throw new context.CancelError(`${fieldName} must be a string or an array`);
+        }
+    },
 
     /**
      * Send slack channel message.
