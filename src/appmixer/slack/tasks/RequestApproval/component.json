@@ -1,8 +1,8 @@
 {
     "name": "appmixer.slack.tasks.RequestApproval",
-    "version": "1.0.0",
-    "label": "Request Approval",
     "description": "Slack Task allows human approval inside workflows, with Slack user selection.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
     "webhook": true,
     "auth": {
         "service": "appmixer:slack",
@@ -52,7 +52,17 @@
                         "type": "text",
                         "label": "Requester (Slack user)",
                         "index": 3,
-                        "tooltip": "Select the Slack user who is the requester."
+                        "tooltip": "Select the Slack user who is the requester.",
+                        "source": {
+                            "url": "/component/appmixer/slack/list/ListUsers?outPort=out",
+                            "data": {
+                                "transform": "./transformers#usersToSelectArray",
+                                "messages": {
+                                    "in/outputType": "array",
+                                    "in/isSource": true
+                                }
+                            }
+                        }
                     },
                     "approver": {
                         "type": "text",
@@ -80,7 +90,16 @@
                         "type": "text",
                         "label": "Channel",
                         "index": 6,
-                        "tooltip": "Select the Slack channel where the approval request will be posted."
+                        "tooltip": "Select the Slack channel where the approval request will be posted.",
+                        "source": {
+                            "url": "/component/appmixer/slack/list/ListChannels?outPort=channels",
+                            "data": {
+                                "messages": {
+                                    "in/types": "private_channel,public_channel"
+                                },
+                                "transform": "ListChannels#channelsToSelectArray"
+                            }
+                        }
                     }
                 }
             }
