@@ -1,18 +1,27 @@
 
 'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
     async receive(context) {
 
-        const { conferenceRecord, transcript } = context.messages.in.content;
+        const { conferenceRecord, transcript } = context.messages.in.content || {};
+        if (!conferenceRecord) {
+            throw new context.CancelError('Conference record is required!');
+        }
+        if (!transcript) {
+            throw new context.CancelError('Transcript is required!');
+        }
+
+        const token = (context.auth && (context.auth.accessToken || context.auth.apiToken)) || context.accessToken;
+        if (!token) {
+            throw new context.CancelError('Missing access token.');
+        }
 
         // https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.transcripts/get
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: '/v2/conferenceRecords/{conferenceRecord}/transcripts/{transcript}',
+            url: `https://meet.googleapis.com/v2/conferenceRecords/${encodeURIComponent(conferenceRecord)}/transcripts/${encodeURIComponent(transcript)}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${token}`
             }
         });
 

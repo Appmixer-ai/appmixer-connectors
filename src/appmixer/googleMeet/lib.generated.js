@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'googleMeet-objects-export';

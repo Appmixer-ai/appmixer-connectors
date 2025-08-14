@@ -1,23 +1,37 @@
 
 'use strict';
-
-const lib = require('../../lib.generated');
 module.exports = {
-    async receive(context) {        
+    async receive(context) {
 
-        const { space|spaceType, space|config } = context.messages.in.content;
+        const content = context.messages.in?.content || {};
 
+        // Inputs can come flattened as "space|spaceType" and "space|config" from inspector.
+        const spaceType = content['space|spaceType'] || content.spaceType;
+        let config = content['space|config'] || content.config;
 
-        // https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/create
+        if (typeof config === 'string') {
+            try { config = JSON.parse(config); } catch (e) { /* keep as string if not JSON */ }
+        }
+
+        const token = (context.auth && (context.auth.accessToken || context.auth.apiToken)) || context.accessToken;
+        if (!token) {
+            throw new context.CancelError('Missing access token.');
+        }
+
+        // Build request body per API spec: https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/create
+        const body = {};
+        if (spaceType) body.spaceType = spaceType;
+        if (config) body.config = config;
+
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: '/v2/spaces',
+            url: 'https://meet.googleapis.com/v2/spaces',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${token}`
+            },
+            data: body
         });
-    
 
-return context.sendJson(data, 'out');
+        return context.sendJson(data, 'out');
     }
 };
