@@ -7,7 +7,7 @@ module.exports = {
 
     async receive(context) {
 
-        let { text, userIds } = context.messages.in.content;
+        let { text, userIds, username, iconUrl } = context.messages.in.content;
         if (userIds.length > 8) {
             throw new context.CancelError('You can send a message to a maximum of 8 users at once');
         }
@@ -23,7 +23,18 @@ module.exports = {
         }
 
         // Then, send the message to the channel.
-        const message = await lib.sendMessage(context, response.channel.id, text, false);
+        const options = {};
+        if (username) options.username = username;
+        if (iconUrl) options.iconUrl = iconUrl;
+        const message = await lib.sendMessage(
+            context,
+            response.channel.id,
+            text,
+            false,
+            undefined,
+            undefined,
+            options
+        );
 
         return context.sendJson(message, 'out');
     }

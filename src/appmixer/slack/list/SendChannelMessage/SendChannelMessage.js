@@ -9,10 +9,29 @@ const lib = require('../../lib');
 module.exports = {
 
     async receive(context) {
+        const {
+            channelId,
+            text,
+            asBot,
+            thread_ts,
+            reply_broadcast,
+            username,
+            iconUrl
+        } = context.messages.message.content;
 
-        const { channelId, text, asBot, thread_ts, reply_broadcast } = context.messages.message.content;
+        const options = {};
+        if (username) options.username = username;
+        if (iconUrl) options.iconUrl = iconUrl;
 
-        const message = await lib.sendMessage(context, channelId, text, asBot, thread_ts, reply_broadcast);
+        const message = await lib.sendMessage(
+            context,
+            channelId,
+            text,
+            asBot,
+            thread_ts,
+            reply_broadcast,
+            options
+        );
         return context.sendJson(message, 'newMessage');
     }
 };
