@@ -68,10 +68,8 @@ describe('SetVariable Component', function() {
             console.log('SetVariable result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            // The response should contain success and variable details
-            assert(typeof data.success === 'boolean', 'Expected success property to be a boolean');
-            assert(data.variableName === testVariableName, 'Expected variableName to match input');
-            assert(data.variableValue === testVariableValue, 'Expected variableValue to match input');
+            // Update operations should return empty object
+            assert(Object.keys(data).length === 0, 'Expected empty object for update operation');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -105,10 +103,8 @@ describe('SetVariable Component', function() {
             console.log('SetVariable (service-specific) result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            // The response should contain success and variable details
-            assert(typeof data.success === 'boolean', 'Expected success property to be a boolean');
-            assert(data.variableName === testVariableName, 'Expected variableName to match input');
-            assert(data.variableValue === testVariableValue, 'Expected variableValue to match input');
+            // Update operations should return empty object
+            assert(Object.keys(data).length === 0, 'Expected empty object for update operation');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -233,10 +229,8 @@ describe('SetVariable Component', function() {
             console.log('SetVariable (update) result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            // The response should contain success and variable details
-            assert(typeof data.success === 'boolean', 'Expected success property to be a boolean');
-            assert(data.variableName === testVariableName, 'Expected variableName to match input');
-            assert(data.variableValue === updatedValue, 'Expected variableValue to match updated input');
+            // Update operations should return empty object
+            assert(Object.keys(data).length === 0, 'Expected empty object for update operation');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');

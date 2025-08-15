@@ -58,7 +58,7 @@ module.exports = {
                     }
                 }
             `;
-            
+
             if (userId) variables.userId = userId;
             if (teamId) variables.teamId = teamId;
             extractPath = 'data.projects.edges';

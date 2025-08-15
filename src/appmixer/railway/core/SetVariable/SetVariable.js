@@ -59,11 +59,7 @@ module.exports = {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // Return the upsert result with variable details
-        return context.sendJson({
-            success: !!data.data.variableUpsert,
-            variableName: variableName,
-            variableValue: variableValue
-        }, 'out');
+        // Return empty object for update operations
+        return context.sendJson({}, 'out');
     }
 };

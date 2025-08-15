@@ -81,8 +81,8 @@ describe('DeleteVariable Component', function() {
             console.log('DeleteVariable result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            // The response should contain success boolean
-            assert(typeof data.success === 'boolean', 'Expected success property to be a boolean');
+            // Delete operations should return empty object
+            assert(Object.keys(data).length === 0, 'Expected empty object for delete operation');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -127,8 +127,8 @@ describe('DeleteVariable Component', function() {
             console.log('DeleteVariable (service-specific) result:', JSON.stringify(data, null, 2));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            // The response should contain success boolean
-            assert(typeof data.success === 'boolean', 'Expected success property to be a boolean');
+            // Delete operations should return empty object
+            assert(Object.keys(data).length === 0, 'Expected empty object for delete operation');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
