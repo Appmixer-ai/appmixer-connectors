@@ -64,8 +64,8 @@ module.exports = {
                 { type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }
             ] },
             { type: 'actions', elements: [
-                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'approve_task' },
-                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'reject_task' }
+                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'task_approve' },
+                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'task_reject' }
             ] }
         ];
         context.log({ step: 'blocks', blocks });

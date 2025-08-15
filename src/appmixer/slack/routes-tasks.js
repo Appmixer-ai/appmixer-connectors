@@ -101,8 +101,8 @@ module.exports = (context) => {
                                 { type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }
                             ] },
                             { type: 'actions', elements: [
-                                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'approve_task' },
-                                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'reject_task' }
+                                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'task_approve' },
+                                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'task_reject' }
                             ] }
                         ];
                         await slackLib.sendMessage(
@@ -169,22 +169,11 @@ module.exports = (context) => {
             auth: false,
             handler: async (req, h) => {
 
-                const result = {
-                    type: typeof req.payload,
-                    pType: typeof req.payload.payload,
-                    payload: req.payload,
-                    pPayload: req.payload.payload
-                };
-                context.log('info', 'slack-plugin-route-webhook-interaction', result);
                 // `req.payload` is a Buffer, so we need to parse it
                 const rawBody = req.payload.toString('utf8'); // raw buffer as string
-                context.log('info', 'slack-plugin-route-REQ-rawBody', { rawBody });
 
                 // Then parse the payload as query string
                 const parsed = querystring.parse(rawBody);
-                context.log('info', 'slack-plugin-route-REQ-parsed', { parsed });
-                const parsedJson = JSON.parse(parsed.payload);
-                context.log('info', 'slack-plugin-route-REQ-parsedJson', { parsedJson });
                 const payload = JSON.parse(parsed.payload);
                 context.log('info', 'slack-plugin-route-REQ-payload', { payload });
 
@@ -198,17 +187,10 @@ module.exports = (context) => {
                 const action = actions[0].action_id;
                 context.log('info', 'slack-plugin-route-interaction-action', { action, taskId });
 
-                // Edit the Slack message to show the new status by calling the responseUrl
-                if (responseUrl) {
-                    await context.httpRequest({
-                        method: 'POST',
-                        url: responseUrl,
-                        headers: { 'Content-type': 'application/json' },
-                        data: {
-                            replace_original: true,
-                            text: `Task ${taskId} has been ${action === 'approve_task' ? 'approved' : 'rejected'}.`
-                        }
-                    });
+                // Handle Task Approval actions
+                if (action.startsWith('task_')) {
+                    await handleTaskAction(context, h, action, taskId, payload, responseUrl);
+                    return h.response({ text: 'Action received' }).code(200);
                 }
 
                 return h.response({ text: 'Action received' }).code(200);
@@ -221,7 +203,6 @@ module.exports = (context) => {
         path: '/tasks/{taskId}/approve',
         options: {
             handler: async req => {
-                const slackUserId = req.query.slackUserId;
                 const task = await Task.findById(req.params.taskId);
                 // Optionally, add permission checks for Slack users here
                 if ([Task.STATUS_REJECTED, Task.STATUS_APPROVED].includes(task.getStatus())) {
@@ -256,7 +237,6 @@ module.exports = (context) => {
         path: '/tasks/{taskId}/reject',
         options: {
             handler: async req => {
-                const slackUserId = req.query.slackUserId;
                 const task = await Task.findById(req.params.taskId);
                 // Optionally, add permission checks for Slack users here
                 if ([Task.STATUS_REJECTED, Task.STATUS_APPROVED].includes(task.getStatus())) {
@@ -285,4 +265,43 @@ module.exports = (context) => {
             auth: false
         }
     });
+
+    async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
+        const task = await Task.findById(taskId);
+        if (!task) {
+            context.log('error', 'slack-plugin-route-interaction-task-not-found', { taskId });
+            return h.response({ text: 'Task not found' }).code(404);
+        }
+
+        if (action === 'task_approve') {
+            task.setStatus(Task.STATUS_APPROVED);
+            task.setDecisionMade(new Date());
+            await utils.triggerWebhooks(task);
+            context.log('info', 'slack-plugin-route-interaction-task-approved', { taskId });
+        } else if (action === 'task_reject') {
+            task.setStatus(Task.STATUS_REJECTED);
+            task.setDecisionMade(new Date());
+            await utils.triggerWebhooks(task);
+            context.log('info', 'slack-plugin-route-interaction-task-rejected', { taskId });
+        } else {
+            context.log('error', 'slack-plugin-route-interaction-unknown-action', { action });
+            return h.response({ text: 'Unknown action' }).code(400);
+        }
+
+        await task.save();
+
+        // Optionally send a response to the user
+        if (responseUrl) {
+            const responseMessage = {
+                text: `Task ${task.title || task.taskId} has been ${task.getStatus()}.`,
+                replace_original: true
+            };
+            await context.httpRequest({
+                method: 'POST',
+                url: responseUrl,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(responseMessage)
+            });
+        }
+    }
 };
