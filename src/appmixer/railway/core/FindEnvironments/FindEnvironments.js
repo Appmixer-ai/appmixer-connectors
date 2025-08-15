@@ -1,4 +1,3 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
@@ -59,6 +58,11 @@ module.exports = {
 
         // Extract environments from the response
         const environments = data.data?.project?.environments?.edges?.map(edge => edge.node) || [];
+
+        // If no environments found, send to notFound port
+        if (environments.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: environments, outputType });
     }

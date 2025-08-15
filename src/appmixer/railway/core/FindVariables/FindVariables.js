@@ -1,4 +1,3 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
@@ -68,6 +67,11 @@ module.exports = {
 
         // Extract variables from the response
         const variablesList = data.data?.variables || [];
+
+        // If no variables found, send to notFound port
+        if (variablesList.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: variablesList, outputType });
     }

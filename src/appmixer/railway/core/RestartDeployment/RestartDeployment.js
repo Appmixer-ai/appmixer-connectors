@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -38,9 +37,7 @@ module.exports = {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // Return the restart result
-        return context.sendJson({
-            success: data.data.deploymentRestart
-        }, 'out');
+        // Return empty object for restart operations
+        return context.sendJson({}, 'out');
     }
 };

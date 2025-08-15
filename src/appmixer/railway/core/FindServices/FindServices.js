@@ -1,4 +1,3 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
@@ -65,6 +64,11 @@ module.exports = {
 
         // Extract services from the response
         const services = data.data?.project?.services?.edges?.map(edge => edge.node) || [];
+
+        // If no services found, send to notFound port
+        if (services.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: services, outputType });
     }

@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -39,9 +38,7 @@ module.exports = {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // Return the deletion result
-        return context.sendJson({
-            success: data.data.serviceDelete
-        }, 'out');
+        // Return empty object for delete operations
+        return context.sendJson({}, 'out');
     }
 };

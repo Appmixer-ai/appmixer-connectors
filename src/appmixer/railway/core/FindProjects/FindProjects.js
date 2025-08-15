@@ -1,4 +1,3 @@
-
 'use strict';
 
 const lib = require('../../lib.generated');
@@ -19,29 +18,51 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data.projects.edges' });
         }
 
-        // GraphQL query based on provided sample
-        const query = `
-            query projects($userId: String!) {
-                projects(
-                    userId: $userId
-                ) {
-                    edges {
-                        node {
-                            id
-                            name
-                            createdAt
-                            updatedAt
-                            teamId
+        // GraphQL query selection based on input parameters
+        let query;
+        let variables = {};
+        let extractPath;
+
+        if (!userId && !teamId) {
+            // Case 1: No userId and no teamId - get authenticated user's projects
+            query = `
+                query me {
+                    me {
+                        projects {
+                            edges {
+                                node {
+                                    id
+                                    name
+                                    createdAt
+                                    updatedAt
+                                }
+                            }
                         }
                     }
                 }
-            }
-        `;
-
-        // Build variables object
-        const variables = {};
-        if (userId) variables.userId = userId;
-        if (teamId) variables.teamId = teamId;
+            `;
+            extractPath = 'data.me.projects.edges';
+        } else {
+            // Case 2: userId or teamId (or both) are provided
+            query = `
+                query projects($teamId: String, $userId: String) {
+                    projects(teamId: $teamId, userId: $userId) {
+                        edges {
+                            node {
+                                id
+                                name
+                                createdAt
+                                updatedAt
+                            }
+                        }
+                    }
+                }
+            `;
+            
+            if (userId) variables.userId = userId;
+            if (teamId) variables.teamId = teamId;
+            extractPath = 'data.projects.edges';
+        }
 
         // https://docs.railway.com/guides/manage-projects
         const { data } = await context.httpRequest({
@@ -61,8 +82,18 @@ module.exports = {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // Extract projects from the response
-        const projects = data.data?.projects?.edges?.map(edge => edge.node) || [];
+        // Extract projects from the response using the appropriate path
+        let projects = [];
+        if (extractPath === 'data.me.projects.edges') {
+            projects = data.data?.me?.projects?.edges?.map(edge => edge.node) || [];
+        } else {
+            projects = data.data?.projects?.edges?.map(edge => edge.node) || [];
+        }
+
+        // If no projects found, send to notFound port
+        if (projects.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: projects, outputType });
     }
