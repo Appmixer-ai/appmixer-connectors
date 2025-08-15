@@ -3,10 +3,10 @@
 module.exports = (context) => {
 
     const querystring = require('querystring');
-    const utils = require('./utils.js')(context);
-    const Task = require('./SlackTaskModel')(context);
-    const Webhook = require('./SlackWebhookModel')(context);
-    const { validateSlackSignature } = require('../routes');
+    const utils = require('./tasks/utils.js')(context);
+    const Task = require('./tasks/SlackTaskModel.js')(context);
+    const Webhook = require('./tasks/SlackWebhookModel.js')(context);
+    const slackLib = require('./lib.js');
 
     context.http.router.register({
         method: 'GET',
@@ -57,7 +57,7 @@ module.exports = (context) => {
         path: '/tasks/{taskId}',
         options: {
             handler: async req => {
-                const slackUserId = req.query.slackUserId;
+                // const slackUserId = req.query.slackUserId;
                 const task = await Task.findById(req.params.taskId);
                 // Optionally, add permission checks for Slack users here
                 return task.addIsApprover(slackUserId, req.query.secret).toJson();
@@ -74,12 +74,57 @@ module.exports = (context) => {
 
                 context.log('debug', 'slack-plugin-route-tasks-create', req.payload);
 
-                return new Task().populate({
+                const task = await new Task().populate({
                     ...req.payload,
                     status: Task.STATUS_PENDING,
                     decisionBy: new Date(req.payload.decisionBy),
                     created: new Date()
                 }).save();
+
+                // Notify approver in Slack on task creation (if channel provided)
+                try {
+                    const {
+                        channel,
+                        title,
+                        description,
+                        requester,
+                        approver,
+                        decisionBy,
+                        username,
+                        iconUrl
+                    } = req.payload || {};
+                    if (channel && title) {
+                        const blocks = [
+                            { type: 'section', text: { type: 'mrkdwn', text: `*${title}*\n${description || ''}` } },
+                            { type: 'context', elements: [
+                                { type: 'mrkdwn', text: `*Requester:* <@${requester}>   *Approver:* <@${approver}>` },
+                                { type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }
+                            ] },
+                            { type: 'actions', elements: [
+                                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'approve_task' },
+                                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'reject_task' }
+                            ] }
+                        ];
+                        await slackLib.sendMessage(
+                            context,
+                            channel,
+                            `${title}\n${description || ''}`,
+                            true,
+                            undefined,
+                            undefined,
+                            {
+                                blocks,
+                                ...(username ? { username } : {}),
+                                ...(iconUrl ? { iconUrl } : {})
+                            }
+                        );
+                    }
+                } catch (err) {
+                    // Do not fail task creation on Slack notification errors
+                    context.log('warn', 'slack-plugin-route-tasks-create-notify-error', { error: err?.message });
+                }
+
+                return task;
             },
             validate: {
                 payload: context.http.Joi.object({
@@ -117,7 +162,7 @@ module.exports = (context) => {
         path: '/interactions',
         options: {
             payload: {
-                parse: false, // changing this later won't propagate to the server!!
+                parse: false, // Changing this later won't propagate to the server
                 output: 'data',
                 allow: 'application/x-www-form-urlencoded'
             },
@@ -140,17 +185,18 @@ module.exports = (context) => {
                 context.log('info', 'slack-plugin-route-REQ-parsed', { parsed });
                 const parsedJson = JSON.parse(parsed.payload);
                 context.log('info', 'slack-plugin-route-REQ-parsedJson', { parsedJson });
-                // const payload = JSON.parse(parsed.payload);
+                const payload = JSON.parse(parsed.payload);
+                context.log('info', 'slack-plugin-route-REQ-payload', { payload });
 
                 // Validate Slack signature
-                const sigResult = validateSlackSignature(req, context);
-                if (!sigResult.valid) {
-                    return sigResult.response(h);
+                if (!slackLib.isValidPayload(context, req)) {
+                    return h.response(undefined).code(401);
                 }
 
-                const { actions, response_url: responseUrl } = parsed;
+                const { actions, response_url: responseUrl } = payload;
                 const taskId = actions[0].value;
                 const action = actions[0].action_id;
+                context.log('info', 'slack-plugin-route-interaction-action', { action, taskId });
 
                 // Edit the Slack message to show the new status by calling the responseUrl
                 if (responseUrl) {
@@ -171,59 +217,6 @@ module.exports = (context) => {
     });
 
     context.http.router.register({
-        method: 'POST',
-        path: '/test3',
-        options: {
-            auth: false,
-            payload: {
-                parse: false,
-                output: 'data',
-                allow: 'application/x-www-form-urlencoded'
-            },
-            handler: async (req, h) => {
-                return processTestPayload(context, req, h, 'test3');
-            }
-        }
-    });
-    context.http.router.register({
-        method: 'POST',
-        path: '/interaction2',
-        options: {
-            payload: {
-                parse: false,
-                output: 'data',
-                allow: 'application/x-www-form-urlencoded'
-            },
-            auth: false,
-            handler: async (req, h) => {
-
-                const result = {
-                    type: typeof req.payload,
-                    pType: typeof req.payload.payload,
-                    payload: req.payload,
-                    pPayload: req.payload.payload
-                };
-                context.log('info', 'slack-plugin-route-webhook-interaction', result);
-                // TODO: fix this, payload is a Buffer
-                return h.response(result).code(200);
-            }
-        }
-    });
-
-    function processTestPayload(context, req, h, testName) {
-        const result = {
-            testName,
-            type: typeof req.payload,
-            pType: typeof req.payload.payload,
-            payload: req.payload,
-            pPayload: req.payload.payload
-        };
-        // log the payload
-        context.log('info', 'slack-plugin-route-webhook-test-payload', result);
-        return h.response(result).code(200);
-    }
-
-    context.http.router.register({
         method: 'PUT',
         path: '/tasks/{taskId}/approve',
         options: {
@@ -237,6 +230,20 @@ module.exports = (context) => {
                 task.setStatus(Task.STATUS_APPROVED);
                 task.setDecisionMade(new Date());
                 await utils.triggerWebhooks(task);
+                // Notify in Slack about approval (best-effort, do not fail)
+                try {
+                    if (task.channel) {
+                        const text = `Task ${task.title || task.taskId} has been approved.`;
+                        await slackLib.sendMessage(
+                            context,
+                            task.channel,
+                            text,
+                            true
+                        );
+                    }
+                } catch (err) {
+                    context.log('warn', 'slack-plugin-route-tasks-approve-notify-error', { error: err?.message });
+                }
                 await task.save();
                 return task.toJson();
             },
@@ -258,6 +265,20 @@ module.exports = (context) => {
                 task.setStatus(Task.STATUS_REJECTED);
                 task.setDecisionMade(new Date());
                 await utils.triggerWebhooks(task);
+                // Notify in Slack about rejection (best-effort, do not fail)
+                try {
+                    if (task.channel) {
+                        const text = `Task ${task.title || task.taskId} has been rejected.`;
+                        await slackLib.sendMessage(
+                            context,
+                            task.channel,
+                            text,
+                            true
+                        );
+                    }
+                } catch (err) {
+                    context.log('warn', 'slack-plugin-route-tasks-reject-notify-error', { error: err?.message });
+                }
                 await task.save();
                 return task.toJson();
             },

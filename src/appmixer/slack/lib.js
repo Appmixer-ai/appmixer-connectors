@@ -4,6 +4,7 @@
 const pathModule = require('path');
 const Entities = require('html-entities').AllHtmlEntities;
 const { WebClient } = require('@slack/web-api');
+const { createHmac } = require('node:crypto');
 // TODO: Uncomment when https://github.com/clientIO/appmixer-core/issues/2889 is fixed
 // const slackConnectorVersion = require('./bundle.json').version;
 
@@ -117,5 +118,44 @@ module.exports = {
         } else {
             throw new context.CancelError('Unsupported outputType ' + outputType);
         }
+    },
+
+    isValidPayload(context, req) {
+
+        // Validates the payload with the Slack-signature hash
+        const slackSignature = req.headers['x-slack-signature'];
+        const signingSecret = context.config?.signingSecret;
+        if (!signingSecret) {
+            context.log('error', 'slack-plugin-route-webhook-event-missing-signingSecret');
+            return false;
+        }
+
+        // Handle two types of payload:
+        // 1. Buffer (raw body, as in /interactions)
+        // 2. Object (already parsed)
+        let payloadString;
+        if (Buffer.isBuffer(req.payload)) {
+            // Raw buffer, convert to string
+            payloadString = req.payload.toString('utf8');
+        } else if (typeof req.payload === 'string') {
+            // Already a string
+            payloadString = req.payload;
+        } else {
+            // Fallback: JSON stringified object
+            payloadString = JSON.stringify(req.payload)
+                .replace(/\//g, '\\/')
+                .replace(/[\u007f-\uffff]/g, (c) => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
+        }
+
+        const timestamp = req.headers['x-slack-request-timestamp'];
+        const baseString = `v0:${timestamp}:${payloadString}`;
+        const mySignature = 'v0=' + createHmac('sha256', signingSecret).update(baseString).digest('hex');
+
+        if (slackSignature !== mySignature) {
+            context.log('info', 'slack-plugin-route-webhook-event-invalid-signature', { config: context.config });
+            context.log('error', 'slack-plugin-route-webhook-event-invalid-signature', { slackSignature, mySignature, baseString, payloadString });
+            return false;
+        }
+        return true;
     }
 };

@@ -4,5 +4,5 @@ module.exports = async context => {
 
     require('./routes')(context);
 
-    require('./tasks/routes.js')(context);
+    require('./routes-tasks.js')(context);
 };

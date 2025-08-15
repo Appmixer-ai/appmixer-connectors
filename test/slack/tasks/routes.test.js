@@ -105,7 +105,7 @@ describe('Slack Tasks routes', () => {
         };
 
         // Load and register routes
-        routes = require('../../../src/appmixer/slack/tasks/routes.js');
+        routes = require('../../../src/appmixer/slack/routes-tasks.js');
         await routes(context);
 
         // Helper to fetch handler
