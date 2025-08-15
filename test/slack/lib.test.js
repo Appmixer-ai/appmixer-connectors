@@ -27,6 +27,31 @@ require.cache[require.resolve('@slack/web-api')].exports = {
 const { sendMessage } = require('../../src/appmixer/slack/lib.js');
 
 describe('lib.js', () => {
+    describe('normalizeMultiselectInput', () => {
+        const context = { CancelError: class CancelError extends Error {} };
+
+        it('should join array of userIds', () => {
+            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1', 'U2', 'U3'], 8, context, 'userIds');
+            assert.strictEqual(result, 'U1,U2,U3');
+        });
+
+        it('should return string userId as is', () => {
+            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput('U1', 8, context, 'userIds');
+            assert.strictEqual(result, 'U1');
+        });
+
+        it('should throw if array exceeds maxItems', () => {
+            assert.throws(() => {
+                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1','U2','U3','U4','U5','U6','U7','U8','U9'], 8, context, 'userIds');
+            }, context.CancelError);
+        });
+
+        it('should throw if input is not array or string', () => {
+            assert.throws(() => {
+                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(123, 8, context, 'userIds');
+            }, context.CancelError);
+        });
+    });
 
     describe('sendMessage - asBot', () => {
 

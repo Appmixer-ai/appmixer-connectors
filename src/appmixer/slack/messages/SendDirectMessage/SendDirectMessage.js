@@ -8,10 +8,7 @@ module.exports = {
     async receive(context) {
 
         let { text, userIds } = context.messages.in.content;
-        if (userIds.length > 8) {
-            throw new context.CancelError('You can send a message to a maximum of 8 users at once');
-        }
-        let ids = userIds?.join(',');
+        const ids = lib.normalizeMultiselectInput(userIds, 8, context, 'userIds');
 
         // First, open a conversation with the user(s). It will return the channel ID.
         const web = new WebClient(context.auth.accessToken);
@@ -28,4 +25,3 @@ module.exports = {
         return context.sendJson(message, 'out');
     }
 };
-
