@@ -83,10 +83,14 @@ describe('Slack RequestApproval', () => {
                 assert.strictEqual(sendJsonArgs[2], undefined, 'sendJson should be called with no third argument');
 
                 assert.equal(slackLib.sendMessage.callCount, 1, 'sendMessage should be called once');
-                assert.deepStrictEqual(slackLib.sendMessage.getCall(0).args[0], context, 'sendMessage should be called with the correct context');
-                assert.deepStrictEqual(slackLib.sendMessage.getCall(0).args[1], {
-                    channelId: 'C123',
-                    text: 'Test Title\nTest Description',
+                const callArgs = slackLib.sendMessage.getCall(0).args;
+                assert.deepStrictEqual(callArgs[0], context, 'sendMessage should be called with the correct context');
+                assert.strictEqual(callArgs[1], 'C123', 'sendMessage should be called with the correct channel');
+                assert.strictEqual(callArgs[2], 'Test Title\nTest Description', 'sendMessage should be called with the correct text');
+                assert.strictEqual(callArgs[3], true, 'sendMessage should be called as bot');
+                assert.strictEqual(callArgs[4], undefined, 'thread_ts should be undefined');
+                assert.strictEqual(callArgs[5], undefined, 'reply_broadcast should be undefined');
+                assert.deepStrictEqual(callArgs[6], {
                     blocks: [
                         { type: 'section', text: { type: 'mrkdwn', text: '*Test Title*\nTest Description' } },
                         { type: 'context', elements: [
@@ -97,9 +101,8 @@ describe('Slack RequestApproval', () => {
                             { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: 'T123', action_id: 'approve_task' },
                             { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: 'T123', action_id: 'reject_task' }
                         ] }
-                    ],
-                    asBot: true
-                }, 'sendMessage should be called with the correct arguments');
+                    ]
+                }, 'sendMessage should be called with the correct options');
 
                 // Call to Appmixer to create the webhook
                 assert.deepStrictEqual(context.callAppmixer.secondCall.args[0], {
