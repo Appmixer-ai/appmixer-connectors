@@ -3,7 +3,7 @@
 const lib = require('../../lib.generated');
 const schema = {
     'id': { 'type': 'string', 'title': 'Environment Id' },
-    'name': { 'type': 'string', 'title': 'Name' }
+    'name': { 'type': 'string', 'title': 'Environment Name' }
 };
 
 module.exports = {

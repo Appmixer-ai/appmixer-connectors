@@ -4,7 +4,7 @@ const lib = require('../../lib.generated');
 const schema = {
     id: {
         type: 'string',
-        title: 'Id'
+        title: 'Team Id'
     },
     createdAt: {
         type: 'string',
