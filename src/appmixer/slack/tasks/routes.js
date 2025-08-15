@@ -87,7 +87,7 @@ module.exports = (context) => {
                     description: context.http.Joi.string(),
                     requester: context.http.Joi.string().required(), // Slack user ID
                     approver: context.http.Joi.string().required(), // Slack user ID
-                    channel: context.http.Joi.string(),
+                    channel: context.http.Joi.string().required(), // Slack channel ID
                     decisionBy: context.http.Joi.date().iso()
                 })
             }
@@ -148,7 +148,7 @@ module.exports = (context) => {
                     return sigResult.response(h);
                 }
 
-                const { actions, channel, user, response_url: responseUrl } = parsed;
+                const { actions, response_url: responseUrl } = parsed;
                 const taskId = actions[0].value;
                 const action = actions[0].action_id;
 
