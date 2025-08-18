@@ -4,6 +4,10 @@ module.exports = {
     async receive(context) {
         const { groupId } = context.messages.in.content;
 
+        if (!groupId) {
+            throw new context.CancelError('Contact Group ID is required!');
+        }
+
         // https://developers.google.com/people/api/rest/v1/contactGroups/delete
         const { data } = await context.httpRequest({
             method: 'DELETE',

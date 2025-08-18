@@ -7,8 +7,12 @@ module.exports = {
     async receive(context) {
         const { query, outputType } = context.messages.in.content;
 
+        if (!query) {
+            throw new context.CancelError('Query is required!');
+        }
+
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'results', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'Directory Contacts', value: 'result' });
         }
 
         // https://developers.google.com/people/api/rest/v1/people/searchDirectoryPeople
