@@ -20,7 +20,7 @@ module.exports = {
         }
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data.variables' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Variables' });
         }
 
         // GraphQL query based on provided sample

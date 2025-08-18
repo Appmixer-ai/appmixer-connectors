@@ -15,7 +15,7 @@ module.exports = {
         const { userId, teamId, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data.projects.edges' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Projects' });
         }
 
         // GraphQL query selection based on input parameters

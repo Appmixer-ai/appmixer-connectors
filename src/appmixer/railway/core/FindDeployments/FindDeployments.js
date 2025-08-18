@@ -17,7 +17,7 @@ module.exports = {
         }
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data.deployments' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Deployments' });
         }
 
         // Build the GraphQL query based on Railway's API
