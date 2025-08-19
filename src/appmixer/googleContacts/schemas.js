@@ -59,10 +59,10 @@ const otherPersonSchema = {
                                 id: { type: 'string', title: 'Email Addresses.Source.ID' }
                             }
                         },
-                        sourcePrimary: { type: 'boolean', title: 'Email Addresses.Source Primary' },
+                        sourcePrimary: { type: 'boolean', title: 'Email Addresses.Source Primary' }
                     }
                 },
-                value: { type: 'string', title: 'Email Addresses.Value' },
+                value: { type: 'string', title: 'Email Addresses.Value' }
             }
         }
     }
