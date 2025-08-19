@@ -21,7 +21,6 @@ module.exports = {
         // GraphQL query selection based on input parameters
         let query;
         let variables = {};
-        let extractPath;
 
         if (teamId) {
             // Case 1: teamId provided - get team projects
@@ -41,7 +40,6 @@ module.exports = {
                 }
             `;
             variables.teamId = teamId;
-            extractPath = 'data.projects.edges';
         } else if (userId) {
             // Case 2: userId provided - get user projects
             query = `
@@ -59,7 +57,6 @@ module.exports = {
                 }
             `;
             variables.userId = userId;
-            extractPath = 'data.projects.edges';
         } else {
             throw new Error('Either userId or teamId must be provided');
         }
