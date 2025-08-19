@@ -2,7 +2,15 @@
 
 module.exports = {
     async receive(context) {
-        const { contactId } = context.messages.in.content;
+        let { contactId } = context.messages.in.content;
+
+        if (!contactId) {
+            throw new context.CancelError('Contact ID is required!');
+        }
+        // Accept either raw id (c123...) or resource name (people/c123...)
+        if (typeof contactId === 'string' && contactId.startsWith('people/')) {
+            contactId = contactId.split('/')[1];
+        }
 
         // https://developers.google.com/people/api/rest/v1/people/get
         const { data } = await context.httpRequest({
