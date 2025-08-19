@@ -4,6 +4,10 @@ module.exports = {
     async receive(context) {
         const { firstName, familyName, emails, phones, notes } = context.messages.in.content;
 
+        if (!firstName) {
+            throw new context.CancelError('First name is required!');
+        }
+
         const emailAddresses = emails?.ADD.map(email => ({
             value: email.value,
             displayName: email.displayName ?? undefined,

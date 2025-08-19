@@ -1,14 +1,14 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const { personSchema } = require('../../schemas');
+const { otherPersonSchema } = require('../../schemas');
 
 module.exports = {
     async receive(context) {
         const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'Other Contacts', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, otherPersonSchema, { label: 'Other Contacts', value: 'result' });
         }
 
         // https://developers.google.com/people/api/rest/v1/otherContacts/list
@@ -24,18 +24,14 @@ module.exports = {
         });
 
         let records = [];
-        if (Array.isArray(data.contactGroup) && data.contactGroups?.length) {
+        if (Array.isArray(data.otherContacts) && data.otherContacts?.length) {
             records = data.otherContacts.map((contact) => {
                 return {
                     id: contact.resourceName.split('/')[1],
                     etag: contact.etag,
                     updateTime: contact.metadata.sources[0].updateTime,
-                    displayName: contact.names[0].displayName,
-                    givenName: contact.names[0].givenName,
-                    displayNameLastFirst: contact.names[0].displayNameLastFirst,
-                    unstructuredName: contact.names[0].unstructuredName,
                     photoUrl: contact.photos[0].url,
-                    memberships: contact.memberships
+                    emailAddresses: contact.emailAddresses
                 };
             });
         }
