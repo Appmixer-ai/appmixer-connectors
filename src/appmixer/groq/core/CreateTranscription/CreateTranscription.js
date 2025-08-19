@@ -9,7 +9,6 @@ module.exports = {
             file,
             language,
             prompt,
-            responseFormat,
             temperature
         } = context.messages.in.content;
 
@@ -26,7 +25,6 @@ module.exports = {
 
         if (language) form.append('language', language);
         if (prompt) form.append('prompt', prompt);
-        if (responseFormat) form.append('response_format', responseFormat);
         if (temperature !== undefined) form.append('temperature', temperature.toString());
 
         const response = await context.httpRequest({
@@ -39,13 +37,6 @@ module.exports = {
             data: form
         });
 
-        // Handle different response formats
-        if (responseFormat === 'text') {
-            // For text format, the response is plain text, wrap it in an object
-            return context.sendJson({ text: response.data }, 'out');
-        } else {
-            // For other formats (json, verbose_json, etc.), return the response as-is
-            return context.sendJson(response.data, 'out');
-        }
+        return context.sendJson(response.data, 'out');
     }
 };
