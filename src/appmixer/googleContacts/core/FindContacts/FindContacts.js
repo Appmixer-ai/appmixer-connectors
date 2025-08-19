@@ -7,8 +7,12 @@ module.exports = {
     async receive(context) {
         const { query, outputType } = context.messages.in.content;
 
+        if (!query) {
+            throw new context.CancelError('Query is required!');
+        }
+
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'results', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, personSchema, { label: 'Contacts', value: 'result' });
         }
 
         // https://developers.google.com/people/api/rest/v1/people/searchContacts
@@ -33,12 +37,12 @@ module.exports = {
             return {
                 id: contact.person.resourceName.split('/')[1],
                 etag: contact.person.etag,
-                updateTime: contact.person.metadata.sources[0].updateTime,
-                displayName: contact.person.names[0].displayName,
-                givenName: contact.person.names[0].givenName,
-                displayNameLastFirst: contact.person.names[0].displayNameLastFirst,
-                unstructuredName: contact.person.names[0].unstructuredName,
-                photoUrl: contact.person.photos[0].url,
+                updateTime: contact.person.metadata?.sources?.[0]?.updateTime || undefined,
+                displayName: contact.person.names?.[0]?.displayName || undefined,
+                givenName: contact.person.names?.[0]?.givenName || undefined,
+                displayNameLastFirst: contact.person.names?.[0]?.displayNameLastFirst || undefined,
+                unstructuredName: contact.person.names?.[0]?.unstructuredName || undefined,
+                photoUrl: contact.person.photos?.[0]?.url || undefined,
                 memberships: contact.person.memberships
             };
         });
