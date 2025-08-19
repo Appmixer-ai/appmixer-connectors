@@ -5,6 +5,14 @@ module.exports = {
 
         const { method, url, headers, body } = context.messages.in.content;
 
+        // Validate required inputs
+        if (!method) {
+            throw new context.CancelError('Method is required!');
+        }
+        if (!url) {
+            throw new context.CancelError('URL is required!');
+        }
+
         // https://console.groq.com/docs/api-reference#api-call
         const { data } = await context.httpRequest({
             method: method,

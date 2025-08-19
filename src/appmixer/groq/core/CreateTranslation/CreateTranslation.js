@@ -12,6 +12,14 @@ module.exports = {
             temperature
         } = context.messages.in.content;
 
+        // Validate required inputs
+        if (!model) {
+            throw new context.CancelError('Model is required!');
+        }
+        if (!file) {
+            throw new context.CancelError('File is required!');
+        }
+
         const fileStream = await context.getFileReadStream(file);
         const fileInfo = await context.getFileInfo(file);
 

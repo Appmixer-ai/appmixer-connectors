@@ -14,6 +14,14 @@ module.exports = {
             topP
         } = context.messages.in.content;
 
+        // Validate required inputs
+        if (!model) {
+            throw new context.CancelError('Model is required!');
+        }
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required!');
+        }
+
         let messages = [];
 
         // Include instructions if provided

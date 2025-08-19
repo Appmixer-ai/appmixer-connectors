@@ -4,6 +4,7 @@ const FormData = require('form-data');
 
 module.exports = {
     async receive(context) {
+
         const {
             model,
             file,
@@ -11,6 +12,11 @@ module.exports = {
             prompt,
             temperature
         } = context.messages.in.content;
+
+        // Validate required inputs
+        if (!file) {
+            throw new context.CancelError('File is required!');
+        }
 
         const fileStream = await context.getFileReadStream(file);
         const fileInfo = await context.getFileInfo(file);
