@@ -23,30 +23,30 @@ module.exports = {
         let variables = {};
         let extractPath;
 
-        if (!userId && !teamId) {
-            // Case 1: No userId and no teamId - get authenticated user's projects
+        if (teamId) {
+            // Case 1: teamId provided - get team projects
             query = `
-                query me {
-                    me {
-                        projects {
-                            edges {
-                                node {
-                                    id
-                                    name
-                                    createdAt
-                                    updatedAt
-                                }
+                query projects($teamId: String!) {
+                    projects(teamId: $teamId) {
+                        edges {
+                            node {
+                                id
+                                name
+                                createdAt
+                                updatedAt
+                                teamId
                             }
                         }
                     }
                 }
             `;
-            extractPath = 'data.me.projects.edges';
-        } else {
-            // Case 2: userId or teamId (or both) are provided
+            variables.teamId = teamId;
+            extractPath = 'data.projects.edges';
+        } else if (userId) {
+            // Case 2: userId provided - get user projects
             query = `
-                query projects($teamId: String, $userId: String) {
-                    projects(teamId: $teamId, userId: $userId) {
+                query projects($userId: String!) {
+                    projects(userId: $userId) {
                         edges {
                             node {
                                 id
@@ -58,10 +58,10 @@ module.exports = {
                     }
                 }
             `;
-
-            if (userId) variables.userId = userId;
-            if (teamId) variables.teamId = teamId;
+            variables.userId = userId;
             extractPath = 'data.projects.edges';
+        } else {
+            throw new Error('Either userId or teamId must be provided');
         }
 
         // https://docs.railway.com/guides/manage-projects
@@ -77,23 +77,8 @@ module.exports = {
             }
         });
 
-        // Check for GraphQL errors
-        if (data.errors) {
-            throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
-        }
-
-        // Extract projects from the response using the appropriate path
-        let projects = [];
-        if (extractPath === 'data.me.projects.edges') {
-            projects = data.data?.me?.projects?.edges?.map(edge => edge.node) || [];
-        } else {
-            projects = data.data?.projects?.edges?.map(edge => edge.node) || [];
-        }
-
-        // If no projects found, send to notFound port
-        if (projects.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
+        // Extract projects from the response
+        const projects = data.data?.projects?.edges?.map(edge => edge.node) || [];
 
         return lib.sendArrayOutput({ context, records: projects, outputType });
     }
