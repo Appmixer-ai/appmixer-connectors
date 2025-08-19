@@ -37,6 +37,13 @@ module.exports = {
             data: form
         });
 
-        return context.sendJson(response.data, 'out');
+        // Handle different response formats
+        if (responseFormat === 'text') {
+            // For text format, the response is plain text, wrap it in an object
+            return context.sendJson({ text: response.data }, 'out');
+        } else {
+            // For other formats (json, verbose_json, etc.), return the response as-is
+            return context.sendJson(response.data, 'out');
+        }
     }
 };
