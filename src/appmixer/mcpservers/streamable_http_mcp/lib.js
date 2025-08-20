@@ -23,12 +23,9 @@ module.exports = {
                 }
             }
         );
-        transport.onclose = async () => {
-            await client.close();
-        };
-        transport.onerror = async (err) => {
+
+        transport.onerror = (err) => {
             context.log({ step: 'error', error: err });
-            await client.close();
         };
 
         await client.connect(transport);
