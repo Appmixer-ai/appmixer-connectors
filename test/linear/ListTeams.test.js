@@ -12,23 +12,23 @@ const ListTeams = require('../../src/appmixer/linear/core/ListTeams/ListTeams');
 // Mock context
 const createMockContext = (auth, messages = {}) => {
     return {
-        auth, 
-        messages, 
-        properties: {}, 
+        auth,
+        messages,
+        properties: {},
         httpRequest: async (options) => {
             const response = await axios({
-                method: options.method || 'GET', 
-                url: options.url, 
-                headers: options.headers, 
+                method: options.method || 'GET',
+                url: options.url,
+                headers: options.headers,
                 data: options.data
             });
 
             return {
-                data: response.data, 
-                status: response.status, 
+                data: response.data,
+                status: response.status,
                 headers: response.headers
             };
-        }, 
+        },
         sendJson: (data, port) => {
             return { data, port };
         },
@@ -71,7 +71,7 @@ describe('ListTeams Component', () => {
             assert(team.id, 'Team should have id');
             assert(team.name, 'Team should have name');
             assert(team.key, 'Team should have key');
-            assert(typeof team.memberCount, 'number', 'Team should have memberCount');
+            assert.strictEqual(typeof team.memberCount, 'number', 'Team should have memberCount');
         }
 
         console.log('✅ Listed teams:', result.data.count);
@@ -111,7 +111,7 @@ describe('ListTeams Component', () => {
         const result = await ListTeams.receive(context);
 
         assert(result, 'Result should be defined');
-        
+
         if (result.port === 'notFound') {
             console.log('No teams found for object output type test');
             return;
@@ -122,8 +122,8 @@ describe('ListTeams Component', () => {
         assert(result.data.id, 'Team should have id');
         assert(result.data.name, 'Team should have name');
         assert(result.data.key, 'Team should have key');
-        assert(typeof result.data.index, 'number', 'Should have index');
-        assert(typeof result.data.count, 'number', 'Should have count');
+        assert.strictEqual(typeof result.data.index, 'number', 'Should have index');
+        assert.strictEqual(typeof result.data.count, 'number', 'Should have count');
     });
 
     it('should handle first output type', async () => {
@@ -141,7 +141,7 @@ describe('ListTeams Component', () => {
         const result = await ListTeams.receive(context);
 
         assert(result, 'Result should be defined');
-        
+
         if (result.port === 'notFound') {
             console.log('No teams found for first output type test');
             return;
@@ -153,7 +153,7 @@ describe('ListTeams Component', () => {
         assert(result.data.name, 'Team should have name');
         assert(result.data.key, 'Team should have key');
         assert.strictEqual(result.data.index, 0, 'Should have index 0 for first item');
-        assert(typeof result.data.count, 'number', 'Should have count');
+        assert.strictEqual(typeof result.data.count, 'number', 'Should have count');
     });
 
     it('should handle generateOutputPortOptions', async () => {
@@ -175,7 +175,7 @@ describe('ListTeams Component', () => {
         assert(result, 'Result should be defined');
         assert.strictEqual(result.port, 'out', 'Should send to out port');
         assert(Array.isArray(result.data), 'Result should be an array of options');
-        
+
         const countOption = result.data.find(option => option.value === 'count');
         assert(countOption, 'Should have count option');
         assert.strictEqual(countOption.label, 'Items Count', 'Count option should have correct label');
