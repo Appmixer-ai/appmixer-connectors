@@ -25,14 +25,14 @@ module.exports = {
         });
 
         const betterResponse = {
-            id: data.resourceName.split('/')[1],
+            id: data.resourceName.split('/')[1] || data.resourceName,
             etag: data.etag,
-            updateTime: data.metadata.sources[0].updateTime,
-            displayName: data.names[0].displayName,
-            givenName: data.names[0].givenName,
-            displayNameLastFirst: data.names[0].displayNameLastFirst,
-            unstructuredName: data.names[0].unstructuredName,
-            photoUrl: data.photos[0].url,
+            updateTime: data.metadata?.sources?.[0]?.updateTime || undefined,
+            displayName: data.names?.[0]?.displayName || undefined,
+            givenName: data.names?.[0]?.givenName || undefined,
+            displayNameLastFirst: data.names?.[0]?.displayNameLastFirst || undefined,
+            unstructuredName: data.names?.[0]?.unstructuredName || undefined,
+            photoUrl: data.photos?.[0]?.url || undefined,
             memberships: data.memberships
         };
 

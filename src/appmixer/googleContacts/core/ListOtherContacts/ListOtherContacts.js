@@ -27,10 +27,10 @@ module.exports = {
         if (Array.isArray(data.otherContacts) && data.otherContacts?.length) {
             records = data.otherContacts.map((contact) => {
                 return {
-                    id: contact.resourceName.split('/')[1],
+                    id: contact.resourceName.split('/')[1] || contact.resourceName,
                     etag: contact.etag,
-                    updateTime: contact.metadata.sources[0].updateTime,
-                    photoUrl: contact.photos[0].url,
+                    updateTime: contact.metadata?.sources?.[0]?.updateTime || undefined,
+                    photoUrl: contact.photos?.[0]?.url || undefined,
                     emailAddresses: contact.emailAddresses
                 };
             });

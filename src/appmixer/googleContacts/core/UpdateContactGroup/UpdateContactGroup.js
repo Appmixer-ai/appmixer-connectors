@@ -33,9 +33,9 @@ module.exports = {
         });
 
         const betterResponse = {
-            id: data.resourceName.split('/')[1],
+            id: data.resourceName.split('/')[1] || data.resourceName,
             etag: data.etag,
-            updateTime: data.metadata.updateTime,
+            updateTime: data.metadata?.updateTime,
             groupType: data.groupType,
             name: data.name,
             formattedName: data.formattedName
