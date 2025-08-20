@@ -57,9 +57,9 @@ describe('GetAthleteStats Component', function() {
             data = output;
         };
 
-        // Use a test athlete ID - this will fail with 401 if token is expired
+        // Use the current authenticated user's athlete ID
         context.messages.in.content = {
-            athleteId: 12345 // Example athlete ID
+            athleteId: 181540540 // Current user's athlete ID from GetLoggedInAthlete test
         };
 
         try {

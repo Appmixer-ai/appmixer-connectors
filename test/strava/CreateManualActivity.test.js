@@ -47,11 +47,15 @@ describe('CreateManualActivity Component', function() {
             data = output;
         };
 
+        // Use dynamic timestamp to avoid conflicts
+        const timestamp = new Date().toISOString();
+        const uniqueName = `Test Run Activity ${Date.now()}`;
+
         context.messages.in.content = {
-            name: 'Test Run Activity',
-            sport_type: 'Run',
-            start_date_local: '2024-08-20T10:00:00Z',
-            elapsed_time: 3600, // 1 hour in seconds
+            name: uniqueName,
+            sportType: 'Run',
+            startDateLocal: timestamp,
+            elapsedTime: 3600, // 1 hour in seconds
             description: 'Test activity created by Appmixer',
             distance: 5000 // 5km in meters
         };
@@ -65,8 +69,8 @@ describe('CreateManualActivity Component', function() {
             assert(data.id, 'Expected activity to have id property');
             assert.strictEqual(typeof data.id, 'number', 'Expected activity ID to be a number');
             assert.strictEqual(data.name, context.messages.in.content.name, 'Expected activity name to match');
-            assert.strictEqual(data.sport_type, context.messages.in.content.sport_type, 'Expected sport type to match');
-            assert.strictEqual(data.elapsed_time, context.messages.in.content.elapsed_time, 'Expected elapsed time to match');
+            assert.strictEqual(data.sport_type, context.messages.in.content.sportType, 'Expected sport type to match');
+            assert.strictEqual(data.elapsed_time, context.messages.in.content.elapsedTime, 'Expected elapsed time to match');
             assert.strictEqual(data.manual, true, 'Expected activity to be marked as manual');
 
             console.log('✅ Successfully created activity with ID:', data.id);
@@ -84,7 +88,7 @@ describe('CreateManualActivity Component', function() {
     it('should fail when required fields are missing', async function() {
         context.messages.in.content = {
             name: 'Test Activity'
-            // Missing sport_type, start_date_local, elapsed_time
+            // Missing sportType, startDateLocal, elapsedTime
         };
 
         try {
@@ -92,7 +96,7 @@ describe('CreateManualActivity Component', function() {
             assert.fail('Expected error for missing required fields');
         } catch (error) {
             assert(error instanceof context.CancelError, 'Expected CancelError');
-            assert(error.message.includes('Sport Type is required'), 'Expected error message about sport_type');
+            assert(error.message.includes('Sport Type is required'), 'Expected error message about sportType');
             console.log('✅ Correctly failed with missing required fields:', error.message);
         }
     });
@@ -103,11 +107,16 @@ describe('CreateManualActivity Component', function() {
             data = output;
         };
 
+        // Use dynamic timestamp and unique name to avoid conflicts
+        // Add some time offset to make it different from previous test
+        const timestamp = new Date(Date.now() + 3600000).toISOString(); // 1 hour later
+        const uniqueName = `Minimal Test Activity ${Date.now()}`;
+
         context.messages.in.content = {
-            name: 'Minimal Test Activity',
-            sport_type: 'Walk',
-            start_date_local: '2024-08-20T12:00:00Z',
-            elapsed_time: 1800 // 30 minutes
+            name: uniqueName,
+            sportType: 'Walk',
+            startDateLocal: timestamp,
+            elapsedTime: 1800 // 30 minutes
         };
 
         try {
@@ -116,7 +125,7 @@ describe('CreateManualActivity Component', function() {
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(data.id, 'Expected activity to have id property');
             assert.strictEqual(data.name, context.messages.in.content.name, 'Expected activity name to match');
-            assert.strictEqual(data.sport_type, context.messages.in.content.sport_type, 'Expected sport type to match');
+            assert.strictEqual(data.sport_type, context.messages.in.content.sportType, 'Expected sport type to match');
             assert.strictEqual(data.manual, true, 'Expected activity to be marked as manual');
 
             console.log('✅ Successfully created minimal activity with ID:', data.id);
