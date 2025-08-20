@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -6,7 +5,6 @@ module.exports = {
 
         const { 
             name, 
-            type, 
             sport_type, 
             start_date_local, 
             elapsed_time, 
@@ -16,7 +14,7 @@ module.exports = {
             commute 
         } = context.messages.in.content;
 
-        // Validate required fields
+        // Validate required fields based on Strava API documentation
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
@@ -39,9 +37,6 @@ module.exports = {
         };
 
         // Add optional fields if provided
-        if (type) {
-            formData.type = type;
-        }
         if (description) {
             formData.description = description;
         }
@@ -55,13 +50,14 @@ module.exports = {
             formData.commute = commute;
         }
 
+        // Create manual activity using Strava API
         // https://developers.strava.com/docs/reference/#api-Activities-createActivity
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://www.strava.com/api/v3/activities',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             },
             data: formData
         });
