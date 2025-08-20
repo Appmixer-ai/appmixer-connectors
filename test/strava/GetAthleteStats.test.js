@@ -14,7 +14,7 @@ describe('GetAthleteStats Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetAthleteStats = require(path.join(__dirname, '../../src/appmixer/strava/core/GetAthleteStats/GetAthleteStats.js'));
 
@@ -68,7 +68,7 @@ describe('GetAthleteStats Component', function() {
             console.log('GetAthleteStats result keys:', Object.keys(data));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            
+
             // Check for typical stats properties
             const expectedFields = ['recent_run_totals', 'all_run_totals', 'recent_ride_totals', 'all_ride_totals'];
             for (const field of expectedFields) {

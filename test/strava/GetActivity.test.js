@@ -14,7 +14,7 @@ describe('GetActivity Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetActivity = require(path.join(__dirname, '../../src/appmixer/strava/core/GetActivity/GetActivity.js'));
 
@@ -70,7 +70,7 @@ describe('GetActivity Component', function() {
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(data.id, 'Expected activity to have id property');
             assert.strictEqual(typeof data.id, 'number', 'Expected activity ID to be a number');
-            
+
             // Check for typical activity properties
             const expectedFields = ['id', 'name', 'type', 'sport_type', 'distance'];
             for (const field of expectedFields) {

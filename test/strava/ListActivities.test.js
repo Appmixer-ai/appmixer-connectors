@@ -14,7 +14,7 @@ describe('ListActivities Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         ListActivities = require(path.join(__dirname, '../../src/appmixer/strava/core/ListActivities/ListActivities.js'));
 
@@ -64,7 +64,7 @@ describe('ListActivities Component', function() {
                 const activity = data.result[0];
                 assert(activity.id, 'Expected activity to have id property');
                 assert(activity.name, 'Expected activity to have name property');
-                
+
                 console.log(`✅ Found ${data.result.length} activities`);
                 console.log('Sample activity:', {
                     id: activity.id,
@@ -102,7 +102,7 @@ describe('ListActivities Component', function() {
             await ListActivities.receive(context);
 
             assert(Array.isArray(data), 'Expected data to be an array of options');
-            
+
             const activitiesOption = data.find(option => option.value === 'Activities');
             if (activitiesOption) {
                 console.log('✅ Found Activities option in output port configuration');

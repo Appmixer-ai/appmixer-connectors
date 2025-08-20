@@ -14,7 +14,7 @@ describe('FindActivityStreams Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindActivityStreams = require(path.join(__dirname, '../../src/appmixer/strava/core/FindActivityStreams/FindActivityStreams.js'));
 
@@ -103,9 +103,7 @@ describe('FindActivityStreams Component', function() {
     });
 
     it('should handle generateOutputPortOptions', async function() {
-        let data;
         context.sendJson = function(output, port) {
-            data = output;
             return output;
         };
 
@@ -115,7 +113,7 @@ describe('FindActivityStreams Component', function() {
         };
 
         const result = await FindActivityStreams.receive(context);
-        
+
         assert(Array.isArray(result), 'Should return array for generateOutputPortOptions');
         console.log('✅ Successfully generated output port options');
     });

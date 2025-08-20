@@ -14,7 +14,7 @@ describe('GetLoggedInAthlete Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         GetLoggedInAthlete = require(path.join(__dirname, '../../src/appmixer/strava/core/GetLoggedInAthlete/GetLoggedInAthlete.js'));
 
@@ -55,7 +55,7 @@ describe('GetLoggedInAthlete Component', function() {
             assert(data && typeof data === 'object', 'Expected data to be an object');
             assert(data.id, 'Expected athlete to have id property');
             assert.strictEqual(typeof data.id, 'number', 'Expected athlete ID to be a number');
-            
+
             // Check for typical athlete properties
             const expectedFields = ['id', 'username', 'firstname', 'lastname'];
             for (const field of expectedFields) {

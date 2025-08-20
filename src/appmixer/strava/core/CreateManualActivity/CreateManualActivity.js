@@ -3,37 +3,37 @@
 module.exports = {
     async receive(context) {
 
-        const { 
-            name, 
-            sport_type, 
-            start_date_local, 
-            elapsed_time, 
-            description, 
-            distance, 
-            trainer, 
-            commute 
+        const {
+            name,
+            sportType,
+            startDateLocal,
+            elapsedTime,
+            description,
+            distance,
+            trainer,
+            commute
         } = context.messages.in.content;
 
         // Validate required fields based on Strava API documentation
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
-        if (!sport_type) {
+        if (!sportType) {
             throw new context.CancelError('Sport Type is required!');
         }
-        if (!start_date_local) {
+        if (!startDateLocal) {
             throw new context.CancelError('Start Date Local is required!');
         }
-        if (!elapsed_time) {
+        if (!elapsedTime) {
             throw new context.CancelError('Elapsed Time is required!');
         }
 
         // Prepare form data
         const formData = {
             name,
-            sport_type,
-            start_date_local,
-            elapsed_time
+            sport_type: sportType,
+            start_date_local: startDateLocal,
+            elapsed_time: elapsedTime
         };
 
         // Add optional fields if provided

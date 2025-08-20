@@ -14,7 +14,7 @@ describe('CreateManualActivity Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         CreateManualActivity = require(path.join(__dirname, '../../src/appmixer/strava/core/CreateManualActivity/CreateManualActivity.js'));
 

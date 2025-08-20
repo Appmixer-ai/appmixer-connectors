@@ -3,7 +3,7 @@
 
 const lib = require('../../lib.generated');
 
-const schema = { 
+const schema = {
     'type': { 'type': 'string', 'title': 'Stream Type' },
     'data': { 'type': 'array', 'title': 'Stream Data', 'items': { 'type': 'number' } },
     'series_type': { 'type': 'string', 'title': 'Series Type' },

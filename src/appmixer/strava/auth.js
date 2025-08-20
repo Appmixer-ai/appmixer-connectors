@@ -13,7 +13,7 @@ module.exports = {
         ],
 
         accountNameFromProfileInfo: context => {
-            return context.profileInfo.firstname && context.profileInfo.lastname 
+            return context.profileInfo.firstname && context.profileInfo.lastname
                 ? `${context.profileInfo.firstname} ${context.profileInfo.lastname}`.trim()
                 : context.profileInfo.username || `Athlete ${context.profileInfo.id}`;
         },

@@ -14,7 +14,7 @@ describe('FindActivities Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         FindActivities = require(path.join(__dirname, '../../src/appmixer/strava/core/FindActivities/FindActivities.js'));
 
@@ -93,14 +93,14 @@ describe('FindActivities Component', function() {
             outputData = data;
             return data;
         };
-        
+
         context.properties = { generateOutputPortOptions: true };
         context.messages.in.content = {
             outputType: 'array'
         };
 
         const result = await FindActivities.receive(context);
-        
+
         assert(Array.isArray(result), 'Should return array for generateOutputPortOptions');
         assert(Array.isArray(outputData), 'sendJson should be called with array data');
         console.log('✅ Successfully generated output port options for FindActivities');

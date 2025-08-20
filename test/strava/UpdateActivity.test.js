@@ -14,7 +14,7 @@ describe('UpdateActivity Component', function() {
             console.log('Skipping tests - STRAVA_ACCESS_TOKEN not set');
             this.skip();
         }
-        
+
         // Load the component
         UpdateActivity = require(path.join(__dirname, '../../src/appmixer/strava/core/UpdateActivity/UpdateActivity.js'));
 
@@ -70,7 +70,7 @@ describe('UpdateActivity Component', function() {
             console.log('UpdateActivity result keys:', Object.keys(data));
 
             assert(data && typeof data === 'object', 'Expected data to be an object');
-            
+
             console.log('✅ Successfully updated activity');
         } catch (error) {
             if (error.response && error.response.status === 401) {
