@@ -5,7 +5,7 @@ const lib = require('../../lib.generated');
 // Updated schema based on actual API response
 const schema = {
     'url': { 'type': 'string', 'title': 'Model URL' },
-    'owner': { 'type': 'string', 'title': 'Owner' },
+    'owner': { 'type': 'string', 'title': 'Model Owner' },
     'name': { 'type': 'string', 'title': 'Model Name' },
     'description': { 'type': 'string', 'title': 'Description' },
     'visibility': { 'type': 'string', 'title': 'Visibility' },

@@ -1,5 +1,4 @@
 'use strict';
-// const parser = require('cron-parser');
 const moment = require('moment-timezone');
 
 const isValidTimezone = (timezone) => {

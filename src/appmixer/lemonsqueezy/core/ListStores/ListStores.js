@@ -9,72 +9,62 @@ const schema = {
     },
     id: {
         type: 'string',
-        title: 'Customer Id'
+        title: 'Store Id'
     },
     attributes: {
         type: 'object',
         properties: {
-            store_id: {
-                type: 'number',
-                title: 'Attributes.Store Id'
-            },
             name: {
                 type: 'string',
                 title: 'Attributes.Name'
             },
-            email: {
+            slug: {
                 type: 'string',
-                title: 'Attributes.Email'
+                title: 'Attributes.Slug'
             },
-            status: {
+            domain: {
                 type: 'string',
-                title: 'Attributes.Status'
+                title: 'Attributes.Domain'
             },
-            city: {
-                type: 'null',
-                title: 'Attributes.City'
+            url: {
+                type: 'string',
+                title: 'Attributes.Url'
             },
-            region: {
-                type: 'null',
-                title: 'Attributes.Region'
+            avatar_url: {
+                type: 'string',
+                title: 'Attributes.Avatar Url'
+            },
+            plan: {
+                type: 'string',
+                title: 'Attributes.Plan'
             },
             country: {
                 type: 'string',
                 title: 'Attributes.Country'
             },
-            total_revenue_currency: {
+            country_nicename: {
+                type: 'string',
+                title: 'Attributes.Country Nicename'
+            },
+            currency: {
+                type: 'string',
+                title: 'Attributes.Currency'
+            },
+            total_sales: {
                 type: 'number',
-                title: 'Attributes.Total Revenue Currency'
+                title: 'Attributes.Total Sales'
             },
-            mrr: {
+            total_revenue: {
                 type: 'number',
-                title: 'Attributes.Mrr'
+                title: 'Attributes.Total Revenue'
             },
-            status_formatted: {
-                type: 'string',
-                title: 'Attributes.Status Formatted'
+            thirty_day_sales: {
+                type: 'number',
+                title: 'Attributes.Thirty Day Sales'
             },
-            country_formatted: {
-                type: 'string',
-                title: 'Attributes.Country Formatted'
-            },
-            total_revenue_currency_formatted: {
-                type: 'string',
-                title: 'Attributes.Total Revenue Currency Formatted'
-            },
-            mrr_formatted: {
-                type: 'string',
-                title: 'Attributes.Mrr Formatted'
-            },
-            urls: {
-                type: 'object',
-                properties: {
-                    customer_portal: {
-                        type: 'string',
-                        title: 'Attributes.Urls.Customer Portal'
-                    }
-                },
-                title: 'Attributes.Urls'
+            thirty_day_revenue: {
+                type: 'number',
+                title: 'Attributes.Thirty Day Revenue'
             },
             created_at: {
                 type: 'string',
@@ -83,10 +73,6 @@ const schema = {
             updated_at: {
                 type: 'string',
                 title: 'Attributes.Updated At'
-            },
-            test_mode: {
-                type: 'boolean',
-                title: 'Attributes.Test Mode'
             }
         },
         title: 'Attributes'
@@ -94,7 +80,7 @@ const schema = {
     relationships: {
         type: 'object',
         properties: {
-            store: {
+            products: {
                 type: 'object',
                 properties: {
                     links: {
@@ -102,17 +88,17 @@ const schema = {
                         properties: {
                             related: {
                                 type: 'string',
-                                title: 'Relationships.Store.Links.Related'
+                                title: 'Relationships.Products.Links.Related'
                             },
                             self: {
                                 type: 'string',
-                                title: 'Relationships.Store.Links.Self'
+                                title: 'Relationships.Products.Links.Self'
                             }
                         },
-                        title: 'Relationships.Store.Links'
+                        title: 'Relationships.Products.Links'
                     }
                 },
-                title: 'Relationships.Store'
+                title: 'Relationships.Products'
             },
             orders: {
                 type: 'object',
@@ -154,6 +140,26 @@ const schema = {
                 },
                 title: 'Relationships.Subscriptions'
             },
+            discounts: {
+                type: 'object',
+                properties: {
+                    links: {
+                        type: 'object',
+                        properties: {
+                            related: {
+                                type: 'string',
+                                title: 'Relationships.Discounts.Links.Related'
+                            },
+                            self: {
+                                type: 'string',
+                                title: 'Relationships.Discounts.Links.Self'
+                            }
+                        },
+                        title: 'Relationships.Discounts.Links'
+                    }
+                },
+                title: 'Relationships.Discounts'
+            },
             'license-keys': {
                 type: 'object',
                 properties: {
@@ -173,6 +179,26 @@ const schema = {
                     }
                 },
                 title: 'Relationships.License-Keys'
+            },
+            webhooks: {
+                type: 'object',
+                properties: {
+                    links: {
+                        type: 'object',
+                        properties: {
+                            related: {
+                                type: 'string',
+                                title: 'Relationships.Webhooks.Links.Related'
+                            },
+                            self: {
+                                type: 'string',
+                                title: 'Relationships.Webhooks.Links.Self'
+                            }
+                        },
+                        title: 'Relationships.Webhooks.Links'
+                    }
+                },
+                title: 'Relationships.Webhooks'
             }
         },
         title: 'Relationships'
@@ -192,35 +218,24 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { query, outputType } = context.messages.in.content;
+        const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Customers' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Stores' });
         }
 
-        // Build query parameters
-        const params = {};
-        if (query) {
-            params['filter[email]'] = query;
-        }
-
-        // https://docs.lemonsqueezy.com/api/customers
+        // https://docs.lemonsqueezy.com/api/stores
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.lemonsqueezy.com/v1/customers',
+            url: 'https://api.lemonsqueezy.com/v1/stores',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/vnd.api+json',
                 'Content-Type': 'application/vnd.api+json'
-            },
-            params
+            }
         });
 
         const records = data.data || [];
-
-        if (records.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

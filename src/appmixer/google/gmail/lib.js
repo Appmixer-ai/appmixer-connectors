@@ -207,11 +207,13 @@ module.exports = {
             query = (query ? query + ' AND ' : '') + 'after:' + internalDateSeconds;
         } else {
             maxResults = 1;
-            await context.log({
-                step: 'initialization',
-                message: 'Fetching the latest message internal date from the inbox to be able to detect new incoming messages.',
-                query
-            });
+            if (context.config.DEBUG === 'true') {
+                await context.log({
+                    step: 'initialization',
+                    message: 'Fetching the latest message internal date from the inbox to be able to detect new incoming messages.',
+                    query
+                });
+            }
             // During the initialization phase, we only need to get the latest message
             // regardless of whether it matches our query. Otherwise, we would always
             // miss the first email matching the query.
@@ -225,13 +227,15 @@ module.exports = {
         };
         const response = await this.callEndpoint(context, endpoint, { params });
         let messages = response.data.messages || [];
-        await context.log({
-            step: 'query',
-            query,
-            messagesReturned: messages.length,
-            lastMessageInternalDate: state.lastMessageInternalDate,
-            lastMessageId: state.lastMessageId
-        });
+        if (context.config.DEBUG === 'true') {
+            await context.log({
+                step: 'query',
+                query,
+                messagesReturned: messages.length,
+                lastMessageInternalDate: state.lastMessageInternalDate,
+                lastMessageId: state.lastMessageId
+            });
+        }
 
         if (state.lastMessageId) {
             // Get emails that we haven't seen. state.lastMessageId contains the ID of the last
@@ -272,11 +276,15 @@ module.exports = {
         newState.lastMessageInternalDate = lastMessage.internalDate;
         newState.lastMessageId = lastMessage.id;
 
-        await context.log({ step: 'emails-fetched', count: emails.length, lastMessage });
+        if (context.config.DEBUG === 'true') {
+            await context.log({ step: 'emails-fetched', count: emails.length, lastMessage });
+        }
 
         if (!state.lastMessageId) {
             // Init phase. Just remember the last internalDate;
-            await context.log({ step: 'initialized', lastMessage });
+            if (context.config.DEBUG === 'true') {
+                await context.log({ step: 'initialized', lastMessage });
+            }
             return { emails: [], state: newState };
         }
 
