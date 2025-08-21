@@ -236,7 +236,7 @@ The connector is currently configured with a working access token for testing.
 ```bash
 # Check current token status
 cat test/.env
-# Should show: STRAVA_ACCESS_TOKEN=f06f452e8a3538bcbf54b189dc21fa6b9a1f54db
+# Should show: STRAVA_ACCESS_TOKEN=
 ```
 
 ### Getting a New Access Token (if needed)
