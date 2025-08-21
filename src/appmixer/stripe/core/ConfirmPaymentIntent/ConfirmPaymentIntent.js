@@ -3,12 +3,14 @@
 module.exports = {
     async receive(context) {
 
-        const id = context.messages.in.content.payment_intent_id;
-        const paymentMethod = context.messages.in.content.payment_method;
+        const { payment_intent_id: id, payment_method: paymentMethod, returnUrl } = context.messages.in.content;
         // https://stripe.com/docs/api/payment_intents/confirm
         const requestData = {};
         if (paymentMethod) {
             requestData.payment_method = paymentMethod;
+        }
+        if (returnUrl) {
+            requestData.return_url = returnUrl;
         }
 
         const { data } = await context.httpRequest({
