@@ -225,6 +225,68 @@ describe('Slack Tasks routes', () => {
             await handler({ payload: Buffer.from(body) }, h);
             assert(codeStub.calledWith(401), 'Should return 401 for invalid signature');
         });
+
+        it('approves a task and triggers webhooks', async () => {
+            const create = context.getRouteHandler('POST', '/tasks');
+            const created = await create({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString(), status: 'pending' } });
+
+            sinon.stub(slackLib, 'isValidPayload').returns(true);
+            context.httpRequest.resolves({ statusCode: 200 });
+
+            const handler = context.getRouteHandler('POST', '/interactions');
+            const payload = {
+                type: 'block_actions',
+                user: { id: 'U2' },
+                response_url: 'https://hooks.slack.com/actions/T/XXX/YYY',
+                message: {
+                    blocks: [
+                        { type: 'section', text: { type: 'mrkdwn', text: '*T*\nD' } },
+                        { type: 'context', elements: [{ type: 'mrkdwn', text: '*Requester:* <@U1>   *Approver:* <@U2>' }] },
+                        { type: 'actions', elements: [{ type: 'button', action_id: 'task_approve', value: created.taskId }] }
+                    ]
+                },
+                actions: [{ action_id: 'task_approve', value: created.taskId }]
+            };
+            const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
+
+            const h = { response: sinon.stub().returns({ code: sinon.stub() }) };
+            await handler({ payload: Buffer.from(body) }, h);
+
+            const getHandler = context.getRouteHandler('GET', '/tasks/{taskId}');
+            const fetched = await getHandler({ params: { taskId: created.taskId }, query: {} });
+            assert.equal(fetched.status, 'approved');
+        });
+
+        it('rejects a task and triggers webhooks', async () => {
+            const create = context.getRouteHandler('POST', '/tasks');
+            const created = await create({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString(), status: 'pending' } });
+
+            sinon.stub(slackLib, 'isValidPayload').returns(true);
+            context.httpRequest.resolves({ statusCode: 200 });
+
+            const handler = context.getRouteHandler('POST', '/interactions');
+            const payload = {
+                type: 'block_actions',
+                user: { id: 'U2' },
+                response_url: 'https://hooks.slack.com/actions/T/XXX/YYY',
+                message: {
+                    blocks: [
+                        { type: 'section', text: { type: 'mrkdwn', text: '*T*\nD' } },
+                        { type: 'context', elements: [{ type: 'mrkdwn', text: '*Requester:* <@U1>   *Approver:* <@U2>' }] },
+                        { type: 'actions', elements: [{ type: 'button', action_id: 'task_reject', value: created.taskId }] }
+                    ]
+                },
+                actions: [{ action_id: 'task_reject', value: created.taskId }]
+            };
+            const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
+
+            const h = { response: sinon.stub().returns({ code: sinon.stub() }) };
+            await handler({ payload: Buffer.from(body) }, h);
+
+            const getHandler = context.getRouteHandler('GET', '/tasks/{taskId}');
+            const fetched = await getHandler({ params: { taskId: created.taskId }, query: {} });
+            assert.equal(fetched.status, 'rejected');
+        });
     });
 
     it('POST /tasks creates a task and notifies approver', async () => {
