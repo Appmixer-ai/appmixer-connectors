@@ -14,6 +14,13 @@ module.exports = {
             automaticPaymentMethodsAllowRedirects
         } = context.messages.in.content;
 
+        if (!amount) {
+            throw new context.CancelError('Amount is required');
+        }
+        if (!currency) {
+            throw new context.CancelError('Currency is required');
+        }
+
         // Build the request data
         const requestData = {
             amount: amount,
