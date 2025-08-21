@@ -1,4 +1,5 @@
 'use strict';
+const querystring = require('querystring');
 
 module.exports = {
     type: 'oauth2',
@@ -22,7 +23,7 @@ module.exports = {
             },
 
             authUrl: function(context) {
-                const params = new URLSearchParams({
+                const params = querystring.stringify({
                     client_id: initData.clientId,
                     redirect_uri: context.callbackUrl,
                     response_type: 'code',
@@ -30,7 +31,7 @@ module.exports = {
                     state: context.ticket,
                     access_type: 'offline',
                     approval_prompt: 'force'
-                }).toString();
+                });
 
                 return `https://accounts.google.com/o/oauth2/auth?${params}`;
             },
@@ -52,14 +53,13 @@ module.exports = {
             },
 
             requestAccessToken: async function(context) {
-
-                const data = {
+                const data = querystring.stringify({
                     code: context.authorizationCode,
                     client_id: initData.clientId,
                     client_secret: initData.clientSecret,
                     redirect_uri: context.callbackUrl,
                     grant_type: 'authorization_code'
-                };
+                });
 
                 const response = await context.httpRequest({
                     method: 'POST',
@@ -67,7 +67,7 @@ module.exports = {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    data
+                    data: data
                 });
 
                 return {
@@ -78,13 +78,12 @@ module.exports = {
             },
 
             refreshAccessToken: async function(context) {
-
-                const data = {
+                const data = querystring.stringify({
                     client_id: initData.clientId,
                     client_secret: initData.clientSecret,
                     refresh_token: context.refreshToken,
                     grant_type: 'refresh_token'
-                };
+                });
 
                 const response = await context.httpRequest({
                     method: 'POST',
@@ -92,7 +91,7 @@ module.exports = {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    data
+                    data: data
                 });
 
                 return {
