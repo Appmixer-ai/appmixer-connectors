@@ -3,15 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { 
-            amount, 
-            currency, 
-            paymentMethod, 
-            description, 
-            customer, 
+        const {
+            amount,
+            currency,
+            paymentMethod,
+            description,
+            customer,
             paymentMethodTypes,
-            automaticPaymentMethodsEnabled, 
-            automaticPaymentMethodsAllowRedirects 
+            automaticPaymentMethodsEnabled,
+            automaticPaymentMethodsAllowRedirects
         } = context.messages.in.content;
 
         // Build the request data
@@ -26,8 +26,8 @@ module.exports = {
         if (customer) requestData.customer = customer;
         if (paymentMethodTypes) {
             // Handle comma-separated string or array
-            const types = Array.isArray(paymentMethodTypes) 
-                ? paymentMethodTypes 
+            const types = Array.isArray(paymentMethodTypes)
+                ? paymentMethodTypes
                 : paymentMethodTypes.split(',').map(type => type.trim());
             requestData.payment_method_types = types;
         }
@@ -35,7 +35,7 @@ module.exports = {
         // Handle automatic payment methods
         if (automaticPaymentMethodsEnabled !== undefined) {
             requestData['automatic_payment_methods[enabled]'] = automaticPaymentMethodsEnabled;
-            
+
             if (automaticPaymentMethodsEnabled === true && automaticPaymentMethodsAllowRedirects !== undefined) {
                 requestData['automatic_payment_methods[allow_redirects]'] = automaticPaymentMethodsAllowRedirects;
             }
