@@ -57,7 +57,7 @@ module.exports = (context) => {
         path: '/tasks/{taskId}',
         options: {
             handler: async req => {
-                // const slackUserId = req.query.slackUserId;
+                const slackUserId = req.query.slackUserId;
                 const task = await Task.findById(req.params.taskId);
                 // Optionally, add permission checks for Slack users here
                 return task.addIsApprover(slackUserId, req.query.secret).toJson();
@@ -292,10 +292,35 @@ module.exports = (context) => {
 
         // Optionally send a response to the user
         if (responseUrl) {
-            const responseMessage = {
-                text: `Task ${task.title || task.taskId} has been ${task.getStatus()}.`,
-                replace_original: true
-            };
+            // Build a block-preserving response that removes buttons and appends a status line
+            const approved = task.getStatus() === Task.STATUS_APPROVED;
+            const actor = payload?.user?.id ? `<@${payload.user.id}>` : 'Someone';
+            const emoji = approved ? ':white_check_mark:' : ':x:';
+            const statusLine = `${emoji} ${actor} ${approved ? 'approved' : 'rejected'} this task.`;
+
+            let responseMessage;
+            try {
+                const originalBlocks = Array.isArray(payload?.message?.blocks) ? payload.message.blocks : [];
+                if (originalBlocks.length) {
+                    const filtered = originalBlocks.filter(b => b && b.type !== 'actions');
+                    filtered.push({
+                        type: 'context',
+                        elements: [
+                            { type: 'mrkdwn', text: statusLine }
+                        ]
+                    });
+                    responseMessage = { replace_original: true, blocks: filtered };
+                }
+            } catch (e) {
+                context.log('warn', 'slack-plugin-route-interaction-blocks-transform-error', { error: e?.message });
+            }
+
+            if (!responseMessage) {
+                responseMessage = {
+                    text: `Task ${task.title || task.taskId} has been ${task.getStatus()}.`,
+                    replace_original: true
+                };
+            }
             await context.httpRequest({
                 method: 'POST',
                 url: responseUrl,

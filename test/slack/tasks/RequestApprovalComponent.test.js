@@ -98,8 +98,8 @@ describe('Slack RequestApproval', () => {
                             { type: 'mrkdwn', text: `*Decision by:* ${context.messages.task.content.decisionBy}` }
                         ] },
                         { type: 'actions', elements: [
-                            { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: 'T123', action_id: 'approve_task' },
-                            { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: 'T123', action_id: 'reject_task' }
+                            { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: 'T123', action_id: 'task_approve' },
+                            { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: 'T123', action_id: 'task_reject' }
                         ] }
                     ]
                 }, 'sendMessage should be called with the correct options');
