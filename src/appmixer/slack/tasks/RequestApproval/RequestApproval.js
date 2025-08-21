@@ -6,7 +6,54 @@ module.exports = {
     async receive(context) {
 
         if (context.messages.webhook) {
-            // TODO: Implement webhook handler if/when plugin triggers webhooks directly into component.
+            const webhookData = context.messages.webhook.content;
+            const { data } = webhookData;
+
+            // Normalize id
+            if (data && data.taskId) {
+                data.id = data.taskId;
+                delete data.taskId;
+            }
+
+            // Notify Slack channel about decision when available
+            try {
+                if (data && data.channel) {
+                    const decisionText = data.status === 'approved' ? 'Approved' : data.status === 'rejected' ? 'Rejected' : 'Updated';
+                    const title = data.title || 'Request';
+                    const description = data.description || '';
+                    const requester = data.requester ? `<@${data.requester}>` : 'N/A';
+                    const approver = data.approver ? `<@${data.approver}>` : 'N/A';
+                    const decisionBy = data.decisionBy || '';
+
+                    const blocks = [
+                        { type: 'section', text: { type: 'mrkdwn', text: `*${title}* — *${decisionText}*` } },
+                        { type: 'section', text: { type: 'mrkdwn', text: description } },
+                        { type: 'context', elements: [
+                            { type: 'mrkdwn', text: `*Requester:* ${requester}   *Approver:* ${approver}` },
+                            ...(decisionBy ? [{ type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }] : [])
+                        ] }
+                    ];
+
+                    await lib.sendMessage(
+                        context,
+                        data.channel,
+                        `${title}\n${description}`,
+                        true,
+                        undefined,
+                        undefined,
+                        { blocks }
+                    );
+                }
+            } catch (err) {
+                context.log({ step: 'webhookNotifyError', err: err && err.message ? err.message : err });
+            }
+
+            // Emit event when status is resolved (not pending)
+            if (data && data.status !== 'pending') {
+                await context.sendJson(data, data.status);
+            }
+
+            return context.response({ status: 'success' }, 200, { 'Content-Type': 'application/json' });
         }
 
         const body = context.messages.task?.content || {};
@@ -36,14 +83,12 @@ module.exports = {
             method: 'POST',
             body
         });
-        context.log({ step: 'createTask', task });
 
         const webhook = await context.callAppmixer({
             endPoint: '/plugins/appmixer/slack/tasks/webhooks',
             method: 'POST',
             body: { url: context.getWebhookUrl(), taskId: task.taskId }
         });
-        context.log({ step: 'createWebhook', webhook });
 
         // Send Slack message to the channel when task is created
         const {
@@ -68,7 +113,6 @@ module.exports = {
                 { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'task_reject' }
             ] }
         ];
-        context.log({ step: 'blocks', blocks });
 
         await lib.sendMessage(
             context,
@@ -85,10 +129,8 @@ module.exports = {
         );
 
         await context.sendJson(task, 'created');
-        context.log({ step: 'sendJson', task, taskId: task.id });
 
         await context.stateSet(webhook.webhookId, {});
-        context.log({ step: 'stateSet', webhookId: webhook.webhookId, state: {} });
     },
 
     async stop(context) {

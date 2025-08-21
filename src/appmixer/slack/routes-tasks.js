@@ -175,7 +175,6 @@ module.exports = (context) => {
                 // Then parse the payload as query string
                 const parsed = querystring.parse(rawBody);
                 const payload = JSON.parse(parsed.payload);
-                context.log('info', 'slack-plugin-route-REQ-payload', { payload });
 
                 // Validate Slack signature
                 if (!slackLib.isValidPayload(context, req)) {
@@ -185,7 +184,6 @@ module.exports = (context) => {
                 const { actions, response_url: responseUrl } = payload;
                 const taskId = actions[0].value;
                 const action = actions[0].action_id;
-                context.log('info', 'slack-plugin-route-interaction-action', { action, taskId });
 
                 // Handle Task Approval actions
                 if (action.startsWith('task_')) {
@@ -267,6 +265,7 @@ module.exports = (context) => {
     });
 
     async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
+
         const task = await Task.findById(taskId);
         if (!task) {
             context.log('error', 'slack-plugin-route-interaction-task-not-found', { taskId });
@@ -321,11 +320,15 @@ module.exports = (context) => {
                     replace_original: true
                 };
             }
+
             await context.httpRequest({
                 method: 'POST',
                 url: responseUrl,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(responseMessage)
+                data: {
+                    ...responseMessage,
+                    replace_original: true
+                }
             });
         }
     }

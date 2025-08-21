@@ -31,8 +31,20 @@ module.exports = context => {
          */
         verifyTaskPerm: async function(req) {
 
-            // TODO: unfake
-            return true;
+            const { task } = req.pre;
+            const { secret } = req.payload || req.query || {};
+
+            if (!task) {
+                throw context.http.HttpError.badRequest('Missing task.');
+            }
+
+            if (req.pre.user.getEmail() === task.approver) {
+                return true;
+            }
+
+            if (secret === task.approverSecret) {
+                return true;
+            }
 
             throw context.http.HttpError.forbidden();
         },
@@ -40,19 +52,23 @@ module.exports = context => {
         /**
          * Gets task using taskId request parameter.
          * @param req
-         * @return {Promise<*>}
+         * @return {Promise<Task>}
          */
         getTask: async function(req) {
 
-            // TODO: unfake
-            return {
-                id: req.params.taskId,
-                title: 'Fake task',
-                description: 'Fake task description',
-                requester: 'Fake requester',
-                approver: 'Fake approver',
-                status: 'pending'
-            };
+            const { taskId } = req.params;
+
+            if (!taskId) {
+                throw context.http.HttpError.badRequest('Missing task ID.');
+            }
+
+            const task = await Task.findById(taskId);
+
+            if (!task) {
+                throw context.http.HttpError.notFound('Task not found.');
+            }
+
+            return task;
         },
 
         /**
@@ -67,31 +83,42 @@ module.exports = context => {
         },
 
         /**
-         * @param {Webhook} webhook
-         * @param {Task} [task]
-         * @return {Promise<boolean>}
-         * @throws Error
-         */
-        triggerWebhook: async function(webhook, task = null) {
-
-            // TODO: unfake
-            console.log('Triggering webhook:', { webhook, task });
-            return true;
-        },
-
-        /**
-         * Trigger webhooks.
+         * Trigger webhooks for a task.
          * @param {Task} task
          * @return {Promise<void>}
-         * @throws Error
          */
         triggerWebhooks: async function(task) {
 
-            // TODO: unfake
-            const webhooks = [];
-            return Promise.map(webhooks, webhook => {
-                return this.triggerWebhook(webhook, task);
-            });
+            check.assert.instance(task, Task, 'Invalid task instance.');
+
+            const webhooks = await Webhook.find({ taskId: task.getId(), status: 'pending' });
+            return Promise.all(webhooks.map(webhook => this.triggerWebhook(webhook, task)));
+        },
+
+        /**
+         * Trigger a single webhook.
+         * @param {Webhook} webhook
+         * @param {Task} [task]
+         * @return {Promise<boolean>}
+         */
+        triggerWebhook: async function(webhook, task = null) {
+
+            check.assert.instance(webhook, Webhook, 'Invalid webhook instance.');
+
+            task = task || await Task.findById(webhook.getTaskId());
+
+            try {
+                await context.httpRequest({
+                    method: 'POST',
+                    url: webhook.getUrl(),
+                    data: task.toJson()
+                });
+                await webhook.populate({ status: 'sent' }).save();
+                return true;
+            } catch (err) {
+                await webhook.populate({ status: 'failed', error: err.message }).save();
+                return false;
+            }
         }
     };
 };

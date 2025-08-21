@@ -1,10 +1,12 @@
 'use strict';
+
 // Slack version: uses SlackTaskModel and SlackWebhookModel, expects Slack user IDs.
 module.exports = async context => {
+
     const config = require('./config')(context);
-    const Webhook = require('./SlackWebhookModel')(context);
-    const Task = require('./SlackTaskModel')(context);
-    const utils = require('./utils')(context);
+    const Webhook = require('./tasks/SlackWebhookModel')(context);
+    const Task = require('./tasks/SlackTaskModel')(context);
+    const utils = require('./tasks/utils')(context);
 
     await context.scheduleJob('due-tasks', config.dueTasksJob.schedule, async () => {
         try {

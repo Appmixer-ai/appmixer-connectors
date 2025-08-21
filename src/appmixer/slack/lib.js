@@ -23,7 +23,7 @@ module.exports = {
      */
     async sendMessage(context, channelId, message, asBot = false, thread_ts, reply_broadcast, options = {}) {
 
-        let token = context.auth.accessToken;
+        let token = context.auth?.accessToken;
 
         // iconUrl and username are only for bot messages.
     	let iconUrl = options.iconUrl;
@@ -32,7 +32,7 @@ module.exports = {
             // Make sure the bot token is used.
             // Backward compatibility - 4.1.3 uses config.botToken
             // 4.1.4+ uses context.auth.profileInfo.botToken
-            token = context.auth.profileInfo?.botToken || context.config?.botToken;
+            token = context.auth?.profileInfo?.botToken || context.config?.botToken;
             if (!token && !context.config?.usesAuthHub) {
                 throw new context.CancelError('Bot token is required for sending messages as bot. Please provide it in the connector configuration.');
             }

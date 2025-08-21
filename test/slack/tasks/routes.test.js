@@ -126,13 +126,15 @@ describe('Slack Tasks routes', () => {
 
     describe('POST /interactions', () => {
         it('approves a task and responds via response_url', async () => {
-            // Create a task first
+            // Ensure payload and response_url are properly initialized
             const create = context.getRouteHandler('POST', '/tasks');
             const created = await create({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString(), status: 'pending' } });
 
-            // Stub signature validation and response call
             sinon.stub(slackLib, 'isValidPayload').returns(true);
-            context.httpRequest.resolves({ statusCode: 200 });
+            context.httpRequest.resolves({
+                statusCode: 200,
+                body: JSON.stringify({ replace_original: true, blocks: [] })
+            });
 
             const handler = context.getRouteHandler('POST', '/interactions');
             const payload = {
@@ -163,7 +165,8 @@ describe('Slack Tasks routes', () => {
             const args = context.httpRequest.getCall(0).args[0];
             assert.equal(args.url, payload.response_url);
             // Verify blocks preserved and actions removed
-            const sent = JSON.parse(args.body);
+            // httpRequest is called with { data: ... } in implementation; tests should read args.data
+            const sent = args.data ? args.data : (args.body ? JSON.parse(args.body) : undefined);
             assert.equal(sent.replace_original, true);
             assert(Array.isArray(sent.blocks), 'blocks should be sent');
             assert.equal(sent.blocks.some(b => b.type === 'actions'), false, 'actions block should be removed');
@@ -205,7 +208,7 @@ describe('Slack Tasks routes', () => {
             assert(context.httpRequest.calledOnce, 'Should POST to response_url');
             const args = context.httpRequest.getCall(0).args[0];
             assert.equal(args.url, payload.response_url);
-            const sent = JSON.parse(args.body);
+            const sent = args.data ? args.data : (args.body ? JSON.parse(args.body) : undefined);
             assert.equal(sent.replace_original, true);
             assert(Array.isArray(sent.blocks), 'blocks should be sent');
             assert.equal(sent.blocks.some(b => b.type === 'actions'), false, 'actions block should be removed');

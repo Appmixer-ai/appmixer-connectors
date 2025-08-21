@@ -120,10 +120,9 @@ describe('Slack RequestApproval', () => {
         });
     });
 
-    // Merged from test/slack/tasks/RequestApprovalComponent.test.js
-    // Keep skipped until webhook handling is implemented in the component.
+    // Webhook-driven updates
     describe('Webhook events', () => {
-        it.skip('should notify proper user in Slack and emit event', async () => {
+        it('should notify Slack and emit event for non-pending status', async () => {
             const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
             context.messages = {
                 webhook: {
@@ -143,8 +142,48 @@ describe('Slack RequestApproval', () => {
 
             await RequestApproval.receive(context);
 
-            assert(slackLib.sendMessage.called, 'sendMessage should be called on state change');
-            assert(context.sendJson.called, 'sendJson should emit state change event');
+            // Should notify Slack
+            assert(slackLib.sendMessage.calledOnce, 'sendMessage should be called on state change');
+            const args = slackLib.sendMessage.getCall(0).args;
+            assert.strictEqual(args[1], 'C1', 'Slack channel should match');
+
+            // Should emit event with normalized id
+            assert(context.sendJson.calledOnce, 'sendJson should emit state change event');
+            const [payload, port] = context.sendJson.getCall(0).args;
+            assert.strictEqual(port, 'approved');
+            assert.strictEqual(payload.id, 'TS2');
+            assert.strictEqual(payload.taskId, undefined);
+
+            // Should respond 200 to webhook
+            assert(context.response.calledOnce, 'response should be sent back to webhook');
+            const resArgs = context.response.getCall(0).args;
+            assert.deepStrictEqual(resArgs[0], { status: 'success' });
+            assert.strictEqual(resArgs[1], 200);
+        });
+
+        it('should not emit event when status is pending but still respond', async () => {
+            const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+            context.messages = {
+                webhook: {
+                    content: {
+                        data: {
+                            taskId: 'TS3',
+                            status: 'pending',
+                            approver: 'U2',
+                            requester: 'U1',
+                            channel: 'C1',
+                            title: 'T',
+                            description: 'D'
+                        }
+                    }
+                }
+            };
+
+            await RequestApproval.receive(context);
+
+            // Notify Slack may happen (implementation allows), but no sendJson for pending
+            assert.strictEqual(context.sendJson.called, false, 'No event should be emitted for pending');
+            assert(context.response.calledOnce, 'response should be sent back to webhook');
         });
     });
 
