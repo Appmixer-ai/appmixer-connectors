@@ -543,6 +543,15 @@ module.exports = {
 
 ```
 
+# Plugins, Routes and Jobs
+Files: <connector>/jobs.js, <connector>/routes.js, <connector>/plugins.js
+
+## Context
+`context.log` MUST have this signature:
+```js
+context.log(level, message, [data]);
+```
+
 
 # Components
 

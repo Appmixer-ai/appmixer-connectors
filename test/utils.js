@@ -84,7 +84,12 @@ function createMockContext(options) {
         },
         log: sinon.stub().callsFake((...args) => console.log(...args)),
         lock: sinon.stub().returns({ unlock: sinon.stub() }),
-        CancelError: Error,
+        CancelError: class CancelError extends Error {
+            constructor(message) {
+                super(message);
+                this.name = 'CancelError';
+            }
+        },
         sendJson: sinon.stub(),
         sendArray: sinon.stub(),
         response: sinon.stub(),

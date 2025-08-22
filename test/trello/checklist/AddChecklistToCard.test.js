@@ -40,7 +40,7 @@ describe('AddChecklistToCard', function() {
 	                async () => {
 	                    await action.receive(context);
 	                },
-	                context.CancelError('Maximum 10 checklist items are allowed')
+	                new context.CancelError('Maximum 10 checklist items are allowed')
 	            );
 	        });
 

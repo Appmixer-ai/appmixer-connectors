@@ -75,7 +75,13 @@ module.exports = {
         }
 
         if (body.decisionBy) {
-            body.decisionBy = new Date(body.decisionBy).toISOString();
+            const decisionDate = new Date(body.decisionBy);
+            if (isNaN(decisionDate.getTime())) {
+                throw new context.CancelError('Decision by date is invalid.');
+            }
+            if (decisionDate < new Date()) {
+                throw new context.CancelError('Decision by date must be in the future.');
+            }
         }
 
         const task = await context.callAppmixer({
@@ -138,9 +144,11 @@ module.exports = {
         const state = await context.loadState();
 
         return Promise.all(Object.keys(state).map(webhookId => {
+
             return context.callAppmixer({
                 endPoint: `/plugins/appmixer/slack/tasks/webhooks/${webhookId}`,
-                method: 'DELETE' });
+                method: 'DELETE'
+            });
         }));
     }
 };

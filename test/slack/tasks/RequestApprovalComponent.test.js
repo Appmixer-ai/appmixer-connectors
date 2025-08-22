@@ -25,6 +25,24 @@ describe('Slack RequestApproval', () => {
         context = testUtils.createMockContext();
         // Properly stub using sinon so it can be restored between tests
         sinon.stub(slackLib, 'sendMessage').resolves({ message: { text: 'testMessage' } });
+        // Common default auth and task message used by many tests
+        const futureDate = new Date(Date.now() + 3600000).toISOString(); // 1 hour in the future
+        context.messages = {
+            task: {
+                content: {
+                    channel: 'C123',
+                    title: 'Test Title',
+                    description: 'Test Description',
+                    requester: 'U1',
+                    approver: 'U2',
+                    decisionBy: futureDate
+                }
+            }
+        };
+        context.auth = { botToken: 'xoxb-test' };
+
+        // default stub for callAppmixer - tests may configure behavior (onFirstCall/onSecondCall)
+        context.callAppmixer = sinon.stub();
     });
 
     [false, true].forEach((i) => {
@@ -37,23 +55,7 @@ describe('Slack RequestApproval', () => {
 
             it('should call context.callAppmixer when the component is started', async () => {
 
-                // Prepare input message
-                context.messages = {
-                    task: {
-                        content: {
-                            channel: 'C123',
-                            title: 'Test Title',
-                            description: 'Test Description',
-                            requester: 'U1',
-                            approver: 'U2',
-                            decisionBy: new Date().toISOString()
-                        }
-                    }
-                };
-                context.auth = { botToken: 'xoxb-test' };
-
-                // Stub only the first call (task creation), let the second call (webhook) return a different value
-                context.callAppmixer = sinon.stub();
+                // Use the defaults from the top-level beforeEach; configure callAppmixer responses
                 context.callAppmixer.onFirstCall().resolves({
                     ...context.messages.task.content,
                     taskId: 'T123'
@@ -116,6 +118,89 @@ describe('Slack RequestApproval', () => {
                 const stateSetArgs = context.stateSet.getCall(0).args;
                 assert.strictEqual(stateSetArgs[0], 'W123', 'stateSet should be called with the correct webhook ID');
                 assert.deepStrictEqual(stateSetArgs[1], {}, 'stateSet should be called with an empty object');
+            });
+
+            it('should throw if the due date is in the past', async () => {
+
+                // Prepare input message with a past due date
+                context.messages = {
+                    task: {
+                        content: {
+                            ...context.messages.task.content,
+                            decisionBy: new Date(Date.now() - 3600000).toISOString() // 1 hour in the past
+                        }
+                    }
+                };
+
+                // Require the component after stubbing
+                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+
+                let error;
+                try {
+                    await RequestApproval.receive(context);
+                } catch (err) {
+                    error = err;
+                }
+                assert(error instanceof context.CancelError, 'Error should be an instance of CancelError');
+                assert.strictEqual(error.message, 'Decision by date must be in the future.', 'Error message should match');
+            });
+
+            it('should throw if the due date is invalid', async () => {
+
+                // Prepare input message with an invalid due date
+                context.messages = {
+                    task: {
+                        content: {
+                            ...context.messages.task.content,
+                            decisionBy: 'invalid-date'
+                        }
+                    }
+                };
+
+                // Require the component after stubbing
+                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+
+                let error;
+                try {
+                    await RequestApproval.receive(context);
+                } catch (err) {
+                    error = err;
+                }
+                assert(error instanceof context.CancelError, 'Error should be an instance of CancelError');
+                assert.strictEqual(error.message, 'Decision by date is invalid.', 'Error message should match');
+            });
+
+            // Additional tests for missing required fields
+            const requiredFields = [
+                ['title', 'Title'],
+                ['description', 'Description'],
+                ['requester', 'Requester'],
+                ['approver', 'Approver'],
+                ['decisionBy', 'Decision by'],
+                ['channel', 'Channel']
+            ];
+
+            requiredFields.forEach(([key, label]) => {
+                it(`should throw if required field ${key} is missing`, async () => {
+
+                    // Prepare input message with one required field missing by cloning defaults
+                    const content = { ...context.messages.task.content };
+                    delete content[key];
+
+                    context.messages = { task: { content } };
+
+                    // Require the component after stubbing
+                    const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+
+                    let error;
+                    try {
+                        await RequestApproval.receive(context);
+                    } catch (err) {
+                        error = err;
+                    }
+                    assert(error instanceof context.CancelError, 'Error should be an instance of CancelError');
+                    assert.strictEqual(error.message, `${label} is required!`, 'Error message should match');
+                });
             });
         });
     });
