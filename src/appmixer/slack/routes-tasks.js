@@ -78,6 +78,7 @@ module.exports = (context) => {
                     ...req.payload,
                     status: Task.STATUS_PENDING,
                     decisionBy: new Date(req.payload.decisionBy),
+                    channel: req.payload.channel,
                     created: new Date()
                 }).save();
 
@@ -189,6 +190,8 @@ module.exports = (context) => {
             return h.response({ text: 'Task not found' }).code(404);
         }
 
+        context.log('info', 'slack-plugin-route-interaction-task-details', task);
+        context.log('info', 'slack-plugin-route-interaction-payload-details', payload);
         if (action === 'task_approve') {
             task.setStatus(Task.STATUS_APPROVED);
             task.setDecisionMade(new Date());

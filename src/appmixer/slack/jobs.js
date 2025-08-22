@@ -7,6 +7,7 @@ module.exports = async context => {
     const Webhook = require('./tasks/SlackWebhookModel')(context);
     const Task = require('./tasks/SlackTaskModel')(context);
     const utils = require('./tasks/utils')(context);
+    context.log('info', '[slack-job-due-tasks] CONFIG', { config });
 
     await context.scheduleJob('slack-due-tasks', config.dueTasksJob.schedule, async () => {
         try {

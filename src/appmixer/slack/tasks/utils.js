@@ -26,6 +26,7 @@ module.exports = context => {
 
         /**
          * Verifies task permission.
+         * TODO: refactor to use user ID instead of email.
          * @param req
          * @return {Promise<boolean>}
          */

@@ -8,6 +8,7 @@ module.exports = {
         if (context.messages.webhook) {
             const webhookData = context.messages.webhook.content;
             const { data } = webhookData;
+            context.log({ step: 'webhookReceived', data });
 
             // Normalize id
             if (data && data.taskId) {
