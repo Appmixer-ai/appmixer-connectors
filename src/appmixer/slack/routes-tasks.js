@@ -139,21 +139,6 @@ module.exports = (context) => {
         }
     });
 
-    context.http.router.register({
-        method: 'PUT',
-        path: '/tasks/{taskId}',
-        options: {
-            handler: async req => {
-                const task = await Task.findById(req.params.taskId);
-                if (req.payload.decisionBy) {
-                    req.payload.decisionBy = new Date(req.payload.decisionBy);
-                }
-                await task.populate(req.payload).save();
-                return task.toJson();
-            }
-        }
-    });
-
     // Receive Slack interactions (e.g., button clicks)
     // From Slack: All apps must, as a minimum, acknowledge the receipt of a valid interaction payload.
     // See https://api.slack.com/interactivity/handling#acknowledgment_response
@@ -196,74 +181,6 @@ module.exports = (context) => {
         }
     });
 
-    context.http.router.register({
-        method: 'PUT',
-        path: '/tasks/{taskId}/approve',
-        options: {
-            handler: async req => {
-                const task = await Task.findById(req.params.taskId);
-                // Optionally, add permission checks for Slack users here
-                if ([Task.STATUS_REJECTED, Task.STATUS_APPROVED].includes(task.getStatus())) {
-                    throw new context.http.HttpError.badRequest(`Cannot approve task, already ${task.getStatus()}`);
-                }
-                task.setStatus(Task.STATUS_APPROVED);
-                task.setDecisionMade(new Date());
-                await utils.triggerWebhooks(task);
-                // Notify in Slack about approval (best-effort, do not fail)
-                try {
-                    if (task.channel) {
-                        const text = `Task ${task.title || task.taskId} has been approved.`;
-                        await slackLib.sendMessage(
-                            context,
-                            task.channel,
-                            text,
-                            true
-                        );
-                    }
-                } catch (err) {
-                    context.log('warn', 'slack-plugin-route-tasks-approve-notify-error', { error: err?.message });
-                }
-                await task.save();
-                return task.toJson();
-            },
-            auth: false
-        }
-    });
-
-    context.http.router.register({
-        method: 'PUT',
-        path: '/tasks/{taskId}/reject',
-        options: {
-            handler: async req => {
-                const task = await Task.findById(req.params.taskId);
-                // Optionally, add permission checks for Slack users here
-                if ([Task.STATUS_REJECTED, Task.STATUS_APPROVED].includes(task.getStatus())) {
-                    throw new context.http.HttpError.badRequest(`Cannot reject task, already ${task.getStatus()}`);
-                }
-                task.setStatus(Task.STATUS_REJECTED);
-                task.setDecisionMade(new Date());
-                await utils.triggerWebhooks(task);
-                // Notify in Slack about rejection (best-effort, do not fail)
-                try {
-                    if (task.channel) {
-                        const text = `Task ${task.title || task.taskId} has been rejected.`;
-                        await slackLib.sendMessage(
-                            context,
-                            task.channel,
-                            text,
-                            true
-                        );
-                    }
-                } catch (err) {
-                    context.log('warn', 'slack-plugin-route-tasks-reject-notify-error', { error: err?.message });
-                }
-                await task.save();
-                return task.toJson();
-            },
-            auth: false
-        }
-    });
-
     async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
 
         const task = await Task.findById(taskId);
@@ -289,47 +206,42 @@ module.exports = (context) => {
 
         await task.save();
 
-        // Optionally send a response to the user
-        if (responseUrl) {
-            // Build a block-preserving response that removes buttons and appends a status line
-            const approved = task.getStatus() === Task.STATUS_APPROVED;
-            const actor = payload?.user?.id ? `<@${payload.user.id}>` : 'Someone';
-            const emoji = approved ? ':white_check_mark:' : ':x:';
-            const statusLine = `${emoji} ${actor} ${approved ? 'approved' : 'rejected'} this task.`;
+        // Send a response to the user
+        // Build a block-preserving response that removes buttons and appends a status line
+        const approved = task.getStatus() === Task.STATUS_APPROVED;
+        const actor = payload?.user?.id ? `<@${payload.user.id}>` : 'Someone';
+        const emoji = approved ? ':white_check_mark:' : ':x:';
+        const statusLine = `${emoji} ${actor} ${approved ? 'approved' : 'rejected'} this task.`;
 
-            let responseMessage;
-            try {
-                const originalBlocks = Array.isArray(payload?.message?.blocks) ? payload.message.blocks : [];
-                if (originalBlocks.length) {
-                    const filtered = originalBlocks.filter(b => b && b.type !== 'actions');
-                    filtered.push({
-                        type: 'context',
-                        elements: [
-                            { type: 'mrkdwn', text: statusLine }
-                        ]
-                    });
-                    responseMessage = { replace_original: true, blocks: filtered };
-                }
-            } catch (e) {
-                context.log('warn', 'slack-plugin-route-interaction-blocks-transform-error', { error: e?.message });
+        let responseMessage;
+        try {
+            const originalBlocks = Array.isArray(payload?.message?.blocks) ? payload.message.blocks : [];
+            if (originalBlocks.length) {
+                const filtered = originalBlocks.filter(b => b && b.type !== 'actions');
+                filtered.push({
+                    type: 'context',
+                    elements: [
+                        { type: 'mrkdwn', text: statusLine }
+                    ]
+                });
+                responseMessage = { replace_original: true, blocks: filtered };
             }
-
-            if (!responseMessage) {
-                responseMessage = {
-                    text: `Task ${task.title || task.taskId} has been ${task.getStatus()}.`,
-                    replace_original: true
-                };
-            }
-
-            await context.httpRequest({
-                method: 'POST',
-                url: responseUrl,
-                headers: { 'Content-Type': 'application/json' },
-                data: {
-                    ...responseMessage,
-                    replace_original: true
-                }
-            });
+        } catch (e) {
+            context.log('error', 'slack-plugin-route-interaction-blocks-transform-error', { error: e?.message });
         }
+
+        if (!responseMessage) {
+            responseMessage = {
+                text: `Task ${task.title || task.taskId} has been ${task.getStatus()} by ${actor}.`,
+                replace_original: true
+            };
+        }
+
+        await context.httpRequest({
+            method: 'POST',
+            url: responseUrl,
+            headers: { 'Content-Type': 'application/json' },
+            data: responseMessage
+        });
     }
 };

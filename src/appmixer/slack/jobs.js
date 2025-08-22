@@ -8,7 +8,7 @@ module.exports = async context => {
     const Task = require('./tasks/SlackTaskModel')(context);
     const utils = require('./tasks/utils')(context);
 
-    await context.scheduleJob('due-tasks', config.dueTasksJob.schedule, async () => {
+    await context.scheduleJob('slack-due-tasks', config.dueTasksJob.schedule, async () => {
         try {
             const lock = await context.job.lock('slack-tasks-due-tasks');
             try {
@@ -29,18 +29,18 @@ module.exports = async context => {
                     triggeredWebhooks: res.flat().filter(item => item).length,
                     errors: res.flat().filter(item => !item).length
                 };
-                context.log('info', `Checking due tasks finished, ${result.tasks} due tasks processed, ${result.triggeredWebhooks} webhooks triggered, ${result.errors} webhooks failed.`);
+                context.log('trace', `[slack-job-due-tasks] ${JSON.stringify(result)}`);
             } finally {
                 lock.unlock();
             }
         } catch (err) {
             if (err.message !== 'locked') {
-                context.log('error', 'Error checking due tasks', context.utils.Error.stringify(err));
+                context.log('error', `[slack-job-due-tasks-error] ${context.utils.Error.stringify(err)}`);
             }
         }
     });
 
-    await context.scheduleJob('resubmit-failed-webhooks', config.resubmitFailedWebhooksJob.schedule, async () => {
+    await context.scheduleJob('slack-resubmit-failed-webhooks', config.resubmitFailedWebhooksJob.schedule, async () => {
         try {
             const lock = await context.job.lock('slack-tasks-failed-webhooks');
             try {

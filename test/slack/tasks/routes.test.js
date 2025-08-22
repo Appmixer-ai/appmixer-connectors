@@ -301,28 +301,6 @@ describe('Slack Tasks routes', () => {
         assert(slackLib.sendMessage.calledOnce, 'sendMessage should notify approver');
     });
 
-    it('PUT /tasks/{taskId}/approve transitions state and notifies requester', async () => {
-        // First create a task
-        const create = context.getRouteHandler('POST', '/tasks');
-        const task = await create({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString(), status: 'pending' } });
-        const approve = context.getRouteHandler('PUT', '/tasks/{taskId}/approve');
-        const res = await approve({ params: { taskId: task.taskId }, query: { slackUserId: 'U2' } });
-
-        assert.equal(res.status, 'approved');
-        // Expectation (may fail): requester notified
-        assert(slackLib.sendMessage.called, 'Requester should be notified on approve');
-    });
-
-    it('PUT /tasks/{taskId}/reject transitions state and notifies requester', async () => {
-        const create = context.getRouteHandler('POST', '/tasks');
-        const task = await create({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString(), status: 'pending' } });
-        const reject = context.getRouteHandler('PUT', '/tasks/{taskId}/reject');
-        const res = await reject({ params: { taskId: task.taskId }, query: { slackUserId: 'U2' } });
-
-        assert.equal(res.status, 'rejected');
-        assert(slackLib.sendMessage.called, 'Requester should be notified on reject');
-    });
-
     it('does not expose dashboard endpoint for Slack routes', async () => {
         const hasDashboard = context.http.router.register.getCalls().some(c => c.args[0].path === '/dashboard-url');
         assert.equal(hasDashboard, false);
