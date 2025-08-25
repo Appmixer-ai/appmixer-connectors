@@ -13,12 +13,13 @@ module.exports = {
         }
 
         const mutation = `
-            mutation serviceInstanceDeployV2($commitSha: String, $environmentId: String!, $serviceId: String!) {
-                serviceInstanceDeployV2(
-                    commitSha: $commitSha
-                    environmentId: $environmentId
-                    serviceId: $serviceId
-                )
+            mutation serviceInstanceDeploy($commitSha: String, $environmentId: String!, $latestCommit: Boolean, $serviceId: String!) {
+            serviceInstanceDeploy(
+                commitSha: $commitSha
+                environmentId: $environmentId
+                latestCommit: $latestCommit
+                serviceId: $serviceId
+            )
             }
         `;
 
@@ -27,8 +28,7 @@ module.exports = {
             environmentId: environmentId,
             commitSha: commitSha || null
         };
-
-        const { data } = await context.httpRequest({
+        const options = {
             method: 'POST',
             url: 'https://backboard.railway.com/graphql/v2',
             headers: {
@@ -38,14 +38,15 @@ module.exports = {
                 query: mutation,
                 variables: variables
             }
-        });
+        };
+        const { data } = await context.httpRequest(options);
 
         if (data.errors) {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // serviceInstanceDeployV2 returns a boolean or deployment ID
-        const result = data.data.serviceInstanceDeployV2;
+        // serviceInstanceDeploy returns a boolean or deployment ID
+        const result = data.data.serviceInstanceDeploy;
         return context.sendJson({ result }, 'out');
     }
 };
