@@ -18,9 +18,6 @@ module.exports = {
         if (!fromAddress) {
             throw new context.CancelError('Email from address is required!');
         }
-        if (!content) {
-            throw new context.CancelError('Email content is required!');
-        }
 
         const requestData = {
             name: name,
@@ -29,11 +26,15 @@ module.exports = {
                 {
                     subject: subject,
                     from_name: senderName,
-                    from: fromAddress,
-                    content: content
+                    from: fromAddress
                 }
             ]
         };
+
+        // Add content only if it's not undefined or null
+        if (content) {
+            requestData.emails[0].content = content;
+        }
 
         // Add optional fields
         if (Array.isArray(groups?.AND) && groups.AND.length > 0) {

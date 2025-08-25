@@ -4,7 +4,7 @@ const lib = require('../../lib.generated');
 
 module.exports = {
     async receive(context) {
-        const { folderLocation, outputType } = context.messages.in.content;
+        const { searchQuery, folderLocation, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Presentations', value: 'result' });
