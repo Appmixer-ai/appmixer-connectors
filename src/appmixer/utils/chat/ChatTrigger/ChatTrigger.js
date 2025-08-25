@@ -193,15 +193,32 @@ module.exports = {
                 case 'send-message': {
                     // Send a message to a thread.
                     const messageData = req.data;
+                    const chatMessage = {
+                        content: messageData.content,
+                        role: 'user',
+                        componentId: context.componentId,
+                        flowId: context.flowId
+                    };
+
+                    if (messageData.files) {
+                        chatMessage.files = [];
+                        for (const file of messageData.files) {
+                            const appmixerFile = await context.saveFile(file.name || 'file', file.type || 'application/octet-stream', Buffer.from(file.data, 'base64'));
+                            chatMessage.files.push({
+                                id: appmixerFile.fileId,
+                                name: appmixerFile.filename,
+                                type: file.type,
+                                size: appmixerFile.length,
+                                md5: appmixerFile.md5
+                            });
+                        }
+                        await context.log({ step: 'files-saved', files: chatMessage.files });
+                    }
+
                     const message = await context.callAppmixer({
                         endPoint: '/plugins/appmixer/utils/chat/messages/' + messageData.threadId,
                         method: 'POST',
-                        body: {
-                            content: messageData.content,
-                            role: 'user',
-                            componentId: context.componentId,
-                            flowId: context.flowId
-                        }
+                        body: chatMessage
                     });
                     const out = {
                         ...message,
