@@ -81,19 +81,66 @@ module.exports = {
                 state.notificationInBucket = true;
                 await context.saveState(state);
             } else {
-                const response = await sns.createTopic({
+                // Build createTopic params with optional encryption (backwards compatible).
+                const createParams = {
                     Name: `${payload.topicPrefix}${crypto.randomBytes(10).toString('hex')}`
-                }).promise();
+                };
+                if (payload.kmsMasterKeyId) {
+                    createParams.Attributes = {
+                        KmsMasterKeyId: payload.kmsMasterKeyId
+                    };
+                }
+
+                const response = await sns.createTopic(createParams).promise();
                 topicARN = response.TopicArn;
 
-                await sns.setTopicAttributes({
-                    TopicArn: topicARN,
-                    AttributeName: 'Policy',
-                    AttributeValue: `{"Version":"2008-10-17","Id":"__default_policy_ID","Statement":[{"Sid":"__console_pub_0",
-                    "Effect":"Allow","Principal":{"AWS":"*"},"Action":"SNS:Publish","Resource":"${topicARN}"},
-                    {"Sid":"__console_sub_0","Effect":"Allow","Principal":{"AWS":"*"},"Action":["SNS:Subscribe","SNS:Receive"],
-                    "Resource":"${topicARN}"}]}`
-                }).promise();
+                // If trusted account IDs provided, build restrictive policy. Otherwise keep legacy public policy for backwards compatibility.
+                try {
+                    // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
+                    const { trustedAccountIds } = payload;
+                    let policy;
+                    if (trustedAccountIds && (Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string')) {
+                        let accounts = Array.isArray(trustedAccountIds) ? trustedAccountIds : trustedAccountIds.split(',');
+                        accounts = accounts.map(a => a.trim()).filter(Boolean).map(a => {
+                            // Normalize to full root ARN if just the numeric account id provided.
+                            if (/^\d{12}$/.test(a)) {
+                                return `arn:aws:iam::${a}:root`;
+                            }
+                            return a; // Assume already ARN or role.
+                        });
+                        if (accounts.length > 0) {
+                            policy = {
+                                Version: '2008-10-17',
+                                Statement: [
+                                    {
+                                        Sid: 'AllowTrustedAccounts',
+                                        Effect: 'Allow',
+                                        Principal: { AWS: accounts.length === 1 ? accounts[0] : accounts },
+                                        Action: ['SNS:Publish', 'SNS:Subscribe', 'SNS:Receive'],
+                                        Resource: topicARN
+                                    }
+                                ]
+                            };
+                        }
+                    }
+
+                    if (!policy) {
+                        // Legacy open policy for compatibility (previous behavior).
+                        policy = { Version: '2008-10-17', Id: '__default_policy_ID', Statement: [
+                            { Sid: '__console_pub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: 'SNS:Publish', Resource: topicARN },
+                            { Sid: '__console_sub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: ['SNS:Subscribe', 'SNS:Receive'], Resource: topicARN }
+                        ] };
+                    }
+
+                    await sns.setTopicAttributes({
+                        TopicArn: topicARN,
+                        AttributeName: 'Policy',
+                        AttributeValue: JSON.stringify(policy)
+                    }).promise();
+                } catch (e) {
+                    // If setting a restrictive policy fails, rethrow to surface error (do not silently fall back to public policy).
+                    throw e;
+                }
 
                 const topicConfigurations = TopicConfigurations.filter(topic => {
                     const events = topic.Events.filter(arr => !arr.includes(payload.eventPrefix));
