@@ -59,7 +59,13 @@ module.exports = {
             throw new Error(`GraphQL Error: ${JSON.stringify(data.errors)}`);
         }
 
-        // Return empty object for update operations
-        return context.sendJson({}, 'out');
+        // Return all the input properties for confirmation and potential reuse
+        return context.sendJson({
+            projectId: projectId,
+            environmentId: environmentId,
+            serviceId: serviceId || null,
+            variableName: variableName,
+            variableValue: variableValue
+        }, 'out');
     }
 };
