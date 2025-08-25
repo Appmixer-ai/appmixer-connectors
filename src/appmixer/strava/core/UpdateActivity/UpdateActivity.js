@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -32,7 +31,7 @@ module.exports = {
 
         // Update activity using Strava API
         // https://developers.strava.com/docs/reference/#api-Activities-updateActivityById
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
             url: `https://www.strava.com/api/v3/activities/${activityId}`,
             headers: {
@@ -42,6 +41,6 @@ module.exports = {
             data: updateData
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
