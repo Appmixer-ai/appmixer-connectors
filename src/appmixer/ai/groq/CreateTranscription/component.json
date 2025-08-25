@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.ai.groq.core.CreateTranslation",
+    "name": "appmixer.ai.groq.CreateTranscription",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Translates spoken words in an audio or video file to English.",
+    "description": "Generates a transcription of audio content to text.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -23,6 +23,9 @@
                     "file": {
                         "type": "string"
                     },
+                    "language": {
+                        "type": "string"
+                    },
                     "prompt": {
                         "type": "string"
                     },
@@ -31,7 +34,6 @@
                     }
                 },
                 "required": [
-                    "model",
                     "file"
                 ]
             },
@@ -40,7 +42,7 @@
                     "model": {
                         "type": "select",
                         "label": "Model",
-                        "tooltip": "Choose the model for translation.",
+                        "tooltip": "Choose the transcription model.",
                         "index": 0,
                         "defaultValue": "whisper-large-v3",
                         "options": [
@@ -57,20 +59,26 @@
                     "file": {
                         "type": "filepicker",
                         "label": "Audio File",
-                        "tooltip": "Upload audio file (mp3, wav, etc.) to translate.",
+                        "tooltip": "Upload an audio file (mp3, wav, etc.)",
                         "index": 1
+                    },
+                    "language": {
+                        "type": "text",
+                        "label": "Language",
+                        "tooltip": "Language code (ISO 639-1) to improve accuracy.",
+                        "index": 2
                     },
                     "prompt": {
                         "type": "textarea",
-                        "label": "Prompt (optional)",
-                        "tooltip": "Optional English text to guide the model.",
-                        "index": 2
+                        "label": "Prompt",
+                        "tooltip": "Guide the model with prior text or style.",
+                        "index": 3
                     },
                     "temperature": {
                         "type": "number",
                         "label": "Temperature",
-                        "tooltip": "0 = deterministic, 1 = more random.",
-                        "index": 3
+                        "tooltip": "Controls randomness of output (0 to 1).",
+                        "index": 4
                     }
                 }
             }
@@ -81,7 +89,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Translation",
+                    "label": "Transcription",
                     "value": "text",
                     "schema": {
                         "type": "string"
