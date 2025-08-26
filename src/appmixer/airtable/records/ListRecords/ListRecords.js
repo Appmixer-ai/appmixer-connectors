@@ -1,6 +1,7 @@
 'use strict';
 
 const { sendArrayOutput } = require('../../airtable-commons');
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -21,7 +22,8 @@ module.exports = {
             cellFormat: 'json'
         };
         if (fields) {
-            queryParams.fields = fields.length > 0 ? fields : undefined;
+            const normalizedFields = lib.normalizeMultiselectInput(fields, Infinity, context, 'Fields');
+            queryParams.fields = normalizedFields.length > 0 ? normalizedFields : undefined;
         }
         if (filterByFormula) {
             queryParams.filterByFormula = filterByFormula.trim();
