@@ -18,6 +18,7 @@ function buildContext(properties = {}) {
         auth: { accessKeyId: 'AKIA_TEST', secretKey: 'SECRET', userId: 123 },
         messages: { in: { content: { region: properties.region } } },
         getWebhookUrl: () => 'https://example.com/webhook',
+        log: (msg) => { console.log('Context log:', msg); },
         lock: async () => ({ unlock: async () => {} }),
         loadState: async () => ({}),
         saveState: async () => {},

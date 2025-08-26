@@ -75,7 +75,6 @@ module.exports = {
             const { TopicConfigurations } = await s3.getBucketNotificationConfiguration({ Bucket: bucket }).promise();
             const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn.includes(payload.topicPrefix));
 
-
             if (filteredTopics.length > 0) {
                 topicARN = filteredTopics[0].TopicArn;
 
