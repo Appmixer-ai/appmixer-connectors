@@ -90,6 +90,12 @@ describe('aws-commons registerWebhook security options', () => {
         assert(Array.isArray(principal), 'Principal should be array when multiple accounts');
         assert(principal.includes('arn:aws:iam::123456789012:root'));
         assert(principal.includes('arn:aws:iam::210987654321:root'));
+        // Verify S3 publish permission is present for bucket notifications
+        const s3Stmt = policy.Statement.find(s => s.Sid === 'AllowS3BucketPublish');
+        assert(s3Stmt, 'S3 publish statement missing');
+        assert.strictEqual(s3Stmt.Principal.Service, 's3.amazonaws.com');
+        assert.strictEqual(s3Stmt.Condition.StringEquals['aws:SourceAccount'], '111111111111');
+        assert(s3Stmt.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
 
     it('falls back to legacy open policy when trustedAccountIds not provided', async () => {
@@ -149,5 +155,10 @@ describe('aws-commons registerWebhook security options', () => {
         assert(Array.isArray(principal), 'Principal should be an array');
         assert(principal.includes('arn:aws:iam::123456789012:root'), 'Policy does not include trusted account 123456789012');
         assert(principal.includes('arn:aws:iam::210987654321:root'), 'Policy does not include trusted account 210987654321');
+        const s3Stmt2 = policy.Statement.find(s => s.Sid === 'AllowS3BucketPublish');
+        assert(s3Stmt2, 'S3 publish statement missing in trusted policy');
+        assert.strictEqual(s3Stmt2.Principal.Service, 's3.amazonaws.com');
+        assert.strictEqual(s3Stmt2.Condition.StringEquals['aws:SourceAccount'], '111111111111');
+        assert(s3Stmt2.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
 });

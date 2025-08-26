@@ -97,52 +97,62 @@ module.exports = {
                 topicARN = response.TopicArn;
 
                 // If trusted account IDs provided, build restrictive policy. Otherwise keep legacy public policy for backwards compatibility.
-                try {
-                    // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
-                    const { trustedAccountIds } = payload;
-                    let policy;
-                    if (trustedAccountIds && (Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string')) {
-                        let accounts = Array.isArray(trustedAccountIds) ? trustedAccountIds : trustedAccountIds.split(',');
-                        accounts = accounts.map(a => a.trim()).filter(Boolean).map(a => {
-                            // Normalize to full root ARN if just the numeric account id provided.
-                            if (/^\d{12}$/.test(a)) {
-                                return `arn:aws:iam::${a}:root`;
-                            }
-                            return a; // Assume already ARN or role.
-                        });
-                        if (accounts.length > 0) {
-                            policy = {
-                                Version: '2008-10-17',
-                                Statement: [
-                                    {
-                                        Sid: 'AllowTrustedAccounts',
-                                        Effect: 'Allow',
-                                        Principal: { AWS: accounts.length === 1 ? accounts[0] : accounts },
-                                        Action: ['SNS:Publish', 'SNS:Subscribe', 'SNS:Receive'],
-                                        Resource: topicARN
-                                    }
-                                ]
-                            };
+                // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
+                const { trustedAccountIds } = payload;
+                let policy;
+                if (trustedAccountIds && (Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string')) {
+                    let accounts = Array.isArray(trustedAccountIds) ? trustedAccountIds : trustedAccountIds.split(',');
+                    accounts = accounts.map(a => a.trim()).filter(Boolean).map(a => {
+                        // Normalize to full root ARN if just the numeric account id provided.
+                        if (/^\d{12}$/.test(a)) {
+                            return `arn:aws:iam::${a}:root`;
                         }
+                        return a; // Assume already ARN or role.
+                    });
+                    if (accounts.length > 0) {
+                        const accountId = topicARN.split(':')[4];
+                        policy = {
+                            Version: '2008-10-17',
+                            Id: `${topicARN}/SQSDefaultPolicy`,
+                            Statement: [
+                                {
+                                    Sid: 'AllowTrustedAccounts',
+                                    Effect: 'Allow',
+                                    Principal: { AWS: accounts.length === 1 ? accounts[0] : accounts },
+                                    Action: ['SNS:Publish', 'SNS:Subscribe', 'SNS:Receive'],
+                                    Resource: topicARN
+                                },
+                                // Explicitly allow S3 to publish to the topic from the bucket (needed for bucket notifications)
+                                // to avoid error: Invalid Argument: Unable to validate the following destination configurations.
+                                {
+                                    Sid: 'AllowS3BucketPublish',
+                                    Effect: 'Allow',
+                                    Principal: { Service: 's3.amazonaws.com' },
+                                    Action: 'SNS:Publish',
+                                    Resource: topicARN,
+                                    Condition: {
+                                        StringEquals: { 'aws:SourceAccount': accountId },
+                                        ArnLike: { 'aws:SourceArn': `arn:aws:s3:*:*:${bucket}` }
+                                    }
+                                }
+                            ]
+                        };
                     }
-
-                    if (!policy) {
-                        // Legacy open policy for compatibility (previous behavior).
-                        policy = { Version: '2008-10-17', Id: '__default_policy_ID', Statement: [
-                            { Sid: '__console_pub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: 'SNS:Publish', Resource: topicARN },
-                            { Sid: '__console_sub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: ['SNS:Subscribe', 'SNS:Receive'], Resource: topicARN }
-                        ] };
-                    }
-
-                    await sns.setTopicAttributes({
-                        TopicArn: topicARN,
-                        AttributeName: 'Policy',
-                        AttributeValue: JSON.stringify(policy)
-                    }).promise();
-                } catch (e) {
-                    // If setting a restrictive policy fails, rethrow to surface error (do not silently fall back to public policy).
-                    throw new context.CancelError(`Failed to set SNS topic policy: ${e.message || e}`);
                 }
+
+                if (!policy) {
+                    // Legacy open policy for compatibility (previous behavior).
+                    policy = { Version: '2008-10-17', Id: '__default_policy_ID', Statement: [
+                        { Sid: '__console_pub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: 'SNS:Publish', Resource: topicARN },
+                        { Sid: '__console_sub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: ['SNS:Subscribe', 'SNS:Receive'], Resource: topicARN }
+                    ] };
+                }
+
+                await sns.setTopicAttributes({
+                    TopicArn: topicARN,
+                    AttributeName: 'Policy',
+                    AttributeValue: JSON.stringify(policy)
+                }).promise();
 
                 const topicConfigurations = TopicConfigurations.filter(topic => {
                     const events = topic.Events.filter(arr => !arr.includes(payload.eventPrefix));
@@ -209,9 +219,7 @@ module.exports = {
                     }
                 }).promise();
             } finally {
-                if (lock) {
-                    await lock.unlock();
-                }
+                await lock?.unlock();
             }
 
             promises.push(sns.deleteTopic({ TopicArn: topicARN }).promise());
