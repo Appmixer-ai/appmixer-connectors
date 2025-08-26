@@ -10,10 +10,13 @@ module.exports = {
 
     start(context) {
 
+        const { kmsMasterKeyId, trustedAccountIds } = context.properties;
         const payload = {
             topicPrefix: 'ObjectRemoved_',
             eventPrefix: 's3:ObjectRemoved:',
-            eventType: 's3:ObjectRemoved:*'
+            eventType: 's3:ObjectRemoved:*',
+            kmsMasterKeyId,
+            trustedAccountIds
         };
         return commons.registerWebhook(context, payload);
     },

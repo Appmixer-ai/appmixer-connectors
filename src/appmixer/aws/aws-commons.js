@@ -49,6 +49,8 @@ module.exports = {
      * @param {string} payload.topicPrefix
      * @param {string} payload.eventPrefix
      * @param {string} payload.eventType
+     * @param {string} [payload.kmsMasterKeyId]
+     * @param {string|string[]} [payload.trustedAccountIds]
      * @return {Promise}
      */
     async registerWebhook(context, payload) {
@@ -139,7 +141,7 @@ module.exports = {
                     }).promise();
                 } catch (e) {
                     // If setting a restrictive policy fails, rethrow to surface error (do not silently fall back to public policy).
-                    throw e;
+                    throw new context.CancelError(`Failed to set SNS topic policy: ${e.message || e}`);
                 }
 
                 const topicConfigurations = TopicConfigurations.filter(topic => {
@@ -162,9 +164,7 @@ module.exports = {
                 }).promise();
             }
         } finally {
-            if (lock) {
-                await lock.unlock();
-            }
+            await lock?.unlock();
         }
 
         return sns.subscribe({ TopicArn: topicARN, Protocol: 'https', Endpoint: url }).promise();

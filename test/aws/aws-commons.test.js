@@ -5,7 +5,11 @@ const sinon = require('sinon');
 
 // We will proxy-require the commons after stubbing AWS SDK.
 const AWS = require('aws-sdk');
-const AWS_LOCAL = require('../../src/appmixer/aws/node_modules/aws-sdk');
+const fs = require('fs');
+let AWS_LOCAL;
+if (fs.existsSync(require('path').join(__dirname, '../../src/appmixer/aws/node_modules/aws-sdk'))) {
+    AWS_LOCAL = require('../../src/appmixer/aws/node_modules/aws-sdk');
+}
 
 // Helper to build fake context object.
 function buildContext(properties = {}) {

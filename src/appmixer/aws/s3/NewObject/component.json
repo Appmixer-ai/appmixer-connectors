@@ -1,6 +1,7 @@
 {
     "name": "appmixer.aws.s3.NewObject",
-    "author": "Jimoh Damilola <jimoh@client.io>",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.1",
     "description": "This trigger fires every time new object is created with POST, Copy and CompleteMultipartUpload operations.",
     "private": false,
     "webhook": true,
@@ -14,7 +15,9 @@
         "schema": {
             "properties": {
                 "region": { "type": "string" },
-                "bucket": { "type": "string" }
+                "bucket": { "type": "string" },
+                "kmsMasterKeyId": { "type": "string" },
+                "trustedAccountIds": { "type": "string" }
             },
             "required": [
                 "bucket"
@@ -43,6 +46,18 @@
                             "transform": "./ListBuckets#bucketsToSelectArray"
                         }
                     }
+                },
+                "kmsMasterKeyId": {
+                    "type": "text",
+                    "label": "KMS Master Key Id or Alias",
+                    "index": 3,
+                    "tooltip": "KMS key ARN or alias (e.g. alias/my-key) to encrypt the SNS topic used internally. If not provided, the topic will be unencrypted."
+                },
+                "trustedAccountIds": {
+                    "type": "text",
+                    "label": "Trusted Account IDs / ARNs",
+                    "index": 4,
+                    "tooltip": "Comma separated AWS account IDs or IAM ARNs allowed to publish/subscribe. If left empty, the topic will be publicly accessible."
                 }
             }
         }
