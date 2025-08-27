@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('./docusign-commons');
+const commons = require('./lib');
 
 module.exports = {
     type: 'oauth2',

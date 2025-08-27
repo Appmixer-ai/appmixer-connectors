@@ -1,6 +1,5 @@
 'use strict';
-const commons = require('../../docusign-commons');
-const { normalizeMultiselect } = require('../../lib');
+const { getEnvelope, normalizeMultiselect } = require('../../lib');
 
 /**
  * Get an envelope.
@@ -23,7 +22,7 @@ module.exports = {
             include: normalizedInclude
         };
 
-        const envelope = await commons.getEnvelope(args, context.auth.accessToken);
+        const envelope = await getEnvelope(args, context.auth.accessToken);
 
         return context.sendJson(envelope, 'out');
     }

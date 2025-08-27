@@ -1,6 +1,5 @@
 'use strict';
-const commons = require('../../docusign-commons');
-const { normalizeMultiselect } = require('../../lib');
+const { registerDocusignWebhook, unregisterDocusignWebhook, normalizeMultiselect } = require('../../lib');
 
 /**
  * Get an envelope.
@@ -39,7 +38,7 @@ module.exports = {
         };
 
         // eslint-disable-next-line max-len
-        const { connectId } = await commons.registerDocusignWebhook(args, context.auth.accessToken, context.getWebhookUrl());
+        const { connectId } = await registerDocusignWebhook(args, context.auth.accessToken, context.getWebhookUrl());
         await context.saveState({ connectId });
     },
 
@@ -50,7 +49,7 @@ module.exports = {
             basePath,
             accountId
         };
-        return commons.unregisterDocusignWebhook(args, context.auth.accessToken, context.state.connectId);
+        return unregisterDocusignWebhook(args, context.auth.accessToken, context.state.connectId);
     },
 
     async receive(context) {
