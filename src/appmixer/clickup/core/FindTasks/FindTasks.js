@@ -1,7 +1,6 @@
 'use strict';
 const ClickUpClient = require('../../ClickUpClient');
-const { sendArrayOutput } = require('../../commons');
-const { normalizeMultiselect } = require('../../lib');
+const { sendArrayOutput, normalizeMultiselect } = require('../../lib');
 
 const outputPortName = 'tasks';
 
