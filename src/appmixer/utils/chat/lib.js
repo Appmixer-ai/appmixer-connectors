@@ -61,7 +61,7 @@ module.exports = {
             client = new Redis({
                 sentinels: sentinelsArray,
                 name: connection.sentinelMasterName,
-                ...(connection.sentinelRedisPaswword ? { password: connection.sentinelRedisPaswword } : {}),
+                ...(connection.sentinelRedisPassword ? { password: connection.sentinelRedisPassword } : {}),
                 ...(connection.enableTLSForSentinelMode ?
                     { enableTLSForSentinelMode: connection.enableTLSForSentinelMode } : {})
             });
