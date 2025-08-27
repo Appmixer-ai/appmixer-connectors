@@ -29,6 +29,7 @@ function buildContext(properties = {}) {
 // Stubs container reused per test.
 let snsStub;
 let s3Stub;
+let kmsStub;
 
 function resetStubs() {
     snsStub = {
@@ -42,12 +43,23 @@ function resetStubs() {
         putBucketNotificationConfiguration: sinon.stub(),
         listObjectVersions: sinon.stub()
     };
+    kmsStub = {
+        describeKey: sinon.stub().returns({ promise: () => Promise.resolve({ KeyMetadata: { KeyId: 'mock-key-id' } }) }),
+        listKeyPolicies: sinon.stub().returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) }),
+        getKeyPolicy: sinon.stub().returns({ promise: () => Promise.resolve({ Policy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [{ Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111111111111:root' }, Action: 'kms:*', Resource: '*' }, { Effect: 'Allow', Principal: { Service: 's3.amazonaws.com' }, Action: ['kms:Decrypt', 'kms:GenerateDataKey*'], Resource: '*' }]
+        }) }) })
+    };
 
     // Stub both root-level and connector-local aws-sdk instances to avoid real network calls.
+    // AWS_LOCAL may be undefined in CI (no local node_modules). Only stub defined objects.
     [AWS, AWS_LOCAL].forEach(A => {
+        if (!A) return; // skip when connector-local aws-sdk isn't installed
         sinon.stub(A, 'SNS').callsFake(() => snsStub);
         sinon.stub(A, 'S3').callsFake(() => s3Stub);
         sinon.stub(A, 'Lambda').callsFake(() => ({ }));
+        sinon.stub(A, 'KMS').callsFake(() => kmsStub);
     });
 }
 
