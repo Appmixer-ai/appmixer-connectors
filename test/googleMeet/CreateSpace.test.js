@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('googleMeet/CreateSpace', () => {
     it('creates a space', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/CreateSpace/CreateSpace');
+        const component = require('../../src/appmixer/googleMeet/space/CreateSpace/CreateSpace');
         const context = createMockContext({
             auth: { accessToken: process.env.GOOGLE_MEET_ACCESS_TOKEN || 'test-token' },
             messages: { in: { content: { 'space|spaceType': 'MEETING' } } },

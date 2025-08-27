@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('googleMeet/FindConferences', () => {
     it('generates out port options', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/FindConferences/FindConferences');
+        const component = require('../../src/appmixer/googleMeet/conferenceRecords/FindConferences/FindConferences');
         let sent;
         const context = createMockContext({
             properties: { generateOutputPortOptions: true },
@@ -21,7 +21,7 @@ describe('googleMeet/FindConferences', () => {
     });
 
     it('returns array', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/FindConferences/FindConferences');
+        const component = require('../../src/appmixer/googleMeet/conferenceRecords/FindConferences/FindConferences');
         let sent;
         const context = createMockContext({
             auth: { accessToken: process.env.GOOGLE_MEET_ACCESS_TOKEN || 'test-token' },

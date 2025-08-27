@@ -9,13 +9,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('googleMeet/EndActiveConference', () => {
     it('requires name', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/EndActiveConference/EndActiveConference');
+        const component = require('../../src/appmixer/googleMeet/space/EndActiveConference/EndActiveConference');
         const context = createMockContext({ CancelError: Error, messages: { in: { content: {} } } });
         await assert.rejects(() => component.receive(context));
     });
 
     it('calls POST endActiveConference', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/EndActiveConference/EndActiveConference');
+        const component = require('../../src/appmixer/googleMeet/space/EndActiveConference/EndActiveConference');
         let sent;
         const context = createMockContext({
             auth: { accessToken: process.env.GOOGLE_MEET_ACCESS_TOKEN || 'test-token' },

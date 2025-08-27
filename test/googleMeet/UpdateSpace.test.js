@@ -9,7 +9,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('googleMeet/UpdateSpace', () => {
     it('requires name and updateMask', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/UpdateSpace/UpdateSpace');
+        const component = require('../../src/appmixer/googleMeet/space/UpdateSpace/UpdateSpace');
         const context = createMockContext({ CancelError: Error, messages: { in: { content: {} } } });
         await assert.rejects(() => component.receive(context));
 
@@ -18,7 +18,7 @@ describe('googleMeet/UpdateSpace', () => {
     });
 
     it('calls PATCH with updateMask and sends {}', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/UpdateSpace/UpdateSpace');
+        const component = require('../../src/appmixer/googleMeet/space/UpdateSpace/UpdateSpace');
         let sent;
         const context = createMockContext({
             auth: { accessToken: process.env.GOOGLE_MEET_ACCESS_TOKEN || 'test-token' },

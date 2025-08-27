@@ -9,13 +9,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 describe('googleMeet/GetSpace', () => {
     it('requires name', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/GetSpace/GetSpace');
+        const component = require('../../src/appmixer/googleMeet/space/GetSpace/GetSpace');
         const context = createMockContext({ CancelError: Error, messages: { in: { content: {} } } });
         await assert.rejects(() => component.receive(context));
     });
 
     it('calls API', async () => {
-        const component = require('../../src/appmixer/googleMeet/core/GetSpace/GetSpace');
+        const component = require('../../src/appmixer/googleMeet/space/GetSpace/GetSpace');
         let sent;
         const context = createMockContext({
             auth: { accessToken: process.env.GOOGLE_MEET_ACCESS_TOKEN || 'test-token' },
