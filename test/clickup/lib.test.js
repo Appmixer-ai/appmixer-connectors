@@ -5,11 +5,11 @@ describe('ClickUp lib', () => {
 
     describe('normalizeMultiselect', () => {
 
-        it('should return undefined for empty/null/undefined values', () => {
+        it('should return original value for empty/null/undefined values', () => {
 
             assert.strictEqual(normalizeMultiselect(undefined), undefined);
-            assert.strictEqual(normalizeMultiselect(null), undefined);
-            assert.strictEqual(normalizeMultiselect(''), undefined);
+            assert.strictEqual(normalizeMultiselect(null), null);
+            assert.strictEqual(normalizeMultiselect(''), '');
         });
 
         it('should return array as-is when input is already an array', () => {
@@ -37,7 +37,7 @@ describe('ClickUp lib', () => {
 
             assert.deepStrictEqual(normalizeMultiselect('completed,,in progress'), ['completed', 'in progress']);
             assert.deepStrictEqual(normalizeMultiselect('completed, , in progress'), ['completed', 'in progress']);
-            assert.strictEqual(normalizeMultiselect(','), undefined);
+            assert.strictEqual(normalizeMultiselect(','), undefined); // Return undefined when no valid content after filtering
         });
 
         it('should convert non-string values to string first', () => {
@@ -48,7 +48,7 @@ describe('ClickUp lib', () => {
 
         it('should handle edge cases', () => {
 
-            assert.strictEqual(normalizeMultiselect('   '), undefined);
+            assert.strictEqual(normalizeMultiselect('   '), undefined); // Whitespace-only should return undefined after filtering
             assert.deepStrictEqual(normalizeMultiselect('completed,'), ['completed']);
             assert.deepStrictEqual(normalizeMultiselect(',completed'), ['completed']);
         });

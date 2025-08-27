@@ -53,7 +53,7 @@ module.exports = {
      */
     normalizeMultiselect(value) {
 
-        if (!value) return undefined;
+        if (!value) return value;
 
         // If already an array, return as is
         if (Array.isArray(value)) return value;
