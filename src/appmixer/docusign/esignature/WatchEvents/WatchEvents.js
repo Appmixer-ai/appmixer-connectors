@@ -1,5 +1,5 @@
 'use strict';
-const { registerDocusignWebhook, unregisterDocusignWebhook, normalizeMultiselect } = require('../../lib');
+const { registerDocusignWebhook, unregisterDocusignWebhook, normalizeMultiselectInput } = require('../../lib');
 
 /**
  * Get an envelope.
@@ -12,7 +12,8 @@ module.exports = {
         let { events } = context.properties;
 
         // Normalize the multiselect field
-        const normalizedEvents = normalizeMultiselect(events);
+        const normalizedEvents = events ?
+            normalizeMultiselectInput(events, context, 'Events') : undefined;
 
         if (!normalizedEvents || normalizedEvents.length === 0) {
             events = [

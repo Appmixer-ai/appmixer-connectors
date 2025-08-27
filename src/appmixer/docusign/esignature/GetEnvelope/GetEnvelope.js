@@ -1,5 +1,5 @@
 'use strict';
-const { getEnvelope, normalizeMultiselect } = require('../../lib');
+const { getEnvelope, normalizeMultiselectInput } = require('../../lib');
 
 /**
  * Get an envelope.
@@ -12,7 +12,8 @@ module.exports = {
         const { envelopeId, include } = context.messages.in.content;
 
         // Normalize the multiselect field
-        const normalizedInclude = normalizeMultiselect(include);
+        const normalizedInclude = include ?
+            normalizeMultiselectInput(include, context, 'Include') : undefined;
 
         const { base_uri: basePath, account_id: accountId } = context.profileInfo.accounts[0];
         let args = {

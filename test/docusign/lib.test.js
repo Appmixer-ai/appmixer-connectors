@@ -1,79 +1,109 @@
 const assert = require('assert');
 
-// Extract just the normalizeMultiselect function for testing
-const normalizeMultiselect = (value) => {
-    if (!value) return undefined;
-
-    // If already an array, return as is
-    if (Array.isArray(value)) return value;
-
-    // If string, split by comma and trim whitespace
-    if (typeof value === 'string') {
-        const result = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
-        return result.length > 0 ? result : undefined;
+// Extract just the normalizeMultiselectInput function for testing
+const normalizeMultiselectInput = (input, context, fieldName) => {
+    if (Array.isArray(input)) {
+        return input;
+    } else if (typeof input === 'string') {
+        // Handle single string value or comma-separated string
+        return input.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    } else {
+        throw new context.CancelError(`${fieldName} must be a string or an array`);
     }
+};
 
-    // For other types, convert to string first then split
-    const result = String(value).split(',').map(item => item.trim()).filter(item => item.length > 0);
-    return result.length > 0 ? result : undefined;
+// Mock context for testing
+const mockContext = {
+    CancelError: class extends Error {
+        constructor(message) {
+            super(message);
+            this.name = 'CancelError';
+        }
+    }
 };
 
 describe('Docusign lib', () => {
 
-    describe('normalizeMultiselect', () => {
-
-        it('should return undefined for empty/null/undefined values', () => {
-            assert.strictEqual(normalizeMultiselect(undefined), undefined);
-            assert.strictEqual(normalizeMultiselect(null), undefined);
-            assert.strictEqual(normalizeMultiselect(''), undefined);
-        });
+    describe('normalizeMultiselectInput', () => {
 
         it('should return array as-is when input is already an array', () => {
-            const input = ['value1', 'value2'];
-            const result = normalizeMultiselect(input);
-            assert.deepStrictEqual(result, ['value1', 'value2']);
+            const input = ['envelope-sent', 'envelope-completed'];
+            const result = normalizeMultiselectInput(input, mockContext, 'events');
+            assert.deepStrictEqual(result, ['envelope-sent', 'envelope-completed']);
             assert.strictEqual(result, input); // Should be the same reference
         });
 
-        it('should split comma-separated string and trim whitespace', () => {
-            assert.deepStrictEqual(normalizeMultiselect('value1,value2'), ['value1', 'value2']);
-            assert.deepStrictEqual(normalizeMultiselect('value1, value2, value3'), ['value1', 'value2', 'value3']);
-            assert.deepStrictEqual(normalizeMultiselect(' value1 , value2 , value3 '), ['value1', 'value2', 'value3']);
-        });
+        it('should handle single string value or comma-separated string', () => {
+            // Single value without commas
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('envelope-sent', mockContext, 'events'),
+                ['envelope-sent']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' envelope-sent ', mockContext, 'events'),
+                ['envelope-sent']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('custom_fields', mockContext, 'include'),
+                ['custom_fields']
+            );
 
-        it('should handle single values', () => {
-            assert.deepStrictEqual(normalizeMultiselect('single'), ['single']);
-            assert.deepStrictEqual(normalizeMultiselect(' single '), ['single']);
+            // Comma-separated values
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('envelope-sent,envelope-completed', mockContext, 'events'),
+                ['envelope-sent', 'envelope-completed']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('custom_fields, documents, recipients', mockContext, 'include'),
+                ['custom_fields', 'documents', 'recipients']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' envelope-sent , envelope-completed , envelope-voided ', mockContext, 'events'),
+                ['envelope-sent', 'envelope-completed', 'envelope-voided']
+            );
         });
 
         it('should filter out empty strings after splitting', () => {
-            assert.deepStrictEqual(normalizeMultiselect('value1,,value2'), ['value1', 'value2']);
-            assert.deepStrictEqual(normalizeMultiselect('value1, , value2'), ['value1', 'value2']);
-            assert.strictEqual(normalizeMultiselect(','), undefined);
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('envelope-sent,,envelope-completed', mockContext, 'events'),
+                ['envelope-sent', 'envelope-completed']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('envelope-sent, , envelope-completed', mockContext, 'events'),
+                ['envelope-sent', 'envelope-completed']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',', mockContext, 'events'),
+                []
+            );
         });
 
-        it('should convert non-string values to string first', () => {
-            assert.deepStrictEqual(normalizeMultiselect(123), ['123']);
-            assert.deepStrictEqual(normalizeMultiselect(true), ['true']);
+        it('should throw error for invalid input types', () => {
+            assert.throws(() => {
+                normalizeMultiselectInput(123, mockContext, 'events');
+            }, /events must be a string or an array/);
+
+            assert.throws(() => {
+                normalizeMultiselectInput(true, mockContext, 'events');
+            }, /events must be a string or an array/);
+
+            assert.throws(() => {
+                normalizeMultiselectInput(null, mockContext, 'events');
+            }, /events must be a string or an array/);
         });
 
         it('should handle edge cases', () => {
-            assert.strictEqual(normalizeMultiselect('   '), undefined);
-            assert.deepStrictEqual(normalizeMultiselect('value,'), ['value']);
-            assert.deepStrictEqual(normalizeMultiselect(',value'), ['value']);
-        });
-
-        it('should handle DocuSign-specific multiselect values', () => {
-            // Test with actual DocuSign event values
             assert.deepStrictEqual(
-                normalizeMultiselect('envelope-sent,envelope-completed'),
-                ['envelope-sent', 'envelope-completed']
+                normalizeMultiselectInput('   ', mockContext, 'events'),
+                []
             );
-
-            // Test with include options
             assert.deepStrictEqual(
-                normalizeMultiselect('custom_fields, documents, recipients'),
-                ['custom_fields', 'documents', 'recipients']
+                normalizeMultiselectInput('envelope-sent,', mockContext, 'events'),
+                ['envelope-sent']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',envelope-sent', mockContext, 'events'),
+                ['envelope-sent']
             );
         });
     });
