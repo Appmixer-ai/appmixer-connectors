@@ -9,6 +9,7 @@ const TOOLS_OUTPUT_POLL_INTERVAL = 300;  // 300ms
 const AI_AGENT_MAX_ATTEMPTS = 20; // Max number of agent turns before we stop.
 const AI_AGENT_MAX_HISTORY_SIZE = 512000;
 const AI_AGENT_MAX_HISTORY_SUMMARY_TOKENS = 32000;
+const AI_AGENT_MAX_FILE_SIZE = 1024 * 1024 * 5; // 5MB
 
 module.exports = {
 
@@ -219,18 +220,21 @@ module.exports = {
         });
     },
 
-    publishChatDeltaEvent: function(context, completionId, content) {
+    publishChatDeltaEvent: async function(context, completionId, content) {
 
-        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        const channel = `stream:agent:events:${context.messages.in.content.threadId}`;
+        const data = {
+            id: uuid.v6(), // UUID v6 is time ordered
+            content,
+            role: 'agent',
+            correlationId: context.messages.in.correlationId,
+            componentId: context.componentId,
+            flowId: context.flowId
+        };
+        await context.log({ step: 'publishing-delta', channel, data, completionId });
+        return lib.publish(channel, {
             type: 'delta',
-            data: {
-                id: uuid.v6(), // UUID v6 is time ordered
-                content,
-                role: 'agent',
-                correlationId: context.messages.in.correlationId,
-                componentId: context.componentId,
-                flowId: context.flowId
-            }
+            data
         });
     },
 
@@ -356,7 +360,7 @@ module.exports = {
         return outputs;
     },
 
-    agent: async function(context, client, instructions, model, prompt, tools, history) {
+    agent: async function(context, client, instructions, model, prompt, fileId, tools, history) {
 
         const messages = history || [{
             // Note that we're not using the 'system' role here since it's not
@@ -365,9 +369,61 @@ module.exports = {
             content: instructions
         }];
 
+        let userContent = prompt;
+
+        if (fileId) {
+            // Get the file content from Appmixer file storage and send directly as base64 encoded content.
+            try {
+                const fileInfo = await context.getFileInfo(fileId);
+                const size = fileInfo.length;
+                if (size > (context.config.AI_AGENT_MAX_FILE_SIZE || AI_AGENT_MAX_FILE_SIZE)) {
+                    throw new context.CancelError(`File size ${size} exceeds the maximum allowed size of ${context.config.AI_AGENT_MAX_FILE_SIZE || AI_AGENT_MAX_FILE_SIZE} bytes.`);
+                }
+                const mime = fileInfo.contentType || 'application/octet-stream';
+                const fileBuffer = await context.loadFile(fileId);
+                const fileContentBase64 = fileBuffer.toString('base64');
+                if (mime === 'image/png' || mime === 'image/jpeg' || mime === 'image/jpg' || mime === 'image/gif' || mime === 'image/webp') {
+                    // For images, we send the data URI so that the model can easily display it if needed.
+                    // Note that the size of the data URI is about 33% larger than the original binary content.
+                    userContent = [{
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:${mime};base64,${fileContentBase64}`
+                        }
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                } else if (mime === 'application/pdf') {
+                    userContent = [{
+                        type: 'file',
+                        file: {
+                            file_data: fileContentBase64,
+                            file_name: fileInfo.filename
+                        }
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                } else {
+                    // Other files are simply sent as a raw text. This is useful if file is e.g. a text file or CSV, JSON, .js, .py, etc.
+                    userContent = [{
+                        type: 'text',
+                        text: `File content: ${fileBuffer.toString('utf8')}`
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                    await context.log({ warning: `File type ${mime} is not an image or PDF. It will be parsed as text and sent as a regular prompt.` });
+                }
+            } catch (err) {
+                throw new context.CancelError(`Failed to process file: ${err.message}`);
+            }
+        }
+
         messages.push({
             role: 'user',
-            content: prompt
+            content: userContent
         });
 
         for (let i = 0; i < (context.config.AI_AGENT_MAX_ATTEMPTS || AI_AGENT_MAX_ATTEMPTS); i++) {
@@ -535,7 +591,7 @@ module.exports = {
 
         await this.publishChatProgressEvent(context, 'start', 'Thinking...');
         const receiveStart = new Date;
-        const { prompt, storeId, threadId } = context.messages.in.content;
+        const { prompt, storeId, threadId, fileId } = context.messages.in.content;
         const model = context.properties.model;
         const client = lib.sdk(context);
         let tools = await context.stateGet('tools');
@@ -558,6 +614,7 @@ module.exports = {
             context.properties.instructions || 'You\'re a helpful assistant.',
             model,
             prompt,
+            fileId,
             tools,
             history
         );
