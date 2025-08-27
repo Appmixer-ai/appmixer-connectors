@@ -1,10 +1,12 @@
 'use strict';
 
 const { transformFieldstoBodyFields } = require('../../airtable-commons');
+const lib = require('../../lib');
 
 module.exports = {
 
     async receive(context) {
+
         const {
             baseId, tableId, fieldsToMergeOn,
             returnFieldsByFieldId = false, typecast = false
@@ -13,9 +15,7 @@ module.exports = {
         const fields = context.messages.in.content;
         const { recordId } = fields;
 
-        if (fieldsToMergeOn.length > 3) {
-            throw new context.CancelError('Cannot have more than 3 fields selected in Merge Fields.');
-        }
+        const normalizedFieldsToMergeOn = lib.normalizeMultiselectInput(fieldsToMergeOn, 3, context, 'Merge Fields');
 
         const bodyFields = transformFieldstoBodyFields(fields);
 
@@ -23,7 +23,7 @@ module.exports = {
             returnFieldsByFieldId,
             typecast,
             performUpsert: {
-                fieldsToMergeOn
+                fieldsToMergeOn: normalizedFieldsToMergeOn
             },
             records: [{ fields: bodyFields, id: recordId }]
         };
