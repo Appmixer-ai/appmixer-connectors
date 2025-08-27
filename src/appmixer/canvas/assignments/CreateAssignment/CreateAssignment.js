@@ -1,5 +1,6 @@
 'use strict';
 const Canvas = require('../../canvas-sdk');
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -29,6 +30,10 @@ module.exports = {
             allowedAttempts
         } = context.messages.in.content;
 
+        // Normalize multiselect inputs
+        const normalizedSubmissionTypes = submissionTypes ?
+            lib.normalizeMultiselectInput(submissionTypes, 9, context, 'Submission Types') : undefined;
+
         const { auth } = context;
         const accessToken = auth.accessToken;
         const client = new Canvas(accessToken, context);
@@ -38,7 +43,7 @@ module.exports = {
             assignment_group_id: assignmentGroupId,
             description,
             position,
-            submission_types: submissionTypes,
+            submission_types: normalizedSubmissionTypes,
             due_at: dueAt,
             lock_at: lockAt,
             unlock_at: unlockAt,
