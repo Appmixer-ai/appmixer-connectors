@@ -1,56 +1,99 @@
 const assert = require('assert');
-const { normalizeMultiselect } = require('../../src/appmixer/clickup/lib');
+const { normalizeMultiselectInput } = require('../../src/appmixer/clickup/lib');
+
+// Mock context for testing
+const mockContext = {
+    CancelError: class extends Error {
+        constructor(message) {
+            super(message);
+            this.name = 'CancelError';
+        }
+    }
+};
 
 describe('ClickUp lib', () => {
 
-    describe('normalizeMultiselect', () => {
-
-        it('should return original value for empty/null/undefined values', () => {
-
-            assert.strictEqual(normalizeMultiselect(undefined), undefined);
-            assert.strictEqual(normalizeMultiselect(null), null);
-            assert.strictEqual(normalizeMultiselect(''), '');
-        });
+    describe('normalizeMultiselectInput', () => {
 
         it('should return array as-is when input is already an array', () => {
-
             const input = ['completed', 'in progress'];
-            const result = normalizeMultiselect(input);
+            const result = normalizeMultiselectInput(input, mockContext, 'statuses');
             assert.deepStrictEqual(result, ['completed', 'in progress']);
             assert.strictEqual(result, input); // Should be the same reference
         });
 
-        it('should split comma-separated string and trim whitespace', () => {
+        it('should handle single string value or comma-separated string', () => {
+            // Single value without commas
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('single', mockContext, 'statuses'),
+                ['single']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' single ', mockContext, 'statuses'),
+                ['single']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('2023:123:1231Z12', mockContext, 'ids'),
+                ['2023:123:1231Z12']
+            );
 
-            assert.deepStrictEqual(normalizeMultiselect('completed,in progress'), ['completed', 'in progress']);
-            assert.deepStrictEqual(normalizeMultiselect('completed, in progress, to do'), ['completed', 'in progress', 'to do']);
-            assert.deepStrictEqual(normalizeMultiselect(' completed , in progress , to do '), ['completed', 'in progress', 'to do']);
-        });
-
-        it('should handle single values', () => {
-
-            assert.deepStrictEqual(normalizeMultiselect('completed'), ['completed']);
-            assert.deepStrictEqual(normalizeMultiselect(' completed '), ['completed']);
+            // Comma-separated values
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('completed,in progress', mockContext, 'statuses'),
+                ['completed', 'in progress']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('completed, in progress, to do', mockContext, 'statuses'),
+                ['completed', 'in progress', 'to do']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' completed , in progress , to do ', mockContext, 'statuses'),
+                ['completed', 'in progress', 'to do']
+            );
         });
 
         it('should filter out empty strings after splitting', () => {
-
-            assert.deepStrictEqual(normalizeMultiselect('completed,,in progress'), ['completed', 'in progress']);
-            assert.deepStrictEqual(normalizeMultiselect('completed, , in progress'), ['completed', 'in progress']);
-            assert.strictEqual(normalizeMultiselect(','), undefined); // Return undefined when no valid content after filtering
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('completed,,in progress', mockContext, 'statuses'),
+                ['completed', 'in progress']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('completed, , in progress', mockContext, 'statuses'),
+                ['completed', 'in progress']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',', mockContext, 'statuses'),
+                []
+            );
         });
 
-        it('should convert non-string values to string first', () => {
+        it('should throw error for invalid input types', () => {
+            assert.throws(() => {
+                normalizeMultiselectInput(123, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
 
-            assert.deepStrictEqual(normalizeMultiselect(123), ['123']);
-            assert.deepStrictEqual(normalizeMultiselect(true), ['true']);
+            assert.throws(() => {
+                normalizeMultiselectInput(true, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
+
+            assert.throws(() => {
+                normalizeMultiselectInput(null, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
         });
 
         it('should handle edge cases', () => {
-
-            assert.strictEqual(normalizeMultiselect('   '), undefined); // Whitespace-only should return undefined after filtering
-            assert.deepStrictEqual(normalizeMultiselect('completed,'), ['completed']);
-            assert.deepStrictEqual(normalizeMultiselect(',completed'), ['completed']);
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('   ', mockContext, 'statuses'),
+                []
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('completed,', mockContext, 'statuses'),
+                ['completed']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',completed', mockContext, 'statuses'),
+                ['completed']
+            );
         });
     });
 });

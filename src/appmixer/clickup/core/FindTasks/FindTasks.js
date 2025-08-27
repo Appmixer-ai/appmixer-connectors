@@ -1,6 +1,6 @@
 'use strict';
 const ClickUpClient = require('../../ClickUpClient');
-const { sendArrayOutput, normalizeMultiselect } = require('../../lib');
+const lib = require('../../lib');
 
 const outputPortName = 'tasks';
 
@@ -19,8 +19,9 @@ module.exports = {
 
         const cu = new ClickUpClient(context);
 
-        // Normalize statuses as it's a true multiselect field
-        const normalizedStatuses = normalizeMultiselect(statuses);
+        // Normalize multiselect inputs (statuses is a true multiselect field)
+        const normalizedStatuses = statuses ?
+            lib.normalizeMultiselectInput(statuses, context, 'Statuses') : undefined;
 
         const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, {
             dataKey: 'tasks',
@@ -38,7 +39,7 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        return sendArrayOutput({
+        return lib.sendArrayOutput({
             context,
             outputPortName,
             outputType,

@@ -2,14 +2,15 @@
 
 ## Overview
 
-This guide provides instructions for implementing robust multiselect input normalization across Appmixer connectors. The goal is to ensure that fields defined as multiselect (or accepting comma-separated values) are consistently normalized to the format expected by their respective APIs.
+This guide provides instructions for implementing robust multiselect input normalization across Appmixer connectors. The goal is to ensure that fields defined as multiselect are consistently normalized to the format expected by their respective APIs.
 
 ## Key Principles
 
 1. **Only normalize true multiselect fields** - Fields defined with `"type": "multiselect"` in component.json
 2. **Preserve text fields** - Fields with `"type": "text"` that accept comma-separated values should remain as designed
 3. **Consistent implementation** - Use shared normalization functions across connectors
-4. **Comprehensive testing** - Every normalization implementation must include unit tests
+4. **Keep it simple** - Basic normalization without unnecessary complexity
+5. **Comprehensive testing** - Every normalization implementation must include unit tests
 
 ## Implementation Steps
 
@@ -28,29 +29,23 @@ Create or update `src/appmixer/{connector}/lib.js` with a normalization function
 module.exports = {
 
     /**
-     * Normalizes multiselect field values to ensure consistent array format.
-     * This function handles various input formats (strings, arrays, comma-separated values)
-     * and converts them to a proper array format for API consumption.
-     *
-     * @param {string|Array|undefined} value - The value to normalize
-     * @returns {Array|undefined} - Normalized array or undefined if input is empty
+     * Normalize multiselect input (array or string) to array format.
+     * Strings are treated as single values or comma-separated lists.
+     * @param {string|string[]} input
+     * @param {object} context
+     * @param {string} fieldName
+     * @returns {string[]}
      */
-    normalizeMultiselect(value) {
+    normalizeMultiselectInput(input, context, fieldName) {
 
-        if (!value) return undefined;
-        
-        // If already an array, return as is
-        if (Array.isArray(value)) return value;
-        
-        // If string, split by comma and trim whitespace
-        if (typeof value === 'string') {
-            const result = value.split(',').map(item => item.trim()).filter(item => item.length > 0);
-            return result.length > 0 ? result : undefined;
+        if (Array.isArray(input)) {
+            return input;
+        } else if (typeof input === 'string') {
+            // Handle single string value or comma-separated string
+            return input.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        } else {
+            throw new context.CancelError(`${fieldName} must be a string or an array`);
         }
-        
-        // For other types, convert to string first then split
-        const result = String(value).split(',').map(item => item.trim()).filter(item => item.length > 0);
-        return result.length > 0 ? result : undefined;
     }
 };
 ```
@@ -59,15 +54,16 @@ module.exports = {
 
 In the component's JavaScript file:
 
-1. **Import the normalization function**:
+1. **Import the lib module**:
 ```javascript
-const { normalizeMultiselect } = require('../../lib');
+const lib = require('../../lib');
 ```
 
 2. **Apply normalization only to multiselect fields**:
 ```javascript
 // Before API call
-const normalizedFieldName = normalizeMultiselect(fieldName);
+const normalizedFieldName = fieldName ?
+    lib.normalizeMultiselectInput(fieldName, context, 'Field Name') : undefined;
 
 // In API request
 const response = await context.httpRequest({
@@ -115,51 +111,101 @@ Create comprehensive unit tests in `test/{connector}/lib.test.js`:
 
 ```javascript
 const assert = require('assert');
-const { normalizeMultiselect } = require('../../src/appmixer/{connector}/lib');
+const { normalizeMultiselectInput } = require('../../src/appmixer/{connector}/lib');
+
+// Mock context for testing
+const mockContext = {
+    CancelError: class extends Error {
+        constructor(message) {
+            super(message);
+            this.name = 'CancelError';
+        }
+    }
+};
 
 describe('{Connector} lib', () => {
 
-    describe('normalizeMultiselect', () => {
-
-        it('should return undefined for empty/null/undefined values', () => {
-            assert.strictEqual(normalizeMultiselect(undefined), undefined);
-            assert.strictEqual(normalizeMultiselect(null), undefined);
-            assert.strictEqual(normalizeMultiselect(''), undefined);
-        });
+    describe('normalizeMultiselectInput', () => {
 
         it('should return array as-is when input is already an array', () => {
             const input = ['value1', 'value2'];
-            const result = normalizeMultiselect(input);
+            const result = normalizeMultiselectInput(input, mockContext, 'statuses');
             assert.deepStrictEqual(result, ['value1', 'value2']);
             assert.strictEqual(result, input); // Should be the same reference
         });
 
-        it('should split comma-separated string and trim whitespace', () => {
-            assert.deepStrictEqual(normalizeMultiselect('value1,value2'), ['value1', 'value2']);
-            assert.deepStrictEqual(normalizeMultiselect('value1, value2, value3'), ['value1', 'value2', 'value3']);
-            assert.deepStrictEqual(normalizeMultiselect(' value1 , value2 , value3 '), ['value1', 'value2', 'value3']);
-        });
+        it('should handle single string value or comma-separated string', () => {
+            // Single value without commas
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('single', mockContext, 'statuses'),
+                ['single']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' single ', mockContext, 'statuses'),
+                ['single']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('2023:123:1231Z12', mockContext, 'ids'),
+                ['2023:123:1231Z12']
+            );
 
-        it('should handle single values', () => {
-            assert.deepStrictEqual(normalizeMultiselect('single'), ['single']);
-            assert.deepStrictEqual(normalizeMultiselect(' single '), ['single']);
+            // Comma-separated values
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('value1,value2', mockContext, 'statuses'),
+                ['value1', 'value2']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('value1, value2, value3', mockContext, 'statuses'),
+                ['value1', 'value2', 'value3']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(' value1 , value2 , value3 ', mockContext, 'statuses'),
+                ['value1', 'value2', 'value3']
+            );
         });
 
         it('should filter out empty strings after splitting', () => {
-            assert.deepStrictEqual(normalizeMultiselect('value1,,value2'), ['value1', 'value2']);
-            assert.deepStrictEqual(normalizeMultiselect('value1, , value2'), ['value1', 'value2']);
-            assert.strictEqual(normalizeMultiselect(','), undefined);
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('value1,,value2', mockContext, 'statuses'),
+                ['value1', 'value2']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('value1, , value2', mockContext, 'statuses'),
+                ['value1', 'value2']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',', mockContext, 'statuses'),
+                []
+            );
         });
 
-        it('should convert non-string values to string first', () => {
-            assert.deepStrictEqual(normalizeMultiselect(123), ['123']);
-            assert.deepStrictEqual(normalizeMultiselect(true), ['true']);
+        it('should throw error for invalid input types', () => {
+            assert.throws(() => {
+                normalizeMultiselectInput(123, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
+
+            assert.throws(() => {
+                normalizeMultiselectInput(true, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
+
+            assert.throws(() => {
+                normalizeMultiselectInput(null, mockContext, 'statuses');
+            }, /statuses must be a string or an array/);
         });
 
         it('should handle edge cases', () => {
-            assert.strictEqual(normalizeMultiselect('   '), undefined);
-            assert.deepStrictEqual(normalizeMultiselect('value,'), ['value']);
-            assert.deepStrictEqual(normalizeMultiselect(',value'), ['value']);
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('   ', mockContext, 'statuses'),
+                []
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput('value,', mockContext, 'statuses'),
+                ['value']
+            );
+            assert.deepStrictEqual(
+                normalizeMultiselectInput(',value', mockContext, 'statuses'),
+                ['value']
+            );
         });
     });
 });
@@ -186,13 +232,14 @@ Update `src/appmixer/{connector}/bundle.json`:
 
 ```javascript
 // FindTasks.js
-const { normalizeMultiselect } = require('../../lib');
+const lib = require('../../lib');
 
 // In receive function:
 const { statuses, assigneeIds, tags } = context.messages.in.content;
 
 // Only normalize the true multiselect field
-const normalizedStatuses = normalizeMultiselect(statuses);
+const normalizedStatuses = statuses ?
+    lib.normalizeMultiselectInput(statuses, context, 'Statuses') : undefined;
 
 // Keep text fields as comma-separated strings
 const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, {
@@ -208,13 +255,14 @@ const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, {
 
 ```javascript
 // CreateAssignment.js
-const { normalizeMultiselect } = require('../../lib');
+const lib = require('../../lib');
 
 // In receive function:
 const { submissionTypes, allowedExtensions } = context.messages.in.content;
 
 // Only normalize the true multiselect field
-const normalizedSubmissionTypes = normalizeMultiselect(submissionTypes);
+const normalizedSubmissionTypes = submissionTypes ?
+    lib.normalizeMultiselectInput(submissionTypes, context, 'Submission Types') : undefined;
 
 const response = await context.httpRequest({
     data: {
@@ -249,8 +297,6 @@ npm run test-unit -- test/{connector}/lib.test.js
 # Run all tests
 npm run test-unit
 
-# Check for lint errors
-npm run lint
 ```
 
 ## Validation Checklist
@@ -263,7 +309,6 @@ Before considering the implementation complete:
 - [ ] Ensured text fields are left unchanged
 - [ ] Created comprehensive unit tests
 - [ ] All tests pass
-- [ ] No lint errors
 - [ ] Updated bundle.json version and changelog
 - [ ] Verified that existing functionality remains intact
 
