@@ -807,6 +807,11 @@ json schema of the component.json
 }
 ```
 
+Make sure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspector.inputs.<input_name>.type` match the following mapping:
+- string -> text|textarea
+- integer -> number
+- boolean -> toggle
+
 Desired order of attributes in `component.json`:
 1. `name`
 2. `description`
