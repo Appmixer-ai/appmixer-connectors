@@ -228,16 +228,19 @@ module.exports = {
 
     publishChatDeltaEvent: async function(context, completionId, content) {
 
-        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        const channel = `stream:agent:events:${context.messages.in.content.threadId}`;
+        const data = {
+            id: uuid.v6(), // UUID v6 is time ordered
+            content,
+            role: 'agent',
+            correlationId: context.messages.in.correlationId,
+            componentId: context.componentId,
+            flowId: context.flowId
+        };
+        await context.log({ step: 'publishing-delta', channel, data, completionId });
+        return lib.publish(channel, {
             type: 'delta',
-            data: {
-                id: uuid.v6(), // UUID v6 is time ordered
-                content,
-                role: 'agent',
-                correlationId: context.messages.in.correlationId,
-                componentId: context.componentId,
-                flowId: context.flowId
-            }
+            data
         });
     },
 
@@ -384,9 +387,9 @@ module.exports = {
                     throw new context.CancelError(`File size ${size} exceeds the maximum allowed size of ${context.config.AI_AGENT_MAX_FILE_SIZE || AI_AGENT_MAX_FILE_SIZE} bytes.`);
                 }
                 const mime = fileInfo.contentType || 'application/octet-stream';
+                const fileBuffer = await context.loadFile(fileId);
+                const fileContentBase64 = fileBuffer.toString('base64');
                 if (mime === 'image/png' || mime === 'image/jpeg' || mime === 'image/jpg' || mime === 'image/gif' || mime === 'image/webp') {
-                    const fileBuffer = await context.loadFile(fileId);
-                    const fileContentBase64 = fileBuffer.toString('base64');
                     // For images, we send the data URI so that the model can easily display it if needed.
                     // Note that the size of the data URI is about 33% larger than the original binary content.
                     userContent = [{
@@ -421,7 +424,6 @@ module.exports = {
                     }];
                 } else {
                     // Other files are simply sent as a raw text. This is useful if file is e.g. a text file or CSV, JSON, .js, .py, etc.
-                    const fileBuffer = await context.loadFile(fileId);
                     userContent = [{
                         type: 'text',
                         text: `File content: ${fileBuffer.toString('utf8')}`
