@@ -9,7 +9,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const queryString = query ? `?query=${encodeURIComponent(query)}` : '';
             const baseUrl = 'https://api.clerk.com/v1/organizations';
             const fullUrl = `${baseUrl}${queryString}`;
-            
+
             assert.strictEqual(fullUrl, 'https://api.clerk.com/v1/organizations?query=test-query');
         });
 
@@ -18,7 +18,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const queryString = query ? `?query=${encodeURIComponent(query)}` : '';
             const baseUrl = 'https://api.clerk.com/v1/organizations';
             const fullUrl = `${baseUrl}${queryString}`;
-            
+
             assert.strictEqual(fullUrl, 'https://api.clerk.com/v1/organizations');
         });
 
@@ -26,11 +26,11 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const queryParams = new URLSearchParams();
             queryParams.append('user_id', 'user123');
             queryParams.append('session_id', 'session456');
-            
+
             const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
             const baseUrl = 'https://api.clerk.com/v1/sessions';
             const fullUrl = `${baseUrl}${queryString}`;
-            
+
             assert.strictEqual(fullUrl, 'https://api.clerk.com/v1/sessions?user_id=user123&session_id=session456');
         });
     });
@@ -39,14 +39,14 @@ describe('Nested Template Literal Refactoring Tests', function() {
         it('should build label queries correctly', function() {
             const labels = ['bug', 'urgent', 'high priority'];
             const labelQuery = labels.length ? labels.map(label => `"${label}"`).join(',') : '';
-            
+
             assert.strictEqual(labelQuery, '"bug","urgent","high priority"');
         });
 
         it('should handle empty labels array', function() {
             const labels = [];
             const labelQuery = labels.length ? labels.map(label => `"${label}"`).join(',') : '';
-            
+
             assert.strictEqual(labelQuery, '');
         });
     });
@@ -56,7 +56,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const subfolderIds = ['folder1', 'folder2', 'folder3'];
             const parentQueries = subfolderIds.map(id => `'${id}' in parents`);
             const query = `(${parentQueries.join(' or ')})`;
-            
+
             assert.strictEqual(query, "('folder1' in parents or 'folder2' in parents or 'folder3' in parents)");
         });
     });
@@ -67,7 +67,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const existingQuery = 'param1=value1&param2=value2';
             const additionalQuery = existingQuery ? `&${existingQuery}` : '';
             const query = `hapikey=${apiKey}${additionalQuery}`;
-            
+
             assert.strictEqual(query, 'hapikey=test-api-key&param1=value1&param2=value2');
         });
 
@@ -76,7 +76,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const existingQuery = '';
             const additionalQuery = existingQuery ? `&${existingQuery}` : '';
             const query = `hapikey=${apiKey}${additionalQuery}`;
-            
+
             assert.strictEqual(query, 'hapikey=test-api-key');
         });
     });
@@ -87,7 +87,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const filter = 'additional-filter';
             const additionalFilter = filter?.length > 0 ? `,${filter}` : '';
             const fullFilter = `equals(messages.channel,'${channelFilter}')${additionalFilter}`;
-            
+
             assert.strictEqual(fullFilter, "equals(messages.channel,'email'),additional-filter");
         });
 
@@ -96,7 +96,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const filter = '';
             const additionalFilter = filter?.length > 0 ? `,${filter}` : '';
             const fullFilter = `equals(messages.channel,'${channelFilter}')${additionalFilter}`;
-            
+
             assert.strictEqual(fullFilter, "equals(messages.channel,'email')");
         });
     });
@@ -105,21 +105,21 @@ describe('Nested Template Literal Refactoring Tests', function() {
         it('should build IN value lists correctly', function() {
             const value = 'value1,value2,value3';
             const valuesList = value.trim().split(',').map(v => `'${v}'`).join(',');
-            
+
             assert.strictEqual(valuesList, "'value1','value2','value3'");
         });
 
         it('should handle single value', function() {
             const value = 'single-value';
             const valuesList = value.trim().split(',').map(v => `'${v}'`).join(',');
-            
+
             assert.strictEqual(valuesList, "'single-value'");
         });
 
         it('should handle values with whitespace', function() {
             const value = ' value1 , value2 , value3 ';
             const valuesList = value.trim().split(',').map(v => `'${v.trim()}'`).join(',');
-            
+
             assert.strictEqual(valuesList, "'value1','value2','value3'");
         });
     });
@@ -132,7 +132,7 @@ describe('Nested Template Literal Refactoring Tests', function() {
             const tableName = 'test_table';
             const columns = ['col1', 'col2', 'col3'];
             const sqlText = `INSERT INTO ${schema}.${tableName} (${columns.join(',')}) VALUES (${valuesList});`;
-            
+
             assert.strictEqual(sqlText, "INSERT INTO test_schema.test_table (col1,col2,col3) VALUES ('value1','value2','value3');");
         });
     });
