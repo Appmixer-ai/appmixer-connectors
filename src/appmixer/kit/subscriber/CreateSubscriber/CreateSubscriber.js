@@ -3,12 +3,18 @@
 module.exports = {
     async receive(context) {
 
-        const { email, firstName, state, customFields } = context.messages.in.content;
+        const { email, firstName, state } = context.messages.in.content;
 
         // Validate required inputs
         if (!email || !email.trim()) {
             throw new context.CancelError('Email is required!');
         }
+
+        const customFieldsArray = context.messages.in.content.customFields?.ADD || [];
+        const customFields = customFieldsArray.reduce((acc, field) => {
+            acc[field.name] = field.value;
+            return acc;
+        }, {});
 
         const requestData = {
             email_address: email.trim(),
