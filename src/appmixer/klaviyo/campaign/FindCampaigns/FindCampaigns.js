@@ -17,8 +17,9 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
         }
 
+        const additionalFilter = filter?.length > 0 ? `,${filter}` : '';
         const queryParams = {
-            filter: `equals(messages.channel,'${channelFilter}')${filter?.length > 0 ? `,${filter}` : ''}`,
+            filter: `equals(messages.channel,'${channelFilter}')${additionalFilter}`,
             sort,
             include: 'tags,campaign-messages'
         };

@@ -66,7 +66,8 @@ class SnowflakeDB {
     }
     async addRow(context, schema, tableName, columns, values) {
 
-        const sqlText = `INSERT INTO ${schema}.${tableName} (${columns.join(',')}) VALUES (${values.map(val => `'${val}'`).join(',')});`;
+        const valuesList = values.map(val => `'${val}'`).join(',');
+        const sqlText = `INSERT INTO ${schema}.${tableName} (${columns.join(',')}) VALUES (${valuesList});`;
         const statement = {
             sqlText
         };

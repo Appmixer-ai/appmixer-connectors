@@ -26,9 +26,10 @@ module.exports = {
     async tick(context) {
         let { repositoryId, includePr = false, state = 'all', labels = [] } = context.properties;
 
+        const labelQuery = labels.length ? labels.map(label => `"${label}"`).join(',') : '';
         const query = [
             `repo:${repositoryId}`,
-            labels.length ? `label:${labels.map(label => `"${label}"`).join(',')}` : '',
+            labelQuery ? `label:${labelQuery}` : '',
             state !== 'all' ? `state:${state}` : '',
             !includePr ? 'is:issue' : ''
         ].filter(Boolean).join('+');

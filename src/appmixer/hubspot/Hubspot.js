@@ -45,7 +45,8 @@ class Hubspot {
 
         if (opts.useKey) {
             delete payload.headers.Authorization;
-            opts.query = `hapikey=${this.apiKey}${opts.query ? `&${opts.query}` : ''}`;
+            const additionalQuery = opts.query ? `&${opts.query}` : '';
+            opts.query = `hapikey=${this.apiKey}${additionalQuery}`;
         }
 
         if (method.toLowerCase() === 'get') {

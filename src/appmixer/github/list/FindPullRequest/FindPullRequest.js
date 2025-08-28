@@ -11,9 +11,10 @@ module.exports = {
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { repositoryId, state = 'all', outputType, title = '', labels = [] } = context.messages.in.content;
 
+        const labelQuery = labels.length ? labels.map(label => `"${label}"`).join(',') : '';
         const query = [
             `is:pr+repo:${repositoryId}+in:title+${title}`,
-            labels.length ? `label:${labels.map(label => `"${label}"`).join(',')}` : '',
+            labelQuery ? `label:${labelQuery}` : '',
             state !== 'all' ? `state:${state}` : ''
         ].filter(Boolean).join('+');
 

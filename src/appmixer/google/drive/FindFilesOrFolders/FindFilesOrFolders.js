@@ -63,7 +63,8 @@ module.exports = {
             for (let subfolder of subfolders) {
                 subfolderIds.push(subfolder.googleDriveFileMetadata.id);
             }
-            q.push(`(${subfolderIds.map(id => `'${id}' in parents`).join(' or ')})`);
+            const parentQueries = subfolderIds.map(id => `'${id}' in parents`);
+            q.push(`(${parentQueries.join(' or ')})`);
         } else {
             if (folderId) {
                 q.push(`'${folderId}' in parents`);

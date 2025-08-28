@@ -173,9 +173,10 @@ module.exports = {
         if (phoneNumber) queryParams.append('phone_number_query', phoneNumber);
 
         // Make API request
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.clerk.com/v1/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+            url: `https://api.clerk.com/v1/users${queryString}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
