@@ -2,12 +2,12 @@
 
 # Appmixer Connectors
 
-Appmixer Connectors enable seamless integration with various external services, empowering developers to create robust workflows with minimal effort. These connectors are designed to simplify the process of connecting to APIs, handling authentication, and managing data flows.
+This repository contains the officially maintained connectors for Appmixer. They enable seamless integration with external services and help you build workflows faster by handling API access, authentication, and data flows.
 
 ## Key Benefits
-- **Ease of Use**: Simplify complex integrations with pre-built connectors.
-- **Flexibility**: Customize and extend connectors to suit your specific needs.
-- **Scalability**: Build workflows that scale with your business requirements.
+- **Ease of use**: Pre-built connectors remove boilerplate for common integrations.
+- **Flexibility**: Customize and extend connectors to suit specific needs.
+- **Scalability**: Build workflows that scale with your workloads.
 
 ## Getting Started
 To learn how to create custom connectors, refer to our comprehensive guide: [Creating Custom Connectors](https://docs.appmixer.com/getting-started/custom-connectors).
@@ -34,7 +34,7 @@ npm run test-unit
 ### Appmixer Stub
 In `test/utils.js` you can find a stub for the Appmixer API. It is supposed to emulate all the advanced features of the Appmixer engine like sending messages, doing HTTP requests, using cache, etc. It is not a complete implementation of the Appmixer API, but it is enough to test the connectors. You can use it to test your connectors without having to run the Appmixer engine.
 
-These tests run for each PR. They are also integrated into SonarQube analysis which is run on each commit to the `dev` branch.
+These tests run on every PR. They also feed into SonarQube analysis, which runs on each commit to the `dev` branch.
 
 ### What to Test
 Rule of thumb:
