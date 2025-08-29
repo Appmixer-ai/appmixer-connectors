@@ -26,7 +26,8 @@ describe('Slack RequestApproval', () => {
         // Properly stub using sinon so it can be restored between tests
         sinon.stub(slackLib, 'sendMessage').resolves({ message: { text: 'testMessage' } });
         // Common default auth and task message used by many tests
-        const futureDate = new Date(Date.now() + 3600000).toISOString(); // 1 hour in the future
+        const futureDate = new Date('2053-12-31T10:59:01.000Z').toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' }).replace('T', ' ');
+
         context.messages = {
             task: {
                 content: {
@@ -92,12 +93,14 @@ describe('Slack RequestApproval', () => {
                 assert.strictEqual(callArgs[3], true, 'sendMessage should be called as bot');
                 assert.strictEqual(callArgs[4], undefined, 'thread_ts should be undefined');
                 assert.strictEqual(callArgs[5], undefined, 'reply_broadcast should be undefined');
+
+                const expectedDecisionByText = new Date('2053-12-31T10:59:01.000Z').toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' }).replace('T', ' ');
                 assert.deepStrictEqual(callArgs[6], {
                     blocks: [
                         { type: 'section', text: { type: 'mrkdwn', text: '*Test Title*\nTest Description' } },
                         { type: 'context', elements: [
                             { type: 'mrkdwn', text: '*Requester:* <@U1>   *Approver:* <@U2>' },
-                            { type: 'mrkdwn', text: `*Decision by:* ${context.messages.task.content.decisionBy}` }
+                            { type: 'mrkdwn', text: `*Decision by:* ${expectedDecisionByText}` }
                         ] },
                         { type: 'actions', elements: [
                             { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: 'T123', action_id: 'task_approve' },
@@ -227,10 +230,8 @@ describe('Slack RequestApproval', () => {
 
             await RequestApproval.receive(context);
 
-            // Should notify Slack
-            assert(slackLib.sendMessage.calledOnce, 'sendMessage should be called on state change');
-            const args = slackLib.sendMessage.getCall(0).args;
-            assert.strictEqual(args[1], 'C1', 'Slack channel should match');
+            // Should not notify Slack here. It is done in the route after validation
+            assert(slackLib.sendMessage.callCount === 0, 'sendMessage should not be called from the component');
 
             // Should emit event with normalized id
             assert(context.sendJson.calledOnce, 'sendJson should emit state change event');

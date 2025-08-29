@@ -15,9 +15,10 @@ describe('Slack Tasks routes', () => {
 
         // Stub router and Joi, HttpError
         const JoiStub = {
-            string: () => ({ required: () => ({}), uri: () => ({ required: () => ({}) }) }),
+            string: () => ({ required: () => ({}), uri: () => ({ required: () => ({}) }), valid: () => ({}) }),
             date: () => ({ iso: () => ({}) }),
-            object: () => ({})
+            object: () => ({}),
+            number: () => ({ integer: () => ({ min: () => ({ max: () => ({ default: () => ({}) }) }) }) })
         };
         context.http = {
             router: { register: sinon.stub() },
@@ -51,6 +52,7 @@ describe('Slack Tasks routes', () => {
                             getStatus: () => entity.status,
                             setStatus: (s) => { entity.status = s; },
                             setDecisionMade: (d) => { entity.decisionMade = d; },
+                            setActor: (a) => { entity.actor = a; },
                             getId: () => id,
                             addIsApprover: () => ({ toJson: () => entity }),
                             save: async () => entity
@@ -297,8 +299,8 @@ describe('Slack Tasks routes', () => {
         const res = await handler({ payload: { title: 'T', description: 'D', requester: 'U1', approver: 'U2', channel: 'C1', decisionBy: new Date().toISOString() } });
 
         assert.equal(res.title, 'T');
-        // Expectation (may fail until implemented): send a Slack notification to approver
-        assert(slackLib.sendMessage.calledOnce, 'sendMessage should notify approver');
+        // No calls to sendMessage here
+        assert(slackLib.sendMessage.callCount === 0, 'sendMessage should not notify approver');
     });
 
     it('does not expose dashboard endpoint for Slack routes', async () => {

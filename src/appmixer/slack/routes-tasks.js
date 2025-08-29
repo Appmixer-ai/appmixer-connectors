@@ -82,49 +82,6 @@ module.exports = (context) => {
                     created: new Date()
                 }).save();
 
-                // Notify approver in Slack on task creation (if channel provided)
-                try {
-                    const {
-                        channel,
-                        title,
-                        description,
-                        requester,
-                        approver,
-                        decisionBy,
-                        username,
-                        iconUrl
-                    } = req.payload || {};
-                    if (channel && title) {
-                        const blocks = [
-                            { type: 'section', text: { type: 'mrkdwn', text: `*${title}*\n${description || ''}` } },
-                            { type: 'context', elements: [
-                                { type: 'mrkdwn', text: `*Requester:* <@${requester}>   *Approver:* <@${approver}>` },
-                                { type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }
-                            ] },
-                            { type: 'actions', elements: [
-                                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'task_approve' },
-                                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'task_reject' }
-                            ] }
-                        ];
-                        await slackLib.sendMessage(
-                            context,
-                            channel,
-                            `${title}\n${description || ''}`,
-                            true,
-                            undefined,
-                            undefined,
-                            {
-                                blocks,
-                                ...(username ? { username } : {}),
-                                ...(iconUrl ? { iconUrl } : {})
-                            }
-                        );
-                    }
-                } catch (err) {
-                    // Do not fail task creation on Slack notification errors
-                    context.log('warn', 'slack-plugin-route-tasks-create-notify-error', { error: err?.message });
-                }
-
                 return task;
             },
             validate: {
@@ -134,7 +91,9 @@ module.exports = (context) => {
                     requester: context.http.Joi.string().required(), // Slack user ID
                     approver: context.http.Joi.string().required(), // Slack user ID
                     channel: context.http.Joi.string().required(), // Slack channel ID
-                    decisionBy: context.http.Joi.date().iso()
+                    decisionBy: context.http.Joi.date().iso(),
+                    username: context.http.Joi.string(),
+                    iconUrl: context.http.Joi.string()
                 })
             }
         }
@@ -192,14 +151,17 @@ module.exports = (context) => {
 
         context.log('info', 'slack-plugin-route-interaction-task-details', task);
         context.log('info', 'slack-plugin-route-interaction-payload-details', payload);
+
         if (action === 'task_approve') {
             task.setStatus(Task.STATUS_APPROVED);
             task.setDecisionMade(new Date());
+            task.setActor(actorUserId);
             await utils.triggerWebhooks(task);
             context.log('info', 'slack-plugin-route-interaction-task-approved', { taskId });
         } else if (action === 'task_reject') {
             task.setStatus(Task.STATUS_REJECTED);
             task.setDecisionMade(new Date());
+            task.setActor(actorUserId);
             await utils.triggerWebhooks(task);
             context.log('info', 'slack-plugin-route-interaction-task-rejected', { taskId });
         } else {

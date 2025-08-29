@@ -8,45 +8,11 @@ module.exports = {
         if (context.messages.webhook) {
             const webhookData = context.messages.webhook.content;
             const { data } = webhookData;
-            context.log({ step: 'webhookReceived', data });
 
             // Normalize id
             if (data && data.taskId) {
                 data.id = data.taskId;
                 delete data.taskId;
-            }
-
-            // Notify Slack channel about decision when available
-            try {
-                if (data && data.channel) {
-                    const decisionText = data.status === 'approved' ? 'Approved' : data.status === 'rejected' ? 'Rejected' : 'Updated';
-                    const title = data.title || 'Request';
-                    const description = data.description || '';
-                    const requester = data.requester ? `<@${data.requester}>` : 'N/A';
-                    const approver = data.approver ? `<@${data.approver}>` : 'N/A';
-                    const decisionBy = data.decisionBy || '';
-
-                    const blocks = [
-                        { type: 'section', text: { type: 'mrkdwn', text: `*${title}* — *${decisionText}*` } },
-                        { type: 'section', text: { type: 'mrkdwn', text: description } },
-                        { type: 'context', elements: [
-                            { type: 'mrkdwn', text: `*Requester:* ${requester}   *Approver:* ${approver}` },
-                            ...(decisionBy ? [{ type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }] : [])
-                        ] }
-                    ];
-
-                    await lib.sendMessage(
-                        context,
-                        data.channel,
-                        `${title}\n${description}`,
-                        true,
-                        undefined,
-                        undefined,
-                        { blocks }
-                    );
-                }
-            } catch (err) {
-                context.log({ step: 'webhookNotifyError', err: err && err.message ? err.message : err });
             }
 
             // Emit event when status is resolved (not pending)
@@ -85,6 +51,10 @@ module.exports = {
             }
         }
 
+        if (body.requester === body.approver) {
+            throw new context.CancelError('Requester and approver must be different users.');
+        }
+
         const task = await context.callAppmixer({
             endPoint: '/plugins/appmixer/slack/tasks',
             method: 'POST',
@@ -109,11 +79,14 @@ module.exports = {
             iconUrl
         } = body;
 
+        // Format decisionBy to YYYY-MM-DD HH:MM for human-readable display
+        const decisionByReadable = decisionBy ? new Date(decisionBy).toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' }).replace('T', ' ') : 'N/A';
+
         const blocks = [
             { type: 'section', text: { type: 'mrkdwn', text: `*${title}*\n${description}` } },
             { type: 'context', elements: [
                 { type: 'mrkdwn', text: `*Requester:* <@${requester}>   *Approver:* <@${approver}>` },
-                { type: 'mrkdwn', text: `*Decision by:* ${decisionBy}` }
+                { type: 'mrkdwn', text: `*Decision by:* ${decisionByReadable}` }
             ] },
             { type: 'actions', elements: [
                 { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'task_approve' },
