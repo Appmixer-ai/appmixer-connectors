@@ -1,6 +1,7 @@
 'use strict';
+
+const { trimUndefined } = require('../../lib');
 const mime = require('mime-types');
-const { trimUndefined } = require('../../commons');
 const axios = require('axios');
 const FormData = require('form-data');
 

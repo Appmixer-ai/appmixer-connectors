@@ -11,7 +11,7 @@ const mockContext = {
     }
 };
 
-describe('Freshdesk commons', () => {
+describe('Freshdesk lib', () => {
 
     describe('normalizeMultiselectInput', () => {
 

@@ -1,6 +1,6 @@
 'use strict';
 const axios = require('axios');
-const { normalizeMultiselectInput } = require('../../commons');
+const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
 

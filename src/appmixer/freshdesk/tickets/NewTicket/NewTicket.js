@@ -1,7 +1,7 @@
 'use strict';
 const axios = require('axios');
 const Promise = require('bluebird');
-const { normalizeMultiselectInput } = require('../../commons');
+const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
 
