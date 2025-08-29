@@ -23,7 +23,7 @@ module.exports = {
         };
 
         // https://developers.kit.com/api-reference/subscribers/update-a-subscriber
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
             url: `https://api.kit.com/v4/subscribers/${subscriberId}`,
             headers: {
@@ -32,7 +32,7 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson(data.subscriber || {}, 'out');
+        return context.sendJson({}, 'out');
     }
 };
 
