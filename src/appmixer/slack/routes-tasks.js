@@ -67,6 +67,55 @@ module.exports = (context) => {
     });
 
     context.http.router.register({
+        method: 'GET',
+        path: '/tasks',
+        options: {
+            handler: async req => {
+                const {
+                    status,
+                    title,
+                    requester,
+                    approver,
+                    limit = 100
+                } = req.query;
+
+                // Build query object
+                const query = {};
+
+                if (status) {
+                    query.status = status;
+                }
+
+                if (title) {
+                    // Case-insensitive partial match for title
+                    query.title = { $regex: title, $options: 'i' };
+                }
+
+                if (requester) {
+                    query.requester = requester;
+                }
+
+                if (approver) {
+                    query.approver = approver;
+                }
+
+                const tasks = await Task.find(query, { limit: parseInt(limit, 10) });
+                return tasks.map(task => task.toJson());
+            },
+            auth: false,
+            validate: {
+                query: context.http.Joi.object({
+                    status: context.http.Joi.string().valid('pending', 'approved', 'rejected', 'due'),
+                    title: context.http.Joi.string(),
+                    requester: context.http.Joi.string(),
+                    approver: context.http.Joi.string(),
+                    limit: context.http.Joi.number().integer().min(1).max(1000).default(100)
+                })
+            }
+        }
+    });
+
+    context.http.router.register({
         method: 'POST',
         path: '/tasks',
         options: {
@@ -147,6 +196,33 @@ module.exports = (context) => {
         if (!task) {
             context.log('error', 'slack-plugin-route-interaction-task-not-found', { taskId });
             return h.response({ text: 'Task not found' }).code(404);
+        }
+
+        // Validate that the user clicking the button is the designated approver
+        const actorUserId = payload?.user?.id;
+        if (!actorUserId) {
+            context.log('error', 'slack-plugin-route-interaction-no-user-id', { taskId });
+            return h.response({ text: 'Unable to identify user' }).code(400);
+        }
+
+        if (actorUserId !== task.approver) {
+            context.log('warn', 'slack-plugin-route-interaction-unauthorized-user', {
+                taskId,
+                actorUserId,
+                expectedApprover: task.approver()
+            });
+
+            // Send response to the user who clicked
+            await context.httpRequest({
+                method: 'POST',
+                url: responseUrl,
+                headers: { 'Content-Type': 'application/json' },
+                data: {
+                    text: `❌ Only <@${task.approver()}> can approve or reject this task.`,
+                    response_type: 'ephemeral'
+                }
+            });
+            return;
         }
 
         context.log('info', 'slack-plugin-route-interaction-task-details', task);
