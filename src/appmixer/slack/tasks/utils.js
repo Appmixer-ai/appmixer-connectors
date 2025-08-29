@@ -33,17 +33,6 @@ module.exports = context => {
         },
 
         /**
-         * Do not return secrets in GET requests.
-         * @param {Task} task
-         * @throws Error
-         */
-        omitSecrets: function(task) {
-
-            check.assert.instance(task, Task, 'Invalid Task instance.');
-            return _.omit(task, 'approverSecret', 'requesterSecret');
-        },
-
-        /**
          * Trigger webhooks for a task.
          * @param {Task} task
          * @return {Promise<void>}
