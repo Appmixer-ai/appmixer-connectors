@@ -23,9 +23,6 @@ module.exports = context => {
                 'decisionMade',
                 'actor', // Slack user ID who made the decision
                 'channel', // Slack channel ID for notifications
-                // maybe not needed
-                // 'approverSecret',
-                // 'requesterSecret',
                 'created',
                 'mtime',
                 'isApprover'

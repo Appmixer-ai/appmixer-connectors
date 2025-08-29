@@ -72,7 +72,7 @@ module.exports = {
                 }
                 return;
             } else { // array
-                return context.sendJson(transformedTasks, 'out');
+                return context.sendJson({ count: transformedTasks.length, result: transformedTasks }, 'out');
             }
         } catch (error) {
             context.log('error', 'Failed to find request approvals', error);

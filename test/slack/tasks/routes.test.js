@@ -101,7 +101,6 @@ describe('Slack Tasks routes', () => {
             exports: () => ({
                 triggerWebhooks: async () => {},
                 getTask: async () => ({}),
-                verifyTaskPerm: async () => true,
                 omitSecrets: (t) => t
             })
         };

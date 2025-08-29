@@ -22,6 +22,7 @@ describe('slack-tasks-jobs', () => {
     let setMockTasks;
     let setMockWebhooks;
     let getSavedTasks;
+    // eslint-disable-next-line max-len, one-var
     let utilsPath, taskModelPath, webhookModelPath, jobsPath, jobsUtilsRequirePath, jobsTaskRequirePath, jobsWebhookRequirePath;
 
     beforeEach(async () => {

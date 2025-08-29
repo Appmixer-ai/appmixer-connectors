@@ -2,7 +2,6 @@
 
 const check = require('check-types');
 const _ = require('lodash');
-const crypto = require('crypto');
 
 module.exports = context => {
 
@@ -10,45 +9,6 @@ module.exports = context => {
     const Webhook = require('./SlackWebhookModel')(context);
 
     return {
-
-        /**
-         * Generates a hash secret based on approver/requester email
-         * @param {string} email
-         * @param {string} secret
-         * @return {string}
-         * @throws Error
-         */
-        generateSecret: function(email, secret) {
-
-            check.assert.nonEmptyString(email, 'Missing email param.');
-            return crypto.createHmac('sha256', secret).update(email).digest('hex');
-        },
-
-        /**
-         * Verifies task permission.
-         * TODO: refactor to use user ID instead of email.
-         * @param req
-         * @return {Promise<boolean>}
-         */
-        verifyTaskPerm: async function(req) {
-
-            const { task } = req.pre;
-            const { secret } = req.payload || req.query || {};
-
-            if (!task) {
-                throw context.http.HttpError.badRequest('Missing task.');
-            }
-
-            if (req.pre.user.getEmail() === task.approver) {
-                return true;
-            }
-
-            if (secret === task.approverSecret) {
-                return true;
-            }
-
-            throw context.http.HttpError.forbidden();
-        },
 
         /**
          * Gets task using taskId request parameter.
@@ -92,7 +52,7 @@ module.exports = context => {
 
             check.assert.instance(task, Task, 'Invalid task instance.');
 
-            const webhooks = await Webhook.find({ taskId: task.getId(), status: 'pending' });
+            const webhooks = await Webhook.find({ taskId: task.getId(), status: Webhook.STATUS_PENDING });
             return Promise.all(webhooks.map(webhook => this.triggerWebhook(webhook, task)));
         },
 
