@@ -4,6 +4,10 @@ module.exports = {
     async receive(context) {
         const { name } = context.messages.in.content;
 
+        if (!name) {
+            throw new context.CancelError('Name is required!');
+        }
+
         // https://developers.google.com/people/api/rest/v1/contactGroups/create
         const { data } = await context.httpRequest({
             method: 'POST',

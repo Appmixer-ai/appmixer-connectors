@@ -1,7 +1,7 @@
 'use strict';
 const uuid = require('uuid').v4;
 const parser = require('cron-parser');
-const moment = require('moment');
+const moment = require('moment-timezone');
 
 module.exports = {
 

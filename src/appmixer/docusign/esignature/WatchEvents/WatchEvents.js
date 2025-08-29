@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../docusign-commons');
+const { registerDocusignWebhook, unregisterDocusignWebhook, normalizeMultiselectInput } = require('../../lib');
 
 /**
  * Get an envelope.
@@ -11,7 +11,11 @@ module.exports = {
 
         let { events } = context.properties;
 
-        if (!Array.isArray(events) || events.length === 0) {
+        // Normalize the multiselect field
+        const normalizedEvents = events ?
+            normalizeMultiselectInput(events, context, 'Events') : undefined;
+
+        if (!normalizedEvents || normalizedEvents.length === 0) {
             events = [
                 'envelope-sent',
                 'envelope-resent',
@@ -23,6 +27,8 @@ module.exports = {
                 'envelope-purge',
                 'envelope-deleted'
             ];
+        } else {
+            events = normalizedEvents;
         }
 
         const { base_uri: basePath, account_id: accountId } = context.profileInfo.accounts[0];
@@ -33,7 +39,7 @@ module.exports = {
         };
 
         // eslint-disable-next-line max-len
-        const { connectId } = await commons.registerDocusignWebhook(args, context.auth.accessToken, context.getWebhookUrl());
+        const { connectId } = await registerDocusignWebhook(args, context.auth.accessToken, context.getWebhookUrl());
         await context.saveState({ connectId });
     },
 
@@ -44,7 +50,7 @@ module.exports = {
             basePath,
             accountId
         };
-        return commons.unregisterDocusignWebhook(args, context.auth.accessToken, context.state.connectId);
+        return unregisterDocusignWebhook(args, context.auth.accessToken, context.state.connectId);
     },
 
     async receive(context) {

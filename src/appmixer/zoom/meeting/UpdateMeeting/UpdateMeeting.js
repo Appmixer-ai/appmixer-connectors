@@ -12,7 +12,8 @@ module.exports = {
         // Build request body
         const requestBody = {
             topic,
-            start_time: startTime,
+            // start_time MUST be in format 'yyyy-MM-ddTHH:mm:ssZ'
+            start_time: startTime ? startTime.replace(/\.\d{3}Z$/, 'Z') : undefined,
             duration,
             password,
             agenda

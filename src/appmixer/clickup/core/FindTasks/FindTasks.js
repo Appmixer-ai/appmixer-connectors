@@ -1,6 +1,6 @@
 'use strict';
 const ClickUpClient = require('../../ClickUpClient');
-const { sendArrayOutput } = require('../../commons');
+const lib = require('../../lib');
 
 const outputPortName = 'tasks';
 
@@ -19,13 +19,27 @@ module.exports = {
 
         const cu = new ClickUpClient(context);
 
-        const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, { dataKey: 'tasks', countLimit: limit, params: { assignees: commaSeparatedStringToArray(assigneeIds), statuses, tags: commaSeparatedStringToArray(tags), order_by: orderBy, paramsSerializer: { indexes: false } } });
+        // Normalize multiselect inputs (statuses is a true multiselect field)
+        const normalizedStatuses = statuses ?
+            lib.normalizeMultiselectInput(statuses, context, 'Statuses') : undefined;
+
+        const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, {
+            dataKey: 'tasks',
+            countLimit: limit,
+            params: {
+                assignees: commaSeparatedStringToArray(assigneeIds),
+                statuses: normalizedStatuses,
+                tags: commaSeparatedStringToArray(tags),
+                order_by: orderBy,
+                paramsSerializer: { indexes: false }
+            }
+        });
 
         if (!tasks || tasks.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
-        return sendArrayOutput({
+        return lib.sendArrayOutput({
             context,
             outputPortName,
             outputType,

@@ -4,6 +4,10 @@ module.exports = {
     async receive(context) {
         const { groupId, name } = context.messages.in.content;
 
+        if (!groupId) {
+            throw new context.CancelError('Contact Group ID is required!');
+        }
+
         // https://developers.google.com/people/api/rest/v1/contactGroups/get
         const { data: currentData } = await context.httpRequest({
             method: 'GET',
@@ -29,9 +33,9 @@ module.exports = {
         });
 
         const betterResponse = {
-            id: data.resourceName.split('/')[1],
+            id: data.resourceName.split('/')[1] || data.resourceName,
             etag: data.etag,
-            updateTime: data.metadata.updateTime,
+            updateTime: data.metadata?.updateTime,
             groupType: data.groupType,
             name: data.name,
             formattedName: data.formattedName

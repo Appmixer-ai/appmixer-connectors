@@ -24,8 +24,8 @@ module.exports = {
         if (Array.isArray(data.contactGroups) && data.contactGroups?.length) {
             records = data.contactGroups.map((contactGroup) => {
                 return {
-                    id: contactGroup.resourceName.split('/')[1],
-                    etag: contactGroup.etag ?? undefined,
+                    id: contactGroup.resourceName.split('/')[1] || contactGroup.resourceName,
+                    etag: contactGroup.etag,
                     updateTime: contactGroup.metadata?.updateTime,
                     groupType: contactGroup.groupType,
                     name: contactGroup.name,

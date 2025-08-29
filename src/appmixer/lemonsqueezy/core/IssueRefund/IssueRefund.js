@@ -3,7 +3,7 @@
 module.exports = {
 
     async receive(context) {
-        const { orderId, amount, reason } = context.messages.in.content;
+        const { orderId, amount } = context.messages.in.content;
 
         // Validate required fields
         if (!orderId) {
@@ -20,10 +20,6 @@ module.exports = {
 
         if (amount) {
             requestData.data.attributes.amount = amount;
-        }
-
-        if (reason) {
-            requestData.data.attributes.reason = reason;
         }
 
         // https://docs.lemonsqueezy.com/api/order-refunds#create-order-refund

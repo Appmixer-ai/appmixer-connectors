@@ -1,8 +1,8 @@
 {
     "name": "appmixer.mailerlite.core.SendCampaign",
-    "description": "Send or schedule an email campaign for delivery.",
+    "description": "Send an email campaign instantly using the MailerLite API.",
     "author": "Appmixer <info@appmixer.com>",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "auth": {
         "service": "appmixer:mailerlite"
     },
@@ -28,9 +28,9 @@
                 "inputs": {
                     "campaignId": {
                         "type": "text",
-                        "tooltip": "The unique identifier of the campaign to be sent.",
-                        "label": "Campaign Id",
-                        "index": 0
+                        "tooltip": "The unique identifier of the campaign to be sent instantly.",
+                        "label": "Campaign ID",
+                        "index": 1
                     }
                 }
             }
@@ -44,27 +44,6 @@
                     "label": "Campaign Id",
                     "value": "id",
                     "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Count",
-                    "value": "count",
-                    "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Mail Id",
-                    "value": "mail_id",
-                    "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Timezone",
-                    "value": "timezone",
-                    "schema": {
                         "type": "string"
                     }
                 },
@@ -72,49 +51,21 @@
                     "label": "Account Id",
                     "value": "account_id",
                     "schema": {
-                        "type": "number"
+                        "type": "string"
                     }
                 },
                 {
-                    "label": "Campaign Type",
-                    "value": "campaign_type",
+                    "label": "Name",
+                    "value": "name",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Date",
-                    "value": "date",
+                    "label": "Type",
+                    "value": "type",
                     "schema": {
                         "type": "string"
-                    }
-                },
-                {
-                    "label": "End Time",
-                    "value": "end_time",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Send Date",
-                    "value": "send_date",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Opened",
-                    "value": "opened",
-                    "schema": {
-                        "type": "null"
-                    }
-                },
-                {
-                    "label": "Clicked",
-                    "value": "clicked",
-                    "schema": {
-                        "type": "null"
                     }
                 },
                 {
@@ -125,149 +76,436 @@
                     }
                 },
                 {
-                    "label": "Campaign Name",
-                    "value": "campaign_name",
+                    "label": "Missing Data",
+                    "value": "missing_data",
+                    "schema": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                {
+                    "label": "Settings",
+                    "value": "settings",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "track_opens": {
+                                "type": "boolean",
+                                "title": "Settings.Track Opens"
+                            },
+                            "use_google_analytics": {
+                                "type": "boolean",
+                                "title": "Settings.Use Google Analytics"
+                            },
+                            "ecommerce_tracking": {
+                                "type": "boolean",
+                                "title": "Settings.Ecommerce Tracking"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Filter",
+                    "value": "filter",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "array"
+                        }
+                    }
+                },
+                {
+                    "label": "Filter For Humans",
+                    "value": "filter_for_humans",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "array"
+                        }
+                    }
+                },
+                {
+                    "label": "Delivery Schedule",
+                    "value": "delivery_schedule",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Mails",
-                    "value": "mails",
+                    "label": "Language Id",
+                    "value": "language_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Scheduled For",
+                    "value": "scheduled_for",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Queued At",
+                    "value": "queued_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Started At",
+                    "value": "started_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Finished At",
+                    "value": "finished_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Stopped At",
+                    "value": "stopped_at",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Default Email Id",
+                    "value": "default_email_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Emails",
+                    "value": "emails",
                     "schema": {
                         "type": "array",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "id": {
-                                    "type": "number",
-                                    "title": "Mails.Id"
-                                },
-                                "date": {
                                     "type": "string",
-                                    "title": "Mails.Date"
+                                    "title": "Emails.Id"
                                 },
-                                "subject": {
+                                "account_id": {
                                     "type": "string",
-                                    "title": "Mails.Subject"
+                                    "title": "Emails.Account Id"
                                 },
-                                "code": {
+                                "emailable_id": {
                                     "type": "string",
-                                    "title": "Mails.Code"
+                                    "title": "Emails.Emailable Id"
                                 },
-                                "from": {
+                                "emailable_type": {
                                     "type": "string",
-                                    "title": "Mails.From"
-                                },
-                                "from_name": {
-                                    "type": "string",
-                                    "title": "Mails.From Name"
-                                },
-                                "url": {
-                                    "type": "string",
-                                    "title": "Mails.Url"
-                                },
-                                "send_date": {
-                                    "type": "string",
-                                    "title": "Mails.Send Date"
-                                },
-                                "host": {
-                                    "type": "string",
-                                    "title": "Mails.Host"
+                                    "title": "Emails.Emailable Type"
                                 },
                                 "type": {
                                     "type": "string",
-                                    "title": "Mails.Type"
+                                    "title": "Emails.Type"
                                 },
-                                "updated": {
+                                "from": {
                                     "type": "string",
-                                    "title": "Mails.Updated"
+                                    "title": "Emails.From"
                                 },
-                                "language": {
+                                "from_name": {
+                                    "type": "string",
+                                    "title": "Emails.From Name"
+                                },
+                                "name": {
+                                    "type": "null",
+                                    "title": "Emails.Name"
+                                },
+                                "reply_to": {
+                                    "type": "string",
+                                    "title": "Emails.Reply To"
+                                },
+                                "subject": {
+                                    "type": "string",
+                                    "title": "Emails.Subject"
+                                },
+                                "plain_text": {
+                                    "type": "string",
+                                    "title": "Emails.Plain Text"
+                                },
+                                "screenshot_url": {
+                                    "type": "null",
+                                    "title": "Emails.Screenshot Url"
+                                },
+                                "preview_url": {
+                                    "type": "null",
+                                    "title": "Emails.Preview Url"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "title": "Emails.Created At"
+                                },
+                                "updated_at": {
+                                    "type": "string",
+                                    "title": "Emails.Updated At"
+                                },
+                                "is_designed": {
+                                    "type": "boolean",
+                                    "title": "Emails.Is Designed"
+                                },
+                                "language_id": {
+                                    "type": "null",
+                                    "title": "Emails.Language Id"
+                                },
+                                "is_winner": {
+                                    "type": "boolean",
+                                    "title": "Emails.Is Winner"
+                                },
+                                "stats": {
                                     "type": "object",
                                     "properties": {
-                                        "code": {
-                                            "type": "string",
-                                            "title": "Mails.Language.Code"
+                                        "sent": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Sent"
                                         },
-                                        "title": {
-                                            "type": "string",
-                                            "title": "Mails.Language.Title"
+                                        "opens_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Opens Count"
+                                        },
+                                        "unique_opens_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Unique Opens Count"
+                                        },
+                                        "open_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Open Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Open Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Open Rate"
+                                        },
+                                        "clicks_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Clicks Count"
+                                        },
+                                        "unique_clicks_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Unique Clicks Count"
+                                        },
+                                        "click_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Click Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Click Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Click Rate"
+                                        },
+                                        "unsubscribes_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Unsubscribes Count"
+                                        },
+                                        "unsubscribe_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Unsubscribe Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Unsubscribe Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Unsubscribe Rate"
+                                        },
+                                        "spam_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Spam Count"
+                                        },
+                                        "spam_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Spam Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Spam Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Spam Rate"
+                                        },
+                                        "hard_bounces_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Hard Bounces Count"
+                                        },
+                                        "hard_bounce_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Hard Bounce Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Hard Bounce Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Hard Bounce Rate"
+                                        },
+                                        "soft_bounces_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Soft Bounces Count"
+                                        },
+                                        "soft_bounce_rate": {
+                                            "type": "object",
+                                            "properties": {
+                                                "float": {
+                                                    "type": "number",
+                                                    "title": "Emails.Stats.Soft Bounce Rate.Float"
+                                                },
+                                                "string": {
+                                                    "type": "string",
+                                                    "title": "Emails.Stats.Soft Bounce Rate.String"
+                                                }
+                                            },
+                                            "title": "Emails.Stats.Soft Bounce Rate"
+                                        },
+                                        "forwards_count": {
+                                            "type": "number",
+                                            "title": "Emails.Stats.Forwards Count"
                                         }
                                     },
-                                    "title": "Mails.Language"
+                                    "title": "Emails.Stats"
                                 },
-                                "groups": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "id": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Id"
-                                            },
-                                            "name": {
-                                                "type": "string",
-                                                "title": "Mails.Groups.Name"
-                                            },
-                                            "total": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Total"
-                                            },
-                                            "active": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Active"
-                                            },
-                                            "unsubscribed": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Unsubscribed"
-                                            },
-                                            "bounced": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Bounced"
-                                            },
-                                            "unconfirmed": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Unconfirmed"
-                                            },
-                                            "junk": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Junk"
-                                            },
-                                            "sent": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Sent"
-                                            },
-                                            "opened": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Opened"
-                                            },
-                                            "clicked": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Clicked"
-                                            },
-                                            "ordering": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Ordering"
-                                            },
-                                            "updating": {
-                                                "type": "number",
-                                                "title": "Mails.Groups.Updating"
-                                            },
-                                            "date": {
-                                                "type": "string",
-                                                "title": "Mails.Groups.Date"
-                                            },
-                                            "updated": {
-                                                "type": "string",
-                                                "title": "Mails.Groups.Updated"
-                                            }
-                                        }
-                                    },
-                                    "title": "Mails.Groups"
+                                "send_after": {
+                                    "type": "null",
+                                    "title": "Emails.Send After"
+                                },
+                                "track_opens": {
+                                    "type": "boolean",
+                                    "title": "Emails.Track Opens"
                                 }
                             }
                         }
+                    }
+                },
+                {
+                    "label": "Used In Automations",
+                    "value": "used_in_automations",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Type For Humans",
+                    "value": "type_for_humans",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Stopped",
+                    "value": "is_stopped",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Has Winner",
+                    "value": "has_winner",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Winner Version For Human",
+                    "value": "winner_version_for_human",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Winner Sending Time For Humans",
+                    "value": "winner_sending_time_for_humans",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Winner Selected Manually At",
+                    "value": "winner_selected_manually_at",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Uses Ecommerce",
+                    "value": "uses_ecommerce",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Uses Survey",
+                    "value": "uses_survey",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Can Be Scheduled",
+                    "value": "can_be_scheduled",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Warnings",
+                    "value": "warnings",
+                    "schema": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                {
+                    "label": "Initial Created At",
+                    "value": "initial_created_at",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Is Currently Sending Out",
+                    "value": "is_currently_sending_out",
+                    "schema": {
+                        "type": "boolean"
                     }
                 }
             ]

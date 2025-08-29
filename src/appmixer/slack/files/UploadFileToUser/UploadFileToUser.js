@@ -1,16 +1,14 @@
 'use strict';
 
 const { WebClient } = require('@slack/web-api');
+const lib = require('../../lib');
 
 module.exports = {
 
     async receive(context) {
 
         const { userIds, fileId, filename, altTxt, snippetType, initialComment } = context.messages.in.content;
-        if (userIds.length > 8) {
-            throw new context.CancelError('You can send a message to a maximum of 8 users at once');
-        }
-        let ids = userIds?.join(',');
+        const ids = lib.normalizeMultiselectInput(userIds, 8, context, 'userIds');
 
         const web = new WebClient(context.auth.accessToken);
         const { channel } = await web.conversations.open({ users: ids, prevent_creation: true });

@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+
     async receive(context) {
 
         const { campaignId } = context.messages.in.content;
@@ -9,15 +10,20 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
-        // https://developers-classic.mailerlite.com/reference/campaign-actions-and-triggers
+        // Send campaign instantly using the schedule endpoint with delivery: "instant"
+        // https://developers.mailerlite.com/docs/campaigns.html#schedule-a-campaign
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.mailerlite.com/api/v2/campaigns/${campaignId}/actions/send`,
+            url: `https://connect.mailerlite.com/api/campaigns/${campaignId}/schedule`,
             headers: {
-                'X-MailerLite-ApiKey': context.auth.apiKey
+                'Authorization': `Bearer ${context.auth.apiKey}`
+            },
+            data: {
+                delivery: 'instant'
             }
         });
 
-        return context.sendJson(data || {}, 'out');
+        // Return the campaign data from the response
+        return context.sendJson(data.data, 'out');
     }
 };

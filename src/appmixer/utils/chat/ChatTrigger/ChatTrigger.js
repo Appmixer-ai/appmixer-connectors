@@ -5,11 +5,13 @@ const { URL } = require('url');
 const jwt = require('jsonwebtoken');
 
 const chatScriptSnippet = `
-<script>
-!function(){window.AppmixerChatWidget=window.AppmixerChatWidget||{};var e=document.createElement("script");e.src="{{CHAT_WIDGET_SCRIPT_URL}}",e.async=!0,document.head.appendChild(e)}();
-window.AppmixerChatWidget.chatUrl = "{{CHAT_URL}}";  // append ?chat_token={YOUR_JWT_TOKEN} to this URL if you're using JWT tokens to authenticate users of the chat.
-window.AppmixerChatWidget.widgetPosition = 'bottom-right'; // or 'bottom-left'
-window.AppmixerChatWidget.widgetWidth = '50%';
+<script type="module">
+!function(){
+    var e=document.createElement("script");
+    e.type="module";
+    e.src="{{CHAT_WIDGET_SCRIPT_URL}}",
+    e.onload=function(){window.initLauncher&&initLauncher({mode:"dialog",theme:"light",endpoint:"{{CHAT_URL}}",baseUrl:"{{BASE_URL}}",jwt:"",widgetPosition:"bottom-right"})},
+    document.head.appendChild(e)}();
 </script>
 `;
 
@@ -18,9 +20,11 @@ module.exports = {
     async start(context) {
 
         const config = {
-            name: context.properties.agentName || 'Agent',
-            avatar: context.properties.agentAvatar || 'https://img.freepik.com/premium-vector/avatar-icon002_750950-52.jpg',
-            message: context.properties.agentMessage || 'Hello! How can I help you?'
+            name: context.properties.agentName,
+            avatar: context.properties.agentAvatar,
+            intro: context.properties.agentIntro,
+            description: context.properties.agentDescription,
+            promptPlaceholder: context.properties.agentPromptPlaceholder
         };
 
         const agents = await context.callAppmixer({
@@ -85,7 +89,8 @@ module.exports = {
                         readonly: true,
                         defaultValue: chatScriptSnippet
                             .replace('{{CHAT_URL}}', context.getWebhookUrl())
-                            .replace('{{CHAT_WIDGET_SCRIPT_URL}}', `${baseUrl}/plugins/appmixer/utils/chat/assets/chat.widget.js`),
+                            .replace('{{BASE_URL}}', process.env.APPMIXER_API_URL)
+                            .replace('{{CHAT_WIDGET_SCRIPT_URL}}', `${baseUrl}/plugins/appmixer/utils/chat/assets/chat.bundle.js`),
                         tooltip: 'Add this script to your website to embed the chat widget.'
                     }
                 }
@@ -142,16 +147,6 @@ module.exports = {
                             id: sessionId
                         }
                     });
-                    const thread = await context.callAppmixer({
-                        endPoint: '/plugins/appmixer/utils/chat/threads',
-                        method: 'POST',
-                        body: {
-                            agentId: agent.id,
-                            sessionId: session.id,
-                            theme: req.data?.theme || context.properties.chatTheme || 'Ask me anything'
-                        }
-                    });
-                    session.threads = [thread];
                     session.agents = [agent];
                     await context.log({ step: 'session-created', session });
                     return context.response(session, 200, { 'Content-Type': 'application/json' });
@@ -198,15 +193,32 @@ module.exports = {
                 case 'send-message': {
                     // Send a message to a thread.
                     const messageData = req.data;
+                    const chatMessage = {
+                        content: messageData.content,
+                        role: 'user',
+                        componentId: context.componentId,
+                        flowId: context.flowId
+                    };
+
+                    if (messageData.files) {
+                        chatMessage.files = [];
+                        for (const file of messageData.files) {
+                            const appmixerFile = await context.saveFile(file.name || 'file', file.type || 'application/octet-stream', Buffer.from(file.data, 'base64'));
+                            chatMessage.files.push({
+                                id: appmixerFile.fileId,
+                                name: appmixerFile.filename,
+                                type: file.type,
+                                size: appmixerFile.length,
+                                md5: appmixerFile.md5
+                            });
+                        }
+                        await context.log({ step: 'files-saved', files: chatMessage.files });
+                    }
+
                     const message = await context.callAppmixer({
                         endPoint: '/plugins/appmixer/utils/chat/messages/' + messageData.threadId,
                         method: 'POST',
-                        body: {
-                            content: messageData.content,
-                            role: 'user',
-                            componentId: context.componentId,
-                            flowId: context.flowId
-                        }
+                        body: chatMessage
                     });
                     const out = {
                         ...message,

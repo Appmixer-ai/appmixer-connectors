@@ -1,6 +1,7 @@
 'use strict';
 const ComputerVisionClient = require('@azure/cognitiveservices-computervision').ComputerVisionClient;
 const ApiKeyCredentials = require('@azure/ms-rest-js').ApiKeyCredentials;
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -11,6 +12,8 @@ module.exports = {
         if (!visualFeatures) {
             visualFeatures =
                 ['Categories', 'Tags', 'Description', 'Faces', 'ImageType', 'Color', 'Adult', 'Objects', 'Brands'];
+        } else {
+            visualFeatures = lib.normalizeMultiselectInput(visualFeatures, 9, context, 'Visual Features');
         }
 
         if (!language) {

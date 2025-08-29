@@ -6,18 +6,18 @@ const page = (baseUrl, endpoint) => {
     return `
         <!DOCTYPE html>
         <html>
-        <head>
-        <link rel="stylesheet" href="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.lib.css"/>
-        <link rel="stylesheet" href="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.main.css"/>
-        </head>
         <body>
-        <div id="chat-container"></div>
-        <script type="text/javascript" src="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.lib.js"></script>
-        <script type="text/javascript">
-           const ENDPOINT = '${endpoint}';
-           const BASE_URL = '${baseUrl}';
+        <script type="module" src="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.bundle.js"></script>
+        <script type="module">
+        initLauncher({
+            mode: 'fullscreen',
+            theme: 'light',
+            endpoint: '${endpoint}',
+            baseUrl: '${baseUrl}',
+            jwt: '',
+            widgetPosition: 'bottom-right'
+        });
         </script>
-        <script type="text/javascript" src="${baseUrl}/plugins/appmixer/utils/chat/assets/chat.main.js"></script>
         </body>
         </html>
         `;
@@ -61,7 +61,7 @@ module.exports = {
             client = new Redis({
                 sentinels: sentinelsArray,
                 name: connection.sentinelMasterName,
-                ...(connection.sentinelRedisPaswword ? { password: connection.sentinelRedisPaswword } : {}),
+                ...(connection.sentinelRedisPassword ? { password: connection.sentinelRedisPassword } : {}),
                 ...(connection.enableTLSForSentinelMode ?
                     { enableTLSForSentinelMode: connection.enableTLSForSentinelMode } : {})
             });
