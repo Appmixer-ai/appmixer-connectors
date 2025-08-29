@@ -26,9 +26,12 @@ module.exports = {
     async tick(context) {
         let { repositoryId, includePr = false, state = 'all', labels = [] } = context.properties;
 
+        // Normalize multiselect fields
+        const normalizedLabels = labels ? lib.normalizeMultiselectInput(labels, context, 'Labels') : [];
+
         const query = [
             `repo:${repositoryId}`,
-            labels.length ? `label:${labels.map(label => `"${label}"`).join(',')}` : '',
+            normalizedLabels.length ? `label:${normalizedLabels.map(label => `"${label}"`).join(',')}` : '',
             state !== 'all' ? `state:${state}` : '',
             !includePr ? 'is:issue' : ''
         ].filter(Boolean).join('+');
