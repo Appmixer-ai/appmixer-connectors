@@ -41,6 +41,26 @@ module.exports = {
             }
         }
 
+        // Helper to validate and normalize a single Slack user reference.
+        // Acceptable formats:
+        //  - Raw user ID: U123ABCDEF (starts with U or W)
+        // Reject anything containing spaces, commas
+        function normalizeSlackUser(value, fieldLabel) {
+            if (typeof value !== 'string' || !value.trim()) {
+                throw new context.CancelError(`${fieldLabel} must be a Slack user ID.`);
+            }
+            // Raw ID format
+            const idMatch = value.match(/^([UW][A-Z0-9]+)$/i);
+            if (idMatch) {
+                return idMatch[1];
+            }
+            throw new context.CancelError(`${fieldLabel} must be a valid Slack user ID (e.g. U123ABCDEF).`);
+        }
+
+        // Normalize and validate requester / approver (must be exactly one each)
+        body.requester = normalizeSlackUser(body.requester, 'Requester');
+        body.approver = normalizeSlackUser(body.approver, 'Approver');
+
         if (body.decisionBy) {
             const decisionDate = new Date(body.decisionBy);
             if (isNaN(decisionDate.getTime())) {

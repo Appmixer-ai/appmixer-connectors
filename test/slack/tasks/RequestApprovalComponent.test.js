@@ -205,6 +205,62 @@ describe('Slack RequestApproval', () => {
                     assert.strictEqual(error.message, `${label} is required!`, 'Error message should match');
                 });
             });
+
+            it('accepts Slack user IDs only for requester and approver', async () => {
+
+                context.messages.task.content.requester = 'U123ABCDEF';
+                context.messages.task.content.approver = 'U222BBBCCC';
+
+                context.callAppmixer.onFirstCall().resolves({
+                    ...context.messages.task.content,
+                    requester: 'U123ABCDEF',
+                    approver: 'U222BBBCCC',
+                    taskId: 'T999'
+                });
+                context.callAppmixer.onSecondCall().resolves({ webhookId: 'W999' });
+
+                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                await RequestApproval.receive(context);
+
+                // Verify that raw IDs are passed through to Appmixer
+                const firstArgs = context.callAppmixer.firstCall.args[0];
+                assert.strictEqual(firstArgs.body.requester, 'U123ABCDEF');
+                assert.strictEqual(firstArgs.body.approver, 'U222BBBCCC');
+
+                // Verify sendMessage gets normalized mentions in blocks
+                const sendArgs = slackLib.sendMessage.getCall(0).args[6];
+                const contextBlock = sendArgs.blocks.find(b => b.type === 'context');
+                assert(contextBlock, 'context block should exist');
+                const textEl = contextBlock.elements[0].text;
+                assert(textEl.includes('<@U123ABCDEF>'), 'Requester mention should be formatted as a Slack mention');
+                assert(textEl.includes('<@U222BBBCCC>'), 'Approver mention should be formatted as a Slack mention');
+            });
+
+            it('throws if requester contains multiple users', async () => {
+
+                context.messages.task.content.requester = 'U123ABCDEF,U222BBBCCC';
+                context.messages.task.content.approver = 'U222BBBCCC';
+                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                let error;
+                try {
+                    await RequestApproval.receive(context);
+                } catch (e) { error = e; }
+                assert(error instanceof context.CancelError, 'Should throw CancelError');
+                assert.match(error.message, /Requester must be a valid Slack user ID/, 'Error message should indicate invalid requester');
+            });
+
+            it('throws if approver has invalid format', async () => {
+
+                context.messages.task.content.requester = 'U123ABCDEF';
+                context.messages.task.content.approver = 'not-valid-format';
+                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                let error;
+                try {
+                    await RequestApproval.receive(context);
+                } catch (e) { error = e; }
+                assert(error instanceof context.CancelError, 'Should throw CancelError');
+                assert.strictEqual(error.message, 'Approver must be a valid Slack user ID (e.g. U123ABCDEF).');
+            });
         });
     });
 
