@@ -1,7 +1,6 @@
 'use strict';
 
 const check = require('check-types');
-const _ = require('lodash');
 
 module.exports = context => {
 
