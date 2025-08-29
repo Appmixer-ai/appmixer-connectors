@@ -544,7 +544,7 @@ module.exports = {
 ```
 
 # Plugins, Routes and Jobs
-Files: <connector>/jobs.js, <connector>/routes.js, <connector>/plugins.js
+Files: <connector>/jobs.js, <connector>/routes.js, <connector>/plugin.js
 
 ## Context
 `context.log` MUST have this signature:

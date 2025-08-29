@@ -76,7 +76,13 @@ describe('utils-tasks-jobs', () => {
         delete require.cache[require.resolve(jobsPath)];
         const jobs = require(jobsPath);
         await jobs(context);
-        handler = context.scheduleJob.getCall(0).args[2];
+        // Find the correct scheduled job handler by job name pattern
+        const jobNamePattern = /due-tasks/;
+        const matchingCall = context.scheduleJob.getCalls().find(call => {
+            const nameArg = call.args[0];
+            return jobNamePattern.test(nameArg);
+        });
+        handler = matchingCall ? matchingCall.args[2] : undefined;
     });
 
     it('should find and process due tasks', async () => {

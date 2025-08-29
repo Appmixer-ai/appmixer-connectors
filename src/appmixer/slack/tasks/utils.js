@@ -114,10 +114,10 @@ module.exports = context => {
                     url: webhook.getUrl(),
                     data: task.toJson()
                 });
-                await webhook.populate({ status: 'sent' }).save();
+                await webhook.populate({ status: Webhook.STATUS_SENT }).save();
                 return true;
             } catch (err) {
-                await webhook.populate({ status: 'failed', error: err.message }).save();
+                await webhook.populate({ status: Webhook.STATUS_FAIL, error: err.message }).save();
                 return false;
             }
         }

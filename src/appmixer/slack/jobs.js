@@ -32,7 +32,7 @@ module.exports = async context => {
                 };
                 context.log('trace', `[slack-job-due-tasks] ${JSON.stringify(result)}`);
             } finally {
-                lock.unlock();
+                await lock?.unlock();
             }
         } catch (err) {
             if (err.message !== 'locked') {
@@ -56,7 +56,7 @@ module.exports = async context => {
                 };
                 context.log('info', `Resubmit failed webhooks finished, ${result.success} webhooks triggered, ${result.errors} failed.`);
             } finally {
-                lock.unlock();
+                await lock?.unlock();
             }
         } catch (err) {
             if (err.message !== 'locked') {
