@@ -18,7 +18,7 @@ module.exports = {
             majorDimension: 'ROWS'
         }).then(res => {
             const row = {
-                count: res['values'].length
+                count: res.values ? res.values.length : 0
             };
             return context.sendJson(row, 'rowCount');
         });

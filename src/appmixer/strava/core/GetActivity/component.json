@@ -1,0 +1,925 @@
+{
+    "name": "appmixer.strava.core.GetActivity",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieve detailed information for a specific activity by its ID.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:strava"
+    },
+    "quota": {
+        "manager": "appmixer:strava",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "activityId": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "activityId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "activityId": {
+                        "type": "number",
+                        "tooltip": "The ID of the activity.",
+                        "label": "Activity ID",
+                        "index": 0
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Activity ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Resource State",
+                    "value": "resource_state",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "External Id",
+                    "value": "external_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Upload Id",
+                    "value": "upload_id",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Athlete",
+                    "value": "athlete",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "title": "Athlete.Id"
+                            },
+                            "resource_state": {
+                                "type": "number",
+                                "title": "Athlete.Resource State"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Name",
+                    "value": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Distance",
+                    "value": "distance",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Moving Time",
+                    "value": "moving_time",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Elapsed Time",
+                    "value": "elapsed_time",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Total Elevation Gain",
+                    "value": "total_elevation_gain",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Type",
+                    "value": "type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Sport Type",
+                    "value": "sport_type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Start Date",
+                    "value": "start_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Start Date Local",
+                    "value": "start_date_local",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Timezone",
+                    "value": "timezone",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Utc Offset",
+                    "value": "utc_offset",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Start Latlng",
+                    "value": "start_latlng",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                },
+                {
+                    "label": "End Latlng",
+                    "value": "end_latlng",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        }
+                    }
+                },
+                {
+                    "label": "Achievement Count",
+                    "value": "achievement_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Kudos Count",
+                    "value": "kudos_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Comment Count",
+                    "value": "comment_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Athlete Count",
+                    "value": "athlete_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Photo Count",
+                    "value": "photo_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Map",
+                    "value": "map",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Map.Id"
+                            },
+                            "polyline": {
+                                "type": "string",
+                                "title": "Map.Polyline"
+                            },
+                            "resource_state": {
+                                "type": "number",
+                                "title": "Map.Resource State"
+                            },
+                            "summary_polyline": {
+                                "type": "string",
+                                "title": "Map.Summary Polyline"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Trainer",
+                    "value": "trainer",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Commute",
+                    "value": "commute",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Manual",
+                    "value": "manual",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Private",
+                    "value": "private",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Flagged",
+                    "value": "flagged",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Gear Id",
+                    "value": "gear_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "From Accepted Tag",
+                    "value": "from_accepted_tag",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Average Speed",
+                    "value": "average_speed",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Max Speed",
+                    "value": "max_speed",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Average Cadence",
+                    "value": "average_cadence",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Average Temp",
+                    "value": "average_temp",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Average Watts",
+                    "value": "average_watts",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Weighted Average Watts",
+                    "value": "weighted_average_watts",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Kilojoules",
+                    "value": "kilojoules",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Device Watts",
+                    "value": "device_watts",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Has Heartrate",
+                    "value": "has_heartrate",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Max Watts",
+                    "value": "max_watts",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Elev High",
+                    "value": "elev_high",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Elev Low",
+                    "value": "elev_low",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Pr Count",
+                    "value": "pr_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Total Photo Count",
+                    "value": "total_photo_count",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Has Kudoed",
+                    "value": "has_kudoed",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Workout Type",
+                    "value": "workout_type",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Suffer Score",
+                    "value": "suffer_score",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Description",
+                    "value": "description",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Calories",
+                    "value": "calories",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Segment Efforts",
+                    "value": "segment_efforts",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Id"
+                                },
+                                "resource_state": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Resource State"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Segment Efforts.Name"
+                                },
+                                "activity": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Activity.Id"
+                                        },
+                                        "resource_state": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Activity.Resource State"
+                                        }
+                                    },
+                                    "title": "Segment Efforts.Activity"
+                                },
+                                "athlete": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Athlete.Id"
+                                        },
+                                        "resource_state": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Athlete.Resource State"
+                                        }
+                                    },
+                                    "title": "Segment Efforts.Athlete"
+                                },
+                                "elapsed_time": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Elapsed Time"
+                                },
+                                "moving_time": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Moving Time"
+                                },
+                                "start_date": {
+                                    "type": "string",
+                                    "title": "Segment Efforts.Start Date"
+                                },
+                                "start_date_local": {
+                                    "type": "string",
+                                    "title": "Segment Efforts.Start Date Local"
+                                },
+                                "distance": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Distance"
+                                },
+                                "start_index": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Start Index"
+                                },
+                                "end_index": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.End Index"
+                                },
+                                "average_cadence": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Average Cadence"
+                                },
+                                "device_watts": {
+                                    "type": "boolean",
+                                    "title": "Segment Efforts.Device Watts"
+                                },
+                                "average_watts": {
+                                    "type": "number",
+                                    "title": "Segment Efforts.Average Watts"
+                                },
+                                "segment": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Id"
+                                        },
+                                        "resource_state": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Resource State"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "title": "Segment Efforts.Segment.Name"
+                                        },
+                                        "activity_type": {
+                                            "type": "string",
+                                            "title": "Segment Efforts.Segment.Activity Type"
+                                        },
+                                        "distance": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Distance"
+                                        },
+                                        "average_grade": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Average Grade"
+                                        },
+                                        "maximum_grade": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Maximum Grade"
+                                        },
+                                        "elevation_high": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Elevation High"
+                                        },
+                                        "elevation_low": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Elevation Low"
+                                        },
+                                        "start_latlng": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            },
+                                            "title": "Segment Efforts.Segment.Start Latlng"
+                                        },
+                                        "end_latlng": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "number"
+                                            },
+                                            "title": "Segment Efforts.Segment.End Latlng"
+                                        },
+                                        "climb_category": {
+                                            "type": "number",
+                                            "title": "Segment Efforts.Segment.Climb Category"
+                                        },
+                                        "city": {
+                                            "type": "string",
+                                            "title": "Segment Efforts.Segment.City"
+                                        },
+                                        "state": {
+                                            "type": "string",
+                                            "title": "Segment Efforts.Segment.State"
+                                        },
+                                        "country": {
+                                            "type": "string",
+                                            "title": "Segment Efforts.Segment.Country"
+                                        },
+                                        "private": {
+                                            "type": "boolean",
+                                            "title": "Segment Efforts.Segment.Private"
+                                        },
+                                        "hazardous": {
+                                            "type": "boolean",
+                                            "title": "Segment Efforts.Segment.Hazardous"
+                                        },
+                                        "starred": {
+                                            "type": "boolean",
+                                            "title": "Segment Efforts.Segment.Starred"
+                                        }
+                                    },
+                                    "title": "Segment Efforts.Segment"
+                                },
+                                "kom_rank": {
+                                    "type": "null",
+                                    "title": "Segment Efforts.Kom Rank"
+                                },
+                                "pr_rank": {
+                                    "type": "null",
+                                    "title": "Segment Efforts.Pr Rank"
+                                },
+                                "achievements": {
+                                    "type": "array",
+                                    "items": {},
+                                    "title": "Segment Efforts.Achievements"
+                                },
+                                "hidden": {
+                                    "type": "boolean",
+                                    "title": "Segment Efforts.Hidden"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Splits Metric",
+                    "value": "splits_metric",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "distance": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Distance"
+                                },
+                                "elapsed_time": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Elapsed Time"
+                                },
+                                "elevation_difference": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Elevation Difference"
+                                },
+                                "moving_time": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Moving Time"
+                                },
+                                "split": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Split"
+                                },
+                                "average_speed": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Average Speed"
+                                },
+                                "pace_zone": {
+                                    "type": "number",
+                                    "title": "Splits Metric.Pace Zone"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Laps",
+                    "value": "laps",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "number",
+                                    "title": "Laps.Id"
+                                },
+                                "resource_state": {
+                                    "type": "number",
+                                    "title": "Laps.Resource State"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Laps.Name"
+                                },
+                                "activity": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "number",
+                                            "title": "Laps.Activity.Id"
+                                        },
+                                        "resource_state": {
+                                            "type": "number",
+                                            "title": "Laps.Activity.Resource State"
+                                        }
+                                    },
+                                    "title": "Laps.Activity"
+                                },
+                                "athlete": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "number",
+                                            "title": "Laps.Athlete.Id"
+                                        },
+                                        "resource_state": {
+                                            "type": "number",
+                                            "title": "Laps.Athlete.Resource State"
+                                        }
+                                    },
+                                    "title": "Laps.Athlete"
+                                },
+                                "elapsed_time": {
+                                    "type": "number",
+                                    "title": "Laps.Elapsed Time"
+                                },
+                                "moving_time": {
+                                    "type": "number",
+                                    "title": "Laps.Moving Time"
+                                },
+                                "start_date": {
+                                    "type": "string",
+                                    "title": "Laps.Start Date"
+                                },
+                                "start_date_local": {
+                                    "type": "string",
+                                    "title": "Laps.Start Date Local"
+                                },
+                                "distance": {
+                                    "type": "number",
+                                    "title": "Laps.Distance"
+                                },
+                                "start_index": {
+                                    "type": "number",
+                                    "title": "Laps.Start Index"
+                                },
+                                "end_index": {
+                                    "type": "number",
+                                    "title": "Laps.End Index"
+                                },
+                                "total_elevation_gain": {
+                                    "type": "number",
+                                    "title": "Laps.Total Elevation Gain"
+                                },
+                                "average_speed": {
+                                    "type": "number",
+                                    "title": "Laps.Average Speed"
+                                },
+                                "max_speed": {
+                                    "type": "number",
+                                    "title": "Laps.Max Speed"
+                                },
+                                "average_cadence": {
+                                    "type": "number",
+                                    "title": "Laps.Average Cadence"
+                                },
+                                "device_watts": {
+                                    "type": "boolean",
+                                    "title": "Laps.Device Watts"
+                                },
+                                "average_watts": {
+                                    "type": "number",
+                                    "title": "Laps.Average Watts"
+                                },
+                                "lap_index": {
+                                    "type": "number",
+                                    "title": "Laps.Lap Index"
+                                },
+                                "split": {
+                                    "type": "number",
+                                    "title": "Laps.Split"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Gear",
+                    "value": "gear",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Gear.Id"
+                            },
+                            "primary": {
+                                "type": "boolean",
+                                "title": "Gear.Primary"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Gear.Name"
+                            },
+                            "resource_state": {
+                                "type": "number",
+                                "title": "Gear.Resource State"
+                            },
+                            "distance": {
+                                "type": "number",
+                                "title": "Gear.Distance"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Partner Brand Tag",
+                    "value": "partner_brand_tag",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Photos",
+                    "value": "photos",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "primary": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "null",
+                                        "title": "Photos.Primary.Id"
+                                    },
+                                    "unique_id": {
+                                        "type": "string",
+                                        "title": "Photos.Primary.Unique Id"
+                                    },
+                                    "urls": {
+                                        "type": "object",
+                                        "properties": {
+                                            "100": {
+                                                "type": "string",
+                                                "title": "Photos.Primary.Urls.100"
+                                            },
+                                            "600": {
+                                                "type": "string",
+                                                "title": "Photos.Primary.Urls.600"
+                                            }
+                                        },
+                                        "title": "Photos.Primary.Urls"
+                                    },
+                                    "source": {
+                                        "type": "number",
+                                        "title": "Photos.Primary.Source"
+                                    }
+                                },
+                                "title": "Photos.Primary"
+                            },
+                            "use_primary_photo": {
+                                "type": "boolean",
+                                "title": "Photos.Use Primary Photo"
+                            },
+                            "count": {
+                                "type": "number",
+                                "title": "Photos.Count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Highlighted Kudosers",
+                    "value": "highlighted_kudosers",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "destination_url": {
+                                    "type": "string",
+                                    "title": "Highlighted Kudosers.Destination Url"
+                                },
+                                "display_name": {
+                                    "type": "string",
+                                    "title": "Highlighted Kudosers.Display Name"
+                                },
+                                "avatar_url": {
+                                    "type": "string",
+                                    "title": "Highlighted Kudosers.Avatar Url"
+                                },
+                                "show_name": {
+                                    "type": "boolean",
+                                    "title": "Highlighted Kudosers.Show Name"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Hide From Home",
+                    "value": "hide_from_home",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Device Name",
+                    "value": "device_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Embed Token",
+                    "value": "embed_token",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Segment Leaderboard Opt Out",
+                    "value": "segment_leaderboard_opt_out",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Leaderboard Opt Out",
+                    "value": "leaderboard_opt_out",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIj8+PCFET0NUWVBFIHN2ZyAgUFVCTElDICctLy9XM0MvL0RURCBTVkcgMS4xLy9FTicgICdodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQnPjxzdmcgaGVpZ2h0PSI1MTJweCIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNTEyIDUxMjsiIHZlcnNpb249IjEuMSIgdmlld0JveD0iMCAwIDUxMiA1MTIiIHdpZHRoPSI1MTJweCIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+PGcgaWQ9Il94MzNfMjMtc3RyYXZhIj48Zz48cG9seWdvbiBwb2ludHM9IjIyNi4xNzIsMjYuMDAxIDkwLjE0OSwyODguMzQ1IDE3MC4yOSwyODguMzQ1IDIyNi4xNzIsMTg0LjAzNiAyODEuNjA1LDI4OC4zNDUgICAgIDM2MS4xMTYsMjg4LjM0NSAgICIgc3R5bGU9ImZpbGw6I0ZGNTUwMDsiLz48cG9seWdvbiBwb2ludHM9IjM2MS4xMTYsMjg4LjM0NSAzMjEuNjc1LDM2Ny41ODYgMjgxLjYwNSwyODguMzQ1IDIyMC44NzEsMjg4LjM0NSAzMjEuNjc1LDQ4NS45OTkgICAgIDQyMS44NTEsMjg4LjM0NSAgICIgc3R5bGU9ImZpbGw6I0ZGQUY4QTsiLz48L2c+PC9nPjxnIGlkPSJMYXllcl8xIi8+PC9zdmc+"
+}

@@ -14,7 +14,7 @@ module.exports = {
         } = context.messages.in.content;
 
         const { auth } = context;
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
         let params = {};
 

@@ -1,6 +1,6 @@
 const Hubspot = require('../../Hubspot');
 
-const lib = require('../../lib.generated');
+const lib = require('../../lib');
 const schema = {
     'id': { 'type': 'string', 'title': 'Id' },
     'properties': {
@@ -8,7 +8,9 @@ const schema = {
         'properties': {
             'hs_createdate': { 'type': 'string', 'title': 'Properties.Hs Create Date' },
             'hs_lastmodifieddate': { 'type': 'string', 'title': 'Properties.Hs Last Modified Date' },
-            'hs_object_id': { 'type': 'string', 'title': 'Properties.Hs Object Id' }
+            'hs_object_id': { 'type': 'string', 'title': 'Properties.Hs Object Id' },
+            'hs_note_body': { 'type': 'string', 'title': 'Properties.Note Body' },
+            'hubspot_owner_id': { 'type': 'string', 'title': 'Properties.Owner Id' }
         },
         'title': 'Properties'
     },
@@ -32,7 +34,9 @@ module.exports = {
         const hs = new Hubspot(auth.accessToken, context.config);
 
         const payload = {
-            query, limit: 200
+            query,
+            limit: 200,
+            properties: ['hs_note_body', 'hubspot_owner_id']
         };
 
         const { data } = await hs.call(

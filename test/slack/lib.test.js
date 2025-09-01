@@ -27,6 +27,31 @@ require.cache[require.resolve('@slack/web-api')].exports = {
 const { sendMessage } = require('../../src/appmixer/slack/lib.js');
 
 describe('lib.js', () => {
+    describe('normalizeMultiselectInput', () => {
+        const context = { CancelError: class CancelError extends Error {} };
+
+        it('should join array of userIds', () => {
+            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1', 'U2', 'U3'], 8, context, 'userIds');
+            assert.strictEqual(result, 'U1,U2,U3');
+        });
+
+        it('should return string userId as is', () => {
+            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput('U1', 8, context, 'userIds');
+            assert.strictEqual(result, 'U1');
+        });
+
+        it('should throw if array exceeds maxItems', () => {
+            assert.throws(() => {
+                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1','U2','U3','U4','U5','U6','U7','U8','U9'], 8, context, 'userIds');
+            }, context.CancelError);
+        });
+
+        it('should throw if input is not array or string', () => {
+            assert.throws(() => {
+                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(123, 8, context, 'userIds');
+            }, context.CancelError);
+        });
+    });
 
     describe('sendMessage - asBot', () => {
 
@@ -67,7 +92,7 @@ describe('lib.js', () => {
         });
 
         it('should call web.chat.postMessage when not using AuthHub', async () => {
-            context.config.botToken = 'testBotToken';
+            context.auth.profileInfo = { botToken: 'testBotToken' };
 
             const result = await sendMessage(context, channelId, message, true);
 
@@ -83,7 +108,7 @@ describe('lib.js', () => {
 
         it('should call web.chat.postMessage when using AuthHub but not as bot', async () => {
             context.config.usesAuthHub = true;
-            context.config.botToken = undefined;
+            context.auth.profileInfo = { botToken: undefined };
 
             const result = await sendMessage(context, channelId, message, false);
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
@@ -121,6 +146,7 @@ describe('lib.js', () => {
                     iconUrl: 'https://example.com/icon.png',
                     username: 'MySlackBot',
                     channelId,
+                    token: context.auth.profileInfo?.botToken,
                     text: message
                 }
             });
@@ -128,7 +154,7 @@ describe('lib.js', () => {
 
         it('should throw an error when not using AuthHub and botToken is not available', async () => {
             context.config.usesAuthHub = undefined;
-            context.config.botToken = undefined;
+            context.auth.profileInfo = { botToken: undefined };
 
             await assert.rejects(
                 sendMessage(context, channelId, message, true),
@@ -138,7 +164,7 @@ describe('lib.js', () => {
         });
 
         it('should send message with thread_ts and reply_broadcast', async () => {
-            context.config.botToken = 'testBotToken';
+            context.auth.profileInfo = { botToken: 'testBotToken' };
             const thread_ts = '1234567890.123456';
             const reply_broadcast = true;
             const result = await sendMessage(context, channelId, message, true, thread_ts, reply_broadcast);
@@ -155,7 +181,7 @@ describe('lib.js', () => {
         });
 
         it('should send message without thread_ts and reply_broadcast', async () => {
-            context.config.botToken = 'testBotToken';
+            context.auth.profileInfo = { botToken: 'testBotToken' };
             const result = await sendMessage(context, channelId, message, true);
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
@@ -169,12 +195,40 @@ describe('lib.js', () => {
 
         it('should prefer context.auth.profileInfo.botToken over context.config.botToken', async () => {
             context.config.botToken = 'testBotToken';
+            context.auth.accessToken = 'testAccessToken';
             context.auth.profileInfo = { botToken: 'profileBotToken' };
+            // Without AuthHub
             const result = await sendMessage(context, channelId, message, true);
             // The mockWebClient is constructed with the token, so we can check which token was used
             assert.equal(mockWebClient.token, 'profileBotToken');
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
+
+            // With AuthHub
+            process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
+            process.env.AUTH_HUB_TOKEN = 'testAuthHubToken';
+            context.config.usesAuthHub = true;
+            context.httpRequest = sinon.stub().resolves({
+                data: { text: message }
+            });
+            const resultAuthHub = await sendMessage(context, channelId, message, true);
+            assert.equal(mockWebClient.token, 'profileBotToken');
+            assert.deepEqual(resultAuthHub, { text: message });
+            assert.equal(context.httpRequest.callCount, 1);
+            assert.deepEqual(context.httpRequest.getCall(0).args[0], {
+                url: process.env.AUTH_HUB_URL + '/plugins/appmixer/slack/auth-hub/send-message',
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${process.env.AUTH_HUB_TOKEN}`
+                },
+                data: {
+                    iconUrl: 'https://example.com/icon.png',
+                    username: 'MySlackBot',
+                    channelId,
+                    text: message,
+                    token: 'profileBotToken'
+                }
+            });
         });
     });
 });

@@ -1,6 +1,5 @@
 'use strict';
 const lib = require('../../lib');
-const Promise = require('bluebird');
 
 /**
  * Component which triggers whenever new review is requested from a specified user
@@ -20,9 +19,10 @@ module.exports = {
         const { diff, actual } = lib.getNewItems(known, result.data.items, 'id');
 
         if (diff.length) {
-            await Promise.map(diff, result => {
+            await Promise.all(diff.map(result => {
                 return context.sendJson(result, 'out');
-            });
+
+            }));
         }
         await context.saveState({ known: actual });
     }

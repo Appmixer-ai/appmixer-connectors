@@ -24,19 +24,22 @@ module.exports = {
             }
         });
 
-        const records = data.connections.map((contact) => {
-            return {
-                id: contact.resourceName.split('/')[1],
-                etag: contact.etag,
-                updateTime: contact.metadata.sources[0].updateTime,
-                displayName: contact.names[0].displayName,
-                givenName: contact.names[0].givenName,
-                displayNameLastFirst: contact.names[0].displayNameLastFirst,
-                unstructuredName: contact.names[0].unstructuredName,
-                photoUrl: contact.photos[0].url,
-                memberships: contact.memberships
-            };
-        });
+        let records = [];
+        if (Array.isArray(data.connections) && data.connections?.length) {
+            records = data.connections.map((contact) => {
+                return {
+                    id: contact.resourceName.split('/')[1] || contact.resourceName,
+                    etag: contact.etag,
+                    updateTime: contact.metadata?.sources?.[0]?.updateTime || undefined,
+                    displayName: contact.names?.[0]?.displayName || undefined,
+                    givenName: contact.names?.[0]?.givenName || undefined,
+                    displayNameLastFirst: contact.names?.[0]?.displayNameLastFirst || undefined,
+                    unstructuredName: contact.names?.[0]?.unstructuredName || undefined,
+                    photoUrl: contact.photos?.[0]?.url || undefined,
+                    memberships: contact.memberships
+                };
+            });
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

@@ -41,7 +41,7 @@ module.exports = {
             }
         });
 
-        if (labels && labels.AND && labels.AND.some(label => label.name)) {
+        if (labels?.AND?.some(label => label.name)) {
             await emailCommons.callEndpoint(context, `/users/me/messages/${result.data.message.id}/modify`, {
                 method: 'POST',
                 data: {

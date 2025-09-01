@@ -96,10 +96,10 @@ module.exports = {
             let deletedRows = await context.store.find(storeId, { query: { key: { $nin: rowIds } } });
             //deletedRows = JSON.parse(JSON.stringify(deletedRows));
 
-            for (let i = 0; i < deletedRows.length; i++) {
-                await context.sendJson({ row: deletedRows[i].value }, 'out');
+            for (const deletedRow of deletedRows) {
+                await context.sendJson({ row: deletedRow.value }, 'out');
                 // Remove from our data store once detected and sent to an output port.
-                await context.store.remove(storeId, deletedRows[i].key + '');
+                await context.store.remove(storeId, deletedRow.key + '');
             }
         } finally {
             if (lock) {

@@ -1,5 +1,4 @@
 'use strict';
-// const parser = require('cron-parser');
 const moment = require('moment-timezone');
 
 const isValidTimezone = (timezone) => {
@@ -57,7 +56,7 @@ module.exports = {
         const endLocal = end ? moment.tz(end, 'YYYY-MM-DD HH:mm', timezone) : null;
         const nowLocal = moment(now).tz(timezone);
 
-        if (firstTime && startLocal && startLocal.isBefore(nowLocal)) {
+        if (firstTime && startLocal?.isBefore(nowLocal)) {
             throw new Error(`Start date (${startLocal}) cannot be in the past (now: ${nowLocal}).`);
         }
 

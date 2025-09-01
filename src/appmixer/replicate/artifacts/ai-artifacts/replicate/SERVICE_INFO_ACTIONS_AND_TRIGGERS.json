@@ -1,0 +1,222 @@
+{
+    "actions": [
+        {
+            "title": "Create Prediction",
+            "description": "Creates a new machine learning prediction using a specified model version or official model.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#predictions",
+            "endpointUrl": "https://api.replicate.com/v1/predictions",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "pred_123",
+                "status": "processing",
+                "output": null,
+                "version": "abc123"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for creating a prediction.",
+                "properties": {
+                    "version": {
+                        "type": "string",
+                        "description": "Model version identifier or official model name."
+                    },
+                    "input": {
+                        "type": "object",
+                        "description": "Object containing model-specific input parameters, such as prompt, file URL, etc."
+                    }
+                },
+                "required": [
+                    "version",
+                    "input"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Prediction",
+            "description": "Retrieves the status and results of an existing prediction.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#predictions",
+            "endpointUrl": "https://api.replicate.com/v1/predictions/{prediction_id}",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "pred_123",
+                "status": "succeeded",
+                "output": {
+                    "result": "example output"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter for retrieving a prediction.",
+                "properties": {
+                    "prediction_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the prediction."
+                    }
+                },
+                "required": [
+                    "prediction_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Predictions",
+            "description": "Retrieves a list of predictions for the authenticated user without pagination parameters.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#predictions",
+            "endpointUrl": "https://api.replicate.com/v1/predictions",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "pred_123",
+                        "status": "succeeded",
+                        "output": {
+                            "result": "example output"
+                        }
+                    },
+                    {
+                        "id": "pred_124",
+                        "status": "processing",
+                        "output": null
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Optional filters for retrieving predictions.",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "description": "Filter predictions by status (e.g., processing, succeeded, failed, canceled)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        },
+        {
+            "title": "Cancel Prediction",
+            "description": "Cancels a running prediction.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#predictions-cancel",
+            "endpointUrl": "https://api.replicate.com/v1/predictions/{prediction_id}/cancel",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "pred_123",
+                "status": "canceled"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter for canceling a prediction.",
+                "properties": {
+                    "prediction_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the prediction to cancel."
+                    }
+                },
+                "required": [
+                    "prediction_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Model",
+            "description": "Retrieves detailed information about a specific model including its input/output schemas and examples.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#models",
+            "endpointUrl": "https://api.replicate.com/v1/models/{model_owner}/{model_name}",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "model_owner/model_name",
+                "description": "A detailed description of the model.",
+                "latest_version": "ver_abc123",
+                "input_schema": {},
+                "output_schema": {}
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters for retrieving a model.",
+                "properties": {
+                    "model_owner": {
+                        "type": "string",
+                        "description": "The owner of the model."
+                    },
+                    "model_name": {
+                        "type": "string",
+                        "description": "The name of the model."
+                    }
+                },
+                "required": [
+                    "model_owner",
+                    "model_name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Models",
+            "description": "Searches and retrieves a collection of public models available on the platform.",
+            "type": "action",
+            "documentation": "https://replicate.com/docs/reference/http#models-search",
+            "endpointUrl": "https://api.replicate.com/v1/models",
+            "apiBaseUrl": "https://api.replicate.com/v1",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "model_owner/model_name",
+                        "description": "A brief model description"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameter for filtering models by a search query.",
+                "properties": {
+                    "search": {
+                        "type": "string",
+                        "description": "Search term to filter models by keyword."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "https://replicate.com/account/api-tokens",
+        "tokenUrl": "",
+        "profileInfoUrl": "https://api.replicate.com/v1/account"
+    },
+    "serviceJson": {
+        "name": "appmixer.replicate",
+        "label": "Replicate",
+        "category": "applications",
+        "description": "Replicate is a cloud platform for running machine learning models. It provides APIs to create predictions, retrieve model details, and more.",
+        "version": "1.0.0",
+        "icon": "https://replicate.com/favicon.ico"
+    }
+}

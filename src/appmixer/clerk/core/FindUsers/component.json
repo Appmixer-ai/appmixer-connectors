@@ -1,0 +1,102 @@
+{
+    "name": "appmixer.clerk.core.FindUsers",
+    "description": "Retrieve a list of users with optional search criteria.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:clerk"
+    },
+    "quota": {
+        "manager": "appmixer:clerk",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "emailAddress": {
+                        "type": "string",
+                        "title": "Email Address",
+                        "description": "Filter users by email address"
+                    },
+                    "username": {
+                        "type": "string",
+                        "title": "Username", 
+                        "description": "Filter users by username"
+                    },
+                    "phoneNumber": {
+                        "type": "string",
+                        "title": "Phone Number",
+                        "description": "Filter users by phone number"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "title": "Output Type",
+                        "description": "Choose how to output the results",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "emailAddress": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Email Address",
+                        "tooltip": "Filter users by email address"
+                    },
+                    "username": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Username",
+                        "tooltip": "Filter users by username"
+                    },
+                    "phoneNumber": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Phone Number",
+                        "tooltip": "Filter users by phone number"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/clerk/core/FindUsers?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"
+}

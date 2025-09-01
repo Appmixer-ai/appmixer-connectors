@@ -21,7 +21,7 @@ module.exports = {
         } = context.messages.in.content;
 
         const { auth } = context;
-        const ac = new ActiveCampaign(auth.url, auth.apiKey);
+        const ac = new ActiveCampaign(auth.url, auth.apiKey, context);
 
         const originalDealData = await ac.call('get', `deals/${dealId}`);
         const originalDealValue = originalDealData.data.deal.value;

@@ -18,6 +18,7 @@ module.exports = context => {
             return [
                 'id',
                 'content',
+                'files',  // Array of file objects { id, name, type, size, md5 }
                 'role',  // 'user' or 'agent'
                 'threadId',
                 'userId',

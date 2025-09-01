@@ -108,7 +108,7 @@ module.exports = async context => {
             options: {
                 handler: async (req, h) => {
 
-                    const { iconUrl, username, channelId, text, thread_ts, reply_broadcast } = req.payload;
+                    const { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token } = req.payload;
                     await context.log('debug', 'slack-plugin-route-auth-hub-send-message', { iconUrl, username, channelId, text, thread_ts, reply_broadcast });
                     if (!channelId || !text) {
                         context.log('error', 'slack-plugin-route-webhook-send-message-missing-params', req.payload);
@@ -116,8 +116,7 @@ module.exports = async context => {
                     }
 
                     const message = await sendBotMessageFromAuthHub(
-                        context,
-                        { iconUrl, username, channelId, text, thread_ts, reply_broadcast }
+                        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token }
                     );
                     return h.response(message).code(200);
                 }
@@ -137,11 +136,10 @@ module.exports = async context => {
 
     /** Supposed to be called from AuthHub only. */
     async function sendBotMessageFromAuthHub(
-        context,
-        { iconUrl, username, channelId, text, thread_ts, reply_broadcast }
+        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token }
     ) {
 
-        const web = new WebClient(context.config?.botToken);
+        const web = new WebClient(token);
 
         const response = await web.chat.postMessage({
             icon_url: iconUrl,

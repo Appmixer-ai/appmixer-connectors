@@ -55,7 +55,7 @@ module.exports = {
         const { data } = await lib.request(context, 'post', '/chat/completions', payload);
         let answer = '';
 
-        if (data && data.choices) {
+        if (data?.choices) {
             answer = data.choices[0].message.content;
         }
 

@@ -19,8 +19,10 @@ module.exports = context => {
             return [
                 'id',
                 'name',
-                'message',
+                'intro',
                 'avatar',
+                'description',
+                'promptPlaceholder',
                 'userId',
                 'componentId',
                 'flowId',

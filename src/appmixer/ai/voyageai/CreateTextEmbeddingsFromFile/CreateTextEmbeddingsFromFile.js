@@ -62,10 +62,10 @@ function splitStream(inputStream, chunkSize) {
             const combinedLength = combined.length;
             let offset = 0;
             while (offset + chunkSize <= combinedLength) {
-                this.push(combined.slice(offset, offset + chunkSize));
+                this.push(combined.subarray(offset, offset + chunkSize));
                 offset += chunkSize;
             }
-            leftover = combined.slice(offset);
+            leftover = combined.subarray(offset);
             callback();
         },
         flush(callback) {

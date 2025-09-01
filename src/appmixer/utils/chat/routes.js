@@ -18,11 +18,7 @@ const fs = require('fs');
 const uuid = require('uuid');
 const { PassThrough } = require('stream');
 
-const chatLibJs = fs.readFileSync(__dirname + '/chat.lib.js', 'utf8');
-const chatMainJs = fs.readFileSync(__dirname + '/chat.main.js', 'utf8');
-const chatWidgetJs = fs.readFileSync(__dirname + '/chat.widget.js', 'utf8');
-const chatLibCss = fs.readFileSync(__dirname + '/chat.lib.css', 'utf8');
-const chatMainCss = fs.readFileSync(__dirname + '/chat.main.css', 'utf8');
+const chatBundleJs = fs.readFileSync(__dirname + '/chat.bundle.js', 'utf8');
 
 // In-memory map of connected clients per threadId.
 const chatClients = new Map();
@@ -62,55 +58,11 @@ module.exports = (context) => {
 
     context.http.router.register({
         method: 'GET',
-        path: '/assets/chat.lib.js',
+        path: '/assets/chat.bundle.js',
         options: {
             auth: false,
             handler: async (req, h) => {
-                return h.response(chatLibJs).type('text/javascript');
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'GET',
-        path: '/assets/chat.lib.css',
-        options: {
-            auth: false,
-            handler: async (req, h) => {
-                return h.response(chatLibCss).type('text/css');
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'GET',
-        path: '/assets/chat.main.js',
-        options: {
-            auth: false,
-            handler: async (req, h) => {
-                return h.response(chatMainJs).type('text/javascript');
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'GET',
-        path: '/assets/chat.widget.js',
-        options: {
-            auth: false,
-            handler: async (req, h) => {
-                return h.response(chatWidgetJs).type('text/javascript');
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'GET',
-        path: '/assets/chat.main.css',
-        options: {
-            auth: false,
-            handler: async (req, h) => {
-                return h.response(chatMainCss).type('text/css');
+                return h.response(chatBundleJs).type('text/javascript');
             }
         }
     });

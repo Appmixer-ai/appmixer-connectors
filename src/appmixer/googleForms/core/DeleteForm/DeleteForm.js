@@ -23,7 +23,7 @@ module.exports = {
 
             return context.sendJson({}, 'out');
         } catch (error) {
-            if (error.response && error.response.status === 404) {
+            if (error.response?.status === 404) {
                 throw new context.CancelError('Form not found');
             }
             throw error;

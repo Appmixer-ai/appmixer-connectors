@@ -13,11 +13,11 @@ module.exports = {
 
         const { data } = await client.listAssignmentGroups(courseId);
 
-        return context.sendJson({ assigmentGroups: data }, 'out');
+        return context.sendJson({ assignmentGroups: data }, 'out');
     },
 
-    toSelectArray({ assigmentGroups }) {
-        return assigmentGroups.map(group => {
+    toSelectArray({ assignmentGroups }) {
+        return assignmentGroups.map(group => {
             return { label: group.name, value: group.id };
         });
     }

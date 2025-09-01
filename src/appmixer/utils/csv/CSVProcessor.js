@@ -498,8 +498,8 @@ module.exports = class CSVProcessor {
             _transform(chunk, encoding, callback) {
                 this.buffer = Buffer.concat([this.buffer, Buffer.from(chunk)]);
                 while (this.buffer.length >= this.chunkSize) {
-                    this.push(this.buffer.slice(0, this.chunkSize));
-                    this.buffer = this.buffer.slice(this.chunkSize);
+                    this.push(this.buffer.subarray(0, this.chunkSize));
+                    this.buffer = this.buffer.subarray(this.chunkSize);
                 }
                 callback();
             }

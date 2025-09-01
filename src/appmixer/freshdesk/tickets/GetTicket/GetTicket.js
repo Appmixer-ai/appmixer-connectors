@@ -15,7 +15,7 @@ module.exports = {
             }
         };
 
-        if (embed && embed.length > 0) {
+        if (embed?.length > 0) {
             requestObject.params = { include: embed.join(',') };
         }
 

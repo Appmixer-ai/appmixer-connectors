@@ -1,0 +1,132 @@
+{
+    "name": "appmixer.klaviyo.campaign.FindCampaigns",
+    "label": "Find Campaigns",
+    "description": "Retrieve and search through email campaigns based on filtering parameters.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:klaviyo"
+    },
+    "quota": {
+        "manager": "appmixer:klaviyo",
+        "resources": "ten-requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "channelFilter": {
+                        "type": "string"
+                    },
+                    "filter": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "channelFilter"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "channelFilter": {
+                        "type": "select",
+                        "label": "Campaign Channel",
+                        "index": 0,
+                        "options": [
+                            {
+                                "label": "Email",
+                                "value": "email"
+                            },
+                            {
+                                "label": "SMS",
+                                "value": "sms"
+                            },
+                            {
+                                "label": "Mobile Push",
+                                "value": "mobile_push"
+                            }
+                        ]
+                    },
+                    "filter": {
+                        "type": "text",
+                        "tooltip": "For more information please visit <a target=_blank href=\"https://developers.klaviyo.com/en/v2025-07-15/reference/api-overview?_gl=1*nrq4zp*_up*MQ..*_ga*OTQxODM1MzguMTc1Mzc0MjYxNw..*_ga_E2RS7HT946*czE3NTM3NDI2MTckbzEkZzAkdDE3NTM3NDI2MTckajYwJGwwJGgxNDE5ODAyMzI3#filtering\">this page</a>.",
+                        "label": "Filter",
+                        "index": 1
+                    },
+                    "sort": {
+                        "type": "select",
+                        "label": "Sort",
+                        "tooltip": "Sort the results by a specific field",
+                        "index": 2,
+                        "options": [
+                            { "label": "Created (Ascending)", "value": "created_at" },
+                            { "label": "Created (Descending)", "value": "-created_at" },
+                            { "label": "ID (Ascending)", "value": "id" },
+                            { "label": "ID (Descending)", "value": "-id" },
+                            { "label": "Name (Ascending)", "value": "name" },
+                            { "label": "Name (Descending)", "value": "-name" },
+                            { "label": "Scheduled At (Ascending)", "value": "scheduled_at" },
+                            { "label": "Scheduled At (Descending)", "value": "-scheduled_at" },
+                            { "label": "Updated (Ascending)", "value": "updated_at" },
+                            { "label": "Updated (Descending)", "value": "-updated_at" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/klaviyo/campaign/FindCampaigns?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAEiSURBVFhH7ZIxToVAEIb/mZWwJEDCQkKLsZDa6jUeQFtbz0BiYecRNDFaegvvYTyEFFYU0mCCrIXZBKd/8xq+ZIr9KebPNwAbGweGANQAdvKDBlEUfQDAJQCvPcy8OOd2BytARE/BhHoBIuqdczkA8OokatR1fTMMw1d4qxqI4/h1XUbVADOPTdN0MlczUBTFrVyuZsAY89Z13YPMoWGAmX+qqjqTiwN7L2CtfZRLAyonsNYOMluzdwPMPOV5fiIXQ8vAsizxOI7PModWAQDw3l9kWXYtc2icIAwRfbZtW66XqxkAAO993ff9vczVDIRJ0/Q8LFc1EJim6QXAEQ5VYJ7n0yRJ7sJb/QT4+yG/y7JsCcAxgKv/HXUwxrzLbGNDnV+yVFeZnf5lVAAAAABJRU5ErkJggg=="
+}

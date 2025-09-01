@@ -65,7 +65,7 @@ module.exports = {
 
             await context.saveState(state);
         } finally {
-            lock && lock.unlock();
+            lock?.unlock();
         }
     }
 };

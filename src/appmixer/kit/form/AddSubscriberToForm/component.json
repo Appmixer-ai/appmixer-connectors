@@ -1,0 +1,166 @@
+{
+    "name": "appmixer.kit.form.AddSubscriberToForm",
+    "label": "Add Subscriber to Form",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Adds a subscriber to a specified form.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:kit"
+    },
+    "quota": {
+        "manager": "appmixer:kit",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "formId": {
+                        "type": "string"
+                    },
+                    "subscriberId": {
+                        "type": "string"
+                    }
+                },
+                "required": ["formId", "subscriberId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "formId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the form.",
+                        "label": "Form ID",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/kit/form/FindForms?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindForms#toSelectArray"
+                            }
+                        }
+                    },
+                    "subscriberId": {
+                        "type": "text",
+                        "tooltip": "Unique identifier of the subscriber.",
+                        "label": "Subscriber ID",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/kit/subscriber/FindSubscribers?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./FindSubscribers#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Subscriber ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "First Name",
+                    "value": "first_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Email Address",
+                    "value": "email_address",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "State",
+                    "value": "state",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Added At",
+                    "value": "added_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Fields",
+                    "value": "fields",
+                    "schema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "label": "Referrer",
+                    "value": "referrer",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Referrer Utm Parameters",
+                    "value": "referrer_utm_parameters",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "source": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Source"
+                            },
+                            "medium": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Medium"
+                            },
+                            "campaign": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Campaign"
+                            },
+                            "term": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Term"
+                            },
+                            "content": {
+                                "type": "string",
+                                "title": "Referrer Utm Parameters.Content"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAOCAYAAABO3B6yAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAJgSURBVEhLpZU7aBRRFIa/M0lAYxMFY8Cdu+6AijZqpWCli4hYGkQRFQvFRxULK60Fg49CMaigIYLWIqaLGlNIRNAmkAjLzp1oCBaC65OdmWOxWby5bBLED7a433/P8HO4sBKG4T1AcGhra7tSrVYnm+disbhOVcvAelVdGQTB5TiOq4VCYa2IDIhIGchVdTjLstNdXV21Wq122/0mgIi8sNYOzXPGGHUFjYu74zh+HkVRd71evyUiB9ySeZ5vn56eHg/D8KmI7HdnVXUoSZLjxphvQKeX3U2S5JTrAvfgUigUVtXr9VER6fU31EREti7gVFVH/AzojKKoO4qi7p6entUsViAIgqsistH3Hq98oaqjNOYvAT/cTESOpGk6m6bpbEdHR8JCBbIsKwFHfe8jImeAAeCDqk4C19M0vQAQx/G7PM93AW/9OZeWb0BV34vIlrnjZ1V9Avxs5mma9s/MzFhjTBnY9HcSgAlr7UgYhnucDW5W1cPAJ2CERvm6tfZ8ywIt+A4MAhettV+a0hgzCBybf5UH1toTxphHwCE3+KdH6LECOAu8LpVKa/zwf2hZQFX7gRv+IwI2pGl633P/wnL3YIyJWhYIgmDYWtunqnuBzM1EZF+xWNzhugX47QugNwzDm8aYa2EYjgFTLQs0SZJkDHjme1U96LsWTPhCRJaJyDmgT0R2AsGiBWgMvfSdqi65gfb29seq+sv3PksWyPM88R1Q8oVPpVKxInJSVet+5hIA48Ab96eqX5sXROSjn4tI84+q4mdzDgBr7UNgm6reAabmNpKpqlXVIREp/wGj9gPY16g4LQAAAABJRU5ErkJggg=="
+}

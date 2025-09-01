@@ -34,7 +34,7 @@ module.exports = {
         // Retrieve state messages if conversationId is provided
         if (conversationId) {
             stateMessages = await context.flow.stateGet(conversationId);
-            if (stateMessages && stateMessages.messages) {
+            if (stateMessages?.messages) {
                 messages = messages.concat(stateMessages.messages);
             }
         }

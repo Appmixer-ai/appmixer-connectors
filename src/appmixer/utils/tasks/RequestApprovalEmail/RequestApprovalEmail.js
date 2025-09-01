@@ -178,12 +178,8 @@ async function sendNotifications(context, taskData) {
 
     // Using tenant's own Mailchimp API key.
     const client = mailchimp(API_KEY);
-    try {
-        await sendMailchimpEmail(client, messageApprover);
-        await sendMailchimpEmail(client, messageRequester);
-    } catch (err) {
-        throw err;
-    }
+    await sendMailchimpEmail(client, messageApprover);
+    await sendMailchimpEmail(client, messageRequester);
 }
 
 async function sendMailchimpEmail(client, message) {

@@ -72,14 +72,13 @@ module.exports = {
         }
 
         if (outputType === 'array') {
-            return context.sendJson([{
-                label,
-                value,
-                schema: {
-                    type: 'array',
-                    items: { type: 'object', properties: itemSchema }
-                }
-            }], 'out');
+            return context.sendJson([
+                { label: 'Forms Count', value: 'count', schema: { type: 'integer' } },
+                { label, value,
+                    schema: { type: 'array',
+                        items: { type: 'object', properties: itemSchema }
+                    }
+                }], 'out');
         }
 
         if (outputType === 'file') {

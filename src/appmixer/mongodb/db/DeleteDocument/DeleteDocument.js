@@ -31,14 +31,10 @@ module.exports = {
             ? { _id: ObjectId.isValid(id) ? new ObjectId(id) : (+id || id) }
             : JSON.parse(filter || '{}');
 
-        try {
-            const collection = getCollection(client, context.auth.database, collectionName);
-            const deleteMethod = quantity === 'One' ? 'deleteOne' : 'deleteMany';
-            const { deletedCount } = await collection[deleteMethod](query);
+        const collection = getCollection(client, context.auth.database, collectionName);
+        const deleteMethod = quantity === 'One' ? 'deleteOne' : 'deleteMany';
+        const { deletedCount } = await collection[deleteMethod](query);
 
-            await context.sendJson({ deletedCount }, 'out');
-        } catch (error) {
-            throw error;
-        }
+        await context.sendJson({ deletedCount }, 'out');
     }
 };

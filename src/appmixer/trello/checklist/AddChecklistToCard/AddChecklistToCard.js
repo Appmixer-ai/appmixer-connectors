@@ -27,8 +27,7 @@ module.exports = {
                 throw new context.CancelError('Maximum 10 checklist items are allowed');
             }
 
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
+            for (const item of items) {
                 await context.httpRequest({
                     headers: { 'Content-Type': 'application/json' },
                     method: 'POST',

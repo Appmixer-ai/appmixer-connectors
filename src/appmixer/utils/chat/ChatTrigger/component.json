@@ -7,12 +7,13 @@
     "properties": {
         "schema": {
             "properties": {
-                "generateInspector": { "type": "boolean" },
                 "url": { "type": "string" },
+                "script": { "type": "string" },
                 "agentAvatar": { "type": "string" },
                 "agentName": { "type": "string" },
-                "agentMessage": { "type": "string" },
-                "chatTheme": { "type": "string" },
+                "agentIntro": { "type": "string" },
+                "agentDescription": { "type": "string" },
+                "agentPromptPlaceholder": { "type": "string" },
                 "publicKey": { "type": "string" }
             }
         },
@@ -44,23 +45,29 @@
                     "type": "text",
                     "index": 4,
                     "label": "Agent Name",
-                    "tooltip": "The name of the agent. Default is 'Agent'."
+                    "tooltip": "The name of the agent. Default is 'AI Assistant'."
                 },
-                "agentMessage": {
+                "agentIntro": {
                     "type": "text",
                     "index": 5,
-                    "label": "Agent Message",
-                    "tooltip": "The first message of the agent. Default is 'Hello! How can I help you?'."
+                    "label": "Agent Intro",
+                    "tooltip": "The first message of the agent. Default is 'What's on your mind today?'."
                 },
-                "chatTheme": {
-                    "type": "text",
+                "agentDescription": {
+                    "type": "textarea",
                     "index": 6,
-                    "label": "Chat Theme",
-                    "tooltip": "The theme of the chat as it appears in the sidebar. Default is 'Ask me anything.'."
+                    "label": "Agent Description",
+                    "tooltip": "The text that appears when a user starts a new chat. Use markdown to describe the agent's capabilities."
+                },
+                "agentPromptPlaceholder": {
+                    "type": "text",
+                    "index": 7,
+                    "label": "Agent Prompt Placeholder",
+                    "tooltip": "The placeholder text in the input field where the user types their message. Default is 'Ask anything...'."
                 },
                 "publicKey": {
                     "type": "textarea",
-                    "index": 7,
+                    "index": 8,
                     "label": "Public Key",
                     "tooltip": "A public key to verify any request to this chat (sending messages, creating threads, ...). If the public key is set, the chat will only accept requests with a JWT token signed with the private key corresponding to this public key. At the same time, the metadata of the JWT token will be available as variables in the connected components in this flow. This allows you to build conversational flows that are aware of the user's identity and context.<br/><br/>Pass your JWT token to the Chat URL `<code>chat_token</code> query parameter. The same goes for the Chat Script. Locate the <code>chatUrl</code> setting in the code snippet and append <code>?chat_token={YOUR_GENERATED_JWT_TOKEN}</code> query parameter to the end of the URL.<br/><br/>To generate a private/public key pair, you can use the following command:<br/><br/><code>openssl genrsa -out my-private-key.pem 4096</code><br/><code>openssl rsa -in my-private-key.pem -outform PEM -pubout -out my-public-key.pem</code><br/><br/>The public key is the content of the my-public-key.pem file."
                 }
@@ -75,6 +82,10 @@
                 { "label": "Thread ID", "value": "threadId", "schema": { "type": "string" } },
                 { "label": "Message ID", "value": "messageId", "schema": { "type": "string" } },
                 { "label": "Message Content", "value": "content", "schema": { "type": "string" } },
+                { "label": "File ID", "value": "files.0.id", "schema": { "type": "string", "format": "appmixer-file-id" } },
+                { "label": "File Name", "value": "files.0.name", "schema": { "type": "string" } },
+                { "label": "File Type", "value": "files.0.type", "schema": { "type": "string" } },
+                { "label": "File Size", "value": "files.0.size", "schema": { "type": "integer" } },
                 { "label": "JWT Token", "value": "jwtToken", "schema": { "type": "string" } },
                 { "label": "JWT Payload", "value": "jwtPayload", "schema": { "type": "object" } }
             ]

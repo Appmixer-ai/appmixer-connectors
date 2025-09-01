@@ -116,7 +116,7 @@ const removeChannel = async (context, channelId) => {
     delete RABBITMQ_CONNECTOR_OPEN_CHANNELS[channelId];
 
     const connection = RABBITMQ_CONNECTOR_OPEN_CONNECTIONS[channel.connectionId];
-    if (connection && connection.channels[channelId]) {
+    if (connection?.channels[channelId]) {
         delete connection.channels[channelId];
         if (Object.keys(connection.channels).length === 0) {
             await context.log('info', `[RABBITMQ] Closing connection ${channel.connectionId} of channel ${channelId}. No other channels are using the connection.`);
@@ -166,7 +166,7 @@ const addConsumer = async (context, queue, options, flowId, componentId, auth, c
             { enqueueOnly: 'true' }
         );
 
-        if (options && options.noAck !== true) {
+        if (options?.noAck !== true) {
             consumer.ack(message);
         }
 
