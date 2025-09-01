@@ -41,7 +41,7 @@ module.exports = {
 
         scopeDelimiter: ',',
 
-        authUrl: 'https://accounts.zoho.com/oauth/v2/auth?access_type=offline',
+        authUrl: 'https://accounts.zoho.com/oauth/v2/auth?prompt=consent&access_type=offline',
 
         processRedirectionCallback: async params => {
 
@@ -69,8 +69,8 @@ module.exports = {
                 refresh_token: refreshToken
             } = data;
 
-            const accessTokenExpDate = new Date();
-            accessTokenExpDate.setSeconds(accessTokenExpDate.getSeconds() + expiresIn);
+            const expiresInSeconds = Number(expiresIn ?? 3600); // 3600 seconds default
+            const accessTokenExpDate = new Date(Date.now() + (expiresInSeconds - 60) * 1000);
 
             return { accessToken, accessTokenExpDate, refreshToken };
         },
@@ -98,11 +98,12 @@ module.exports = {
 
             const { data } = await context.httpRequest.post(tokenUrl);
 
-            const newDate = new Date();
-            newDate.setTime(newDate.getTime() + (data.expires_in * 1000));
+            const expiresIn = Number(data.expires_in ?? 3600); // 3600 seconds default
+            const accessTokenExpDate = new Date(Date.now() + (expiresIn - 60) * 1000);
+
             return {
                 accessToken: data.access_token,
-                accessTokenExpDate: newDate
+                accessTokenExpDate
             };
         },
 
