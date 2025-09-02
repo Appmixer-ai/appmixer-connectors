@@ -48,7 +48,10 @@ function resetStubs() {
         listKeyPolicies: sinon.stub().returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) }),
         getKeyPolicy: sinon.stub().returns({ promise: () => Promise.resolve({ Policy: JSON.stringify({
             Version: '2012-10-17',
-            Statement: [{ Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111111111111:root' }, Action: 'kms:*', Resource: '*' }, { Effect: 'Allow', Principal: { Service: 's3.amazonaws.com' }, Action: ['kms:Decrypt', 'kms:GenerateDataKey*'], Resource: '*' }]
+            Statement: [
+                { Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111111111111:root' }, Action: 'kms:*', Resource: '*' },
+                { Effect: 'Allow', Principal: { Service: 's3.amazonaws.com' }, Action: ['kms:Decrypt', 'kms:GenerateDataKey*'], Resource: '*' }
+            ]
         }) }) })
     };
 
@@ -107,6 +110,8 @@ describe('aws-commons registerWebhook security options', () => {
         const s3Stmt = policy.Statement.find(s => s.Sid === 'AllowS3BucketPublish');
         assert(s3Stmt, 'S3 publish statement missing');
         assert.strictEqual(s3Stmt.Principal.Service, 's3.amazonaws.com');
+        assert.strictEqual(s3Stmt.Condition.StringEquals['aws:SourceAccount'], '111111111111');
+        assert.strictEqual(s3Stmt.Condition.ArnLike['aws:SourceArn'], 'arn:aws:s3:*:*:my-bucket');
         assert.strictEqual(s3Stmt.Condition.StringEquals['aws:SourceAccount'], '111111111111');
         assert(s3Stmt.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
@@ -172,6 +177,7 @@ describe('aws-commons registerWebhook security options', () => {
         assert(s3Stmt2, 'S3 publish statement missing in trusted policy');
         assert.strictEqual(s3Stmt2.Principal.Service, 's3.amazonaws.com');
         assert.strictEqual(s3Stmt2.Condition.StringEquals['aws:SourceAccount'], '111111111111');
+        assert.strictEqual(s3Stmt2.Condition.ArnLike['aws:SourceArn'], 'arn:aws:s3:*:*:my-bucket');
         assert(s3Stmt2.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
 });

@@ -95,10 +95,10 @@ module.exports = {
                     const kmsMasterKeyId = payload.kmsMasterKeyId.trim();
 
                     // Soft format check (KeyId/UUID, ARN key, ARN alias, alias name, raw key id)
-                    const reKeyArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:key\/[0-9a-fA-F-]{36}$/;
+                    const reKeyArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:key\/([0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/;
                     const reAliasArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
                     const reAlias = /^alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
-                    const reKeyId = /^[0-9a-fA-F-]{36}$/; // plain key UUID
+                    const reKeyId = /^(?:[0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/; // UUID or mrk- key id
                     if (!(reKeyArn.test(kmsMasterKeyId) ||
                         reAliasArn.test(kmsMasterKeyId) ||
                         reAlias.test(kmsMasterKeyId) ||
