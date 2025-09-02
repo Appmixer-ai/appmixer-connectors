@@ -17,8 +17,11 @@ async function setWorksheetHeader(context, sheet, csvHeader, append, autoMatch, 
 
     let headerRow;
     if (autoMatch) {
-        await sheet.loadHeaderRow();
-        headerRow = sheet.headerValues;
+        const headerRowIndex = sheet.headerRowIndex || 1;
+        const headerCells = await sheet.getCellsInRange(`A${headerRowIndex}:${sheet.lastColumnLetter}${headerRowIndex}`);
+
+        // if the header row is empty, we will use the csvHeader as headerRow
+        headerRow = headerCells ? headerCells[0] : csvHeader;
 
         if (autoMatch && !headerRow) {
             // the best would be to show this error in the UI before the flow is started, but right now there is no
@@ -45,7 +48,7 @@ async function setWorksheetHeader(context, sheet, csvHeader, append, autoMatch, 
     });
 
     newColumns.forEach(column => {
-        if (newHeader.indexOf(column.column) === -1) {
+        if (column.column && newHeader.indexOf(column.column) === -1) {
             newHeader.push(column.column);
         }
     });
