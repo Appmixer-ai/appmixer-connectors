@@ -33,7 +33,6 @@ Clerk connector provides integration with Clerk's Backend API for user authentic
 - **FindSessions** - Search sessions by user, client, or session ID
 - **GetSession** - Retrieve session by ID
 - **CreateSession** - Create session (testing environments only)
-- **RefreshSession** - Refresh session tokens
 - **RevokeSession** - Invalidate session
 
 ## Find Components

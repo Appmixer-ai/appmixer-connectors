@@ -30,7 +30,6 @@ Requires a Clerk Secret Key from your [Clerk Dashboard](https://dashboard.clerk.
 - **FindSessions** - Search sessions by user ID, client ID, or session ID
 - **GetSession** - Get session details by ID
 - **CreateSession** - Create session (testing only)
-- **RefreshSession** - Refresh existing session
 - **RevokeSession** - Revoke session
 
 ## Find Components Features
