@@ -112,13 +112,12 @@ module.exports = {
                         const { KeyMetadata } = await kms.describeKey({ KeyId: kmsMasterKeyId }).promise();
                         keyMetadata = KeyMetadata;
                     } catch (e) {
-                        context.log && context.log({ step: 'kmsDescribeKeyError', error: e.message });
+                        context.log({ step: 'kmsDescribeKeyError', error: e.message });
                         throw new context.CancelError('KMS key not found or not accessible.');
                     }
 
                     // Obtain key policy (default). Ensure S3 service allowed to decrypt & generate data keys.
                     try {
-                        context.log && context.log({ step: 'kmsGetKeyPolicy', keyMetadata });
                         const { PolicyNames } = await kms.listKeyPolicies({ KeyId: keyMetadata.KeyId }).promise();
                         const policyName = PolicyNames.includes('default') ? 'default' : (PolicyNames[0] || 'default');
                         const { Policy } = await kms.getKeyPolicy({
@@ -131,11 +130,9 @@ module.exports = {
                         } catch (parseErr) {
                             throw new context.CancelError('Unable to parse KMS key policy JSON.');
                         }
-                        context.log && context.log({ step: 'kmsKeyPolicy', policyJson, PolicyNames });
                         const statements = Array.isArray(policyJson.Statement)
                             ? policyJson.Statement
                             : [policyJson.Statement];
-                        context.log && context.log({ step: 'kmsKeyStatements', statements });
                         const hasS3Statement = statements.some(stmt => {
                             if (!stmt || stmt.Effect !== 'Allow') return false;
                             // Principal can be structure like { Service: 's3.amazonaws.com' } or { AWS: 'arn:...' } or arrays.
@@ -159,10 +156,9 @@ module.exports = {
                         if (!hasS3Statement) {
                             throw new context.CancelError('KMS key policy missing required S3 permissions (kms:Decrypt, kms:GenerateDataKey* for Principal Service s3.amazonaws.com).');
                         }
-                        context.log && context.log({ step: 'kmsValidationOk', keyId: keyMetadata.KeyId, alias: keyMetadata.AliasName });
                     } catch (e) {
                         if (e instanceof context.CancelError) throw e; // rethrow validation errors
-                        context.log && context.log({ step: 'kmsPolicyValidationError', error: e.message });
+                        context.log({ step: 'kmsPolicyValidationError', error: e.message });
                         throw new context.CancelError('Failed to validate KMS key policy.');
                     }
                     // --- KMS VALIDATION END ---
