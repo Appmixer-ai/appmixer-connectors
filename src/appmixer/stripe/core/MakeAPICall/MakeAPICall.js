@@ -30,6 +30,8 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        await context.log({ step: 'http-request-success', response: data });
+
+        return context.sendJson({ response: data }, 'out');
     }
 };
