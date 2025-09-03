@@ -3,7 +3,6 @@
 module.exports = {
     async receive(context) {
         const {
-            name,
             accessType,
             entryPointAccess,
             moderation,
@@ -18,9 +17,7 @@ module.exports = {
         } = context.messages.in.content;
 
         // Build SpaceConfig according to API spec: https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces#spaceconfig
-        const body = {
-            name
-        };
+        const body = {};
 
         // Only add config if any configuration options are specified
         if (accessType || entryPointAccess || moderation || attendanceReportGenerationType ||

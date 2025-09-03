@@ -32,7 +32,7 @@ module.exports = {
 
 const schema = {
     'name': { 'type': 'string', 'title': 'Conference Record ID' },
-    'space': { 'type': 'string', 'title': 'Space' },
+    'space': { 'type': 'string', 'title': 'Space ID' },
     'startTime': { 'type': 'string', 'title': 'Start Time' },
     'endTime': { 'type': 'string', 'title': 'End Time' },
     'expireTime': { 'type': 'string', 'title': 'Expire Time' }
