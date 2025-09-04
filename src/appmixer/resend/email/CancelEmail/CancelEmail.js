@@ -11,7 +11,7 @@ module.exports = {
         }
 
         // https://resend.com/docs/api-reference/emails/cancel
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.resend.com/emails/${id}/cancel`,
             headers: {
@@ -19,6 +19,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
