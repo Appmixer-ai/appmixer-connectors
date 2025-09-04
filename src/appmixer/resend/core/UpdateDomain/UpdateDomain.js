@@ -1,6 +1,6 @@
+'use strict';
 
 /* eslint-disable camelcase */
-'use strict';
 
 module.exports = {
 

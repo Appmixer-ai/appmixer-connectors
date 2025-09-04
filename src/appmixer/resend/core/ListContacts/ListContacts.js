@@ -33,7 +33,7 @@ module.exports = {
         }
 
         // Make the API request
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://api.resend.com/audiences/${audience_id}/contacts`,
             headers: {
@@ -41,7 +41,7 @@ module.exports = {
             }
         });
 
-        const items = response.data && Array.isArray(response.data) ? response.data : [];
+        const items = data && Array.isArray(data) ? data : [];
 
         // No searching supported yet, so we return all items
         // if (items.length === 0) {
