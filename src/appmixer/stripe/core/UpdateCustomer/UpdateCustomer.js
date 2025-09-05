@@ -66,7 +66,7 @@ module.exports = {
             };
         }
 
-        await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api.stripe.com/v1/customers/${customerId}`,
             headers: {
@@ -84,6 +84,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson({}, 'out');
+        return context.sendJson(data, 'out');
     }
 };
