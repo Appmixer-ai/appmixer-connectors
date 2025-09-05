@@ -20,6 +20,16 @@ module.exports = {
                 'offline_access'
             ],
 
+            pre() {
+                return {
+                    jiraCloudSite: {
+                        type: 'text',
+                        name: 'JIRA Cloud Site',
+                        tooltip: "If you use multiple JIRA cloud sites, enter the site name you want to connect. If you leave this empty, the first option in the select will be always used. Expected format: '<sub_domain>.atlassian.net' Note: This must be selected as the Authorize for site option during JIRA login."
+                    }
+                };
+            },
+
             authUrl(context) {
 
                 return 'https://auth.atlassian.com/authorize?' +
@@ -41,7 +51,8 @@ module.exports = {
                     }
                 });
 
-                const { id: cloudId, name } = data[0];
+                const cloudId = context.jiraCloudSite ?? data[0].id;
+                const { name } = data[0];
                 return {
                     cloudId,
                     name,
