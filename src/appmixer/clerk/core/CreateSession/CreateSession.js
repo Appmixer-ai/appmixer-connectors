@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const { userId } = context.messages.in.content;
 
         if (!userId) {
