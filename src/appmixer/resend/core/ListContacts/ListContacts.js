@@ -16,6 +16,7 @@ const schema = {
 module.exports = {
 
     async receive(context) {
+
         const { audience_id, outputType = 'array' } = context.messages.in.content || {};
 
         if (!audience_id) {
@@ -40,8 +41,7 @@ module.exports = {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
-
-        const items = data && Array.isArray(data) ? data : [];
+        const items = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
 
         // No searching supported yet, so we return all items
         // if (items.length === 0) {
