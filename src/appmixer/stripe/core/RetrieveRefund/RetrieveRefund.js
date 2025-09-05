@@ -5,6 +5,10 @@ module.exports = {
 
         const { refundId } = context.messages.in.content;
 
+        if (!refundId) {
+            throw new context.CancelError('Refund ID is required!');
+        }
+
         // https://stripe.com/docs/api/refunds/retrieve
         const { data } = await context.httpRequest({
             method: 'GET',

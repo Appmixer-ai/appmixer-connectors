@@ -5,13 +5,21 @@ module.exports = {
 
         const { customEndpoint, method, parameters } = context.messages.in.content;
 
+        if (!customEndpoint) {
+            throw new context.CancelError('Custom Endpoint is required!');
+        }
+
+        if (!method) {
+            throw new context.CancelError('Method is required!');
+        }
+
         // Parse parameters if it's a JSON string
         let parsedParameters = {};
         if (parameters) {
             if (typeof parameters === 'string') {
                 try {
                     parsedParameters = JSON.parse(parameters);
-                } catch (error) {
+                } catch {
                     throw new context.CancelError('Invalid JSON format in parameters');
                 }
             }

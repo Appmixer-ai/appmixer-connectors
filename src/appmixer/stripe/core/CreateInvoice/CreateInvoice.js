@@ -11,6 +11,10 @@ module.exports = {
             daysUntilDue
         } = context.messages.in.content;
 
+        if (!customer) {
+            throw new context.CancelError('Customer is required!');
+        }
+
         // https://stripe.com/docs/api/invoices/create
         const invoiceData = {};
         if (customer !== undefined && customer !== '') invoiceData.customer = customer;

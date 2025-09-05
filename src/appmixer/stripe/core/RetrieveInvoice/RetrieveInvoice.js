@@ -6,6 +6,10 @@ module.exports = {
 
         const { invoiceId } = context.messages.in.content;
 
+        if (!invoiceId) {
+            throw new context.CancelError('Invoice ID is required!');
+        }
+
         // https://stripe.com/docs/api/invoices/retrieve
         const { data } = await context.httpRequest({
             method: 'GET',

@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const {
             customerId,
             email,
@@ -24,6 +25,10 @@ module.exports = {
             shippingAddressPostalCode,
             shippingAddressCountry
         } = context.messages.in.content;
+
+        if (!customerId) {
+            throw new context.CancelError('Customer ID is required!');
+        }
 
         let address;
         if (
@@ -61,7 +66,7 @@ module.exports = {
             };
         }
 
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.stripe.com/v1/customers/${customerId}`,
             headers: {
@@ -79,6 +84,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

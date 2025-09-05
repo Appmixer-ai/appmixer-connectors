@@ -5,6 +5,14 @@ module.exports = {
 
         const { charge, amount, reason } = context.messages.in.content;
 
+        if (!charge) {
+            throw new context.CancelError('Charge is required!');
+        }
+
+        if (!amount) {
+            throw new context.CancelError('Amount is required!');
+        }
+
         // https://stripe.com/docs/api/refunds/create
         const formData = {};
         if (charge) formData.charge = charge;

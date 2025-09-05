@@ -5,8 +5,12 @@ module.exports = {
 
         const { customerId } = context.messages.in.content;
 
+        if (!customerId) {
+            throw new context.CancelError('Customer ID is required!');
+        }
+
         // https://stripe.com/docs/api/customers/delete
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'DELETE',
             url: `https://api.stripe.com/v1/customers/${customerId}`,
             headers: {
@@ -15,6 +19,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
