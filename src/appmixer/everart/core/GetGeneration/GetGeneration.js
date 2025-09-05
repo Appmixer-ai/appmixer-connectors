@@ -1,7 +1,14 @@
 
+'use strict';
+
 module.exports = {
     async receive(context) {
+
         const { id } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Generation ID is required!');
+        }
 
         // https://www.everart.ai/api/docs#tag/Generations/operation/getGeneration
         const { data } = await context.httpRequest({

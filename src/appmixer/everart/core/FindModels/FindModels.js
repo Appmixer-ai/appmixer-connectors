@@ -1,4 +1,7 @@
+'use strict';
+
 const lib = require('../../lib.generated');
+
 const schema = {
     'id': { 'type': 'string', 'title': 'Model Id' },
     'name': { 'type': 'string', 'title': 'Name' },
@@ -12,6 +15,7 @@ const schema = {
 
 module.exports = {
     async receive(context) {
+
         const { search, status, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
