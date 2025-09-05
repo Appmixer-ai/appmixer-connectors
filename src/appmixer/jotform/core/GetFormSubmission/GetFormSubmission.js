@@ -5,6 +5,11 @@ module.exports = {
     receive: async function(context) {
 
         const { id } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Submission ID is required!');
+        }
+
         const regionPrefix = context.auth.regionPrefix || 'api';
 
         // https://api.jotform.com/docs/#submission-id
