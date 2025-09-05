@@ -29,8 +29,7 @@ module.exports = {
             method: 'GET',
             url: url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiToken}`
             }
         });
 

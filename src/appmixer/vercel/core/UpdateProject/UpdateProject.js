@@ -27,16 +27,15 @@ module.exports = {
         const url = `https://api.vercel.com/v9/projects/${encodeURIComponent(id)}${params.toString() ? '?' + params.toString() : ''}`;
 
         // https://vercel.com/docs/rest-api/reference/projects#update-project
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PATCH',
             url: url,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.apiToken}`
             },
             data: requestBody
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

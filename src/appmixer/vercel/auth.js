@@ -18,8 +18,7 @@ module.exports = {
                 method: 'GET',
                 url: 'https://api.vercel.com/v2/user',
                 headers: {
-                    'Authorization': `Bearer ${context.apiToken}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${context.apiToken}`
                 }
             });
 
@@ -32,8 +31,7 @@ module.exports = {
                     method: 'GET',
                     url: 'https://api.vercel.com/v2/user',
                     headers: {
-                        'Authorization': `Bearer ${context.apiToken}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${context.apiToken}`
                     }
                 });
                 return true;
