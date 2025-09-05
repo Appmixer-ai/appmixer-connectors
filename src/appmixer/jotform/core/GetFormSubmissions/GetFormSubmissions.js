@@ -57,6 +57,12 @@ module.exports = {
             failsafe += 1;
         }
 
+        // Transform each submission to convert answers from object to array
+        result = result.map(submission => ({
+            ...submission,
+            answers: Object.values(submission.answers || {})
+        }));
+
         if (context.messages.in.content.xConnectorOutputType === 'object') {
             return context.sendArray(result, 'out');
         } else {
@@ -197,7 +203,7 @@ module.exports = {
                         'type': 'string'
                     },
                     'answers': {
-                        'type': 'object'
+                        'type': 'array'
                     },
                     'workflowStatus': {
                         'type': 'string'
