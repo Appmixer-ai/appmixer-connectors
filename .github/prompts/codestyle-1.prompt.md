@@ -15,8 +15,8 @@ Every inspector input of type `toggle` must have a `defaultValue` set to `false`
 For components that define dynamic output ports (i.e., source is present inside an outPorts entry), ensure that the source.data.messages mapping follows this rule: If the input schema defines required fields (i.e., the "required" array is non-empty), then all required fields must be mapped using "in/<fieldName>": "any" (the value can be any valid expression or constant). If there are no required input fields, only include the minimal mapping: "in/outputType": "inputs/in/outputType". Do not include any additional mappings when no required fields are present. This ensures correct evaluation of dynamic output port options.
 
 # Refactor the behavior file to follow these rules
-The file begins with `'use strict';` (single quotes) on the first line.
-Ensure an empty line after the receive function definition (i.e., after the `async receive(context) {` line).
+The file begins with `'use strict';` (single quotes) on the first line. Optional: various ESlint rules can be on the first line with "use strict"; on the next line.
+Ensure an empty line after the receive function signature definition (i.e., after the `async receive(context) {` line).
 Avoid adding any unspecified empty lines in the behavior file.
 Remove any unused library imports or requires.
 When making HTTP requests with context.httpRequest, prefer destructuring the response as const { data } = await context.httpRequest({ ... }) instead of const response = await context.httpRequest({ ... }).
