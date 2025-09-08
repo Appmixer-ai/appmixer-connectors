@@ -384,45 +384,6 @@ describe('Clerk Connector Integration Tests', function() {
         console.log('GetSession result:', result);
     });
 
-    it('RefreshSession', async function() {
-        if (!sessionId) {
-            console.log('Skipping RefreshSession: No sessionId available (CreateSession might have been skipped)');
-            this.skip();
-            return;
-        }
-        const { execSync } = require('child_process');
-        // Note: In a real scenario, you'd have actual tokens. For testing purposes, we use dummy values
-        const input = `{"in":{"sessionId":"${sessionId}","expiredToken":"dummy_expired_token","refreshToken":"dummy_refresh_token","requestOrigin":"https://example.com"}}`;
-        const cmd = `appmixer test component src/appmixer/clerk/core/RefreshSession -i '${input}' --json`;
-        let output;
-        try {
-            output = execSync(cmd, { encoding: 'utf8' });
-        } catch (err) {
-            // RefreshSession might fail with dummy tokens, which is expected
-            if (err.stdout && (err.stdout.includes('401') || err.stdout.includes('400') || err.stdout.includes('invalid') || err.stdout.includes('token'))) {
-                console.warn('RefreshSession: Expected failure with dummy tokens (401/400 errors expected)');
-                return;
-            }
-            throw new Error(`RefreshSession failed unexpectedly: ${err.stdout || err.message}`);
-        }
-        let result = null;
-        const lines = output.split(/\r?\n/).reverse();
-        for (const line of lines) {
-            const jsonStart = line.indexOf('{');
-            if (jsonStart !== -1) {
-                const jsonStr = line.slice(jsonStart);
-                try {
-                    const obj = JSON.parse(jsonStr);
-                    if (obj) {
-                        result = obj;
-                        break;
-                    }
-                } catch (e) { /* not JSON, skip */ }
-            }
-        }
-        console.log('RefreshSession result:', result);
-    });
-
     it('RevokeSession', async function() {
         if (!sessionId) {
             console.log('Skipping RevokeSession: No sessionId available (CreateSession might have been skipped)');

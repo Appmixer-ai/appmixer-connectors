@@ -1,10 +1,13 @@
-
 'use strict';
 
 module.exports = {
     async receive(context) {
 
         const { paymentIntentId } = context.messages.in.content;
+
+        if (!paymentIntentId) {
+            throw new context.CancelError('Payment Intent ID is required!');
+        }
 
         // https://stripe.com/docs/api/payment_intents/retrieve
         const { data } = await context.httpRequest({

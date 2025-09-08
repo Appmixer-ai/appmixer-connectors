@@ -14,11 +14,7 @@ module.exports = {
             data: {
                 requests: [
                     {
-                        createSlide: {
-                            slideLayoutReference: {
-                                predefinedLayout: 'BLANK'
-                            }
-                        }
+                        createSlide: {} // by default, creates a 'BLANK' slide
                     }
                 ]
             }

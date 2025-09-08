@@ -4,7 +4,6 @@ const { cwd } = require('process');
 const assert = require('assert');
 const sinon = require('sinon');
 const testUtils = require('../utils.js');
-require('@slack/web-api');
 
 // Mock the WebClient class from @slack/web-api
 // This is necessary to avoid making actual API calls during tests
@@ -20,11 +19,9 @@ const mockWebClientClass = class {
         postMessage: sinon.stub().resolves({ message: { text: 'testMessage' } })
     };
 };
-require.cache[require.resolve('@slack/web-api')].exports = {
-    WebClient: mockWebClientClass
-};
 
-const { sendMessage } = require('../../src/appmixer/slack/lib.js');
+// Will be assigned in beforeEach after setting up the mock and re-requiring the lib.
+let sendMessage;
 
 describe('lib.js', () => {
     describe('normalizeMultiselectInput', () => {
@@ -80,12 +77,27 @@ describe('lib.js', () => {
                     }
                 }
             };
+
+            // Ensure @slack/web-api is loaded and then replace it with our mock
+            // We do this here so that if other tests required the Slack lib earlier,
+            // we can re-require it with our mocked dependency.
+            require('@slack/web-api');
+            require.cache[require.resolve('@slack/web-api')].exports = { WebClient: mockWebClientClass };
+
+            // Force re-evaluation of the slack lib so it picks up the mocked @slack/web-api
+            const libPath = require.resolve('../../src/appmixer/slack/lib.js');
+            delete require.cache[libPath];
+            ({ sendMessage } = require('../../src/appmixer/slack/lib.js'));
         });
 
         afterEach(() => {
             mockWebClient?.chat?.postMessage?.resetHistory();
             mockWebClient = null;
             delete require.cache[require.resolve('@slack/web-api')];
+            // Also remove the slack lib from cache to avoid leaking the mocked version to other suites
+            const libPath = require.resolve('../../src/appmixer/slack/lib.js');
+            delete require.cache[libPath];
+            // Recreate a clean cache entry for @slack/web-api for other tests
             require('@slack/web-api');
             process.env.AUTH_HUB_URL = undefined;
             process.env.AUTH_HUB_TOKEN = undefined;
@@ -94,7 +106,8 @@ describe('lib.js', () => {
         it('should call web.chat.postMessage when not using AuthHub', async () => {
             context.auth.profileInfo = { botToken: 'testBotToken' };
 
-            const result = await sendMessage(context, channelId, message, true);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
 
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
@@ -109,13 +122,13 @@ describe('lib.js', () => {
         it('should call web.chat.postMessage when using AuthHub but not as bot', async () => {
             context.config.usesAuthHub = true;
             context.auth.profileInfo = { botToken: undefined };
-
-            const result = await sendMessage(context, channelId, message, false);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, false, undefined, undefined, opts);
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
             assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
-                icon_url: undefined,
-                username: undefined,
+                icon_url: 'https://example.com/icon.png',
+                username: 'MySlackBot',
                 channel: channelId,
                 text: message
             });
@@ -131,7 +144,8 @@ describe('lib.js', () => {
                 data: { text: message }
             });
 
-            const result = await sendMessage(context, channelId, message, true);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
 
             assert.deepEqual(result, { text: message });
             assert.equal(context.httpRequest.callCount, 1);
@@ -157,7 +171,7 @@ describe('lib.js', () => {
             context.auth.profileInfo = { botToken: undefined };
 
             await assert.rejects(
-                sendMessage(context, channelId, message, true),
+                sendMessage(context, channelId, message, true, undefined, undefined, { iconUrl: 'x', username: 'y' }),
                 Error,
                 'Bot token is required for sending messages as bot. Please provide it in the connector configuration.'
             );
@@ -167,7 +181,8 @@ describe('lib.js', () => {
             context.auth.profileInfo = { botToken: 'testBotToken' };
             const thread_ts = '1234567890.123456';
             const reply_broadcast = true;
-            const result = await sendMessage(context, channelId, message, true, thread_ts, reply_broadcast);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, true, thread_ts, reply_broadcast, opts);
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
             assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
@@ -182,7 +197,8 @@ describe('lib.js', () => {
 
         it('should send message without thread_ts and reply_broadcast', async () => {
             context.auth.profileInfo = { botToken: 'testBotToken' };
-            const result = await sendMessage(context, channelId, message, true);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
             assert.deepEqual(result, { text: 'testMessage' });
             assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
@@ -198,7 +214,8 @@ describe('lib.js', () => {
             context.auth.accessToken = 'testAccessToken';
             context.auth.profileInfo = { botToken: 'profileBotToken' };
             // Without AuthHub
-            const result = await sendMessage(context, channelId, message, true);
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot' };
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
             // The mockWebClient is constructed with the token, so we can check which token was used
             assert.equal(mockWebClient.token, 'profileBotToken');
             assert.equal(mockWebClient.chat.postMessage.callCount, 1);
@@ -211,7 +228,7 @@ describe('lib.js', () => {
             context.httpRequest = sinon.stub().resolves({
                 data: { text: message }
             });
-            const resultAuthHub = await sendMessage(context, channelId, message, true);
+            const resultAuthHub = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
             assert.equal(mockWebClient.token, 'profileBotToken');
             assert.deepEqual(resultAuthHub, { text: message });
             assert.equal(context.httpRequest.callCount, 1);
@@ -228,6 +245,24 @@ describe('lib.js', () => {
                     text: message,
                     token: 'profileBotToken'
                 }
+            });
+        });
+
+        it('should ignore context.messages and use options for iconUrl and username', async () => {
+            context.auth.profileInfo = { botToken: 'testBotToken' };
+            // context.messages contains different values vs options
+            context.messages.message.content.iconUrl = 'https://example.com/icon-from-context.png';
+            context.messages.message.content.username = 'ContextSlackBot';
+            const opts = { iconUrl: 'https://example.com/icon-from-options.png', username: 'OptionsBot' };
+
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
+            assert.equal(mockWebClient.chat.postMessage.callCount, 1);
+            assert.deepEqual(result, { text: 'testMessage' });
+            assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
+                icon_url: 'https://example.com/icon-from-options.png',
+                username: 'OptionsBot',
+                channel: channelId,
+                text: message
             });
         });
     });

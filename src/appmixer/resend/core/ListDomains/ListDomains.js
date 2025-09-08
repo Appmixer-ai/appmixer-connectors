@@ -1,4 +1,3 @@
-
 'use strict';
 
 const lib = require('../../lib');
@@ -27,7 +26,7 @@ module.exports = {
         }
 
         // Make the API request
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.resend.com/domains',
             headers: {
@@ -36,7 +35,7 @@ module.exports = {
         });
 
         // Always nested: response.data.data is the domains array
-        const items = response.data?.data ?? [];
+        const items = data?.data ?? [];
 
         // No searching supported yet, so we return all items
         // if (items.length === 0) {

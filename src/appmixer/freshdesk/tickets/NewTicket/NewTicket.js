@@ -1,13 +1,18 @@
 'use strict';
 const axios = require('axios');
 const Promise = require('bluebird');
+const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
 
     async tick(context) {
 
         const { auth } = context;
-        const { embed = [] } = context.properties;
+        const { embed } = context.properties;
+
+        // Normalize the multiselect field
+        const normalizedEmbed = embed ?
+            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
 
         let since = (new Date()).toISOString();
 
@@ -20,8 +25,8 @@ module.exports = {
         const pages = Math.ceil(limit / perPage);
 
         const params = { per_page: perPage };
-        if (embed.length > 0) {
-            params.include = embed.join(',');
+        if (normalizedEmbed.length > 0) {
+            params.include = normalizedEmbed.join(',');
         }
 
         const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
@@ -68,13 +73,13 @@ module.exports = {
                     ticketJson: ticket
                 };
 
-                if (embed.includes('requester')) {
+                if (normalizedEmbed.includes('requester')) {
                     fields.requesterId = ticket.requester.id;
                     fields.requesterName = ticket.requester.name;
                     fields.requesterEmail = ticket.requester.email;
                 }
 
-                if (embed.includes('description')) {
+                if (normalizedEmbed.includes('description')) {
                     fields.description = ticket.description_text;
                 }
 

@@ -6,6 +6,10 @@ module.exports = {
         const intentId = context.messages.in.content.payment_intent_id;
         const amount = context.messages.in.content.amount_to_capture;
 
+        if (!intentId) {
+            throw new context.CancelError('Payment Intent ID is required!');
+        }
+
         // https://stripe.com/docs/api/payment_intents/capture
         const requestData = {};
         if (amount !== '' && amount !== undefined) {

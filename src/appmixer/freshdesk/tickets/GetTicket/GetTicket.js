@@ -1,12 +1,17 @@
 'use strict';
 const axios = require('axios');
+const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
 
     async receive(context) {
 
         const { auth } = context;
-        const { ticketId, embed = [] } = context.messages.in.content;
+        const { ticketId, embed } = context.messages.in.content;
+
+        // Normalize the multiselect field
+        const normalizedEmbed = embed ?
+            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
 
         const requestObject = {
             auth: {
@@ -15,8 +20,8 @@ module.exports = {
             }
         };
 
-        if (embed?.length > 0) {
-            requestObject.params = { include: embed.join(',') };
+        if (normalizedEmbed.length > 0) {
+            requestObject.params = { include: normalizedEmbed.join(',') };
         }
 
         const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets/${ticketId}`;
@@ -36,20 +41,20 @@ module.exports = {
             ticketJson: data
         };
 
-        if (embed.includes('conversations')) {
+        if (normalizedEmbed.includes('conversations')) {
             fields.conversations = data.conversations;
         }
 
-        if (embed.includes('requester')) {
+        if (normalizedEmbed.includes('requester')) {
             fields.requester_name = data.requester.name;
             fields.requester_email = data.requester.email;
         }
 
-        if (embed.includes('company')) {
+        if (normalizedEmbed.includes('company')) {
             fields.company = data.company;
         }
 
-        if (embed.includes('stats')) {
+        if (normalizedEmbed.includes('stats')) {
             fields.stats = data.stats;
         }
 

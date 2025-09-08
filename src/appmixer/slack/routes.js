@@ -2,7 +2,7 @@
 'use strict';
 
 const { WebClient } = require('@slack/web-api');
-const { createHmac } = require('node:crypto');
+const { isValidPayload } = require('./lib.js');
 
 module.exports = async context => {
 
@@ -40,27 +40,17 @@ module.exports = async context => {
             auth: false,
             handler: async (req, h) => {
 
-                await context.log('info', 'slack-plugin-route-webhook-hit', { type: req.payload?.type });
-                context.log('trace', 'slack-plugin-route-webhook-payload', { payload: req.payload });
+                if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+                    // Return 400 Bad Request if the content type is not JSON
+                    // Example: Someone configures interaction (Request Approval) URL the same as the event URL in Slack.
+                    return h.response({ error: 'Invalid content type' }).code(400);
+                }
+
+                await context.log('info', 'slack-plugin-route-webhook-event-hit', { type: req.payload?.type });
+                context.log('trace', 'slack-plugin-route-webhook-event-payload', { payload: req.payload });
 
                 // Validates the payload with the Slack-signature hash
-                const slackSignature = req.headers['x-slack-signature'];
-                const signingSecret = context.config?.signingSecret;
-                if (!signingSecret) {
-                    context.log('error', 'slack-plugin-route-webhook-missing-signingSecret');
-                    return h.response(undefined).code(401);
-                }
-                // Use the raw request body from `req.payload`, without headers, before it has been deserialized from JSON or other forms. See https://stackoverflow.com/questions/70653161/unable-to-correctly-verify-slack-requests.
-                const payloadString = JSON.stringify(req.payload)
-                    .replace(/\//g, '\\/')
-                    .replace(/[\u007f-\uffff]/g, (c) => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
-
-                const timestamp = req.headers['x-slack-request-timestamp'];
-                const baseString = `v0:${timestamp}:${payloadString}`;
-                const mySignature = 'v0=' + createHmac('sha256', signingSecret).update(baseString).digest('hex');
-                if (slackSignature !== mySignature) {
-                    context.log('info', 'slack-plugin-route-webhook-invalid-signature', { config: context.config });
-                    context.log('error', 'slack-plugin-route-webhook-invalid-signature', { slackSignature, mySignature, baseString, payloadString });
+                if (!isValidPayload(context, req)) {
                     return h.response(undefined).code(401);
                 }
 
@@ -74,14 +64,14 @@ module.exports = async context => {
 
                 const event = req.payload.event;
                 if (!event) {
-                    context.log('error', 'slack-plugin-route-webhook-event-missing', req.payload);
+                    context.log('error', 'slack-plugin-route-webhook-event-event-missing', req.payload);
                     return {};
                 }
                 if (event.hidden) {
                     return {};
                 }
 
-                context.log('info', 'slack-plugin-route-webhook-event-type', { type: event.type });
+                context.log('info', 'slack-plugin-route-webhook-event-event-type', { type: event.type });
                 switch (event.type) {
                     case 'message':
                         await processMessages(context, req);
@@ -90,7 +80,7 @@ module.exports = async context => {
                         await processNewUsers(context, req);
                         break;
                     default:
-                        context.log('error', 'slack-plugin-route-webhook-event-type-unsupported', { type: event.type });
+                        context.log('error', 'slack-plugin-route-webhook-event-event-type-unsupported', { type: event.type });
                         break;
                 }
 
@@ -111,7 +101,7 @@ module.exports = async context => {
                     const { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token } = req.payload;
                     await context.log('debug', 'slack-plugin-route-auth-hub-send-message', { iconUrl, username, channelId, text, thread_ts, reply_broadcast });
                     if (!channelId || !text) {
-                        context.log('error', 'slack-plugin-route-webhook-send-message-missing-params', req.payload);
+                        context.log('error', 'slack-plugin-route-webhook-event-send-message-missing-params', req.payload);
                         return h.response(undefined).code(400);
                     }
 

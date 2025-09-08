@@ -15,13 +15,12 @@ module.exports = {
             if (records.length === 0) {
                 throw new context.CancelError('No records available for first output type');
             }
-            // One by one.
+            // Just the first one.
             await context.sendJson(
                 { ...records[0], index: 0, count: records.length },
                 outputPortName
             );
         } else if (outputType === 'object') {
-            // One by one.
             // One by one.
             for (let index = 0; index < records.length; index++) {
                 await context.sendJson(

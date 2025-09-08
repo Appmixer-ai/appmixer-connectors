@@ -543,6 +543,15 @@ module.exports = {
 
 ```
 
+# Plugins, Routes and Jobs
+Files: <connector>/jobs.js, <connector>/routes.js, <connector>/plugin.js
+
+## Context
+`context.log` MUST have this signature:
+```js
+context.log(level, message, [data]);
+```
+
 
 # Components
 
@@ -601,7 +610,7 @@ json schema of the component.json
                 "manager": {
                     "type": "string", "description": "The name of the quota module where usage limit rules are defined."
                 },
-                "maxWait": { "type": "integer", "description": "MUST be lower than 120000 (2 minutes) which is the default TTL for the quota manager." },
+                "maxWait": { "type": "integer", "description": "If present it MUST be lower than 120000 (2 minutes) which is the default TTL for the quota manager." },
                 "concurrency": { "type": "integer" },
                 "resources": {
                     "description": "One or more resources that identify rules from the quota module that apply to this component. Each rule in the quota module can have the resource property. quota.resources allow you to cherry-pick rules from the list of rules in the quota module that apply to this component. quota.resources can either be a string or an array of strings.",
@@ -1004,4 +1013,16 @@ For file input components:
         }
     }
 }
+```
+
+## Testing Guidelines
+### Unit Tests
+- Use `mocha` for unit tests
+- Place tests in `test/unit` directory
+- Use `assert` from Node.js for assertions
+
+When working on a single connector, you can run tests with:
+
+```bash
+npm run test-unit -- test/<connector_name>
 ```

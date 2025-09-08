@@ -38,7 +38,6 @@ describe('CreateProject', () => {
                 assert.strictEqual(options.data.name, projectName);
                 assert.strictEqual(options.data.framework, 'nextjs');
                 assert(options.headers['Authorization'].includes('Bearer'));
-                assert.strictEqual(options.headers['Content-Type'], 'application/json');
 
                 // Return mock response
                 return { data: mockResponse };

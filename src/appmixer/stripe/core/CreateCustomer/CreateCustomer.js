@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const {
             email,
             description,
@@ -23,6 +24,10 @@ module.exports = {
             shippingAddressPostalCode,
             shippingAddressCountry
         } = context.messages.in.content;
+
+        if (!email) {
+            throw new context.CancelError('Email is required!');
+        }
 
         let address;
         if (

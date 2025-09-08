@@ -5,6 +5,10 @@ module.exports = {
 
         const id = context.messages.in.content.payment_intent_id;
 
+        if (!id) {
+            throw new context.CancelError('Payment Intent ID is required!');
+        }
+
         // https://stripe.com/docs/api/payment_intents/cancel
         const { data } = await context.httpRequest({
             method: 'POST',

@@ -6,6 +6,10 @@ module.exports = {
         const { analysisId, branch, projectId, projectKey, pullRequest } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
 
+        if (!analysisId && !projectId && !projectKey) {
+            throw new context.CancelError('At least one of Analysis Id, Project Id, or Project Key is required');
+        }
+
         // SonarQube API endpoint: /api/qualitygates/project_status
         const { data } = await context.httpRequest({
             method: 'GET',

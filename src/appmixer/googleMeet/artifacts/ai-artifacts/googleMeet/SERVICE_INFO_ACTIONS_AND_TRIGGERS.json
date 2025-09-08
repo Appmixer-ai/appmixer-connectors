@@ -1,0 +1,613 @@
+{
+    "actions": [
+        {
+            "title": "CreateSpace",
+            "description": "Create a new Google Meet space (meeting). Requires OAuth 2.0; scope: https://www.googleapis.com/auth/meetings.space.created.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/create",
+            "endpointUrl": "/v2/spaces",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "POST",
+            "sampleResponse": {
+                "name": "spaces/abc123",
+                "meetingCode": "abc-defg-hij",
+                "meetingUri": "https://meet.google.com/abc-defg-hij",
+                "spaceType": "MEETING"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "space": {
+                        "type": "object",
+                        "description": "Space resource to create. If omitted, a default meeting space is created.",
+                        "properties": {
+                            "spaceType": {
+                                "type": "string",
+                                "description": "Type of the space to create, for example MEETING."
+                            },
+                            "config": {
+                                "type": "object",
+                                "description": "Optional space configuration and settings (see API docs for supported fields).",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetSpace",
+            "description": "Retrieve details of a Meet space by resource name. Requires OAuth 2.0; scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/get",
+            "endpointUrl": "/v2/spaces/{name}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "spaces/abc123",
+                "meetingCode": "abc-defg-hij",
+                "meetingUri": "https://meet.google.com/abc-defg-hij",
+                "spaceType": "MEETING"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Resource name of the space. Format: spaces/{space}"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "UpdateSpace",
+            "description": "Update settings of a Meet space. Requires OAuth 2.0; scope: https://www.googleapis.com/auth/meetings.space.settings.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/patch",
+            "endpointUrl": "/v2/spaces/{name}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "PATCH",
+            "sampleResponse": {
+                "name": "spaces/abc123",
+                "meetingCode": "abc-defg-hij",
+                "meetingUri": "https://meet.google.com/abc-defg-hij",
+                "spaceType": "MEETING",
+                "config": {
+                    "exampleSetting": true
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Resource name of the space to update. Format: spaces/{space}"
+                    },
+                    "updateMask": {
+                        "type": "string",
+                        "description": "Comma-separated list of fields to update. Example: spaceType,config.accessType"
+                    },
+                    "space": {
+                        "type": "object",
+                        "description": "Space fields to update.",
+                        "properties": {
+                            "spaceType": {
+                                "type": "string",
+                                "description": "Updated space type, e.g., MEETING."
+                            },
+                            "config": {
+                                "type": "object",
+                                "description": "Space configuration to update (see API docs for supported fields).",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "name",
+                    "updateMask",
+                    "space"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "EndActiveConference",
+            "description": "End the active conference running in a space. Requires OAuth 2.0; scope: https://www.googleapis.com/auth/meetings.space.settings.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/endActiveConference",
+            "endpointUrl": "/v2/spaces/{name}:endActiveConference",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "POST",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Resource name of the space. Format: spaces/{space}"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindConferences",
+            "description": "Search conference records for your organization’s meetings. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords/list",
+            "endpointUrl": "/v2/conferenceRecords",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "conferenceRecords": [
+                    {
+                        "name": "conferenceRecords/abcd1234",
+                        "space": "spaces/abc123",
+                        "startTime": "2025-01-01T10:00:00Z",
+                        "endTime": "2025-01-01T11:00:00Z"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "filter": {
+                        "type": "string",
+                        "description": "Optional filter expression. Example: space=\"spaces/abc123\" AND startTime>\"2025-01-01T00:00:00Z\""
+                    },
+                    "orderBy": {
+                        "type": "string",
+                        "description": "Optional sort expression for results, e.g., startTime desc"
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "conferenceRecords"
+            }
+        },
+        {
+            "title": "GetConference",
+            "description": "Get a specific conference record by resource name. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords/get",
+            "endpointUrl": "/v2/conferenceRecords/{name}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234",
+                "space": "spaces/abc123",
+                "startTime": "2025-01-01T10:00:00Z",
+                "endTime": "2025-01-01T11:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Resource name of the conference record. Format: conferenceRecords/{conferenceRecord}"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindParticipants",
+            "description": "Search participants of a specific conference record. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.participants/list",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/participants",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "participants": [
+                    {
+                        "name": "conferenceRecords/abcd1234/participants/xyz789",
+                        "earliestJoinTime": "2025-01-01T10:01:02Z",
+                        "latestLeaveTime": "2025-01-01T10:55:10Z",
+                        "user": {
+                            "displayName": "Alice Example",
+                            "email": "alice@example.com"
+                        }
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "filter": {
+                        "type": "string",
+                        "description": "Optional filter expression for participants (e.g., by user.email). Support varies; see API docs."
+                    }
+                },
+                "required": [
+                    "conferenceRecord"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "participants"
+            }
+        },
+        {
+            "title": "GetParticipant",
+            "description": "Get a specific participant by resource name. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.participants/get",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/participants/{participant}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234/participants/xyz789",
+                "earliestJoinTime": "2025-01-01T10:01:02Z",
+                "latestLeaveTime": "2025-01-01T10:55:10Z",
+                "user": {
+                    "displayName": "Alice Example",
+                    "email": "alice@example.com"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "participant": {
+                        "type": "string",
+                        "description": "ID of the participant. Used in path: participants/{participant}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "participant"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindParticipantSessions",
+            "description": "Search the participant sessions (joins/leaves) for a participant within a conference record. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.participants.participantSessions/list",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/participants/{participant}/participantSessions",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "participantSessions": [
+                    {
+                        "name": "conferenceRecords/abcd1234/participants/xyz789/participantSessions/1",
+                        "startTime": "2025-01-01T10:01:02Z",
+                        "endTime": "2025-01-01T10:20:00Z"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "participant": {
+                        "type": "string",
+                        "description": "ID of the participant. Used in path: participants/{participant}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "participant"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "participantSessions"
+            }
+        },
+        {
+            "title": "GetParticipantSession",
+            "description": "Get details of a specific participant session. Requires OAuth 2.0; typical scope: https://www.googleapis.com/auth/meetings.space.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.participants.participantSessions/get",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/participants/{participant}/participantSessions/{session}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234/participants/xyz789/participantSessions/1",
+                "startTime": "2025-01-01T10:01:02Z",
+                "endTime": "2025-01-01T10:20:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "participant": {
+                        "type": "string",
+                        "description": "ID of the participant. Used in path: participants/{participant}"
+                    },
+                    "session": {
+                        "type": "string",
+                        "description": "ID of the participant session. Used in path: participantSessions/{session}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "participant",
+                    "session"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindRecordings",
+            "description": "Search recordings generated by a conference record. Requires OAuth 2.0; Meet scope for metadata and Google Drive scope to access the file: https://www.googleapis.com/auth/drive.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.recordings/list",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/recordings",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "recordings": [
+                    {
+                        "name": "conferenceRecords/abcd1234/recordings/1",
+                        "driveDestination": {
+                            "fileId": "1AbCdEfGhIjK"
+                        }
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "recordings"
+            }
+        },
+        {
+            "title": "GetRecording",
+            "description": "Get a specific recording resource. Requires OAuth 2.0; Google Drive scope is needed to download the media: https://www.googleapis.com/auth/drive.readonly.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.recordings/get",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/recordings/{recording}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234/recordings/1",
+                "driveDestination": {
+                    "fileId": "1AbCdEfGhIjK"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "recording": {
+                        "type": "string",
+                        "description": "ID of the recording. Used in path: recordings/{recording}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "recording"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindTranscripts",
+            "description": "Search transcripts generated by a conference record. Requires OAuth 2.0; Meet scope for metadata and Google Drive scope to access transcript file contents if stored in Drive.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.transcripts/list",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/transcripts",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "transcripts": [
+                    {
+                        "name": "conferenceRecords/abcd1234/transcripts/1",
+                        "state": "AVAILABLE",
+                        "startTime": "2025-01-01T10:00:10Z",
+                        "endTime": "2025-01-01T11:00:00Z",
+                        "languageCode": "en-US"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "transcripts"
+            }
+        },
+        {
+            "title": "GetTranscript",
+            "description": "Get a specific transcript resource. Requires OAuth 2.0.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.transcripts/get",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/transcripts/{transcript}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234/transcripts/1",
+                "state": "AVAILABLE",
+                "startTime": "2025-01-01T10:00:10Z",
+                "endTime": "2025-01-01T11:00:00Z",
+                "languageCode": "en-US"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "transcript": {
+                        "type": "string",
+                        "description": "ID of the transcript. Used in path: transcripts/{transcript}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "transcript"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindTranscriptEntries",
+            "description": "Search transcript entries (utterances) for a given transcript. Requires OAuth 2.0.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.transcripts.entries/list",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/transcripts/{transcript}/entries",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "entries": [
+                    {
+                        "name": "conferenceRecords/abcd1234/transcripts/1/entries/1",
+                        "participant": "conferenceRecords/abcd1234/participants/xyz789",
+                        "startTime": "2025-01-01T10:10:10Z",
+                        "endTime": "2025-01-01T10:10:15Z",
+                        "text": "Hello everyone, welcome to the meeting."
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "transcript": {
+                        "type": "string",
+                        "description": "ID of the transcript. Used in path: transcripts/{transcript}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "transcript"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "entries"
+            }
+        },
+        {
+            "title": "GetTranscriptEntry",
+            "description": "Get a specific transcript entry (utterance). Requires OAuth 2.0.",
+            "type": "action",
+            "documentation": "https://developers.google.com/workspace/meet/api/reference/rest/v2/conferenceRecords.transcripts.entries/get",
+            "endpointUrl": "/v2/conferenceRecords/{conferenceRecord}/transcripts/{transcript}/entries/{entry}",
+            "apiBaseUrl": "https://meet.googleapis.com",
+            "method": "GET",
+            "sampleResponse": {
+                "name": "conferenceRecords/abcd1234/transcripts/1/entries/1",
+                "participant": "conferenceRecords/abcd1234/participants/xyz789",
+                "startTime": "2025-01-01T10:10:10Z",
+                "endTime": "2025-01-01T10:10:15Z",
+                "text": "Hello everyone, welcome to the meeting."
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "conferenceRecord": {
+                        "type": "string",
+                        "description": "ID of the conference record. Used in path: conferenceRecords/{conferenceRecord}"
+                    },
+                    "transcript": {
+                        "type": "string",
+                        "description": "ID of the transcript. Used in path: transcripts/{transcript}"
+                    },
+                    "entry": {
+                        "type": "string",
+                        "description": "ID of the transcript entry. Used in path: entries/{entry}"
+                    }
+                },
+                "required": [
+                    "conferenceRecord",
+                    "transcript",
+                    "entry"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "oauth2",
+        "authUrl": "https://accounts.google.com/o/oauth2/auth",
+        "tokenUrl": "https://oauth2.googleapis.com/token",
+        "profileInfoUrl": "https://openidconnect.googleapis.com/v1/userinfo"
+    },
+    "serviceJson": {
+        "name": "appmixer.googleMeet",
+        "label": "Google Meet",
+        "category": "applications",
+        "description": "Google Meet is a video conferencing service by Google. This service enables creation and management of meeting spaces, access to conference records, participants, and meeting artifacts (recordings and transcripts).",
+        "version": "1.0.0",
+        "icon": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Google_Meet_icon_%282020%29.svg"
+    }
+}

@@ -9,6 +9,7 @@ module.exports = {
             encodedFields = fields.join(',');
         }
 
+        // https://developers.google.com/workspace/slides/api/reference/rest/v1/presentations/get
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://slides.googleapis.com/v1/presentations/${presentationId}`,

@@ -18,11 +18,13 @@ module.exports = {
         const lambda = new AWS.Lambda({ apiVersion: '2015-03-31', credentials });
         const s3 = new AWS.S3({ apiVersion: '2006-03-01', credentials });
         const sns = new AWS.SNS({ apiVersion: '2010-03-31', credentials });
+        const kms = new AWS.KMS({ apiVersion: '2014-11-01', credentials });
 
         return {
             lambda,
             s3,
-            sns
+            sns,
+            kms
         };
     },
 
@@ -49,13 +51,15 @@ module.exports = {
      * @param {string} payload.topicPrefix
      * @param {string} payload.eventPrefix
      * @param {string} payload.eventType
+     * @param {string} [payload.kmsMasterKeyId]
+     * @param {string|string[]} [payload.trustedAccountIds]
      * @return {Promise}
      */
     async registerWebhook(context, payload) {
 
         await this.unregisterWebhook(context);
 
-        const { sns, s3 } = this.init(context);
+        const { sns, s3, kms } = this.init(context);
 
         const { bucket } = context.properties;
         const url = context.getWebhookUrl();
@@ -73,7 +77,6 @@ module.exports = {
             const { TopicConfigurations } = await s3.getBucketNotificationConfiguration({ Bucket: bucket }).promise();
             const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn.includes(payload.topicPrefix));
 
-
             if (filteredTopics.length > 0) {
                 topicARN = filteredTopics[0].TopicArn;
 
@@ -81,18 +84,149 @@ module.exports = {
                 state.notificationInBucket = true;
                 await context.saveState(state);
             } else {
-                const response = await sns.createTopic({
+                // Build createTopic params with optional encryption (backwards compatible).
+                const createParams = {
                     Name: `${payload.topicPrefix}${crypto.randomBytes(10).toString('hex')}`
-                }).promise();
+                };
+
+                if (payload.kmsMasterKeyId) {
+                    // --- KMS VALIDATION START ---
+                    // Let the user know early if the key is invalid or not accessible.
+                    const kmsMasterKeyId = payload.kmsMasterKeyId.trim();
+
+                    // Soft format check (KeyId/UUID, ARN key, ARN alias, alias name, raw key id)
+                    const reKeyArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:key\/([0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/;
+                    const reAliasArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
+                    const reAlias = /^alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
+                    const reKeyId = /^(?:[0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/; // UUID or mrk- key id
+                    if (!(reKeyArn.test(kmsMasterKeyId) ||
+                        reAliasArn.test(kmsMasterKeyId) ||
+                        reAlias.test(kmsMasterKeyId) ||
+                        reKeyId.test(kmsMasterKeyId))) {
+                        throw new context.CancelError('kmsMasterKeyId format is invalid. Must be a KMS key ARN, alias ARN, alias/<name>, or key UUID.');
+                    }
+
+                    // AWS describeKey to ensure existence / accessibility.
+                    let keyMetadata;
+                    try {
+                        const { KeyMetadata } = await kms.describeKey({ KeyId: kmsMasterKeyId }).promise();
+                        keyMetadata = KeyMetadata;
+                    } catch (e) {
+                        context.log({ step: 'kmsDescribeKeyError', error: e.message });
+                        throw new context.CancelError('KMS key not found or not accessible.');
+                    }
+
+                    // Obtain key policy (default). Ensure S3 service allowed to decrypt & generate data keys.
+                    try {
+                        const { PolicyNames } = await kms.listKeyPolicies({ KeyId: keyMetadata.KeyId }).promise();
+                        const policyName = PolicyNames.includes('default') ? 'default' : (PolicyNames[0] || 'default');
+                        const { Policy } = await kms.getKeyPolicy({
+                            KeyId: keyMetadata.KeyId,
+                            PolicyName: policyName
+                        }).promise();
+                        let policyJson;
+                        try {
+                            policyJson = JSON.parse(Policy);
+                        } catch (parseErr) {
+                            throw new context.CancelError('Unable to parse KMS key policy JSON.');
+                        }
+                        const statements = Array.isArray(policyJson.Statement)
+                            ? policyJson.Statement
+                            : [policyJson.Statement];
+                        const hasS3Statement = statements.some(stmt => {
+                            if (!stmt || stmt.Effect !== 'Allow') return false;
+                            // Principal can be structure like { Service: 's3.amazonaws.com' } or { AWS: 'arn:...' } or arrays.
+                            let principalService = null;
+                            if (stmt.Principal) {
+                                if (typeof stmt.Principal.Service === 'string') {
+                                    principalService = stmt.Principal.Service;
+                                } else if (Array.isArray(stmt.Principal.Service)) {
+                                    principalService = stmt.Principal.Service.find(s => s === 's3.amazonaws.com') || null;
+                                }
+                            }
+                            const actions = Array.isArray(stmt.Action) ? stmt.Action : [stmt.Action];
+                            const serviceMatch = principalService === 's3.amazonaws.com';
+                            const decryptOk = actions.includes('kms:Decrypt');
+                            const dataKeyOk = actions.includes('kms:GenerateDataKey*') || actions.includes('kms:GenerateDataKey');
+                            const resourceOk = !stmt.Resource || stmt.Resource === '*' || (
+                                Array.isArray(stmt.Resource) && stmt.Resource.includes('*')
+                            );
+                            return serviceMatch && decryptOk && dataKeyOk && resourceOk;
+                        });
+                        if (!hasS3Statement) {
+                            throw new context.CancelError('KMS key policy missing required S3 permissions (kms:Decrypt, kms:GenerateDataKey* for Principal Service s3.amazonaws.com).');
+                        }
+                    } catch (e) {
+                        if (e instanceof context.CancelError) throw e; // rethrow validation errors
+                        context.log({ step: 'kmsPolicyValidationError', error: e.message });
+                        throw new context.CancelError('Failed to validate KMS key policy.');
+                    }
+                    // --- KMS VALIDATION END ---
+
+                    createParams.Attributes = {
+                        KmsMasterKeyId: kmsMasterKeyId
+                    };
+                }
+
+                const response = await sns.createTopic(createParams).promise();
                 topicARN = response.TopicArn;
+
+                // If trusted account IDs provided, build restrictive policy. Otherwise keep legacy public policy for backwards compatibility.
+                // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
+                const { trustedAccountIds } = payload;
+                let policy;
+                if (trustedAccountIds && (Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string')) {
+                    let accounts = Array.isArray(trustedAccountIds) ? trustedAccountIds : trustedAccountIds.split(',');
+                    accounts = accounts.map(a => a.trim()).filter(Boolean).map(a => {
+                        // Normalize to full root ARN if just the numeric account id provided.
+                        if (/^\d{12}$/.test(a)) {
+                            return `arn:aws:iam::${a}:root`;
+                        }
+                        return a; // Assume already ARN or role.
+                    });
+                    if (accounts.length > 0) {
+                        const accountId = topicARN.split(':')[4];
+                        policy = {
+                            Version: '2008-10-17',
+                            Id: `${topicARN}/SQSDefaultPolicy`,
+                            Statement: [
+                                {
+                                    Sid: 'AllowTrustedAccounts',
+                                    Effect: 'Allow',
+                                    Principal: { AWS: accounts.length === 1 ? accounts[0] : accounts },
+                                    Action: ['SNS:Publish', 'SNS:Subscribe', 'SNS:Receive'],
+                                    Resource: topicARN
+                                },
+                                // Explicitly allow S3 to publish to the topic from the bucket (needed for bucket notifications)
+                                // to avoid error: Invalid Argument: Unable to validate the following destination configurations.
+                                {
+                                    Sid: 'AllowS3BucketPublish',
+                                    Effect: 'Allow',
+                                    Principal: { Service: 's3.amazonaws.com' },
+                                    Action: 'SNS:Publish',
+                                    Resource: topicARN,
+                                    Condition: {
+                                        StringEquals: { 'aws:SourceAccount': accountId },
+                                        ArnLike: { 'aws:SourceArn': `arn:aws:s3:*:*:${bucket}` }
+                                    }
+                                }
+                            ]
+                        };
+                    }
+                }
+
+                if (!policy) {
+                    // Legacy open policy for compatibility (previous behavior).
+                    policy = { Version: '2008-10-17', Id: '__default_policy_ID', Statement: [
+                        { Sid: '__console_pub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: 'SNS:Publish', Resource: topicARN },
+                        { Sid: '__console_sub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: ['SNS:Subscribe', 'SNS:Receive'], Resource: topicARN }
+                    ] };
+                }
 
                 await sns.setTopicAttributes({
                     TopicArn: topicARN,
                     AttributeName: 'Policy',
-                    AttributeValue: `{"Version":"2008-10-17","Id":"__default_policy_ID","Statement":[{"Sid":"__console_pub_0",
-                    "Effect":"Allow","Principal":{"AWS":"*"},"Action":"SNS:Publish","Resource":"${topicARN}"},
-                    {"Sid":"__console_sub_0","Effect":"Allow","Principal":{"AWS":"*"},"Action":["SNS:Subscribe","SNS:Receive"],
-                    "Resource":"${topicARN}"}]}`
+                    AttributeValue: JSON.stringify(policy)
                 }).promise();
 
                 const topicConfigurations = TopicConfigurations.filter(topic => {
@@ -115,9 +249,7 @@ module.exports = {
                 }).promise();
             }
         } finally {
-            if (lock) {
-                await lock.unlock();
-            }
+            await lock?.unlock();
         }
 
         return sns.subscribe({ TopicArn: topicARN, Protocol: 'https', Endpoint: url }).promise();
@@ -162,9 +294,7 @@ module.exports = {
                     }
                 }).promise();
             } finally {
-                if (lock) {
-                    await lock.unlock();
-                }
+                await lock?.unlock();
             }
 
             promises.push(sns.deleteTopic({ TopicArn: topicARN }).promise());

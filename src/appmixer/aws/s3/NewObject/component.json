@@ -1,11 +1,12 @@
 {
     "name": "appmixer.aws.s3.NewObject",
-    "author": "Jimoh Damilola <jimoh@client.io>",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.1",
     "description": "This trigger fires every time new object is created with POST, Copy and CompleteMultipartUpload operations.",
     "private": false,
     "webhook": true,
     "dependencies": {
-        "service": "1.0.1"
+        "service": "1.0.2"
     },
     "auth": {
         "service": "appmixer:aws"
@@ -14,7 +15,9 @@
         "schema": {
             "properties": {
                 "region": { "type": "string" },
-                "bucket": { "type": "string" }
+                "bucket": { "type": "string" },
+                "kmsMasterKeyId": { "type": "string" },
+                "trustedAccountIds": { "type": "string" }
             },
             "required": [
                 "bucket"
@@ -43,6 +46,18 @@
                             "transform": "./ListBuckets#bucketsToSelectArray"
                         }
                     }
+                },
+                "kmsMasterKeyId": {
+                    "type": "text",
+                    "label": "SNS Topic KMS Master Key Id or Alias",
+                    "index": 3,
+                    "tooltip": "KMS key ARN or alias (e.g. alias/my-key) to encrypt the SNS topic used internally for notifications. Does NOT affect S3 file encryption. If not provided, the topic will be unencrypted."
+                },
+                "trustedAccountIds": {
+                    "type": "text",
+                    "label": "SNS Topic Trusted Account IDs / ARNs",
+                    "index": 4,
+                    "tooltip": "Comma separated AWS account IDs or IAM ARNs allowed to publish/subscribe to the SNS topic used for notifications. Does NOT restrict access to S3 files. If left empty, the topic will be publicly accessible."
                 }
             }
         }

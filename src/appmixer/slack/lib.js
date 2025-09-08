@@ -4,6 +4,7 @@
 const pathModule = require('path');
 const Entities = require('html-entities').AllHtmlEntities;
 const { WebClient } = require('@slack/web-api');
+const { createHmac } = require('node:crypto');
 // TODO: Uncomment when https://github.com/clientIO/appmixer-core/issues/2889 is fixed
 // const slackConnectorVersion = require('./bundle.json').version;
 
@@ -31,30 +32,30 @@ module.exports = {
 
     /**
      * Send slack channel message.
+     * @param {Object} context
      * @param {string} channelId
      * @param {string} message
      * @param {boolean} asBot
      * @param {string} thread_ts
      * @param {boolean} reply_broadcast
+     * @param {Object} options
      * @return {Promise<*>}
      */
-    async sendMessage(context, channelId, message, asBot = false, thread_ts, reply_broadcast) {
+    async sendMessage(context, channelId, message, asBot = false, thread_ts, reply_broadcast, options = {}) {
 
-        let token = context.auth.accessToken;
+        let token = context.auth?.accessToken;
 
-        // Only for bot messages.
-        let iconUrl;
-        let username;
+        // iconUrl and username are only for bot messages.
+    	let iconUrl = options.iconUrl;
+    	let username = options.username;
         if (asBot === true) {
             // Make sure the bot token is used.
             // Backward compatibility - 4.1.3 uses config.botToken
             // 4.1.4+ uses context.auth.profileInfo.botToken
-            token = context.auth.profileInfo?.botToken || context.config?.botToken;
+            token = context.auth?.profileInfo?.botToken || context.config?.botToken;
             if (!token && !context.config?.usesAuthHub) {
                 throw new context.CancelError('Bot token is required for sending messages as bot. Please provide it in the connector configuration.');
             }
-
-            ({ iconUrl, username } = context.messages.message.content);
         }
 
         let entities = new Entities();
@@ -74,6 +75,7 @@ module.exports = {
                     username,
                     channelId,
                     text: entities.decode(message),
+                    ...options.blocks ? { blocks: options.blocks } : {},
                     token,
                     ...(thread_ts ? { thread_ts } : {}),
                     ...(typeof reply_broadcast === 'boolean' ? { reply_broadcast } : {})
@@ -92,6 +94,7 @@ module.exports = {
             username,
             channel: channelId,
             text: entities.decode(message),
+            ...(options.blocks ? { blocks: options.blocks } : {}),
             ...(thread_ts ? { thread_ts } : {}),
             ...(typeof reply_broadcast === 'boolean' ? { reply_broadcast } : {})
         });
@@ -135,5 +138,44 @@ module.exports = {
         } else {
             throw new context.CancelError('Unsupported outputType ' + outputType);
         }
+    },
+
+    isValidPayload(context, req) {
+
+        // Validates the payload with the Slack-signature hash
+        const slackSignature = req.headers['x-slack-signature'];
+        const signingSecret = context.config?.signingSecret;
+        if (!signingSecret) {
+            context.log('error', 'slack-plugin-route-webhook-event-missing-signingSecret');
+            return false;
+        }
+
+        // Handle two types of payload:
+        // 1. Buffer (raw body, as in /interactions)
+        // 2. Object (already parsed)
+        let payloadString;
+        if (Buffer.isBuffer(req.payload)) {
+            // Raw buffer, convert to string
+            payloadString = req.payload.toString('utf8');
+        } else if (typeof req.payload === 'string') {
+            // Already a string
+            payloadString = req.payload;
+        } else {
+            // Fallback: JSON stringified object
+            payloadString = JSON.stringify(req.payload)
+                .replace(/\//g, '\\/')
+                .replace(/[\u007f-\uffff]/g, (c) => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
+        }
+
+        const timestamp = req.headers['x-slack-request-timestamp'];
+        const baseString = `v0:${timestamp}:${payloadString}`;
+        const mySignature = 'v0=' + createHmac('sha256', signingSecret).update(baseString).digest('hex');
+
+        if (slackSignature !== mySignature) {
+            context.log('info', 'slack-plugin-route-webhook-event-invalid-signature', { config: context.config });
+            context.log('error', 'slack-plugin-route-webhook-event-invalid-signature', { slackSignature, mySignature, baseString, payloadString });
+            return false;
+        }
+        return true;
     }
 };

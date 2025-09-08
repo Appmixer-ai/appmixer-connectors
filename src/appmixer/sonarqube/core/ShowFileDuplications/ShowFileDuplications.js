@@ -2,8 +2,13 @@
 
 module.exports = {
     async receive(context) {
+
         const { key } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
+
+        if (!key) {
+            throw new context.CancelError('Key is required');
+        }
 
         // https://sonar.appmixer.cloud/web_api/api/duplications/show
         const { data } = await context.httpRequest({

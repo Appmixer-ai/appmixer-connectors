@@ -21,7 +21,7 @@ module.exports = {
         }
 
         const params = {
-            per_page: 1000
+            per_page: isSource ? 50 : 1000
         };
 
         // Add filter parameters if provided

@@ -5,6 +5,10 @@ module.exports = {
 
         const { customerId } = context.messages.in.content;
 
+        if (!customerId) {
+            throw new context.CancelError('Customer ID is required!');
+        }
+
         // https://stripe.com/docs/api/customers/delete
         const { data } = await context.httpRequest({
             method: 'DELETE',

@@ -1,13 +1,18 @@
 'use strict';
 const axios = require('axios');
 const Promise = require('bluebird');
+const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
 
     async tick(context) {
 
         const { auth } = context;
-        const { embed = [] } = context.properties;
+        const { embed } = context.properties;
+
+        // Normalize the multiselect field
+        const normalizedEmbed = embed ?
+            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
 
         let since = new Date();
         let updated = new Set();
@@ -24,10 +29,13 @@ module.exports = {
             },
             params: {
                 per_page: 100,
-                order_by: 'updated_at',
-                include: 'requester,description'
+                order_by: 'updated_at'
             }
         };
+
+        if (normalizedEmbed.length > 0) {
+            requestObject.params.include = normalizedEmbed.join(',');
+        }
 
         let tickets = [];
 
@@ -65,13 +73,13 @@ module.exports = {
                     ticketJson: ticket
                 };
 
-                if (embed.includes('requester')) {
+                if (normalizedEmbed.includes('requester')) {
                     fields.requesterId = ticket.requester.id;
                     fields.requesterName = ticket.requester.name;
                     fields.requesterEmail = ticket.requester.email;
                 }
 
-                if (embed.includes('description')) {
+                if (normalizedEmbed.includes('description')) {
                     fields.description = ticket.description_text;
                 }
 

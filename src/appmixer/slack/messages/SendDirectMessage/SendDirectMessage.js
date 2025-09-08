@@ -7,7 +7,7 @@ module.exports = {
 
     async receive(context) {
 
-        let { text, userIds } = context.messages.in.content;
+        let { text, userIds, username, iconUrl } = context.messages.in.content;
         const ids = lib.normalizeMultiselectInput(userIds, 8, context, 'userIds');
 
         // First, open a conversation with the user(s). It will return the channel ID.
@@ -20,7 +20,18 @@ module.exports = {
         }
 
         // Then, send the message to the channel.
-        const message = await lib.sendMessage(context, response.channel.id, text, false);
+        const options = {};
+        if (username) options.username = username;
+        if (iconUrl) options.iconUrl = iconUrl;
+        const message = await lib.sendMessage(
+            context,
+            response.channel.id,
+            text,
+            false,
+            undefined,
+            undefined,
+            options
+        );
 
         return context.sendJson(message, 'out');
     }

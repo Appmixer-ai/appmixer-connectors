@@ -2,8 +2,17 @@
 
 module.exports = {
     async receive(context) {
+
         const { component, metrics, branch, from, to } = context.messages.in.content;
         const serverUrl = context.auth.serverUrl.replace(/\/$/, '');
+
+        if (!component) {
+            throw new context.CancelError('Component is required');
+        }
+
+        if (!metrics) {
+            throw new context.CancelError('Metrics is required');
+        }
 
         // https://sonar.appmixer.cloud/web_api/api/measures/search_history
         const { data } = await context.httpRequest({

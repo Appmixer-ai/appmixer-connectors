@@ -13,6 +13,14 @@ module.exports = {
             queueing: 'fifo',
             resource: 'postMessage',
             scope: 'userId'
+        },
+        {
+            // General purpose rule to cover other API calls
+            limit: 20,           // the quota is 50 per minute
+            window: 1000,      // 1 minute
+            queueing: 'fifo',
+            resource: 'request',
+            scope: 'userId'
         }
     ]
 };

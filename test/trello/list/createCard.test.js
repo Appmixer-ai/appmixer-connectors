@@ -41,7 +41,7 @@ describe('CreateCard', function() {
                 async () => {
                     await action.receive(context);
                 },
-                context.CancelError('Checklist name is required to add checklist items')
+                new context.CancelError('Checklist name is required to add checklist items')
             );
         });
 
@@ -52,7 +52,7 @@ describe('CreateCard', function() {
 	            async () => {
 	                await action.receive(context);
 	            },
-	            context.CancelError('Card name is required')
+	            new context.CancelError('Card name is required')
 	        );
 
             context.messages = { in: { content: {} } };
@@ -60,7 +60,7 @@ describe('CreateCard', function() {
 	            async () => {
 	                await action.receive(context);
 	            },
-	            context.CancelError('Card name is required')
+	            new context.CancelError('Card name is required')
 	        );
         });
 
@@ -78,7 +78,7 @@ describe('CreateCard', function() {
                 async () => {
                     await action.receive(context);
                 },
-                context.CancelError('Maximum 10 checklist items are allowed')
+                new context.CancelError('Maximum 10 checklist items are allowed')
             );
         });
 

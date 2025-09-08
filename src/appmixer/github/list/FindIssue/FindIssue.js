@@ -11,10 +11,12 @@ module.exports = {
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { repositoryId, state = 'all', outputType, title = '', labels = [] } = context.messages.in.content;
 
-        const labelQuery = labels.length ? labels.map(label => `"${label}"`).join(',') : '';
+        // Normalize multiselect fields
+        const normalizedLabels = labels ? lib.normalizeMultiselectInput(labels, context, 'Labels') : [];
+
         const query = [
             `is:issue+repo:${repositoryId}+in:title+${title}`,
-            labelQuery ? `label:${labelQuery}` : '',
+            normalizedLabels.length ? `label:${normalizedLabels.map(label => `"${label}"`).join(',')}` : '',
             state !== 'all' ? `state:${state}` : ''
         ].filter(Boolean).join('+');
 

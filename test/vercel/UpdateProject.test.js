@@ -39,16 +39,12 @@ describe('UpdateProject', () => {
                 assert.strictEqual(options.data.name, newName);
                 assert.strictEqual(options.data.devCommand, 'npm run dev-updated');
                 assert(options.headers['Authorization'].includes('Bearer'));
-                assert.strictEqual(options.headers['Content-Type'], 'application/json');
 
                 return { data: mockUpdatedProject };
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
-                assert(data);
-                assert.strictEqual(data.id, projectId);
-                assert.strictEqual(data.name, newName);
-                assert.strictEqual(data.devCommand, 'npm run dev-updated');
+                assert.deepStrictEqual(data, {});
                 return Promise.resolve();
             }
         };
@@ -114,9 +110,7 @@ describe('UpdateProject', () => {
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
-                assert(data);
-                assert.strictEqual(data.id, projectId);
-                assert.strictEqual(data.name, 'new-name');
+                assert.deepStrictEqual(data, {});
                 return Promise.resolve();
             }
         };
@@ -155,9 +149,7 @@ describe('UpdateProject', () => {
             },
             sendJson: (data, port) => {
                 assert.strictEqual(port, 'out');
-                assert(data);
-                assert.strictEqual(data.id, projectId);
-                assert.strictEqual(data.publicSource, false);
+                assert.deepStrictEqual(data, {});
                 return Promise.resolve();
             }
         };

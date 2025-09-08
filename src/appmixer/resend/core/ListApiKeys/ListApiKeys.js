@@ -24,7 +24,7 @@ module.exports = {
         }
 
         // Make the API request
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.resend.com/api-keys',
             headers: {
@@ -32,8 +32,8 @@ module.exports = {
             }
         });
 
-        const items = response.data && Array.isArray(response.data) ? response.data :
-            (Array.isArray(response.data?.data) ? response.data.data : []);
+        const items = data && Array.isArray(data) ? data :
+            (Array.isArray(data?.data) ? data.data : []);
 
         // // No searching supported yet, so we return all items
         // if (items.length === 0) {
