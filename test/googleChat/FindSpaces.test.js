@@ -169,4 +169,73 @@ describe('FindSpaces Component', function() {
             assert.fail('Expected data to be sent to out or notFound port');
         }
     });
+
+    it('should handle comma-separated string input for spaceTypes', async () => {
+        // Test comma-separated string input
+        context.messages.in.content = {
+            spaceTypes: 'SPACE,GROUP_CHAT',
+            outputType: 'array'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Comma-separated filtered spaces sent to port: ${port}`);
+        };
+
+        await FindSpaces.receive(context);
+
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} spaces with comma-separated input`);
+
+            // Verify all returned spaces are of allowed types
+            sentData.result.forEach(space => {
+                assert(['SPACE', 'GROUP_CHAT'].includes(space.spaceType),
+                    `Expected SPACE or GROUP_CHAT type, got ${space.spaceType}`);
+            });
+        } else if (sentPort === 'notFound') {
+            console.log('No spaces found for comma-separated input');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
+
+    it('should handle single string input for spaceTypes', async () => {
+        // Test single string input (no commas)
+        context.messages.in.content = {
+            spaceTypes: 'SPACE',
+            outputType: 'array'
+        };
+
+        let sentData = null;
+        let sentPort = null;
+        context.sendJson = async (data, port) => {
+            sentData = data;
+            sentPort = port;
+            console.log(`Single string filtered spaces sent to port: ${port}`);
+        };
+
+        await FindSpaces.receive(context);
+
+        if (sentPort === 'out') {
+            assert(sentData, 'Sent data should exist');
+            assert(sentData.result, 'Result should exist in sent data');
+            assert(Array.isArray(sentData.result), 'Result should be an array');
+            console.log(`Found ${sentData.result.length} spaces with single string input`);
+
+            // Verify all returned spaces are of type SPACE
+            sentData.result.forEach(space => {
+                assert(space.spaceType === 'SPACE', `Expected SPACE type, got ${space.spaceType}`);
+            });
+        } else if (sentPort === 'notFound') {
+            console.log('No SPACE type spaces found for single string input');
+        } else {
+            assert.fail('Expected data to be sent to out or notFound port');
+        }
+    });
 });

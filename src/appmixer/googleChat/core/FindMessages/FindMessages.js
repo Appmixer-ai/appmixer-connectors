@@ -1,6 +1,6 @@
 'use strict';
 
-const lib = require('../../lib.generated');
+const lib = require('../../lib');
 
 // Schema for a single message item
 const messageSchema = {
