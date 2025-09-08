@@ -60,9 +60,15 @@ describe('google.drive.lib', () => {
         });
 
         it('should throw error for invalid input type', () => {
-            assert.throws(() => normalizeMultiselectInput(123), /Invalid input type for multiselect field. Expected string or array./);
-            assert.throws(() => normalizeMultiselectInput({}), /Invalid input type for multiselect field. Expected string or array./);
-            assert.throws(() => normalizeMultiselectInput(true), /Invalid input type for multiselect field. Expected string or array./);
+            assert.throws(
+                () => normalizeMultiselectInput(123),
+                /Invalid input type for multiselect field. Expected string or array./);
+            assert.throws(
+                () => normalizeMultiselectInput({}),
+                /Invalid input type for multiselect field. Expected string or array./);
+            assert.throws(
+                () => normalizeMultiselectInput(true),
+                /Invalid input type for multiselect field. Expected string or array./);
         });
 
     });
