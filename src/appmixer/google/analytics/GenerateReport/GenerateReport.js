@@ -22,15 +22,20 @@ module.exports = {
         if (!metrics) {
             throw new context.CancelError('Metrics are required!');
         }
-        if (Boolean(keepEmptyRows) === undefined) {
+        if (keepEmptyRows === undefined) {
             throw new context.CancelError('Keep Empty Rows flag is required!');
         }
 
         // Normalize multiselect inputs
-        const normalizedDimensions = dimensions ?
-            lib.normalizeMultiselectInput(dimensions, context, 'Dimensions') : [];
-        const normalizedMetrics = metrics ?
-            lib.normalizeMultiselectInput(metrics, context, 'Metrics') : [];
+        const normalizedDimensions = lib.normalizeMultiselectInput(dimensions, context, 'Dimensions');
+        const normalizedMetrics = lib.normalizeMultiselectInput(metrics, context, 'Metrics');
+
+        if (normalizedDimensions.length === 0) {
+            throw new context.CancelError('At least one dimension is required!');
+        }
+        if (normalizedMetrics.length === 0) {
+            throw new context.CancelError('At least one metric is required!');
+        }
 
         let dateRangesArr = [];
 
