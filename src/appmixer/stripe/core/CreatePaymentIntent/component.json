@@ -41,6 +41,13 @@
                     "automaticPaymentMethodsAllowRedirects": {
                         "type": "string",
                         "enum": ["always", "never"]
+                    },
+                    "captureMethod": {
+                        "type": "string",
+                        "enum": ["automatic", "manual", "automatic_async"]
+                    },
+                    "confirm": {
+                        "type": "boolean"
                     }
                 },
                 "required": ["amount", "currency"]
@@ -83,6 +90,18 @@
                         "label": "Payment Method Types",
                         "index": 5
                     },
+                    "captureMethod": {
+                        "type": "select",
+                        "tooltip": "Controls when the funds will be captured from the customer's account. 'automatic_async' (default) captures asynchronously with better latency. 'manual' requires calling capture separately. 'automatic' captures instantly.",
+                        "label": "Capture Method",
+                        "index": 6,
+                        "defaultValue": "automatic_async",
+                        "options": [
+                            {"label": "Automatic", "value": "automatic"},
+                            {"label": "Manual", "value": "manual"},
+                            {"label": "Automatic Async", "value": "automatic_async"}
+                        ]
+                    },
                     "automaticPaymentMethodsEnabled": {
                         "type": "toggle",
                         "tooltip": "Whether automatic payment methods feature is enabled. When enabled, this PaymentIntent accepts payment methods that you enable in the Dashboard.",
@@ -95,11 +114,18 @@
                         "tooltip": "Controls whether this PaymentIntent will accept redirect-based payment methods. 'always' (default) accepts redirects, 'never' filters out redirect-based methods.",
                         "label": "Allow Redirects for Automatic Payment Methods",
                         "index": 8,
-                        "default": "always",
+                        "defaultValue": "always",
                         "options": [
-                            {"label": "Always (Default)", "value": "always"},
+                            {"label": "Always", "value": "always"},
                             {"label": "Never", "value": "never"}
                         ]
+                    },
+                    "confirm": {
+                        "type": "toggle",
+                        "tooltip": "Set to true to attempt to confirm this PaymentIntent immediately. When false, the PaymentIntent is created in requires_confirmation status and must be confirmed separately.",
+                        "label": "Confirm Payment Intent",
+                        "index": 9,
+                        "defaultValue": false
                     }
                 }
             }

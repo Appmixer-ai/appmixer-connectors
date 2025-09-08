@@ -11,7 +11,9 @@ module.exports = {
             customer,
             paymentMethodTypes,
             automaticPaymentMethodsEnabled,
-            automaticPaymentMethodsAllowRedirects
+            automaticPaymentMethodsAllowRedirects,
+            captureMethod,
+            confirm
         } = context.messages.in.content;
 
         if (!amount) {
@@ -37,6 +39,16 @@ module.exports = {
                 ? paymentMethodTypes
                 : paymentMethodTypes.split(',').map(type => type.trim());
             requestData.payment_method_types = types;
+        }
+
+        // Add capture method if specified
+        if (captureMethod) {
+            requestData.capture_method = captureMethod;
+        }
+
+        // Add confirm parameter if specified
+        if (confirm !== undefined) {
+            requestData.confirm = confirm;
         }
 
         // Handle automatic payment methods

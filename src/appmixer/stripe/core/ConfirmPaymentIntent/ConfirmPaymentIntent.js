@@ -3,7 +3,12 @@
 module.exports = {
     async receive(context) {
 
-        const { payment_intent_id: id, payment_method: paymentMethod, returnUrl } = context.messages.in.content;
+        const {
+            payment_intent_id: id,
+            payment_method: paymentMethod,
+            returnUrl,
+            captureMethod
+        } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Payment Intent ID is required');
@@ -15,6 +20,9 @@ module.exports = {
         }
         if (returnUrl) {
             requestData.return_url = returnUrl;
+        }
+        if (captureMethod) {
+            requestData.capture_method = captureMethod;
         }
 
         const { data } = await context.httpRequest({
