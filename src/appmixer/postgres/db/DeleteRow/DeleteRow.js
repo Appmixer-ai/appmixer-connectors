@@ -31,11 +31,9 @@ module.exports = {
                 } else if (operator === 'NOT ENDS WITH') {
                     whereCondition += `${column} NOT LIKE '%${value}'`;
                 } else if (operator === 'IN') {
-                    const valuesList = value.trim().split(',').map(v => `'${v}'`).join(',');
-                    whereCondition += `${column} IN (${valuesList})`;
+                    whereCondition += `${column} IN (${value.trim().split(',').map(v => `'${v}'`).join(',')})`;
                 } else if (operator === 'NOT IN') {
-                    const valuesList2 = value.trim().split(',').map(v => `'${v}'`).join(',');
-                    whereCondition += `${column} NOT IN (${valuesList2})`;
+                    whereCondition += `${column} NOT IN (${value.trim().split(',').map(v => `'${v}'`).join(',')})`;
                 } else if (operator === 'IS NULL') {
                     whereCondition += `${column} IS NULL`;
                 } else if (operator === 'IS NOT NULL') {
