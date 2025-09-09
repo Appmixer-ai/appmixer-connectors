@@ -19,6 +19,7 @@ module.exports = {
         let url = lib.getBaseUrl(context) + `/sheets/${input['sheetId']}/copy`;
 
         const headers = {};
+        const query = new URLSearchParams;
 
         const inputMapping = {
             'destinationId': input['destinationType'] === 'home' ? null : input['destinationFolderId'] || input['destinationWorkspaceId'],
@@ -28,6 +29,15 @@ module.exports = {
         let requestBody = {};
         lib.setProperties(requestBody, inputMapping);
 
+        const queryParameters = { 'include': input['include'] ? lib.normalizeMultiselectInput(input['include'], context, 'Include') : undefined,
+            'exclude': input['exclude'] };
+
+        Object.keys(queryParameters).forEach(parameter => {
+            if (queryParameters[parameter]) {
+                query.append(parameter, queryParameters[parameter]);
+            }
+        });
+
         headers['Authorization'] = 'Bearer ' + context.auth.accessToken;
 
         const req = {
@@ -36,6 +46,11 @@ module.exports = {
             data: requestBody,
             headers: headers
         };
+
+        const queryString = query.toString();
+        if (queryString) {
+            req.url += '?' + queryString;
+        }
 
         try {
             const response = await context.httpRequest(req);

@@ -29,9 +29,9 @@ module.exports = {
         let requestBody = {};
         lib.setProperties(requestBody, inputMapping);
 
-        const queryParameters = { 'include': input['include'],
+        const queryParameters = { 'include': input['include'] ? lib.normalizeMultiselectInput(input['include'], context, 'Include') : undefined,
             'exclude': input['exclude'],
-            'skipRemap': input['skipRemap'] };
+            'skipRemap': input['skipRemap'] ? lib.normalizeMultiselectInput(input['skipRemap'], context, 'Skip Remap') : undefined };
 
         Object.keys(queryParameters).forEach(parameter => {
             if (queryParameters[parameter]) {

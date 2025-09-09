@@ -22,7 +22,7 @@ module.exports = {
         const query = new URLSearchParams;
 
         const queryParameters = { 'accessApiLevel': input['accessApiLevel'],
-            'include': input['include'],
+            'include': input['include'] ? lib.normalizeMultiselectInput(input['include'], context, 'Include') : undefined,
             'loadAll': input['loadAll'] };
 
         Object.keys(queryParameters).forEach(parameter => {

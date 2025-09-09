@@ -85,6 +85,26 @@ module.exports = {
         });
 
         return typeof template === 'string' ? result : JSON.parse(result);
+    },
+
+    /**
+     * Normalize multiselect input (array or string) to comma-separated string format.
+     * Arrays are joined with commas. Strings are treated as single values or comma-separated lists.
+     * @param {string|string[]} input
+     * @param {object} context
+     * @param {string} fieldName
+     * @returns {string}
+     */
+    normalizeMultiselectInput(input, context, fieldName) {
+
+        if (Array.isArray(input)) {
+            return input.join(',');
+        } else if (typeof input === 'string') {
+            // Handle single string value or comma-separated string
+            return input.split(',').map(item => item.trim()).filter(item => item.length > 0).join(',');
+        } else {
+            throw new context.CancelError(`${fieldName} must be a string or an array`);
+        }
     }
 
 };
