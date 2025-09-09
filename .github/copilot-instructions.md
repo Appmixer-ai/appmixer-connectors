@@ -928,10 +928,10 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 Behavior JS file MUST follow these rules:
 - every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('<human_readable_input_name> is required!')`.
-- update or delete component must return an empty object, eg `return context.sendJson({}, 'out');` at the end of the function.
+- delete component must return an empty object, eg `return context.sendJson({}, 'out');` at the end of the function.
 
 `component.json` file MUST follow these rules:
-- update or delete component must have `outPorts: ['out']`.
+- delete component must have `outPorts: ['out']`.
 - update or delete component must have at least one required input, which is the ID of the entity being updated or deleted.
 
 # Best Practices (Humans)
