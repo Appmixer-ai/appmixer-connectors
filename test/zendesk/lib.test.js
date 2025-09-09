@@ -103,7 +103,7 @@ describe('Zendesk lib', () => {
                 'zen:event-type:user.deleted',
                 'zen:event-type:organization.created'
             ];
-            
+
             // Array input
             assert.deepStrictEqual(
                 normalizeMultiselectInput(eventTypes, mockContext, 'eventTypes'),
