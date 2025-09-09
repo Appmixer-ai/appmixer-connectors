@@ -6,6 +6,10 @@ module.exports = {
     async receive(context) {
         const { presentationId, fields } = context.messages.in.content;
 
+        if (!presentationId) {
+            throw new context.CancelError('Presentation ID is required!');
+        }
+
         // Normalize the multiselect fields input
         const normalizedFields = fields ?
             lib.normalizeMultiselectInput(fields, context, 'Fields') : undefined;

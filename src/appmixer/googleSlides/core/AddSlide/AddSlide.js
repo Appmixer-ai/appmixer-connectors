@@ -4,6 +4,10 @@ module.exports = {
     async receive(context) {
         const { presentationId } = context.messages.in.content;
 
+        if (!presentationId) {
+            throw new context.CancelError('Presentation ID is required!');
+        }
+
         // https://developers.google.com/slides/api/reference/rest/v1/presentations/batchUpdate
         const { data } = await context.httpRequest({
             method: 'POST',
