@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const FindFilesOrFolders = require('../../../src/appmixer/google/drive/FindFilesOrFolders/FindFilesOrFolders');
-const lib = require('../../../src/appmixer/google/drive/lib');
+const FindFilesOrFolders = require('../../FindFilesOrFolders/FindFilesOrFolders');
+const lib = require('../../lib');
 
 describe('google.drive.FindFilesOrFolders', () => {
 

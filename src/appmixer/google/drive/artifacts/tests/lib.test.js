@@ -9,51 +9,15 @@ describe('google.drive.lib', () => {
     beforeEach(() => {
         sandbox = sinon.createSandbox();
 
-        // Mock googleapis before requiring the lib
-        const googleMock = {
-            google: {
-                drive: sandbox.stub(),
-                auth: {
-                    OAuth2: sandbox.stub()
-                }
-            }
-        };
+        // Clear require cache first
+        delete require.cache[require.resolve('../../lib')];
 
-        // Mock moment
-        const momentMock = sandbox.stub();
-
-        // Mock uuid
-        const uuidMock = {
-            v4: sandbox.stub().returns('mock-uuid')
-        };
-
-        // Mock require
-        const Module = require('module');
-        const originalRequire = Module.prototype.require;
-        Module.prototype.require = function(id) {
-            if (id === 'googleapis') {
-                return googleMock;
-            }
-            if (id === 'moment') {
-                return momentMock;
-            }
-            if (id === 'uuid') {
-                return uuidMock;
-            }
-            return originalRequire.apply(this, arguments);
-        };
-
-        // Now require the lib with mocked dependencies
-        lib = require('../../../src/appmixer/google/drive/lib');
+        // Now require the lib
+        lib = require('../../lib');
     });
 
     afterEach(() => {
         sandbox.restore();
-        // Restore require
-        const Module = require('module');
-        delete Module.prototype.require;
-        // Clear the module cache to force re-require
-        delete require.cache[require.resolve('../../../src/appmixer/google/drive/lib')];
     });
 
     describe('#normalizeMultiselectInput', () => {
