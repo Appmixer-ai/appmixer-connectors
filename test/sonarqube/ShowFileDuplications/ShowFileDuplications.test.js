@@ -76,7 +76,7 @@ describe('ShowFileDuplications', function() {
             context.messages = {
                 in: {
                     content: {
-                        key: 'my_project:/src/foo/Bar.php'
+                        key: 'my_project:src/foo/Bar.php'
                     }
                 }
             };
@@ -91,7 +91,7 @@ describe('ShowFileDuplications', function() {
             assert.strictEqual(requestOptions.url, 'https://sonarqube.example.com/api/duplications/show');
 
             const params = requestOptions.params;
-            assert.strictEqual(params.key, 'my_project:/src/foo/Bar.php');
+            assert.strictEqual(params.key, 'my_project:src/foo/Bar.php');
 
             // Check auth header
             const authHeader = requestOptions.headers.Authorization;
