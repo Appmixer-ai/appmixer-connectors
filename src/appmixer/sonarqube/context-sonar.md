@@ -213,7 +213,7 @@ key
 required
 File key
 Example value
-my_project:/src/foo/Bar.php
+my_project:src/foo/Bar.php
 
 Example response:
 ```json
