@@ -1,7 +1,8 @@
 'use strict';
 const commons = require('../../shopify-commons');
+const lib = require('../../lib');
 
-function buildCustomer(customerInfo) {
+function buildCustomer(customerInfo, context) {
     const { firstName, lastName, email, phone, note, tags } = customerInfo;
     const customer = {};
 
@@ -41,8 +42,8 @@ function buildCustomer(customerInfo) {
     customer['accepts_marketing'] = customerInfo.accepts_marketing;
     customer['tax_exempt'] = customerInfo.tax_exempt;
 
-    if (Array.isArray(customerInfo.tax_exemptions)) {
-        customer['tax_exemptions'] = customerInfo.tax_exemptions;
+    if (customerInfo.tax_exemptions) {
+        customer['tax_exemptions'] = lib.normalizeMultiselectInput(customerInfo.tax_exemptions, context, 'Tax Exemptions');
     }
 
     if (metafields.length > 0) {
@@ -64,7 +65,7 @@ module.exports = {
         const customerInfo = context.messages.in.content;
         const { id } = customerInfo;
 
-        const updatedCustomer = await shopify.customer.update(id, buildCustomer(customerInfo));
+        const updatedCustomer = await shopify.customer.update(id, buildCustomer(customerInfo, context));
         return context.sendJson(updatedCustomer, 'customer');
     }
 };
