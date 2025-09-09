@@ -1,10 +1,8 @@
 'use strict';
 const flatten = require('@json2csv/transforms').flatten();
-const { Transform: Json2csvTransform } = require('@json2csv/plainjs');
-const stream = require('stream');
-const { PassThrough, Transform } = stream;
+const { Transform: Json2csvTransform } = require('@json2csv/node');
+const { Readable, PassThrough, Transform } = require('stream');
 const JSONStream = require('JSONStream');
-const { Readable } = require('stream');
 
 /**
  * A helper function for converting the JSON object to a csv.
@@ -72,7 +70,7 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
             transforms: [flatten] // flatten is imported
         };
         const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
-        const json2csv = new Json2csvTransform(opts, transformOpts);
+        const json2csv = new Json2csvTransform(opts, {}, { ...transformOpts, objectMode: true });
         input.pipe(json2csv).pipe(resStream);
     } catch (err) {
         errorHandler(err);
@@ -122,11 +120,18 @@ module.exports = {
             if (!flattenValue && fileType === 'csv') {
                 // Create a simple CSV transform for key-value pairs
                 const csvTransform = new Transform({
-                    objectMode: true,
+                    writableObjectMode: true,
+                    readableObjectMode: false,
                     transform(chunk, encoding, callback) {
                         try {
-                            const csvLine = `"${chunk.key}","${JSON.stringify(chunk.value).replace(/"/g, '""')}"\n`;
-                            callback(null, csvLine);
+                            const key = String(chunk?.key ?? '').replace(/"/g, '""');
+                            let rawValue = typeof chunk?.value === 'string'
+                                ? chunk.value
+                                : JSON.stringify(chunk?.value ?? '');
+                            // Mitigate formula/CSV injection in spreadsheets
+                            if (/^[=+\-@]/.test(rawValue.trim())) rawValue = `'${rawValue}`;
+                            const value = rawValue.replace(/"/g, '""');
+                            callback(null, `"${key}","${value}"\n`);
                         } catch (err) {
                             callback(err);
                         }
