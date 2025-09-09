@@ -1,8 +1,8 @@
 'use strict';
 const flatten = require('@json2csv/transforms').flatten();
-const { Transform } = require('json2csv');
+const { Transform: Json2csvTransform } = require('@json2csv/plainjs');
 const stream = require('stream');
-const { PassThrough } = stream;
+const { PassThrough, Transform } = stream;
 const JSONStream = require('JSONStream');
 const { Readable } = require('stream');
 
@@ -28,7 +28,8 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
 
     const input = new Readable({ objectMode: true });
     // eslint-disable-next-line no-underscore-dangle
-    input._read = () => { };
+    input._read = () => {};
+
     const defaultIterationMax = 10;
     const keySamples = [];
     const keys = [];
@@ -71,7 +72,7 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
             transforms: [flatten] // flatten is imported
         };
         const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
-        const json2csv = new Transform(opts, transformOpts);
+        const json2csv = new Json2csvTransform(opts, transformOpts);
         input.pipe(json2csv).pipe(resStream);
     } catch (err) {
         errorHandler(err);
@@ -119,8 +120,23 @@ module.exports = {
             }
 
             if (!flattenValue && fileType === 'csv') {
-                const opts = { fields: ['key', 'value'] };
-                stream = cursor.stream().pipe(new Transform(opts, { objectMode: true }));
+                // Create a simple CSV transform for key-value pairs
+                const csvTransform = new Transform({
+                    objectMode: true,
+                    transform(chunk, encoding, callback) {
+                        try {
+                            const csvLine = `"${chunk.key}","${JSON.stringify(chunk.value).replace(/"/g, '""')}"\n`;
+                            callback(null, csvLine);
+                        } catch (err) {
+                            callback(err);
+                        }
+                    }
+                });
+
+                // Add CSV header
+                csvTransform.push('"key","value"\n');
+
+                stream = cursor.stream().pipe(csvTransform);
             } else {
                 stream = cursor.stream().pipe(JSONStream.stringify());
             }
