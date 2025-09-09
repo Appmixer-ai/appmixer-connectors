@@ -2,6 +2,7 @@
 
 module.exports = {
     async receive(context) {
+
         const { presentationId, pageObjectId, thumbnail } = context.messages.in.content;
 
         if (!presentationId) {
