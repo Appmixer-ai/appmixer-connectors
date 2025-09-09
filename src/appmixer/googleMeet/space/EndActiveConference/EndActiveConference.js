@@ -14,7 +14,7 @@ module.exports = {
         const spaceId = name.startsWith('spaces/') ? name.split('/')[1] : name;
 
         // https://developers.google.com/workspace/meet/api/reference/rest/v2/spaces/endActiveConference
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://meet.googleapis.com/v2/spaces/${spaceId}:endActiveConference`,
             headers: {
@@ -22,6 +22,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
