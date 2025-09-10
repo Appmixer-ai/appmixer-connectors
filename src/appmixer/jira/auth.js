@@ -1,3 +1,5 @@
+let params;
+
 module.exports = {
 
     type: 'oauth2',
@@ -25,7 +27,7 @@ module.exports = {
                     jiraCloudSite: {
                         type: 'text',
                         name: 'JIRA Cloud Site',
-                        tooltip: "If you use multiple JIRA cloud sites, enter the site name you want to connect. If you leave this empty, the first option in the select will be always used. Expected format: <sub_domain>.atlassian.net Note: This must be selected as the Authorize for site option during JIRA login."
+                        tooltip: "If you use multiple JIRA cloud sites, enter the site name you want to connect. If you leave this empty, the first option in the select on the next page will be always used. Expected format: <sub_domain>.atlassian.net Note: If you enter a value here, the select on next page doesnt matter, the value here will be used as your JIRA domain."
                     }
                 };
             },
@@ -51,8 +53,35 @@ module.exports = {
                     }
                 });
 
-                const cloudId = context.jiraCloudSite ?? data[0].id;
-                const { name } = data[0];
+                // Normalize the jiraCloudSite URL to ensure it's in the correct format
+                let normalizedUrl = context.jiraCloudSite;
+                if (normalizedUrl) {
+                    // Ensure it ends with .atlassian.net
+                    if (!normalizedUrl.toLowerCase().endsWith('.atlassian.net')) {
+                        normalizedUrl += '.atlassian.net';
+                    }
+
+                    // Ensure it starts with https://
+                    if (!normalizedUrl.toLowerCase().startsWith('https://')) {
+                        normalizedUrl = 'https://' + normalizedUrl;
+                    }
+                }
+
+                // Find the cloudId by matching the normalized URL
+                let cloudId;
+                let name;
+                if (normalizedUrl) {
+                    const foundSite = data.find(site => site.url === normalizedUrl);
+                    if (!foundSite) {
+                        throw new Error(`JIRA Cloud Site "${context.jiraCloudSite}" not found. Available sites: ${data.map(site => site.url).join(', ')}`);
+                    }
+                    cloudId = foundSite.id;
+                    name = foundSite.name;
+                } else {
+                    cloudId = data[0].id;
+                    name = data[0].name;
+                }
+
                 return {
                     cloudId,
                     name,
