@@ -110,7 +110,7 @@ describe('POST /send-message handler', () => {
         assert.equal(h.response.getCall(0).returnValue.code.getCall(0).args[0], 400);
     });
 
-    it('auth-hub/send-message with thread_ts and reply_broadcast', async () => {
+    it('auth-hub/send-message with blocks, thread_ts and reply_broadcast', async () => {
         const sendMessageHandler = context.http.router.register.getCall(1).args[0].options.handler;
         context.auth.profileInfo = { botToken: 'mock_bot_token' };
         const req = {
@@ -119,6 +119,7 @@ describe('POST /send-message handler', () => {
                 username: 'TestBot',
                 channelId: 'C12345',
                 text: 'Test message',
+                blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'Hello, world!' } }],
                 thread_ts: '1234567890.123456',
                 token: 'bot_token',
                 reply_broadcast: true
@@ -134,6 +135,7 @@ describe('POST /send-message handler', () => {
             username: 'TestBot',
             channel: 'C12345',
             text: 'Test message',
+            blocks: [{ type: 'section', text: { type: 'mrkdwn', text: 'Hello, world!' } }],
             thread_ts: '1234567890.123456',
             reply_broadcast: true
         });

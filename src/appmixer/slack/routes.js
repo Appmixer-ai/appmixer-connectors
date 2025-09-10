@@ -98,15 +98,17 @@ module.exports = async context => {
             options: {
                 handler: async (req, h) => {
 
-                    const { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token } = req.payload;
-                    await context.log('debug', 'slack-plugin-route-auth-hub-send-message', { iconUrl, username, channelId, text, thread_ts, reply_broadcast });
+                    const {
+                        iconUrl, username, channelId, text, thread_ts, reply_broadcast, token, blocks
+                    } = req.payload;
+                    await context.log('debug', 'slack-plugin-route-auth-hub-send-message', { iconUrl, username, channelId, text, thread_ts, reply_broadcast, blocks });
                     if (!channelId || !text) {
                         context.log('error', 'slack-plugin-route-webhook-event-send-message-missing-params', req.payload);
                         return h.response(undefined).code(400);
                     }
 
                     const message = await sendBotMessageFromAuthHub(
-                        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token }
+                        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token, blocks }
                     );
                     return h.response(message).code(200);
                 }
@@ -126,7 +128,7 @@ module.exports = async context => {
 
     /** Supposed to be called from AuthHub only. */
     async function sendBotMessageFromAuthHub(
-        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token }
+        { iconUrl, username, channelId, text, thread_ts, reply_broadcast, token, blocks }
     ) {
 
         const web = new WebClient(token);
@@ -136,6 +138,7 @@ module.exports = async context => {
             username,
             channel: channelId,
             text,
+            ...(blocks ? { blocks } : {}),
             ...(thread_ts ? { thread_ts } : {}),
             ...(typeof reply_broadcast === 'boolean' ? { reply_broadcast } : {})
         });
