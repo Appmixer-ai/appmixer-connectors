@@ -1,4 +1,4 @@
-let params;
+'use strict';
 
 module.exports = {
 
@@ -27,7 +27,7 @@ module.exports = {
                     jiraCloudSite: {
                         type: 'text',
                         name: 'JIRA Cloud Site',
-                        tooltip: "If you use multiple JIRA cloud sites, enter the site name you want to connect. If you leave this empty, the first option in the select on the next page will be always used. Expected format: <sub_domain>.atlassian.net Note: If you enter a value here, the select on next page doesnt matter, the value here will be used as your JIRA domain."
+                        tooltip: 'If you use multiple JIRA cloud sites, enter the site name you want to connect to. If you leave this empty, the first option in the select on the next page will be always used. Expected format: <sub_domain>.atlassian.net Note: If you enter a value here, the select on next page does not matter, the value here will be used as your JIRA domain.'
                     }
                 };
             },
@@ -56,6 +56,7 @@ module.exports = {
                 // Normalize the jiraCloudSite URL to ensure it's in the correct format
                 let normalizedUrl = context.jiraCloudSite;
                 if (normalizedUrl) {
+                    normalizedUrl = normalizedUrl.trim();
                     // Ensure it ends with .atlassian.net
                     if (!normalizedUrl.toLowerCase().endsWith('.atlassian.net')) {
                         normalizedUrl += '.atlassian.net';
