@@ -11,25 +11,19 @@ module.exports = async context => {
         // the accessToken is used to get the user_id. This way it is ensured that the
         // registered user_id belongs to the owner of the accessToken.
 
-        const response = await context.httpRequest({
-            method: 'GET',
-            url: 'https://line.com/api/auth.test',
-            headers: {
-                Authorization: `Bearer ${listener.params.accessToken}`
-            }
-        });
+        // TODO: add accessToken to listener.params
 
-        if (response?.data?.ok === false) {
-            throw new Error(response?.data?.error);
-        }
+        // const response = await context.httpRequest({
+        //     method: 'GET',
+        //     url: 'https://line.com/api/auth.test',
+        //     headers: {
+        //         Authorization: `Bearer ${listener.params.accessToken}`
+        //     }
+        // });
 
-        if (!response?.data['user_id']) {
-            throw new Error('Missing user_id property.');
-        }
-
-        listener.params = {
-            userId: response.data['user_id']
-        };
+        // if (response?.data?.ok === false) {
+        //     throw new Error(response?.data?.error);
+        // }
     });
 
     context.http.router.register({
@@ -39,8 +33,8 @@ module.exports = async context => {
             auth: false,
             handler: async (req, h) => {
 
-                await context.log('info', 'line-plugin-route-webhook-hit', { type: req.payload?.type });
-                context.log('trace', 'line-plugin-route-webhook-payload', { payload: req.payload });
+                //await context.log('info', 'line-plugin-route-webhook-hit', { type: req.payload?.type });
+                context.log('info', 'line-plugin-route-webhook-payload: ' + JSON.stringify(req.payload));
 
                 // Validates the payload with the Line-signature hash
                 // const slackSignature = req.headers['x-line-signature'];
@@ -71,64 +65,54 @@ module.exports = async context => {
                 //     return {};
                 // }
 
-                // const event = req.payload.event;
-                // if (!event) {
-                //     context.log('error', 'line-plugin-route-webhook-event-missing', req.payload);
-                //     return {};
-                // }
-                // if (event.hidden) {
-                //     return {};
-                // }
+                const { events } = req.payload;
+                if (!events) {
+                    context.log('error', 'line-plugin-route-webhook-event-missing', req.payload);
+                    return {};
+                }
 
                 // context.log('info', 'line-plugin-route-webhook-event-type', { type: event.type });
-                // switch (event.type) {
-                //     case 'message':
-                //         await processMessages(context, req);
-                //         break;
-                //     case 'team_join':
-                //         await processNewUsers(context, req);
-                //         break;
-                //     default:
-                //         context.log('error', 'line-plugin-route-webhook-event-type-unsupported', { type: event.type });
-                //         break;
-                // }
+                for (const event of events) {
+                    if (event.type === 'message') {
+                        await processMessages(context, event, req.payload.destination);
+                    }
+                }
 
                 return {};
             }
         }
     });
 
-    async function processMessages(context, req) {
+    async function processMessages(context, event, destination) {
 
-        const { event } = req.payload;
-        const channelId = event?.channel;
-        if (!channelId) {
-            context.log('error', 'Missing channel property.', req.payload);
-            return;
-        }
+        //const { type } = event;
+        // if (!channelId) {
+        //     context.log('error', 'Missing channel property.', req.payload);
+        //     return;
+        // }
 
-        const response = await context.httpRequest({
-            method: 'POST',
-            url: 'https://line.com/api/apps.event.authorizations.list',
-            headers: {
-                Authorization: `Bearer ${context.config.authToken}`
-            },
-            data: {
-                event_context: req.payload.event_context
-            }
-        });
+        // const response = await context.httpRequest({
+        //     method: 'POST',
+        //     url: 'https://line.com/api/apps.event.authorizations.list',
+        //     headers: {
+        //         Authorization: `Bearer ${context.config.authToken}`
+        //     },
+        //     data: {
+        //         event_context: req.payload.event_context
+        //     }
+        // });
 
-        if (response?.data?.ok === false) {
-            context.log('error', response?.data?.error);
-            return {};
-        }
+        // if (response?.data?.ok === false) {
+        //     context.log('error', response?.data?.error);
+        //     return {};
+        // }
 
-        const authorizedUsers = response.data.authorizations.map(item => item['user_id']);
+        // const authorizedUsers = response.data.authorizations.map(item => item['user_id']);
         await context.triggerListeners({
-            eventName: channelId,
+            eventName: event.type,
             payload: event,
             filter: listener => {
-                return authorizedUsers.indexOf(listener.params.userId) !== -1;
+                return listener.params.userId === destination;
             }
         });
     }

@@ -4,6 +4,7 @@ module.exports = {
 
     async start(context) {
 
+        const userId = context.profileInfo.userId;
         // https://api.possible-hen-28246.appmixer.cloud/plugins/appmixer/line/events
         // const componentName = context.flowDescriptor[context.componentId].label || 'Watch Events';
 
@@ -15,22 +16,20 @@ module.exports = {
         //     throw new Error(`Missing LINE configuration for component: ${componentName}. Please configure the "signingSecret" with a valid Slack App signing secret.`);
         // }
 
-        return context.addListener('abc');
+        return context.addListener('message', { userId });
     },
 
     async stop(context) {
+        const userId = context.profileInfo.userId;
 
-        return context.removeListener('abc');
+        return context.removeListener('message', { userId });
     },
 
     async receive(context) {
 
         if (context.messages.webhook) {
-            if (context.properties.ignoreBotMessages && context.messages.webhook.content.data.subtype === 'bot_message') {
-                // Ignore bot messages.
-                return;
-            }
-            await context.sendJson(context.messages.webhook.content.data, 'message');
+            context.log({ step: 'receive', message: context.messages.webhook });
+            await context.sendJson(context.messages.webhook.content.data, 'out');
         }
     }
 };
