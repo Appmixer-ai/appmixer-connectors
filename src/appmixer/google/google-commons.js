@@ -90,7 +90,6 @@ module.exports = {
         return new Date(dateObject.date ? dateObject.date : dateObject.dateTime);
     },
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'item', 'items', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'items', records = [] }) {
         if (outputType === 'item') {
@@ -116,7 +115,6 @@ module.exports = {
     }
 };
 
-// TODO: Move to appmixer-lib
 const toCsv = (array) => {
     const headers = Object.keys(array[0]);
 

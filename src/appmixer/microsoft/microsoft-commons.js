@@ -5,7 +5,6 @@ const pathModule = require('path');
 
 const BASE_URL = 'https://graph.microsoft.com/v1.0';
 
-// TODO: Move to appmixer-lib
 function getCSVValue(value) {
     if (typeof value === 'object') {
         try {
@@ -118,7 +117,6 @@ module.exports = {
         }
     },
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'object', 'array', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [] }) {
         if (outputType === 'first') {

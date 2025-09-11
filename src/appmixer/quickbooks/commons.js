@@ -21,7 +21,6 @@ function getBaseUrl(context, auth) {
     return auth ? baseUrl : apiUrl;
 }
 
-// TODO: Move to appmixer-lib
 function getCSVValue(value) {
     if (typeof value === 'object') {
         try {
@@ -91,7 +90,6 @@ module.exports = {
         };
     },
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'item', 'items', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'items', records = [] }) {
 

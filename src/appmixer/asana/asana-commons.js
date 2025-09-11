@@ -14,7 +14,6 @@ module.exports = {
         return new AsanaAPI.Client.create().useAccessToken(token);
     },
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'item', 'items', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'items', records = [] }) {
         if (outputType === 'item') {
