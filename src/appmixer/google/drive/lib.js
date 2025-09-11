@@ -280,6 +280,9 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
 
     const { folder = {}, recursive = false, fileTypesRestriction } = context.properties;
 
+    // Normalize fileTypesRestriction to ensure it's always an array
+    const normalizedFileTypesRestriction = normalizeMultiselectInput(fileTypesRestriction);
+
     let folderIds = [];
     if (typeof folder === 'string') {
         folderIds.push(folder);
@@ -330,7 +333,7 @@ const checkMonitoredFiles = async function(context, { filter, includeRemoved } =
             drive,
             filter,
             folderIds,
-            fileTypesRestriction,
+            normalizedFileTypesRestriction,
             includeRemoved,
             startPageToken);
 
@@ -389,6 +392,20 @@ const isDebug = (context) => {
     return context.config.DEBUG === 'true' || false;
 };
 
+/**
+ * Normalizes multiselect input to ensure it's always an array.
+ * @param {string|Array} input - The input value from a multiselect field
+ * @returns {Array} An array of values
+ */
+const normalizeMultiselectInput = (input) => {
+    if (!input) return [];
+    if (Array.isArray(input)) return input;
+    if (typeof input === 'string') {
+        return input.split(',').map(item => item.trim()).filter(item => item);
+    }
+    throw new Error('Invalid input type for multiselect field. Expected string or array.');
+};
+
 module.exports = {
 
     processedItemsBuffer,
@@ -401,5 +418,6 @@ module.exports = {
     checkMonitoredFiles,
     getOauth2Client,
     getCredentials,
-    isDebug
+    isDebug,
+    normalizeMultiselectInput
 };

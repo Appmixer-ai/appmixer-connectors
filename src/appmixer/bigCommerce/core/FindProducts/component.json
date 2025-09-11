@@ -1,0 +1,208 @@
+{
+    "name": "appmixer.bigCommerce.core.FindProducts",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search products.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:bigCommerce"
+    },
+    "quota": {
+        "manager": "appmixer:bigCommerce",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "keyword": {
+                        "type": "string"
+                    },
+                    "sku": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "brand_id": {
+                        "type": "number"
+                    },
+                    "categories": {
+                        "type": "string"
+                    },
+                    "is_visible": {
+                        "type": "boolean"
+                    },
+                    "is_featured": {
+                        "type": "boolean"
+                    },
+                    "price": {
+                        "type": "number"
+                    },
+                    "availability": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "date_modified_start": {
+                        "type": "string"
+                    },
+                    "date_modified_end": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "keyword": {
+                        "type": "textarea",
+                        "tooltip": "Search in product name, description, SKU, or brand. Comprehensive text search across multiple fields.",
+                        "label": "Keyword Search",
+                        "index": 0
+                    },
+                    "sku": {
+                        "type": "text",
+                        "tooltip": "Filter products by SKU (Stock Keeping Unit). Exact match search.",
+                        "label": "SKU",
+                        "index": 1
+                    },
+                    "name": {
+                        "type": "text",
+                        "tooltip": "Filter products by name. Partial name matching supported.",
+                        "label": "Product Name",
+                        "index": 2
+                    },
+                    "brand_id": {
+                        "type": "number",
+                        "tooltip": "Filter products by brand ID. Use the brand's numeric identifier.",
+                        "label": "Brand ID",
+                        "index": 3
+                    },
+                    "categories": {
+                        "type": "text",
+                        "tooltip": "Filter products by category IDs. Use comma-separated list for multiple categories (e.g., '18,23').",
+                        "label": "Category IDs",
+                        "index": 4
+                    },
+                    "is_visible": {
+                        "type": "toggle",
+                        "tooltip": "Filter products based on their visibility status in the storefront.",
+                        "label": "Is Visible",
+                        "index": 5
+                    },
+                    "is_featured": {
+                        "type": "toggle",
+                        "tooltip": "Filter products that are marked as featured.",
+                        "label": "Is Featured",
+                        "index": 6
+                    },
+                    "price": {
+                        "type": "number",
+                        "tooltip": "Filter products by exact price value. Use decimal format (e.g., 29.99).",
+                        "label": "Price",
+                        "index": 7
+                    },
+                    "availability": {
+                        "type": "select",
+                        "tooltip": "Filter products by availability status.",
+                        "label": "Availability",
+                        "index": 8,
+                        "options": [
+                            {
+                                "label": "Available",
+                                "value": "available"
+                            },
+                            {
+                                "label": "Disabled",
+                                "value": "disabled"
+                            },
+                            {
+                                "label": "Preorder",
+                                "value": "preorder"
+                            }
+                        ]
+                    },
+                    "type": {
+                        "type": "select",
+                        "tooltip": "Filter products by type.",
+                        "label": "Product Type",
+                        "index": 9,
+                        "options": [
+                            {
+                                "label": "Physical",
+                                "value": "physical"
+                            },
+                            {
+                                "label": "Digital",
+                                "value": "digital"
+                            }
+                        ]
+                    },
+                    "date_modified_start": {
+                        "type": "date-time",
+                        "tooltip": "Filter products modified after this ISO8601 date. Example: 2023-01-01T00:00:00Z",
+                        "label": "Modified After",
+                        "index": 10
+                    },
+                    "date_modified_end": {
+                        "type": "date-time",
+                        "tooltip": "Filter products modified before this ISO8601 date. Example: 2023-12-31T23:59:59Z",
+                        "label": "Modified Before",
+                        "index": 11
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 12,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/bigCommerce/core/FindProducts?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+QmlnQ29tbWVyY2U8L3RpdGxlPjxwYXRoIGQ9Ik0xMi42NDUgMTMuNjYzaDMuMDI3Yy44NjEgMCAxLjQwNi0uNDc0IDEuNDA2LTEuMjM1IDAtLjcxNy0uNTQ1LTEuMjM0LTEuNDA2LTEuMjM0aC0zLjAyN2MtLjEgMC0uMTg3LjA4Ni0uMTg3LjE3MnYyLjEyNWMuMDE1LjEuMDg2LjE3Mi4xODcuMTcyem0wIDQuODk2aDMuMTI4Yy45NjEgMCAxLjUzNS0uNDg4IDEuNTM1LTEuMzUgMC0uNzQ2LS41NDUtMS4zNS0xLjUzNS0xLjM1aC0zLjEyOGMtLjEgMC0uMTg3LjA4Ny0uMTg3LjE3M3YyLjM0Yy4wMTUuMTE1LjA4Ni4xODcuMTg3LjE4N3pNMjMuNzIuMDUzbC04Ljk1MyA4LjkzaDEuNDY0YzIuMjgxIDAgMy42MyAxLjQzNSAzLjYzIDMgMCAxLjIzNS0uODMyIDIuMTQtMS43MjIgMi41NDEtLjE0My4wNTgtLjE0My4yNTkuMDE0LjMxNiAxLjAzMy40MDIgMS43NjUgMS40OCAxLjc2NSAyLjc0MiAwIDEuNzgtMS4xOSAzLjIwMi0zLjUgMy4yMDJoLTYuMzQyYy0uMSAwLS4xODctLjA4Ni0uMTg3LS4xNzJWMTMuODVMLjA2MiAyMy42NGMtLjEzLjEzLS4wNDMuMzU5LjE0My4zNTloMjMuNjMxYS4xNi4xNiAwIDAgMCAuMTU4LS4xNThWLjE4MmMuMDQzLS4xNTgtLjE1OC0uMjQ0LS4yNzMtLjEzeiIvPjwvc3ZnPg=="
+}

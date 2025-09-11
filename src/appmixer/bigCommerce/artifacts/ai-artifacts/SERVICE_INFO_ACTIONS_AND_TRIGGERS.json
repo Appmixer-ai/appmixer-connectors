@@ -1,0 +1,426 @@
+{
+    "actions": [
+        {
+            "title": "Find Products",
+            "description": "Search products by common filters (such as name, SKU, visibility, and modification date range) and return a maximum of 250 results. Pagination parameters are omitted.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/catalog/products/getproducts",
+            "endpointUrl": "/v3/catalog/products",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": 1001,
+                        "name": "Example Product",
+                        "sku": "SKU-EXAMPLE",
+                        "price": "29.99",
+                        "is_visible": true
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter products by name or SKU."
+                    },
+                    "is_visible": {
+                        "type": "boolean",
+                        "description": "Filter products based on their visibility status."
+                    },
+                    "date_modified_start": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter products modified after this date."
+                    },
+                    "date_modified_end": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter products modified before this date."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "Get Product",
+            "description": "Retrieve detailed information for a single product using its product ID. The product ID is usually obtained via the Find Products action.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/catalog/products/getproductbyid",
+            "endpointUrl": "/v3/catalog/products/{product_id}",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 1001,
+                "name": "Example Product",
+                "sku": "SKU-EXAMPLE",
+                "price": "29.99",
+                "is_visible": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "number",
+                        "description": "Unique identifier for the product."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Product",
+            "description": "Create a new product by specifying details like name, SKU, price, type, weight, categories, and visibility. Returns the newly created product.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/catalog/products/createproduct",
+            "endpointUrl": "/v3/catalog/products",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "id": 1002,
+                    "name": "New Product",
+                    "sku": "SKU-NEW"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the product."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Product type (e.g., physical or digital)."
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "Price of the product."
+                    },
+                    "sku": {
+                        "type": "string",
+                        "description": "Unique SKU for inventory tracking."
+                    },
+                    "weight": {
+                        "type": "number",
+                        "description": "Weight of the product, applicable for shipping."
+                    },
+                    "categories": {
+                        "type": "array",
+                        "description": "List of category IDs the product belongs to.",
+                        "items": {
+                            "type": "number"
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Product description."
+                    },
+                    "is_visible": {
+                        "type": "boolean",
+                        "description": "Visibility status of the product."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Product",
+            "description": "Update an existing product identified by its product ID. Use this endpoint to modify details like name, price, or visibility among others.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/catalog/products/updateproduct",
+            "endpointUrl": "/v3/catalog/products/{product_id}",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "PUT",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "number",
+                        "description": "Unique identifier for the product to update."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Updated product name."
+                    },
+                    "price": {
+                        "type": "number",
+                        "description": "Updated product price."
+                    },
+                    "is_visible": {
+                        "type": "boolean",
+                        "description": "Updated visibility status."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Product",
+            "description": "Delete a product by its product ID. This action permanently removes the product from the store.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/catalog/products/deleteproduct",
+            "endpointUrl": "/v3/catalog/products/{product_id}",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "product_id": {
+                        "type": "number",
+                        "description": "Unique identifier for the product to be deleted."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Customers",
+            "description": "Search customers by filters such as email, name, or creation date. Returns a maximum of 250 matched customer records.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/customers-v3/customers/getcustomers",
+            "endpointUrl": "/v3/customers",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": 501,
+                        "email": "customer@example.com",
+                        "first_name": "Jane",
+                        "last_name": "Doe"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter customers by name or email."
+                    },
+                    "date_created_start": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter customers created after this date."
+                    },
+                    "date_created_end": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter customers created before this date."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "Get Customer",
+            "description": "Retrieve detailed information for a single customer using their customer ID. The customer ID can be obtained from the Find Customers action.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/customers-v3/customers/getacustomer",
+            "endpointUrl": "/v3/customers/{customer_id}",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 501,
+                "email": "customer@example.com",
+                "first_name": "Jane",
+                "last_name": "Doe"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "number",
+                        "description": "Unique identifier for the customer."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Customer",
+            "description": "Create a new customer by providing key details such as email, first name, last name, and phone number. Additional information like addresses and company can be provided optionally.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/customers-v3/customers/createcustomers",
+            "endpointUrl": "/v3/customers",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "id": 502,
+                    "email": "newcustomer@example.com"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "The customer's email address."
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "description": "The customer's first name."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "The customer's last name."
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "The customer's phone number."
+                    },
+                    "addresses": {
+                        "type": "array",
+                        "description": "Optional list of addresses for the customer.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "street_1": {
+                                    "type": "string",
+                                    "description": "Primary street address."
+                                },
+                                "city": {
+                                    "type": "string",
+                                    "description": "City name."
+                                },
+                                "state": {
+                                    "type": "string",
+                                    "description": "State or province."
+                                },
+                                "zip": {
+                                    "type": "string",
+                                    "description": "Postal code."
+                                },
+                                "country": {
+                                    "type": "string",
+                                    "description": "Country name."
+                                }
+                            }
+                        }
+                    },
+                    "company": {
+                        "type": "string",
+                        "description": "Company name (if applicable)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Customer",
+            "description": "Update an existing customer's information using their customer ID. Fields typically updated include email, first name, last name, and phone number.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/customers-v3/customers/updateacustomer",
+            "endpointUrl": "/v3/customers/{customer_id}",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "PUT",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customer_id": {
+                        "type": "number",
+                        "description": "Unique identifier for the customer to update."
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "Updated email address."
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "description": "Updated first name."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "Updated last name."
+                    },
+                    "phone": {
+                        "type": "string",
+                        "description": "Updated phone number."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Orders",
+            "description": "Search orders using filters such as status, creation date range, customer ID, or email. Returns a maximum of 250 orders. Pagination parameters are omitted.",
+            "type": "action",
+            "documentation": "https://developer.bigcommerce.com/api-reference/store-management/orders/orders/getorders",
+            "endpointUrl": "/v2/orders",
+            "apiBaseUrl": "https://api.bigcommerce.com/stores/{store_hash}/",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": 601,
+                        "status_id": 1,
+                        "total_inc_tax": "59.99"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search term to filter orders by customer email or other criteria."
+                    },
+                    "status_id": {
+                        "type": "number",
+                        "description": "Filter orders by their status identifier."
+                    },
+                    "min_date_created": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter orders created after this time."
+                    },
+                    "max_date_created": {
+                        "type": "string",
+                        "description": "ISO8601 date to filter orders created before this time."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "oauth2",
+        "authUrl": "https://login.bigcommerce.com/oauth2/authorize",
+        "tokenUrl": "https://login.bigcommerce.com/oauth2/token",
+        "profileInfoUrl": "https://api.bigcommerce.com/stores/{store_hash}/v3/customers/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.bigcommerce",
+        "label": "BigCommerce",
+        "category": "applications",
+        "description": "Integration component for managing BigCommerce products, customers, and orders. Supports OAuth2 authentication for multi-store usage and API tokens as an alternative.",
+        "version": "1.0.0",
+        "icon": "https://cdn.example.com/icons/bigcommerce.svg"
+    }
+}

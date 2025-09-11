@@ -1,7 +1,7 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
+const lib = require('../../lib');
 
 // Schema for a single space item
 const spaceSchema = {
@@ -66,6 +66,10 @@ module.exports = {
 
         const { spaceTypes, outputType } = context.messages.in.content;
 
+        // Normalize spaceTypes to ensure it's always an array
+        const normalizedSpaceTypes = spaceTypes ?
+            lib.normalizeMultiselectInput(spaceTypes, context, 'Space Types') : undefined;
+
         // Generate output port schema dynamically based on the outputType
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(
@@ -81,8 +85,8 @@ module.exports = {
         };
 
         // Build filter query from selected space types
-        if (spaceTypes?.length > 0) {
-            const validTypes = spaceTypes.filter(type =>
+        if (normalizedSpaceTypes?.length > 0) {
+            const validTypes = normalizedSpaceTypes.filter(type =>
                 ['SPACE', 'GROUP_CHAT', 'DIRECT_MESSAGE'].includes(type)
             );
 

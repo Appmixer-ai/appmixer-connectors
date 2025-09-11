@@ -1,0 +1,139 @@
+{
+    "name": "appmixer.bigCommerce.core.FindCustomers",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search customers.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:bigCommerce"
+    },
+    "quota": {
+        "manager": "appmixer:bigCommerce",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id_in": {
+                        "type": "string"
+                    },
+                    "email_in": {
+                        "type": "string"
+                    },
+                    "name_like": {
+                        "type": "string"
+                    },
+                    "company_in": {
+                        "type": "string"
+                    },
+                    "phone_in": {
+                        "type": "string"
+                    },
+                    "date_created_start": {
+                        "type": "string"
+                    },
+                    "date_created_end": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "id_in": {
+                        "type": "text",
+                        "tooltip": "Filter customers by ID. Comma-separated list of customer IDs (e.g., '4,5,6').",
+                        "label": "Customer IDs",
+                        "index": 0
+                    },
+                    "email_in": {
+                        "type": "text",
+                        "tooltip": "Filter customers by email addresses. Comma-separated list (e.g., 'john@example.com,jane@example.com').",
+                        "label": "Email Addresses",
+                        "index": 1
+                    },
+                    "name_like": {
+                        "type": "text",
+                        "tooltip": "Search customers by name substring. Searches in both first_name and last_name fields.",
+                        "label": "Name Search",
+                        "index": 2
+                    },
+                    "company_in": {
+                        "type": "text",
+                        "tooltip": "Filter customers by company names. Comma-separated list (e.g., 'BigCommerce,CommonGood').",
+                        "label": "Company Names",
+                        "index": 3
+                    },
+                    "phone_in": {
+                        "type": "text",
+                        "tooltip": "Filter customers by phone number (e.g., '555-55-5555').",
+                        "label": "Phone Number",
+                        "index": 4
+                    },
+                    "date_created_start": {
+                        "type": "text",
+                        "tooltip": "ISO8601 date to filter customers created after this date (e.g., '2023-01-01T00:00:00Z').",
+                        "label": "Date Created Start",
+                        "index": 5
+                    },
+                    "date_created_end": {
+                        "type": "text",
+                        "tooltip": "ISO8601 date to filter customers created before this date (e.g., '2023-12-31T23:59:59Z').",
+                        "label": "Date Created End",
+                        "index": 6
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 7,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/bigCommerce/core/FindCustomers?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+QmlnQ29tbWVyY2U8L3RpdGxlPjxwYXRoIGQ9Ik0xMi42NDUgMTMuNjYzaDMuMDI3Yy44NjEgMCAxLjQwNi0uNDc0IDEuNDA2LTEuMjM1IDAtLjcxNy0uNTQ1LTEuMjM0LTEuNDA2LTEuMjM0aC0zLjAyN2MtLjEgMC0uMTg3LjA4Ni0uMTg3LjE3MnYyLjEyNWMuMDE1LjEuMDg2LjE3Mi4xODcuMTcyem0wIDQuODk2aDMuMTI4Yy45NjEgMCAxLjUzNS0uNDg4IDEuNTM1LTEuMzUgMC0uNzQ2LS41NDUtMS4zNS0xLjUzNS0xLjM1aC0zLjEyOGMtLjEgMC0uMTg3LjA4Ny0uMTg3LjE3M3YyLjM0Yy4wMTUuMTE1LjA4Ni4xODcuMTg3LjE4N3pNMjMuNzIuMDUzbC04Ljk1MyA4LjkzaDEuNDY0YzIuMjgxIDAgMy42MyAxLjQzNSAzLjYzIDMgMCAxLjIzNS0uODMyIDIuMTQtMS43MjIgMi41NDEtLjE0My4wNTgtLjE0My4yNTkuMDE0LjMxNiAxLjAzMy40MDIgMS43NjUgMS40OCAxLjc2NSAyLjc0MiAwIDEuNzgtMS4xOSAzLjIwMi0zLjUgMy4yMDJoLTYuMzQyYy0uMSAwLS4xODctLjA4Ni0uMTg3LS4xNzJWMTMuODVMLjA2MiAyMy42NGMtLjEzLjEzLS4wNDMuMzU5LjE0My4zNTloMjMuNjMxYS4xNi4xNiAwIDAgMCAuMTU4LS4xNThWLjE4MmMuMDQzLS4xNTgtLjE1OC0uMjQ0LS4yNzMtLjEzeiIvPjwvc3ZnPg=="
+}
