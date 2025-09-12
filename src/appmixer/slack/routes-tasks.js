@@ -140,6 +140,7 @@ module.exports = (context) => {
                     requester: context.http.Joi.string().required(), // Slack user ID
                     approver: context.http.Joi.string().required(), // Slack user ID
                     channel: context.http.Joi.string().required(), // Slack channel ID
+                    webhookUrl: context.http.Joi.string().uri().required(),
                     decisionBy: context.http.Joi.date().iso(),
                     username: context.http.Joi.string(),
                     iconUrl: context.http.Joi.string()
@@ -176,8 +177,15 @@ module.exports = (context) => {
                 }
 
                 const { actions, response_url: responseUrl } = payload;
-                const taskId = actions[0].value;
+                if (!actions || !Array.isArray(actions) || actions.length === 0) {
+                    return h.response({ text: 'No actions found' }).code(400);
+                }
+                // value format: taskId|componentId|host, e.g. "taskId|fc8fee2a-dd23-491a-803a-842dc1f9ffb6|https://api.acme.appmixer.cloud"
+                const [taskId, componentId, host] = actions[0].value?.split('|');
                 const action = actions[0].action_id;
+
+
+                // Normal processing below
 
                 // Handle Task Approval actions
                 if (action.startsWith('task_')) {
@@ -190,6 +198,7 @@ module.exports = (context) => {
         }
     });
 
+    // This always runs in the tenant, never in AuthHub
     async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
 
         const task = await Task.findById(taskId);

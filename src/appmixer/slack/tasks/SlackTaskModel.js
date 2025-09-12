@@ -23,6 +23,7 @@ module.exports = context => {
                 'decisionMade',
                 'actor', // Slack user ID who made the decision
                 'channel', // Slack channel ID for notifications
+                'webhookUrl', // URL of the Appmixer component that created this task
                 'created',
                 'mtime',
                 'isApprover'
