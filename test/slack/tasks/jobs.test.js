@@ -81,26 +81,6 @@ describe('slack-tasks-jobs', () => {
             exports: () => FakeTask
         };
 
-        // Stub SlackWebhookModel
-        webhookModelPath = path.resolve(__dirname, '../../../src/appmixer/slack/tasks/SlackWebhookModel.js');
-        let webhookRecords = [];
-        class FakeWebhook { static get STATUS_FAIL() { return 'fail'; } static async find(query) { return webhookRecords; } }
-        webhookFindSpy = sinon.spy(FakeWebhook, 'find');
-        setMockWebhooks = (arr) => { webhookRecords = arr; };
-        require.cache[require.resolve(webhookModelPath)] = {
-            id: webhookModelPath,
-            filename: webhookModelPath,
-            loaded: true,
-            exports: () => FakeWebhook
-        };
-        jobsWebhookRequirePath = path.join(jobsDir, 'SlackWebhookModel.js');
-        require.cache[jobsWebhookRequirePath] = {
-            id: jobsWebhookRequirePath,
-            filename: jobsWebhookRequirePath,
-            loaded: true,
-            exports: () => FakeWebhook
-        };
-
         // Provide './utils' path expected by slack/jobs.js
         jobsUtilsRequirePath = path.join(jobsDir, 'utils.js');
         require.cache[jobsUtilsRequirePath] = {

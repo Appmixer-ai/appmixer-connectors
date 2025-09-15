@@ -65,29 +65,6 @@ describe('Slack Tasks routes', () => {
             }
         };
 
-        const webhookModelPath = require.resolve('../../../src/appmixer/slack/tasks/SlackWebhookModel.js');
-        require.cache[webhookModelPath] = {
-            id: webhookModelPath,
-            filename: webhookModelPath,
-            loaded: true,
-            exports: () => {
-                class Webhook {
-                    static get STATUS_SENT() { return 'sent'; }
-                    static get STATUS_FAIL() { return 'fail'; }
-                    static get STATUS_PENDING() { return 'pending'; }
-                    static async deleteById(id) { delete memory.webhooks[id]; }
-                    populate(obj) {
-                        const id = obj.webhookId || 'W1';
-                        const entity = Object.assign({ webhookId: id }, obj);
-                        memory.webhooks[id] = entity;
-                        return { save: async () => entity };
-                    }
-                }
-                Webhook.createSettersAndGetters = () => {};
-                return Webhook;
-            }
-        };
-
         // Stub slack lib sendMessage
         slackLib = require('../../../src/appmixer/slack/lib.js');
         sinon.stub(slackLib, 'sendMessage').resolves({ ok: true });
@@ -99,7 +76,7 @@ describe('Slack Tasks routes', () => {
             filename: utilsPath,
             loaded: true,
             exports: () => ({
-                triggerWebhooks: async () => {},
+                triggerWebhook: async () => {},
                 getTask: async () => ({})
             })
         };

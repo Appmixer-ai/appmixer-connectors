@@ -4,7 +4,6 @@
 module.exports = async context => {
 
     const config = require('./config')(context);
-    const Webhook = require('./tasks/SlackWebhookModel')(context);
     const Task = require('./tasks/SlackTaskModel')(context);
     const utils = require('./tasks/utils')(context);
     context.log('info', '[slack-job-due-tasks] CONFIG', { config });
@@ -45,12 +44,12 @@ module.exports = async context => {
         try {
             const lock = await context.job.lock('slack-tasks-failed-webhooks');
             try {
-                const webhooks = await Webhook.find({ status: Webhook.STATUS_FAIL });
-                const res = await context.utils.P.mapArray(webhooks, function(webhook) {
-                    return utils.triggerWebhook(webhook);
+                const tasksToRetry = await Task.find({ status: Task.STATUS_RETRY });
+                const res = await context.utils.P.mapArray(tasksToRetry, function(taskToRetry) {
+                    return utils.triggerWebhook(taskToRetry);
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });
                 const result = {
-                    webhooks: webhooks.length,
+                    webhooks: tasksToRetry.length,
                     success: res.flat().filter(item => item).length,
                     errors: res.flat().filter(item => !item).length
                 };

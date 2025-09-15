@@ -1,4 +1,5 @@
 'use strict';
+
 const lib = require('../../lib');
 
 module.exports = {
@@ -84,12 +85,6 @@ module.exports = {
 
         await context.addListener('slack_task_' + context.componentId, { accessToken: context.auth.accessToken });
 
-        const webhook = await context.callAppmixer({
-            endPoint: '/plugins/appmixer/slack/tasks/webhooks',
-            method: 'POST',
-            body: { url: context.getWebhookUrl(), taskId: task.taskId }
-        });
-
         // Send Slack message to the channel when task is created
         const {
             channel,
@@ -135,24 +130,12 @@ module.exports = {
         );
 
         await context.sendJson(task, 'created');
-
-        await context.stateSet(webhook.webhookId, {});
     },
 
     async stop(context) {
 
         // Remove all listeners created by this connector instance.
+        // This still leaves the tasks in the DB and scheduled jobs intact.
         await context.removeListener('slack_task_' + context.componentId);
-
-        // Remove all webhooks created by this component.
-        const state = await context.loadState();
-
-        return Promise.all(Object.keys(state).map(webhookId => {
-
-            return context.callAppmixer({
-                endPoint: `/plugins/appmixer/slack/tasks/webhooks/${webhookId}`,
-                method: 'DELETE'
-            });
-        }));
     }
 };

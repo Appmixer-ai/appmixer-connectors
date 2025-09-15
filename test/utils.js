@@ -136,7 +136,7 @@ function createMockContext(options) {
             mockState[key].add(value);
         }),
         componentStaticCall: sinon.stub(),
-        getWebhookUrl: sinon.stub(),
+        getWebhookUrl: sinon.stub().returns('https://api.my.appmixer.cloud/flow/FLOWID/component/componentId-1'),
         saveState: sinon.stub().returns({}),
         setTimeout: sinon.stub(),
         triggerComponent: sinon.stub(),

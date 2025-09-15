@@ -2,11 +2,15 @@
 
 module.exports = context => {
 
+    /**
+     * Name: pluginAppmixerSlackSlack_tasks
+     */
     class SlackTaskModel extends context.db.Model {
 
         static get STATUS_PENDING() { return 'pending'; }
         static get STATUS_REJECTED() { return 'rejected'; }
         static get STATUS_APPROVED() { return 'approved'; }
+        static get STATUS_RETRY() { return 'retry'; } // For slack-resubmit-failed-webhooks job
         static get STATUS_DUE() { return 'due'; }
         static get collection() { return 'slack_tasks'; }
         static get idProperty() { return 'taskId'; }

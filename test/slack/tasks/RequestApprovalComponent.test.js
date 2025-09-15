@@ -61,9 +61,6 @@ describe('Slack RequestApproval', () => {
                     ...context.messages.task.content,
                     taskId: 'T123'
                 });
-                context.callAppmixer.onSecondCall().resolves({
-                    webhookId: 'W123'
-                });
 
                 // Require the component after stubbing
                 const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
@@ -108,13 +105,6 @@ describe('Slack RequestApproval', () => {
                         ] }
                     ]
                 }, 'sendMessage should be called with the correct options');
-
-                // Call to Appmixer to create the webhook
-                assert.deepStrictEqual(context.callAppmixer.secondCall.args[0], {
-                    endPoint: '/plugins/appmixer/slack/tasks/webhooks',
-                    method: 'POST',
-                    body: { url: context.getWebhookUrl(), taskId: 'T123' }
-                }, 'context.callAppmixer should be called with the correct arguments for webhook');
 
                 // context.stateSet should be called once
                 assert(context.stateSet.calledOnce, 'context.stateSet should be called once');
@@ -217,7 +207,6 @@ describe('Slack RequestApproval', () => {
                     approver: 'U222BBBCCC',
                     taskId: 'T999'
                 });
-                context.callAppmixer.onSecondCall().resolves({ webhookId: 'W999' });
 
                 const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
                 await RequestApproval.receive(context);

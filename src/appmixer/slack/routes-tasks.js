@@ -5,7 +5,6 @@ module.exports = (context) => {
     const querystring = require('querystring');
     const utils = require('./tasks/utils.js')(context);
     const Task = require('./tasks/SlackTaskModel.js')(context);
-    const Webhook = require('./tasks/SlackWebhookModel.js')(context);
     const slackLib = require('./lib.js');
 
     context.http.router.register({
@@ -14,41 +13,6 @@ module.exports = (context) => {
         options: {
             handler: () => ({ version: '1.0' }),
             auth: false
-        }
-    });
-
-    context.http.router.register({
-        method: 'POST',
-        path: '/tasks/webhooks',
-        options: {
-            handler: req => {
-
-                const { url, taskId } = req.payload;
-
-                return new Webhook().populate({
-                    url,
-                    taskId,
-                    created: new Date(),
-                    status: Webhook.STATUS_PENDING
-                }).save();
-            },
-            validate: {
-                payload: context.http.Joi.object({
-                    url: context.http.Joi.string().uri().required(),
-                    taskId: context.http.Joi.string().required()
-                })
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'DELETE',
-        path: '/tasks/webhooks/{webhookId}',
-        options: {
-            handler: async (req, h) => {
-                await Webhook.deleteById(req.params.webhookId);
-                return h.response({});
-            }
         }
     });
 
@@ -198,7 +162,7 @@ module.exports = (context) => {
         }
     });
 
-    // This always runs in the tenant, never in AuthHub
+    /** This always runs in the tenant, never in AuthHub */
     async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
 
         const task = await Task.findById(taskId);
@@ -241,13 +205,13 @@ module.exports = (context) => {
             task.setStatus(Task.STATUS_APPROVED);
             task.setDecisionMade(new Date());
             task.setActor(actorUserId);
-            await utils.triggerWebhooks(task);
+            await utils.triggerWebhook(task);
             context.log('info', 'slack-plugin-route-interaction-task-approved', { taskId });
         } else if (action === 'task_reject') {
             task.setStatus(Task.STATUS_REJECTED);
             task.setDecisionMade(new Date());
             task.setActor(actorUserId);
-            await utils.triggerWebhooks(task);
+            await utils.triggerWebhook(task);
             context.log('info', 'slack-plugin-route-interaction-task-rejected', { taskId });
         } else {
             context.log('error', 'slack-plugin-route-interaction-unknown-action', { action });
