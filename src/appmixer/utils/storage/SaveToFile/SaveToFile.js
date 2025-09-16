@@ -93,10 +93,11 @@ module.exports = {
             let stream;
 
             if (flattenValue && fileType === 'csv') {
+                // Save original next before overriding
+                const originalNext = cursor.next.bind(cursor);
 
                 cursor.next = async () => {
-                    const record = await cursor.originalNext();
-                    // if the record is not null, set record.value to the decoded value
+                    const record = await originalNext();
                     if (record) {
                         return {
                             key: record.key,
