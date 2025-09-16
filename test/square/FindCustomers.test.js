@@ -64,7 +64,7 @@ describe('Square -> FindCustomers', () => {
         const callArgs = context.httpRequest.firstCall.args[0];
         assert.equal(callArgs.url, 'https://connect.squareup.com/v2/customers/search');
         assert.deepEqual(callArgs.data, {}); // Should make a basic search with empty filter
-        
+
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
         const sendJsonArgs = context.sendJson.firstCall.args[0];
         assert(sendJsonArgs.result);
@@ -161,7 +161,7 @@ describe('Square -> FindCustomers', () => {
             start_at: '2023-01-01T00:00:00Z',
             end_at: '2023-12-31T23:59:59Z'
         });
-        
+
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
     });
 
