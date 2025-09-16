@@ -7,14 +7,21 @@ module.exports = {
         const {
             given_name: givenName,
             family_name: familyName,
+            company_name: companyName,
             email_address: emailAddress,
             phone_number: phoneNumber
         } = context.messages.in.content;
+
+        // Validate that at least one required field is provided
+        if (!givenName && !familyName && !companyName && !emailAddress && !phoneNumber) {
+            throw new context.CancelError('At least one of the following fields is required: Given Name, Family Name, Company Name, Email Address, or Phone Number.');
+        }
 
         const customerData = {};
 
         if (givenName) customerData.given_name = givenName;
         if (familyName) customerData.family_name = familyName;
+        if (companyName) customerData.company_name = companyName;
         if (emailAddress) customerData.email_address = emailAddress;
         if (phoneNumber) customerData.phone_number = phoneNumber;
 
@@ -34,6 +41,6 @@ module.exports = {
             data: customerData
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(data.customer, 'out');
     }
 };

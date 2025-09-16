@@ -28,18 +28,16 @@ module.exports = {
             : 'https://connect.squareupsandbox.com';
 
         // https://developer.squareup.com/reference/square/customers-api/update-customer
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
             url: `${baseUrl}/v2/customers/${customerId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
                 'Square-Version': '2025-08-20'
             },
             data: customerData
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

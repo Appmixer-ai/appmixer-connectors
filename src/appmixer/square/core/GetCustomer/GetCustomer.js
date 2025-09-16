@@ -21,11 +21,10 @@ module.exports = {
             url: `${baseUrl}/v2/customers/${customerId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Accept': 'application/json',
                 'Square-Version': '2025-08-20'
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(data.customer, 'out');
     }
 };

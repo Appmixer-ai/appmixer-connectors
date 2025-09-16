@@ -22,11 +22,6 @@ module.exports = {
             return context.profileInfo.merchant?.business_name || context.profileInfo.merchant?.id;
         },
 
-        emailFromProfileInfo: context => {
-
-            return context.profileInfo.merchant?.main_location_id;
-        },
-
         authUrl: context => {
 
             const environment = context.config.environment || 'production';

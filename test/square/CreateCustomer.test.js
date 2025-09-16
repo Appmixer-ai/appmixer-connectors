@@ -69,4 +69,86 @@ describe('Square -> CreateCustomer', () => {
         assert(sendJsonArgs[0], 'Should have sent customer data');
         assert.strictEqual(sendJsonArgs[1], 'out', 'Should send to out port');
     });
+
+    it('should create a customer with company name only', async () => {
+
+        const testData = {
+            company_name: 'Test Company Inc.'
+        };
+
+        context.messages = {
+            in: {
+                content: testData
+            }
+        };
+
+        await component.receive(context);
+
+        const httpArgs = context.httpRequest.getCall(0).args[0];
+        assert.strictEqual(httpArgs.data.company_name, 'Test Company Inc.', 'Should send company name');
+        assert.strictEqual(context.httpRequest.callCount, 1, 'httpRequest should be called once');
+    });
+
+    it('should create a customer with phone number only', async () => {
+
+        const testData = {
+            phone_number: '+1234567890'
+        };
+
+        context.messages = {
+            in: {
+                content: testData
+            }
+        };
+
+        await component.receive(context);
+
+        const httpArgs = context.httpRequest.getCall(0).args[0];
+        assert.strictEqual(httpArgs.data.phone_number, '+1234567890', 'Should send phone number');
+        assert.strictEqual(context.httpRequest.callCount, 1, 'httpRequest should be called once');
+    });
+
+    it('should throw error when no required fields are provided', async () => {
+
+        const testData = {}; // No fields provided
+
+        context.messages = {
+            in: {
+                content: testData
+            }
+        };
+
+        try {
+            await component.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.message.includes('At least one of the following fields is required'), 'Should throw validation error');
+            assert.strictEqual(context.httpRequest.callCount, 0, 'httpRequest should not be called');
+        }
+    });
+
+    it('should not include empty fields in request', async () => {
+
+        const testData = {
+            given_name: 'John',
+            family_name: '', // Empty string
+            email_address: 'john@example.com'
+            // company_name and phone_number not provided
+        };
+
+        context.messages = {
+            in: {
+                content: testData
+            }
+        };
+
+        await component.receive(context);
+
+        const httpArgs = context.httpRequest.getCall(0).args[0];
+        assert.strictEqual(httpArgs.data.given_name, 'John', 'Should include given name');
+        assert.strictEqual(httpArgs.data.email_address, 'john@example.com', 'Should include email');
+        assert.strictEqual(httpArgs.data.family_name, undefined, 'Should not include empty family name');
+        assert.strictEqual(httpArgs.data.company_name, undefined, 'Should not include undefined company name');
+        assert.strictEqual(httpArgs.data.phone_number, undefined, 'Should not include undefined phone number');
+    });
 });
