@@ -23,6 +23,9 @@ module.exports = {
             orderBy,
             outputType
         } = context.messages.in.content;
+
+        // Normalize fileTypes to ensure it's always an array
+        fileTypes = lib.normalizeMultiselectInput(fileTypes);
         const escapedQuery = lib.escapeSpecialCharacters(query);
 
         let folderId;
@@ -55,7 +58,7 @@ module.exports = {
             q.push(`(${mimeTypeQuery})`);
         }
 
-        const orderByNormalized  = searchType === 'fullText' ? null : orderBy;
+        const orderByNormalized = searchType === 'fullText' ? null : orderBy;
         if (recursive && folderId) {
             // Find all subfolder IDs recursively.
             const subfolders = await lib.findSubfolders(context, drive, folderId, orderByNormalized);

@@ -1,9 +1,10 @@
 'use strict';
 
-const lib = require('../../lib.generated');
+const lib = require('../../lib');
 
 module.exports = {
     async receive(context) {
+
         const { searchQuery, folderLocation, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {

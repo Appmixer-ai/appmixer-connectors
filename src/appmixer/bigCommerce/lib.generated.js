@@ -1,15 +1,21 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = 'googleSlides-objects-export';
+const DEFAULT_PREFIX = 'bigCommerce-objects-export';
 
 module.exports = {
 
-    async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [] }) {
+    async sendArrayOutput({
+        context,
+        outputPortName = 'out',
+        outputType = 'array',
+        records = []
+    }) {
+
         if (outputType === 'first') {
             if (records.length === 0) {
                 throw new context.CancelError('No records available for first output type');
             }
-            // One by one.
+            // First item only.
             await context.sendJson(
                 { ...records[0], index: 0, count: records.length },
                 outputPortName
@@ -46,7 +52,7 @@ module.exports = {
         return path.split('.').reduce((acc, part) => acc?.[part], obj);
     },
 
-    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+    getOutputPortOptions(context, outputType, itemSchema, { label }) {
 
         if (outputType === 'object' || outputType === 'first') {
             const options = Object.keys(itemSchema)
@@ -73,11 +79,18 @@ module.exports = {
 
         if (outputType === 'array') {
             return context.sendJson([{
-                label,
-                value,
+                label: 'Items Count',
+                value: 'count',
+                schema: { type: 'integer' }
+            }, {
+                label: label,
+                value: 'result',
                 schema: {
                     type: 'array',
-                    items: { type: 'object', properties: itemSchema }
+                    items: {
+                        type: 'object',
+                        properties: itemSchema
+                    }
                 }
             }], 'out');
         }
@@ -93,12 +106,13 @@ module.exports = {
  * @returns {string}
  */
 const toCsv = (array) => {
+
     const headers = Object.keys(array[0]);
 
     return [
         headers.join(','),
-
         ...array.map(items => {
+
             return Object.values(items).map(property => {
                 if (typeof property === 'object') {
                     return JSON.stringify(property);
@@ -106,6 +120,5 @@ const toCsv = (array) => {
                 return property;
             }).join(',');
         })
-
     ].join('\n');
 };

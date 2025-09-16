@@ -11,7 +11,8 @@ module.exports = {
         if (action === 'listTools') {
             const result = await lib.mcpCall(context, context.auth, 'listTools', []);
             // Filter out tools that are not checked by the user.
-            const selectedTools = context.properties.tools;
+            const selectedTools = context.properties.tools ?
+                lib.normalizeMultiselectInput(context.properties.tools, context, 'Tools') : undefined;
             let tools = result.tools || [];
             if (selectedTools?.length > 0) {
                 tools = tools.filter(tool => selectedTools.includes(tool.name));
