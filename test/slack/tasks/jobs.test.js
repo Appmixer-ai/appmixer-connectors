@@ -10,7 +10,7 @@ const testUtils = require('../../utils.js');
  *  - resubmit-failed-webhooks job finds failed webhooks and re-triggers them
  */
 
-describe('slack-tasks-jobs', () => {
+describe('slack-due-tasks', () => {
 
     let context;
     let dueHandler;
@@ -55,6 +55,8 @@ describe('slack-tasks-jobs', () => {
             setStatus(status) { this.status = status; }
             async save() { savedTasks.push(this); return this; }
             static get STATUS_DUE() { return 'due'; }
+            static get STATUS_ERROR() { return 'error'; }
+            static get STATUS_PENDING() { return 'pending'; }
             static async find(query) { return taskRecords.map(r => new FakeTask(r)); }
         }
         taskFindSpy = sinon.spy(FakeTask, 'find');
@@ -139,9 +141,44 @@ describe('slack-tasks-jobs', () => {
 
     it('should resubmit failed webhooks', async () => {
 
+        // Prepare two tasks in error state: one will succeed when retried, one will fail
+        const errorTasks = [
+            { taskId: 'e1', status: 'error' },
+            { taskId: 'e2', status: 'error' }
+        ];
+        setMockTasks(errorTasks);
+
+        // Configure triggerWebhook: succeed for first, fail for second
+        triggerWebhookStub.onCall(0).resolves(true);
+        triggerWebhookStub.onCall(1).rejects(new Error('webhook failed'));
+
         await resubmitHandler();
 
-        assert(false, 'TODO retry tasks');
+        // Verify Task.find called for error status
+        assert(taskFindSpy.called);
 
+        const saved = getSavedTasks();
+        // First task should have been set to pending then saved, second should be reverted back to error and saved
+        const sbyId = id => saved.find(t => t.taskId === id) || null;
+        const firstSaved = sbyId('e1');
+        const secondSaved = sbyId('e2');
+        assert(firstSaved, 'first task was not saved');
+        assert(secondSaved, 'second task was not saved');
+
+        // First should be pending, second should be error
+        assert.equal(firstSaved.status, 'pending');
+        assert.equal(secondSaved.status, 'error');
+
+        // triggerWebhook should be called twice
+        assert.equal(triggerWebhookStub.callCount, 2);
+
+    });
+
+    it('should handle no failed webhooks gracefully', async () => {
+        setMockTasks([]);
+        await resubmitHandler();
+        const saved = getSavedTasks();
+        assert.equal(saved.length, 0);
+        assert.equal(triggerWebhookStub.callCount, 0);
     });
 });

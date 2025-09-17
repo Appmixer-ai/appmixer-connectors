@@ -230,7 +230,7 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
 
         // AuthHub httpRequest to tenant results in 400. Axios-like response
         authHubContext.httpRequest.resolves({
-            data: { ok: false, error: 'Flow is stopped' },
+            data: { ok: false, error: 'Flow stopped.' },
             status: 400,
             statusText: 'Bad Request',
             headers: {},

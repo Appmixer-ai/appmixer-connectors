@@ -265,5 +265,55 @@ describe('lib.js', () => {
                 text: message
             });
         });
+
+        it('should forward blocks unchanged when not using AuthHub', async () => {
+            context.auth.profileInfo = { botToken: 'testBotToken' };
+            const blocks = [{ type: 'section', text: { type: 'mrkdwn', text: '*Hello*' } }];
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot', blocks };
+
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
+
+            assert.equal(mockWebClient.chat.postMessage.callCount, 1);
+            assert.deepEqual(result, { text: 'testMessage' });
+            assert.deepEqual(mockWebClient.chat.postMessage.getCall(0).args[0], {
+                icon_url: 'https://example.com/icon.png',
+                username: 'MySlackBot',
+                channel: channelId,
+                text: message,
+                blocks
+            });
+        });
+
+        it('should include blocks in AuthHub payload when using AuthHub as bot', async () => {
+            process.env.AUTH_HUB_URL = 'https://auth-hub.example.com';
+            process.env.AUTH_HUB_TOKEN = 'testAuthHubToken';
+            context.config.usesAuthHub = true;
+
+            context.httpRequest = sinon.stub().resolves({ data: { text: message } });
+
+            context.auth.profileInfo = { botToken: 'testBotToken' };
+            const blocks = [{ type: 'section', text: { type: 'mrkdwn', text: '*AuthHub*' } }];
+            const opts = { iconUrl: 'https://example.com/icon.png', username: 'MySlackBot', blocks };
+
+            const result = await sendMessage(context, channelId, message, true, undefined, undefined, opts);
+
+            assert.deepEqual(result, { text: message });
+            assert.equal(context.httpRequest.callCount, 1);
+            assert.deepEqual(context.httpRequest.getCall(0).args[0], {
+                url: process.env.AUTH_HUB_URL + '/plugins/appmixer/slack/auth-hub/send-message',
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${process.env.AUTH_HUB_TOKEN}`
+                },
+                data: {
+                    iconUrl: 'https://example.com/icon.png',
+                    username: 'MySlackBot',
+                    channelId,
+                    token: context.auth.profileInfo?.botToken,
+                    text: message,
+                    blocks
+                }
+            });
+        });
     });
 });

@@ -14,15 +14,11 @@ module.exports = async context => {
             try {
                 const query = { 'status': 'pending', 'decisionBy': { '$lt': new Date() } };
                 const tasks = await Task.find(query);
-                const res = await context.utils.P.mapArray(tasks, function(task) {
+                const res = await context.utils.P.mapArray(tasks, async function(task) {
                     task.setStatus(Task.STATUS_DUE);
-                    let webhooksTriggered;
-                    return utils.triggerWebhook(task)
-                        .then(result => {
-                            webhooksTriggered = result;
-                            return task.save();
-                        })
-                        .then(() => webhooksTriggered);
+                    await utils.triggerWebhook(task);
+                    task.save();
+                    return true;
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });
                 const result = {
                     tasks: tasks.length,
@@ -45,8 +41,25 @@ module.exports = async context => {
             const lock = await context.job.lock('slack-tasks-failed-webhooks');
             try {
                 const tasksToRetry = await Task.find({ status: Task.STATUS_ERROR });
-                const res = await context.utils.P.mapArray(tasksToRetry, function(taskToRetry) {
-                    return utils.triggerWebhook(taskToRetry);
+                const res = await context.utils.P.mapArray(tasksToRetry, async function(taskToRetry) {
+                    // For each task, attempt to set to pending, trigger webhook and save.
+                    // If triggering fails, revert status back to error and save the failure.
+                    taskToRetry.setStatus(Task.STATUS_PENDING);
+                    try {
+                        await utils.triggerWebhook(taskToRetry);
+                        await taskToRetry.save();
+                        return true;
+                    } catch (err) {
+                        // revert status and persist
+                        try {
+                            taskToRetry.setStatus(Task.STATUS_ERROR);
+                            await taskToRetry.save();
+                        } catch (err2) {
+                            // log but continue
+                            context.log('error', '[slack-resubmit-failed-webhooks] failed to save task after trigger error', context.utils.Error.stringify(err2));
+                        }
+                        return false;
+                    }
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });
                 const result = {
                     webhooks: tasksToRetry.length,

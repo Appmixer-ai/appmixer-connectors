@@ -9,28 +9,6 @@ module.exports = context => {
     return {
 
         /**
-         * Gets task using taskId request parameter.
-         * @param req
-         * @return {Promise<Task>}
-         */
-        getTask: async function(req) {
-
-            const { taskId } = req.params;
-
-            if (!taskId) {
-                throw context.http.HttpError.badRequest('Missing task ID.');
-            }
-
-            const task = await Task.findById(taskId);
-
-            if (!task) {
-                throw context.http.HttpError.notFound('Task not found.');
-            }
-
-            return task;
-        },
-
-        /**
          * Trigger a single webhook.
          * @param {Task} [task]
          * @return {Promise<boolean>}
