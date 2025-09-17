@@ -22,7 +22,7 @@ module.exports = {
             // For search, use the search endpoint
             url = 'https://api.intercom.io/companies/search';
             method = 'POST';
-            
+
             // Handle both simple string query and complex query object
             if (typeof query === 'string') {
                 data = {

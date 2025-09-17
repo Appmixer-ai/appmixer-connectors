@@ -30,7 +30,6 @@ describe('Intercom Connector Comprehensive Validation', () => {
     describe('Contact Components', () => {
         const FindContacts = require('../../src/appmixer/intercom/core/FindContacts/FindContacts');
         const CreateContact = require('../../src/appmixer/intercom/core/CreateContact/CreateContact');
-        const RetrieveContact = require('../../src/appmixer/intercom/core/RetrieveContact/RetrieveContact');
 
         it('should list contacts successfully', async () => {
             context.messages = {
@@ -50,7 +49,7 @@ describe('Intercom Connector Comprehensive Validation', () => {
 
         it('should create contact successfully', async () => {
             const randomEmail = `validation-test-${Date.now()}@example.com`;
-            
+
             context.messages = {
                 in: {
                     content: {

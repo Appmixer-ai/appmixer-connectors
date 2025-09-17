@@ -23,7 +23,7 @@ describe('Intercom CreateContact Component', () => {
 
     it('should create a contact with email only', async () => {
         const randomEmail = `test${Date.now()}@example.com`;
-        
+
         context.messages = {
             in: {
                 content: {
@@ -42,7 +42,7 @@ describe('Intercom CreateContact Component', () => {
 
     it('should create a contact with email and name', async () => {
         const randomEmail = `test${Date.now()}@example.com`;
-        
+
         context.messages = {
             in: {
                 content: {

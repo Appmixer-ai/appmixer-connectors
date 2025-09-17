@@ -27,7 +27,7 @@ describe('Intercom Connector Integration Tests', () => {
 
         it('should create and retrieve a contact', async () => {
             const randomEmail = `integration-test-${Date.now()}@example.com`;
-            
+
             // 1. Create a contact
             context.messages = {
                 in: {

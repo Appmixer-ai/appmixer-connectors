@@ -63,15 +63,15 @@ describe('Intercom Final Component Validation', () => {
         it('should have all required components present', () => {
             const fs = require('fs');
             const componentDir = path.join(__dirname, '../../src/appmixer/intercom/core');
-            
+
             const expectedComponents = [
                 'CreateContact',
-                'FindContacts', 
+                'FindContacts',
                 'RetrieveContact',
                 'UpdateContact',
                 'CreateCompany',
                 'FindCompanies',
-                'RetrieveCompany', 
+                'RetrieveCompany',
                 'UpdateCompany',
                 'FindConversations',
                 'RetrieveConversation',
@@ -81,10 +81,10 @@ describe('Intercom Final Component Validation', () => {
             ];
 
             const actualComponents = fs.readdirSync(componentDir);
-            
+
             expectedComponents.forEach(component => {
                 assert(actualComponents.includes(component), `Component ${component} should exist`);
-                
+
                 // Check that both .js and component.json files exist
                 const componentPath = path.join(componentDir, component);
                 const files = fs.readdirSync(componentPath);
