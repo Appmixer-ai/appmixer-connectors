@@ -2,8 +2,6 @@
 
 'use strict';
 
-const lib = require('../../lib.generated');
-
 module.exports = {
 
     async receive(context) {
@@ -24,8 +22,8 @@ module.exports = {
 
         if (custom_attributes) {
             try {
-                requestBody.custom_attributes = typeof custom_attributes === 'string' 
-                    ? JSON.parse(custom_attributes) 
+                requestBody.custom_attributes = typeof custom_attributes === 'string'
+                    ? JSON.parse(custom_attributes)
                     : custom_attributes;
             } catch (error) {
                 throw new context.CancelError('Invalid custom attributes format. Must be valid JSON.');
@@ -38,7 +36,6 @@ module.exports = {
             url: 'https://api.intercom.io/contacts',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
                 'Intercom-Version': '2.14'
             },
             data: requestBody

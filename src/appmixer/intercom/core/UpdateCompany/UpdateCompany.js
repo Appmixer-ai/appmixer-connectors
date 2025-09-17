@@ -1,6 +1,5 @@
+/* eslint-disable camelcase */
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
 
@@ -20,8 +19,8 @@ module.exports = {
 
         if (custom_attributes) {
             try {
-                requestBody.custom_attributes = typeof custom_attributes === 'string' 
-                    ? JSON.parse(custom_attributes) 
+                requestBody.custom_attributes = typeof custom_attributes === 'string'
+                    ? JSON.parse(custom_attributes)
                     : custom_attributes;
             } catch (error) {
                 throw new context.CancelError('Invalid custom attributes format. Must be valid JSON.');
@@ -29,17 +28,16 @@ module.exports = {
         }
 
         // https://developers.intercom.com/reference#update-a-company
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PATCH',
             url: `https://api.intercom.io/companies/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
                 'Intercom-Version': '2.14'
             },
             data: requestBody
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

@@ -1,7 +1,4 @@
 'use strict';
-
-const lib = require('../../lib.generated');
-
 module.exports = {
 
     async receive(context) {
@@ -18,7 +15,6 @@ module.exports = {
             url: `https://api.intercom.io/conversations/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
                 'Intercom-Version': '2.14'
             }
         });

@@ -1,6 +1,5 @@
+/* eslint-disable camelcase */
 'use strict';
-
-const lib = require('../../lib.generated');
 
 module.exports = {
 
@@ -23,19 +22,18 @@ module.exports = {
         const requestBody = {
             message_type: message_type,
             body: body,
-            from: {
-                type: 'admin',
+            to: {
+                type: 'user',
                 id: recipient_id
             }
         };
 
-        // https://developers.intercom.com/reference#create-a-message
+        // https://developers.intercom.com/reference#send-a-message
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/messages',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
                 'Intercom-Version': '2.14'
             },
             data: requestBody

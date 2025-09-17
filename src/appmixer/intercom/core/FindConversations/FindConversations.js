@@ -51,7 +51,6 @@ module.exports = {
                 url: url,
                 headers: {
                     'Authorization': `Bearer ${context.auth.accessToken}`,
-                    'Content-Type': 'application/json',
                     'Intercom-Version': '2.14'
                 },
                 data: data
@@ -61,8 +60,8 @@ module.exports = {
             return lib.sendArrayOutput({ context, records, outputType });
         } catch (error) {
             // Log the error for debugging
-            context.log('error', 'FindConversations API request failed', { 
-                error: error.message, 
+            context.log('error', 'FindConversations API request failed', {
+                error: error.message,
                 status: error.response?.status,
                 data: error.response?.data,
                 url: url,
