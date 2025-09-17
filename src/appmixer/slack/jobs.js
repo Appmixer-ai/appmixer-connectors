@@ -17,7 +17,7 @@ module.exports = async context => {
                 const res = await context.utils.P.mapArray(tasks, function(task) {
                     task.setStatus(Task.STATUS_DUE);
                     let webhooksTriggered;
-                    return utils.triggerWebhooks(task)
+                    return utils.triggerWebhook(task)
                         .then(result => {
                             webhooksTriggered = result;
                             return task.save();

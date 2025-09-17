@@ -45,9 +45,10 @@ module.exports = context => {
                     url: task.getWebhookUrl(),
                     data: task.toJson()
                 });
-                return true;
             } catch (err) {
-                return false;
+                task.setStatus(Task.STATUS_ERROR);
+                await task.save();
+                context.log('error', `[slack-trigger-webhook-error] ${context.utils.Error.stringify(err)}`, { taskId: task.id });
             }
         }
     };
