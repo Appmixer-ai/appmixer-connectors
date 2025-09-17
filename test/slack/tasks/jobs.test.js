@@ -15,12 +15,9 @@ describe('slack-tasks-jobs', () => {
     let context;
     let dueHandler;
     let resubmitHandler;
-    let triggerWebhooksStub;
     let triggerWebhookStub;
     let taskFindSpy;
-    let webhookFindSpy;
     let setMockTasks;
-    let setMockWebhooks;
     let getSavedTasks;
     // eslint-disable-next-line max-len, one-var
     let utilsPath, taskModelPath, webhookModelPath, jobsPath, jobsUtilsRequirePath, jobsTaskRequirePath, jobsWebhookRequirePath;
@@ -38,14 +35,12 @@ describe('slack-tasks-jobs', () => {
 
         // Stub the utils module used by slack/jobs.js
         utilsPath = path.resolve(__dirname, '../../../src/appmixer/slack/tasks/utils.js');
-        triggerWebhooksStub = sinon.stub().callsFake(async () => [true]);
         triggerWebhookStub = sinon.stub().resolves(true);
         require.cache[require.resolve(utilsPath)] = {
             id: utilsPath,
             filename: utilsPath,
             loaded: true,
             exports: () => ({
-                triggerWebhooks: triggerWebhooksStub,
                 triggerWebhook: triggerWebhookStub
             })
         };
@@ -88,7 +83,6 @@ describe('slack-tasks-jobs', () => {
             filename: jobsUtilsRequirePath,
             loaded: true,
             exports: () => ({
-                triggerWebhooks: triggerWebhooksStub,
                 triggerWebhook: triggerWebhookStub
             })
         };
@@ -132,7 +126,7 @@ describe('slack-tasks-jobs', () => {
         assert(saved.every(t => t.status === 'due'));
 
         // Webhooks should be triggered once per task
-        assert.equal(triggerWebhooksStub.callCount, 2);
+        assert.equal(triggerWebhookStub.callCount, 2);
     });
 
     it('should handle no due tasks gracefully', async () => {
@@ -140,21 +134,14 @@ describe('slack-tasks-jobs', () => {
         await dueHandler();
         const saved = getSavedTasks();
         assert.equal(saved.length, 0);
-        assert.equal(triggerWebhooksStub.callCount, 0);
+        assert.equal(triggerWebhookStub.callCount, 0);
     });
 
     it('should resubmit failed webhooks', async () => {
-        const failedWebhooks = [{ webhookId: 'w1' }, { webhookId: 'w2' }];
-        setMockWebhooks(failedWebhooks);
 
         await resubmitHandler();
 
-        assert(webhookFindSpy.calledOnce);
-        const queryArg = webhookFindSpy.getCall(0).args[0];
-        // Should look for failed status
-        assert.equal(queryArg.status, 'fail');
+        assert(false, 'TODO retry tasks');
 
-        // Each failed webhook should be retriggered
-        assert.equal(triggerWebhookStub.callCount, failedWebhooks.length);
     });
 });

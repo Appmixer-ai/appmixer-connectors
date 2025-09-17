@@ -102,7 +102,7 @@ module.exports = {
 
         const origin = new URL(context.getWebhookUrl()).origin;
         // Max action value length is 2000 characters: https://docs.slack.dev/reference/block-kit/block-elements/button-element#fields
-        const actionValue = [task.taskId, context.componentId, origin].join('|');
+        const actionValue = [task.taskId, origin].join('|');
         const blocks = [
             { type: 'section', text: { type: 'mrkdwn', text: `*${title}*\n${description}` } },
             { type: 'context', elements: [

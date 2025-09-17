@@ -44,7 +44,7 @@ module.exports = async context => {
         try {
             const lock = await context.job.lock('slack-tasks-failed-webhooks');
             try {
-                const tasksToRetry = await Task.find({ status: Task.STATUS_RETRY });
+                const tasksToRetry = await Task.find({ status: Task.STATUS_ERROR });
                 const res = await context.utils.P.mapArray(tasksToRetry, function(taskToRetry) {
                     return utils.triggerWebhook(taskToRetry);
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });

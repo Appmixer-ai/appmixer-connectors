@@ -69,7 +69,7 @@ module.exports = (context) => {
             auth: false,
             validate: {
                 query: context.http.Joi.object({
-                    status: context.http.Joi.string().valid('pending', 'approved', 'rejected', 'due'),
+                    status: context.http.Joi.string().valid('pending', 'approved', 'rejected', 'due', 'error'),
                     title: context.http.Joi.string(),
                     requester: context.http.Joi.string(),
                     approver: context.http.Joi.string(),
@@ -144,12 +144,12 @@ module.exports = (context) => {
                 if (!actions || !Array.isArray(actions) || actions.length === 0) {
                     return h.response({ text: 'No actions found' }).code(400);
                 }
-                // value format: taskId|componentId|host, e.g. "taskId|fc8fee2a-dd23-491a-803a-842dc1f9ffb6|https://api.acme.appmixer.cloud"
-                const [taskId, componentId, host] = actions[0].value?.split('|');
+                // value format: taskId|host, e.g. "taskId|https://api.acme.appmixer.cloud"
+                const [taskId, host] = actions[0].value?.split('|');
                 const action = actions[0].action_id;
 
 
-                // Normal processing below
+                // Normal processing below - tenant pod
 
                 // Handle Task Approval actions
                 if (action.startsWith('task_')) {
