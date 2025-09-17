@@ -148,6 +148,48 @@ module.exports = (context) => {
                 const [taskId, host] = actions[0].value?.split('|');
                 const action = actions[0].action_id;
 
+                // -- AuthHub processing start --
+                // If this is AuthHub, forward the request to the tenant
+                const isAuthHubPod = !!process.env.AUTH_HUB_URL && !process.env.AUTH_HUB_TOKEN;
+                if (isAuthHubPod) {
+                    if (!host) {
+                        context.log('error', 'slack-plugin-route-interaction-missing-host', { action, taskId });
+                        return h.response({ text: 'Missing tenant host information' }).code(400);
+                    } else if (process.env.AUTH_HUB_URL === host) {
+                        context.log('error', 'slack-plugin-route-interaction-invalid-host', { action, taskId, host });
+                        return h.response({ text: 'Invalid tenant host information' }).code(400);
+                    }
+
+                    // Forward the entire payload as-is to the tenant plugin
+                    // - we don't use the ususal context.triggerListeners because they trigger the component directly
+                    // - instead we need to go through the tenant's /interactions endpoint
+                    const tenantInteractionsURL = `${host}/plugins/appmixer/slack/interactions`;
+                    try {
+                        const { data, status } = await context.httpRequest({
+                            url: tenantInteractionsURL,
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            data: req.payload
+                        });
+                        return h.response(data).code(status);
+                    } catch (err) {
+                        // Possible reasons for failure:
+                        // - flow is stopped
+                        // - network error
+                        // - tenant pod not reachable
+                        // - tenant pod returns an error (4xx, 5xx)
+                        context.log('error', 'slack-plugin-route-interaction-forward-error', {
+                            action,
+                            taskId,
+                            host,
+                            error: context.utils.Error.stringify(err)
+                        });
+                        return h.response({ text: 'Error forwarding request to tenant' }).code(500);
+                    }
+                }
+                // -- AuthHub processing end --
 
                 // Normal processing below - tenant pod
 
@@ -182,7 +224,7 @@ module.exports = (context) => {
             context.log('warn', 'slack-plugin-route-interaction-unauthorized-user', {
                 taskId,
                 actorUserId,
-                expectedApprover: task.approver()
+                expectedApprover: task.approver
             });
 
             // Send response to the user who clicked
@@ -191,7 +233,7 @@ module.exports = (context) => {
                 url: responseUrl,
                 headers: { 'Content-Type': 'application/json' },
                 data: {
-                    text: `❌ Only <@${task.approver()}> can approve or reject this task.`,
+                    text: `❌ Only <@${task.approver}> can approve or reject this task.`,
                     response_type: 'ephemeral'
                 }
             });
