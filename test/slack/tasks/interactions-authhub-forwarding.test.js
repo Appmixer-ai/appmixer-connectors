@@ -14,41 +14,29 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
 
     let authHubContext;
     let tenantContext;
-    let routes; // routes-tasks.js export
+    let routes;
     let slackLib;
     let utilsTriggerWebhookStub;
 
     beforeEach(async () => {
-        // Fresh contexts
-        authHubContext = testUtils.createMockContext({
-            http: {
-                router: { register: sinon.stub() },
-                Joi: {
-                    string: () => ({ required: () => ({}), uri: () => ({ required: () => ({}) }), valid: () => ({}) }),
-                    date: () => ({ iso: () => ({}) }),
-                    object: () => ({}),
-                    number: () => ({ integer: () => ({ min: () => ({ max: () => ({ default: () => ({}) }) }) }) })
-                },
-                HttpError: class { static badRequest(msg) { const e = new Error(msg); e.code = 400; return e; } }
-            }
-        });
+        // Create standard mock contexts
+        authHubContext = testUtils.createMockContext({ http: { router: { register: sinon.stub() } } });
+        tenantContext = testUtils.createMockContext({ http: { router: { register: sinon.stub() } } });
+
+        // Minimal Joi shim expected by routes (keeps tests simple)
+        const minimalJoi = {
+            string: () => ({ required: () => ({}), uri: () => ({ required: () => ({}) }), valid: () => ({}) }),
+            date: () => ({ iso: () => ({}) }),
+            object: () => ({}),
+            number: () => ({ integer: () => ({ min: () => ({ max: () => ({ default: () => ({}) }) }) }) })
+        };
+        authHubContext.http.Joi = minimalJoi;
+        tenantContext.http.Joi = minimalJoi;
+
         // AuthHub-specific methods used by routes-tasks AuthHub branch
         authHubContext.getListeners = sinon.stub();
 
-        tenantContext = testUtils.createMockContext({
-            http: {
-                router: { register: sinon.stub() },
-                Joi: {
-                    string: () => ({ required: () => ({}), uri: () => ({ required: () => ({}) }), valid: () => ({}) }),
-                    date: () => ({ iso: () => ({}) }),
-                    object: () => ({}),
-                    number: () => ({ integer: () => ({ min: () => ({ max: () => ({ default: () => ({}) }) }) }) })
-                },
-                HttpError: class { static badRequest(msg) { const e = new Error(msg); e.code = 400; return e; } }
-            }
-        });
-
-        // In-memory Task model stub (shared for both contexts)
+        // In-memory Task model stub (shared for both contexts) - keep minimal and reliable
         const memory = { tasks: {} };
         const taskModelPath = require.resolve('../../../src/appmixer/slack/tasks/SlackTaskModel.js');
         require.cache[taskModelPath] = {
@@ -85,22 +73,20 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
             }
         };
 
-        // Stub slack/tasks/utils.js with a spy-able triggerWebhook
+        // Stub slack/tasks/utils.js with a spy-able triggerWebhook using minimal export
         const utilsPath = require.resolve('../../../src/appmixer/slack/tasks/utils.js');
         utilsTriggerWebhookStub = sinon.stub().resolves();
         require.cache[utilsPath] = {
             id: utilsPath,
             filename: utilsPath,
             loaded: true,
-            exports: () => ({
-                triggerWebhook: utilsTriggerWebhookStub,
-                getTask: async () => ({})
-            })
+            exports: () => ({ triggerWebhook: utilsTriggerWebhookStub, getTask: async () => ({}) })
         };
 
-        // Prepare routes module and common slack lib
+        // Prepare routes module and common slack lib; ensure signature validation passes by default
         routes = require('../../../src/appmixer/slack/routes-tasks.js');
         slackLib = require('../../../src/appmixer/slack/lib.js');
+        // slackLib?.isValidPayload?.restore();
         sinon.stub(slackLib, 'isValidPayload').returns(true);
 
         // Register routes for both contexts
