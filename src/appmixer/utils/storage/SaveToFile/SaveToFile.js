@@ -39,7 +39,6 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
             if (i < defaultIterationMax) {
                 keySamples.push(element);
             }
-            element = JSON.stringify(element);
             input.push(element);
             i += 1;
         }
