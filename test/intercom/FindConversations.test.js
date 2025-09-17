@@ -32,6 +32,11 @@ describe('FindConversations Component', function() {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
+            log: function(level, message, data) {
+                if (level === 'error') {
+                    console.error(`[${level}] ${message}`, data || '');
+                }
+            },
             CancelError: class extends Error {
                 constructor(message) {
                     super(message);

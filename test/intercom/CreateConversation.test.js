@@ -8,9 +8,19 @@ const component = require('../../src/appmixer/intercom/core/CreateConversation/C
 // Make createMockContext available globally
 global.createMockContext = createMockContext;
 
-describe('Intercom CreateConversation Component', () => {
+describe('Intercom CreateConversation Component', function() {
 
     let context;
+
+    this.timeout(30000);
+
+    before(function() {
+        // Skip all tests if the access token is not set
+        if (!process.env.INTERCOM_ACCESS_TOKEN) {
+            console.log('Skipping tests - INTERCOM_ACCESS_TOKEN not set');
+            this.skip();
+        }
+    });
 
     beforeEach(() => {
         context = global.createMockContext({
