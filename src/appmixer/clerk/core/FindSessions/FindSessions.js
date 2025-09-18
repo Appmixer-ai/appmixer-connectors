@@ -86,9 +86,10 @@ module.exports = {
         if (sessionId) queryParams.append('session_id', sessionId);
 
         // Make API request
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.clerk.com/v1/sessions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+            url: `https://api.clerk.com/v1/sessions${queryString}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }

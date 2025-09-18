@@ -4,7 +4,6 @@ const DEFAULT_API_VERSION = '58.0';
 
 module.exports = {
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'object', 'array', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [] }) {
         if (outputType === 'object') {

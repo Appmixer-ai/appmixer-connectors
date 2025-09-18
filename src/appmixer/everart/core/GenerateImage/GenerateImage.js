@@ -1,4 +1,7 @@
+'use strict';
+
 const lib = require('../../lib.generated');
+
 const schema = {
     'id': { 'type': 'string', 'title': 'Id' },
     'model_id': { 'type': 'string', 'title': 'Model Id' },
@@ -23,6 +26,10 @@ module.exports = {
             webhook_url: webhookUrl,
             outputType
         } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Model ID is required!');
+        }
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Generations', value: 'generations' });

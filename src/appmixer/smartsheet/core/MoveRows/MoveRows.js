@@ -36,7 +36,7 @@ module.exports = {
             }
         };
 
-        const queryParameters = { 'include': input['include'],
+        const queryParameters = { 'include': input['include'] ? lib.normalizeMultiselectInput(input['include'], context, 'Include') : undefined,
             'ignoreRowsNotFound': input['ignoreRowsNotFound'] };
 
         Object.keys(queryParameters).forEach(parameter => {

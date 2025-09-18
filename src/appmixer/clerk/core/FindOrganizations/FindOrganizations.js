@@ -75,9 +75,10 @@ module.exports = {
         }
 
         // Make API request with optional query parameter
+        const queryString = query ? `?query=${encodeURIComponent(query)}` : '';
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.clerk.com/v1/organizations${query ? `?query=${encodeURIComponent(query)}` : ''}`,
+            url: `https://api.clerk.com/v1/organizations${queryString}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }

@@ -6,7 +6,7 @@ module.exports = {
 
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [], arrayPropertyValue = 'result' }) {
         if (outputType === 'first') {
-            // One by one.
+            // First item found only.
             await context.sendJson(records[0], outputPortName);
         } else if (outputType === 'object') {
             // One by one.

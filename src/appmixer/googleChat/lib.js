@@ -41,7 +41,6 @@ module.exports = {
             );
         } else if (outputType === 'object') {
             // One by one.
-            // One by one.
             for (let index = 0; index < records.length; index++) {
                 await context.sendJson(
                     { ...records[index], index, count: records.length },

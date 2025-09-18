@@ -21,7 +21,7 @@ module.exports = {
         const headers = {};
         const query = new URLSearchParams;
 
-        const queryParameters = { 'include': input['include'] };
+        const queryParameters = { 'include': input['include'] ? lib.normalizeMultiselectInput(input['include'], context, 'Include') : undefined };
 
         Object.keys(queryParameters).forEach(parameter => {
             if (queryParameters[parameter]) {

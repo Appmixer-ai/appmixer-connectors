@@ -3,7 +3,6 @@ const pathModule = require('path');
 
 module.exports = {
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'item', 'items', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'first', records = [] }) {
 

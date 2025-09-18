@@ -1,6 +1,17 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
+
         const { name, subject, image_urls: imageUrls } = context.messages.in.content;
+
+        if (!name) {
+            throw new context.CancelError('Name is required!');
+        }
+
+        if (!subject) {
+            throw new context.CancelError('Subject is required!');
+        }
 
         const payload = {
             name,
@@ -8,7 +19,7 @@ module.exports = {
         };
 
         if (!Array.isArray(imageUrls?.AND) || imageUrls.AND.length === 0) {
-            throw new context.CancelError('"Image Urls" must be provided.');
+            throw new context.CancelError('Image URLs must be provided.');
         }
 
         payload.image_urls = imageUrls.AND.map(item => item['image_urls_item']);
