@@ -29,7 +29,7 @@ module.exports = {
 
         if (reply_type === 'contact') {
             // Contact reply validation and construction
-            
+
             // Check that at least one contact identifier is provided
             if (!intercom_user_id && !email && !user_id) {
                 throw new context.CancelError('For contact replies, at least one contact identifier is required (intercom_user_id, email, or user_id)!');
