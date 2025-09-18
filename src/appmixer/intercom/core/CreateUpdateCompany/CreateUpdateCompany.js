@@ -5,28 +5,23 @@ module.exports = {
 
     async receive(context) {
 
-        const { company_id, name, custom_attributes } = context.messages.in.content;
+        const { company_id, name, website, size } = context.messages.in.content;
 
         if (!company_id) {
             throw new context.CancelError('Company ID is required!');
         }
 
         const requestBody = {
-            company_id: company_id
+            company_id,
+            name
         };
 
-        if (name) {
-            requestBody.name = name;
+        if (website) {
+            requestBody.website = website;
         }
 
-        if (custom_attributes) {
-            try {
-                requestBody.custom_attributes = typeof custom_attributes === 'string'
-                    ? JSON.parse(custom_attributes)
-                    : custom_attributes;
-            } catch (error) {
-                throw new context.CancelError('Invalid custom attributes format. Must be valid JSON.');
-            }
+        if (size) {
+            requestBody.size = size;
         }
 
         // https://developers.intercom.com/reference#create-a-company

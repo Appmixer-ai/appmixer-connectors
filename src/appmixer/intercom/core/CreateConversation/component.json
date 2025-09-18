@@ -17,36 +17,86 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "contact_id": {
+                    "from_type": {
                         "type": "string"
                     },
-                    "admin_id": {
+                    "from_id": {
                         "type": "string"
                     },
                     "body": {
                         "type": "string"
+                    },
+                    "message_type": {
+                        "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "from_type",
+                    "from_id",
+                    "body"
+                ]
             },
             "inspector": {
                 "inputs": {
-                    "contact_id": {
-                        "type": "text",
-                        "tooltip": "The unique identifier of the contact initiating the conversation",
-                        "label": "Contact Id",
-                        "index": 0
+                    "from_type": {
+                        "type": "select",
+                        "tooltip": "The role associated to the contact",
+                        "label": "From Type",
+                        "index": 0,
+                        "options": [
+                            {
+                                "label": "User",
+                                "value": "user"
+                            },
+                            {
+                                "label": "Lead",
+                                "value": "lead"
+                            },
+                            {
+                                "label": "Contact",
+                                "value": "contact"
+                            }
+                        ]
                     },
-                    "admin_id": {
+                    "from_id": {
                         "type": "text",
-                        "tooltip": "The unique identifier of the admin initiating or responding",
-                        "label": "Admin Id",
+                        "tooltip": "The identifier for the contact which is given by Intercom (24 characters)",
+                        "label": "From ID",
                         "index": 1
                     },
                     "body": {
-                        "type": "text",
-                        "tooltip": "The message content for the conversation",
+                        "type": "textarea",
+                        "tooltip": "The content of the message. HTML is not supported.",
                         "label": "Body",
                         "index": 2
+                    },
+                    "message_type": {
+                        "type": "select",
+                        "tooltip": "The kind of message being created",
+                        "label": "Message Type",
+                        "index": 4,
+                        "options": [
+                            {
+                                "label": "In-app",
+                                "value": "inapp"
+                            },
+                            {
+                                "label": "Email",
+                                "value": "email"
+                            },
+                            {
+                                "label": "SMS",
+                                "value": "sms"
+                            },
+                            {
+                                "label": "WhatsApp",
+                                "value": "whatsapp"
+                            },
+                            {
+                                "label": "Facebook",
+                                "value": "facebook"
+                            }
+                        ]
                     }
                 }
             }
@@ -57,22 +107,43 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Type",
+                    "value": "type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Message Id",
                     "value": "id",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Subject",
-                    "value": "subject",
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Body",
+                    "value": "body",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Status",
-                    "value": "status",
+                    "label": "Message Type",
+                    "value": "message_type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Conversation Id",
+                    "value": "conversation_id",
                     "schema": {
                         "type": "string"
                     }

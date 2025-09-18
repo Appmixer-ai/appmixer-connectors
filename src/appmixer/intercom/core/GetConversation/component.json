@@ -1,8 +1,7 @@
 {
-    "name": "appmixer.intercom.core.ReplytoConversation",
-    "label": "Reply to Conversation",
+    "name": "appmixer.intercom.core.GetConversation",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Send a reply to an existing conversation. This can be used by admins or contacts to respond.",
+    "description": "Get detailed information about a specific conversation by providing its unique identifier.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -19,150 +18,17 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string",
-                        "title": "Conversation ID"
-                    },
-                    "reply_type": {
-                        "type": "string",
-                        "enum": [
-                            "contact",
-                            "admin"
-                        ],
-                        "title": "Reply Type"
-                    },
-                    "intercom_user_id": {
-                        "type": "string",
-                        "title": "Intercom User ID"
-                    },
-                    "email": {
-                        "type": "string",
-                        "title": "Email"
-                    },
-                    "user_id": {
-                        "type": "string",
-                        "title": "User ID"
-                    },
-                    "admin_id": {
-                        "type": "string",
-                        "title": "Admin ID"
-                    },
-                    "message_type": {
-                        "type": "string",
-                        "enum": [
-                            "comment",
-                            "note",
-                            "quick_reply"
-                        ],
-                        "title": "Message Type"
-                    },
-                    "body": {
-                        "type": "string",
-                        "title": "Body"
+                        "type": "string"
                     }
-                },
-                "required": [
-                    "id",
-                    "reply_type"
-                ]
+                }
             },
             "inspector": {
                 "inputs": {
                     "id": {
                         "type": "text",
-                        "tooltip": "The unique identifier of the conversation to reply to, or 'last' to reply to the last part",
+                        "tooltip": "The unique identifier of the conversation",
                         "label": "Conversation Id",
                         "index": 0
-                    },
-                    "reply_type": {
-                        "type": "select",
-                        "tooltip": "Choose whether this is a contact reply or admin reply",
-                        "label": "Reply Type",
-                        "index": 1,
-                        "options": [
-                            {
-                                "label": "Contact Reply",
-                                "value": "contact"
-                            },
-                            {
-                                "label": "Admin Reply",
-                                "value": "admin"
-                            }
-                        ]
-                    },
-                    "intercom_user_id": {
-                        "when": {
-                            "eq": {
-                                "reply_type": "contact"
-                            }
-                        },
-                        "type": "text",
-                        "tooltip": "The Intercom identifier for the contact (use this OR email OR user_id)",
-                        "label": "Intercom User ID",
-                        "index": 2
-                    },
-                    "email": {
-                        "when": {
-                            "eq": {
-                                "reply_type": "contact"
-                            }
-                        },
-                        "type": "text",
-                        "tooltip": "The email address of the contact (use this OR intercom_user_id OR user_id)",
-                        "label": "Email",
-                        "index": 3
-                    },
-                    "user_id": {
-                        "when": {
-                            "eq": {
-                                "reply_type": "contact"
-                            }
-                        },
-                        "type": "text",
-                        "tooltip": "The external user ID for the contact (use this OR intercom_user_id OR email)",
-                        "label": "User ID",
-                        "index": 4
-                    },
-                    "admin_id": {
-                        "when": {
-                            "eq": {
-                                "reply_type": "admin"
-                            }
-                        },
-                        "type": "text",
-                        "tooltip": "The ID of the admin authoring the reply (required for admin replies)",
-                        "label": "Admin ID",
-                        "index": 5
-                    },
-                    "message_type": {
-                        "when": {
-                            "eq": {
-                                "reply_type": "admin"
-                            }
-                        },
-                        "type": "select",
-                        "tooltip": "The type of message (required for admin replies)",
-                        "label": "Message Type",
-                        "index": 6,
-                        "options": [
-                            {
-                                "label": "Comment",
-                                "value": "comment"
-                            },
-                            {
-                                "label": "Note",
-                                "value": "note"
-                            },
-                            {
-                                "label": "Quick Reply",
-                                "value": "quick_reply"
-                            }
-                        ]
-                    },
-                    "body": {
-                        "type": "textarea",
-                        "tooltip": "The text body of the reply (required for contact replies and admin comment/note types)",
-                        "label": "Body",
-                        "index": 7
                     }
                 }
             }
@@ -180,7 +46,7 @@
                     }
                 },
                 {
-                    "label": "Id",
+                    "label": "Conversation Id",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -204,7 +70,7 @@
                     "label": "Waiting Since",
                     "value": "waiting_since",
                     "schema": {
-                        "type": "number"
+                        "type": "null"
                     }
                 },
                 {
@@ -316,21 +182,7 @@
                     "label": "First Contact Reply",
                     "value": "first_contact_reply",
                     "schema": {
-                        "type": "object",
-                        "properties": {
-                            "created_at": {
-                                "type": "number",
-                                "title": "First Contact Reply.Created At"
-                            },
-                            "type": {
-                                "type": "string",
-                                "title": "First Contact Reply.Type"
-                            },
-                            "url": {
-                                "type": "null",
-                                "title": "First Contact Reply.Url"
-                            }
-                        }
+                        "type": "null"
                     }
                 },
                 {
@@ -380,7 +232,41 @@
                             },
                             "tags": {
                                 "type": "array",
-                                "items": {},
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "title": "Tags.Tags.Type"
+                                        },
+                                        "id": {
+                                            "type": "string",
+                                            "title": "Tags.Tags.Id"
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "title": "Tags.Tags.Name"
+                                        },
+                                        "applied_at": {
+                                            "type": "number",
+                                            "title": "Tags.Tags.Applied At"
+                                        },
+                                        "applied_by": {
+                                            "type": "object",
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string",
+                                                    "title": "Tags.Tags.Applied By.Type"
+                                                },
+                                                "id": {
+                                                    "type": "string",
+                                                    "title": "Tags.Tags.Applied By.Id"
+                                                }
+                                            },
+                                            "title": "Tags.Tags.Applied By"
+                                        }
+                                    }
+                                },
                                 "title": "Tags.Tags"
                             }
                         }
@@ -511,7 +397,7 @@
                                             "title": "Conversation Parts.Conversation Parts.Type"
                                         },
                                         "id": {
-                                            "type": "string",
+                                            "type": "number",
                                             "title": "Conversation Parts.Conversation Parts.Id"
                                         },
                                         "part_type": {
@@ -519,7 +405,10 @@
                                             "title": "Conversation Parts.Conversation Parts.Part Type"
                                         },
                                         "body": {
-                                            "type": "string",
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
                                             "title": "Conversation Parts.Conversation Parts.Body"
                                         },
                                         "created_at": {
@@ -535,19 +424,30 @@
                                             "title": "Conversation Parts.Conversation Parts.Notified At"
                                         },
                                         "assigned_to": {
-                                            "type": "null",
+                                            "type": [
+                                                "object",
+                                                "null"
+                                            ],
+                                            "properties": {
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "id": {
+                                                    "type": "string"
+                                                }
+                                            },
                                             "title": "Conversation Parts.Conversation Parts.Assigned To"
                                         },
                                         "author": {
                                             "type": "object",
                                             "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "title": "Conversation Parts.Conversation Parts.Author.Id"
-                                                },
                                                 "type": {
                                                     "type": "string",
                                                     "title": "Conversation Parts.Conversation Parts.Author.Type"
+                                                },
+                                                "id": {
+                                                    "type": "string",
+                                                    "title": "Conversation Parts.Conversation Parts.Author.Id"
                                                 },
                                                 "name": {
                                                     "type": "string",
@@ -566,27 +466,112 @@
                                             "title": "Conversation Parts.Conversation Parts.Attachments"
                                         },
                                         "external_id": {
-                                            "type": "null",
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ],
                                             "title": "Conversation Parts.Conversation Parts.External Id"
                                         },
                                         "redacted": {
                                             "type": "boolean",
                                             "title": "Conversation Parts.Conversation Parts.Redacted"
                                         },
-                                        "metadata": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "title": "Conversation Parts.Conversation Parts.Metadata"
-                                        },
                                         "email_message_metadata": {
                                             "type": "null",
                                             "title": "Conversation Parts.Conversation Parts.Email Message Metadata"
                                         },
+                                        "state": {
+                                            "type": "string",
+                                            "title": "Conversation Parts.Conversation Parts.State"
+                                        },
+                                        "tags": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string",
+                                                        "title": "Conversation Parts.Conversation Parts.Tags.Type"
+                                                    },
+                                                    "id": {
+                                                        "type": "string",
+                                                        "title": "Conversation Parts.Conversation Parts.Tags.Id"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "title": "Conversation Parts.Conversation Parts.Tags.Name"
+                                                    }
+                                                }
+                                            },
+                                            "title": "Conversation Parts.Conversation Parts.Tags"
+                                        },
+                                        "event_details": {
+                                            "type": "object",
+                                            "properties": {
+                                                "action": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "title": "Conversation Parts.Conversation Parts.Event Details.Action.Name"
+                                                        },
+                                                        "result": {
+                                                            "type": "string",
+                                                            "title": "Conversation Parts.Conversation Parts.Event Details.Action.Result"
+                                                        }
+                                                    },
+                                                    "title": "Conversation Parts.Conversation Parts.Event Details.Action"
+                                                },
+                                                "attribute": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "title": "Conversation Parts.Conversation Parts.Event Details.Attribute.Name"
+                                                        }
+                                                    },
+                                                    "title": "Conversation Parts.Conversation Parts.Event Details.Attribute"
+                                                },
+                                                "value": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "title": "Conversation Parts.Conversation Parts.Event Details.Value.Name"
+                                                        }
+                                                    },
+                                                    "title": "Conversation Parts.Conversation Parts.Event Details.Value"
+                                                }
+                                            },
+                                            "title": "Conversation Parts.Conversation Parts.Event Details"
+                                        },
                                         "app_package_code": {
-                                            "type": "null",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ],
                                             "title": "Conversation Parts.Conversation Parts.App Package Code"
                                         }
-                                    }
+                                    },
+                                    "required": [
+                                        "type",
+                                        "id",
+                                        "part_type",
+                                        "body",
+                                        "created_at",
+                                        "updated_at",
+                                        "notified_at",
+                                        "assigned_to",
+                                        "author",
+                                        "attachments",
+                                        "external_id",
+                                        "redacted",
+                                        "email_message_metadata",
+                                        "state",
+                                        "tags",
+                                        "event_details",
+                                        "app_package_code"
+                                    ]
                                 },
                                 "title": "Conversation Parts.Conversation Parts"
                             },

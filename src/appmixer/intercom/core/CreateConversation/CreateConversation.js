@@ -1,13 +1,18 @@
 /* eslint-disable camelcase */
 'use strict';
+
 module.exports = {
 
     async receive(context) {
 
-        const { contact_id, admin_id, body } = context.messages.in.content;
+        const { from_type, from_id, body, message_type } = context.messages.in.content;
 
-        if (!contact_id) {
-            throw new context.CancelError('Contact ID is required!');
+        if (!from_type) {
+            throw new context.CancelError('From Type is required!');
+        }
+
+        if (!from_id) {
+            throw new context.CancelError('From ID is required!');
         }
 
         if (!body) {
@@ -16,14 +21,14 @@ module.exports = {
 
         const requestBody = {
             from: {
-                type: 'contact',
-                id: contact_id
+                type: from_type,
+                id: from_id
             },
-            body: body
+            body
         };
 
-        if (admin_id) {
-            requestBody.admin_id = admin_id;
+        if (message_type) {
+            requestBody.message_type = message_type;
         }
 
         // https://developers.intercom.com/reference#create-a-conversation

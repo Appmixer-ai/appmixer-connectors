@@ -1,9 +1,9 @@
 {
     "name": "appmixer.intercom.core.SendMessage",
+    "label": "Send Message",
     "author": "Appmixer <info@appmixer.com>",
     "description": "Send a targeted message (such as an in-app or email message) to a contact.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:intercom"
     },
@@ -17,36 +17,113 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "recipient_id": {
-                        "type": "string"
-                    },
                     "message_type": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "in_app",
+                            "email"
+                        ],
+                        "title": "Message Type"
                     },
                     "body": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Body"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "title": "Subject"
+                    },
+                    "template": {
+                        "type": "string",
+                        "title": "Template"
+                    },
+                    "from_admin_id": {
+                        "type": "integer",
+                        "title": "From Admin ID"
+                    },
+                    "to_contact_id": {
+                        "type": "string",
+                        "title": "To Contact ID"
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "title": "Created At"
+                    },
+                    "create_conversation_without_contact_reply": {
+                        "type": "boolean",
+                        "title": "Create Conversation Without Contact Reply"
                     }
-                }
+                },
+                "required": [
+                    "message_type",
+                    "body",
+                    "to_contact_id"
+                ]
             },
             "inspector": {
                 "inputs": {
-                    "recipient_id": {
-                        "type": "text",
-                        "tooltip": "The unique identifier of the contact to whom the message is sent",
-                        "label": "Recipient Id",
-                        "index": 0
-                    },
                     "message_type": {
-                        "type": "text",
-                        "tooltip": "Type of the message (e.g., inapp, email)",
+                        "type": "select",
+                        "tooltip": "The kind of message being created (in-app or email)",
                         "label": "Message Type",
-                        "index": 1
+                        "index": 0,
+                        "options": [
+                            {
+                                "label": "In-App Message",
+                                "value": "in_app"
+                            },
+                            {
+                                "label": "Email Message",
+                                "value": "email"
+                            }
+                        ]
                     },
                     "body": {
-                        "type": "text",
-                        "tooltip": "The content of the message",
+                        "type": "textarea",
+                        "tooltip": "The content of the message. HTML and plaintext are supported.",
                         "label": "Body",
+                        "index": 1
+                    },
+                    "subject": {
+                        "when": {
+                            "eq": {
+                                "message_type": "email"
+                            }
+                        },
+                        "type": "text",
+                        "tooltip": "The title of the email (required for email messages)",
+                        "label": "Subject",
                         "index": 2
+                    },
+                    "to_contact_id": {
+                        "type": "text",
+                        "tooltip": "The unique identifier of the contact to whom the message is sent",
+                        "label": "To Contact ID",
+                        "index": 3
+                    },
+                    "from_admin_id": {
+                        "type": "number",
+                        "tooltip": "The identifier for the admin sending the message. If not provided, the default sender will be used.",
+                        "label": "From Admin ID",
+                        "index": 4
+                    },
+                    "template": {
+                        "type": "text",
+                        "tooltip": "The style of the outgoing message (e.g., 'plain')",
+                        "label": "Template",
+                        "index": 5
+                    },
+                    "created_at": {
+                        "type": "number",
+                        "tooltip": "Unix timestamp for when the message was created. If not provided, current time will be used.",
+                        "label": "Created At",
+                        "index": 6
+                    },
+                    "create_conversation_without_contact_reply": {
+                        "type": "toggle",
+                        "tooltip": "Whether a conversation should be opened in the inbox for the message without the contact replying. Defaults to false.",
+                        "label": "Create Conversation Without Contact Reply",
+                        "index": 7
                     }
                 }
             }
@@ -57,8 +134,29 @@
             "name": "out",
             "options": [
                 {
+                    "label": "Type",
+                    "value": "type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
                     "label": "Id",
                     "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Body",
+                    "value": "body",
                     "schema": {
                         "type": "string"
                     }
@@ -71,23 +169,10 @@
                     }
                 },
                 {
-                    "label": "Body",
-                    "value": "body",
+                    "label": "Conversation Id",
+                    "value": "conversation_id",
                     "schema": {
                         "type": "string"
-                    }
-                },
-                {
-                    "label": "Recipient",
-                    "value": "recipient",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "title": "Recipient.Id"
-                            }
-                        }
                     }
                 }
             ]

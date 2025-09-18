@@ -5,35 +5,56 @@ module.exports = {
 
     async receive(context) {
 
-        const { id, email, name, custom_attributes } = context.messages.in.content;
+        const {
+            id,
+            external_id,
+            role,
+            email,
+            phone,
+            name,
+            unsubscribed_from_emails,
+            language_override
+        } = context.messages.in.content;
 
+        // Validate required fields
         if (!id) {
             throw new context.CancelError('Contact ID is required!');
         }
 
+        // Build request body with only provided fields
         const requestBody = {};
+
+        if (external_id) {
+            requestBody.external_id = external_id;
+        }
+
+        if (role) {
+            requestBody.role = role;
+        }
 
         if (email) {
             requestBody.email = email;
+        }
+
+        if (phone) {
+            requestBody.phone = phone;
         }
 
         if (name) {
             requestBody.name = name;
         }
 
-        if (custom_attributes) {
-            try {
-                requestBody.custom_attributes = typeof custom_attributes === 'string'
-                    ? JSON.parse(custom_attributes)
-                    : custom_attributes;
-            } catch (error) {
-                throw new context.CancelError('Invalid custom attributes format. Must be valid JSON.');
-            }
+        if (unsubscribed_from_emails !== undefined) {
+            requestBody.unsubscribed_from_emails = unsubscribed_from_emails;
         }
 
-        // https://developers.intercom.com/reference#update-a-contact
-        await context.httpRequest({
-            method: 'PATCH',
+        if (language_override) {
+            requestBody.language_override = language_override;
+        }
+
+        // Make the API request
+        const { data } = await context.httpRequest({
+            method: 'PUT',
             url: `https://api.intercom.io/contacts/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
@@ -42,6 +63,6 @@ module.exports = {
             data: requestBody
         });
 
-        return context.sendJson({}, 'out');
+        return context.sendJson(data, 'out');
     }
 };

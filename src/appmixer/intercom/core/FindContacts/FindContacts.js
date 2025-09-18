@@ -1,7 +1,64 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'string','title':'Id' },'email':{ 'type':'string','title':'Email' },'name':{ 'type':'string','title':'Name' },'custom_attributes':{ 'type':'object','properties':{},'title':'Custom Attributes' } };
+const schema = {
+    type: {
+        type: 'string',
+        title: 'Type'
+    },
+    id: {
+        type: 'string',
+        title: 'Contact Id'
+    },
+    workspace_id: {
+        type: 'string',
+        title: 'Workspace Id'
+    },
+    external_id: {
+        type: 'string',
+        title: 'Contact External Id'
+    },
+    role: {
+        type: 'string',
+        title: 'Role'
+    },
+    email: {
+        type: 'string',
+        title: 'Email'
+    },
+    phone: {
+        type: 'null',
+        title: 'Phone'
+    },
+    name: {
+        type: 'null',
+        title: 'Name'
+    },
+    avatar: {
+        type: 'null',
+        title: 'Avatar'
+    },
+    owner_id: {
+        type: 'null',
+        title: 'Owner Id'
+    },
+    marked_email_as_spam: {
+        type: 'boolean',
+        title: 'Marked Email As Spam'
+    },
+    unsubscribed_from_emails: {
+        type: 'boolean',
+        title: 'Unsubscribed From Emails'
+    },
+    created_at: {
+        type: 'number',
+        title: 'Created At'
+    },
+    updated_at: {
+        type: 'number',
+        title: 'Updated At'
+    }
+};
 
 module.exports = {
 
@@ -9,71 +66,38 @@ module.exports = {
 
         const { query, outputType } = context.messages.in.content;
 
+        if (!query) {
+            throw new context.CancelError('Query is required!');
+        }
+
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Contacts' });
         }
 
-        let url = 'https://api.intercom.io/contacts';
-        let method = 'GET';
-        let data = undefined;
-
-        if (query) {
-            // For search, use the search endpoint
-            url = 'https://api.intercom.io/contacts/search';
-            method = 'POST';
-
-            // Handle both simple string query and complex query object
-            if (typeof query === 'string') {
-                data = {
-                    query: {
-                        operator: 'OR',
-                        value: [
-                            {
-                                field: 'name',
-                                operator: '~',
-                                value: query
-                            },
-                            {
-                                field: 'email',
-                                operator: '~',
-                                value: query
-                            }
-                        ]
-                    }
-                };
-            } else {
-                // Handle structured query object
-                data = {
-                    query: query
-                };
-            }
-        }
-
+        // Parse the JSON query
+        let parsedQuery;
         try {
-            // https://developers.intercom.com/reference#list-contacts
-            const response = await context.httpRequest({
-                method: method,
-                url: url,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`,
-                    'Intercom-Version': '2.14'
-                },
-                data: data
-            });
-
-            const records = response.data.data || [];
-            return lib.sendArrayOutput({ context, records, outputType });
+            parsedQuery = typeof query === 'string' ? JSON.parse(query) : query;
         } catch (error) {
-            // Log the error for debugging
-            context.log('error', 'FindContacts API request failed', {
-                error: error.message,
-                status: error.response?.status,
-                data: error.response?.data,
-                url: url,
-                method: method,
-                queryData: data
-            });
-            throw error;
+            throw new context.CancelError('Invalid JSON query format. Please provide a valid JSON query object.');
         }
+
+        const requestBody = {
+            query: parsedQuery
+        };
+
+        // https://developers.intercom.com/reference#search-contacts
+        const response = await context.httpRequest({
+            method: 'POST',
+            url: 'https://api.intercom.io/contacts/search',
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Intercom-Version': '2.14'
+            },
+            data: requestBody
+        });
+
+        const records = response.data.data || [];
+        return lib.sendArrayOutput({ context, records, outputType });
     }
 };
