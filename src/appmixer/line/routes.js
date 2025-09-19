@@ -11,19 +11,18 @@ module.exports = async context => {
         // the accessToken is used to get the user_id. This way it is ensured that the
         // registered user_id belongs to the owner of the accessToken.
 
-        // TODO: add accessToken to listener.params
+        const response = await context.httpRequest({
+            method: 'POST',
+            url: 'https://api.line.me/v2/bot/channel/webhook/test',
+            headers: {
+                Authorization: `Bearer ${listener.params.channelAccessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-        // const response = await context.httpRequest({
-        //     method: 'GET',
-        //     url: 'https://line.com/api/auth.test',
-        //     headers: {
-        //         Authorization: `Bearer ${listener.params.accessToken}`
-        //     }
-        // });
-
-        // if (response?.data?.ok === false) {
-        //     throw new Error(response?.data?.error);
-        // }
+        if (response?.data?.ok === false) {
+            throw new Error(response?.data?.error);
+        }
     });
 
     context.http.router.register({
@@ -32,38 +31,6 @@ module.exports = async context => {
         options: {
             auth: false,
             handler: async (req, h) => {
-
-                //await context.log('info', 'line-plugin-route-webhook-hit', { type: req.payload?.type });
-                context.log('info', 'line-plugin-route-webhook-payload: ' + JSON.stringify(req.payload));
-
-                // Validates the payload with the Line-signature hash
-                // const slackSignature = req.headers['x-line-signature'];
-                // const signingSecret = context.config?.signingSecret;
-                // if (!signingSecret) {
-                //     context.log('error', 'line-plugin-route-webhook-missing-signingSecret');
-                //     return h.response(undefined).code(401);
-                // }
-                // // Use the raw request body from `req.payload`, without headers, before it has been deserialized from JSON or other forms. See https://stackoverflow.com/questions/70653161/unable-to-correctly-verify-line-requests.
-                // const payloadString = JSON.stringify(req.payload)
-                //     .replace(/\//g, '\\/')
-                //     .replace(/[\u007f-\uffff]/g, (c) => '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4));
-
-                // const timestamp = req.headers['x-line-request-timestamp'];
-                // const baseString = `v0:${timestamp}:${payloadString}`;
-                // const mySignature = 'v0=' + createHmac('sha256', signingSecret).update(baseString).digest('hex');
-                // if (slackSignature !== mySignature) {
-                //     context.log('info', 'line-plugin-route-webhook-invalid-signature', { config: context.config });
-                //     context.log('error', 'line-plugin-route-webhook-invalid-signature', { slackSignature, mySignature, baseString, payloadString });
-                //     return h.response(undefined).code(401);
-                // }
-
-                // if (req.payload.challenge) {
-                //     return { challenge: req.payload.challenge };
-                // }
-
-                // if (req.payload.type !== 'event_callback') {
-                //     return {};
-                // }
 
                 const { events } = req.payload;
                 if (!events) {
@@ -74,7 +41,7 @@ module.exports = async context => {
                 // context.log('info', 'line-plugin-route-webhook-event-type', { type: event.type });
                 for (const event of events) {
                     if (event.type === 'message') {
-                        await processMessages(context, event, req.payload.destination);
+                        await processMessages(context, event, req);
                     }
                 }
 
@@ -83,51 +50,33 @@ module.exports = async context => {
         }
     });
 
-    async function processMessages(context, event, destination) {
+    async function processMessages(context, event, req) {
 
-        //const { type } = event;
-        // if (!channelId) {
-        //     context.log('error', 'Missing channel property.', req.payload);
-        //     return;
-        // }
-
-        // const response = await context.httpRequest({
-        //     method: 'POST',
-        //     url: 'https://line.com/api/apps.event.authorizations.list',
-        //     headers: {
-        //         Authorization: `Bearer ${context.config.authToken}`
-        //     },
-        //     data: {
-        //         event_context: req.payload.event_context
-        //     }
-        // });
-
-        // if (response?.data?.ok === false) {
-        //     context.log('error', response?.data?.error);
-        //     return {};
-        // }
-
-        // const authorizedUsers = response.data.authorizations.map(item => item['user_id']);
         await context.triggerListeners({
-            eventName: event.type,
+            eventName: `line-message-${req.payload.destination}`,
             payload: event,
             filter: listener => {
-                return listener.params.userId === destination;
+                return listener.params.userId === req.payload.destination && verifySignature(context, req, listener.params.channelSecret);
             }
         });
     }
 
-    async function processNewUsers(context, req) {
+    function verifySignature(context, req, channelSecret) {
 
-        const { event } = req.payload;
-        if (!event?.user) {
-            context.log('error', 'line-plugin-route-webhook-event-user-missing', req.payload);
-            return;
+        const body = req.payload;
+
+        const signature = createHmac('sha256', channelSecret)
+            .update(JSON.stringify(body))
+            .digest('base64');
+
+        const lineSignature = req.headers['x-line-signature'];
+
+        const valid = signature === lineSignature;
+
+        if (!valid) {
+            context.log('error', 'line-plugin-route-webhook-invalid-signature', { signature, lineSignature, payload: req.payload });
         }
 
-        await context.triggerListeners({
-            eventName: 'slack_team_join',
-            payload: event.user
-        });
+        return valid;
     }
 };

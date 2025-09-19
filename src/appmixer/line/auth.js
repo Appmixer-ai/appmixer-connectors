@@ -8,6 +8,11 @@ module.exports = {
                 type: 'password',
                 name: 'Channel Access Token',
                 tooltip: 'Log into your LINE Developers Console and find the Channel Access Token for your channel.'
+            },
+            channelSecret: {
+                type: 'password',
+                name: 'Channel Secret',
+                tooltip: 'Log into your LINE Developers Console and find the Channel Secret for your channel. A unique secret key you can use to grant an app access to your channel.'
             }
         },
 
