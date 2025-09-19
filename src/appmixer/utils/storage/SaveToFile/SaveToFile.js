@@ -1,10 +1,8 @@
 'use strict';
 const flatten = require('@json2csv/transforms').flatten();
-const { Transform } = require('json2csv');
-const stream = require('stream');
-const { PassThrough } = stream;
+const { Transform: Json2csvTransform } = require('@json2csv/node');
+const { Readable, PassThrough, Transform } = require('stream');
 const JSONStream = require('JSONStream');
-const { Readable } = require('stream');
 
 /**
  * A helper function for converting the JSON object to a csv.
@@ -28,7 +26,8 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
 
     const input = new Readable({ objectMode: true });
     // eslint-disable-next-line no-underscore-dangle
-    input._read = () => { };
+    input._read = () => {};
+
     const defaultIterationMax = 10;
     const keySamples = [];
     const keys = [];
@@ -40,7 +39,6 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
             if (i < defaultIterationMax) {
                 keySamples.push(element);
             }
-            element = JSON.stringify(element);
             input.push(element);
             i += 1;
         }
@@ -71,7 +69,7 @@ const convertToCSV = async function(storeListCursor, resStream, errorHandler) {
             transforms: [flatten] // flatten is imported
         };
         const transformOpts = { highWaterMark: 16384, encoding: 'utf-8' };
-        const json2csv = new Transform(opts, transformOpts);
+        const json2csv = new Json2csvTransform(opts, {}, { ...transformOpts, objectMode: true });
         input.pipe(json2csv).pipe(resStream);
     } catch (err) {
         errorHandler(err);
@@ -94,10 +92,11 @@ module.exports = {
             let stream;
 
             if (flattenValue && fileType === 'csv') {
+                // Save original next before overriding
+                const originalNext = cursor.next.bind(cursor);
 
                 cursor.next = async () => {
-                    const record = await cursor.originalNext();
-                    // if the record is not null, set record.value to the decoded value
+                    const record = await originalNext();
                     if (record) {
                         return {
                             key: record.key,
@@ -119,8 +118,30 @@ module.exports = {
             }
 
             if (!flattenValue && fileType === 'csv') {
-                const opts = { fields: ['key', 'value'] };
-                stream = cursor.stream().pipe(new Transform(opts, { objectMode: true }));
+                // Create a simple CSV transform for key-value pairs
+                const csvTransform = new Transform({
+                    writableObjectMode: true,
+                    readableObjectMode: false,
+                    transform(chunk, encoding, callback) {
+                        try {
+                            const key = String(chunk?.key ?? '').replace(/"/g, '""');
+                            let rawValue = typeof chunk?.value === 'string'
+                                ? chunk.value
+                                : JSON.stringify(chunk?.value ?? '');
+                            // Mitigate formula/CSV injection in spreadsheets
+                            if (/^[=+\-@]/.test(rawValue.trim())) rawValue = `'${rawValue}`;
+                            const value = rawValue.replace(/"/g, '""');
+                            callback(null, `"${key}","${value}"\n`);
+                        } catch (err) {
+                            callback(err);
+                        }
+                    }
+                });
+
+                // Add CSV header
+                csvTransform.push('"key","value"\n');
+
+                stream = cursor.stream().pipe(csvTransform);
             } else {
                 stream = cursor.stream().pipe(JSONStream.stringify());
             }
