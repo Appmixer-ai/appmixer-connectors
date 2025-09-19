@@ -48,7 +48,6 @@ const parseData = (data) => {
 };
 
 
-// TODO: Move to appmixer-lib
 // Expects standardized outputType: 'item', 'items', 'file'
 const sendArrayOutput = async ({ context, outputPortName = 'out', outputType = 'items', records = [] }) => {
     if (outputType === 'item') {

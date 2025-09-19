@@ -1,7 +1,6 @@
 'use strict';
 const pathModule = require('path');
 
-// TODO: Move to appmixer-lib
 function getCSVValue(value) {
     if (typeof value === 'object') {
         try {
@@ -17,7 +16,6 @@ function getCSVValue(value) {
 
 module.exports = {
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'object', 'array', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'array', records = [] }) {
         if (outputType === 'object') {

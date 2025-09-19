@@ -1,6 +1,13 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
+
         const { id, name } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Model ID is required!');
+        }
 
         const payload = {};
         if (name !== undefined) {
@@ -8,7 +15,7 @@ module.exports = {
         }
 
         // https://www.everart.ai/api/docs/#/Models/patch_models__id__patch
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PATCH',
             url: `https://api.everart.ai/v1/models/${id}`,
             headers: {
@@ -17,6 +24,6 @@ module.exports = {
             data: payload
         });
 
-        return context.sendJson(data.model, 'out');
+        return context.sendJson({}, 'out');
     }
 };

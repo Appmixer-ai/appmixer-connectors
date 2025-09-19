@@ -102,7 +102,6 @@ module.exports = {
         return response.message;
     },
 
-    // TODO: Move to appmixer-lib
     // Expects standardized outputType: 'item', 'items', 'file', 'first'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'first', records = [] }) {
 

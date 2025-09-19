@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../lib');
+
 module.exports = {
 
     async receive(context) {
@@ -34,10 +36,15 @@ module.exports = {
         const headers = {
             Authorization: 'Bearer ' + context.auth.accessToken
         };
+
+        // Normalize multiselect input for eventTypes
+        const normalizedEventTypes = context.properties.eventTypes ?
+            lib.normalizeMultiselectInput(context.properties.eventTypes, context, 'Event Types') : [];
+
         const requestBody = {
             webhook: {
                 endpoint: context.getWebhookUrl(),
-                subscriptions: context.properties.eventTypes,
+                subscriptions: normalizedEventTypes,
                 http_method: 'POST',
                 name: 'WatchOrganizations:webhook:' + context.componentId,
                 request_format: 'json',

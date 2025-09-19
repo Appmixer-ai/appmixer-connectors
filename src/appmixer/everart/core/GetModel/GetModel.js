@@ -1,6 +1,13 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
+
         const { id } = context.messages.in.content;
+
+        if (!id) {
+            throw new context.CancelError('Model ID is required!');
+        }
 
         // https://www.everart.ai/api/docs/#/Model/get_models__id__get
         const { data } = await context.httpRequest({
