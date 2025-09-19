@@ -2,24 +2,22 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('RetrieveCompany Component', function() {
+describe('GetCompany Component', function() {
     let context;
-    let RetrieveCompany;
-    let CreateCompany;
-    let createdCompanyId;
+    let GetCompany;
+    let testCompanyId;
 
     this.timeout(30000);
 
-    before(function() {
+    before(async function() {
         // Skip all tests if the access token is not set
         if (!process.env.INTERCOM_ACCESS_TOKEN) {
             console.log('Skipping tests - INTERCOM_ACCESS_TOKEN not set');
             this.skip();
         }
 
-        // Load the components
-        RetrieveCompany = require(path.join(__dirname, '../../src/appmixer/intercom/core/RetrieveCompany/RetrieveCompany.js'));
-        CreateCompany = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateCompany/CreateCompany.js'));
+        // Load the component
+        GetCompany = require(path.join(__dirname, '../../src/appmixer/intercom/core/GetCompany/GetCompany.js'));
 
         // Mock context
         context = {
@@ -35,6 +33,11 @@ describe('RetrieveCompany Component', function() {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
+            log: function(level, message, data) {
+                if (level === 'error') {
+                    console.error(`[${level}] ${message}`, data || '');
+                }
+            },
             CancelError: class extends Error {
                 constructor(message) {
                     super(message);
@@ -42,20 +45,23 @@ describe('RetrieveCompany Component', function() {
                 }
             }
         };
-    });
 
-    beforeEach(async function() {
-        // Create a test company before each test
-        const randomCompanyId = `test-retrieve-company-${Date.now()}`;
-
-        context.messages.in.content = {
-            company_id: randomCompanyId,
-            name: 'Test Retrieve Company'
-        };
-
+        // Create a test company first
         try {
-            const createResult = await CreateCompany.receive(context);
-            createdCompanyId = createResult.data.id;
+            testCompanyId = `test-get-company-${Date.now()}`;
+            const CreateUpdateCompany = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateUpdateCompany/CreateUpdateCompany.js'));
+
+            const createContext = { ...context };
+            createContext.messages = {
+                in: {
+                    content: {
+                        company_id: testCompanyId,
+                        name: 'Test Company for Get'
+                    }
+                }
+            };
+
+            await CreateUpdateCompany.receive(createContext);
         } catch (error) {
             console.error('Error creating test company:', error.response?.data || error.message);
             throw error;
@@ -64,17 +70,15 @@ describe('RetrieveCompany Component', function() {
 
     it('should retrieve a company by id', async function() {
         context.messages.in.content = {
-            id: createdCompanyId
+            id: testCompanyId
         };
 
         try {
-            const result = await RetrieveCompany.receive(context);
+            const result = await GetCompany.receive(context);
 
             assert(result, 'Should return a result');
             assert(result.data, 'Should return company data');
-            assert(result.data.id, 'Should return company id');
-            assert.strictEqual(result.data.id, createdCompanyId, 'Should return correct company id');
-            assert(result.data.company_id, 'Should return company_id');
+            assert(result.data.company_id === testCompanyId, 'Should return correct company');
         } catch (error) {
             console.error('Error retrieving company:', error.response?.data || error.message);
             throw error;
@@ -85,7 +89,7 @@ describe('RetrieveCompany Component', function() {
         context.messages.in.content = {};
 
         try {
-            await RetrieveCompany.receive(context);
+            await GetCompany.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
@@ -95,16 +99,14 @@ describe('RetrieveCompany Component', function() {
 
     it('should handle non-existent company id gracefully', async function() {
         context.messages.in.content = {
-            id: 'non-existent-company-id-12345'
+            id: 'non-existent-company-12345'
         };
 
         try {
-            await RetrieveCompany.receive(context);
-            // This might succeed or fail depending on Intercom's behavior
+            await GetCompany.receive(context);
+            assert.fail('Should have thrown an error for non-existent company');
         } catch (error) {
-            // If it fails, it should be a 404 error
-            assert(error.response, 'Should have response data');
-            assert(error.response.status === 404, 'Should return 404 for non-existent company');
+            assert(error.response && error.response.status === 404, 'Should return 404 for non-existent company');
         }
     });
 });

@@ -35,6 +35,10 @@
                     },
                     "template": {
                         "type": "string",
+                        "enum": [
+                            "plain",
+                            "personal"
+                        ],
                         "title": "Template"
                     },
                     "from_admin_id": {
@@ -44,6 +48,15 @@
                     "to_contact_id": {
                         "type": "string",
                         "title": "To Contact ID"
+                    },
+                    "to_contact_type": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "lead"
+                        ],
+                        "title": "To Contact Type",
+                        "default": "user"
                     },
                     "created_at": {
                         "type": "integer",
@@ -57,14 +70,15 @@
                 "required": [
                     "message_type",
                     "body",
-                    "to_contact_id"
+                    "to_contact_id",
+                    "from_admin_id"
                 ]
             },
             "inspector": {
                 "inputs": {
                     "message_type": {
                         "type": "select",
-                        "tooltip": "The kind of message being created (in-app or email)",
+                        "tooltip": "The kind of message being created (in-app or email). For email messages, subject and template are required.",
                         "label": "Message Type",
                         "index": 0,
                         "options": [
@@ -85,45 +99,67 @@
                         "index": 1
                     },
                     "subject": {
-                        "when": {
-                            "eq": {
-                                "message_type": "email"
-                            }
-                        },
                         "type": "text",
-                        "tooltip": "The title of the email (required for email messages)",
+                        "tooltip": "The title of the email. Required for email messages, optional for in-app messages.",
                         "label": "Subject",
                         "index": 2
                     },
+                    "template": {
+                        "type": "select",
+                        "tooltip": "The style of the outgoing message. Required for email messages, optional for in-app messages.",
+                        "label": "Template",
+                        "index": 3,
+                        "options": [
+                            {
+                                "label": "Plain",
+                                "value": "plain"
+                            },
+                            {
+                                "label": "Personal",
+                                "value": "personal"
+                            }
+                        ]
+                    },
                     "to_contact_id": {
                         "type": "text",
-                        "tooltip": "The unique identifier of the contact to whom the message is sent",
+                        "tooltip": "The unique identifier of the contact to whom the message is sent. You can use FindContacts component to get contact IDs.",
                         "label": "To Contact ID",
-                        "index": 3
+                        "index": 4
+                    },
+                    "to_contact_type": {
+                        "type": "select",
+                        "tooltip": "The role associated to the contact - user or lead.",
+                        "label": "To Contact Type",
+                        "index": 5,
+                        "defaultValue": "user",
+                        "options": [
+                            {
+                                "label": "User",
+                                "value": "user"
+                            },
+                            {
+                                "label": "Lead",
+                                "value": "lead"
+                            }
+                        ]
                     },
                     "from_admin_id": {
                         "type": "number",
-                        "tooltip": "The identifier for the admin sending the message. If not provided, the default sender will be used.",
+                        "tooltip": "The identifier for the admin sending the message. Required. You can use ListAdmins component to get admin IDs.",
                         "label": "From Admin ID",
-                        "index": 4
-                    },
-                    "template": {
-                        "type": "text",
-                        "tooltip": "The style of the outgoing message (e.g., 'plain')",
-                        "label": "Template",
-                        "index": 5
+                        "index": 6
                     },
                     "created_at": {
                         "type": "number",
                         "tooltip": "Unix timestamp for when the message was created. If not provided, current time will be used.",
                         "label": "Created At",
-                        "index": 6
+                        "index": 7
                     },
                     "create_conversation_without_contact_reply": {
                         "type": "toggle",
                         "tooltip": "Whether a conversation should be opened in the inbox for the message without the contact replying. Defaults to false.",
                         "label": "Create Conversation Without Contact Reply",
-                        "index": 7
+                        "index": 8
                     }
                 }
             }

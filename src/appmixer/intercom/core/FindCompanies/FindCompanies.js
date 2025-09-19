@@ -120,7 +120,7 @@ module.exports = {
         }
 
         // https://developers.intercom.com/reference#list-all-companies
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: url,
             headers: {
@@ -130,7 +130,7 @@ module.exports = {
             params
         });
 
-        const records = response.data.data || [];
+        const records = data.data || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

@@ -117,7 +117,7 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Conversations' });
         }
 
-        // Parse the JSON query
+        // Parse query for search
         let parsedQuery;
         try {
             parsedQuery = typeof query === 'string' ? JSON.parse(query) : query;
@@ -130,7 +130,7 @@ module.exports = {
         };
 
         // https://developers.intercom.com/reference#search-conversations
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/conversations/search',
             headers: {
@@ -140,7 +140,7 @@ module.exports = {
             data: requestBody
         });
 
-        const records = response.data.conversations || [];
+        const records = data.conversations || [];
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

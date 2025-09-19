@@ -12,6 +12,7 @@ module.exports = {
             template,
             from_admin_id,
             to_contact_id,
+            to_contact_type = 'user',
             created_at,
             create_conversation_without_contact_reply
         } = context.messages.in.content;
@@ -29,35 +30,41 @@ module.exports = {
             throw new context.CancelError('To Contact ID is required!');
         }
 
-        // For email messages, subject is required
-        if (message_type === 'email' && !subject) {
-            throw new context.CancelError('Subject is required for email messages!');
+        if (!from_admin_id) {
+            throw new context.CancelError('From Admin ID is required!');
         }
 
-        // Build the request body
+        // For email messages, subject and template are required
+        if (message_type === 'email') {
+            if (!subject) {
+                throw new context.CancelError('Subject is required for email messages!');
+            }
+            if (!template) {
+                throw new context.CancelError('Template is required for email messages!');
+            }
+        }
+
+        // Build the request body according to API documentation
         const requestBody = {
             message_type: message_type,
             body: body,
             to: {
-                type: 'user',
+                type: to_contact_type,
                 id: to_contact_id
+            },
+            from: {
+                type: 'admin',
+                id: from_admin_id
             }
         };
 
-        // Add optional fields if provided
+        // Add conditional fields based on message type
         if (subject) {
             requestBody.subject = subject;
         }
 
         if (template) {
             requestBody.template = template;
-        }
-
-        if (from_admin_id) {
-            requestBody.from = {
-                type: 'admin',
-                id: from_admin_id
-            };
         }
 
         if (created_at) {

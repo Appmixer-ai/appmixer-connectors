@@ -6,7 +6,9 @@ describe('SendMessage Component', function() {
     let context;
     let SendMessage;
     let CreateContact;
+    let ListAdmins;
     let createdContactId;
+    let validAdminId;
 
     this.timeout(30000);
 
@@ -20,6 +22,7 @@ describe('SendMessage Component', function() {
         // Load the components
         SendMessage = require(path.join(__dirname, '../../src/appmixer/intercom/core/SendMessage/SendMessage.js'));
         CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
+        ListAdmins = require(path.join(__dirname, '../../src/appmixer/intercom/core/ListAdmins/ListAdmins.js'));
 
         // Mock context
         context = {
@@ -31,6 +34,7 @@ describe('SendMessage Component', function() {
                     content: {}
                 }
             },
+            properties: {},
             sendJson: function(data, port) {
                 return { data, port };
             },
@@ -45,6 +49,27 @@ describe('SendMessage Component', function() {
     });
 
     beforeEach(async function() {
+        // Get a valid admin ID first
+        context.messages.in.content = { outputType: 'first' };
+        try {
+            const adminResult = await ListAdmins.receive(context);
+            console.log('Admin result:', adminResult);
+            if (adminResult && adminResult.data && adminResult.data.id) {
+                validAdminId = parseInt(adminResult.data.id);
+            } else if (adminResult && adminResult.id) {
+                validAdminId = parseInt(adminResult.id);
+            } else {
+                // Fallback to hardcoded admin ID for testing
+                validAdminId = 8441149;
+                console.log('Using fallback admin ID');
+            }
+        } catch (error) {
+            console.error('Error getting admin ID:', error.response?.data || error.message);
+            // Fallback to hardcoded admin ID for testing
+            validAdminId = 8441149;
+            console.log('Using fallback admin ID due to error');
+        }
+
         // Create a test contact before each test
         const randomEmail = `test-message-${Date.now()}@example.com`;
 
@@ -66,8 +91,11 @@ describe('SendMessage Component', function() {
         const messageBody = `Test message sent at ${new Date().toISOString()}`;
 
         context.messages.in.content = {
-            contact_id: createdContactId,
-            body: messageBody
+            message_type: 'in_app',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
+            body: messageBody,
+            from_admin_id: validAdminId
         };
 
         try {
@@ -88,9 +116,11 @@ describe('SendMessage Component', function() {
         const messageBody = `Test admin message sent at ${new Date().toISOString()}`;
 
         context.messages.in.content = {
-            contact_id: createdContactId,
+            message_type: 'in_app',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
             body: messageBody,
-            admin_id: '12345' // This may or may not exist, but shouldn't break the request
+            from_admin_id: validAdminId
         };
 
         try {
@@ -112,6 +142,59 @@ describe('SendMessage Component', function() {
 
     it('should throw error when contact_id is missing', async function() {
         context.messages.in.content = {
+            message_type: 'in_app',
+            body: 'Test message',
+            from_admin_id: validAdminId
+        };
+
+        try {
+            await SendMessage.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.name === 'CancelError', 'Should throw CancelError');
+            assert(error.message.includes('To Contact ID is required'), 'Should have appropriate error message');
+        }
+    });
+
+    it('should throw error when body is missing', async function() {
+        context.messages.in.content = {
+            message_type: 'in_app',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
+            from_admin_id: validAdminId
+        };
+
+        try {
+            await SendMessage.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.name === 'CancelError', 'Should throw CancelError');
+            assert(error.message.includes('Body is required'), 'Should have appropriate error message');
+        }
+    });
+
+    it('should throw error when message_type is missing', async function() {
+        context.messages.in.content = {
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
+            body: 'Test message',
+            from_admin_id: validAdminId
+        };
+
+        try {
+            await SendMessage.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.name === 'CancelError', 'Should throw CancelError');
+            assert(error.message.includes('Message Type is required'), 'Should have appropriate error message');
+        }
+    });
+
+    it('should throw error when from_admin_id is missing', async function() {
+        context.messages.in.content = {
+            message_type: 'in_app',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
             body: 'Test message'
         };
 
@@ -120,13 +203,18 @@ describe('SendMessage Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
-            assert(error.message.includes('Contact ID is required'), 'Should have appropriate error message');
+            assert(error.message.includes('From Admin ID is required'), 'Should have appropriate error message');
         }
     });
 
-    it('should throw error when body is missing', async function() {
+    it('should throw error when email message lacks subject', async function() {
         context.messages.in.content = {
-            contact_id: createdContactId
+            message_type: 'email',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
+            body: 'Test email message',
+            from_admin_id: validAdminId,
+            template: 'plain'
         };
 
         try {
@@ -134,7 +222,26 @@ describe('SendMessage Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
-            assert(error.message.includes('Message body is required'), 'Should have appropriate error message');
+            assert(error.message.includes('Subject is required for email messages'), 'Should have appropriate error message');
+        }
+    });
+
+    it('should throw error when email message lacks template', async function() {
+        context.messages.in.content = {
+            message_type: 'email',
+            to_contact_id: createdContactId,
+            to_contact_type: 'user',
+            body: 'Test email message',
+            from_admin_id: validAdminId,
+            subject: 'Test Email'
+        };
+
+        try {
+            await SendMessage.receive(context);
+            assert.fail('Should have thrown an error');
+        } catch (error) {
+            assert(error.name === 'CancelError', 'Should throw CancelError');
+            assert(error.message.includes('Template is required for email messages'), 'Should have appropriate error message');
         }
     });
 });

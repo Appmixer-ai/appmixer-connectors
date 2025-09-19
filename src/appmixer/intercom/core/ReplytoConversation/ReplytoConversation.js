@@ -25,6 +25,10 @@ module.exports = {
             throw new context.CancelError('Reply Type is required!');
         }
 
+        if (!body) {
+            throw new context.CancelError('Message body is required!');
+        }
+
         let requestBody = {};
 
         if (reply_type === 'contact') {
@@ -33,11 +37,6 @@ module.exports = {
             // Check that at least one contact identifier is provided
             if (!intercom_user_id && !email && !user_id) {
                 throw new context.CancelError('For contact replies, at least one contact identifier is required (intercom_user_id, email, or user_id)!');
-            }
-
-            // Body is always required for contact replies
-            if (!body) {
-                throw new context.CancelError('Body is required for contact replies!');
             }
 
             // Set required fields for contact replies
@@ -56,27 +55,11 @@ module.exports = {
 
         } else if (reply_type === 'admin') {
             // Admin reply validation and construction
-
-            if (!admin_id) {
-                throw new context.CancelError('Admin ID is required for admin replies!');
-            }
-
-            if (!message_type) {
-                throw new context.CancelError('Message Type is required for admin replies!');
-            }
-
             // Set required fields for admin replies
             requestBody.type = 'admin';
-            requestBody.admin_id = admin_id;
-            requestBody.message_type = message_type;
-
-            // Body is required for comment and note, but not for quick_reply
-            if (message_type === 'comment' || message_type === 'note') {
-                if (!body) {
-                    throw new context.CancelError(`Body is required for ${message_type} message type!`);
-                }
-                requestBody.body = body;
-            }
+            requestBody.admin_id = admin_id || 'default'; // API will use the authenticated admin
+            requestBody.message_type = message_type || 'comment';
+            requestBody.body = body;
 
         } else {
             throw new context.CancelError('Reply Type must be either "contact" or "admin"!');
@@ -88,8 +71,7 @@ module.exports = {
             url: `https://api.intercom.io/conversations/${id}/reply`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Intercom-Version': '2.14',
-                'Content-Type': 'application/json'
+                'Intercom-Version': '2.14'
             },
             data: requestBody
         });

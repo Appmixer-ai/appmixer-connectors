@@ -14,16 +14,15 @@ describe('Intercom Connector - All Components', function() {
 
     // Import all component tests
     require('./CreateContact.test.js');
-    require('./CreateCompany.test.js');
+    require('./CreateUpdateCompany.test.js');
     require('./CreateConversation.test.js');
     require('./FindContacts.test.js');
     require('./FindCompanies.test.js');
     require('./FindConversations.test.js');
-    require('./RetrieveContact.test.js');
-    require('./RetrieveCompany.test.js');
-    require('./RetrieveConversation.test.js');
+    require('./GetContact.test.js');
+    require('./GetCompany.test.js');
+    require('./GetConversation.test.js');
     require('./SendMessage.test.js');
     require('./ReplytoConversation.test.js');
     require('./UpdateContact.test.js');
-    require('./UpdateCompany.test.js');
 });

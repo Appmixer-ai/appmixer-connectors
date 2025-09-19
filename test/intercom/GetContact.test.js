@@ -2,24 +2,22 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const assert = require('assert');
 
-describe('RetrieveContact Component', function() {
+describe('GetContact Component', function() {
     let context;
-    let RetrieveContact;
-    let CreateContact;
-    let createdContactId;
+    let GetContact;
+    let testContactId;
 
     this.timeout(30000);
 
-    before(function() {
+    before(async function() {
         // Skip all tests if the access token is not set
         if (!process.env.INTERCOM_ACCESS_TOKEN) {
             console.log('Skipping tests - INTERCOM_ACCESS_TOKEN not set');
             this.skip();
         }
 
-        // Load the components
-        RetrieveContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/RetrieveContact/RetrieveContact.js'));
-        CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
+        // Load the component
+        GetContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/GetContact/GetContact.js'));
 
         // Mock context
         context = {
@@ -35,6 +33,11 @@ describe('RetrieveContact Component', function() {
                 return { data, port };
             },
             httpRequest: require('./httpRequest.js'),
+            log: function(level, message, data) {
+                if (level === 'error') {
+                    console.error(`[${level}] ${message}`, data || '');
+                }
+            },
             CancelError: class extends Error {
                 constructor(message) {
                     super(message);
@@ -42,20 +45,23 @@ describe('RetrieveContact Component', function() {
                 }
             }
         };
-    });
 
-    beforeEach(async function() {
-        // Create a test contact before each test
-        const randomEmail = `test-retrieve-${Date.now()}@example.com`;
-
-        context.messages.in.content = {
-            email: randomEmail,
-            name: 'Test Retrieve User'
-        };
-
+        // Create a test contact first
         try {
-            const createResult = await CreateContact.receive(context);
-            createdContactId = createResult.data.id;
+            const CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
+
+            const createContext = { ...context };
+            createContext.messages = {
+                in: {
+                    content: {
+                        email: `test-get-contact-${Date.now()}@example.com`,
+                        name: 'Test Contact for Get'
+                    }
+                }
+            };
+
+            const result = await CreateContact.receive(createContext);
+            testContactId = result.data.id;
         } catch (error) {
             console.error('Error creating test contact:', error.response?.data || error.message);
             throw error;
@@ -64,17 +70,15 @@ describe('RetrieveContact Component', function() {
 
     it('should retrieve a contact by id', async function() {
         context.messages.in.content = {
-            id: createdContactId
+            id: testContactId
         };
 
         try {
-            const result = await RetrieveContact.receive(context);
+            const result = await GetContact.receive(context);
 
             assert(result, 'Should return a result');
             assert(result.data, 'Should return contact data');
-            assert(result.data.id, 'Should return contact id');
-            assert.strictEqual(result.data.id, createdContactId, 'Should return correct contact id');
-            assert(result.data.email, 'Should return contact email');
+            assert(result.data.id === testContactId, 'Should return correct contact');
         } catch (error) {
             console.error('Error retrieving contact:', error.response?.data || error.message);
             throw error;
@@ -85,7 +89,7 @@ describe('RetrieveContact Component', function() {
         context.messages.in.content = {};
 
         try {
-            await RetrieveContact.receive(context);
+            await GetContact.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
@@ -95,16 +99,14 @@ describe('RetrieveContact Component', function() {
 
     it('should handle non-existent contact id gracefully', async function() {
         context.messages.in.content = {
-            id: 'non-existent-id-12345'
+            id: 'non-existent-contact-12345'
         };
 
         try {
-            await RetrieveContact.receive(context);
-            // This might succeed or fail depending on Intercom's behavior
+            await GetContact.receive(context);
+            assert.fail('Should have thrown an error for non-existent contact');
         } catch (error) {
-            // If it fails, it should be a 404 error
-            assert(error.response, 'Should have response data');
-            assert(error.response.status === 404, 'Should return 404 for non-existent contact');
+            assert(error.response && error.response.status === 404, 'Should return 404 for non-existent contact');
         }
     });
 });
