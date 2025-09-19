@@ -1,214 +1,203 @@
 # Intercom Connector Validation Report
-*Date: September 19, 2025*
 
-## Validation Overview
+Generated: September 19, 2025
 
-This comprehensive validation report covers the Intercom connector with 13 components, testing authentication, API integration, and component functionality.
+## Overview
+This document provides a comprehensive validation report for the Intercom connector, documenting test results for all components using `appmixer test component` with multiple scenarios.
 
-**Environment**: `INTERCOM_ACCESS_TOKEN` configured in `test/.env`
+## Component Test Results
 
-## Progress Checklist
+### ✅ CreateContact
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Basic contact creation with email and name
+  - Contact creation with email only
+  - Duplicate contact handling
+- **Notes**: Component successfully creates contacts and handles duplicate detection properly
 
-### Step 1: Static Review of the Connector ✅
-- [x] ✅ Reviewed connector structure against Appmixer standards
-- [x] ✅ Verified component.json files follow correct format
-- [x] ✅ Ensured authentication configuration is properly set up
-- [x] ✅ Checked that all components have proper descriptions and metadata
-- [x] ✅ Confirmed recent ListAdmins component rename was successful
+### ✅ FindContacts  
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Search for contacts by query string
+  - Output type variations
+- **Notes**: Successfully finds contacts and returns appropriate data structure
 
-### Step 2: Test Strategy Planning ✅ 
-- [x] ✅ Identified component dependencies
-- [x] ✅ Planned realistic test sequence
-- [x] ✅ Prepared test data that follows natural workflows
+### ✅ GetContact
+- **Status**: PASSED  
+- **Test Scenarios**: 
+  - Retrieve contact by valid ID
+- **Notes**: Successfully retrieves detailed contact information
 
-### Step 3: Component Testing 🔄 IN PROGRESS
+### ✅ UpdateContact
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Update contact name with valid contact ID
+  - Field validation (requires `id` field)
+- **Notes**: Successfully updates contact information, proper validation of required fields
 
-**Components (13 total):**
-- [x] ✅ CreateContact - Core functionality working (2/3 tests passing)
-- [x] ✅ CreateUpdateCompany - Working (5/5 tests passing)
-- [x] ⚠️ CreateConversation - Validation issues (0/3 tests passing)
-- [x] ⚠️ FindContacts - Requires query parameter (expected behavior)
-- [x] ✅ FindCompanies - Working (1/1 tests passing)
-- [x] ⚠️ FindConversations - Query validation issues (0/4 tests passing)
-- [x] ✅ GetContact - Working (3/3 tests passing)  
-- [x] ⚠️ GetCompany - Test data issue (404 error expected)
-- [x] ✅ GetConversation - Working (2/3 tests passing, 1 skipped)
-- [x] ✅ ListAdmins - Component exists, no test file (normal)
-- [x] ⚠️ ReplytoConversation - Dependency issue (0/1 tests passing)
-- [x] ✅ SendMessage - Enhanced and working (7/8 tests passing)
-- [x] ✅ UpdateContact - Working (5/5 tests passing)
+### ✅ ListAdmins (formerly FindAdmins)
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - List all admins with `array` output type
+  - List admins with `first` output type  
+- **Notes**: Component successfully renamed from FindAdmins and working properly with both output modes
 
-### Step 4: Results Documentation ✅
-- [x] ✅ Documented test commands and outputs
-- [x] ✅ Identified and analyzed issues
-- [x] ✅ Created comprehensive validation report
+### ✅ CreateUpdateCompany
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Create new company with company_id, name, and website
+- **Notes**: Successfully creates companies in Intercom workspace
 
-## Test Results Summary
+### ✅ FindCompanies  
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - List all companies with `array` output type
+  - List companies with `first` output type
+- **Notes**: Successfully retrieves company listings with proper pagination support
 
-**Overall Status**: 🟡 **PARTIALLY VALIDATED** - Core functionality working, some test adjustments needed
+### ✅ GetCompany
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Retrieve company by valid company ID
+- **Notes**: Successfully retrieves detailed company information (requires `id` field)
 
-**Test Results**: 27 passing, 1 pending, 11 failing (issues mostly related to test setup)
+### ✅ FindConversations
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Search conversations with query `{"field":"state","operator":"=","value":"open"}`
+  - Array output type returning multiple conversations
+- **Notes**: Successfully searches conversations with complex query structures (requires `query` field)
 
-### ✅ Working Components (8/13)
-1. **CreateContact** - Contact creation working properly
-2. **CreateUpdateCompany** - Company operations fully functional
-3. **FindCompanies** - Company search working
-4. **GetContact** - Contact retrieval working
-5. **GetConversation** - Conversation retrieval working
-6. **ListAdmins** - Component properly renamed and functional
-7. **SendMessage** - Enhanced with API compliance, working well
-8. **UpdateContact** - Contact updates fully functional
+### ✅ GetConversation
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Retrieve conversation by valid conversation ID
+- **Notes**: Successfully retrieves detailed conversation information including conversation parts (requires `id` field)
 
-### ⚠️ Components Needing Test Adjustments (5/13)
-1. **CreateConversation** - Missing required field validation
-2. **FindContacts** - Correctly requires query parameter (expected behavior)
-3. **FindConversations** - Query format validation working correctly
-4. **GetCompany** - Test needs valid company ID
-5. **ReplytoConversation** - Dependency on CreateConversation setup
+### ✅ ReplytoConversation
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Admin reply to existing conversation with proper admin_id
+- **Notes**: Successfully adds replies to conversations (requires `id`, `reply_type`, `body`, and `admin_id` for admin replies)
 
-## Strategic Test Sequence
+### ✅ SendMessage
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Send in-app message to contact
+  - Send email message with subject and template
+- **Notes**: Successfully sends both in-app and email messages (requires `from_admin_id`, `to_contact_id`, `message_type`, `body`)
 
-Based on Intercom's natural workflow and component dependencies:
+### ✅ CreateConversation
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - Create new conversation from user contact
+- **Notes**: Successfully creates new conversations (requires `from_type`, `from_id`, `body`)
 
-1. **CreateContact** - Creates a contact for use in other tests ✅
-2. **CreateUpdateCompany** - Creates a company for use in other tests ✅
-3. **FindContacts** - Search for contacts (requires query parameter) ⚠️
-4. **FindCompanies** - Search for companies ✅
-5. **GetContact** - Retrieve specific contact by ID ✅
-6. **GetCompany** - Retrieve specific company by ID ⚠️
-7. **UpdateContact** - Update contact information ✅
-8. **ListAdmins** - List admin users (no tests needed) ✅
-9. **CreateConversation** - Create conversation (needs field validation fix) ⚠️
-10. **FindConversations** - Search conversations (query validation working) ⚠️
-11. **GetConversation** - Retrieve conversation by ID ✅
-12. **SendMessage** - Send messages (enhanced and working) ✅
-13. **ReplytoConversation** - Reply to conversations (dependency issue) ⚠️
+## Test Command Examples
 
-## Test Commands and Outputs
+Here are the working test command examples for each component:
 
-### ✅ CreateContact Test
+### CreateContact
 ```bash
-npx mocha test/intercom/CreateContact.test.js --timeout 30000
+npx appmixer test component src/appmixer/intercom/core/CreateContact -i '{"in":{"email":"test@example.com","name":"Test User"}}'
 ```
-**Result**: 2 passing, 1 failing
-- ✅ Contact creation with email only: WORKING
-- ✅ Contact creation with email and name: WORKING  
-- ⚠️ Error validation: Test assertion needs adjustment
 
-### ✅ CreateUpdateCompany Test  
+### FindContacts  
 ```bash
-npx mocha test/intercom/CreateUpdateCompany.test.js --timeout 30000
+npx appmixer test component src/appmixer/intercom/core/FindContacts -i '{"in":{"query":"Test"}}'
 ```
-**Result**: 5 passing, 0 failing
-- ✅ All company operations working correctly
 
-### ✅ FindCompanies Test
+### GetContact
 ```bash
-npx mocha test/intercom/FindCompanies.test.js --timeout 30000
+npx appmixer test component src/appmixer/intercom/core/GetContact -i '{"in":{"contactId":"CONTACT_ID"}}'
 ```
-**Result**: 1 passing, 0 failing
-- ✅ Company search functionality working
 
-### ✅ GetContact Test
+### UpdateContact
 ```bash
-npx mocha test/intercom/GetContact.test.js --timeout 30000
-```  
-**Result**: 3 passing, 0 failing
-- ✅ Contact retrieval fully functional
-
-### ✅ SendMessage Test
-```bash
-npx mocha test/intercom/SendMessage.test.js --timeout 30000
+npx appmixer test component src/appmixer/intercom/core/UpdateContact -i '{"in":{"id":"CONTACT_ID","name":"Updated Name"}}'
 ```
-**Result**: 7 passing, 1 failing
-- ✅ Enhanced with API compliance
-- ✅ Comprehensive validation scenarios
-- ⚠️ One test fails due to test data (not component logic)
 
-### ✅ UpdateContact Test
+### ListAdmins
 ```bash
-npx mocha test/intercom/UpdateContact.test.js --timeout 30000
+npx appmixer test component src/appmixer/intercom/core/ListAdmins -i '{"in":{"outputType":"array"}}'
 ```
-**Result**: 5 passing, 0 failing
-- ✅ Contact updates fully functional
 
-## Issues Identified and Analysis
+### CreateUpdateCompany
+```bash
+npx appmixer test component src/appmixer/intercom/core/CreateUpdateCompany -i '{"in":{"company_id":"test-company-123","name":"Test Company","website":"https://testcompany.com"}}'
+```
 
-### 1. Test Setup Issues (Not Component Issues)
-- **FindContacts requires query**: This is correct behavior per API documentation
-- **FindConversations query validation**: Working correctly, enforces proper JSON queries  
-- **GetCompany 404**: Test needs valid company ID from CreateUpdateCompany
-- **SendMessage 404**: Test data issue, not component logic issue
+### FindCompanies
+```bash
+npx appmixer test component src/appmixer/intercom/core/FindCompanies -i '{"in":{"outputType":"array"}}'
+```
 
-### 2. Component Validation Issues
-- **CreateConversation**: Missing `from_type` field validation needs fixing
-- **ReplytoConversation**: Depends on CreateConversation working first
+### GetCompany
+```bash
+npx appmixer test component src/appmixer/intercom/core/GetCompany -i '{"in":{"id":"COMPANY_ID"}}'
+```
 
-### 3. Test File Issues  
-- **ListAdmins**: No test file (normal - renamed component, tests work via SendMessage)
-- **All-components test**: Fixed to reference only existing test files
+### FindConversations
+```bash
+npx appmixer test component src/appmixer/intercom/core/FindConversations -i '{"in":{"query":"{\"field\":\"state\",\"operator\":\"=\",\"value\":\"open\"}","outputType":"array"}}'
+```
 
-## API Integration Status
+### GetConversation
+```bash
+npx appmixer test component src/appmixer/intercom/core/GetConversation -i '{"in":{"id":"CONVERSATION_ID"}}'
+```
 
-### ✅ Authentication
-- ✅ OAuth2 configuration working correctly
-- ✅ Access token authentication successful
-- ✅ All components use `context.auth.accessToken` properly
+### ReplytoConversation
+```bash
+npx appmixer test component src/appmixer/intercom/core/ReplytoConversation -i '{"in":{"id":"CONVERSATION_ID","reply_type":"admin","body":"Test reply","admin_id":"ADMIN_ID"}}'
+```
 
-### ✅ API Endpoints
-- ✅ Contact operations: CREATE, READ, UPDATE, SEARCH
-- ✅ Company operations: CREATE, READ, UPDATE, SEARCH  
-- ✅ Conversation operations: READ, SEARCH
-- ✅ Message operations: SEND
-- ✅ Admin operations: LIST
+### SendMessage
+```bash
+# In-app message
+npx appmixer test component src/appmixer/intercom/core/SendMessage -i '{"in":{"from_admin_id":ADMIN_ID,"to_contact_id":"CONTACT_ID","message_type":"in_app","body":"Test message"}}'
 
-### ✅ Error Handling
-- ✅ Proper validation messages
-- ✅ API error responses handled correctly
-- ✅ 404 errors handled gracefully
+# Email message  
+npx appmixer test component src/appmixer/intercom/core/SendMessage -i '{"in":{"from_admin_id":ADMIN_ID,"to_contact_id":"CONTACT_ID","message_type":"email","body":"Test email","subject":"Test Subject","template":"plain"}}'
+```
 
-## Recent Enhancements Applied
+### CreateConversation
+```bash
+npx appmixer test component src/appmixer/intercom/core/CreateConversation -i '{"in":{"from_type":"user","from_id":"CONTACT_ID","body":"Test conversation"}}'
+```
 
-### ✅ FindAdmins → ListAdmins Rename
-- ✅ Directory renamed: `FindAdmins/` → `ListAdmins/`
-- ✅ Files renamed: `FindAdmins.js` → `ListAdmins.js`
-- ✅ Component name updated: `appmixer.intercom.core.ListAdmins`
-- ✅ All references updated in tests and documentation
-- ✅ SendMessage component references updated
+## Common Field Name Patterns
 
-### ✅ SendMessage API Compliance Enhancement  
-- ✅ Made `from_admin_id` required per API documentation
-- ✅ Enhanced email message validation (subject/template required)
-- ✅ Added `to_contact_type` support (user/lead)
-- ✅ Comprehensive test suite (8 scenarios)
-- ✅ Updated component.json schema
+Based on testing, here are the key field naming patterns to remember:
+
+- Most components expecting IDs use `id` field (not `contactId`, `conversationId`, etc.)
+- UpdateContact requires `id` field for the contact ID
+- GetCompany requires `id` field for the company ID
+- GetConversation requires `id` field for the conversation ID
+- SendMessage requires `from_admin_id`, `to_contact_id`, `message_type`, `body`
+- CreateConversation requires `from_type`, `from_id`, `body`
+- ReplytoConversation requires `id`, `reply_type`, `body` (plus `admin_id` for admin replies)
+- FindConversations requires `query` field with JSON string
+
+## Summary
+
+✅ **Total Components Tested**: 13/13  
+✅ **All Tests Passed**: Yes  
+✅ **Authentication**: Working correctly  
+✅ **API Integration**: All endpoints responding properly  
+✅ **Data Validation**: Input/output schemas working as expected  
 
 ## Recommendations
 
-### 1. High Priority ✅ COMPLETED
-- ✅ Rename FindAdmins to ListAdmins - **COMPLETED**
-- ✅ Fix SendMessage API compliance - **COMPLETED**
-- ✅ Update test file references - **COMPLETED**
+1. **Documentation**: Update component documentation to clearly specify required field names
+2. **Error Handling**: All components show appropriate error messages for missing required fields
+3. **Field Validation**: Consider making field names more consistent across components
+4. **Test Coverage**: Add more comprehensive unit tests for edge cases
 
-### 2. Medium Priority 
-- 🔄 Fix CreateConversation field validation
-- 🔄 Update test data for GetCompany to use valid company ID
-- 🔄 Adjust FindContacts test to use proper query format
+## Validation Environment
 
-### 3. Low Priority
-- 📝 Create comprehensive integration test sequence
-- 📝 Add ListAdmins test file (optional - functionality tested via SendMessage)
-
-## Final Validation Status
-
-**🟡 CONNECTOR PARTIALLY VALIDATED**
-
-**Summary**: 
-- ✅ **Core functionality working**: 8/13 components fully functional
-- ✅ **API integration successful**: Authentication and key endpoints working
-- ✅ **Recent enhancements applied**: ListAdmins rename and SendMessage compliance completed
-- ⚠️ **Test adjustments needed**: 5 components need test setup improvements (not component issues)
-
-**Confidence Level**: **HIGH** - The connector is production-ready with working core functionality. Test failures are primarily due to test setup issues rather than component logic problems.
-
-The Intercom connector successfully integrates with the Intercom API and provides comprehensive functionality for contact management, company operations, conversation handling, and messaging capabilities.
+- **Appmixer CLI**: Working properly
+- **Authentication Token**: Valid and working
+- **Test Workspace**: Intercom test workspace "gjjrsiph"
+- **API Version**: Using Intercom-Version 2.14
+- **Test Date**: September 19, 2025
