@@ -2,6 +2,14 @@ module.exports = {
     async receive(context) {
         const { replyToken, messages, notificationDisabled } = context.messages.in.content;
 
+        if (!replyToken) {
+            throw new context.CancelError('Reply Token is required.');
+        }
+
+        if (!messages) {
+            throw new context.CancelError('Messages is required.');
+        }
+
         const messagesArr = messages.ADD.map((message) => {
             return {
                 type: message.type,

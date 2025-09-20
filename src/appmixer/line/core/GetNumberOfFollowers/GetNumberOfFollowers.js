@@ -2,6 +2,10 @@ module.exports = {
     async receive(context) {
         const { date } = context.messages.in.content;
 
+        if (!date) {
+            throw new context.CancelError('Date is required.');
+        }
+
         // https://developers.line.biz/en/reference/messaging-api/#get-number-of-followers
         const { data } = await context.httpRequest({
             method: 'GET',

@@ -7,6 +7,10 @@ module.exports = {
             throw new context.CancelError('To is required.');
         }
 
+        if (!messages) {
+            throw new context.CancelError('Messages is required.');
+        }
+
         const messagesArr = messages.ADD.map((message) => {
             return {
                 type: message.type,

@@ -2,6 +2,10 @@ module.exports = {
     async receive(context) {
         const { richMenuId } = context.messages.in.content;
 
+        if (!richMenuId) {
+            throw new context.CancelError('Rich Menu ID is required.');
+        }
+
         // https://developers.line.biz/en/reference/messaging-api/#get-rich-menu
         const { data } = await context.httpRequest({
             method: 'GET',

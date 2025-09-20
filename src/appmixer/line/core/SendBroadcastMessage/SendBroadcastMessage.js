@@ -2,6 +2,10 @@ module.exports = {
     async receive(context) {
         const { messages, notificationDisabled } = context.messages.in.content;
 
+        if (!messages) {
+            throw new context.CancelError('Messages is required.');
+        }
+
         const messagesArr = messages.ADD.map((message) => {
             return {
                 type: message.type,

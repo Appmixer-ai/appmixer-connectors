@@ -19,7 +19,6 @@ module.exports = {
     async receive(context) {
 
         if (context.messages.webhook) {
-            context.log({ step: 'receive', message: context.messages.webhook });
             await context.sendJson(context.messages.webhook.content.data, 'out');
         }
     }

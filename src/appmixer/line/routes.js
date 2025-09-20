@@ -38,7 +38,6 @@ module.exports = async context => {
                     return {};
                 }
 
-                // context.log('info', 'line-plugin-route-webhook-event-type', { type: event.type });
                 for (const event of events) {
                     if (event.type === 'message') {
                         await processMessages(context, event, req);
@@ -56,7 +55,8 @@ module.exports = async context => {
             eventName: `line-message-${req.payload.destination}`,
             payload: event,
             filter: listener => {
-                return listener.params.userId === req.payload.destination && verifySignature(context, req, listener.params.channelSecret);
+                return listener.params.userId === req.payload.destination
+                    && verifySignature(context, req, listener.params.channelSecret);
             }
         });
     }
