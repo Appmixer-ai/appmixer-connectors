@@ -25,7 +25,7 @@ describe('ListTags Component', function() {
         assert(result.data, 'Result data should be defined');
         assert(Array.isArray(result.data.tags), 'Tags should be an array');
         console.log(`✓ Listed ${result.data.tags.length} tags successfully`);
-        
+
         if (result.data.tags.length > 0) {
             const tag = result.data.tags[0];
             assert(tag.id, 'Tag should have an id');
@@ -44,7 +44,7 @@ describe('ListTags Component', function() {
         };
 
         const ListTags = require('../../src/appmixer/intercom/core/ListTags/ListTags');
-        
+
         try {
             await ListTags.receive(mockContext);
             assert.fail('Should have thrown an error with invalid token');
