@@ -22,6 +22,7 @@ describe('Intercom Connector - All Components', function() {
     require('./GetContact.test.js');
     require('./GetCompany.test.js');
     require('./GetConversation.test.js');
+    require('./ListTags.test.js');
     require('./SendMessage.test.js');
     require('./ReplytoConversation.test.js');
     require('./UpdateContact.test.js');

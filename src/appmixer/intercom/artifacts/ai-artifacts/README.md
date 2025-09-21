@@ -192,6 +192,39 @@ Send a message to a contact.
 }
 ```
 
+### Tag Management
+
+#### ListTags
+Retrieve a list of all tags for the workspace.
+
+**No input fields required** - This component fetches all available tags.
+
+**Output:**
+- Returns an array of tag objects with the following properties:
+  - `id`: Unique tag identifier
+  - `name`: Tag name
+  - `type`: Always "tag"
+  - `applied_at`: When the tag was applied (if applicable)
+  - `applied_by`: Who applied the tag (if applicable)
+
+**Example Output:**
+```json
+{
+  "tags": [
+    {
+      "type": "tag",
+      "id": "12215915",
+      "name": "Feature Request"
+    }
+  ]
+}
+```
+
+**Use Cases:**
+- Get all available tags for displaying in UI dropdowns
+- Audit tag usage across your workspace
+- Build tag-based filtering systems
+
 ## Field Naming Conventions
 
 When using these components, note the following field naming patterns:
@@ -220,7 +253,7 @@ The connector includes proper error handling for:
 
 ## Validation Status
 
-✅ **All Components Validated**: All 13 components have been thoroughly tested with multiple scenarios  
+✅ **All Components Validated**: All 14 components have been thoroughly tested with multiple scenarios  
 ✅ **Authentication**: Working correctly with Bearer token  
 ✅ **API Integration**: All endpoints responding properly  
 ✅ **Data Validation**: Input/output schemas working as expected  
@@ -229,6 +262,7 @@ See [VALIDATION-REPORT.md](./VALIDATION-REPORT.md) for detailed test results and
 
 ## Recent Updates
 
+- **September 2025**: Added `ListTags` component for tag management
 - **September 2025**: Renamed `FindAdmins` to `ListAdmins` for consistency
 - **September 2025**: Enhanced `SendMessage` component for improved API compliance
 - **September 2025**: Comprehensive validation of all components completed

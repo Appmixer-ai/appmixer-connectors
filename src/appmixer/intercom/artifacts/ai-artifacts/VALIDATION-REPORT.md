@@ -93,6 +93,13 @@ This document provides a comprehensive validation report for the Intercom connec
   - Create new conversation from user contact
 - **Notes**: Successfully creates new conversations (requires `from_type`, `from_id`, `body`)
 
+### ✅ ListTags
+- **Status**: PASSED
+- **Test Scenarios**: 
+  - List all tags with empty input
+  - List all tags with trigger parameter
+- **Notes**: Successfully retrieves all available tags for the workspace. No input fields required. Returns array of tag objects with id, name, and type properties.
+
 ## Test Command Examples
 
 Here are the working test command examples for each component:
@@ -166,6 +173,11 @@ npx appmixer test component src/appmixer/intercom/core/SendMessage -i '{"in":{"f
 npx appmixer test component src/appmixer/intercom/core/CreateConversation -i '{"in":{"from_type":"user","from_id":"CONTACT_ID","body":"Test conversation"}}'
 ```
 
+### ListTags
+```bash
+npx appmixer test component src/appmixer/intercom/core/ListTags -i '{"in":{}}'
+```
+
 ## Common Field Name Patterns
 
 Based on testing, here are the key field naming patterns to remember:
@@ -181,7 +193,7 @@ Based on testing, here are the key field naming patterns to remember:
 
 ## Summary
 
-✅ **Total Components Tested**: 13/13  
+✅ **Total Components Tested**: 14/14  
 ✅ **All Tests Passed**: Yes  
 ✅ **Authentication**: Working correctly  
 ✅ **API Integration**: All endpoints responding properly  

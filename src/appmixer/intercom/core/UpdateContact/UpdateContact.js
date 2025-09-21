@@ -6,7 +6,7 @@ module.exports = {
     async receive(context) {
 
         const {
-            id,
+            contact_id,
             external_id,
             role,
             email,
@@ -17,7 +17,7 @@ module.exports = {
         } = context.messages.in.content;
 
         // Validate required fields
-        if (!id) {
+        if (!contact_id) {
             throw new context.CancelError('Contact ID is required!');
         }
 
@@ -53,9 +53,9 @@ module.exports = {
         }
 
         // Make the API request
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
-            url: `https://api.intercom.io/contacts/${id}`,
+            url: `https://api.intercom.io/contacts/${contact_id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Intercom-Version': '2.14'
@@ -63,6 +63,6 @@ module.exports = {
             data: requestBody
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
