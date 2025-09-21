@@ -14,7 +14,9 @@ describe('ListTags Component', function() {
 
         const mockContext = {
             auth: { accessToken: process.env.INTERCOM_ACCESS_TOKEN },
-            httpRequest: require('axios'),
+            messages: { in: { content: {} } },
+            properties: {}, // Add missing properties object
+            httpRequest: require('./httpRequest.js'),
             sendJson: (data, port) => ({ data, port })
         };
 
@@ -39,7 +41,9 @@ describe('ListTags Component', function() {
 
         const mockContext = {
             auth: { accessToken: 'invalid_token' },
-            httpRequest: require('axios'),
+            messages: { in: { content: {} } },
+            properties: {}, // Add missing properties object
+            httpRequest: require('./httpRequest.js'),
             sendJson: (data, port) => ({ data, port })
         };
 
@@ -49,6 +53,7 @@ describe('ListTags Component', function() {
             await ListTags.receive(mockContext);
             assert.fail('Should have thrown an error with invalid token');
         } catch (error) {
+            // Check if it's an HTTP error with proper response
             assert(error.response, 'Should be an HTTP error');
             assert(error.response.status === 401, 'Should return 401 for invalid token');
             console.log('✓ Correctly handled invalid authentication');
