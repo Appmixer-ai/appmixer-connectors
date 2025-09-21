@@ -1,3 +1,5 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
 
@@ -9,6 +11,10 @@ module.exports = {
 
         if (!messages) {
             throw new context.CancelError('Messages is required.');
+        }
+
+        if (!Array.isArray(messages.ADD) || messages.ADD.length === 0) {
+            throw new context.CancelError('At least one message is required.');
         }
 
         const messagesArr = messages.ADD.map((message) => {

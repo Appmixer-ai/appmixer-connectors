@@ -1,5 +1,8 @@
+'use strict';
+
 module.exports = {
     async receive(context) {
+
         const { groupId, roomId } = context.messages.in.content;
 
         if (!groupId && !roomId) {
