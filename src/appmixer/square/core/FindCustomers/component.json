@@ -1,0 +1,206 @@
+{
+    "name": "appmixer.square.core.FindCustomers",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search and retrieve customer profiles.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:square"
+    },
+    "quota": {
+        "manager": "appmixer:square",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "emailAddress": {
+                        "type": "string"
+                    },
+                    "phoneNumber": {
+                        "type": "string"
+                    },
+                    "createdAtFrom": {
+                        "type": "string"
+                    },
+                    "createdAtTo": {
+                        "type": "string"
+                    },
+                    "updatedAtFrom": {
+                        "type": "string"
+                    },
+                    "updatedAtTo": {
+                        "type": "string"
+                    },
+                    "creationSource": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "groupIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "sortField": {
+                        "type": "string"
+                    },
+                    "sortOrder": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "emailAddress": {
+                        "type": "text",
+                        "tooltip": "Filter customers by email address (fuzzy search - partial matches allowed)",
+                        "label": "Email Address",
+                        "index": 1
+                    },
+                    "phoneNumber": {
+                        "type": "text",
+                        "tooltip": "Filter customers by phone number (fuzzy search - partial matches allowed)",
+                        "label": "Phone Number",
+                        "index": 2
+                    },
+                    "createdAtFrom": {
+                        "type": "date-time",
+                        "tooltip": "Find customers created after this date (ISO 8601 format)",
+                        "label": "Created After",
+                        "index": 3
+                    },
+                    "createdAtTo": {
+                        "type": "date-time",
+                        "tooltip": "Find customers created before this date (ISO 8601 format)",
+                        "label": "Created Before",
+                        "index": 4
+                    },
+                    "updatedAtFrom": {
+                        "type": "date-time",
+                        "tooltip": "Find customers updated after this date (ISO 8601 format)",
+                        "label": "Updated After",
+                        "index": 5
+                    },
+                    "updatedAtTo": {
+                        "type": "date-time",
+                        "tooltip": "Find customers updated before this date (ISO 8601 format)",
+                        "label": "Updated Before",
+                        "index": 6
+                    },
+                    "creationSource": {
+                        "type": "select",
+                        "tooltip": "Filter by creation source(s)",
+                        "label": "Creation Source",
+                        "index": 7,
+                        "multiple": true,
+                        "options": [
+                            { "label": "Third Party", "value": "THIRD_PARTY" },
+                            { "label": "Square", "value": "SQUARE" },
+                            { "label": "Square Invoices", "value": "INVOICES" },
+                            { "label": "Square Customers API", "value": "CUSTOMERS_API" },
+                            { "label": "Square Dashboard", "value": "DASHBOARD" },
+                            { "label": "Square Point of Sale", "value": "SQUARE_POS" },
+                            { "label": "Terminals API", "value": "TERMINALS_API" },
+                            { "label": "Terminal", "value": "TERMINAL" },
+                            { "label": "Billing", "value": "BILLING" },
+                            { "label": "Bookings", "value": "BOOKINGS" },
+                            { "label": "Marketing", "value": "MARKETING" },
+                            { "label": "Loyalty", "value": "LOYALTY" },
+                            { "label": "Other", "value": "OTHER" }
+                        ]
+                    },
+                    "groupIds": {
+                        "type": "text",
+                        "tooltip": "Filter by customer group IDs (comma-separated)",
+                        "label": "Group IDs",
+                        "index": 8
+                    },
+                    "sortField": {
+                        "type": "select",
+                        "tooltip": "Field to sort results by",
+                        "label": "Sort Field",
+                        "index": 9,
+                        "options": [
+                            { "label": "Default", "value": "DEFAULT" },
+                            { "label": "Created At", "value": "CREATED_AT" }
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "select",
+                        "tooltip": "Sort order",
+                        "label": "Sort Order",
+                        "index": 10,
+                        "defaultValue": "ASC",
+                        "options": [
+                            { "label": "Ascending", "value": "ASC" },
+                            { "label": "Descending", "value": "DESC" }
+                        ]
+                    },
+                    "limit": {
+                        "type": "number",
+                        "tooltip": "Maximum number of results to return (1-100, default 100)",
+                        "label": "Limit",
+                        "index": 11,
+                        "defaultValue": 100
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 12,
+                        "defaultValue": "array",
+                        "tooltip": "Choose how to receive the results",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/square/core/FindCustomers?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGlkPSJGbGF0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0yMDgsMjhINDhBMjAuMDIyOTIsMjAuMDIyOTIsMCwwLDAsMjgsNDhWMjA4YTIwLjAyMjkyLDIwLjAyMjkyLDAsMCwwLDIwLDIwSDIwOGEyMC4wMjI5MiwyMC4wMjI5MiwwLDAsMCwyMC0yMFY0OEEyMC4wMjI5MiwyMC4wMjI5MiwwLDAsMCwyMDgsMjhabS00LDE3Nkg1MlY1MkgyMDRaTTk2LDE3Mmg2NGExMiwxMiwwLDAsMCwxMi0xMlY5NmExMiwxMiwwLDAsMC0xMi0xMkg5NkExMiwxMiwwLDAsMCw4NCw5NnY2NEExMiwxMiwwLDAsMCw5NiwxNzJabTEyLTY0aDQwdjQwSDEwOFoiLz4KPC9zdmc+"
+}
