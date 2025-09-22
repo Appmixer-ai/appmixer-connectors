@@ -168,11 +168,13 @@ module.exports = {
         }
 
         if (date_created_start) {
-            params['date_created:min'] = date_created_start;
+            // BigCommerce API expects ISO 8601 format without milliseconds
+            params['date_created:min'] = new Date(date_created_start).toISOString().split('.')[0] + 'Z';
         }
 
         if (date_created_end) {
-            params['date_created:max'] = date_created_end;
+            // BigCommerce API expects ISO 8601 format without milliseconds
+            params['date_created:max'] = new Date(date_created_end).toISOString().split('.')[0] + 'Z';
         }
 
         // https://developer.bigcommerce.com/api-reference/store-management/customers-v3/customers/getcustomers

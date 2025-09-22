@@ -118,10 +118,12 @@ module.exports = {
             params.type = type;
         }
         if (date_modified_start) {
-            params['date_modified:min'] = date_modified_start;
+            // BigCommerce API expects ISO 8601 format without milliseconds
+            params['date_modified:min'] = new Date(date_modified_start).toISOString().split('.')[0] + 'Z';
         }
         if (date_modified_end) {
-            params['date_modified:max'] = date_modified_end;
+            // BigCommerce API expects ISO 8601 format without milliseconds
+            params['date_modified:max'] = new Date(date_modified_end).toISOString().split('.')[0] + 'Z';
         }
 
         // https://developer.bigcommerce.com/api-reference/store-management/catalog/products/getproducts
