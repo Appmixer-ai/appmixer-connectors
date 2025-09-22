@@ -13,7 +13,7 @@ module.exports = {
             }
         });
 
-        // BigCommerce API returns orders array directly
+        // BigCommerce API returns orders status array directly
         const statuses = Array.isArray(data) ? data : [];
 
         await context.sendJson({ statuses }, 'out');
