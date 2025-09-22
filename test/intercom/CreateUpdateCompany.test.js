@@ -115,16 +115,13 @@ describe('CreateUpdateCompany Component', function() {
 
         context.messages.in.content = {
             company_id: companyId,
-            custom_attributes: JSON.stringify(customAttributes)
+            custom_attributes: customAttributes
         };
 
         try {
-            const result = await CreateUpdateCompany.receive(context);
-
-            assert(result, 'Should return a result');
-            assert(result.data, 'Should return company data');
-            assert(result.data.company_id === companyId, 'Should have correct company_id');
-            console.log('Expected error for non-existent custom attribute');
+            await CreateUpdateCompany.receive(context);
+            // If we reach here, the request unexpectedly succeeded
+            assert.fail('Should have failed with invalid custom attributes');
         } catch (error) {
             // Expected to fail with invalid custom attributes
             assert(error.response && error.response.status >= 400, 'Should fail with 4xx error for invalid custom attributes');

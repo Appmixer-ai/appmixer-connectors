@@ -6,6 +6,7 @@ describe('GetCompany Component', function() {
     let context;
     let GetCompany;
     let testCompanyId;
+    let testIntercomId;
 
     this.timeout(30000);
 
@@ -61,7 +62,8 @@ describe('GetCompany Component', function() {
                 }
             };
 
-            await CreateUpdateCompany.receive(createContext);
+            const createResult = await CreateUpdateCompany.receive(createContext);
+            testIntercomId = createResult.data.id; // Store the Intercom ID
         } catch (error) {
             console.error('Error creating test company:', error.response?.data || error.message);
             throw error;
@@ -70,7 +72,7 @@ describe('GetCompany Component', function() {
 
     it('should retrieve a company by id', async function() {
         context.messages.in.content = {
-            id: testCompanyId
+            id: testIntercomId
         };
 
         try {

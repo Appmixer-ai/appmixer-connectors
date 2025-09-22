@@ -8,22 +8,59 @@ Intercom is a customer messaging platform that provides live chat, marketing aut
 
 ## Authentication Method
 
-**Type:** Bearer Token Authentication (Access Token)
+**Type:** OAuth 2.0 Authorization Code Flow
 
 **How it works:**
-- Intercom uses Access Tokens for API authentication
-- Tokens are provided when creating an app in the Intercom workspace
+- Intercom uses OAuth 2.0 for secure API authentication with user-authorized access
+- The flow involves obtaining user authorization and exchanging authorization codes for access tokens
 - Authentication is done via the `Authorization: Bearer <access_token>` header
 
-**How to obtain Access Token:**
-1. Create an app on your workspace at https://app.intercom.com/a/developer-signup
-2. Find your Access Token in the Configure > Authentication section in your app within the Developer Hub
-3. Alternative: Access tokens are also visible on the Test & Publish > Your Workspaces page
+**OAuth 2.0 Implementation Steps:**
 
-**Important Security Notes:**
-- Access Tokens should be treated like passwords and never shared with third parties
-- For public integrations, OAuth should be used instead of Access Tokens
-- Access Tokens are suitable for private apps accessing your own workspace data
+1. **Register App & Obtain Credentials:**
+   - Create an app at https://app.intercom.com/a/developer-signup
+   - Configure app permissions and redirect URIs in the Developer Hub
+   - Obtain your `client_id` and `client_secret` from the app configuration
+
+2. **Set Redirect URI:**
+   - Configure your callback URL in the app settings
+   - This is where users will be redirected after authorization
+
+3. **Request User Authorization:**
+   - Direct users to: `https://app.intercom.com/oauth`
+   - Required parameters:
+     - `client_id`: Your app's client ID
+     - `redirect_uri`: Your registered callback URL
+     - `response_type`: Set to "code"
+     - `state`: CSRF protection token
+
+4. **Exchange Authorization Code for Access Token:**
+   - POST to: `https://api.intercom.io/auth/eagle/token`
+   - Headers: `Content-Type: application/x-www-form-urlencoded`
+   - Body parameters:
+     - `code`: Authorization code from callback
+     - `client_id`: Your app's client ID
+     - `client_secret`: Your app's client secret
+
+5. **Use Access Token:**
+   ```
+   Authorization: Bearer <access_token>
+   ```
+
+**Required Scopes:**
+Intercom OAuth apps are granted permissions based on the app configuration in the Developer Hub rather than explicit scopes in the authorization request. Configure the required permissions when setting up your app.
+
+**Token Management Best Practices:**
+- **Storage:** Store access tokens securely (encrypted, server-side)
+- **Validation:** Tokens can be validated by calling `/me` endpoint
+- **No Expiration:** Intercom access tokens do not expire automatically
+- **Revocation:** Tokens remain valid until user revokes access or app is deleted
+- **Security:** Never expose tokens in client-side code or logs
+
+**Personal Access Tokens (Private/Test Use Only):**
+Personal Access Tokens are available for private apps or testing purposes only. They should not be used for public integrations:
+- Obtain from Configure > Authentication section in Developer Hub
+- Suitable only for internal tools accessing your own workspace data
 
 **Authentication Documentation:** https://developers.intercom.com/docs/build-an-integration/learn-more/authentication
 

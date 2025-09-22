@@ -66,7 +66,7 @@ describe('UpdateContact Component', function() {
         const newName = `Updated Name ${Date.now()}`;
 
         context.messages.in.content = {
-            id: createdContactId,
+            contact_id: createdContactId,
             name: newName
         };
 
@@ -87,7 +87,7 @@ describe('UpdateContact Component', function() {
         const newEmail = `updated-${Date.now()}@example.com`;
 
         context.messages.in.content = {
-            id: createdContactId,
+            contact_id: createdContactId,
             email: newEmail
         };
 
@@ -109,7 +109,7 @@ describe('UpdateContact Component', function() {
         };
 
         context.messages.in.content = {
-            id: createdContactId,
+            contact_id: createdContactId,
             custom_attributes: customAttributes
         };
 
@@ -148,7 +148,7 @@ describe('UpdateContact Component', function() {
 
     it('should handle non-existent contact id gracefully', async function() {
         context.messages.in.content = {
-            id: 'non-existent-contact-12345',
+            contact_id: 'non-existent-contact-12345',
             name: 'Updated Name'
         };
 

@@ -2,14 +2,22 @@
     "actions": [
         {
             "title": "Find Contacts",
-            "description": "Retrieve a list of contacts based on search criteria. Use the 'query' parameter to filter contacts by name, email, or other attributes.",
+            "description": "Search for contacts using query criteria and filters. Use query object to define search parameters like field, operator, and value.",
             "type": "action",
             "documentation": "https://developers.intercom.com/reference#search-contacts",
-            "endpointUrl": "/contacts",
+            "endpointUrl": "/contacts/search",
             "apiBaseUrl": "https://api.intercom.io",
-            "method": "GET",
+            "method": "POST",
+            "sampleRequest": {
+                "query": {
+                    "field": "email",
+                    "operator": "=",
+                    "value": "joe@example.com"
+                }
+            },
             "sampleResponse": {
-                "contacts": [
+                "type": "list",
+                "data": [
                     {
                         "id": "12345",
                         "email": "john.doe@example.com",
@@ -18,22 +26,52 @@
                     }
                 ],
                 "pages": {
-                    "next": "cursor_for_next_page"
+                    "next": {
+                        "page": 2,
+                        "starting_after": "cursor_value"
+                    }
                 }
             },
             "inputSchema": {
                 "type": "object",
-                "description": "Input parameters for finding contacts",
+                "description": "Input parameters for searching contacts",
                 "properties": {
                     "query": {
-                        "type": "string",
-                        "description": "Search query for filtering contacts by name, email, etc."
+                        "type": "object",
+                        "description": "Search query object defining field, operator, and value. Can also support complex queries with AND/OR operators.",
+                        "properties": {
+                            "field": {
+                                "type": "string",
+                                "description": "The field to search on (e.g., 'email', 'name', 'custom_attributes.field_name')"
+                            },
+                            "operator": {
+                                "type": "string",
+                                "description": "The operator for comparison (e.g., '=', '!=', 'IN', 'NIN', '>', '<', '~')"
+                            },
+                            "value": {
+                                "description": "The value to search for"
+                            }
+                        }
+                    },
+                    "pagination": {
+                        "type": "object",
+                        "description": "Pagination parameters",
+                        "properties": {
+                            "per_page": {
+                                "type": "number",
+                                "description": "Number of results per page (max 150)"
+                            },
+                            "starting_after": {
+                                "type": "string",
+                                "description": "Cursor for pagination"
+                            }
+                        }
                     }
                 }
             },
             "outputType": {
                 "outputType": "array",
-                "arrayPropertyValue": "contacts"
+                "arrayPropertyValue": "data"
             }
         },
         {
@@ -142,12 +180,12 @@
         },
         {
             "title": "Find Conversations",
-            "description": "Retrieve a list of conversations filtered by various criteria using a search query.",
+            "description": "Search for conversations using query criteria and filters.",
             "type": "action",
-            "documentation": "https://developers.intercom.com/reference#list-all-conversations",
-            "endpointUrl": "/conversations",
+            "documentation": "https://developers.intercom.com/reference#search-conversations",
+            "endpointUrl": "/conversations/search",
             "apiBaseUrl": "https://api.intercom.io",
-            "method": "GET",
+            "method": "POST",
             "sampleResponse": {
                 "conversations": [
                     {
@@ -162,7 +200,7 @@
             },
             "inputSchema": {
                 "type": "object",
-                "description": "Input parameters for finding conversations",
+                "description": "Input parameters for searching conversations",
                 "properties": {
                     "query": {
                         "type": "string",

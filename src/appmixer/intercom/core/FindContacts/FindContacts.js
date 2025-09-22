@@ -27,19 +27,19 @@ const schema = {
         title: 'Email'
     },
     phone: {
-        type: 'null',
+        type: 'string',
         title: 'Phone'
     },
     name: {
-        type: 'null',
+        type: 'string',
         title: 'Name'
     },
     avatar: {
-        type: 'null',
+        type: 'string',
         title: 'Avatar'
     },
     owner_id: {
-        type: 'null',
+        type: 'string',
         title: 'Owner Id'
     },
     marked_email_as_spam: {

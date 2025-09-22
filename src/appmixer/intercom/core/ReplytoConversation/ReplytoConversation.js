@@ -57,7 +57,7 @@ module.exports = {
             // Admin reply validation and construction
             // Set required fields for admin replies
             requestBody.type = 'admin';
-            requestBody.admin_id = admin_id || 'default'; // API will use the authenticated admin
+            requestBody.admin_id = admin_id || context.profileInfo.id; // Use authenticated admin's ID if none provided
             requestBody.message_type = message_type || 'comment';
             requestBody.body = body;
 
