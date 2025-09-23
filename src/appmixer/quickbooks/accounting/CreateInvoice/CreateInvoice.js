@@ -1,5 +1,5 @@
 'use strict';
-const { makeRequest } = require('../../commons');
+const { makeRequest, logDeprecatedMinorVersion } = require('../../commons');
 
 const getAddress = (context, type) => {
 
@@ -34,6 +34,9 @@ module.exports = {
             customerMemo,
             ...optionalInputs
         } = context.messages.in.content;
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         // SalesItemLineDetail only from inspector expression fields.
         const lineItemsArray = lineItems?.AND?.map(item => {

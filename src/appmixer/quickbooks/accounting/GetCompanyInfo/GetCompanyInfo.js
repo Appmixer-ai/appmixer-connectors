@@ -1,5 +1,5 @@
 'use strict';
-const { makeRequest } = require('../../commons');
+const { makeRequest, logDeprecatedMinorVersion } = require('../../commons');
 
 /**
  * Component for making API requests.
@@ -10,6 +10,9 @@ module.exports = {
     async receive(context) {
 
         const { minorVersion } = context.messages.in.content;
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         const options = {
             path: `v3/company/${context.profileInfo.companyId}/companyinfo/${context.profileInfo.companyId}?minorversion=${minorVersion}`,

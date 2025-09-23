@@ -222,5 +222,16 @@ module.exports = {
         }
     },
 
-    getBaseUrl
+    getBaseUrl,
+
+    /**
+     * Log a warning if the user specified a deprecated minor version
+     * @param {Object} context - Appmixer context
+     * @param {number} minorVersion - The minor version specified by the user
+     */
+    async logDeprecatedMinorVersion(context, minorVersion) {
+        if (minorVersion && minorVersion < 75) {
+            await context.log({ message: `You specified version ${minorVersion}, but versions below 75 are no longer supported and will be ignored. The API will default to version 75. Please update to version 75 or higher. See https://developer.intuit.com/app/developer/qbo/docs/learn/explore-the-quickbooks-online-api/minor-versions for more details.` });
+        }
+    }
 };

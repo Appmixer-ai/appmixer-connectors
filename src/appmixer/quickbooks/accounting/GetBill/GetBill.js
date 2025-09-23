@@ -1,5 +1,5 @@
 'use strict';
-const { makeRequest } = require('../../commons');
+const { makeRequest, logDeprecatedMinorVersion } = require('../../commons');
 
 module.exports = {
 
@@ -9,6 +9,9 @@ module.exports = {
             billId,
             minorVersion
         } = context.messages.in.content;
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         const options = {
             path: `v3/company/${context.profileInfo.companyId}/bill/${billId}?minorversion=${minorVersion}`,

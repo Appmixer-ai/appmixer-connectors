@@ -1,5 +1,5 @@
 'use strict';
-const { makeRequest, sendArrayOutput } = require('../../commons');
+const { makeRequest, sendArrayOutput, logDeprecatedMinorVersion } = require('../../commons');
 
 /**
  * Component for making API requests.
@@ -15,6 +15,9 @@ module.exports = {
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         /** A query for filtering the results. */
         let query = 'select * from customer';

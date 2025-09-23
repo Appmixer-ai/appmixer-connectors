@@ -1,6 +1,6 @@
 'use strict';
 const FormData = require('form-data');
-const { makeRequest } = require('../../commons');
+const { makeRequest, logDeprecatedMinorVersion } = require('../../commons');
 
 module.exports = {
 
@@ -14,6 +14,9 @@ module.exports = {
             entityType,
             attachment
         } = context.messages.in.content;
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         // make it multipart/form-data
         const data = new FormData();

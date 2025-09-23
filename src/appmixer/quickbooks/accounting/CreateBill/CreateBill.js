@@ -1,5 +1,5 @@
 'use strict';
-const { makeRequest } = require('../../commons');
+const { makeRequest, logDeprecatedMinorVersion } = require('../../commons');
 
 module.exports = {
 
@@ -13,6 +13,9 @@ module.exports = {
             dueDate,
             ...optionalInputs
         } = context.messages.in.content;
+
+        // Log warning for deprecated minor versions
+        await logDeprecatedMinorVersion(context, minorVersion);
 
         let lineItems = [];
         try {
