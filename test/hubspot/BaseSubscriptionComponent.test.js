@@ -1,5 +1,6 @@
 const assert = require('assert');
 const testUtils = require('../utils.js');
+const sinon = require('sinon');
 const Base = require('../../src/appmixer/hubspot/BaseSubscriptionComponent.js');
 
 // Simulates eg UpdatedContact component
@@ -47,6 +48,13 @@ describe('BaseSubscriptionComponent', () => {
 
         // Register the triggers
         const component = new TestComponent('contact.PropertyChange');
+        // Simulate HubSpot returning the correct target URL
+        context.config.appId = context.auth.profileInfo.app_id || 456;
+        context.config.apiKey = 'testApiKey';
+        context.appmixerApiUrl = 'https://appmixer.example.com';
+        const targetURL = context.appmixerApiUrl + '/plugins/appmixer/hubspot/events';
+        context.httpRequest.resolves({ data: { targetUrl: targetURL } });
+
         await component.start(context);
 
         const addListenerArgs = context.addListener.getCall(0).args[0];
@@ -61,6 +69,59 @@ describe('BaseSubscriptionComponent', () => {
 
         const removeListenerArgs = context.removeListener.getCall(0).args[0];
         assert.equal(removeListenerArgs, 'contact.PropertyChange:33', 'The trigger component should be unregistered by Appmixer.');
+    });
+
+    it('should throw when webhook target mismatches', async () => {
+
+        const component = new TestComponent('contact.PropertyChange');
+        context.config.appId = context.auth.profileInfo.app_id || 456;
+        context.config.apiKey = 'testApiKey';
+        context.appmixerApiUrl = 'https://appmixer.example.com';
+
+        // HubSpot returns a different target URL
+        context.httpRequest.resolves({ data: { targetUrl: 'https://other.example.com/hooks' } });
+
+        try {
+            await component.start(context);
+            throw new Error('Expected start() to throw CancelError due to wrong target URL');
+        } catch (err) {
+            assert.equal(err.name, 'CancelError');
+            assert.ok(err.message.indexOf('wrong target URL') !== -1);
+        }
+    });
+
+    it('should register webhook when not found (404) and then fail startup', async () => {
+
+        const component = new TestComponent('contact.PropertyChange');
+        context.config.appId = context.auth.profileInfo.app_id || 456;
+        context.config.apiKey = 'testApiKey';
+        context.appmixerApiUrl = 'https://appmixer.example.com';
+
+        // Make httpRequest GET throw a 404-like error
+        const error404 = new Error('Not Found');
+        error404.response = { status: 404 };
+        context.httpRequest.rejects(error404);
+
+        // Spy on hubspot.registerWebhook - it's invoked via this.hubspot.registerWebhook inside the component
+        // Replace the hubspot instance on the component with a mock that has registerWebhook
+        const registerSpy = sinon.stub().resolves();
+        component.hubspot = {
+            registerWebhook: registerSpy,
+            setApiKey: sinon.stub(),
+            setAppId: sinon.stub(),
+            setToken: sinon.stub()
+        };
+
+        // Run start - it should call registerWebhook but then throw CancelError because webhookConfiguredProperly remains false
+        try {
+            await component.start(context);
+            throw new Error('Expected start() to throw CancelError after registerWebhook');
+        } catch (err) {
+            assert.equal(err.name, 'CancelError');
+            assert.ok(registerSpy.calledOnce, 'Expected registerWebhook to be called when webhook not found');
+            // Ensure addListener was not called due to the failure
+            assert.equal(context.addListener.callCount, 0);
+        }
     });
 
 });

@@ -19,7 +19,8 @@ module.exports = async context => {
     }
 
     // Register webhook only in Engine pod and if not using AuthHub.
-    if (!isAuthHubPod && !isAuthHubInUse) {
+    // If appId or apiKey is missing, we cannot register the webhook here. Instead, the component startup will fail later with a clear error message.
+    if (!isAuthHubPod && !isAuthHubInUse && appId && apiKey) {
         const baseUrl = context.appmixerApiUrl;
         const eventsUrl = context.http.router.getPluginEndpoint('/events');
         const url = baseUrl.concat(eventsUrl);
