@@ -125,7 +125,7 @@ module.exports = {
                 'Intercom-Version': '2.14'
             }
         };
-        context.log({ step: 'Request Options', options });
+
         const { data } = await context.httpRequest(options);
 
         // Check if the response is an error
