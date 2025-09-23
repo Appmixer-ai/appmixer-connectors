@@ -957,7 +957,7 @@ Behavior JS file MUST follow these rules:
 
 ### When editing existing or creating new component
 
-IMPORTANT! use the `instructions-component-standards` tool to get comprehensive guidelines on how to create or edit components in Appmixer.
+IMPORTANT! refer [./prompts/instructions.componentStandards.md](./prompts/instructions.componentStandards.md) for comprehensive guidelines on creating or editing components in Appmixer.
 
 ### When adding new field to component.json
 
