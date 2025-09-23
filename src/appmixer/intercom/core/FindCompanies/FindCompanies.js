@@ -102,12 +102,19 @@ module.exports = {
         let url = 'https://api.intercom.io/companies';
         const queryParams = [];
 
-        // Add query parameters if provided
-        if (tag_id) {
-            queryParams.push(`tag_id=${encodeURIComponent(tag_id)}`);
+        // Validate filter parameters - Intercom v2.14 API only accepts one filter at a time
+        if (tag_id && segment_id) {
+            // Both filters provided - log warning and use tag_id precedence
+            await context.log({
+                message: 'Both tag_id and segment_id provided. Using tag_id filter only as Intercom API v2.14 accepts only one filter parameter.'
+            });
         }
 
-        if (segment_id) {
+        // Add query parameters with precedence: tag_id > segment_id
+        // Only one filter parameter is allowed by Intercom v2.14 API
+        if (tag_id) {
+            queryParams.push(`tag_id=${encodeURIComponent(tag_id)}`);
+        } else if (segment_id) {
             queryParams.push(`segment_id=${encodeURIComponent(segment_id)}`);
         }
 
