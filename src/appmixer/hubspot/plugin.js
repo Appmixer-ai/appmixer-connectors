@@ -15,7 +15,6 @@ module.exports = async context => {
     const isAuthHubInUse = !appId && !apiKey && !!clientId && !clientSecret;
     if (!(appId && apiKey) && !isAuthHubInUse && !isAuthHubPod) {
         context.log('error', 'HubSpot module not configured properly, missing appId or apiKey.');
-        return {};
     }
 
     // Register webhook only in Engine pod and if not using AuthHub.
