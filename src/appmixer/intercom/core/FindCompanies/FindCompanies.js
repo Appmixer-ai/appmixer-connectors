@@ -93,44 +93,52 @@ module.exports = {
 
     async receive(context) {
 
-        const { name, company_id, tag_id, segment_id, outputType } = context.messages.in.content;
+        const { tag_id, segment_id, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Companies' });
         }
 
-        const url = 'https://api.intercom.io/companies';
-        const params = {};
+        let url = 'https://api.intercom.io/companies';
+        const queryParams = [];
 
         // Add query parameters if provided
-        if (name) {
-            params.name = name;
-        }
-
-        if (company_id) {
-            params.company_id = company_id;
-        }
-
         if (tag_id) {
-            params.tag_id = tag_id;
+            queryParams.push(`tag_id=${encodeURIComponent(tag_id)}`);
         }
 
         if (segment_id) {
-            params.segment_id = segment_id;
+            queryParams.push(`segment_id=${encodeURIComponent(segment_id)}`);
+        }
+
+        // Append query string if there are parameters
+        if (queryParams.length > 0) {
+            url += '?' + queryParams.join('&');
         }
 
         // https://developers.intercom.com/reference#list-all-companies
-        const { data } = await context.httpRequest({
+        const options = {
             method: 'GET',
             url: url,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Intercom-Version': '2.14'
-            },
-            params
-        });
+            }
+        };
+        context.log({ step: 'Request Options', options });
+        const { data } = await context.httpRequest(options);
+
+        // Check if the response is an error
+        if (data.type === 'error.list') {
+            // Handle specific error case
+            const errorCode = data.errors?.[0]?.code;
+            if (errorCode === 'company_not_found') {
+                return context.sendJson({}, 'notFound');
+            }
+        }
 
         const records = data.data || [];
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

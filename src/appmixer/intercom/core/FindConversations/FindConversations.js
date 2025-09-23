@@ -2,104 +2,68 @@
 
 const lib = require('../../lib.generated');
 const schema = {
-    'type': {
-        'type': 'string',
-        'title': 'Type'
+    type: {
+        type: 'string',
+        title: 'Type'
     },
-    'id': {
-        'type': 'string',
-        'title': 'Conversation Id'
+    id: {
+        type: 'string',
+        title: 'Conversation Id'
     },
-    'created_at': {
-        'type': 'number',
-        'title': 'Created At'
+    created_at: {
+        type: 'number',
+        title: 'Created At'
     },
-    'updated_at': {
-        'type': 'number',
-        'title': 'Updated At'
+    updated_at: {
+        type: 'number',
+        title: 'Updated At'
     },
-    'state': {
-        'type': 'string',
-        'title': 'State'
+    waiting_since: {
+        type: 'number',
+        title: 'Waiting Since'
     },
-    'open': {
-        'type': 'boolean',
-        'title': 'Open'
+    snoozed_until: {
+        type: 'string',
+        title: 'Snoozed Until'
     },
-    'admin_assignee_id': {
-        'type': 'number',
-        'title': 'Admin Assignee Id'
+    open: {
+        type: 'boolean',
+        title: 'Open'
     },
-    'team_assignee_id': {
-        'type': 'string',
-        'title': 'Team Assignee Id'
+    state: {
+        type: 'string',
+        title: 'State'
     },
-    'priority': {
-        'type': 'string',
-        'title': 'Priority'
+    read: {
+        type: 'boolean',
+        title: 'Read'
     },
-    'read': {
-        'type': 'boolean',
-        'title': 'Read'
-    },
-    'source': {
-        'type': 'object',
-        'properties': {
-            'type': {
-                'type': 'string',
-                'title': 'Source.Type'
+    tags: {
+        type: 'object',
+        properties: {
+            type: {
+                type: 'string',
+                title: 'Tags.Type'
             },
-            'subject': {
-                'type': 'string',
-                'title': 'Subject'
-            },
-            'body': {
-                'type': 'string',
-                'title': 'Body'
-            },
-            'author': {
-                'type': 'object',
-                'properties': {
-                    'name': {
-                        'type': 'string',
-                        'title': 'Author Name'
-                    },
-                    'email': {
-                        'type': 'string',
-                        'title': 'Author Email'
-                    }
-                }
+            tags: {
+                type: 'array',
+                items: {},
+                title: 'Tags.Tags'
             }
-        }
+        },
+        title: 'Tags'
     },
-    'tags': {
-        'type': 'object',
-        'properties': {
-            'tags': {
-                'type': 'array',
-                'items': {
-                    'type': 'string'
-                },
-                'title': 'Tags'
-            }
-        }
+    priority: {
+        type: 'string',
+        title: 'Priority'
     },
-    'custom_attributes': {
-        'type': 'object',
-        'properties': {
-            'Language': {
-                'type': 'string',
-                'title': 'Language'
-            },
-            'Has attachments': {
-                'type': 'boolean',
-                'title': 'Has Attachments'
-            },
-            'Auto-translated': {
-                'type': 'boolean',
-                'title': 'Auto-translated'
-            }
-        }
+    title: {
+        type: 'string',
+        title: 'Title'
+    },
+    ticket: {
+        type: 'string',
+        title: 'Ticket'
     }
 };
 
@@ -141,6 +105,12 @@ module.exports = {
         });
 
         const records = data.conversations || [];
+
+        //if no records found, send to notFound port
+        if (records.length === 0) {
+            await context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

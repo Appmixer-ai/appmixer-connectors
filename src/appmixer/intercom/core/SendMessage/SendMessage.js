@@ -13,7 +13,6 @@ module.exports = {
             from_admin_id,
             to_contact_id,
             to_contact_type = 'user',
-            created_at,
             create_conversation_without_contact_reply
         } = context.messages.in.content;
 
@@ -65,10 +64,6 @@ module.exports = {
 
         if (template) {
             requestBody.template = template;
-        }
-
-        if (created_at) {
-            requestBody.created_at = created_at;
         }
 
         if (create_conversation_without_contact_reply !== undefined) {
