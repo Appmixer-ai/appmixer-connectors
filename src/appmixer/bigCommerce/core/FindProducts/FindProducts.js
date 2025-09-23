@@ -99,8 +99,11 @@ module.exports = {
             params.brand_id = parseInt(brand_id, 10);
         }
         if (categories) {
-            // Support both single category and comma-separated list
-            params['categories:in'] = Array.isArray(categories) ? categories.join(',') : categories;
+            // Normalize multiselect input and create comma-separated string for BigCommerce API
+            const normalizedCategories = lib.normalizeMultiselectInput(categories, context, 'Categories');
+            if (normalizedCategories.length > 0) {
+                params['categories:in'] = normalizedCategories.join(',');
+            }
         }
         if (typeof is_visible === 'boolean') {
             params.is_visible = is_visible;
