@@ -144,7 +144,8 @@ module.exports = {
                             // Otherwise throws an error:
                             // 'send_past_recipients_immediately' is not a valid field for the resource 'NonLocalStaticSend'
                             if (sendStrategy.options.is_local) {
-                                sendStrategy.options.send_past_recipients_immediately = staticSendPastRecipientsImmediately;
+                                sendStrategy.options
+                                    .send_past_recipients_immediately = staticSendPastRecipientsImmediately;
                             }
                         }
                     }
