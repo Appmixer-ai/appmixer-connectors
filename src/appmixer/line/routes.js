@@ -7,10 +7,6 @@ module.exports = async context => {
 
     context.onListenerAdded(async listener => {
 
-        // Components have to send the accessToken (not directly the Slack user_id) and
-        // the accessToken is used to get the user_id. This way it is ensured that the
-        // registered user_id belongs to the owner of the accessToken.
-
         const response = await context.httpRequest({
             method: 'POST',
             url: 'https://api.line.me/v2/bot/channel/webhook/test',
@@ -31,6 +27,9 @@ module.exports = async context => {
         options: {
             auth: false,
             handler: async (req, h) => {
+
+                await context.log('info', 'line-plugin-route-webhook-hit', { eventCount: req.payload?.events?.length });
+                context.log('trace', 'line-plugin-route-webhook-payload', { payload: req.payload });
 
                 const { events } = req.payload;
                 if (!events) {
