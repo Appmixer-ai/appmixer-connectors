@@ -141,7 +141,11 @@ module.exports = {
                             sendStrategy.options.is_local = staticIsLocal;
                         }
                         if (staticSendPastRecipientsImmediately !== undefined) {
-                            sendStrategy.options.send_past_recipients_immediately = staticSendPastRecipientsImmediately;
+                            // Otherwise throws an error:
+                            // 'send_past_recipients_immediately' is not a valid field for the resource 'NonLocalStaticSend'
+                            if (sendStrategy.options.is_local) {
+                                sendStrategy.options.send_past_recipients_immediately = staticSendPastRecipientsImmediately;
+                            }
                         }
                     }
                 } else if (sendStrategyMethod === 'throttled') {
