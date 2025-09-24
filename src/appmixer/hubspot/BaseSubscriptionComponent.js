@@ -60,7 +60,8 @@ class BaseSubscriptionComponent {
                 await context.staticCache.set(
                     cacheKey,
                     data?.targetUrl || null,
-                    context.config.webhookTargetURLCacheTTL || (20 * 1000)
+                    // 1 hour cache by default
+                    context.config.webhookTargetURLCacheTTL || (60 * 60 * 1000)
                 );
 
                 existingTargetURL = data?.targetUrl;
