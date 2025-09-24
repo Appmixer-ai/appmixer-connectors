@@ -41,11 +41,11 @@ class BaseSubscriptionComponent {
         const targetURL = context.appmixerApiUrl + '/plugins/appmixer/hubspot/events';
 
         // Use cache to avoid hitting HubSpot API too often
-        const cacheKey = 'hubspot_webhook_' + appId + '_' + apiKey;
+        const cacheKey = 'hubspot_webhook_' + appId;
         let lock;
         try {
             // Only one trigger at a time
-            lock = await context.lock(appId + apiKey);
+            lock = await context.lock(cacheKey);
 
             const targetURLCached = await context.staticCache.get(cacheKey);
             if (targetURLCached) {
