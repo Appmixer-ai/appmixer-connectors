@@ -183,7 +183,7 @@ describe('slack-due-tasks', () => {
         assert.equal(triggerWebhookStub.callCount, 0);
     });
 
-    it('should remove tasks older than 30 days via deleteMany', async () => {
+    it('should remove tasks older than 60 days via deleteMany', async () => {
         // Arrange: create 10 tasks all on the same day
         const clock = sinon.useFakeTimers(new Date('2025-01-01T00:00:00Z').getTime());
         const tenTasks = Array.from({ length: 10 }).map((_, i) => ({

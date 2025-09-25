@@ -27,7 +27,7 @@ module.exports = async context => {
                 const res = await context.utils.P.mapArray(tasks, async function(task) {
                     task.setStatus(Task.STATUS_DUE);
                     await utils.triggerWebhook(task);
-                    task.save();
+                    await task.save();
                     return true;
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });
                 const result = {

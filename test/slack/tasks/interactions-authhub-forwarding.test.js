@@ -146,7 +146,7 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
             message: {
                 blocks: [
                     { type: 'section', text: { type: 'mrkdwn', text: '*Test Task*\nDesc' } },
-                    { type: 'actions', elements: [{ type: 'button', action_id: 'task_approve', value: `${created.taskId}|COMPONENT-1|https://tenant.example.com` }] }
+                    { type: 'actions', elements: [{ type: 'button', action_id: 'task_approve', value: `${created.taskId}|https://tenant.example.com` }] }
                 ]
             },
             actions: [{ action_id: 'task_approve', value: `${created.taskId}|https://tenant.example.com` }]

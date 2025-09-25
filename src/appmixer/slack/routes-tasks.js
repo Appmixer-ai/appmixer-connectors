@@ -145,7 +145,11 @@ module.exports = (context) => {
                     return h.response({ text: 'No actions found' }).code(400);
                 }
                 // value format: taskId|host, e.g. "taskId|https://api.acme.appmixer.cloud"
-                const [taskId, host] = actions[0].value?.split('|');
+                const [taskId, host] = actions[0].value?.split('|') || [];
+                if (!taskId) {
+                    context.log('error', 'slack-plugin-route-interaction-missing-task-id', payload);
+                    return h.response({ text: 'Missing task ID' }).code(400);
+                }
                 const action = actions[0].action_id;
 
                 // -- AuthHub processing start --
@@ -170,6 +174,7 @@ module.exports = (context) => {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded'
+                                // Not sending Slack signature headers, we already validated them
                             },
                             data: req.payload
                         });
