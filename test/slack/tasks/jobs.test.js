@@ -207,7 +207,8 @@ describe('slack-due-tasks', () => {
         assert.equal(coll.deleteMany.callCount, 1);
         const filterArg = coll.deleteMany.getCall(0).args[0];
         assert(filterArg && filterArg.createdAt && filterArg.createdAt.$lt instanceof Date);
-        const expectedCutoff = new Date(Date.now() - (60 * 24 * 60 * 60 * 1000));
+        const expectedCutoff = new Date(Date.now());
+        expectedCutoff.setDate(expectedCutoff.getDate() - 60);
         assert.equal(filterArg.createdAt.$lt.getTime(), expectedCutoff.getTime());
 
         clock.restore();

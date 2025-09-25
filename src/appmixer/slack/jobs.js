@@ -26,9 +26,28 @@ module.exports = async context => {
                 const tasks = await Task.find(query);
                 const res = await context.utils.P.mapArray(tasks, async function(task) {
                     task.setStatus(Task.STATUS_DUE);
-                    await utils.triggerWebhook(task);
-                    await task.save();
-                    return true;
+                    try {
+                        await utils.triggerWebhook(task);
+                        await task.save();
+                        return true;
+                    } catch (err) {
+                        task.setStatus(Task.STATUS_ERROR);
+                        try {
+                            await task.save();
+                        } catch (saveErr) {
+                            context.log(
+                                'error',
+                                '[slack-job-due-tasks] failed to save task after trigger error',
+                                { err: saveErr, taskId: task.getId ? task.getId() : task.taskId }
+                            );
+                        }
+                        context.log(
+                            'error',
+                            '[slack-job-due-tasks] triggerWebhook failed; task marked as error',
+                            { err, taskId: task.getId ? task.getId() : task.taskId }
+                        );
+                        return false;
+                    }
                 }, { concurrency: config.triggerWebhooksConcurrencyLimit });
                 const result = {
                     tasks: tasks.length,
