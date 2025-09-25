@@ -6,7 +6,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { email, name, external_id, role } = context.messages.in.content;
+        const { phone, email, name, external_id, role } = context.messages.in.content;
 
         if (!email && !external_id) {
             throw new context.CancelError('Either email or external_id is required!');
@@ -24,6 +24,10 @@ module.exports = {
 
         if (external_id) {
             requestBody.external_id = external_id;
+        }
+
+        if (phone) {
+            requestBody.phone = phone;
         }
 
         if (role) {

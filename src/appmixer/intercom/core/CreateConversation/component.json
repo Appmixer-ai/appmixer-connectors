@@ -28,13 +28,28 @@
                     },
                     "message_type": {
                         "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "from_type",
                     "from_id",
                     "body"
-                ]
+                ],
+                "if": {
+                    "properties": {
+                        "message_type": {
+                            "const": "email"
+                        }
+                    }
+                },
+                "then": {
+                    "required": [
+                        "subject"
+                    ]
+                }
             },
             "inspector": {
                 "inputs": {
@@ -70,7 +85,7 @@
                         "type": "select",
                         "tooltip": "The kind of message being created",
                         "label": "Message Type",
-                        "index": 4,
+                        "index": 3,
                         "options": [
                             {
                                 "label": "In-app",
@@ -93,6 +108,13 @@
                                 "value": "facebook"
                             }
                         ]
+                    },
+                    "subject": {
+                        "when": { "eq": { "./message_type": "email" } },
+                        "type": "text",
+                        "tooltip": "The subject of the message. Required when message type is email.",
+                        "label": "Subject",
+                        "index": 4
                     }
                 }
             }
