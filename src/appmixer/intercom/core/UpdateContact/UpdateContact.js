@@ -52,7 +52,7 @@ module.exports = {
             requestBody.language_override = language_override;
         }
 
-        // Make the API request
+        // Make the API request https://developers.intercom.com/docs/references/rest-api/api.intercom.io/contacts/updatecontact
         await context.httpRequest({
             method: 'PUT',
             url: `https://api.intercom.io/contacts/${contact_id}`,

@@ -123,7 +123,7 @@ module.exports = {
             url += '?' + queryParams.join('&');
         }
 
-        // https://developers.intercom.com/reference#list-all-companies
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/companies/retrievecompany
         const options = {
             method: 'GET',
             url: url,
@@ -133,19 +133,18 @@ module.exports = {
             }
         };
 
-        const { data } = await context.httpRequest(options);
-
-        // Check if the response is an error
-        if (data.type === 'error.list') {
-            // Handle specific error case
-            const errorCode = data.errors?.[0]?.code;
-            if (errorCode === 'company_not_found') {
+        let data;
+        try {
+            ({ data } = await context.httpRequest(options));
+        } catch (err) {
+            if (err.response?.status === 404) {
                 return context.sendJson({}, 'notFound');
             }
+            throw err;
         }
 
         const records = data.data || [];
-
         return lib.sendArrayOutput({ context, records, outputType });
+
     }
 };

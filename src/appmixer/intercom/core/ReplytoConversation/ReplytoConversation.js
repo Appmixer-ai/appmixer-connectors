@@ -65,7 +65,7 @@ module.exports = {
             throw new context.CancelError('Reply Type must be either "contact" or "admin"!');
         }
 
-        // Make the API request
+        // Make the API request https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/replyconversation
         const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api.intercom.io/conversations/${id}/reply`,

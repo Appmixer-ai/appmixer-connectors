@@ -24,7 +24,7 @@ module.exports = {
             requestBody.size = size;
         }
 
-        // https://developers.intercom.com/reference#create-a-company
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/companies/createorupdatecompany
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/companies',

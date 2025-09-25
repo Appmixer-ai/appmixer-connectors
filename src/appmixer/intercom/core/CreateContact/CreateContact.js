@@ -31,7 +31,7 @@ module.exports = {
         }
 
 
-        // https://developers.intercom.com/reference#create-a-contact
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/contacts/createcontact
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/contacts',

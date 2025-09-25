@@ -70,7 +70,7 @@ module.exports = {
             requestBody.create_conversation_without_contact_reply = create_conversation_without_contact_reply;
         }
 
-        // Make the API request
+        // Make the API request https://developers.intercom.com/docs/references/rest-api/api.intercom.io/messages/createmessage
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/messages',

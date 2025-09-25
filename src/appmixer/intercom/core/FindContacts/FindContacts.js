@@ -86,7 +86,7 @@ module.exports = {
             query: parsedQuery
         };
 
-        // https://developers.intercom.com/reference#search-contacts
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/contacts/searchcontacts
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/contacts/search',

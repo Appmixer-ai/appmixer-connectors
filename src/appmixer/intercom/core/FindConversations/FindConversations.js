@@ -93,7 +93,7 @@ module.exports = {
             query: parsedQuery
         };
 
-        // https://developers.intercom.com/reference#search-conversations
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/searchconversations
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/conversations/search',

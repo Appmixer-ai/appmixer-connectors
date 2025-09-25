@@ -16,7 +16,7 @@ module.exports = {
             throw new context.CancelError('Company ID is required.');
         }
 
-        // https://developers.intercom.com/reference#attach-a-contact-to-a-company
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/contacts/attachcontacttoacompany
         await context.httpRequest({
             method: 'POST',
             url: `https://api.intercom.io/contacts/${contact_id}/companies`,

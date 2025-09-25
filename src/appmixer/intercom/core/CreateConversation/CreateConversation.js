@@ -31,7 +31,7 @@ module.exports = {
             requestBody.message_type = message_type;
         }
 
-        // https://developers.intercom.com/reference#create-a-conversation
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/conversations/createconversation
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.intercom.io/conversations',

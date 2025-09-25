@@ -9,7 +9,7 @@ module.exports = {
             throw new context.CancelError('Company ID is required!');
         }
 
-        // https://developers.intercom.com/reference#retrieve-a-company
+        // https://developers.intercom.com/docs/references/rest-api/api.intercom.io/companies/retrievecompany
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://api.intercom.io/companies/${id}`,
