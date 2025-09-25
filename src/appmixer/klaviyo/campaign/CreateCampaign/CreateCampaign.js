@@ -106,8 +106,6 @@ module.exports = {
                         }
                         audiencesExcludedIds.push(audience.listId);
                     };
-                } else {
-                    return;
                 }
             });
 
