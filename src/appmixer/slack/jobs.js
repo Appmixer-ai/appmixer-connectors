@@ -12,6 +12,16 @@ module.exports = async context => {
         try {
             const lock = await context.job.lock('slack-tasks-due-tasks');
             try {
+                // Delete all old tasks older than 60 days
+                const deleteBefore = new Date();
+                deleteBefore.setDate(deleteBefore.getDate() - 60);
+                context.log('info', `[slack-job-due-tasks] Deleting old tasks older than ${deleteBefore.toISOString()}`);
+
+                const filter = { 'createdAt': { '$lt': deleteBefore } };
+                const resultDel = await context.db.collection(Task.collection).deleteMany(filter);
+                const deletedCount = resultDel?.deletedCount || 0;
+                context.log('info', `[slack-job-due-tasks] Old tasks deletion finished. Deleted: ${deletedCount}`);
+
                 const query = { 'status': 'pending', 'decisionBy': { '$lt': new Date() } };
                 const tasks = await Task.find(query);
                 const res = await context.utils.P.mapArray(tasks, async function(task) {

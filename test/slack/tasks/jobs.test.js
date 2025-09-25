@@ -57,6 +57,7 @@ describe('slack-due-tasks', () => {
             static get STATUS_DUE() { return 'due'; }
             static get STATUS_ERROR() { return 'error'; }
             static get STATUS_PENDING() { return 'pending'; }
+            static get collection() { return 'slack_tasks'; }
             static async find(query) { return taskRecords.map(r => new FakeTask(r)); }
         }
         taskFindSpy = sinon.spy(FakeTask, 'find');
@@ -180,5 +181,35 @@ describe('slack-due-tasks', () => {
         const saved = getSavedTasks();
         assert.equal(saved.length, 0);
         assert.equal(triggerWebhookStub.callCount, 0);
+    });
+
+    it('should remove tasks older than 30 days via deleteMany', async () => {
+        // Arrange: create 10 tasks all on the same day
+        const clock = sinon.useFakeTimers(new Date('2025-01-01T00:00:00Z').getTime());
+        const tenTasks = Array.from({ length: 10 }).map((_, i) => ({
+            taskId: `old-${i + 1}`,
+            status: 'pending',
+            createdAt: new Date(),
+            decisionBy: new Date()
+        }));
+        setMockTasks(tenTasks);
+
+        // Stub deleteMany to return the number of deleted tasks
+        const coll = context.db.collection();
+        coll.deleteMany.resolves({ deletedCount: tenTasks.length });
+
+        // Act: jump ahead by 61 days to trigger cleanup of >60 days old tasks
+        clock.tick(61 * 24 * 60 * 60 * 1000);
+        await dueHandler();
+
+        // Assert the correct collection and filter used
+        assert(context.db.collection.calledWith('slack_tasks'));
+        assert.equal(coll.deleteMany.callCount, 1);
+        const filterArg = coll.deleteMany.getCall(0).args[0];
+        assert(filterArg && filterArg.createdAt && filterArg.createdAt.$lt instanceof Date);
+        const expectedCutoff = new Date(Date.now() - (60 * 24 * 60 * 60 * 1000));
+        assert.equal(filterArg.createdAt.$lt.getTime(), expectedCutoff.getTime());
+
+        clock.restore();
     });
 });
