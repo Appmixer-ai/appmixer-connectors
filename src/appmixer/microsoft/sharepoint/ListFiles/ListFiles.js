@@ -3,6 +3,7 @@ const oneDriveAPI = require('onedrive-api');
 const querystring = require('querystring');
 
 const commons = require('../../microsoft-commons');
+const lib = require('../lib');
 const PAGE_SIZE = 10000; // Number of items to retrieve per page
 
 module.exports = {
@@ -22,27 +23,31 @@ module.exports = {
         const files = recursive ? await listFolderRecursive(context) : await listFolder(context);
 
         if (Array.isArray(files) && files.length > 0) {
-            if (fileTypesRestriction?.length > 0) {
-                const allowedFiles = files.filter(file =>
-                    fileTypesRestriction.some(typeRestriction =>
-                        file.file?.mimeType.startsWith(typeRestriction)
-                    )
-                );
-                if (allowedFiles.length === 0) {
-                    return context.sendJson({}, 'notFound');
+            // Normalize fileTypesRestriction to array format for multiselect field
+            if (fileTypesRestriction) {
+                const normalizedFileTypesRestriction = lib.normalizeMultiselectInput(fileTypesRestriction, context, 'File Types Restriction');
+                if (normalizedFileTypesRestriction.length > 0) {
+                    const allowedFiles = files.filter(file =>
+                        normalizedFileTypesRestriction.some(typeRestriction =>
+                            file.file?.mimeType.startsWith(typeRestriction)
+                        )
+                    );
+                    if (allowedFiles.length === 0) {
+                        return context.sendJson({}, 'notFound');
+                    }
+                    return await commons.sendArrayOutput({
+                        context,
+                        outputType,
+                        records: allowedFiles
+                    });
                 }
-                return await commons.sendArrayOutput({
-                    context,
-                    outputType,
-                    records: allowedFiles
-                });
-            } else {
-                return await commons.sendArrayOutput({
-                    context,
-                    outputType,
-                    records: files
-                });
             }
+
+            return await commons.sendArrayOutput({
+                context,
+                outputType,
+                records: files
+            });
         } else {
             return context.sendJson({}, 'notFound');
         }

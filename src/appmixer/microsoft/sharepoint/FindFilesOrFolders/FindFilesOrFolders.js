@@ -2,6 +2,7 @@
 
 const { makeRequest } = require('../common');
 const commons = require('../../microsoft-commons');
+const lib = require('../lib');
 
 const MAX_SIZE = 10000;
 
@@ -48,28 +49,32 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        if (fileTypesRestriction?.length > 0) {
-            const allowedFilesOrFolders = filesAndFolder.filter(file =>
-                fileTypesRestriction.some(typeRestriction =>
-                    file.file?.mimeType.startsWith(typeRestriction)
-                )
-            );
-            if (allowedFilesOrFolders.length === 0) {
-                return context.sendJson({}, 'notFound');
-            }
+        // Normalize fileTypesRestriction to array format for multiselect field
+        if (fileTypesRestriction) {
+            const normalizedFileTypesRestriction = lib.normalizeMultiselectInput(fileTypesRestriction, context, 'File Types Restriction');
+            if (normalizedFileTypesRestriction.length > 0) {
+                const allowedFilesOrFolders = filesAndFolder.filter(file =>
+                    normalizedFileTypesRestriction.some(typeRestriction =>
+                        file.file?.mimeType.startsWith(typeRestriction)
+                    )
+                );
+                if (allowedFilesOrFolders.length === 0) {
+                    return context.sendJson({}, 'notFound');
+                }
 
-            return await commons.sendArrayOutput({
-                context,
-                outputType,
-                records: allowedFilesOrFolders
-            });
-        } else {
-            return await commons.sendArrayOutput({
-                context,
-                outputType,
-                records: filesAndFolder
-            });
+                return await commons.sendArrayOutput({
+                    context,
+                    outputType,
+                    records: allowedFilesOrFolders
+                });
+            }
         }
+
+        return await commons.sendArrayOutput({
+            context,
+            outputType,
+            records: filesAndFolder
+        });
 
     }
 };
