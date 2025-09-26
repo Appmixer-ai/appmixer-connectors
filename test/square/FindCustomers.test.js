@@ -321,9 +321,9 @@ describe('Square -> FindCustomers', () => {
         await component.receive(context);
 
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
-        const sendJsonArgs = context.sendJson.firstCall.args[0];
-        assert(Array.isArray(sendJsonArgs.result));
-        assert.equal(sendJsonArgs.result.length, 0);
+        const sendJsonArgs = context.sendJson.firstCall.args;
+        assert.deepEqual(sendJsonArgs[0], {}, 'Should send empty object');
+        assert.equal(sendJsonArgs[1], 'notFound', 'Should use notFound port');
     });
 
     it('should handle response without customers field', async () => {
@@ -341,9 +341,9 @@ describe('Square -> FindCustomers', () => {
         await component.receive(context);
 
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
-        const sendJsonArgs = context.sendJson.firstCall.args[0];
-        assert(Array.isArray(sendJsonArgs.result));
-        assert.equal(sendJsonArgs.result.length, 0);
+        const sendJsonArgs = context.sendJson.firstCall.args;
+        assert.deepEqual(sendJsonArgs[0], {}, 'Should send empty object');
+        assert.equal(sendJsonArgs[1], 'notFound', 'Should use notFound port');
     });
 
     it('should handle creation source and group IDs filters correctly', async () => {

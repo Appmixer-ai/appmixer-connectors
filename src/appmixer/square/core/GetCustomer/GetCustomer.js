@@ -7,7 +7,7 @@ module.exports = {
         const { customer_id: customerId } = context.messages.in.content;
 
         if (!customerId) {
-            throw new context.CancelError('Customer Id is required!');
+            throw new context.CancelError('Customer ID is required!');
         }
 
         const environment = context.config.environment || 'production';
