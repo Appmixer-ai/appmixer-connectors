@@ -119,6 +119,7 @@ module.exports = {
             outputType
         } = content;
 
+
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Customers' });
         }
@@ -169,19 +170,17 @@ module.exports = {
         }
 
         // Add creation source filter if provided
-        if (creationSource && creationSource.length > 0) {
+        if (creationSource && creationSource.trim()) {
             filter.creation_source = {
-                values: Array.isArray(creationSource) ? creationSource : [creationSource],
+                values: [creationSource.trim()],
                 rule: 'INCLUDE'
             };
         }
 
         // Add group IDs filter if provided
-        if (groupIds && groupIds.length > 0) {
-            // Handle both string (comma-separated) and array inputs
-            const groupIdsArray = typeof groupIds === 'string'
-                ? groupIds.split(',').map(id => id.trim()).filter(id => id)
-                : Array.isArray(groupIds) ? groupIds : [groupIds];
+        if (groupIds && groupIds.trim()) {
+            // Parse comma-separated string
+            const groupIdsArray = groupIds.split(',').map(id => id.trim()).filter(id => id);
 
             if (groupIdsArray.length > 0) {
                 filter.group_ids = {
@@ -230,13 +229,16 @@ module.exports = {
             url: `${baseUrl}/v2/customers/search`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json',
                 'Square-Version': '2025-08-20'
             },
             data: searchBody
         });
 
         let records = data.customers || [];
+
+        if (records.length === 0) {
+            await context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

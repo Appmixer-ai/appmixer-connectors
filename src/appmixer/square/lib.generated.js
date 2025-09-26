@@ -13,7 +13,7 @@ module.exports = {
 
         if (outputType === 'first') {
             if (records.length === 0) {
-                throw new context.CancelError('No records available for first output type');
+                await context.sendJson({}, outputPortName);
             }
             // One by one.
             await context.sendJson(

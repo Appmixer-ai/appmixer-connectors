@@ -13,7 +13,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!customerId) {
-            throw new context.CancelError('Customer ID is required!');
+            throw new context.CancelError('Customer Id is required!');
         }
 
         const customerData = {};

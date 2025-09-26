@@ -346,4 +346,36 @@ describe('Square -> FindCustomers', () => {
         assert.equal(sendJsonArgs.result.length, 0);
     });
 
+    it('should handle creation source and group IDs filters correctly', async () => {
+
+        context.httpRequest.resolves({ data: { customers: [] } });
+        context.messages = {
+            in: {
+                content: {
+                    creationSource: 'CUSTOMERS_API',
+                    groupIds: '1,2,3,4,5, 6,',
+                    outputType: 'array'
+                }
+            }
+        };
+
+        await component.receive(context);
+
+        // Verify the request was made with the correct filter format
+        assert(context.httpRequest.calledOnce, 'httpRequest should be called once');
+        const httpRequestCall = context.httpRequest.firstCall.args[0];
+        const requestBody = httpRequestCall.data;
+
+        // Check creation_source filter format
+        assert(requestBody.query.filter.creation_source, 'creation_source filter should be present');
+        assert.deepEqual(requestBody.query.filter.creation_source.values, ['CUSTOMERS_API'], 'creation_source values should match');
+        assert.equal(requestBody.query.filter.creation_source.rule, 'INCLUDE', 'creation_source rule should be INCLUDE');
+
+        // Check group_ids filter format
+        assert(requestBody.query.filter.group_ids, 'group_ids filter should be present');
+        assert.deepEqual(requestBody.query.filter.group_ids.all, ['1', '2', '3', '4', '5', '6'], 'group_ids should be parsed correctly');
+
+        assert(context.sendJson.calledOnce, 'sendJson should be called once');
+    });
+
 });
