@@ -237,7 +237,7 @@ module.exports = {
         let records = data.customers || [];
 
         if (records.length === 0) {
-            await context.sendJson({}, 'notFound');
+            return context.sendJson({}, 'notFound');
         }
 
         return lib.sendArrayOutput({ context, records, outputType });
