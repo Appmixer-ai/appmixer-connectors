@@ -1,5 +1,6 @@
 'use strict';
 const moment = require('moment-timezone');
+const lib = require('../lib');
 
 const isValidTimezone = (timezone) => {
 
@@ -52,6 +53,12 @@ module.exports = {
             timezone = 'GMT'
         } = context.properties;
 
+        // Normalize multiselect fields to array format
+        const normalizedDaysOfWeek = daysOfWeek ?
+            lib.normalizeMultiselectInput(daysOfWeek, context, 'Days of Week') : [];
+        const normalizedDaysOfMonth = daysOfMonth ?
+            lib.normalizeMultiselectInput(daysOfMonth, context, 'Days of Month') : [];
+
         const startLocal = start ? moment.tz(start, 'YYYY-MM-DD HH:mm', timezone) : null;
         const endLocal = end ? moment.tz(end, 'YYYY-MM-DD HH:mm', timezone) : null;
         const nowLocal = moment(now).tz(timezone);
@@ -88,7 +95,7 @@ module.exports = {
                 }
                 break;
             case 'weeks':
-                const daysOfWeekMoments = daysOfWeek.map(day => baseDate.clone().set({
+                const daysOfWeekMoments = normalizedDaysOfWeek.map(day => baseDate.clone().set({
                     hour, minute, second: 0, millisecond: 0
                 }).day(day.toLowerCase()));
 
@@ -96,8 +103,8 @@ module.exports = {
                 nextRun = daysOfWeekMoments.find(day => day.isAfter(baseDate)) || daysOfWeekMoments[0].add(1, 'week');
                 break;
             case 'months':
-                const isLastDay = daysOfMonth.includes('last day of the month');
-                nextRun = baseDate.clone().set('date', isLastDay ? baseDate.daysInMonth() : Math.min(...daysOfMonth)).set({
+                const isLastDay = normalizedDaysOfMonth.includes('last day of the month');
+                nextRun = baseDate.clone().set('date', isLastDay ? baseDate.daysInMonth() : Math.min(...normalizedDaysOfMonth)).set({
                     hour,
                     minute,
                     second: 0,
