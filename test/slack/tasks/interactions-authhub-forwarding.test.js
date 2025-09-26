@@ -237,7 +237,7 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
             config: {}
         });
 
-        const payload = { type: 'block_actions', user: { id: 'U' }, actions: [{ action_id: 'task_approve', value: 'TS-1|COMPONENT-1|https://tenant.example.com' }] };
+        const payload = { type: 'block_actions', user: { id: 'U' }, actions: [{ action_id: 'task_approve', value: 'TS-1|https://tenant.example.com' }] };
         const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
         const h = { response: sinon.stub().returns({ code: sinon.stub() }) };
 
@@ -253,7 +253,7 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
         slackLib.isValidPayload.restore();
         sinon.stub(slackLib, 'isValidPayload').returns(false);
 
-        const payload = { type: 'block_actions', user: { id: 'U' }, actions: [{ action_id: 'task_approve', value: 'TS-1|COMPONENT-1|https://tenant.example.com' }] };
+        const payload = { type: 'block_actions', user: { id: 'U' }, actions: [{ action_id: 'task_approve', value: 'TS-1|https://tenant.example.com' }] };
         const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
 
         const codeStub = sinon.stub();
