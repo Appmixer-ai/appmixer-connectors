@@ -1,0 +1,724 @@
+{
+    "actions": [
+        {
+            "title": "List/Search Contacts",
+            "description": "Retrieve contacts with optional query-based search and pagination.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/contacts",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "cnt_123",
+                        "name": "Jane Doe",
+                        "description": "VIP customer",
+                        "avatar_url": "https://example.com/avatar.png",
+                        "is_spammer": false,
+                        "links": [
+                            "https://example.com/profile"
+                        ],
+                        "handles": [
+                            {
+                                "type": "email",
+                                "handle": "jane@example.com"
+                            },
+                            {
+                                "type": "phone",
+                                "handle": "+14155550123"
+                            }
+                        ],
+                        "groups": [],
+                        "custom_fields": {
+                            "plan": "enterprise"
+                        },
+                        "created_at": 1691097600,
+                        "updated_at": 1693708800
+                    }
+                ],
+                "next_page_token": "eyJjdXJzb3IiOiJhYmMifQ"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": "string",
+                        "description": "Query string to search contacts (supports Front advanced query syntax, e.g., name:\"Jane\" OR email:jane@)"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max number of results to return per page"
+                    },
+                    "page_token": {
+                        "type": "string",
+                        "description": "Cursor for the next page of results"
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        },
+        {
+            "title": "Get Contact",
+            "description": "Retrieve a single contact by ID.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/contacts/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "cnt_123",
+                "name": "Jane Doe",
+                "description": "VIP customer",
+                "avatar_url": "https://example.com/avatar.png",
+                "is_spammer": false,
+                "links": [
+                    "https://example.com/profile"
+                ],
+                "handles": [
+                    {
+                        "type": "email",
+                        "handle": "jane@example.com"
+                    }
+                ],
+                "groups": [],
+                "custom_fields": {
+                    "plan": "enterprise"
+                },
+                "created_at": 1691097600,
+                "updated_at": 1693708800
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Contact ID (e.g., cnt_123)"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Contact",
+            "description": "Create a new contact.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/contacts",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "cnt_456",
+                "name": "John Smith",
+                "description": null,
+                "avatar_url": null,
+                "is_spammer": false,
+                "links": [],
+                "handles": [
+                    {
+                        "type": "email",
+                        "handle": "john@acme.co"
+                    }
+                ],
+                "groups": [],
+                "custom_fields": {},
+                "created_at": 1694035200,
+                "updated_at": 1694035200
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Full name of the contact"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Notes about the contact"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "description": "Link to avatar image"
+                    },
+                    "is_spammer": {
+                        "type": "boolean",
+                        "description": "Mark contact as spammer"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Related URLs"
+                    },
+                    "handles": {
+                        "type": "array",
+                        "description": "Communication handles (email, phone, etc.)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "Handle type (email, phone, twitter, etc.)"
+                                },
+                                "handle": {
+                                    "type": "string",
+                                    "description": "Handle value (e.g., email address, phone number)"
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "handle"
+                            ]
+                        }
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Contact groups"
+                    },
+                    "custom_fields": {
+                        "type": "object",
+                        "description": "Custom fields by key"
+                    }
+                },
+                "required": [
+                    "handles"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Contact",
+            "description": "Update an existing contact by ID.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/contacts/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "PATCH",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Contact ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Full name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Notes"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "description": "Avatar URL"
+                    },
+                    "is_spammer": {
+                        "type": "boolean",
+                        "description": "Spam flag"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Related URLs"
+                    },
+                    "handles": {
+                        "type": "array",
+                        "description": "Communication handles",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "Handle type"
+                                },
+                                "handle": {
+                                    "type": "string",
+                                    "description": "Handle value"
+                                }
+                            }
+                        }
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Groups"
+                    },
+                    "custom_fields": {
+                        "type": "object",
+                        "description": "Custom fields"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Contact",
+            "description": "Delete a contact by ID.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/contacts/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Contact ID"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Search Conversations",
+            "description": "Search/list conversations using advanced query with pagination.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/conversations",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "cnv_123",
+                        "subject": "Order #4567",
+                        "status": "assigned",
+                        "assignee": {
+                            "id": "tea_1",
+                            "email": "agent@company.com",
+                            "name": "Agent One"
+                        },
+                        "recipient": {
+                            "handle": "jane@example.com",
+                            "type": "email"
+                        },
+                        "tags": [
+                            "urgent",
+                            "billing"
+                        ],
+                        "links": [],
+                        "is_private": false,
+                        "draft_mode": "none",
+                        "created_at": 1693500000
+                    }
+                ],
+                "next_page_token": "eyJjdXJzb3IiOiJkZWYifQ"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "q": {
+                        "type": "string",
+                        "description": "Search query (e.g., status:open tag:urgent to:\"support@company.com\")"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max number of results per page"
+                    },
+                    "page_token": {
+                        "type": "string",
+                        "description": "Cursor for next page"
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        },
+        {
+            "title": "Get Conversation",
+            "description": "Retrieve a specific conversation by ID.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/conversations/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "cnv_123",
+                "subject": "Order #4567",
+                "status": "assigned",
+                "assignee": {
+                    "id": "tea_1",
+                    "email": "agent@company.com",
+                    "name": "Agent One"
+                },
+                "recipient": {
+                    "handle": "jane@example.com",
+                    "type": "email"
+                },
+                "tags": [
+                    "urgent",
+                    "billing"
+                ],
+                "links": [],
+                "is_private": false,
+                "draft_mode": "none",
+                "created_at": 1693500000
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Conversation ID (e.g., cnv_123)"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Conversation",
+            "description": "Assign, tag, move or change status of a conversation.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/conversations/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "PATCH",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Conversation ID"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "New status",
+                        "enum": [
+                            "assigned",
+                            "unassigned",
+                            "archived",
+                            "deleted"
+                        ]
+                    },
+                    "assignee_id": {
+                        "type": "string",
+                        "description": "Teammate ID to assign to (or null to unassign)"
+                    },
+                    "inbox_id": {
+                        "type": "string",
+                        "description": "Move conversation to this inbox"
+                    },
+                    "tag_ids": {
+                        "type": "array",
+                        "description": "Replace tags with these tag IDs",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Send Message in Conversation",
+            "description": "Send a reply or note in an existing conversation.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/conversations/{id}/messages",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "msg_789",
+                "type": "email",
+                "is_inbound": false,
+                "is_draft": false,
+                "subject": "Re: Order #4567",
+                "body": "<p>Thanks for reaching out!</p>",
+                "text": "Thanks for reaching out!",
+                "author": {
+                    "id": "tea_1",
+                    "email": "agent@company.com",
+                    "name": "Agent One"
+                },
+                "recipients": [
+                    {
+                        "type": "to",
+                        "handle": "jane@example.com"
+                    }
+                ],
+                "attachments": [],
+                "created_at": 1694038800
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Conversation ID to reply to"
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Message type (email, sms, comment, etc.)"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Subject (emails only)"
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "HTML body"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Plain text body"
+                    },
+                    "recipients": {
+                        "type": "array",
+                        "description": "Recipients for the message",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "to, cc, bcc (for email)"
+                                },
+                                "handle": {
+                                    "type": "string",
+                                    "description": "Email, phone, etc."
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "handle"
+                            ]
+                        }
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "description": "Attachments metadata (if supported by your plan)",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "file_id": {
+                                    "type": "string",
+                                    "description": "Uploaded file identifier"
+                                },
+                                "filename": {
+                                    "type": "string",
+                                    "description": "File name"
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "body"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Message",
+            "description": "Retrieve a message by ID.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/messages/{id}",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "msg_789",
+                "type": "email",
+                "is_inbound": false,
+                "is_draft": false,
+                "subject": "Re: Order #4567",
+                "body": "<p>Thanks for reaching out!</p>",
+                "text": "Thanks for reaching out!",
+                "author": {
+                    "id": "tea_1",
+                    "email": "agent@company.com",
+                    "name": "Agent One"
+                },
+                "recipients": [
+                    {
+                        "type": "to",
+                        "handle": "jane@example.com"
+                    }
+                ],
+                "attachments": [],
+                "created_at": 1694038800
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Message ID (e.g., msg_123)"
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Current User (profile)",
+            "description": "Fetch current API token owner profile to validate authentication.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/me",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "tea_1",
+                "email": "agent@company.com",
+                "username": "agent",
+                "first_name": "Agent",
+                "last_name": "One"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Inboxes",
+            "description": "List inboxes available to the authenticated account (useful for assignments and routing).",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/inboxes",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "inb_1",
+                        "name": "Support",
+                        "is_private": false
+                    },
+                    {
+                        "id": "inb_2",
+                        "name": "Sales",
+                        "is_private": false
+                    }
+                ],
+                "next_page_token": null
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results per page"
+                    },
+                    "page_token": {
+                        "type": "string",
+                        "description": "Cursor for next page"
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        },
+        {
+            "title": "List Teammates",
+            "description": "List teammates to use their IDs for assignments.",
+            "type": "action",
+            "documentation": "https://dev.frontapp.com/reference",
+            "endpointUrl": "/teammates",
+            "apiBaseUrl": "https://api2.frontapp.com",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "id": "tea_1",
+                        "email": "agent@company.com",
+                        "name": "Agent One"
+                    },
+                    {
+                        "id": "tea_2",
+                        "email": "agent2@company.com",
+                        "name": "Agent Two"
+                    }
+                ],
+                "next_page_token": null
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "Max results per page"
+                    },
+                    "page_token": {
+                        "type": "string",
+                        "description": "Cursor for next page"
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "",
+        "tokenUrl": "",
+        "profileInfoUrl": "https://api2.frontapp.com/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.front",
+        "label": "Front",
+        "category": "applications",
+        "description": "Front is a customer communication platform. This connector uses Front Core API (https://api2.frontapp.com) to manage contacts, conversations, and messages.",
+        "version": "1.0.0",
+        "icon": "https://logo.clearbit.com/front.com"
+    }
+}
