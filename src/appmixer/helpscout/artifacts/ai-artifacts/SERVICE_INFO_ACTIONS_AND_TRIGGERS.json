@@ -1,0 +1,999 @@
+{
+    "actions": [
+        {
+            "title": "List Mailboxes",
+            "description": "Retrieve all accessible mailboxes for the authenticated user.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/mailboxes/list/",
+            "endpointUrl": "/mailboxes",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "mailboxes": [
+                        {
+                            "id": 12345,
+                            "name": "Support",
+                            "slug": "support",
+                            "createdAt": "2020-06-20T12:34:56Z",
+                            "updatedAt": "2020-06-21T12:34:56Z",
+                            "email": "support@example.com",
+                            "status": "active"
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1,
+                "_links": {}
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number for pagination."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size (max per API docs)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.mailboxes"
+            }
+        },
+        {
+            "title": "List Folders in Mailbox",
+            "description": "List folders for a given mailbox (e.g., Inbox, Unassigned, etc.).",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/folders/list/",
+            "endpointUrl": "/mailboxes/{mailboxId}/folders",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "folders": [
+                        {
+                            "id": 54321,
+                            "name": "Inbox",
+                            "type": "inbox",
+                            "userId": null
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "mailboxId": {
+                        "type": "integer",
+                        "description": "Mailbox ID to list folders for."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size."
+                    }
+                },
+                "required": [
+                    "mailboxId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.folders"
+            }
+        },
+        {
+            "title": "Find Conversations (filters)",
+            "description": "List conversations with standard filters like mailbox, status, assignee, and tags. Use this to browse conversations without the advanced search syntax.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/conversations/list/",
+            "endpointUrl": "/conversations",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "conversations": [
+                        {
+                            "id": 100001,
+                            "number": 4321,
+                            "subject": "Example question",
+                            "status": "open",
+                            "mailboxId": 12345,
+                            "assignee": {
+                                "id": 777,
+                                "type": "user"
+                            },
+                            "tags": [
+                                "vip"
+                            ],
+                            "createdAt": "2023-01-01T10:00:00Z",
+                            "updatedAt": "2023-01-01T11:00:00Z",
+                            "_links": {
+                                "threads": {
+                                    "href": "/v2/conversations/100001?embed=threads"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "mailbox": {
+                        "type": "integer",
+                        "description": "Mailbox ID to filter by."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Conversation status: active, open, pending, closed, spam."
+                    },
+                    "tag": {
+                        "type": "string",
+                        "description": "Filter by a single tag."
+                    },
+                    "assignedTo": {
+                        "type": "integer",
+                        "description": "User ID of assignee."
+                    },
+                    "modifiedSince": {
+                        "type": "string",
+                        "description": "ISO8601 date-time to filter by last modification."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size."
+                    },
+                    "sortField": {
+                        "type": "string",
+                        "description": "Field to sort by, e.g., createdAt or updatedAt."
+                    },
+                    "sortOrder": {
+                        "type": "string",
+                        "description": "Sort order asc or desc."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.conversations"
+            }
+        },
+        {
+            "title": "Search Conversations (advanced query)",
+            "description": "Advanced search over conversations using Help Scout query syntax (e.g., mailbox:123 AND status:open).",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/search/conversations/",
+            "endpointUrl": "/search/conversations",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "conversations": [
+                        {
+                            "id": 100001,
+                            "number": 4321,
+                            "subject": "Example",
+                            "status": "open"
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Advanced search query string (required)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size."
+                    },
+                    "sortBy": {
+                        "type": "string",
+                        "description": "Sort field (createdAt, updatedAt, score)."
+                    },
+                    "sortOrder": {
+                        "type": "string",
+                        "description": "asc or desc."
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.conversations"
+            }
+        },
+        {
+            "title": "Get Conversation",
+            "description": "Retrieve a specific conversation by ID. Optionally embed threads.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/conversations/get/",
+            "endpointUrl": "/conversations/{id}",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 100001,
+                "number": 4321,
+                "subject": "Example question",
+                "status": "open",
+                "mailboxId": 12345,
+                "tags": [
+                    "vip"
+                ],
+                "_embedded": {
+                    "threads": [
+                        {
+                            "id": 5550001,
+                            "type": "customer",
+                            "createdAt": "2023-01-01T10:00:00Z",
+                            "body": "Customer message"
+                        }
+                    ]
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Conversation ID."
+                    },
+                    "embed": {
+                        "type": "string",
+                        "description": "Comma-separated embed options, e.g., threads."
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Conversation",
+            "description": "Create a new email conversation in a mailbox.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/conversations/create/",
+            "endpointUrl": "/conversations",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 100010,
+                "number": 5001,
+                "subject": "Welcome!",
+                "status": "open",
+                "mailboxId": 12345,
+                "_links": {}
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "description": "Conversation type, e.g., email."
+                    },
+                    "mailboxId": {
+                        "type": "integer",
+                        "description": "Mailbox ID where the conversation will be created."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Subject line."
+                    },
+                    "customer": {
+                        "type": "object",
+                        "description": "Customer object (id or email/name).",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "description": "Existing customer ID."
+                            },
+                            "email": {
+                                "type": "string",
+                                "description": "Customer email."
+                            },
+                            "firstName": {
+                                "type": "string",
+                                "description": "Customer first name."
+                            },
+                            "lastName": {
+                                "type": "string",
+                                "description": "Customer last name."
+                            }
+                        }
+                    },
+                    "threads": {
+                        "type": "array",
+                        "description": "Initial thread(s) (body, type, attachments).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "Thread type: customer, agent, note."
+                                },
+                                "text": {
+                                    "type": "string",
+                                    "description": "Body (plain text or HTML)."
+                                },
+                                "attachments": {
+                                    "type": "array",
+                                    "description": "Array of uploaded attachment IDs.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string",
+                                                "description": "Attachment ID returned by /attachments."
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "Initial tags.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "customFields": {
+                        "type": "array",
+                        "description": "Custom fields to set.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "description": "Custom field ID."
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "description": "Value for the field."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "type",
+                    "mailboxId",
+                    "subject",
+                    "customer",
+                    "threads"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Conversation",
+            "description": "Update conversation properties such as status, assignee, tags, and custom fields.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/conversations/update/",
+            "endpointUrl": "/conversations/{id}",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "PATCH",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Conversation ID."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "open, pending, closed, spam."
+                    },
+                    "assignTo": {
+                        "type": "object",
+                        "description": "Assignee information.",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "description": "User ID to assign to."
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "Assignee type (user or team)."
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "Replace tags with provided list.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "customFields": {
+                        "type": "array",
+                        "description": "Set custom fields (ID and value).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "description": "Custom field ID."
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "description": "Value for the field."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Thread (Agent Reply)",
+            "description": "Add an agent reply thread to a conversation. Supports attachments and CC/BCC.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/threads/create-reply/",
+            "endpointUrl": "/conversations/{id}/reply",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 5550002,
+                "type": "agent",
+                "status": "published",
+                "createdAt": "2023-01-01T11:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Conversation ID."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Reply body."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "From email address (if different mailbox aliases are used)."
+                    },
+                    "cc": {
+                        "type": "array",
+                        "description": "List of CC email addresses.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "bcc": {
+                        "type": "array",
+                        "description": "List of BCC email addresses.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "description": "Attachment objects referencing uploaded attachment IDs.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Attachment ID from /attachments."
+                                }
+                            }
+                        }
+                    },
+                    "draft": {
+                        "type": "boolean",
+                        "description": "Create as draft instead of sending."
+                    }
+                },
+                "required": [
+                    "id",
+                    "text"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Thread (Internal Note)",
+            "description": "Add a private internal note to a conversation.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/threads/create-note/",
+            "endpointUrl": "/conversations/{id}/notes",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 5550003,
+                "type": "note",
+                "createdAt": "2023-01-01T11:05:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Conversation ID."
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "Note body."
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "description": "Attachment objects referencing uploaded attachment IDs.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Attachment ID from /attachments."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "text"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Upload Attachment",
+            "description": "Upload a file to get an attachment ID to use in thread or conversation creation.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/attachments/create/",
+            "endpointUrl": "/attachments",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "att_abc123",
+                "size": 12345,
+                "fileName": "example.pdf",
+                "mimeType": "application/pdf"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "Binary file upload (multipart/form-data) or file stream."
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Customers",
+            "description": "Search/list customers by email or name. Supports pagination.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/customers/list/",
+            "endpointUrl": "/customers",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "customers": [
+                        {
+                            "id": 20001,
+                            "firstName": "Jane",
+                            "lastName": "Doe",
+                            "photoUrl": null,
+                            "emails": [
+                                {
+                                    "value": "jane@example.com",
+                                    "type": "work"
+                                }
+                            ],
+                            "createdAt": "2023-01-01T10:00:00Z",
+                            "updatedAt": "2023-01-05T10:00:00Z"
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "Filter customers by email address."
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "Free-text query over customer fields."
+                    },
+                    "modifiedSince": {
+                        "type": "string",
+                        "description": "ISO8601 date-time filter."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.customers"
+            }
+        },
+        {
+            "title": "Get Customer",
+            "description": "Retrieve a single customer by ID.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/customers/get/",
+            "endpointUrl": "/customers/{id}",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 20001,
+                "firstName": "Jane",
+                "lastName": "Doe",
+                "photoUrl": null,
+                "emails": [
+                    {
+                        "value": "jane@example.com",
+                        "type": "work"
+                    }
+                ],
+                "address": {},
+                "socialProfiles": {}
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Customer ID."
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Customer",
+            "description": "Create a new customer profile.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/customers/create/",
+            "endpointUrl": "/customers",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 20002,
+                "firstName": "John",
+                "lastName": "Smith"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "firstName": {
+                        "type": "string",
+                        "description": "First name."
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "description": "Last name."
+                    },
+                    "photoUrl": {
+                        "type": "string",
+                        "description": "URL to profile photo."
+                    },
+                    "emails": {
+                        "type": "array",
+                        "description": "Array of email objects.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "description": "Email address."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Type (work, home, other)."
+                                }
+                            }
+                        }
+                    },
+                    "background": {
+                        "type": "string",
+                        "description": "Internal notes/background."
+                    }
+                },
+                "required": [
+                    "emails"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Customer",
+            "description": "Update an existing customer.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/customers/update/",
+            "endpointUrl": "/customers/{id}",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "PUT",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "Customer ID."
+                    },
+                    "firstName": {
+                        "type": "string",
+                        "description": "First name."
+                    },
+                    "lastName": {
+                        "type": "string",
+                        "description": "Last name."
+                    },
+                    "emails": {
+                        "type": "array",
+                        "description": "Array of email objects to set.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "description": "Email address."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "Type (work, home, other)."
+                                }
+                            }
+                        }
+                    },
+                    "background": {
+                        "type": "string",
+                        "description": "Internal notes/background."
+                    }
+                },
+                "required": [
+                    "id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Tags",
+            "description": "Retrieve all tags available to the account.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/tags/list/",
+            "endpointUrl": "/tags",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "tags": [
+                        {
+                            "id": 30001,
+                            "name": "vip",
+                            "color": "#00AEEF"
+                        }
+                    ]
+                },
+                "page": 1,
+                "pageSize": 25,
+                "count": 1,
+                "total": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "description": "Page size."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.tags"
+            }
+        },
+        {
+            "title": "List Conversation Custom Fields",
+            "description": "List conversation custom fields and option IDs (useful for set/update).",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/custom-fields/list/",
+            "endpointUrl": "/conversations/fields",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "_embedded": {
+                    "fields": [
+                        {
+                            "id": 40001,
+                            "name": "Priority",
+                            "fieldType": "dropdown",
+                            "options": [
+                                {
+                                    "id": 1,
+                                    "label": "Low"
+                                },
+                                {
+                                    "id": 2,
+                                    "label": "Medium"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.fields"
+            }
+        },
+        {
+            "title": "Get Current User (Profile)",
+            "description": "Retrieve the current authenticated user profile.",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/mailbox-api/endpoints/users/me/",
+            "endpointUrl": "/me",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "user": {
+                    "id": 777,
+                    "firstName": "Agent",
+                    "lastName": "One",
+                    "email": "agent@example.com",
+                    "timezone": "UTC"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Manage Webhooks",
+            "description": "Create and manage webhooks for real-time events (convo.created, convo.status, customer.created, etc.).",
+            "type": "action",
+            "documentation": "https://developer.helpscout.com/webhooks/",
+            "endpointUrl": "/webhooks",
+            "apiBaseUrl": "https://api.helpscout.net/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 90001,
+                "url": "https://example.com/hooks/helpscout",
+                "events": [
+                    "convo.created",
+                    "convo.status"
+                ],
+                "sharedSecret": "••••••"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": "Public HTTPS webhook URL."
+                    },
+                    "events": {
+                        "type": "array",
+                        "description": "Array of event keys to subscribe to.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "secret": {
+                        "type": "string",
+                        "description": "Shared secret used for HMAC-SHA1 signatures."
+                    }
+                },
+                "required": [
+                    "url",
+                    "events",
+                    "secret"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "oauth2",
+        "authUrl": "https://secure.helpscout.net/authentication/authorizeClientApplication",
+        "tokenUrl": "https://api.helpscout.net/v2/oauth2/token",
+        "profileInfoUrl": "https://api.helpscout.net/v2/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.helpscout",
+        "label": "Help Scout",
+        "category": "applications",
+        "description": "Help Scout Mailbox API v2 connector for conversations, customers, mailboxes, threads, tags and webhooks. Supports OAuth 2.0, pagination (HAL), attachments, custom fields, and webhook verification.",
+        "version": "1.0.0",
+        "icon": "https://cdn.worldvectorlogo.com/logos/helpscout-1.svg"
+    }
+}
