@@ -1,5 +1,6 @@
 'use strict';
 const commons = require('../../microsoft-commons');
+const lib = require('../lib');
 
 const getLatestChanges = async (deltaLink, accessToken) => {
 
@@ -92,6 +93,10 @@ module.exports = {
                         const promises = [];
                         const { fileTypesRestriction } = context.properties;
 
+                        // Normalize fileTypesRestriction to array format for multiselect field
+                        const normalizedFileTypesRestriction = fileTypesRestriction ?
+                            lib.normalizeMultiselectInput(fileTypesRestriction, context, 'File Types Restriction') : [];
+
                         latest.value.forEach((file) => {
                             const isFile = Object.keys(file).includes('file');
                             const isDeleted = Object.keys(file).includes('deleted');
@@ -101,8 +106,8 @@ module.exports = {
                                 isFile && createdDateTime &&
                                 new Date(lastUpdated) > new Date(createdDateTime) && !isDeleted
                             ) {
-                                if (fileTypesRestriction?.length > 0) {
-                                    fileTypesRestriction.forEach((typeRestriction) => {
+                                if (normalizedFileTypesRestriction.length > 0) {
+                                    normalizedFileTypesRestriction.forEach((typeRestriction) => {
                                         if (file.file.mimeType.startsWith(typeRestriction)) {
                                             promises.push(context.sendJson(file, 'file'));
                                         }

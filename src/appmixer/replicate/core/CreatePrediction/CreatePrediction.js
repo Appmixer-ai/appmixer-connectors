@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 module.exports = {
     async receive(context) {
 
@@ -26,6 +28,10 @@ module.exports = {
             throw new context.CancelError('Invalid input JSON format. Please provide a valid JSON object. Example: {"prompt": "Hello world"}');
         }
 
+        // Normalize webhookEventsFilter to array format for multiselect field
+        const normalizedWebhookEventsFilter = webhookEventsFilter ?
+            lib.normalizeMultiselectInput(webhookEventsFilter, context, 'Webhook Events Filter') : [];
+
         // Construct request data and endpoint
         let url;
         const isOfficialModel = version.includes('/') && !version.includes(':') && !version.match(/^[a-f0-9]{64}$/);
@@ -45,8 +51,8 @@ module.exports = {
             input: inputObject,
             ...(isOfficialModel ? {} : { version }),
             ...(webhook?.trim() && { webhook: webhook.trim() }),
-            ...(Array.isArray(webhookEventsFilter) && webhookEventsFilter.length > 0 && {
-                webhook_events_filter: webhookEventsFilter
+            ...(normalizedWebhookEventsFilter.length > 0 && {
+                webhook_events_filter: normalizedWebhookEventsFilter
             })
         };
 

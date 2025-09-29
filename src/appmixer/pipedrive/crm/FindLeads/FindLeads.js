@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 /**
  * Find Leads action.
  * @extends {Component}
@@ -18,15 +20,23 @@ module.exports = {
             outputType
         } = context.messages.in.content || {};
 
+        if (!term) {
+            throw new context.CancelError('Term is required');
+        }
+
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }
+
+        // Normalize fields to array format for multiselect field
+        const normalizedFields = fields ?
+            lib.normalizeMultiselectInput(fields, context, 'Search From') : [];
 
         // Build query params with conditional inclusion
         const params = {
             term,
             exact_match: exactMatch,
-            ...(fields && { fields }),
+            ...(normalizedFields.length > 0 && { fields: normalizedFields }),
             ...(organizationId && { organization_id: organizationId })
         };
 
