@@ -24,6 +24,7 @@ module.exports = {
 
     async receive(context) {
         const outputType = context.messages.in.content.outputType || 'array';
+        const isSource = context.messages.in.content.isSource;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Groups' });
@@ -46,6 +47,9 @@ module.exports = {
 
         let records = data.groups || [];
 
+        if (isSource) {
+            return context.sendJson(records, 'out');
+        };
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

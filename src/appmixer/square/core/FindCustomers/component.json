@@ -36,10 +36,10 @@
                         "type": "string"
                     },
                     "creationSource": {
-                        "type": "string"
+                        "type": ["array", "string"]
                     },
                     "groupIds": {
-                        "type": "string"
+                        "type": ["array", "string"]
                     },
                     "sortField": {
                         "type": "string"
@@ -102,32 +102,102 @@
                         "index": 7,
                         "multiple": true,
                         "options": [
-                            { "label": "Other", "value": "OTHER" },
-                            { "label": "Appointments", "value": "APPOINTMENTS" },
-                            { "label": "Coupon", "value": "COUPON" },
-                            { "label": "Deletion Recovery", "value": "DELETION_RECOVERY" },
-                            { "label": "Directory", "value": "DIRECTORY" },
-                            { "label": "E-Gifting", "value": "EGIFTING" },
-                            { "label": "Email Collection", "value": "EMAIL_COLLECTION" },
-                            { "label": "Feedback", "value": "FEEDBACK" },
-                            { "label": "Import", "value": "IMPORT" },
-                            { "label": "Invoices", "value": "INVOICES" },
-                            { "label": "Loyalty", "value": "LOYALTY" },
-                            { "label": "Marketing", "value": "MARKETING" },
-                            { "label": "Merge", "value": "MERGE" },
-                            { "label": "Online Store", "value": "ONLINE_STORE" },
-                            { "label": "Instant Profile", "value": "INSTANT_PROFILE" },
-                            { "label": "Terminal", "value": "TERMINAL" },
-                            { "label": "Third Party", "value": "THIRD_PARTY" },
-                            { "label": "Third Party Import", "value": "THIRD_PARTY_IMPORT" },
-                            { "label": "Unmerge Recovery", "value": "UNMERGE_RECOVERY" }
+                            {
+                                "clearItem": true,
+                                "content": "-- Clear selection --"
+                            },
+                            {
+                                "label": "Other",
+                                "value": "OTHER"
+                            },
+                            {
+                                "label": "Appointments",
+                                "value": "APPOINTMENTS"
+                            },
+                            {
+                                "label": "Coupon",
+                                "value": "COUPON"
+                            },
+                            {
+                                "label": "Deletion Recovery",
+                                "value": "DELETION_RECOVERY"
+                            },
+                            {
+                                "label": "Directory",
+                                "value": "DIRECTORY"
+                            },
+                            {
+                                "label": "E-Gifting",
+                                "value": "EGIFTING"
+                            },
+                            {
+                                "label": "Email Collection",
+                                "value": "EMAIL_COLLECTION"
+                            },
+                            {
+                                "label": "Feedback",
+                                "value": "FEEDBACK"
+                            },
+                            {
+                                "label": "Import",
+                                "value": "IMPORT"
+                            },
+                            {
+                                "label": "Invoices",
+                                "value": "INVOICES"
+                            },
+                            {
+                                "label": "Loyalty",
+                                "value": "LOYALTY"
+                            },
+                            {
+                                "label": "Marketing",
+                                "value": "MARKETING"
+                            },
+                            {
+                                "label": "Merge",
+                                "value": "MERGE"
+                            },
+                            {
+                                "label": "Online Store",
+                                "value": "ONLINE_STORE"
+                            },
+                            {
+                                "label": "Instant Profile",
+                                "value": "INSTANT_PROFILE"
+                            },
+                            {
+                                "label": "Terminal",
+                                "value": "TERMINAL"
+                            },
+                            {
+                                "label": "Third Party",
+                                "value": "THIRD_PARTY"
+                            },
+                            {
+                                "label": "Third Party Import",
+                                "value": "THIRD_PARTY_IMPORT"
+                            },
+                            {
+                                "label": "Unmerge Recovery",
+                                "value": "UNMERGE_RECOVERY"
+                            }
                         ]
                     },
                     "groupIds": {
-                        "type": "text",
-                        "tooltip": "Filter by customer group IDs (comma-separated)",
+                        "type": "multiselect",
+                        "tooltip": "Filter by customer group IDs",
                         "label": "Group IDs",
-                        "index": 8
+                        "index": 8,
+                        "source": {
+                            "url": "/component/appmixer/square/core/ListCustomerGroups?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/isSource": true
+                                },
+                                "transform": "./transformers#customerGroupsToSelectArray"
+                            }
+                        }
                     },
                     "sortField": {
                         "type": "select",
@@ -135,8 +205,18 @@
                         "label": "Sort Field",
                         "index": 9,
                         "options": [
-                            { "label": "Default", "value": "DEFAULT" },
-                            { "label": "Created At", "value": "CREATED_AT" }
+                            {
+                                "clearItem": true,
+                                "content": "-- Clear selection --"
+                            },
+                            {
+                                "label": "Default",
+                                "value": "DEFAULT"
+                            },
+                            {
+                                "label": "Created At",
+                                "value": "CREATED_AT"
+                            }
                         ]
                     },
                     "sortOrder": {
@@ -146,8 +226,18 @@
                         "index": 10,
                         "defaultValue": "ASC",
                         "options": [
-                            { "label": "Ascending", "value": "ASC" },
-                            { "label": "Descending", "value": "DESC" }
+                            {
+                                "clearItem": true,
+                                "content": "-- Clear selection --"
+                            },
+                            {
+                                "label": "Ascending",
+                                "value": "ASC"
+                            },
+                            {
+                                "label": "Descending",
+                                "value": "DESC"
+                            }
                         ]
                     },
                     "limit": {
@@ -203,7 +293,6 @@
         },
         {
             "name": "notFound"
-            
         }
     ],
     "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIFVwbG9hZGVkIHRvOiBTVkcgUmVwbywgd3d3LnN2Z3JlcG8uY29tLCBHZW5lcmF0b3I6IFNWRyBSZXBvIE1peGVyIFRvb2xzIC0tPgo8c3ZnIGZpbGw9IiMwMDAwMDAiIHdpZHRoPSI4MDBweCIgaGVpZ2h0PSI4MDBweCIgdmlld0JveD0iMCAwIDI1NiAyNTYiIGlkPSJGbGF0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxwYXRoIGQ9Ik0yMDgsMjhINDhBMjAuMDIyOTIsMjAuMDIyOTIsMCwwLDAsMjgsNDhWMjA4YTIwLjAyMjkyLDIwLjAyMjkyLDAsMCwwLDIwLDIwSDIwOGEyMC4wMjI5MiwyMC4wMjI5MiwwLDAsMCwyMC0yMFY0OEEyMC4wMjI5MiwyMC4wMjI5MiwwLDAsMCwyMDgsMjhabS00LDE3Nkg1MlY1MkgyMDRaTTk2LDE3Mmg2NGExMiwxMiwwLDAsMCwxMi0xMlY5NmExMiwxMiwwLDAsMC0xMi0xMkg5NkExMiwxMiwwLDAsMCw4NCw5NnY2NEExMiwxMiwwLDAsMCw5NiwxNzJabTEyLTY0aDQwdjQwSDEwOFoiLz4KPC9zdmc+"

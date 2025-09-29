@@ -378,4 +378,57 @@ describe('Square -> FindCustomers', () => {
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
     });
 
+    it('should handle group IDs as array from multiselect', async () => {
+
+        context.httpRequest.resolves({ data: { customers: [] } });
+        context.messages = {
+            in: {
+                content: {
+                    groupIds: ['group1', 'group2', 'group3'],
+                    outputType: 'array'
+                }
+            }
+        };
+
+        await component.receive(context);
+
+        // Verify the request was made with the correct filter format
+        assert(context.httpRequest.calledOnce, 'httpRequest should be called once');
+        const httpRequestCall = context.httpRequest.firstCall.args[0];
+        const requestBody = httpRequestCall.data;
+
+        // Check group_ids filter format
+        assert(requestBody.query.filter.group_ids, 'group_ids filter should be present');
+        assert.deepEqual(requestBody.query.filter.group_ids.all, ['group1', 'group2', 'group3'], 'group_ids should be an array');
+
+        assert(context.sendJson.calledOnce, 'sendJson should be called once');
+    });
+
+    it('should handle creation source as array from multiselect', async () => {
+
+        context.httpRequest.resolves({ data: { customers: [] } });
+        context.messages = {
+            in: {
+                content: {
+                    creationSource: ['APPOINTMENTS', 'DIRECTORY', 'THIRD_PARTY'],
+                    outputType: 'array'
+                }
+            }
+        };
+
+        await component.receive(context);
+
+        // Verify the request was made with the correct filter format
+        assert(context.httpRequest.calledOnce, 'httpRequest should be called once');
+        const httpRequestCall = context.httpRequest.firstCall.args[0];
+        const requestBody = httpRequestCall.data;
+
+        // Check creation_source filter format
+        assert(requestBody.query.filter.creation_source, 'creation_source filter should be present');
+        assert.deepEqual(requestBody.query.filter.creation_source.values, ['APPOINTMENTS', 'DIRECTORY', 'THIRD_PARTY'], 'creation_source values should be an array');
+        assert.equal(requestBody.query.filter.creation_source.rule, 'INCLUDE', 'creation_source rule should be INCLUDE');
+
+        assert(context.sendJson.calledOnce, 'sendJson should be called once');
+    });
+
 });

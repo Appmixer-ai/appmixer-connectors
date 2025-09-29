@@ -170,23 +170,20 @@ module.exports = {
         }
 
         // Add creation source filter if provided
-        if (creationSource && creationSource.trim()) {
+        const normalizedCreationSource = lib.normalizeMultiselectInput(creationSource, context, 'Creation Source');
+        if (normalizedCreationSource.length > 0) {
             filter.creation_source = {
-                values: [creationSource.trim()],
+                values: normalizedCreationSource,
                 rule: 'INCLUDE'
             };
         }
 
         // Add group IDs filter if provided
-        if (groupIds && groupIds.trim()) {
-            // Parse comma-separated string
-            const groupIdsArray = groupIds.split(',').map(id => id.trim()).filter(id => id);
-
-            if (groupIdsArray.length > 0) {
-                filter.group_ids = {
-                    all: groupIdsArray
-                };
-            }
+        const normalizedGroupIds = lib.normalizeMultiselectInput(groupIds, context, 'Group IDs');
+        if (normalizedGroupIds.length > 0) {
+            filter.group_ids = {
+                all: normalizedGroupIds
+            };
         }
 
         // Build the query object

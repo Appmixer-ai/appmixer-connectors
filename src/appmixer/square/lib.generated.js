@@ -99,6 +99,35 @@ module.exports = {
         if (outputType === 'file') {
             return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
         }
+    },
+
+    /**
+     * Normalizes multiselect input to ensure consistent format.
+     * @param {string|Array} input - Input value (array from multiselect UI or string from variables)
+     * @param {Object} context - Appmixer context
+     * @param {string} fieldName - Name of the field for error messages
+     * @returns {Array} Normalized array of strings
+     */
+    normalizeMultiselectInput(input, context, fieldName) {
+        if (!input) {
+            return [];
+        }
+
+        let result;
+
+        if (Array.isArray(input)) {
+            // Input is already an array (from multiselect UI)
+            result = input.filter(item => item && typeof item === 'string' && item.trim()).map(item => item.trim());
+        } else if (typeof input === 'string') {
+            // Input is a string (from variables or comma-separated input)
+            result = input.split(',')
+                .map(item => item.trim())
+                .filter(item => item);
+        } else {
+            throw new context.CancelError(`${fieldName} must be an array or comma-separated string`);
+        }
+
+        return result;
     }
 };
 
