@@ -137,6 +137,3 @@ describe('postgres/lib disconnect behaviour', () => {
          }
      });
  });
-        }
-    });
-});
