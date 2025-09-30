@@ -1,9 +1,14 @@
 const assert = require('assert');
+const { checkAccessTokenOrSkip } = require('./testHelper');
 
 const component = require('../../src/appmixer/helpscout/core/UploadAttachment/UploadAttachment.js');
 const httpRequest = require('./httpRequest.js');
 
 describe('UploadAttachment', () => {
+
+    before(function() {
+        checkAccessTokenOrSkip(this);
+    });
 
     it('should upload a file attachment', async () => {
         const fileContent = 'Test file content for attachment upload';

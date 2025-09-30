@@ -1,10 +1,15 @@
 const assert = require('assert');
 const crypto = require('crypto');
+const { checkAccessTokenOrSkip } = require('./testHelper');
 
 const component = require('../../src/appmixer/helpscout/core/CreateThreadInternalNote/CreateThreadInternalNote.js');
 const httpRequest = require('./httpRequest.js');
 
 describe('CreateThreadInternalNote', () => {
+
+    before(function() {
+        checkAccessTokenOrSkip(this);
+    });
 
     it('should create an internal note on a conversation', async () => {
         // Use a known conversation ID (from previous test runs)

@@ -1,12 +1,12 @@
 'use strict';
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+const { checkAccessTokenOrSkip } = require('./testHelper');
 
 describe('HelpScout core.FindCustomers', () => {
+
+    before(function() {
+        checkAccessTokenOrSkip(this);
+    });
 
     it('should receive and send array output', async () => {
 

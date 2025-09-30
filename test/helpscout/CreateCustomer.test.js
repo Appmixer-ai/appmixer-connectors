@@ -1,11 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const path = require('path');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+const { checkAccessTokenOrSkip } = require('./testHelper');
 
 describe('CreateCustomer', function() {
     this.timeout(30000); // 30 second timeout
@@ -13,7 +9,9 @@ describe('CreateCustomer', function() {
     const componentPath = '../../src/appmixer/helpscout/core/CreateCustomer/CreateCustomer.js';
     let component;
 
-    before(() => {
+    before(function() {
+        // Skip all tests if no access token is available
+        checkAccessTokenOrSkip(this);
         component = require(componentPath);
     });
 

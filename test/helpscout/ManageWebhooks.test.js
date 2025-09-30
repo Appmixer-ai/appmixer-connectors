@@ -1,10 +1,15 @@
 const assert = require('assert');
 const crypto = require('crypto');
+const { checkAccessTokenOrSkip } = require('./testHelper');
 
 const component = require('../../src/appmixer/helpscout/core/ManageWebhooks/ManageWebhooks.js');
 const httpRequest = require('./httpRequest.js');
 
 describe('ManageWebhooks', () => {
+
+    before(function() {
+        checkAccessTokenOrSkip(this);
+    });
 
     it('should create a webhook', async () => {
         const webhookUrl = `https://example.com/webhook/${crypto.randomBytes(8).toString('hex')}`;
