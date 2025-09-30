@@ -117,11 +117,17 @@ describe('postgres/lib disconnect behaviour', () => {
             }
             await streamPromise;
 
-            const releaseCalled = client.release.calledOnce;
-
-            if (!releaseCalled) {
-                client.release();
+            if (resolveEnd) {
+                resolveEnd();
             }
+
+            await disconnectPromise;
+
+            assert.strictEqual(
+                client.release.calledOnce,
+                true,
+                'client.release should be called once the file stream completes'
+            );
 
             if (resolveEnd) {
                 resolveEnd();
