@@ -31,11 +31,10 @@ module.exports = {
             const savedFile = await context.saveFileStream(filename, dbStream.pipe(stringifier));
             return savedFile;
         } catch (err) {
-            client.release();
             throw err;
+        } finally {
+            client.release();
         }
-
-        return pool.query(query);
     },
 
     connect: async (context) => {
