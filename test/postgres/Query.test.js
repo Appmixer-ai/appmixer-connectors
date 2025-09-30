@@ -129,11 +129,11 @@ describe('postgres/lib disconnect behaviour', () => {
                 'client.release should be called once the file stream completes'
             );
 
-             assert.strictEqual(
-                 client.release.calledOnce,
-                 true,
-                 'client.release should be called once the file stream completes'
-             );
-         }
-     });
- });
+            assert.strictEqual(
+                client.release.calledOnce,
+                true,
+                'client.release should be called once the file stream completes'
+            );
+        }
+    });
+});
