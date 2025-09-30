@@ -21,8 +21,7 @@ describe('GetCustomer', function() {
 
         // Mock context with tracking
         let sendJsonCalled = false;
-        let sentData = null;
-        
+
         const context = {
             auth: {
                 accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
@@ -41,7 +40,7 @@ describe('GetCustomer', function() {
                 sentData = data;
                 assert.strictEqual(port, 'out');
                 console.log('GetCustomer response:', data);
-                
+
                 if (data && typeof data === 'object') {
                     // Verify it's a customer object
                     if (data.id) assert(typeof data.id === 'number');
@@ -54,7 +53,7 @@ describe('GetCustomer', function() {
         // Execute component
         try {
             await component.receive(context);
-            
+
             // Verify that sendJson was called
             assert(sendJsonCalled, 'sendJson should have been called');
             console.log('Test completed successfully');

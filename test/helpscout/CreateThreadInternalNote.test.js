@@ -10,7 +10,7 @@ describe('CreateThreadInternalNote', () => {
         // Use a known conversation ID (from previous test runs)
         const conversationId = 3092600559;
         const noteText = `Internal note from automated test - ${crypto.randomBytes(8).toString('hex')}`;
-        
+
         const context = {
             messages: {
                 in: {
@@ -31,7 +31,7 @@ describe('CreateThreadInternalNote', () => {
             CancelError: class extends Error {}
         };
 
-        const result = await component.receive(context);
+        await component.receive(context);
         // CreateThreadInternalNote may return empty data on success (201 status)
         console.log('Internal note created successfully');
     });

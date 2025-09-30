@@ -10,7 +10,7 @@ describe('ManageWebhooks', () => {
         const webhookUrl = `https://example.com/webhook/${crypto.randomBytes(8).toString('hex')}`;
         const events = ['convo.created', 'convo.status'];
         const secret = 'test-secret';
-        
+
         const context = {
             messages: {
                 in: {

@@ -7,7 +7,7 @@ describe('UploadAttachment', () => {
 
     it('should upload a file attachment', async () => {
         const fileContent = 'Test file content for attachment upload';
-        
+
         const context = {
             messages: {
                 in: {

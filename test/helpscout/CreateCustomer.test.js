@@ -22,7 +22,7 @@ describe('CreateCustomer', function() {
         // Mock context with tracking
         let sendJsonCalled = false;
         let sentData = null;
-        
+
         const context = {
             auth: {
                 accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
@@ -45,7 +45,7 @@ describe('CreateCustomer', function() {
                 sentData = data;
                 assert.strictEqual(port, 'out');
                 console.log('CreateCustomer response:', data); // Debug log
-                
+
                 if (data) {
                     assert(typeof data === 'object');
                     if (data.id) {
@@ -69,11 +69,11 @@ describe('CreateCustomer', function() {
 
         // Execute component
         await component.receive(context);
-        
+
         // Verify that sendJson was called with correct data
         assert(sendJsonCalled, 'sendJson should have been called');
         console.log('Sent data:', sentData);
-        
+
         if (sentData && sentData.firstName) {
             assert.strictEqual(sentData.firstName, 'Test');
         }

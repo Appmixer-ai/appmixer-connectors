@@ -20,7 +20,7 @@ describe('ListConversationCustomFields', () => {
 
         let sendJsonCalled = false;
         let sentData = null;
-        
+
         const context = {
             auth: {
                 accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
@@ -49,7 +49,7 @@ describe('ListConversationCustomFields', () => {
 
         // Execute component
         await component.receive(context);
-        
+
         // Verify that sendJson was called with correct data
         assert(sendJsonCalled, 'sendJson should have been called');
         assert(sentData, 'Data should have been sent');

@@ -9,16 +9,16 @@ module.exports = async function httpRequest(config) {
             console.log('Headers:', JSON.stringify(config.headers, null, 2));
             console.log('Data:', JSON.stringify(config.data, null, 2));
         }
-        
+
         const response = await axios(config);
-        
+
         // Debug logging for POST/PATCH requests
         if (config.method === 'POST' || config.method === 'PATCH') {
             console.log(`API Response: ${config.method} ${config.url}`);
             console.log(`Status: ${response.status}`);
             console.log('Data:', response.data);
         }
-        
+
         return {
             data: response.data,
             status: response.status,
@@ -30,7 +30,7 @@ module.exports = async function httpRequest(config) {
             console.log(`API Error: ${config.method} ${config.url}`);
             console.log(`Status: ${error.response.status}`);
             console.log('Error Data:', JSON.stringify(error.response.data, null, 2));
-            
+
             // Server responded with error status
             const newError = new Error(error.message);
             newError.response = {
@@ -43,4 +43,4 @@ module.exports = async function httpRequest(config) {
         throw error;
     }
 };
- 
+
