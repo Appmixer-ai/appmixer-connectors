@@ -26,6 +26,9 @@ module.exports = {
 
             accountNameFromProfileInfo: (context) => {
                 const name = context['UPSTASH_EMAIL'];
+                if (name.length <= 6) {
+                    return name;
+                }
                 return name.substring(0, 3) + '...' + name.slice(-3);
             }
         };
