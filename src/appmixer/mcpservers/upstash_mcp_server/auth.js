@@ -19,7 +19,7 @@ module.exports = {
             },
 
             validate: async (context) => {
-                if (!context['UPSTASH_EMAIL']) {
+                if (!context['UPSTASH_EMAIL'] || !context['UPSTASH_API_KEY']) {
                     throw new Error('Invalid credentials.');
                 }
             },
