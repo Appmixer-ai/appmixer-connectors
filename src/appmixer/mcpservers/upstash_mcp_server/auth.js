@@ -1,0 +1,33 @@
+'use strict';
+
+module.exports = {
+
+    type: 'apiKey',
+
+    definition: () => {
+
+        return {
+            auth: {
+                'UPSTASH_EMAIL': {
+                    'type': 'text',
+                    'name': 'UPSTASH_EMAIL'
+                },
+                'UPSTASH_API_KEY': {
+                    'type': 'text',
+                    'name': 'UPSTASH_API_KEY'
+                }
+            },
+
+            validate: async (context) => {
+                if (!context['UPSTASH_EMAIL']) {
+                    throw new Error('Invalid credentials.');
+                }
+            },
+
+            accountNameFromProfileInfo: (context) => {
+                const name = context['UPSTASH_EMAIL'];
+                return name.substring(0, 3) + '...' + name.slice(-3);
+            }
+        };
+    }
+};
