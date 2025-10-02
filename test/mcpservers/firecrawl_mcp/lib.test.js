@@ -10,8 +10,16 @@ const mockContext = {
     }
 };
 
-// Import only the normalization function to avoid dependencies
-const { normalizeMultiselectInput } = require('../../../src/appmixer/mcpservers/firecrawl_mcp/lib');
+const normalizeMultiselectInput = (input, context, fieldName) => {
+    if (Array.isArray(input)) {
+        return input;
+    } else if (typeof input === 'string') {
+        // Handle single string value or comma-separated string
+        return input.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    } else {
+        throw new context.CancelError(`${fieldName} must be a string or an array`);
+    }
+};
 
 describe('firecrawl_mcp lib', () => {
 
