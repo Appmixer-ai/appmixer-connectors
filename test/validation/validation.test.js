@@ -3,7 +3,7 @@ const assert = require('assert');
 // Test that validation is correctly added to a few components
 
 describe('Required field validation', function() {
-    
+
     it('activecampaign DeleteContact should validate contactId', async function() {
         const DeleteContact = require('../../src/appmixer/activecampaign/contacts/DeleteContact/DeleteContact.js');
         const context = {
@@ -19,7 +19,7 @@ describe('Required field validation', function() {
                 }
             }
         };
-        
+
         try {
             await DeleteContact.receive(context);
             assert.fail('Should have thrown error for missing contactId');
@@ -28,7 +28,7 @@ describe('Required field validation', function() {
             assert(error.message.includes('required'), 'Error message should mention required');
         }
     });
-    
+
     it('clickup CreateTask should validate listId and name', async function() {
         const CreateTask = require('../../src/appmixer/clickup/core/CreateTask/CreateTask.js');
         const context = {
@@ -44,7 +44,7 @@ describe('Required field validation', function() {
                 }
             }
         };
-        
+
         try {
             await CreateTask.receive(context);
             assert.fail('Should have thrown error for missing listId');
@@ -53,7 +53,7 @@ describe('Required field validation', function() {
             assert(error.message.includes('required'), 'Error message should mention required');
         }
     });
-    
+
     it('brevo CreateContact should validate email', async function() {
         const CreateContact = require('../../src/appmixer/brevo/core/CreateContact/CreateContact.js');
         const context = {
@@ -69,7 +69,7 @@ describe('Required field validation', function() {
                 }
             }
         };
-        
+
         try {
             await CreateContact.receive(context);
             assert.fail('Should have thrown error for missing email');
