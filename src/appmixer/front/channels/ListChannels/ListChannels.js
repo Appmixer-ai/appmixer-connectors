@@ -26,7 +26,7 @@ module.exports = {
             method: 'GET',
             url: `https://api2.frontapp.com/inboxes/${inboxId}/channels`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
+                'Authorization': `Bearer ${context.auth.accessToken}`
             }
         });
 

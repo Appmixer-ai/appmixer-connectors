@@ -7,7 +7,7 @@ module.exports = {
     definition: {
 
         auth: {
-            apiKey: {
+            accessToken: {
                 type: 'text',
                 name: 'API Token',
                 tooltip: 'Your Front API Token. You can find it in your account inside Settings > Developers > API Tokens tab.'
@@ -21,7 +21,7 @@ module.exports = {
                 method: 'GET',
                 url: 'https://api2.frontapp.com/me',
                 headers: {
-                    Authorization: `Bearer ${context.apiKey}`,
+                    Authorization: `Bearer ${context.accessToken}`,
                     accept: 'application/json'
                 }
             });
@@ -33,7 +33,7 @@ module.exports = {
             method: 'GET',
             url: 'https://api2.frontapp.com/me',
             headers: {
-                Authorization: 'Bearer {{apiKey}}',
+                Authorization: 'Bearer {{accessToken}}',
                 accept: 'application/json'
             }
         }

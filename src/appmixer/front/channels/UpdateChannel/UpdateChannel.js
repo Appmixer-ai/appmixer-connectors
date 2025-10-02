@@ -25,7 +25,7 @@ module.exports = {
             method: 'PATCH',
             url: `https://api2.frontapp.com/channels/${channelId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
             },
             data: requestData
