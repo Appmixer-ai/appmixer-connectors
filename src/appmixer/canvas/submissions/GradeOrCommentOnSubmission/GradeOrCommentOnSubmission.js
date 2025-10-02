@@ -15,6 +15,18 @@ module.exports = {
             isAnonymous,
             ...inputs
         } = context.messages.in.content;
+        if (!courseId) {
+            throw new context.CancelError('Course ID is required');
+        }
+
+        if (!assignmentId) {
+            throw new context.CancelError('Assignment ID is required');
+        }
+
+        if (!userId) {
+            throw new context.CancelError('User ID is required');
+        }
+
 
         const form = {
             'comment[text_comment]': `${inputs.comment || ''}`,

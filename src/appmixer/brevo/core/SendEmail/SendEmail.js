@@ -13,6 +13,18 @@ module.exports = {
             replyToName,
             cc,
             bcc } = context.messages.in.content;
+        if (!senderEmail) {
+            throw new context.CancelError('Sender Email is required');
+        }
+
+        if (!subject) {
+            throw new context.CancelError('Subject is required');
+        }
+
+        if (!replyToEmail) {
+            throw new context.CancelError('Reply-To Email is required');
+        }
+
 
         const toArr = to.ADD.map((recipient) => {
             return {

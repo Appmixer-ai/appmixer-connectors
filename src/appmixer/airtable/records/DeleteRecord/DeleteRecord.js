@@ -7,6 +7,18 @@ module.exports = {
         const {
             baseId, tableIdOrName, recordId
         } = context.messages.in.content;
+        if (!baseId) {
+            throw new context.CancelError('Base ID is required');
+        }
+
+        if (!tableIdOrName) {
+            throw new context.CancelError('Table ID or Name is required');
+        }
+
+        if (!recordId) {
+            throw new context.CancelError('Record IDs is required');
+        }
+
 
         const queryParams = {
             records: recordId.split(',')

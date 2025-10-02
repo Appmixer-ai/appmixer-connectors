@@ -23,6 +23,11 @@ module.exports = {
     receive: async function(context) {
 
         const { prompt, model, instructions } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+
         const threadId = context.messages.in.content.threadId;
         const correlationId = context.messages.in.correlationId;
 

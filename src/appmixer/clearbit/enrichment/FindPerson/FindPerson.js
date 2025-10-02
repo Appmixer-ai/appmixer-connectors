@@ -29,6 +29,10 @@ let processPerson = function(res) {
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.email) {
+            throw new context.CancelError('Email is required');
+        }
+
 
         if (context.messages.webhook) {
             let data = context.messages.webhook.content.data;

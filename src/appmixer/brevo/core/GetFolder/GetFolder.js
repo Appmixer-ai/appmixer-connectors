@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { folderId } = context.messages.in.content;
+        if (!folderId) {
+            throw new context.CancelError('Folder ID is required');
+        }
+
 
         // https://developers.brevo.com/reference/getfolder-1
         const { data } = await context.httpRequest({

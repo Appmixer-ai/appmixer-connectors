@@ -8,6 +8,10 @@ module.exports = {
     receive: async function(context) {
 
         const { fileId, responseFormat, model } = context.messages.in.content;
+        if (!fileId) {
+            throw new context.CancelError('File ID is required');
+        }
+
 
         const readStream = await context.getFileReadStream(fileId);
         const fileInfo = await context.getFileInfo(fileId);

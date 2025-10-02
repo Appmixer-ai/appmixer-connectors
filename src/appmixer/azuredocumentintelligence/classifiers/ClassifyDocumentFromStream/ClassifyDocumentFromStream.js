@@ -9,6 +9,14 @@ module.exports = {
 
         const { endpoint, apiKey } = context.config;
         const { classifierId, fileId } = context.messages.in.content;
+        if (!classifierId) {
+            throw new context.CancelError('Classifier ID is required');
+        }
+
+        if (!fileId) {
+            throw new context.CancelError('File ID is required');
+        }
+
 
         const client = DocumentIntelligence(endpoint, { key: apiKey });
 

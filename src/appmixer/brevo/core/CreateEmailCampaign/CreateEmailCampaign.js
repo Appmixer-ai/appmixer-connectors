@@ -9,6 +9,22 @@ module.exports = {
             senderEmail,
             senderName,
             htmlContent } = context.messages.in.content;
+        if (!name) {
+            throw new context.CancelError('Name is required');
+        }
+
+        if (!senderType) {
+            throw new context.CancelError('Sender Type is required');
+        }
+
+        if (!htmlContent) {
+            throw new context.CancelError('HtmlContent is required');
+        }
+
+        if (!subject) {
+            throw new context.CancelError('Subject is required');
+        }
+
 
         // https://developers.brevo.com/reference/createemailcampaign-1
         const { data } = await context.httpRequest({

@@ -7,6 +7,11 @@ module.exports = {
     receive: async function(context) {
 
         const { prompt, size, model } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+
         const { data } = await lib.request(context, 'post', '/images/generations', {
             model: model || 'dall-e-3',
             prompt,

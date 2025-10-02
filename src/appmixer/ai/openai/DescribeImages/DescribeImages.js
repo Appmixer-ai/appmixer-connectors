@@ -8,6 +8,15 @@ module.exports = {
     receive: async function(context) {
 
         const { prompt, images, model } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+        if (!images) {
+            throw new context.CancelError('Images is required');
+        }
+
+
         const imageFileIds = (images.ADD || []).map(image => (image.fileId || null)).filter(fileId => fileId !== null);
 
         const imageContent = await Promise.all(imageFileIds.map(async (fileId) => {

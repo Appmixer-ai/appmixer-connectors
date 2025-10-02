@@ -7,6 +7,11 @@ module.exports = {
     receive: async function(context) {
 
         const { prompt, model } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+
         const { data } = await lib.request(context, 'post', '/chat/completions', {
             model: model || 'gpt-4o',
             messages: [

@@ -20,6 +20,34 @@ module.exports = {
             duration,
             durationUnits
         } = context.messages.in.content;
+        if (!relationship) {
+            throw new context.CancelError('Task Relationship is required');
+        }
+
+        if (!taskType) {
+            throw new context.CancelError('Task type is required');
+        }
+
+        if (!title) {
+            throw new context.CancelError('Title is required');
+        }
+
+        if (!note) {
+            throw new context.CancelError('Description is required');
+        }
+
+        if (!due) {
+            throw new context.CancelError('Due is required');
+        }
+
+        if (!duration) {
+            throw new context.CancelError('Duration is required');
+        }
+
+        if (!durationUnits) {
+            throw new context.CancelError('Duration units is required');
+        }
+
 
         const dueDate = moment(due);
         const eDate = dueDate.add(duration, durationUnits);

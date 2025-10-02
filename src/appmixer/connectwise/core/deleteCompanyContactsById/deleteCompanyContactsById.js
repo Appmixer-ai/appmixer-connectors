@@ -14,6 +14,14 @@ module.exports = {
     httpRequest: async function(context) {
 
         const input = context.messages.in.content;
+        if (!input['id']) {
+            throw new context.CancelError('Id is required');
+        }
+
+        if (!input['transferContactId']) {
+            throw new context.CancelError('Transfer Contact Id is required');
+        }
+
 
         let url = this.getBaseUrl(context) + `/company/contacts/${input['id']}`;
 

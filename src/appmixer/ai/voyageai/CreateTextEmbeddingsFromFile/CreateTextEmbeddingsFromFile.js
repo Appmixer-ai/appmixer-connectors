@@ -18,6 +18,10 @@ module.exports = {
             chunkSize = 500,
             chunkOverlap = 50
         } = context.messages.in.content;
+        if (!fileId) {
+            throw new context.CancelError('File ID is required');
+        }
+
 
         const apiKey = context.auth.apiKey;
         const readStream = await context.getFileReadStream(fileId);

@@ -8,6 +8,10 @@ module.exports = {
     async receive(context) {
 
         const { query, outputType } = context.messages.in.content;
+        if (!query) {
+            throw new context.CancelError('SQL Query is required');
+        }
+
 
         try {
             const queryResponse = await runQuery({ context: context.auth, query, stream: outputType === 'file' });

@@ -3,6 +3,11 @@
 module.exports = {
     async receive(context) {
         const { spaceId } = context.messages.in.content;
+        if (!spaceId) {
+            throw new context.CancelError('Space ID is required');
+        }
+
+
         const { data } = await context.httpRequest.get(`https://api.clickup.com/api/v2/space/${spaceId}/list`, {
             headers: {
                 Authorization: context.auth.accessToken

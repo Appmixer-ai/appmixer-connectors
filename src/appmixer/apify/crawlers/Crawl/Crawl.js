@@ -4,6 +4,14 @@ const { ApifyClient } = require('apify-client');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.url) {
+            throw new context.CancelError('URL to crawl (must start with http:// or https://) is required');
+        }
+
+        if (!context.messages.in.content.pageFunction) {
+            throw new context.CancelError('Page function is required');
+        }
+
 
         let auth = context.auth;
         const message = context.messages.in.content;

@@ -14,6 +14,15 @@ module.exports = {
         }
 
         const { name, invocationType, clientContext, logType, payload, qualifier } = context.messages.in.content;
+        if (!region) {
+            throw new context.CancelError('Region is required');
+        }
+
+        if (!name) {
+            throw new context.CancelError('FunctionName is required');
+        }
+
+
         const { lambda } = commons.init(context);
 
         const params = {

@@ -10,6 +10,27 @@ module.exports = {
     async receive(context) {
 
         const { bucket, key, content, acl, contentType, expiryDate } = context.messages.in.content;
+        if (!bucket) {
+            throw new context.CancelError('Bucket is required');
+        }
+
+        if (!key) {
+            throw new context.CancelError('Object Key is required');
+        }
+
+        if (!content) {
+            throw new context.CancelError('Content is required');
+        }
+
+        if (!contentType) {
+            throw new context.CancelError('Content Type is required');
+        }
+
+        if (!acl) {
+            throw new context.CancelError('Access Control is required');
+        }
+
+
         const { s3 } = commons.init(context);
 
         const result = await s3.upload({

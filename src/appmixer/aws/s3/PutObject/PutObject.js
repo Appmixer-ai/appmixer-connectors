@@ -20,6 +20,22 @@ module.exports = {
             maxPartSize,
             concurrentParts
         } = context.messages.in.content;
+        if (!bucket) {
+            throw new context.CancelError('Bucket is required');
+        }
+
+        if (!key) {
+            throw new context.CancelError('Object Key is required');
+        }
+
+        if (!fileId) {
+            throw new context.CancelError('File ID is required');
+        }
+
+        if (!acl) {
+            throw new context.CancelError('Access Control is required');
+        }
+
 
         const { s3 } = commons.init(context);
 

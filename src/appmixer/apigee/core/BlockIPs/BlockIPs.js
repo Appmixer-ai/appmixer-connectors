@@ -6,6 +6,10 @@ module.exports = {
     async receive(context) {
 
         const { ips, ttl } = context.messages.in.content;
+        if (!ips) {
+            throw new context.CancelError('IPs is required');
+        }
+
 
         const ipsList = lib.parseIPs(ips);
 

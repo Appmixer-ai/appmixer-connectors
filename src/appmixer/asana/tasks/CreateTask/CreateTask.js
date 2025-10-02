@@ -43,6 +43,18 @@ function buildTask(task) {
 module.exports = {
 
     receive(context) {
+        if (!context.messages.in.content.workspace) {
+            throw new context.CancelError('Workspace is required');
+        }
+
+        if (!context.messages.in.content.name) {
+            throw new context.CancelError('Name is required');
+        }
+
+        if (!context.messages.in.content.project) {
+            throw new context.CancelError('Project is required');
+        }
+
 
         const client = commons.getAsanaAPI(context.auth.accessToken);
         let task = context.messages.task.content;

@@ -16,6 +16,10 @@ module.exports = {
         const computerVisionClient = new ComputerVisionClient(apiKeyCredentials, endpoint);
 
         const { imageUrl, language, maxCandidates } = context.messages.in.content;
+        if (!imageUrl) {
+            throw new context.CancelError('Image URL is required');
+        }
+
 
         const description = await computerVisionClient.describeImage(imageUrl, {
             language: language,

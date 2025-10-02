@@ -11,6 +11,10 @@ module.exports = {
 
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { project, outputType } = context.messages.in.content;
+        if (!project) {
+            throw new context.CancelError('Project is required');
+        }
+
 
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);

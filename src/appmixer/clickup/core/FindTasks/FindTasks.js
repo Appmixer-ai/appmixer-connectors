@@ -12,6 +12,10 @@ module.exports = {
 
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { listId, assigneeIds, statuses, tags, orderBy, outputType, limit } = context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List ID is required');
+        }
+
 
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);

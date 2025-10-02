@@ -24,6 +24,18 @@ module.exports = {
             gradeSchemaId,
             score
         } = context.messages.in.content;
+        if (!courseId) {
+            throw new context.CancelError('Course ID is required');
+        }
+
+        if (!parentId) {
+            throw new context.CancelError('Parent ID is required');
+        }
+
+        if (!title) {
+            throw new context.CancelError('Title is required');
+        }
+
 
         const client = new Blackboard(
             context.auth.clientId,

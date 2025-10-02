@@ -5,6 +5,10 @@ const lib = require('../lib');
 module.exports = {
 
     receive: async function(context) {
+        if (!context.messages.in.content.text) {
+            throw new context.CancelError('Text is required');
+        }
+
 
         const config = {
             apiKey: context.auth.apiKey,

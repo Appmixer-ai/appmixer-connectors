@@ -21,6 +21,10 @@ module.exports = {
             duration,
             durationUnits
         } = context.messages.in.content;
+        if (!taskId) {
+            throw new context.CancelError('Task is required');
+        }
+
 
         const dueDate = moment(due);
         const eDate = dueDate.add(duration, durationUnits);

@@ -4,6 +4,15 @@ module.exports = {
     async receive(context) {
 
         const { imageName, image } = context.messages.in.content;
+        if (!imageName) {
+            throw new context.CancelError('Image Name is required');
+        }
+
+        if (!image) {
+            throw new context.CancelError('Image is required');
+        }
+
+
         const fileStream = await context.getFileReadStream(image);
         const fileStats = await context.getFileInfo(image);
         const imageNameBase64 = Buffer.from(imageName).toString('base64');

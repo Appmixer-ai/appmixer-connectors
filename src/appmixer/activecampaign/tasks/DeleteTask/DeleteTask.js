@@ -8,6 +8,10 @@ module.exports = {
         const {
             taskId
         } = context.messages.in.content;
+        if (!taskId) {
+            throw new context.CancelError('Task is required');
+        }
+
 
         const { auth } = context;
         const ac = new ActiveCampaign(auth.url, auth.apiKey, context);

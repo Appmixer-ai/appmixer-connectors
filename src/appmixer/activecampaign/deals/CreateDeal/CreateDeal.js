@@ -5,6 +5,30 @@ const { trimUndefined } = require('../../helpers');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.contactId) {
+            throw new context.CancelError('Contact is required');
+        }
+
+        if (!context.messages.in.content.title) {
+            throw new context.CancelError('Title is required');
+        }
+
+        if (!context.messages.in.content.owner) {
+            throw new context.CancelError('Owner is required');
+        }
+
+        if (!context.messages.in.content.stage) {
+            throw new context.CancelError('Stage is required');
+        }
+
+        if (!context.messages.in.content.value) {
+            throw new context.CancelError('Deal amount is required');
+        }
+
+        if (!context.messages.in.content.currency) {
+            throw new context.CancelError('Currency is required');
+        }
+
 
         const {
             contactId,

@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { email, emailBlacklisted, smsBlacklisted, listIds, updateEnabled } = context.messages.in.content;
+        if (!email) {
+            throw new context.CancelError('Email is required');
+        }
+
 
         // list ID must be type number
         const body = {

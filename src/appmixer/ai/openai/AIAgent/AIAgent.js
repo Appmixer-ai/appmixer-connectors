@@ -607,6 +607,11 @@ module.exports = {
         await this.publishChatProgressEvent(context, 'start', 'Thinking...');
         const receiveStart = new Date;
         const { prompt, storeId, threadId, fileId } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+
         const model = context.properties.model;
         const client = lib.sdk(context);
         let tools = await context.stateGet('tools');

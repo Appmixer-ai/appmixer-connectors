@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { contactId, email, emailBlacklisted, smsBlacklisted, listIds } = context.messages.in.content;
+        if (!contactId) {
+            throw new context.CancelError('Contact ID is required');
+        }
+
 
         // https://developers.brevo.com/reference/updatecontact
         await context.httpRequest({

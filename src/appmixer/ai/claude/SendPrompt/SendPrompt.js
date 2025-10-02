@@ -4,6 +4,18 @@ module.exports = {
     async receive(context) {
 
         const { prompt, system, model, max_tokens } = context.messages.in.content;
+        if (!prompt) {
+            throw new context.CancelError('Prompt is required');
+        }
+
+        if (!model) {
+            throw new context.CancelError('Model is required');
+        }
+
+        if (!max_tokens) {
+            throw new context.CancelError('Max Tokens is required');
+        }
+
 
         const { data } = await context.httpRequest({
             method: 'POST',

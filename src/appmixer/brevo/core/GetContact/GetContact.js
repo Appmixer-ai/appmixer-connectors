@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { contactId } = context.messages.in.content;
+        if (!contactId) {
+            throw new context.CancelError('Contact ID or Email is required');
+        }
+
 
         // https://developers.brevo.com/reference/getcontactinfo-1
         const { data } = await context.httpRequest({

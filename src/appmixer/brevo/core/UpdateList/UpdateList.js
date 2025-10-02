@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { listId, name, folderId } = context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List ID is required');
+        }
+
 
         // https://developers.brevo.com/reference/updatelist
         await context.httpRequest({

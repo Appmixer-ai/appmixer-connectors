@@ -14,6 +14,14 @@ module.exports = {
     httpRequest: async function(context) {
 
         const input = context.messages.in.content;
+        if (!input['identifier']) {
+            throw new context.CancelError('Identifier is required');
+        }
+
+        if (!input['name']) {
+            throw new context.CancelError('Name is required');
+        }
+
 
         let url = this.getBaseUrl(context) + '/company/companies';
 

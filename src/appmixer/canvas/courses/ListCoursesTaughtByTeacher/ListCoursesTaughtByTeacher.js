@@ -10,6 +10,11 @@ module.exports = {
         const client = new Canvas(accessToken, context);
 
         const { teacherId } = context.messages.in.content;
+        if (!teacherId) {
+            throw new context.CancelError('Teacher ID is required');
+        }
+
+
         const { data } = await client.listCoursesByUserId(teacherId);
 
         return context.sendJson({ courses: data }, 'out');

@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { name } = context.messages.in.content;
+        if (!name) {
+            throw new context.CancelError('Name is required');
+        }
+
 
         // https://developers.brevo.com/reference/createfolder
         const { data } = await context.httpRequest({

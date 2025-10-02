@@ -12,6 +12,11 @@ module.exports = {
         const { s3 } = commons.init(context);
 
         const { bucket } = context.messages.in.content;
+        if (!bucket) {
+            throw new context.CancelError('Bucket is required');
+        }
+
+
         await s3.deleteBucket({ Bucket: bucket }).promise();
 
         return context.sendJson({ Name: bucket }, 'deleted');

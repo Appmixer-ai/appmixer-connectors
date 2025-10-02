@@ -6,6 +6,10 @@ module.exports = {
         const { accessToken } = context.auth;
         const { baseId, tableId } = context.properties;
         const { recordId } = context.messages.in.content;
+        if (!recordId) {
+            throw new context.CancelError('Record ID is required');
+        }
+
 
         const { data } = await context.httpRequest({
             url: `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`,

@@ -19,6 +19,10 @@ module.exports = {
             parent,
             archived
         } = context.messages.in.content;
+        if (!taskId) {
+            throw new context.CancelError('Task ID is required');
+        }
+
 
         const clickUpClient = new ClickUpClient(context);
 

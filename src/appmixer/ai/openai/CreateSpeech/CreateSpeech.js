@@ -7,6 +7,10 @@ module.exports = {
     receive: async function(context) {
 
         const { input, voice, responseFormat, speed, model } = context.messages.in.content;
+        if (!input) {
+            throw new context.CancelError('Text is required');
+        }
+
 
         const { data: readStream } = await lib.request(context, '/audio/speech', {
             model: model || 'tts-1',

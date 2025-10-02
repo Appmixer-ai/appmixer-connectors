@@ -6,6 +6,23 @@ module.exports = {
     receive: async function(context) {
 
         const { text, jsonSchema: jsonSchemaString, model, max_tokens } = context.messages.in.content;
+        if (!text) {
+            throw new context.CancelError('Text is required');
+        }
+
+        if (!jsonSchema) {
+            throw new context.CancelError('Output JSON Schema is required');
+        }
+
+        if (!model) {
+            throw new context.CancelError('Model is required');
+        }
+
+        if (!max_tokens) {
+            throw new context.CancelError('Max Tokens is required');
+        }
+
+
         let jsonSchema;
         try {
             jsonSchema = JSON.parse(jsonSchemaString);
