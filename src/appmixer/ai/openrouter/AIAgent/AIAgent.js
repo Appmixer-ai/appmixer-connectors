@@ -9,6 +9,7 @@ const TOOLS_OUTPUT_POLL_INTERVAL = 300;  // 300ms
 const AI_AGENT_MAX_ATTEMPTS = 20; // Max number of agent turns before we stop.
 const AI_AGENT_MAX_HISTORY_SIZE = 512000;
 const AI_AGENT_MAX_HISTORY_SUMMARY_TOKENS = 32000;
+const AI_AGENT_MAX_FILE_SIZE = 1024 * 1024 * 5; // 5MB
 
 module.exports = {
 
@@ -63,25 +64,29 @@ module.exports = {
         return toolsDefinition.concat(mcpToolsDefinition);
     },
 
-    mcpListTools: function(context, componentId) {
+    mcpListTools: async function(context, componentId) {
 
-        return context.callAppmixer({
-            endPoint: `/flows/${context.flowId}/components/${componentId}?action=listTools`,
+        const { data } = await context.httpRequest({
+            url: `${process.env.APPMIXER_API_URL}/flows/${context.flowId}/components/${componentId}?action=listTools`,
             method: 'POST',
-            body: {}
+            data: {}
         });
+
+        return data;
     },
 
-    mcpCallTool: function(context, componentId, toolName, args) {
+    mcpCallTool: async function(context, componentId, toolName, args) {
 
-        return context.callAppmixer({
-            endPoint: `/flows/${context.flowId}/components/${componentId}?action=callTool`,
+        const { data } = await context.httpRequest({
+            url: `${process.env.APPMIXER_API_URL}/flows/${context.flowId}/components/${componentId}?action=callTool`,
             method: 'POST',
-            body: {
+            data: {
                 name: toolName,
                 arguments: args
             }
         });
+
+        return data;
     },
 
     isMCPserver: function(context, componentId) {
@@ -107,6 +112,7 @@ module.exports = {
         const agentComponentId = context.componentId;
         const mcpPort = 'mcp';
         const components = {};
+        let error;
         // Find all components connected to my 'mcp' output port.
         Object.keys(flowDescriptor).forEach((componentId) => {
             const component = flowDescriptor[componentId];
@@ -123,6 +129,11 @@ module.exports = {
                 }
             });
         });
+
+        // Teach the user via logs that they need to connect only MCP servers to the mcp port.
+        if (error) {
+            throw new context.CancelError(error);
+        }
 
         for (const componentId in components) {
             // For each 'MCP Server' component, call the component to retrieve available tools.
@@ -167,6 +178,10 @@ module.exports = {
                 properties: {}
             };
             parameters.forEach((parameter) => {
+                // Skip empty objects
+                if (Object.keys(parameter).length === 0) {
+                    return;
+                }
                 toolParameters.properties[parameter.name] = {
                     type: parameter.type,
                     description: parameter.description
@@ -189,6 +204,37 @@ module.exports = {
         return toolsDefinition;
     },
 
+    publishChatProgressEvent: function(context, step, content) {
+
+        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+            type: 'progress',
+            data: {
+                id: uuid.v6(), // UUID v6 is time ordered
+                step,
+                content,
+                role: 'agent',
+                correlationId: context.messages.in.correlationId,
+                componentId: context.componentId,
+                flowId: context.flowId
+            }
+        });
+    },
+
+    publishChatDeltaEvent: async function(context, completionId, content) {
+
+        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+            type: 'delta',
+            data: {
+                id: uuid.v6(), // UUID v6 is time ordered
+                content,
+                role: 'agent',
+                correlationId: context.messages.in.correlationId,
+                componentId: context.componentId,
+                flowId: context.flowId
+            }
+        });
+    },
+
     callTools: async function(context, modelToolCalls) {
 
         if (!modelToolCalls || !modelToolCalls.length) {
@@ -196,7 +242,7 @@ module.exports = {
         }
 
         if (modelToolCalls.length > 1) {
-            await context.sendJson({ status: `Calling ${modelToolCalls.length} tools.` }, 'progress');
+            await this.publishChatProgressEvent(context, 'tool-calls', `Calling ${modelToolCalls.length} tools.`);
         }
 
         const outputs = [];
@@ -205,13 +251,30 @@ module.exports = {
         for (const toolCall of modelToolCalls) {
             let componentId = toolCall.function.name.split('_')[0];
             const toolName = toolCall.function.name.split('_').slice(1).join('_');
-            await context.sendJson({ status: `Calling tool ${toolName}.` }, 'progress');
+            await this.publishChatProgressEvent(context, 'tool-call', `Calling tool ${toolName}.`);
             if (!uuid.validate(componentId)) {
                 // Short version of the UUID.
                 // Get back the original compoennt UUID back from the short version.
                 componentId = shortuuid().toUUID(componentId);
             }
-            const args = JSON.parse(toolCall.function.arguments);
+            let args;
+            try {
+                args = JSON.parse(toolCall.function.arguments);
+            } catch (err) {
+                await context.log({
+                    step: 'tool-call-json-parse-error',
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.function.name,
+                    arguments: toolCall.function.arguments,
+                    error: err.message
+                });
+                // Add error response for malformed JSON arguments
+                outputs.push({
+                    tool_call_id: toolCall.id,
+                    output: `Error: Failed to parse tool arguments - ${err.message}. Raw arguments: ${toolCall.function.arguments}`
+                });
+                continue;
+            }
             if (this.isMCPserver(context, componentId)) {
                 // MCP Server. Get output directly.
                 let output;
@@ -249,15 +312,20 @@ module.exports = {
             const pollStart = Date.now();
             const pollTimeout = context.config.TOOLS_OUTPUT_POLL_TIMEOUT || TOOLS_OUTPUT_POLL_TIMEOUT;
             const pollInterval = context.config.TOOLS_OUTPUT_POLL_INTERVAL || TOOLS_OUTPUT_POLL_INTERVAL;
+            const collectedToolCallIds = new Set();
+
             while (
-                (outputs.length < toolCalls.length) &&
+                (collectedToolCallIds.size < toolCalls.length) &&
                 (Date.now() - pollStart < pollTimeout)
             ) {
                 for (const toolCall of toolCalls) {
-                    const result = await context.flow.stateGet(toolCall.id);
-                    if (result) {
-                        outputs.push({ tool_call_id: toolCall.id, output: result.output });
-                        await context.flow.stateUnset(toolCall.id);
+                    if (!collectedToolCallIds.has(toolCall.id)) {
+                        const result = await context.flow.stateGet(toolCall.id);
+                        if (result) {
+                            outputs.push({ tool_call_id: toolCall.id, output: result.output });
+                            collectedToolCallIds.add(toolCall.id);
+                            await context.flow.stateUnset(toolCall.id);
+                        }
                     }
                 }
                 // Sleep.
@@ -266,10 +334,30 @@ module.exports = {
             await context.log({ step: 'collected-tools-output', outputs });
         }
 
+        // Ensure we have responses for ALL tool calls
+        // OpenAI requires a response to every tool_call_id
+        const providedToolCallIds = new Set(outputs.map(output => output.tool_call_id));
+        for (const toolCall of modelToolCalls) {
+            if (!providedToolCallIds.has(toolCall.id)) {
+                // Add error response for missing tool calls
+                const pollTimeout = context.config.TOOLS_OUTPUT_POLL_TIMEOUT || TOOLS_OUTPUT_POLL_TIMEOUT;
+                outputs.push({
+                    tool_call_id: toolCall.id,
+                    output: `Error: Tool call ${toolCall.function.name} timed out or failed to respond within ${pollTimeout}ms`
+                });
+                await context.log({
+                    step: 'tool-call-timeout',
+                    toolCallId: toolCall.id,
+                    toolName: toolCall.function.name,
+                    timeout: pollTimeout
+                });
+            }
+        }
+
         return outputs;
     },
 
-    agent: async function(context, client, instructions, model, prompt, tools, history) {
+    agent: async function(context, instructions, model, prompt, fileId, tools, history) {
 
         const messages = history || [{
             // Note that we're not using the 'system' role here since it's not
@@ -278,12 +366,83 @@ module.exports = {
             content: instructions
         }];
 
+        let userContent = prompt;
+
+        if (fileId) {
+            // Get the file content from Appmixer file storage and send directly as base64 encoded content.
+            try {
+                const fileInfo = await context.getFileInfo(fileId);
+                await this.publishChatProgressEvent(context, 'file-processing', `Processing file ${fileInfo.filename} (${lib.formatBytes(fileInfo.length)})...`);
+                const size = fileInfo.length;
+                if (size > (context.config.AI_AGENT_MAX_FILE_SIZE || AI_AGENT_MAX_FILE_SIZE)) {
+                    throw new context.CancelError(`File size ${size} exceeds the maximum allowed size of ${context.config.AI_AGENT_MAX_FILE_SIZE || AI_AGENT_MAX_FILE_SIZE} bytes.`);
+                }
+                const mime = fileInfo.contentType || 'application/octet-stream';
+                if (mime === 'image/png' || mime === 'image/jpeg' || mime === 'image/jpg' || mime === 'image/gif' || mime === 'image/webp') {
+                    const fileBuffer = await context.loadFile(fileId);
+                    const fileContentBase64 = fileBuffer.toString('base64');
+                    // For images, we send the data URI so that the model can easily display it if needed.
+                    // Note that the size of the data URI is about 33% larger than the original binary content.
+                    userContent = [{
+                        type: 'image_url',
+                        image_url: {
+                            url: `data:${mime};base64,${fileContentBase64}`
+                        }
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                } else if (mime === 'application/pdf') {
+                    const fileBuffer = await context.loadFile(fileId);
+                    const fileContentBase64 = fileBuffer.toString('base64');
+                    // For images, we send the data URI so that the model can easily display it if needed.
+                    // Note that the size of the data URI is about 33% larger than the original binary content.
+                    userContent = [{
+                        type: 'file',
+                        file: {
+                            filename: fileInfo.filename,
+                            file_data: `data:${mime};base64,${fileContentBase64}`
+                        }
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                } else if (mime === 'audio/wav' || mime === 'audio/mp3' || mime === 'audio/x-wav') {
+                    const fileBuffer = await context.loadFile(fileId);
+                    const fileContentBase64 = fileBuffer.toString('base64');
+                    userContent = [{
+                        type: 'input_audio',
+                        input_audio: {
+                            data: fileContentBase64,
+                            format: mime.split('/').pop()
+                        }
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                } else {
+                    // Other files are simply sent as a raw text. This is useful if file is e.g. a text file or CSV, JSON, .js, .py, etc.
+                    const fileBuffer = await context.loadFile(fileId);
+                    userContent = [{
+                        type: 'text',
+                        text: `File content: ${fileBuffer.toString('utf8')}`
+                    }, {
+                        type: 'text',
+                        text: prompt
+                    }];
+                    await context.log({ warning: `File type ${mime} is not an image or PDF. It will be parsed as text and sent as a regular prompt.` });
+                }
+            } catch (err) {
+                throw new context.CancelError(`Failed to process file: ${err.message}`);
+            }
+        }
+
         messages.push({
             role: 'user',
-            content: prompt
+            content: userContent
         });
 
-        for (let i = 0; i < context.config.AI_AGENT_MAX_ATTEMPTS || AI_AGENT_MAX_ATTEMPTS; i++) {
+        for (let i = 0; i < (context.config.AI_AGENT_MAX_ATTEMPTS || AI_AGENT_MAX_ATTEMPTS); i++) {
 
             const completion = {
                 model,
@@ -291,7 +450,10 @@ module.exports = {
                 tools
             };
             await context.log({ step: 'agent-completion', completion });
-            const choice = await this.createCompletion(context, client, completion);
+            await this.publishChatProgressEvent(context, 'inference', `Crunching data (${i + 1})...`);
+            const choice = context.properties.stream
+                ? await this.createStreamCompletion(context, completion)
+                : await this.createCompletion(context, completion);
             const { finish_reason: finishReason, message } = choice;
             messages.push(message);
 
@@ -310,14 +472,116 @@ module.exports = {
                 return { messages, answer: message.content, turns: i + 1 };
             }
         }
-        return { messages, answer: 'The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input.' };
+        return {
+            messages,
+            answer: 'The maximum number of iterations has been met without a suitable answer. Please try again with a more specific input.'
+        };
     },
 
-    createCompletion: async function(context, client, completion) {
+    createStreamCompletion: async function(context, completion) {
 
-        const response = await client.chat.completions.create(completion);
-        const choice = response.choices[0];
-        const usage = response.usage;
+        const response = await lib.request(
+            context,
+            'post',
+            '/chat/completions',
+            { ...completion, stream: true },
+            { responseType: 'stream' }
+        );
+        const finalToolCalls = [];
+        let finalContent = '';
+        let finishReason = null;
+
+        const stream = response.data;
+        stream.setEncoding('utf8');
+
+        let buffer = '';
+
+        for await (const chunk of stream) {
+
+            buffer += chunk;
+
+            // Split into SSE events by blank line; keep last partial in buffer
+            const events = buffer.split(/\r?\n\r?\n/);
+            buffer = events.pop() ?? "";
+
+            for (const evt of events) {
+                // Collect all data: lines in this event (SSE allows multi-line data)
+                const dataLines = evt
+                    .split(/\r?\n/)
+                    .filter((l) => l.startsWith('data:'))
+                    .map((l) => l.slice(5).trim());
+
+                if (dataLines.length === 0) continue;
+                const payload = dataLines.join('\n').trim();
+
+                if (payload === '[DONE]') {
+                    break; // stop the generator
+                }
+
+                // OpenRouter streams OpenAI-style deltas
+                try {
+                    const chunk = JSON.parse(payload);
+                    // With include_usage: true, the last chunk contains usage field
+                    // while the choices array is empty.
+                    const choice = chunk.choices.length ? chunk.choices[0] : {};
+                    if (choice.finish_reason) {
+                        finishReason = choice.finish_reason;
+                    }
+                    const delta = choice?.delta || {};
+                    if (delta.tool_calls) {
+                        for (const toolCall of delta.tool_calls) {
+                            const { index } = toolCall;
+
+                            if (!finalToolCalls[index]) {
+                                finalToolCalls[index] = {
+                                    id: toolCall.id,
+                                    type: toolCall.type,
+                                    function: {
+                                        name: toolCall.function.name,
+                                        arguments: toolCall.function.arguments || ''
+                                    }
+                                };
+                            } else {
+                                finalToolCalls[index].function.arguments += toolCall.function.arguments || '';
+                            }
+                        }
+                    } else if (delta.content) {
+                        finalContent += delta.content;
+                        await this.publishChatDeltaEvent(context, chunk.id, delta.content);
+                    }
+                    if (chunk.usage) {
+                        // Note that only the last chunk has usage info so this does NOT
+                        // run with each chunk.
+                        await this.updateUsage(context, chunk.usage);
+                    }
+
+                } catch {
+                    // Non-JSON keepalive/comment; ignore
+                }
+            }
+        }
+
+        const choice = {
+            finish_reason: finishReason,
+            message: {
+                role: 'assistant',
+                content: finalContent
+            }
+        };
+
+        // Add only when tool calls required. Empty array is not allowed by OpenAI API.
+        if (finalToolCalls.length) {
+            choice.message.tool_calls = finalToolCalls;
+        }
+
+        return choice;
+    },
+
+    createCompletion: async function(context, completion) {
+
+        const response = await lib.request(context, 'post', '/chat/completions', completion);
+        const choice = response.data.choices[0];
+        const usage = response.data.usage;
 
         if (usage) {
             // Remember aggregated usage for the current flow.
@@ -354,9 +618,9 @@ module.exports = {
         return context.stateSet('usage', newUsage);
     },
 
-    summarizeHistory: async function(context, client, model, history) {
+    summarizeHistory: async function(context, model, history) {
 
-        const choice = await this.createCompletion(context, client, {
+        const choice = await this.createCompletion(context, {
             model,
             messages: [{
                 role: 'user',
@@ -374,10 +638,10 @@ module.exports = {
 
     receive: async function(context) {
 
+        await this.publishChatProgressEvent(context, 'start', 'Thinking...');
         const receiveStart = new Date;
-        const { prompt, storeId, threadId } = context.messages.in.content;
+        const { prompt, storeId, threadId, fileId } = context.messages.in.content;
         const model = context.properties.model;
-        const client = lib.sdk(context);
         let tools = await context.stateGet('tools');
         if (!tools) {
             // If agent is started with OnStart component, the start method might not
@@ -394,10 +658,10 @@ module.exports = {
         const agentTimeStart = new Date;
         const response = await this.agent(
             context,
-            client,
             context.properties.instructions || 'You\'re a helpful assistant.',
             model,
             prompt,
+            fileId,
             tools,
             history
         );
@@ -412,7 +676,7 @@ module.exports = {
         const maxHistorySize = context.config.AI_AGENT_MAX_HISTORY_SIZE || AI_AGENT_MAX_HISTORY_SIZE;
         if (threadId && (newHistoryText.length > maxHistorySize)) {
             // Limit the history size to around 512kB by default.
-            const summary = await this.summarizeHistory(context, client, model, newHistory);
+            const summary = await this.summarizeHistory(context, model, newHistory);
             newHistory = [{
                 role: 'user',
                 content: summary
