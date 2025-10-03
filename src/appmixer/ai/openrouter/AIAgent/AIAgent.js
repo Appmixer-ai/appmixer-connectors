@@ -502,7 +502,7 @@ module.exports = {
 
             // Split into SSE events by blank line; keep last partial in buffer
             const events = buffer.split(/\r?\n\r?\n/);
-            buffer = events.pop() ?? "";
+            buffer = events.pop() ?? '';
 
             for (const evt of events) {
                 // Collect all data: lines in this event (SSE allows multi-line data)
