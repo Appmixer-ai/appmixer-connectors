@@ -1,10 +1,15 @@
 {
     "name": "appmixer.front.rule.ListRules",
-    "description": "List automation rules from Front",
+    "description": "List automation rules from Front. Requires Enterprise plan.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
+    "private": true,
     "auth": {
         "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -12,38 +17,25 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "limit": {
-                        "type": "integer",
-                        "title": "Limit",
-                        "minimum": 1,
-                        "maximum": 100
-                    },
                     "outputType": {
-                        "type": "string",
-                        "title": "Output Type"
+                        "type": "string"
                     }
                 }
             },
             "inspector": {
                 "inputs": {
-                    "limit": {
-                        "type": "number",
-                        "index": 1,
-                        "label": "Limit",
-                        "tooltip": "Maximum number of rules to return (1-100)"
-                    },
                     "outputType": {
                         "type": "select",
-                        "index": 2,
+                        "index": 0,
                         "label": "Output Type",
-                        "tooltip": "How to output the rules",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [
-                            { "label": "Array", "value": "array" },
-                            { "label": "Object", "value": "object" },
-                            { "label": "First Item", "value": "first" },
-                            { "label": "CSV File", "value": "file" }
-                        ],
-                        "defaultValue": "array"
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
                     }
                 }
             }
@@ -52,20 +44,18 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Result", "value": "result" },
-                { "label": "Count", "value": "count" },
-                { "label": "Rule ID", "value": "result.id" },
-                { "label": "Rule Name", "value": "result.name" },
-                { "label": "Rule Description", "value": "result.description" },
-                { "label": "Is Active", "value": "result.is_active" },
-                { "label": "Created At", "value": "result.created_at" },
-                { "label": "Updated At", "value": "result.updated_at" },
-                { "label": "Conditions", "value": "result.conditions" },
-                { "label": "Actions", "value": "result.actions" },
-                { "label": "Priority", "value": "result.priority" }
-            ]
+            "source": {
+                "url": "/component/appmixer/front/rule/ListRules?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
         }
     ],
-    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzI0N18yNDA3KSI+CjxwYXRoIGQ9Ik00MCAyMEM0MCAzMS4wNDU3IDMxLjA0NTcgNDAgMjAgNDBDOC45NTQzIDQwIDAgMzEuMDQ1NyAwIDIwQzAgOC45NTQzIDguOTU0MyAwIDIwIDBDMzEuMDQ1NyAwIDQwIDguOTU0MyA0MCAyMFoiIGZpbGw9IiNGRjQwM0IiLz4KPHBhdGggZD0iTTI5LjE0MjkgMTEuNDI4NkMzMC4wNzE0IDEwLjUgMzEuNzE0MyAxMC41IDMyLjY0MjkgMTEuNDI4NkMzMy41NzE0IDEyLjM1NzEgMzMuNTcxNCAxNCAzMi42NDI5IDE0LjkyODZMMjQgMjMuNTcxNEMxNy4yODU3IDMwLjI4NTcgMTcuMjg1NyAzMS4wNzE0IDE3LjI4NTcgMzEuMDcxNEgxMC42NDI5QzEwLjA3MTQgMzEuMDcxNCA5LjU3MTQzIDMwLjU3MTQgOS41NzE0MyAzMFYyMy4zNTcxQzkuNTcxNDMgMjMuMzU3MSAxMC4zNTcxIDIzLjM1NzEgMTcuMDcxNCAyMy4zNTcxSDE3LjA3MTRMMjkuMTQyOSAxMS40Mjg2WiIgZmlsbD0id2hpdGUiLz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMF8yNDdfMjQwNyI+CjxyZWN0IHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0id2hpdGUiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4="
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
 }

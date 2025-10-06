@@ -8,7 +8,7 @@ module.exports = {
             throw new context.CancelError('Inbox ID is required.');
         }
 
-        // API Documentation: https://dev.frontapp.com/reference/get-inbox
+        // https://dev.frontapp.com/reference/get-inbox
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://api2.frontapp.com/inboxes/${inbox_id}`,

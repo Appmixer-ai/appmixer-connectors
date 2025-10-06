@@ -2,27 +2,27 @@
 
 module.exports = {
     async receive(context) {
-        const { name, is_private } = context.messages.in.content;
+        const { teamId, name } = context.messages.in.content;
+
+        if (!teamId) {
+            throw new context.CancelError('Team ID is required.');
+        }
 
         if (!name) {
-            throw new context.CancelError('Inbox name is required.');
+            throw new context.CancelError('Inbox Name is required.');
         }
 
-        const requestData = { name };
+        const body = { name };
 
-        if (typeof is_private === 'boolean') {
-            requestData.is_private = is_private;
-        }
-
-        // API Documentation: https://dev.frontapp.com/reference/create-inbox
+        // https://dev.frontapp.com/reference/create-team-inbox
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api2.frontapp.com/inboxes',
+            url: `https://api2.frontapp.com/teams/${teamId}/inboxes`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
             },
-            data: requestData
+            data: body
         });
 
         return context.sendJson(data, 'out');
