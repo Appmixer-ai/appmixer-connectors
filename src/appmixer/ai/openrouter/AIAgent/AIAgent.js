@@ -403,7 +403,7 @@ module.exports = {
                         type: 'text',
                         text: prompt
                     }];
-                } else if (mime === 'audio/wav' || mime === 'audio/mp3' || mime === 'audio/x-wav') {
+                } else if (mime === 'audio/wav' || mime === 'audio/mp3' || mime === 'audio/mpeg' || mime === 'audio/x-wav') {
                     const fileBuffer = await context.loadFile(fileId);
                     const fileContentBase64 = fileBuffer.toString('base64');
                     userContent = [{
