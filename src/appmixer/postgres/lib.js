@@ -1,10 +1,13 @@
-const { Pool } = require('pg');
+const { Pool, Client } = require('pg');
 const QueryStream = require('pg-query-stream');
 const { stringify } = require('csv-stringify');
 const crypto = require('crypto');
 
 // ConnectionHash: { components: Set, pool: Pool }
 const POOLS = {};
+
+// Create a dummy client for escaping (no connection required for these methods)
+const dummyClient = new Client();
 
 module.exports = {
 
@@ -54,6 +57,25 @@ module.exports = {
             await record.pool.end();
             delete POOLS[context.connectionHash];
         }
+    },
+
+    /**
+     * Escapes a PostgreSQL identifier (table name, column name, schema name, etc.)
+     * to prevent SQL injection.
+     * @param {string} identifier - The identifier to escape
+     * @returns {string} The escaped identifier wrapped in double quotes
+     */
+    escapeIdentifier: (identifier) => {
+        return dummyClient.escapeIdentifier(identifier);
+    },
+
+    /**
+     * Escapes a literal value for use in SQL queries to prevent SQL injection.
+     * @param {string} literal - The literal value to escape
+     * @returns {string} The escaped literal wrapped in single quotes
+     */
+    escapeLiteral: (literal) => {
+        return dummyClient.escapeLiteral(literal);
     }
 };
 

@@ -6,6 +6,7 @@ const { PassThrough } = require('stream');
 const { createMockContext } = require('../utils');
 
 const libPath = path.join(__dirname, '../../src/appmixer/postgres/lib.js');
+const actualPg = require(path.join(__dirname, '../../src/appmixer/postgres/node_modules/pg'));
 const FakeQueryStream = class {
     constructor(text) {
         this.text = text;
@@ -32,7 +33,7 @@ describe('postgres/lib disconnect behaviour', () => {
         originalModuleRequire = Module.prototype.require;
         Module.prototype.require = function(request, ...args) {
             if (request === 'pg') {
-                return { Pool: PoolConstructorStub };
+                return { Pool: PoolConstructorStub, Client: actualPg.Client };
             }
             if (request === 'pg-query-stream') {
                 return FakeQueryStream;

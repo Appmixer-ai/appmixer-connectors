@@ -14,12 +14,14 @@ module.exports = {
             schema = 'public';
         }
 
-        const query = `SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = '${schema}' and table_name = '${table}'`;
-        await context.log({ step: 'query', query });
+        // Use parameterized query to prevent SQL injection
+        const query = 'SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = $1 and table_name = $2';
+        const values = [schema, table];
+        await context.log({ step: 'query', query, values });
 
         let res;
         try {
-            res = await lib.query(context, query);
+            res = await lib.query(context, query, values);
         } finally {
             await lib.disconnect(context);
         }
