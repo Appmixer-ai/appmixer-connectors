@@ -706,7 +706,7 @@ module.exports = {
 
         const key = `thread_summary_${threadId}`;
         const messagesString = storeId
-            ? (await context.store.get(storeId, key)).value
+            ? (await context.store.get(storeId, key))?.value
             : await context.stateGet(key);
         const messages = messagesString ? JSON.parse(messagesString) : [];
         return messages;
