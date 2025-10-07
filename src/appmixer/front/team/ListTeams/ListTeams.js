@@ -2,30 +2,66 @@
 
 const lib = require('../../lib');
 
-const schema = {
-    'id': { 'type': 'string', 'title': 'Id' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'description': { 'type': 'string', 'title': 'Description' },
-    'inbox_count': { 'type': 'number', 'title': 'Inbox Count' },
-    'teammate_count': { 'type': 'number', 'title': 'Teammate Count' }
-};
-
 module.exports = {
     async receive(context) {
         const { outputType } = context.messages.in.content;
+        const { generateOutputPortOptions, isSource } = context.properties;
+        const { auth } = context;
 
-        if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Teams', value: 'teams' });
+        if (generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Teams' });
         }
 
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api2.frontapp.com/teams',
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            }
-        });
+        const cacheKey = 'front_teams_' + auth.accessToken.slice(5, -5);
+        let lock;
+        try {
+            lock = await context.lock(auth.accessToken.slice(5, -5));
 
-        return lib.sendArrayOutput({ context, records: data._results, outputType });
+            if (isSource) {
+                const teamsCached = await context.staticCache.get(cacheKey);
+                if (teamsCached) {
+                    return context.sendJson({ result: teamsCached }, 'out');
+                }
+            }
+
+            // https://dev.frontapp.com/reference/list-teams
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: 'https://api2.frontapp.com/teams',
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+
+            const records = data._results;
+
+            if (isSource) {
+                await context.staticCache.set(
+                    cacheKey,
+                    records.map(team => ({ id: team.id, name: team.name })),
+                    context.config.listTeamsCacheTTL || (20 * 1000)
+                );
+
+                return context.sendJson({ result: records }, 'out');
+            }
+
+            await lib.sendArrayOutput({ context, records, outputType });
+        } finally {
+            lock?.unlock();
+        }
+    },
+
+    toSelectArray({ result }) {
+
+        return result.map(team => {
+            return { label: team.name, value: team.id };
+        });
     }
+};
+
+
+const schema = {
+    'id': { 'type': 'string', 'title': 'Team ID' },
+    'name': { 'type': 'string', 'title': 'Name' },
+    '_links': { 'type': 'string', 'title': 'Links' }
 };

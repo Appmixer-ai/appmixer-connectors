@@ -6,6 +6,7 @@ module.exports = {
             throw new context.CancelError('Channel ID is required.');
         }
 
+        // https://dev.frontapp.com/reference/get-channel
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api2.frontapp.com/channels/${channelId}`,

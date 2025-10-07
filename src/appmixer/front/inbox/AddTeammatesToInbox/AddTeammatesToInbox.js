@@ -2,24 +2,24 @@
 
 module.exports = {
     async receive(context) {
-        const { inbox_id, teammate_ids } = context.messages.in.content;
+        const { inboxId, teammateIds } = context.messages.in.content;
 
-        if (!inbox_id) {
+        if (!inboxId) {
             throw new context.CancelError('Inbox ID is required.');
         }
 
-        if (!teammate_ids || (Array.isArray(teammate_ids) ? teammate_ids.length === 0 : !teammate_ids.trim())) {
+        if (!teammateIds || (Array.isArray(teammateIds) ? teammateIds.length === 0 : !teammateIds.trim())) {
             throw new context.CancelError('Teammate IDs are required.');
         }
 
         const requestData = {
-            teammate_ids: Array.isArray(teammate_ids) ? teammate_ids : teammate_ids.split(',').map(id => id.trim())
+            teammate_ids: Array.isArray(teammateIds) ? teammateIds : teammateIds.split(',').map(id => id.trim())
         };
 
-        // API Documentation: https://dev.frontapp.com/reference/add-inbox-access
+        // https://dev.frontapp.com/reference/add-inbox-access
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api2.frontapp.com/inboxes/${inbox_id}/teammates`,
+            url: `https://api2.frontapp.com/inboxes/${inboxId}/teammates`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
@@ -27,10 +27,8 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson({
-            success: true,
-            teammates: requestData.teammate_ids,
-            ...data
-        }, 'out');
+        context.log({ steap: 'addInboxAccess response', data });
+
+        return context.sendJson(data, 'out');
     }
 };

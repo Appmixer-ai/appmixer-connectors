@@ -31,6 +31,7 @@ module.exports = {
 const schema = {
     'id': { 'type': 'string', 'title': 'Inbox ID' },
     'name': { 'type': 'string', 'title': 'Name' },
+    'type': { 'type': 'string', 'title': 'Type' },
     'is_private': { 'type': 'boolean', 'title': 'Is Private' },
     'is_public': { 'type': 'boolean', 'title': 'Is Public' },
     'custom_fields': {
