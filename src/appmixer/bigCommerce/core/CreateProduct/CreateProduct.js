@@ -5,14 +5,6 @@ module.exports = {
     async receive(context) {
 
         const { name, type, price, weight, sku, description, is_visible } = context.messages.in.content;
-        if (!weight) {
-            throw new context.CancelError('Weight is required');
-        }
-
-        if (!price) {
-            throw new context.CancelError('Price is required');
-        }
-
 
         // Required fields validation
         if (!name) {
