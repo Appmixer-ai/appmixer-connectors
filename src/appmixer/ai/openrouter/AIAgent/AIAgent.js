@@ -254,7 +254,7 @@ module.exports = {
             await this.publishChatProgressEvent(context, 'tool-call', `Calling tool ${toolName}.`);
             if (!uuid.validate(componentId)) {
                 // Short version of the UUID.
-                // Get back the original compoennt UUID back from the short version.
+                // Get back the original component UUID back from the short version.
                 componentId = shortuuid().toUUID(componentId);
             }
             let args;
@@ -381,8 +381,6 @@ module.exports = {
                 if (mime === 'image/png' || mime === 'image/jpeg' || mime === 'image/jpg' || mime === 'image/gif' || mime === 'image/webp') {
                     const fileBuffer = await context.loadFile(fileId);
                     const fileContentBase64 = fileBuffer.toString('base64');
-                    // For images, we send the data URI so that the model can easily display it if needed.
-                    // Note that the size of the data URI is about 33% larger than the original binary content.
                     userContent = [{
                         type: 'image_url',
                         image_url: {
@@ -395,8 +393,6 @@ module.exports = {
                 } else if (mime === 'application/pdf') {
                     const fileBuffer = await context.loadFile(fileId);
                     const fileContentBase64 = fileBuffer.toString('base64');
-                    // For images, we send the data URI so that the model can easily display it if needed.
-                    // Note that the size of the data URI is about 33% larger than the original binary content.
                     userContent = [{
                         type: 'file',
                         file: {
@@ -423,9 +419,15 @@ module.exports = {
                 } else {
                     // Other files are simply sent as a raw text. This is useful if file is e.g. a text file or CSV, JSON, .js, .py, etc.
                     const fileBuffer = await context.loadFile(fileId);
+                    let textContent;
+                    try {
+                        textContent = fileBuffer.toString('utf8');
+                    } catch (err) {
+                        throw new context.CancelError(`File type ${mime} cannot be decoded as text: ${err.message}`);
+                    }
                     userContent = [{
                         type: 'text',
-                        text: `File content: ${fileBuffer.toString('utf8')}`
+                        text: `File content: ${textContent}`
                     }, {
                         type: 'text',
                         text: prompt
