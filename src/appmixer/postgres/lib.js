@@ -59,6 +59,17 @@ module.exports = {
         }
     },
 
+    sanitizeOperator: (operator, context) => {
+        const trimmedOperator = (operator ?? '').trim();
+        const normalizedOperator = trimmedOperator.toUpperCase();
+
+        if (!SAFE_OPERATORS.has(normalizedOperator)) {
+            throw new context.CancelError(`Unsupported operator "${operator}"`);
+        }
+
+        return normalizedOperator;
+    },
+
     /**
      * Escapes a PostgreSQL identifier (table name, column name, schema name, etc.)
      * to prevent SQL injection.
@@ -78,6 +89,17 @@ module.exports = {
         return dummyClient.escapeLiteral(literal);
     }
 };
+
+// Operator sanitizer helper for components
+const SAFE_OPERATORS = new Set([
+    '=', '!=', '<>', '<', '<=', '>', '>=',
+    'CONTAINS', 'NOT CONTAINS', 'STARTS WITH', 'NOT STARTS WITH',
+    'ENDS WITH', 'NOT ENDS WITH', 'IN', 'NOT IN',
+    'LIKE', 'NOT LIKE', 'IS NULL', 'IS NOT NULL'
+]);
+
+
+module.exports.SAFE_OPERATORS = SAFE_OPERATORS;
 
 function ensurePool(context) {
 

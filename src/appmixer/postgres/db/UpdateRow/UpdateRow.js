@@ -68,7 +68,10 @@ module.exports = {
                 } else if (operator === 'IS NOT NULL') {
                     whereCondition += `${escapedColumn} IS NOT NULL`;
                 } else {
-                    whereCondition += `${escapedColumn} ${operator} $${paramIndex}`;
+                    // LIKE, NOT LIKE, =, !=, <>, <, <=, >, >=
+                    // and any operators passed as variables from the UI
+                    const sanitizedOperator = lib.sanitizeOperator(operator, context);
+                    whereCondition += `${escapedColumn} ${sanitizedOperator} $${paramIndex}`;
                     whereValues.push(value);
                     paramIndex++;
                 }
