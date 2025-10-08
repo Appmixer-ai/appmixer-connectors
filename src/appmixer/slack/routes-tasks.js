@@ -135,8 +135,9 @@ module.exports = (context) => {
                 const parsed = querystring.parse(rawBody);
                 const payload = JSON.parse(parsed.payload);
 
-                // Validate Slack signature
-                if (!slackLib.isValidPayload(context, req)) {
+                // Validate Slack signature if this is engine pod and not using AuthHub
+                const isFromAuthHub = !!req.headers?.['x-appmixer-forwarded-from-authhub'];
+                if (!isFromAuthHub && !slackLib.isValidPayload(context, req)) {
                     return h.response(undefined).code(401);
                 }
 
@@ -173,7 +174,8 @@ module.exports = (context) => {
                             url: tenantInteractionsURL,
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'x-appmixer-forwarded-from-authhub': true
                                 // Not sending Slack signature headers, we already validated them
                             },
                             data: req.payload

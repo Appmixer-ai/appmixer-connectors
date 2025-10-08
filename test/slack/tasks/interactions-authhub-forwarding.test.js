@@ -262,4 +262,23 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
 
         assert(codeStub.calledWith(401), 'Should return 401 for invalid signature at AuthHub boundary');
     });
+
+    it('skips Slack signature validation when request from AuthHub (tenant)', async () => {
+        const tenantHandler = tenantContext.getRouteHandler('POST', '/interactions');
+        // Override validation to fail - if called, the test should fail
+        slackLib.isValidPayload.restore();
+        sinon.stub(slackLib, 'isValidPayload').callsFake(() => {
+            throw new Error('Signature validation should not be called for AuthHub-forwarded request');
+        });
+
+        const payload = { type: 'block_actions', user: { id: 'U' }, actions: [{ action_id: 'task_approve', value: 'TS-1|https://tenant.example.com' }] };
+        const body = 'payload=' + encodeURIComponent(JSON.stringify(payload));
+
+        const codeStub = sinon.stub();
+        const h = { response: sinon.stub().returns({ code: codeStub }) };
+        await tenantHandler({ payload: Buffer.from(body), headers: { 'x-appmixer-forwarded-from-authhub': true } }, h);
+
+        // If we reach here, the test is successful
+        assert.ok(true, 'Request from AuthHub should skip signature validation');
+    });
 });
