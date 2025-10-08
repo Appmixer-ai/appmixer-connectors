@@ -227,7 +227,7 @@ module.exports = {
                     type: 'function',
                     function: {
                         name,
-                        description: tool.description
+                        description: tool.description || ''
                     }
                 };
                 if (tool.inputSchema) {
@@ -262,7 +262,7 @@ module.exports = {
                 }
                 toolParameters.properties[parameter.name] = {
                     type: parameter.type,
-                    description: parameter.description
+                    description: parameter.description || ''
                 };
             });
             let toolName = (component.label || component.type.split('.').pop());
@@ -271,7 +271,7 @@ module.exports = {
                 type: 'function',
                 function: {
                     name: componentId + '_' + toolName,
-                    description: component.config.properties.description
+                    description: component.config.properties.description || ''
                 }
             };
             if (parameters.length) {

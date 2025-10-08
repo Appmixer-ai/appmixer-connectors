@@ -108,7 +108,7 @@ module.exports = {
                 messages,
                 tools
             };
-            await context.log({ step: 'agent-completion', completion });
+            await context.log({ step: 'agent-completion', completion, step: i + 1 });
             await lib.publishChatProgressEvent(context, 'inference', `Crunching data (${i + 1})...`);
             const choice = context.properties.stream
                 ? await this.createStreamCompletion(context, completion)
