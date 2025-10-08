@@ -6,7 +6,7 @@ const { PassThrough } = require('stream');
 const { createMockContext } = require('../utils');
 
 const libPath = path.join(__dirname, '../../src/appmixer/postgres/lib.js');
-const actualPg = require(path.join(__dirname, '../../src/appmixer/postgres/node_modules/pg'));
+const actualPg = require('pg');
 const FakeQueryStream = class {
     constructor(text) {
         this.text = text;
