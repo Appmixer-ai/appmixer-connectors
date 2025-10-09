@@ -40,7 +40,7 @@ The Task Approval feature lets a flow request an approval from a designated Slac
   - `slack-due-tasks`: marks overdue (`decisionBy < now`) pending tasks as `due`, deletes tasks older than 60 days, triggers webhook notifications.
   - `slack-resubmit-failed-webhooks`: retries tasks in `error` by re-triggering webhooks.
 - `lib.js / isValidPayload` – Validates Slack signatures (time + HMAC) for security.
-- `tasks/utils.js` – Helper functions such as `triggerWebhook` used after status transitions.
+- `taskUtils.js` – Helper functions such as `triggerWebhook` used after status transitions.
 
 ### AuthHub vs Tenant Pods
 The code supports a multi-tenant AuthHub deployment:

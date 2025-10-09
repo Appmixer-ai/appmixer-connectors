@@ -3,8 +3,8 @@
 module.exports = (context) => {
 
     const querystring = require('querystring');
-    const utils = require('./tasks/utils.js')(context);
-    const Task = require('./tasks/SlackTaskModel.js')(context);
+    const utils = require('./taskUtils.js')(context);
+    const Task = require('./SlackTaskModel.js')(context);
     const slackLib = require('./lib.js');
 
     context.http.router.register({

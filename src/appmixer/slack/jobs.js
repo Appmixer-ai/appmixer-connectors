@@ -4,8 +4,8 @@
 module.exports = async context => {
 
     const config = require('./config')(context);
-    const Task = require('./tasks/SlackTaskModel')(context);
-    const utils = require('./tasks/utils')(context);
+    const Task = require('./SlackTaskModel')(context);
+    const utils = require('./taskUtils')(context);
     context.log('info', '[slack-job-due-tasks] CONFIG', { config });
 
     await context.scheduleJob('slack-due-tasks', config.dueTasksJob.schedule, async () => {
