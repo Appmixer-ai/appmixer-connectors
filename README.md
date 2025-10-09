@@ -28,6 +28,9 @@ In the `test` directory, you can find the test files for the connectors. They ar
 
 ### Running the Tests
 ```sh
+# install dependencies once
+scripts/npm-install.sh
+# run the tests
 npm run test-unit
 ```
 

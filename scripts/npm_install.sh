@@ -20,12 +20,12 @@ install_deps() {
     local package_file=$1
     local dir=$(dirname "$package_file")
     echo "Installing dependencies in $dir..."
-    (cd "$dir" && npm install --silent) && echo "✓ Completed: $dir" || echo "✗ Failed: $dir"
+    (cd "$dir" && npm install --no-package-lock --silent --no-audit --no-fund) && echo "✓ Completed: $dir" || echo "✗ Failed: $dir"
 }
 
 export -f install_deps
 
-# Run npm install in parallel with max 5 processes at a time
-echo "$PACKAGE_FILES" | xargs -P 5 -I {} bash -c 'install_deps "$@"' _ {}
+# Run npm install in parallel with max 10 processes at a time
+echo "$PACKAGE_FILES" | xargs -P 10 -I {} bash -c 'install_deps "$@"' _ {}
 
 echo "All dependencies installed successfully"
