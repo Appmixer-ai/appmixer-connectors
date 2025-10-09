@@ -31,11 +31,10 @@ describe('Slack Tasks routes', () => {
         // In-memory stores
         const memory = { tasks: {}, webhooks: {} };
 
-        // Stub Slack models via require cache
-        const taskModelPath = require.resolve('../../../src/appmixer/slack/tasks/SlackTaskModel.js');
-        require.cache[taskModelPath] = {
-            id: taskModelPath,
-            filename: taskModelPath,
+        // Stub Slack models via require cache (both legacy and root paths)
+        const createTaskModuleStub = modulePath => ({
+            id: modulePath,
+            filename: modulePath,
             loaded: true,
             exports: () => {
                 class Task {
@@ -50,10 +49,11 @@ describe('Slack Tasks routes', () => {
                             ...entity,
                             toJson: () => entity,
                             getStatus: () => entity.status,
-                            setStatus: (s) => { entity.status = s; },
-                            setDecisionMade: (d) => { entity.decisionMade = d; },
-                            setActor: (a) => { entity.actor = a; },
+                            setStatus: s => { entity.status = s; },
+                            setDecisionMade: d => { entity.decisionMade = d; },
+                            setActor: a => { entity.actor = a; },
                             getId: () => id,
+                            getWebhookUrl: () => entity.webhookUrl,
                             addIsApprover: () => ({ toJson: () => entity }),
                             save: async () => entity
                         };
@@ -63,23 +63,27 @@ describe('Slack Tasks routes', () => {
                 Task.createSettersAndGetters = () => {};
                 return Task;
             }
-        };
+        });
+
+        const rootTaskModelPath = require.resolve('../../../src/appmixer/slack/SlackTaskModel.js');
+        require.cache[rootTaskModelPath] = createTaskModuleStub(rootTaskModelPath);
 
         // Stub slack lib sendMessage
         slackLib = require('../../../src/appmixer/slack/lib.js');
         sinon.stub(slackLib, 'sendMessage').resolves({ ok: true });
 
         // Stub slack/tasks/utils.js before requiring routes to avoid external deps
-        const utilsPath = require.resolve('../../../src/appmixer/slack/tasks/utils.js');
-        require.cache[utilsPath] = {
-            id: utilsPath,
-            filename: utilsPath,
+        const createUtilsModuleStub = modulePath => ({
+            id: modulePath,
+            filename: modulePath,
             loaded: true,
             exports: () => ({
                 triggerWebhook: async () => {},
                 getTask: async () => ({})
             })
-        };
+        });
+        const rootUtilsPath = require.resolve('../../../src/appmixer/slack/taskUtils.js');
+        require.cache[rootUtilsPath] = createUtilsModuleStub(rootUtilsPath);
 
         // Load and register routes
         routes = require('../../../src/appmixer/slack/routes-tasks.js');
@@ -99,6 +103,10 @@ describe('Slack Tasks routes', () => {
 
     afterEach(() => {
         sinon.restore();
+        ['../../../src/appmixer/slack/SlackTaskModel.js', '../../../src/appmixer/slack/taskUtils.js']
+            .forEach(modulePath => {
+                try { delete require.cache[require.resolve(modulePath)]; } catch (_) {}
+            });
     });
 
     describe('POST /interactions', () => {

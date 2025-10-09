@@ -38,10 +38,9 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
 
         // In-memory Task model stub (shared for both contexts) - keep minimal and reliable
         const memory = { tasks: {} };
-        const taskModelPath = require.resolve('../../../src/appmixer/slack/tasks/SlackTaskModel.js');
-        require.cache[taskModelPath] = {
-            id: taskModelPath,
-            filename: taskModelPath,
+        const createTaskModuleStub = modulePath => ({
+            id: modulePath,
+            filename: modulePath,
             loaded: true,
             exports: () => {
                 class Task {
@@ -57,10 +56,11 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
                             ...entity,
                             toJson: () => entity,
                             getStatus: () => entity.status,
-                            setStatus: (s) => { entity.status = s; },
-                            setDecisionMade: (d) => { entity.decisionMade = d; },
-                            setActor: (a) => { entity.actor = a; },
+                            setStatus: s => { entity.status = s; },
+                            setDecisionMade: d => { entity.decisionMade = d; },
+                            setActor: a => { entity.actor = a; },
                             getId: () => id,
+                            getWebhookUrl: () => entity.webhookUrl,
                             approver: entity.approver,
                             addIsApprover: () => ({ toJson: () => entity }),
                             save: async () => entity
@@ -71,17 +71,21 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
                 Task.createSettersAndGetters = () => {};
                 return Task;
             }
-        };
+        });
+
+        const rootTaskModelPath = require.resolve('../../../src/appmixer/slack/SlackTaskModel.js');
+        require.cache[rootTaskModelPath] = createTaskModuleStub(rootTaskModelPath);
 
         // Stub slack/tasks/utils.js with a spy-able triggerWebhook using minimal export
-        const utilsPath = require.resolve('../../../src/appmixer/slack/tasks/utils.js');
-        utilsTriggerWebhookStub = sinon.stub().resolves();
-        require.cache[utilsPath] = {
-            id: utilsPath,
-            filename: utilsPath,
+        const createUtilsModuleStub = modulePath => ({
+            id: modulePath,
+            filename: modulePath,
             loaded: true,
             exports: () => ({ triggerWebhook: utilsTriggerWebhookStub, getTask: async () => ({}) })
-        };
+        });
+        utilsTriggerWebhookStub = sinon.stub().resolves();
+        const rootUtilsPath = require.resolve('../../../src/appmixer/slack/taskUtils.js');
+        require.cache[rootUtilsPath] = createUtilsModuleStub(rootUtilsPath);
 
         // Prepare routes module and common slack lib; ensure signature validation passes by default
         routes = require('../../../src/appmixer/slack/routes-tasks.js');
@@ -112,13 +116,15 @@ describe('Slack Tasks interactions - AuthHub forwarding to tenant', () => {
         delete process.env.AUTH_HUB_URL;
         delete process.env.AUTH_HUB_TOKEN;
         // Clean module cache of lib stubs if needed
-        try { delete require.cache[require.resolve('../../../src/appmixer/slack/tasks/SlackTaskModel.js')]; } catch (_) {}
-        try { delete require.cache[require.resolve('../../../src/appmixer/slack/tasks/utils.js')]; } catch (_) {}
+        ['../../../src/appmixer/slack/SlackTaskModel.js', '../../../src/appmixer/slack/taskUtils.js']
+            .forEach(modulePath => {
+                try { delete require.cache[require.resolve(modulePath)]; } catch (_) {}
+            });
     });
 
     it('forwards Approve to tenant and tenant triggers webhook (end-to-end)', async () => {
         // Prepare a pending task directly in the in-memory model
-        const Task = require('../../../src/appmixer/slack/tasks/SlackTaskModel.js')(tenantContext);
+        const Task = require('../../../src/appmixer/slack/SlackTaskModel.js')(tenantContext);
         const created = await new Task().populate({
             taskId: 'TS-42',
             title: 'Test Task',
