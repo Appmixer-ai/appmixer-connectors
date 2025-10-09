@@ -65,7 +65,7 @@ describe('Slack Tasks routes', () => {
             }
         });
 
-        const rootTaskModelPath = require.resolve('../../../src/appmixer/slack/SlackTaskModel.js');
+        const rootTaskModelPath = require.resolve('../../../SlackTaskModel.js');
         require.cache[rootTaskModelPath] = createTaskModuleStub(rootTaskModelPath);
 
         // Stub slack lib sendMessage
@@ -82,7 +82,7 @@ describe('Slack Tasks routes', () => {
                 getTask: async () => ({})
             })
         });
-        const rootUtilsPath = require.resolve('../../../src/appmixer/slack/taskUtils.js');
+        const rootUtilsPath = require.resolve('../../../taskUtils.js');
         require.cache[rootUtilsPath] = createUtilsModuleStub(rootUtilsPath);
 
         // Load and register routes
@@ -103,7 +103,7 @@ describe('Slack Tasks routes', () => {
 
     afterEach(() => {
         sinon.restore();
-        ['../../../src/appmixer/slack/SlackTaskModel.js', '../../../src/appmixer/slack/taskUtils.js']
+        ['../../../SlackTaskModel.js', '../../../taskUtils.js']
             .forEach(modulePath => {
                 try { delete require.cache[require.resolve(modulePath)]; } catch (_) {}
             });

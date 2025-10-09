@@ -43,11 +43,11 @@ describe('slack-due-tasks', () => {
             })
         });
         triggerWebhookStub = sinon.stub().resolves(true);
-        rootTaskUtilsPath = path.resolve(__dirname, '../../../src/appmixer/slack/taskUtils.js');
+        rootTaskUtilsPath = path.resolve(__dirname, '../../../taskUtils.js');
         require.cache[rootTaskUtilsPath] = createUtilsStub(rootTaskUtilsPath);
 
         // Stub SlackTaskModel
-        taskModelPath = path.resolve(__dirname, '../../../src/appmixer/slack/SlackTaskModel.js');
+        taskModelPath = path.resolve(__dirname, '../../../SlackTaskModel.js');
         let taskRecords = [];
         let savedTasks = [];
         class FakeTask {
