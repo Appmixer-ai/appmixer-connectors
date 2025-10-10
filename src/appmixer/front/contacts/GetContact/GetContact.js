@@ -18,8 +18,6 @@ module.exports = {
             }
         });
 
-        context.log({ step: 'getContact response', data });
-
         return context.sendJson(data, 'out');
 
     }

@@ -6,21 +6,56 @@ module.exports = {
     async receive(context) {
 
         const { outputType } = context.messages.in.content;
+        const { generateOutputPortOptions, isSource } = context.properties;
+        const { auth } = context;
 
-        if (context.properties.generateOutputPortOptions) {
+        if (generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Teammates' });
         }
 
-        // https://dev.frontapp.com/reference/list-teammates
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api2.frontapp.com/teammates',
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            }
-        });
+        const cacheKey = 'front_teammates_' + auth.accessToken.slice(5, -5);
+        let lock;
+        try {
+            lock = await context.lock(auth.accessToken.slice(5, -5));
 
-        return lib.sendArrayOutput({ context, records: data._results, outputType });
+            if (isSource) {
+                const teammatesCached = await context.staticCache.get(cacheKey);
+                if (teammatesCached) {
+                    return context.sendJson({ result: teammatesCached }, 'out');
+                }
+            }
+
+            // https://dev.frontapp.com/reference/list-teammates
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: 'https://api2.frontapp.com/teammates',
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+            const records = data['_results'];
+
+            if (isSource) {
+                await context.staticCache.set(
+                    cacheKey,
+                    records.map(teammate => ({ id: teammate.id, email: teammate.email })),
+                    context.config.listTeamsCacheTTL || (20 * 1000)
+                );
+
+                return context.sendJson({ result: records }, 'out');
+            }
+
+            await lib.sendArrayOutput({ context, records, outputType });
+        } finally {
+            lock?.unlock();
+        }
+    },
+
+    toSelectArray({ result }) {
+
+        return result.map(teammates => {
+            return { label: teammates.email, value: teammates.id };
+        });
     }
 };
 

@@ -42,8 +42,6 @@ module.exports = {
             data: requestData
         });
 
-        context.log({ step: 'response', data });
-
         return context.sendJson(data, 'out');
     }
 };

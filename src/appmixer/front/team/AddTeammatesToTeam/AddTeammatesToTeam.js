@@ -16,8 +16,8 @@ module.exports = {
             teammate_ids: Array.isArray(teammateIds) ? teammateIds : teammateIds.split(',').map(id => id.trim())
         };
 
-        // API Documentation: https://dev.frontapp.com/reference/add-teammates-to-team
-        const { data } = await context.httpRequest({
+        // https://dev.frontapp.com/reference/add-teammates-to-team
+        await context.httpRequest({
             method: 'POST',
             url: `https://api2.frontapp.com/teams/${teamId}/teammates`,
             headers: {
@@ -27,11 +27,6 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson({
-            success: true,
-            teammates: requestData.teammate_ids,
-            team_id: teamId,
-            ...data
-        }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

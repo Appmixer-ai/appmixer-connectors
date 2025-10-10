@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { contactId, body, author_id } = context.messages.in.content;
+        const { contactId, body, authorId } = context.messages.in.content;
 
         if (!contactId) {
             throw new context.CancelError('Contact ID is required.');
@@ -12,11 +12,11 @@ module.exports = {
             throw new context.CancelError('Note body is required.');
         }
 
-        const requestData = { body };
-
-        if (author_id) {
-            requestData.author_id = author_id;
+        if (!authorId) {
+            throw new context.CancelError('Author ID is required.');
         }
+
+        const requestData = { body, author_id: authorId };
 
         const { data } = await context.httpRequest({
             method: 'POST',
@@ -27,6 +27,8 @@ module.exports = {
             },
             data: requestData
         });
+
+        context.log({ step: 'CreateContactNote response', data });
 
         return context.sendJson(data, 'out');
     }

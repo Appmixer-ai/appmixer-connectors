@@ -33,7 +33,7 @@ module.exports = {
                 }
             });
 
-            const records = data._results;
+            const records = data['_results'];
 
             if (isSource) {
                 await context.staticCache.set(
@@ -63,5 +63,24 @@ module.exports = {
 const schema = {
     'id': { 'type': 'string', 'title': 'Team ID' },
     'name': { 'type': 'string', 'title': 'Name' },
-    '_links': { 'type': 'string', 'title': 'Links' }
+    'is_private': { 'type': 'boolean', 'title': 'Is Private' },
+    'is_public': { 'type': 'boolean', 'title': 'Is Public' },
+    'custom_fields': { 'type': 'object', 'title': 'Custom Fields' },
+    '_links': {
+        'type': 'object',
+        'title': 'Links',
+        'properties': {
+            'self': { 'type': 'string', 'title': 'Self Link' },
+            'related': {
+                'type': 'object',
+                'title': 'Related Links',
+                'properties': {
+                    'channels': { 'type': 'string', 'title': 'Channels Link' },
+                    'conversations': { 'type': 'string', 'title': 'Conversations Link' },
+                    'teammates': { 'type': 'string', 'title': 'Teammates Link' },
+                    'owner': { 'type': 'string', 'title': 'Owner Link' }
+                }
+            }
+        }
+    }
 };

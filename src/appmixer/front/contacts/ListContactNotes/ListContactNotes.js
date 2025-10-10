@@ -2,14 +2,6 @@
 
 const lib = require('../../lib');
 
-const schema = {
-    'id': { 'type': 'string', 'title': 'Id' },
-    'body': { 'type': 'string', 'title': 'Body' },
-    'created_at': { 'type': 'number', 'title': 'Created At' },
-    'updated_at': { 'type': 'number', 'title': 'Updated At' },
-    'author': { 'type': 'object', 'title': 'Author' }
-};
-
 module.exports = {
     async receive(context) {
         const { contactId, outputType } = context.messages.in.content;
@@ -30,12 +22,61 @@ module.exports = {
             }
         });
 
-        const records = data._results || [];
+        const records = data['_results'] || [];
 
-        if (records.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
+        context.log({ step: 'ListContactNotes response', records });
 
         return lib.sendArrayOutput({ context, records, outputType });
     }
+};
+
+const schema = {
+    '_links': {
+        'type': 'object',
+        'properties': {
+            'related': {
+                'type': 'object',
+                'properties': {
+                    'author': { 'type': 'string', 'title': 'Links.Related.Author' },
+                    'owner': { 'type': ['string', 'null'], 'title': 'Links.Related.Owner' }
+                },
+                'title': 'Links.Related'
+            }
+        },
+        'title': 'Links'
+    },
+    'author': {
+        'type': 'object',
+        'properties': {
+            '_links': {
+                'type': 'object',
+                'properties': {
+                    'self': { 'type': 'string', 'title': 'Author.Links.Self' },
+                    'related': {
+                        'type': 'object',
+                        'properties': {
+                            'inboxes': { 'type': 'string', 'title': 'Author.Links.Related.Inboxes' },
+                            'conversations': { 'type': 'string', 'title': 'Author.Links.Related.Conversations' }
+                        },
+                        'title': 'Author.Links.Related'
+                    }
+                },
+                'title': 'Author.Links'
+            },
+            'id': { 'type': 'string', 'title': 'Author.Id' },
+            'email': { 'type': 'string', 'title': 'Author.Email' },
+            'username': { 'type': 'string', 'title': 'Author.Username' },
+            'first_name': { 'type': 'string', 'title': 'Author.First Name' },
+            'last_name': { 'type': 'string', 'title': 'Author.Last Name' },
+            'is_admin': { 'type': 'boolean', 'title': 'Author.Is Admin' },
+            'is_available': { 'type': 'boolean', 'title': 'Author.Is Available' },
+            'is_blocked': { 'type': 'boolean', 'title': 'Author.Is Blocked' },
+            'type': { 'type': 'string', 'title': 'Author.Type' },
+            'custom_fields': { 'type': 'object', 'title': 'Author.Custom Fields' }
+        },
+        'title': 'Author'
+    },
+    'body': { 'type': 'string', 'title': 'Body' },
+    'is_private': { 'type': 'boolean', 'title': 'Is Private' },
+    'created_at': { 'type': 'number', 'title': 'Created At' }
 };

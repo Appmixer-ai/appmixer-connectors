@@ -16,19 +16,31 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "team_id": {
+                    "teamId": {
                         "type": "string"
                     }
                 },
-                "required": ["team_id"]
+                "required": ["teamId"]
             },
             "inspector": {
                 "inputs": {
-                    "team_id": {
+                    "teamId": {
                         "type": "text",
                         "label": "Team ID",
-                        "index": 1,
-                        "tooltip": "The ID of the team (workspace) to fetch"
+                        "index": 0,
+                        "tooltip": "The ID of the team (workspace) to fetch",
+                        "source": {
+                            "url": "/component/appmixer/front/team/ListTeams?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeams#toSelectArray"
+                            }
+                        }
                     }
                 }
             }
@@ -40,11 +52,25 @@
             "options": [
                 { "label": "Team ID", "value": "id" },
                 { "label": "Name", "value": "name" },
-                { "label": "Description", "value": "description" },
-                { "label": "Inbox Count", "value": "inbox_count" },
-                { "label": "Teammate Count", "value": "teammate_count" },
-                { "label": "Created At", "value": "created_at" },
-                { "label": "Updated At", "value": "updated_at" }
+                { "label": "Is Private", "value": "is_private" },
+                { "label": "Is Public", "value": "is_public" },
+                { "label": "Custom Fields", "value": "custom_fields", "schema": { "type": "object" } },
+                { "label": "Links", "value": "_links", "schema": {
+                    "type": "object",
+                    "properties": {
+                        "self": { "type": "string", "title": "Links.Self" },
+                        "related": {
+                            "type": "object",
+                            "title": "Links.Related",
+                            "properties": {
+                                "channels": { "type": "string", "title": "Links.Related.Channels" },
+                                "conversations": { "type": "string", "title": "Links.Related.Conversations" },
+                                "teammates": { "type": "string", "title": "Links.Related.Teammates" },
+                                "owner": { "type": "string", "title": "Links.Related.Owner" }
+                            }
+                        }
+                    }
+                }}
             ]
         }
     ],

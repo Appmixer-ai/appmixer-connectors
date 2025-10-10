@@ -16,7 +16,7 @@ module.exports = {
             teammate_ids: Array.isArray(teammateIds) ? teammateIds : teammateIds.split(',').map(id => id.trim())
         };
 
-        // API Documentation: https://dev.frontapp.com/reference/remove-teammates-from-team
+        // https://dev.frontapp.com/reference/remove-teammates-from-team
         await context.httpRequest({
             method: 'DELETE',
             url: `https://api2.frontapp.com/teams/${teamId}/teammates`,
