@@ -25,7 +25,7 @@ module.exports = {
             params
         });
 
-        return lib.sendArrayOutput({ context, records: data._results, outputType });
+        return lib.sendArrayOutput({ context, records: data['_results'], outputType });
     }
 };
 

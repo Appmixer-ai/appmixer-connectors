@@ -3,7 +3,6 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const assert = require('assert');
-const { rateLimitDelay, createTestContext } = require('../testUtils.js');
 
 describe('Front Tags Integration', function() {
 

@@ -20,7 +20,7 @@ module.exports = {
             }
         });
 
-        const rules = data._results || [];
+        const rules = data['_results'] || [];
 
         return lib.sendArrayOutput({ context, records: rules, outputType });
     }

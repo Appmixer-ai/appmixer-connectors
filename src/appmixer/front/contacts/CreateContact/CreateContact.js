@@ -1,36 +1,37 @@
 'use strict';
 
-const lib = require('../../lib');
-
 module.exports = {
     async receive(context) {
-
         const {
             name,
             description,
-            avatar_url,
-            is_spammer,
             links,
-            handles,
-            groups,
-            custom_fields
+            handles
         } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required.');
         }
 
-        const contactData = { name };
+        const requestData = { name };
 
-        if (description) contactData.description = description;
-        if (avatar_url) contactData.avatar_url = avatar_url;
-        if (typeof is_spammer === 'boolean') contactData.is_spammer = is_spammer;
-        if (links && Array.isArray(links)) contactData.links = links;
-        if (handles && Array.isArray(handles)) contactData.handles = handles;
-        if (groups && Array.isArray(groups)) contactData.group_names = groups;
-        if (custom_fields && typeof custom_fields === 'object') contactData.custom_fields = custom_fields;
+        if (description) {
+            requestData.description = description;
+        }
 
-        // https://dev.frontapp.com/reference
+        if (links) {
+            requestData.links = Array.isArray(links) ? links : links.split(',').map(link => link.trim());
+        }
+
+        if (handles) {
+            const transformedHandles = handles.ADD.map(handle => ({
+                source: handle.source,
+                handle: handle.handle
+            }));
+            requestData.handles = transformedHandles;
+        }
+
+        // https://dev.frontapp.com/reference/create-contact
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api2.frontapp.com/contacts',
@@ -38,8 +39,10 @@ module.exports = {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
             },
-            data: contactData
+            data: requestData
         });
+
+        context.log({ step: 'response', data });
 
         return context.sendJson(data, 'out');
     }

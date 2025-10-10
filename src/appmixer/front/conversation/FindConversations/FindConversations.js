@@ -32,7 +32,7 @@ module.exports = {
             params: queryString
         });
 
-        const records = data._results || [];
+        const records = data['_results'] || [];
 
         if (records.length === 0) {
             return context.sendJson({}, 'notFound');

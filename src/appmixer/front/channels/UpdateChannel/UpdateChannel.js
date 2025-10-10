@@ -3,7 +3,9 @@
 module.exports = {
     async receive(context) {
 
-        const { channelId, inboxId, name, undoSendTime, allTeammatesCanReply, webhookUrl } = context.messages.in.content;
+        const {
+            channelId, inboxId, name, undoSendTime, allTeammatesCanReply, webhookUrl
+        } = context.messages.in.content;
 
         if (!channelId) {
             throw new context.CancelError('Channel ID is required.');

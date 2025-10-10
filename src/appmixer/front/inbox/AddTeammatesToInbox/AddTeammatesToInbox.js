@@ -17,7 +17,7 @@ module.exports = {
         };
 
         // https://dev.frontapp.com/reference/add-inbox-access
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api2.frontapp.com/inboxes/${inboxId}/teammates`,
             headers: {
@@ -27,8 +27,6 @@ module.exports = {
             data: requestData
         });
 
-        context.log({ steap: 'addInboxAccess response', data });
-
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

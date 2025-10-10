@@ -1,6 +1,3 @@
-const os = require('os');
-const path = require('path');
-
 /**
  * Integration test for Front Channels
  * This test runs channel components in sequence to test their interactions

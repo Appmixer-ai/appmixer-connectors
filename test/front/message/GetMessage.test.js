@@ -86,7 +86,7 @@ describe('GetMessage Component', function() {
 
     describe('API Integration', function() {
         it('should handle API errors gracefully', async function() {
-            // Mock error response  
+            // Mock error response
             const originalHttpRequest = context.httpRequest;
             context.httpRequest = async () => {
                 const error = new Error('Message not found');

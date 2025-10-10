@@ -6,7 +6,10 @@ const assert = require('assert');
 const { rateLimitDelay, createTestContext } = require('../testUtils');
 
 describe('Front Comments End-to-End Integration Tests', function() {
-    let CreateComment, ListComments, GetComment, UpdateComment;
+    let CreateComment;
+    let ListComments;
+    let GetComment;
+    let UpdateComment;
     let testConversationId;
 
     this.timeout(30000);

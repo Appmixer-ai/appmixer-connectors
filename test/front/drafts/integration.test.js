@@ -7,7 +7,11 @@ const { rateLimitDelay, createTestContext } = require('../testUtils');
 
 describe('Drafts Integration Tests', function() {
     let context;
-    let CreateDraft, GetDraft, ListDrafts, UpdateDraft, DeleteDraft;
+    let CreateDraft;
+    let GetDraft;
+    let ListDrafts;
+    let UpdateDraft;
+    let DeleteDraft;
 
     this.timeout(60000); // Longer timeout for integration tests
 

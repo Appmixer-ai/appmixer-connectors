@@ -3,7 +3,7 @@
 module.exports = {
     async receive(context) {
         const {
-            conversation_id,
+            conversationId,
             channelId,
             to,
             authorId,
@@ -16,7 +16,7 @@ module.exports = {
             archive
         } = context.messages.in.content;
 
-        if (!conversation_id) {
+        if (!conversationId) {
             throw new context.CancelError('Conversation ID is required.');
         }
 
@@ -54,7 +54,7 @@ module.exports = {
         // API Documentation: https://dev.frontapp.com/reference/create-message-reply
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api2.frontapp.com/conversations/${conversation_id}/messages`,
+            url: `https://api2.frontapp.com/conversations/${conversationId}/messages`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'

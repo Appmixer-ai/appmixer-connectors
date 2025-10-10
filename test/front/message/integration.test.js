@@ -6,7 +6,6 @@ const assert = require('assert');
 const { rateLimitDelay, createTestContext } = require('../testUtils');
 
 describe('Front Message Integration', function() {
-    let context;
 
     this.timeout(30000);
 

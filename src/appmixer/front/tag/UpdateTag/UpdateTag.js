@@ -2,7 +2,9 @@
 
 module.exports = {
     async receive(context) {
-        const { id, description, name, highlight, parentTagId, isVisibleInConversationLists } = context.messages.in.content;
+        const {
+            id, description, name, highlight, parentTagId, isVisibleInConversationLists
+        } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Tag ID is required.');

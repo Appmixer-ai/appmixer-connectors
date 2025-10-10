@@ -6,8 +6,13 @@ const assert = require('assert');
 const { rateLimitDelay, createTestContext } = require('../testUtils');
 
 describe('Contacts Integration Tests', function() {
-    let context;
-    let CreateContact, GetContact, UpdateContact, DeleteContact, SearchContacts, CreateContactNote, ListContactNotes;
+    let CreateContact;
+    let GetContact;
+    let UpdateContact;
+    let DeleteContact;
+    let SearchContacts;
+    let CreateContactNote;
+    let ListContactNotes;
     let createdContactIds = [];
 
     this.timeout(60000); // Longer timeout for integration tests

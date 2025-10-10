@@ -6,7 +6,6 @@ const assert = require('assert');
 const { rateLimitDelay, createTestContext } = require('../testUtils.js');
 
 describe('ListTags Component', function() {
-    let context;
     let ListTags;
 
     this.timeout(30000);
