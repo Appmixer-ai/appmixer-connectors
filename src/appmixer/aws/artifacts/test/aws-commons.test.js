@@ -7,8 +7,8 @@ const sinon = require('sinon');
 const AWS = require('aws-sdk');
 const fs = require('fs');
 let AWS_LOCAL;
-if (fs.existsSync(require('path').join(__dirname, '../../src/appmixer/aws/node_modules/aws-sdk'))) {
-    AWS_LOCAL = require('../../src/appmixer/aws/node_modules/aws-sdk');
+if (fs.existsSync(require('path').join(__dirname, '../../node_modules/aws-sdk'))) {
+    AWS_LOCAL = require('../../node_modules/aws-sdk');
 }
 
 // Helper to build fake context object.
@@ -88,7 +88,7 @@ describe('aws-commons registerWebhook security options', () => {
         });
         s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
 
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1', kmsMasterKeyId: 'alias/my-key', trustedAccountIds: '123456789012, 210987654321' });
 
@@ -128,7 +128,7 @@ describe('aws-commons registerWebhook security options', () => {
         });
         s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
 
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1' });
 
@@ -151,7 +151,7 @@ describe('aws-commons registerWebhook security options', () => {
         });
         s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
 
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
 
         const context = buildContext({
             bucket: 'my-bucket',

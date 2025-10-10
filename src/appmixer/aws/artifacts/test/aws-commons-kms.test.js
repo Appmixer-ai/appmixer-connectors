@@ -7,8 +7,8 @@ const path = require('path');
 const fs = require('fs');
 
 let AWS_LOCAL;
-if (fs.existsSync(path.join(__dirname, '../../src/appmixer/aws/node_modules/aws-sdk'))) {
-    AWS_LOCAL = require('../../src/appmixer/aws/node_modules/aws-sdk');
+if (fs.existsSync(path.join(__dirname, '../../node_modules/aws-sdk'))) {
+    AWS_LOCAL = require('../../node_modules/aws-sdk');
 }
 
 function buildContext(properties = {}) {
@@ -85,7 +85,7 @@ describe('aws-commons KMS validation', () => {
         snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
         snsStub.subscribe.returns({ promise: () => Promise.resolve({ SubscriptionArn: 'sub-arn' }) });
 
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
         const context = buildContext({ bucket: 'bucket-a', region: 'us-east-1' });
 
         await commons.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' });
@@ -100,7 +100,7 @@ describe('aws-commons KMS validation', () => {
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
         });
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
         await expectCancel(commons.registerWebhook(context, { topicPrefix: 'X_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'bad-format-key' }), 'kmsMasterKeyId format is invalid');
         assert.strictEqual(snsStub.createTopic.called, false, 'Should not attempt createTopic on invalid format');
@@ -112,7 +112,7 @@ describe('aws-commons KMS validation', () => {
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
         });
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
         const context = buildContext({ bucket: 'bucket-a', region: 'us-east-1' });
         await expectCancel(commons.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key not found');
         assert.strictEqual(snsStub.createTopic.called, false, 'createTopic should not be called if describeKey fails');
@@ -134,7 +134,7 @@ describe('aws-commons KMS validation', () => {
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
         });
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
         await expectCancel(commons.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key policy missing required S3 permissions');
     });
@@ -147,7 +147,7 @@ describe('aws-commons KMS validation', () => {
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
         });
-        const commons = require('../../src/appmixer/aws/aws-commons');
+        const commons = require('../../aws-commons');
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
         await expectCancel(commons.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'Unable to parse KMS key policy JSON');
     });

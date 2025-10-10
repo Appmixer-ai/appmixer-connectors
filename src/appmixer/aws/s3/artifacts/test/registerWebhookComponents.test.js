@@ -2,15 +2,15 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils');
+const testUtils = require('../../../../../../test/utils');
 
 // Load commons so we can stub its methods before loading components.
-const commons = require('../../../src/appmixer/aws/aws-commons');
+const commons = require('../../../aws-commons');
 
 // Components under test.
-const NewObject = require('../../../src/appmixer/aws/s3/NewObject/NewObject');
-const DeletedObject = require('../../../src/appmixer/aws/s3/DeletedObject/DeletedObject');
-const UpdatedObject = require('../../../src/appmixer/aws/s3/UpdatedObject/UpdatedObject');
+const NewObject = require('../../NewObject/NewObject');
+const DeletedObject = require('../../DeletedObject/DeletedObject');
+const UpdatedObject = require('../../UpdatedObject/UpdatedObject');
 
 describe('AWS S3 trigger components registerWebhook integration', () => {
 
