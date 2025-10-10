@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { Readable } = require('stream');
-const geminiLib = require('../../../src/appmixer/ai/gemini/lib');
+const geminiLib = require('../../lib');
 
 describe('ai.gemini extractBaseModelId', () => {
 
