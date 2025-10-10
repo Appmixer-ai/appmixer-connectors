@@ -1,6 +1,5 @@
 'use strict';
 const check = require('check-types');
-const { parseMD } = require('./lib');
 
 /**
  * @param {Object} context
