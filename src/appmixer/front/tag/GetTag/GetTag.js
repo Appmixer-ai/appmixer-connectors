@@ -8,7 +8,7 @@ module.exports = {
             throw new context.CancelError('Tag ID is required.');
         }
 
-        // API Documentation: https://dev.frontapp.com/reference/get-tag
+        // https://dev.frontapp.com/reference/get-tag
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://api2.frontapp.com/tags/${id}`,

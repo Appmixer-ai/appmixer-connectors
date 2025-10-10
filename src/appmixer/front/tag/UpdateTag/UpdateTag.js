@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { id, name, highlight, is_private } = context.messages.in.content;
+        const { id, description, name, highlight, parentTagId, isVisibleInConversationLists } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Tag ID is required.');
@@ -10,12 +10,14 @@ module.exports = {
 
         const requestData = {};
 
-        if (name !== undefined) requestData.name = name;
-        if (highlight !== undefined) requestData.highlight = highlight;
-        if (typeof is_private === 'boolean') requestData.is_private = is_private;
+        if (name) requestData.name = name;
+        if (description) requestData.description = description;
+        if (highlight) requestData.highlight = highlight;
+        if (parentTagId) requestData.parent_tag_id = parentTagId;
+        if (typeof isVisibleInConversationLists === 'boolean') requestData.is_visible_in_conversation_lists = isVisibleInConversationLists;
 
-        // API Documentation: https://dev.frontapp.com/reference/update-a-tag
-        const { data } = await context.httpRequest({
+        // https://dev.frontapp.com/reference/update-a-tag
+        await context.httpRequest({
             method: 'PATCH',
             url: `https://api2.frontapp.com/tags/${id}`,
             headers: {
@@ -25,6 +27,6 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { name, highlight, is_private } = context.messages.in.content;
+        const { name, description, highlight, isVisibleInConversationLists } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Tag name is required.');
@@ -10,10 +10,11 @@ module.exports = {
 
         const requestData = { name };
 
-        if (highlight !== undefined) requestData.highlight = highlight;
-        if (typeof is_private === 'boolean') requestData.is_private = is_private;
+        if (highlight) requestData.highlight = highlight;
+        if (description) requestData.description = description;
+        if (typeof isVisibleInConversationLists === 'boolean') requestData.is_visible_in_conversation_lists = isVisibleInConversationLists;
 
-        // API Documentation: https://dev.frontapp.com/reference/create-tag
+        // https://dev.frontapp.com/reference/create-tag
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api2.frontapp.com/tags',

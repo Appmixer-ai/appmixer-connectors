@@ -8,24 +8,16 @@ module.exports = {
             throw new context.CancelError('Tag ID is required.');
         }
 
-        try {
-            // API Documentation: https://dev.frontapp.com/reference/delete-tag
-            await context.httpRequest({
-                method: 'DELETE',
-                url: `https://api2.frontapp.com/tags/${tagId}`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`,
-                    'Accept': 'application/json'
-                }
-            });
-
-            return context.sendJson({}, 'out');
-
-        } catch (error) {
-            if (error.response?.status === 404) {
-                throw new context.CancelError('Tag not found!');
+        // https://dev.frontapp.com/reference/delete-tag
+        await context.httpRequest({
+            method: 'DELETE',
+            url: `https://api2.frontapp.com/tags/${tagId}`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Accept': 'application/json'
             }
-            throw error;
-        }
+        });
+
+        return context.sendJson({}, 'out');
     }
 };

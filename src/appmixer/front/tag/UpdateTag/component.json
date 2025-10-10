@@ -1,7 +1,7 @@
 {
     "name": "appmixer.front.tag.UpdateTag",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Update an existing tag in Front. You can modify the tag name, highlight color, and privacy settings.",
+    "description": "Update an existing tag in Front.",
     "version": "1.0.0",
     "auth": {
         "service": "appmixer:front"
@@ -22,10 +22,16 @@
                     "name": {
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string"
+                    },
                     "highlight": {
                         "type": "string"
                     },
-                    "is_private": {
+                    "parentTagId": {
+                        "type": "string"
+                    },
+                    "isVisibleInConversationLists": {
                         "type": "boolean"
                     }
                 },
@@ -36,7 +42,7 @@
                     "id": {
                         "type": "text",
                         "label": "Tag ID",
-                        "index": 1,
+                        "index": 0,
                         "tooltip": "The unique identifier of the tag to update"
                     },
                     "name": {
@@ -45,12 +51,19 @@
                         "index": 2,
                         "tooltip": "The updated name of the tag"
                     },
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "index": 3,
+                        "tooltip": "A brief description of the tag"
+                    },
                     "highlight": {
                         "type": "select",
                         "label": "Highlight Color",
                         "index": 3,
                         "tooltip": "The color to highlight the tag in Front",
                         "options": [
+                            { "clearItem": true, "label": "<Empty>" },
                             { "label": "Blue", "value": "blue" },
                             { "label": "Red", "value": "red" },
                             { "label": "Green", "value": "green" },
@@ -58,31 +71,26 @@
                             { "label": "Orange", "value": "orange" },
                             { "label": "Purple", "value": "purple" },
                             { "label": "Pink", "value": "pink" },
-                            { "label": "Grey", "value": "grey" }
+                            { "label": "Grey", "value": "grey" },
+                            { "label": "Light Blue", "value": "light-blue" }
                         ]
                     },
-                    "is_private": {
-                        "type": "toggle",
-                        "label": "Is Private",
+                    "parentTagId": {
+                        "type": "text",
+                        "label": "Parent Tag ID",
                         "index": 4,
-                        "tooltip": "Whether the tag is private to the user"
+                        "tooltip": "ID of the parent of this tag. Set to null to remove the parent tag."
+                    },
+                    "isVisibleInConversationLists": {
+                        "type": "toggle",
+                        "label": "Is Visible in Conversation Lists",
+                        "index": 5,
+                        "tooltip": "Whether the tag is visible in conversation lists"
                     }
                 }
             }
         }
     ],
-    "outPorts": [
-        {
-            "name": "out",
-            "options": [
-                { "label": "Tag ID", "value": "id" },
-                { "label": "Name", "value": "name" },
-                { "label": "Highlight", "value": "highlight" },
-                { "label": "Is Private", "value": "is_private" },
-                { "label": "Created At", "value": "created_at" },
-                { "label": "Updated At", "value": "updated_at" }
-            ]
-        }
-    ],
-    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDianrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79ENENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
 }
