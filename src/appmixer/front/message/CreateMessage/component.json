@@ -16,76 +16,70 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "channel_id": {
+                    "channelId": {
                         "type": "string"
                     },
                     "to": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                        "type": "string"
                     },
-                    "cc": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "authorId": {
+                        "type": "string"
                     },
-                    "bcc": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "subject": {
+                    "senderName": {
                         "type": "string"
                     },
                     "body": {
                         "type": "string"
                     },
-                    "text": {
+                    "cc": {
                         "type": "string"
                     },
-                    "author_id": {
+                    "bcc": {
                         "type": "string"
                     },
-                    "sender_name": {
+                    "subject": {
                         "type": "string"
                     },
-                    "attachments": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "tags": {
+                        "type": "string"
+                    },
+                    "archive": {
+                        "type": "boolean"
                     }
                 },
-                "required": ["channel_id", "to", "body"]
+                "required": ["channelId", "to", "body"]
             },
             "inspector": {
                 "inputs": {
-                    "channel_id": {
+                    "channelId": {
                         "type": "text",
                         "label": "Channel ID",
-                        "index": 1,
+                        "index": 0,
                         "tooltip": "The ID of the channel from which to send the message"
                     },
                     "to": {
                         "type": "text",
                         "label": "To (Recipients)",
-                        "index": 2,
+                        "index": 1,
                         "tooltip": "Comma-separated list of recipient email addresses"
                     },
-                    "cc": {
-                        "type": "text",
-                        "label": "CC",
-                        "index": 3,
-                        "tooltip": "Comma-separated list of CC email addresses"
+                    "body": {
+                        "type": "textarea",
+                        "label": "Body",
+                        "index": 2,
+                        "tooltip": "The body of the message (plain text or HTML)"
                     },
-                    "bcc": {
+                    "authorId": {
                         "type": "text",
-                        "label": "BCC",
+                        "label": "Author ID",
+                        "index": 3,
+                        "tooltip": "The teammate ID of the message author"
+                    },
+                    "senderName": {
+                        "type": "text",
+                        "label": "Sender Name",
                         "index": 4,
-                        "tooltip": "Comma-separated list of BCC email addresses"
+                        "tooltip": "Name to display as the sender"
                     },
                     "subject": {
                         "type": "text",
@@ -93,35 +87,30 @@
                         "index": 5,
                         "tooltip": "The subject line of the message"
                     },
-                    "body": {
-                        "type": "textarea",
-                        "label": "Body (HTML)",
+                    "cc": {
+                        "type": "text",
+                        "label": "CC",
                         "index": 6,
-                        "tooltip": "The HTML body of the message"
+                        "tooltip": "Comma-separated list of CC email addresses"
                     },
-                    "text": {
-                        "type": "textarea",
-                        "label": "Text Body",
+                    "bcc": {
+                        "type": "text",
+                        "label": "BCC",
                         "index": 7,
-                        "tooltip": "The plain text body of the message"
+                        "tooltip": "Comma-separated list of BCC email addresses"
                     },
-                    "author_id": {
+                    "tags": {
                         "type": "text",
-                        "label": "Author ID",
+                        "label": "Tags",
                         "index": 8,
-                        "tooltip": "The teammate ID of the message author"
+                        "tooltip": "Comma-separated list of tags for the message"
                     },
-                    "sender_name": {
-                        "type": "text",
-                        "label": "Sender Name",
+                    "archive": {
+                        "type": "toggle",
+                        "label": "Archive",
                         "index": 9,
-                        "tooltip": "Name to display as the sender"
-                    },
-                    "attachments": {
-                        "type": "text",
-                        "label": "Attachments",
-                        "index": 10,
-                        "tooltip": "Comma-separated list of attachment file IDs"
+                        "defaultValue": true,
+                        "tooltip": "Archive the conversation right when sending the message"
                     }
                 }
             }
@@ -132,17 +121,62 @@
             "name": "out",
             "options": [
                 { "label": "Message ID", "value": "id" },
+                { "label": "Message UID", "value": "message_uid" },
                 { "label": "Type", "value": "type" },
                 { "label": "Is Inbound", "value": "is_inbound" },
                 { "label": "Is Draft", "value": "is_draft" },
-                { "label": "Subject", "value": "subject" },
+                { "label": "Created At", "value": "created_at" },
+                { "label": "Blurb", "value": "blurb" },
                 { "label": "Body", "value": "body" },
                 { "label": "Text", "value": "text" },
+                { "label": "Error Type", "value": "error_type" },
+                { "label": "Version", "value": "version" },
+                { "label": "Subject", "value": "subject" },
+                { "label": "Draft Mode", "value": "draft_mode" },
+                { "label": "Metadata", "value": "metadata", "schema": { "type": "object" } },
                 { "label": "Author", "value": "author" },
-                { "label": "Recipients", "value": "recipients" },
-                { "label": "Created At", "value": "created_at" }
+                { 
+                    "label": "Recipients", 
+                    "value": "recipients", 
+                    "schema": { 
+                        "type": "array", 
+                        "items": { 
+                            "type": "object", 
+                            "properties": { 
+                                "name": { "type": "string" }, 
+                                "handle": { "type": "string" }, 
+                                "role": { "type": "string" } 
+                            } 
+                        } 
+                    } 
+                },
+                {
+                    "label": "Attachments",
+                    "value": "attachments",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                { "label": "Signature", "value": "signature" },
+                { "label": "Conversation Reference", "value": "conversation_reference" },
+                { "label": "Status", "value": "status" },
+                {
+                    "label": "Links",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            },
+                            "related": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
             ]
         }
     ],
-    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDianrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79ENENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
 }

@@ -3,19 +3,19 @@
 module.exports = {
     async receive(context) {
         const {
-            channel_id,
+            channelId,
             to,
+            authorId,
+            senderName,
+            body,
             cc,
             bcc,
             subject,
-            body,
-            text,
-            author_id,
-            sender_name,
-            attachments
+            tags,
+            archive
         } = context.messages.in.content;
 
-        if (!channel_id) {
+        if (!channelId) {
             throw new context.CancelError('Channel ID is required.');
         }
 
@@ -23,8 +23,8 @@ module.exports = {
             throw new context.CancelError('Recipients (to) are required.');
         }
 
-        if (!body && !text) {
-            throw new context.CancelError('Message body or text is required.');
+        if (!body) {
+            throw new context.CancelError('Message body is required.');
         }
 
         const requestData = {
@@ -41,26 +41,30 @@ module.exports = {
 
         if (subject) requestData.subject = subject;
         if (body) requestData.body = body;
-        if (text) requestData.text = text;
-        if (author_id) requestData.author_id = author_id;
-        if (sender_name) requestData.sender_name = sender_name;
-
-        if (attachments) {
-            requestData.attachments = Array.isArray(attachments)
-                ? attachments
-                : attachments.split(',').map(id => id.trim());
+        if (authorId) requestData.author_id = authorId;
+        if (senderName) requestData.sender_name = senderName;
+        if (tags || archive !== undefined) {
+            requestData.options = {};
+            if (tags) {
+                requestData.options.tag_ids = Array.isArray(tags) ? tags : tags.split(',').map(id => id.trim());
+            }
+            if (archive !== undefined) {
+                requestData.options.archive = archive;
+            }
         }
 
-        // API Documentation: https://dev.frontapp.com/reference/create-message
+        // https://dev.frontapp.com/reference/create-message
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api2.frontapp.com/channels/${channel_id}/messages`,
+            url: `https://api2.frontapp.com/channels/${channelId}/messages`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
             },
             data: requestData
         });
+
+        context.log({ step: 'response', data });
 
         return context.sendJson(data, 'out');
     }
