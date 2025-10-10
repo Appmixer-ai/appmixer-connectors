@@ -1,21 +1,38 @@
-
 'use strict';
 
-const lib = require('../../lib');
 module.exports = {
     async receive(context) {
 
-        const { id, status, assignee_id, inbox_id, tag_ids } = context.messages.in.content;
+        const { id, status, assigneeId, inboxId } = context.messages.in.content;
 
-        // https://dev.frontapp.com/reference
-        const { data } = await context.httpRequest({
+        if (!id) {
+            throw new context.CancelError('Conversation ID is required.');
+        }
+
+        const body = {};
+
+        if (status) {
+            body.status = status;
+        }
+
+        if (assigneeId) {
+            body.assignee_id = assigneeId;
+        }
+
+        if (inboxId) {
+            body.inbox_id = inboxId;
+        }
+
+        // https://dev.frontapp.com/reference/update-conversation
+        await context.httpRequest({
             method: 'PATCH',
-            url: '/conversations/{id}',
+            url: `https://api2.frontapp.com/conversations/${id}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            },
+            data: body
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

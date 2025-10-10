@@ -15,11 +15,6 @@ module.exports = {
 
         const requestData = { type: 'custom' };
 
-        // Add name if provided
-        if (name) {
-            requestData.name = name;
-        }
-
         // Build settings object with the new properties
         const channelSettings = {};
 
