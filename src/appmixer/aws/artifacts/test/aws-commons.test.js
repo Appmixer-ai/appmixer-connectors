@@ -34,7 +34,7 @@ let kmsStub;
 function resetStubs() {
     // Restore all sinon stubs before creating new ones
     sinon.restore();
-    
+
     snsStub = {
         createTopic: sinon.stub(),
         setTopicAttributes: sinon.stub(),

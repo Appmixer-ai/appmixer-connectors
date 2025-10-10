@@ -31,7 +31,7 @@ let snsStub; let s3Stub; let kmsStub;
 function resetStubs() {
     // Restore all sinon stubs before creating new ones
     sinon.restore();
-    
+
     snsStub = { createTopic: sinon.stub(), setTopicAttributes: sinon.stub(), subscribe: sinon.stub() };
     s3Stub = { getBucketNotificationConfiguration: sinon.stub(), putBucketNotificationConfiguration: sinon.stub() };
     kmsStub = { describeKey: sinon.stub(), listKeyPolicies: sinon.stub(), getKeyPolicy: sinon.stub() };
