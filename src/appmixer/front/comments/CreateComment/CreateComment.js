@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { conversationId, body, author_id, is_pinned } = context.messages.in.content;
+        const { conversationId, body, authorId, isPinned } = context.messages.in.content;
 
         if (!conversationId) {
             throw new context.CancelError('Conversation ID is required.');
@@ -14,14 +14,15 @@ module.exports = {
 
         const requestData = { body };
 
-        if (author_id) {
-            requestData.author_id = author_id;
+        if (authorId) {
+            requestData.author_id = authorId;
         }
 
-        if (is_pinned !== undefined) {
-            requestData.is_pinned = is_pinned;
+        if (isPinned !== undefined) {
+            requestData.is_pinned = isPinned;
         }
 
+        // https://dev.frontapp.com/reference/add-comment
         const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api2.frontapp.com/conversations/${conversationId}/comments`,

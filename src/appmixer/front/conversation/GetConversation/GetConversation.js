@@ -14,8 +14,6 @@ module.exports = {
             }
         });
 
-        context.log({ step: 'getConversation response', data });
-
         return context.sendJson(data, 'out');
     }
 };
