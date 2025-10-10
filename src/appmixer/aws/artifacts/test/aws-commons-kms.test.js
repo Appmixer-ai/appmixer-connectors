@@ -29,17 +29,20 @@ function buildContext(properties = {}) {
 let snsStub; let s3Stub; let kmsStub;
 
 function resetStubs() {
+    // Restore all sinon stubs before creating new ones
+    sinon.restore();
+    
     snsStub = { createTopic: sinon.stub(), setTopicAttributes: sinon.stub(), subscribe: sinon.stub() };
     s3Stub = { getBucketNotificationConfiguration: sinon.stub(), putBucketNotificationConfiguration: sinon.stub() };
     kmsStub = { describeKey: sinon.stub(), listKeyPolicies: sinon.stub(), getKeyPolicy: sinon.stub() };
 
-    [AWS, AWS_LOCAL].forEach(A => {
-        if (!A) return;
-        sinon.stub(A, 'SNS').callsFake(() => snsStub);
-        sinon.stub(A, 'S3').callsFake(() => s3Stub);
-        sinon.stub(A, 'Lambda').callsFake(() => ({ }));
-        sinon.stub(A, 'KMS').callsFake(() => kmsStub);
-    });
+    // Stub the connector-local aws-sdk instance (aws-commons uses this)
+    // If AWS_LOCAL is not available (e.g., in CI without local node_modules), stub the global AWS instead
+    const awsToStub = AWS_LOCAL || AWS;
+    sinon.stub(awsToStub, 'SNS').callsFake(() => snsStub);
+    sinon.stub(awsToStub, 'S3').callsFake(() => s3Stub);
+    sinon.stub(awsToStub, 'Lambda').callsFake(() => ({ }));
+    sinon.stub(awsToStub, 'KMS').callsFake(() => kmsStub);
 }
 
 function restoreStubs() { sinon.restore(); }
@@ -62,10 +65,15 @@ async function expectCancel(promise, msgFragment) {
 
 describe('aws-commons KMS validation', () => {
 
+    beforeEach(() => {
+        resetStubs();
+    });
+
     afterEach(() => restoreStubs());
 
+    after(() => restoreStubs());
+
     it('creates encrypted topic when kms key alias policy allows S3', async () => {
-        resetStubs();
         // KMS success path stubs
         kmsStub.describeKey.returns({ promise: () => Promise.resolve({ KeyMetadata: { KeyId: '1234-uuid-key' } }) });
         kmsStub.listKeyPolicies.returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) });
@@ -96,7 +104,6 @@ describe('aws-commons KMS validation', () => {
     });
 
     it('rejects invalid kmsMasterKeyId format', async () => {
-        resetStubs();
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
         });
@@ -107,7 +114,6 @@ describe('aws-commons KMS validation', () => {
     });
 
     it('rejects when describeKey fails', async () => {
-        resetStubs();
         kmsStub.describeKey.returns({ promise: () => Promise.reject(new Error('NotFound')) });
         s3Stub.getBucketNotificationConfiguration.returns({
             promise: () => Promise.resolve({ TopicConfigurations: [] })
@@ -119,7 +125,6 @@ describe('aws-commons KMS validation', () => {
     });
 
     it('rejects when key policy missing S3 statement', async () => {
-        resetStubs();
         kmsStub.describeKey.returns({ promise: () => Promise.resolve({ KeyMetadata: { KeyId: 'key-uuid' } }) });
         kmsStub.listKeyPolicies.returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) });
         kmsStub.getKeyPolicy.returns({ promise: () => Promise.resolve({ Policy: JSON.stringify({
@@ -140,7 +145,6 @@ describe('aws-commons KMS validation', () => {
     });
 
     it('rejects when key policy JSON invalid', async () => {
-        resetStubs();
         kmsStub.describeKey.returns({ promise: () => Promise.resolve({ KeyMetadata: { KeyId: 'key-uuid' } }) });
         kmsStub.listKeyPolicies.returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) });
         kmsStub.getKeyPolicy.returns({ promise: () => Promise.resolve({ Policy: '{not-json' }) });

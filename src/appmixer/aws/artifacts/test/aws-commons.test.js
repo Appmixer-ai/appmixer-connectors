@@ -32,6 +32,9 @@ let s3Stub;
 let kmsStub;
 
 function resetStubs() {
+    // Restore all sinon stubs before creating new ones
+    sinon.restore();
+    
     snsStub = {
         createTopic: sinon.stub(),
         setTopicAttributes: sinon.stub(),
@@ -55,15 +58,13 @@ function resetStubs() {
         }) }) })
     };
 
-    // Stub both root-level and connector-local aws-sdk instances to avoid real network calls.
-    // AWS_LOCAL may be undefined in CI (no local node_modules). Only stub defined objects.
-    [AWS, AWS_LOCAL].forEach(A => {
-        if (!A) return; // skip when connector-local aws-sdk isn't installed
-        sinon.stub(A, 'SNS').callsFake(() => snsStub);
-        sinon.stub(A, 'S3').callsFake(() => s3Stub);
-        sinon.stub(A, 'Lambda').callsFake(() => ({ }));
-        sinon.stub(A, 'KMS').callsFake(() => kmsStub);
-    });
+    // Stub the connector-local aws-sdk instance (aws-commons uses this)
+    // If AWS_LOCAL is not available (e.g., in CI without local node_modules), stub the global AWS instead
+    const awsToStub = AWS_LOCAL || AWS;
+    sinon.stub(awsToStub, 'SNS').callsFake(() => snsStub);
+    sinon.stub(awsToStub, 'S3').callsFake(() => s3Stub);
+    sinon.stub(awsToStub, 'Lambda').callsFake(() => ({ }));
+    sinon.stub(awsToStub, 'KMS').callsFake(() => kmsStub);
 }
 
 function restoreStubs() {
@@ -72,12 +73,19 @@ function restoreStubs() {
 
 describe('aws-commons registerWebhook security options', () => {
 
+    beforeEach(() => {
+        resetStubs();
+    });
+
     afterEach(() => {
         restoreStubs();
     });
 
+    after(() => {
+        restoreStubs();
+    });
+
     it('creates encrypted topic with restrictive policy when kmsMasterKeyId and trustedAccountIds provided', async () => {
-        resetStubs();
         const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic1' };
         snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
         snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
@@ -117,7 +125,6 @@ describe('aws-commons registerWebhook security options', () => {
     });
 
     it('falls back to legacy open policy when trustedAccountIds not provided', async () => {
-        resetStubs();
         const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic2' };
         snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
         snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
@@ -140,7 +147,6 @@ describe('aws-commons registerWebhook security options', () => {
     });
 
     it('calls setTopicAttributes with correct policy when trustedAccountIds is passed', async () => {
-        resetStubs();
         const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic3' };
         snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
         snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
