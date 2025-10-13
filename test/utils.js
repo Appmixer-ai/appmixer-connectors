@@ -188,8 +188,45 @@ function createMockContext(options) {
     return context;
 }
 
+/**
+ * Create a simple in-process mutex factory for tests.
+ * Usage:
+ *   const lockFn = createMutexLock();
+ *   const lock = await lockFn(key);
+ *   // do work
+ *   lock.unlock();
+ */
+function createMutexLock() {
+    const locks = new Map();
+    return async function lock(key) {
+        const previousRelease = locks.get(key) || Promise.resolve();
+
+        let release;
+        const releasePromise = new Promise(resolve => { release = resolve; });
+
+        // install our release promise so next waiter will wait on it
+        locks.set(key, releasePromise);
+
+        // wait for the previous owner to release
+        await previousRelease;
+
+        let unlocked = false;
+        return {
+            unlock: () => {
+                if (unlocked) return;
+                unlocked = true;
+                release();
+                if (locks.get(key) === releasePromise) {
+                    locks.delete(key);
+                }
+            }
+        };
+    };
+}
+
 module.exports = {
     getComponentJsonFiles,
     getPackageJsonFiles,
-    createMockContext
+    createMockContext,
+    createMutexLock
 };
