@@ -28,7 +28,7 @@ module.exports = {
 
         let lock;
         try {
-            lock = await context.lock(context.auth.apiKey);
+            lock = await context.lock(context.auth.apiKey + '_boards');
             let boards = await context.staticCache.get(context.auth.apiKey + '_boards');
             if (boards) {
                 return context.sendJson({ boards }, 'out');
