@@ -5,6 +5,10 @@ module.exports = {
 
         const { id } = context.messages.in.content;
 
+        if (!id) {
+            throw new context.CancelError('Conversation ID is required.');
+        }
+
         // https://dev.frontapp.com/reference/get-conversation-by-id
         const { data } = await context.httpRequest({
             method: 'GET',

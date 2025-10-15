@@ -29,22 +29,24 @@ module.exports = {
 const schema = {
     'id': { 'type': 'string', 'title': 'Rule ID' },
     'name': { 'type': 'string', 'title': 'Name' },
-    'description': { 'type': 'string', 'title': 'Description' },
-    'is_active': { 'type': 'boolean', 'title': 'Is Active' },
-    'created_at': { 'type': 'string', 'title': 'Created At' },
-    'updated_at': { 'type': 'string', 'title': 'Updated At' },
-    'priority': { 'type': 'number', 'title': 'Priority' },
-    'conditions': { 'type': 'array', 'title': 'Conditions' },
-    'actions': { 'type': 'array', 'title': 'Actions' },
-    'owner': {
+    'actions': {
+        'type': 'array',
+        'items': { 'type': 'string' },
+        'title': 'Actions'
+    },
+    'is_private': { 'type': 'boolean', 'title': 'Is Private' },
+    '_links': {
         'type': 'object',
         'properties': {
-            'id': { 'type': 'string', 'title': 'Owner.ID' },
-            'email': { 'type': 'string', 'title': 'Owner.Email' },
-            'username': { 'type': 'string', 'title': 'Owner.Username' },
-            'first_name': { 'type': 'string', 'title': 'Owner.First Name' },
-            'last_name': { 'type': 'string', 'title': 'Owner.Last Name' }
+            'self': { 'type': 'string', 'title': 'Links.Self' },
+            'related': {
+                'type': 'object',
+                'properties': {
+                    'owner': { 'type': ['string', 'null'], 'title': 'Links.Related.Owner' }
+                },
+                'title': 'Links.Related'
+            }
         },
-        'title': 'Owner'
+        'title': 'Links'
     }
 };
