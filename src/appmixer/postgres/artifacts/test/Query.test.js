@@ -3,9 +3,9 @@ const path = require('path');
 const sinon = require('sinon');
 const Module = require('module');
 const { PassThrough } = require('stream');
-const { createMockContext } = require('../utils');
+const { createMockContext } = require('../../../../../test/utils');
 
-const libPath = path.join(__dirname, '../../src/appmixer/postgres/lib.js');
+const libPath = path.join(__dirname, '../../lib.js');
 const actualPg = require('pg');
 const FakeQueryStream = class {
     constructor(text) {

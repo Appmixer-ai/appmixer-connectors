@@ -3,10 +3,10 @@
 const assert = require('assert');
 const path = require('path');
 const sinon = require('sinon');
-const { createMockContext } = require('../utils');
+const { createMockContext } = require('../../../../../test/utils');
 
-const componentPath = path.join(__dirname, '../../src/appmixer/postgres/db/DeleteRow/DeleteRow.js');
-const libPath = path.join(__dirname, '../../src/appmixer/postgres/lib.js');
+const componentPath = path.join(__dirname, '../../db/DeleteRow/DeleteRow.js');
+const libPath = path.join(__dirname, '../../lib.js');
 
 const SAFE_OPERATORS = new Set([
     '=', '!=', '<>', '<', '<=', '>', '>=',

@@ -3,10 +3,10 @@
 const assert = require('assert');
 const path = require('path');
 const sinon = require('sinon');
-const { createMockContext } = require('../utils');
+const { createMockContext } = require('../../../../../test/utils');
 
-const componentPath = path.join(__dirname, '../../src/appmixer/postgres/db/ListColumns/ListColumns.js');
-const libPath = path.join(__dirname, '../../src/appmixer/postgres/lib.js');
+const componentPath = path.join(__dirname, '../../db/ListColumns/ListColumns.js');
+const libPath = path.join(__dirname, '../../lib.js');
 
 describe('postgres/ListColumns', () => {
 
