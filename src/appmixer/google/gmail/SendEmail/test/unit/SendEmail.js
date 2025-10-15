@@ -1,58 +1,78 @@
 'use strict';
+const sinon = require('sinon');
+const emailCommons = require('../../../lib');
 const SendEmail = require('../../SendEmail');
 
 describe('SendEmail', function() {
 
-    let component;
+    const sandbox = sinon.createSandbox();
 
-    before(function() {
-
-        // minimal constructor for the SendEmail component
-        let constructor = {
-
-            'id': 'Doesn\'t matter, but required.',
-            'coordinatorId': 'Doesn\'t matter, but required.',
-            'flowId': 'Doesn\'t matter, but required.',
-            'manifest': require('../../component.json') // load the manifest
-        };
-
-        // important for standalone spawning
-        constructor.mode = 'static';
-
-        // create the instance
-        component = new SendEmail(constructor);
-
-        constructor.manifest.quota.scope = 'testUserId';
-
-        component.setQuotaConfig(constructor.manifest.quota);
-
-        // if there is need for authorization for the component, here is the place
-        component.setAuth(constructor.manifest.auth);
-
-        // SendEmail doesn't need any property
-        let properties = {};
-        component.configure(properties);
+    afterEach(function() {
+        sandbox.restore();
     });
 
-    it('should send the test email', function(done) {
+    it('should send the email and apply labels', async function() {
 
-        this.timeout(10000);
+        const addAttachmentsStub = sandbox.stub(emailCommons, 'addAttachments').resolves([{ filename: 'file.txt' }]);
+        const addSignatureStub = sandbox.stub(emailCommons, 'addSignature');
+        const buildEmailStub = sandbox.stub(emailCommons, 'buildEmail').resolves(Buffer.from('raw-email'));
+        const callEndpointStub = sandbox.stub(emailCommons, 'callEndpoint');
 
-        let inMessages = {
-            in: Buffer.from(JSON.stringify({
-                'sender': 'tomas.waldauf@gmail.com',
-                'from': 'Grid',
-                'to': 'tomas.waldauf@gmail.com',
-                'subject': 'Hello, Grid here!',
-                'text': 'Kiss my ass!'
-            }))
+        callEndpointStub.onFirstCall().resolves({ data: { id: '123' } });
+        callEndpointStub.onSecondCall().resolves();
+
+        const sendJsonStub = sandbox.stub().resolves();
+
+        const context = {
+            profileInfo: { email: 'sender@example.com' },
+            messages: {
+                in: {
+                    content: {
+                        to: 'recipient@example.com',
+                        cc: 'cc@example.com',
+                        bcc: 'bcc@example.com',
+                        subject: 'Hello',
+                        text: 'Body',
+                        signature: 'Regards',
+                        labels: {
+                            AND: [{ name: 'Label_1' }, { name: '' }]
+                        },
+                        attachments: { file1: 'data' }
+                    }
+                }
+            },
+            sendJson: sendJsonStub
         };
 
-        component.input(inMessages, function(error, messages) {
+        await SendEmail.receive(context);
 
-            // TBD:
-            // see: GRID-165 - component testing support
-            done(error);
+        sinon.assert.calledOnceWithExactly(addAttachmentsStub, context, { file1: 'data' });
+        sinon.assert.calledOnce(addSignatureStub);
+
+        const mailArg = buildEmailStub.firstCall.args[0];
+        sinon.assert.match(mailArg, {
+            from: 'sender@example.com',
+            to: 'recipient@example.com',
+            cc: 'cc@example.com',
+            bcc: 'bcc@example.com',
+            subject: 'Hello',
+            text: 'Body',
+            attachments: [{ filename: 'file.txt' }]
         });
+
+        sinon.assert.calledTwice(callEndpointStub);
+        sinon.assert.match(callEndpointStub.firstCall.args, [
+            context,
+            '/users/me/messages/send',
+            sinon.match({ method: 'POST', headers: { 'Content-Type': 'application/json' }, data: sinon.match.object })
+        ]);
+
+        sinon.assert.match(callEndpointStub.secondCall.args, [
+            context,
+            '/users/me/messages/123/modify',
+            sinon.match({ data: { addLabelIds: ['Label_1'] } })
+        ]);
+
+        sinon.assert.calledOnceWithExactly(sendJsonStub, { id: '123' }, 'email');
     });
 });
