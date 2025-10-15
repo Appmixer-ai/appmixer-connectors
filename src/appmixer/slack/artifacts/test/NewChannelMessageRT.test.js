@@ -1,6 +1,6 @@
 const assert = require('assert');
-const testUtils = require('../utils.js');
-const NewChannelMessageRT = require('../../src/appmixer/slack/list/NewChannelMessageRT/NewChannelMessageRT.js');
+const testUtils = require('../../../../../test/utils.js');
+const NewChannelMessageRT = require('../../list/NewChannelMessageRT/NewChannelMessageRT.js');
 
 describe('NewChannelMessageRT', () => {
 

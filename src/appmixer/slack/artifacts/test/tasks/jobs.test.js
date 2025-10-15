@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const path = require('path');
-const testUtils = require('../../utils.js');
+const testUtils = require('../../../../../../test/utils.js');
 
 /**
  * Tests for Slack jobs (src/appmixer/slack/jobs.js)
@@ -20,7 +20,7 @@ describe('slack-due-tasks', () => {
     let setMockTasks;
     let getSavedTasks;
     // eslint-disable-next-line max-len, one-var
-    let utilsPath, taskModelPath, webhookModelPath, jobsPath, jobsUtilsRequirePath, jobsTaskRequirePath, jobsWebhookRequirePath;
+    let rootTaskUtilsPath, taskModelPath, webhookModelPath, jobsPath, jobsUtilsRequirePath, jobsTaskRequirePath, jobsWebhookRequirePath;
 
     beforeEach(async () => {
         context = {
@@ -34,25 +34,27 @@ describe('slack-due-tasks', () => {
         };
 
         // Stub the utils module used by slack/jobs.js
-        utilsPath = path.resolve(__dirname, '../../../src/appmixer/slack/tasks/utils.js');
-        triggerWebhookStub = sinon.stub().resolves(true);
-        require.cache[require.resolve(utilsPath)] = {
-            id: utilsPath,
-            filename: utilsPath,
+        const createUtilsStub = modulePath => ({
+            id: modulePath,
+            filename: modulePath,
             loaded: true,
             exports: () => ({
                 triggerWebhook: triggerWebhookStub
             })
-        };
+        });
+        triggerWebhookStub = sinon.stub().resolves(true);
+        rootTaskUtilsPath = path.resolve(__dirname, '../../../taskUtils.js');
+        require.cache[rootTaskUtilsPath] = createUtilsStub(rootTaskUtilsPath);
 
         // Stub SlackTaskModel
-        taskModelPath = path.resolve(__dirname, '../../../src/appmixer/slack/tasks/SlackTaskModel.js');
+        taskModelPath = path.resolve(__dirname, '../../../SlackTaskModel.js');
         let taskRecords = [];
         let savedTasks = [];
         class FakeTask {
             constructor(data) { Object.assign(this, data); }
             getId() { return this.taskId; }
             setStatus(status) { this.status = status; }
+            getWebhookUrl() { return this.webhookUrl; }
             async save() { savedTasks.push(this); return this; }
             static get STATUS_DUE() { return 'due'; }
             static get STATUS_ERROR() { return 'error'; }
@@ -80,18 +82,11 @@ describe('slack-due-tasks', () => {
         };
 
         // Provide './utils' path expected by slack/jobs.js
-        jobsUtilsRequirePath = path.join(jobsDir, 'utils.js');
-        require.cache[jobsUtilsRequirePath] = {
-            id: jobsUtilsRequirePath,
-            filename: jobsUtilsRequirePath,
-            loaded: true,
-            exports: () => ({
-                triggerWebhook: triggerWebhookStub
-            })
-        };
+        jobsUtilsRequirePath = path.join(jobsDir, 'taskUtils.js');
+        require.cache[jobsUtilsRequirePath] = createUtilsStub(jobsUtilsRequirePath);
 
         // Register the jobs
-        jobsPath = path.resolve(__dirname, '../../../src/appmixer/slack/jobs.js');
+        jobsPath = path.resolve(__dirname, '../../../jobs.js');
         delete require.cache[require.resolve(jobsPath)];
         const jobs = require(jobsPath);
         await jobs(context);
@@ -103,7 +98,15 @@ describe('slack-due-tasks', () => {
     afterEach(() => {
         sinon.restore();
         // eslint-disable-next-line max-len
-        [utilsPath, jobsUtilsRequirePath, taskModelPath, jobsTaskRequirePath, webhookModelPath, jobsWebhookRequirePath, jobsPath].forEach(p => {
+        [
+            rootTaskUtilsPath,
+            jobsUtilsRequirePath,
+            taskModelPath,
+            jobsTaskRequirePath,
+            webhookModelPath,
+            jobsWebhookRequirePath,
+            jobsPath
+        ].forEach(p => {
             if (p && require.cache[p]) delete require.cache[p];
         });
     });

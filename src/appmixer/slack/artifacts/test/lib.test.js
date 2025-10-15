@@ -1,9 +1,7 @@
 /* eslint-disable camelcase */
-const fs = require('fs');
-const { cwd } = require('process');
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
+const testUtils = require('../../../../../test/utils.js');
 
 // Mock the WebClient class from @slack/web-api
 // This is necessary to avoid making actual API calls during tests
@@ -28,24 +26,24 @@ describe('lib.js', () => {
         const context = { CancelError: class CancelError extends Error {} };
 
         it('should join array of userIds', () => {
-            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1', 'U2', 'U3'], 8, context, 'userIds');
+            const result = require('../../lib').normalizeMultiselectInput(['U1', 'U2', 'U3'], 8, context, 'userIds');
             assert.strictEqual(result, 'U1,U2,U3');
         });
 
         it('should return string userId as is', () => {
-            const result = require('../../src/appmixer/slack/lib').normalizeMultiselectInput('U1', 8, context, 'userIds');
+            const result = require('../../lib').normalizeMultiselectInput('U1', 8, context, 'userIds');
             assert.strictEqual(result, 'U1');
         });
 
         it('should throw if array exceeds maxItems', () => {
             assert.throws(() => {
-                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(['U1','U2','U3','U4','U5','U6','U7','U8','U9'], 8, context, 'userIds');
+                require('../../lib').normalizeMultiselectInput(['U1','U2','U3','U4','U5','U6','U7','U8','U9'], 8, context, 'userIds');
             }, context.CancelError);
         });
 
         it('should throw if input is not array or string', () => {
             assert.throws(() => {
-                require('../../src/appmixer/slack/lib').normalizeMultiselectInput(123, 8, context, 'userIds');
+                require('../../lib').normalizeMultiselectInput(123, 8, context, 'userIds');
             }, context.CancelError);
         });
     });
@@ -55,14 +53,6 @@ describe('lib.js', () => {
         let context;
         const channelId = 'testChannelId';
         const message = 'testMessage';
-
-        before(() => {
-            // Stop if there are node modules installed in the connector folder.
-            const connectorPath = cwd() + '/src/appmixer/slack/node_modules';
-            if (fs.existsSync(connectorPath)) {
-                throw new Error(`For testing, please remove node_modules from ${connectorPath}`);
-            }
-        });
 
         beforeEach(() => {
             context = testUtils.createMockContext();
@@ -81,24 +71,24 @@ describe('lib.js', () => {
             // Ensure @slack/web-api is loaded and then replace it with our mock
             // We do this here so that if other tests required the Slack lib earlier,
             // we can re-require it with our mocked dependency.
-            require('@slack/web-api');
-            require.cache[require.resolve('@slack/web-api')].exports = { WebClient: mockWebClientClass };
+            require('../../node_modules/@slack/web-api');
+            require.cache[require.resolve('../../node_modules/@slack/web-api')].exports = { WebClient: mockWebClientClass };
 
             // Force re-evaluation of the slack lib so it picks up the mocked @slack/web-api
-            const libPath = require.resolve('../../src/appmixer/slack/lib.js');
+            const libPath = require.resolve('../../lib.js');
             delete require.cache[libPath];
-            ({ sendMessage } = require('../../src/appmixer/slack/lib.js'));
+            ({ sendMessage } = require('../../lib.js'));
         });
 
         afterEach(() => {
             mockWebClient?.chat?.postMessage?.resetHistory();
             mockWebClient = null;
-            delete require.cache[require.resolve('@slack/web-api')];
+            delete require.cache[require.resolve('../../node_modules/@slack/web-api')];
             // Also remove the slack lib from cache to avoid leaking the mocked version to other suites
-            const libPath = require.resolve('../../src/appmixer/slack/lib.js');
+            const libPath = require.resolve('../../lib.js');
             delete require.cache[libPath];
             // Recreate a clean cache entry for @slack/web-api for other tests
-            require('@slack/web-api');
+            require('../../node_modules/@slack/web-api');
             process.env.AUTH_HUB_URL = undefined;
             process.env.AUTH_HUB_TOKEN = undefined;
         });
@@ -154,7 +144,7 @@ describe('lib.js', () => {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${process.env.AUTH_HUB_TOKEN}`
-                    // 'x-appmixer-version-slack': require('../../src/appmixer/slack/bundle.json').version
+                    // 'x-appmixer-version-slack': require('../../bundle.json').version
                 },
                 data: {
                     iconUrl: 'https://example.com/icon.png',

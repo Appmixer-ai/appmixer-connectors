@@ -1,6 +1,6 @@
 const assert = require('assert');
-const testUtils = require('../../utils.js');
-const TransformTextToJSON = require('../../../src/appmixer/ai/gemini/TransformTextToJSON/TransformTextToJSON');
+const testUtils = require('../../../../../../test/utils.js');
+const TransformTextToJSON = require('../../TransformTextToJSON/TransformTextToJSON');
 
 describe('ai.gemini TransformTextToJSON', () => {
     let context;

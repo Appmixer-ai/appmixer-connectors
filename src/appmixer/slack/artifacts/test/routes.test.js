@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-const routes = require('../../src/appmixer/slack/routes.js');
+const testUtils = require('../../../../../test/utils.js');
+const routes = require('../../routes.js');
 const { createHmac } = require('node:crypto');
 
 describe('POST /events handler', () => {

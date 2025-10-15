@@ -1,6 +1,6 @@
 const assert = require('assert');
-const testUtils = require('../utils.js');
-const NewUserWebhook = require('../../src/appmixer/slack/list/NewUserWebhook/NewUserWebhook.js');
+const testUtils = require('../../../../../test/utils.js');
+const NewUserWebhook = require('../../list/NewUserWebhook/NewUserWebhook.js');
 
 describe('NewUserWebhook', () => {
 

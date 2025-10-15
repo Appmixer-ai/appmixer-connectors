@@ -1,6 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
+const testUtils = require('../../../../../test/utils.js');
 require('@slack/web-api');
 // Mock the WebClient class from @slack/web-api
 // This is necessary to avoid making actual API calls during tests
@@ -20,7 +20,7 @@ require.cache[require.resolve('@slack/web-api')].exports = {
     WebClient: mockWebClientClass
 };
 
-const routes = require('../../src/appmixer/slack/routes.js');
+const routes = require('../../routes.js');
 
 describe('POST /send-message handler', () => {
 

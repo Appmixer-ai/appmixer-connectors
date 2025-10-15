@@ -1,9 +1,9 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
+const testUtils = require('../../../../../test/utils.js');
 
-const lib = require('../../src/appmixer/slack/lib.js');
-const SendPrivateChannelMessage = require('../../src/appmixer/slack/list/SendPrivateChannelMessage/SendPrivateChannelMessage.js');
+const lib = require('../../lib.js');
+const SendPrivateChannelMessage = require('../../list/SendPrivateChannelMessage/SendPrivateChannelMessage.js');
 
 describe('SendPrivateChannelMessage component (options focus)', () => {
 

@@ -25,17 +25,27 @@ module.exports = async (context) => {
                 const subscriptionType = eventName.split(':')[0];
                 const subscriptions = getSubscriptionsByType(subscriptionType, context);
                 const results = await getHubSpotSubscriptions(context, params);
-                const currentSubs = results.map(s => s.eventType);
+                const currentActiveSubs = results.filter(s => s.enabled).map(s => s.eventType);
 
                 let subscriptionsToCreate = [];
                 subscriptions.forEach(s => {
-                    if (!currentSubs.includes(s.subscriptionDetails.subscriptionType)) {
+                    if (!currentActiveSubs.includes(s.subscriptionDetails.subscriptionType)) {
                         subscriptionsToCreate.push(s);
                     }
                 });
 
                 if (!subscriptionsToCreate.length) {
                     return {};
+                }
+
+                // If deletion or creation, check if we need to enable or create the subscription
+                for (const sub of subscriptionsToCreate) {
+                    const existingSub = results.find(r => r.eventType === sub.subscriptionDetails.subscriptionType);
+                    if (existingSub) {
+                        // Enable the existing subscription
+                        await activateHubSpotSubscription(context, params, existingSub.id);
+                        return;
+                    }
                 }
 
                 const { data } = await createHubSpotSubscriptions(context, params, subscriptionsToCreate);
@@ -224,6 +234,21 @@ async function createHubSpotSubscriptions(context, hubspot, subscriptions) {
         method: 'POST',
         url: `https://api.hubapi.com/webhooks/v1/${hubspot.appId}/subscriptions/batch?hapikey=${hubspot.apiKey}`,
         data: subscriptions
+    });
+
+    if (result.data?.ok === false) {
+        throw new Error(response?.data?.error);
+    }
+
+    return result;
+}
+
+async function activateHubSpotSubscription(context, hubspot, subscriptionId) {
+
+    const result = await context.httpRequest({
+        method: 'PATCH',
+        url: `https://api.hubapi.com/webhooks/v3/${hubspot.appId}/subscriptions/${subscriptionId}?hapikey=${hubspot.apiKey}`,
+        data: { enabled: true }
     });
 
     if (result.data?.ok === false) {

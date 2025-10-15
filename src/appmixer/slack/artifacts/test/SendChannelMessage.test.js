@@ -1,9 +1,9 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
+const testUtils = require('../../../../../test/utils.js');
 
-const lib = require('../../src/appmixer/slack/lib.js');
-const SendChannelMessage = require('../../src/appmixer/slack/list/SendChannelMessage/SendChannelMessage.js');
+const lib = require('../../lib.js');
+const SendChannelMessage = require('../../list/SendChannelMessage/SendChannelMessage.js');
 
 describe('SendChannelMessage component', () => {
 

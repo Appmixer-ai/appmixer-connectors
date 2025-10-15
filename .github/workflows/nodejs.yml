@@ -20,6 +20,13 @@ jobs:
         cache: 'npm'
     - name: Install dependencies
       run: npm ci
+    - name: Cache node_modules for connectors
+      uses: actions/cache@v4
+      with:
+        path: src/appmixer/**/node_modules
+        key: ${{ runner.os }}-connector-npm-${{ hashFiles('src/appmixer/**/package.json') }}
+    - name: Install connector dependencies
+      run: ./scripts/npm_install.sh
     - name: Run lint
       run: npm run lint
     - name: Run unit tests

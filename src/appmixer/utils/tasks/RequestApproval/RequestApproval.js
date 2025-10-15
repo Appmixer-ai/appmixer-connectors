@@ -49,7 +49,8 @@ module.exports = {
         return Promise.map(Object.keys(state), webhookId => {
             return context.callAppmixer({
                 endPoint: `/plugins/appmixer/utils/tasks/webhooks/${webhookId}`,
-                method: 'DELETE' });
+                method: 'DELETE'
+            });
         });
     }
 };

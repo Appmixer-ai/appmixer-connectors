@@ -1,8 +1,6 @@
-const fs = require('fs');
-const { cwd } = require('process');
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
+const testUtils = require('../../../../../../test/utils.js');
 
 describe('Slack RequestApproval', () => {
 
@@ -10,13 +8,7 @@ describe('Slack RequestApproval', () => {
     let slackLib;
 
     before(() => {
-
-        // Stop if there are node modules installed in the connector folder.
-        const connectorPath = cwd() + '/src/appmixer/slack/node_modules';
-        if (fs.existsSync(connectorPath)) {
-            throw new Error(`For testing, please remove node_modules from ${connectorPath}`);
-        }
-        slackLib = require('../../../src/appmixer/slack/lib.js');
+        slackLib = require('../../../lib.js');
     });
 
     beforeEach(async () => {
@@ -63,7 +55,7 @@ describe('Slack RequestApproval', () => {
                 });
 
                 // Require the component after stubbing
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
                 await RequestApproval.receive(context);
 
                 // Call to Appmixer to create the task
@@ -121,7 +113,7 @@ describe('Slack RequestApproval', () => {
                 };
 
                 // Require the component after stubbing
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
 
                 let error;
                 try {
@@ -146,7 +138,7 @@ describe('Slack RequestApproval', () => {
                 };
 
                 // Require the component after stubbing
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
 
                 let error;
                 try {
@@ -178,7 +170,7 @@ describe('Slack RequestApproval', () => {
                     context.messages = { task: { content } };
 
                     // Require the component after stubbing
-                    const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                    const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
 
                     let error;
                     try {
@@ -203,7 +195,7 @@ describe('Slack RequestApproval', () => {
                     taskId: 'T999'
                 });
 
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
                 await RequestApproval.receive(context);
 
                 // Verify that raw IDs are passed through to Appmixer
@@ -224,7 +216,7 @@ describe('Slack RequestApproval', () => {
 
                 context.messages.task.content.requester = 'U123ABCDEF,U222BBBCCC';
                 context.messages.task.content.approver = 'U222BBBCCC';
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
                 let error;
                 try {
                     await RequestApproval.receive(context);
@@ -237,7 +229,7 @@ describe('Slack RequestApproval', () => {
 
                 context.messages.task.content.requester = 'U123ABCDEF';
                 context.messages.task.content.approver = 'not-valid-format';
-                const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+                const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
                 let error;
                 try {
                     await RequestApproval.receive(context);
@@ -251,7 +243,7 @@ describe('Slack RequestApproval', () => {
     // Webhook-driven updates
     describe('Webhook events', () => {
         it('should notify Slack and emit event for non-pending status', async () => {
-            const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+            const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
             context.messages = {
                 webhook: {
                     content: {
@@ -288,7 +280,7 @@ describe('Slack RequestApproval', () => {
         });
 
         it('should not emit event when status is pending but still respond', async () => {
-            const RequestApproval = require('../../../src/appmixer/slack/tasks/RequestApproval/RequestApproval.js');
+            const RequestApproval = require('../../../tasks/RequestApproval/RequestApproval.js');
             context.messages = {
                 webhook: {
                     content: {

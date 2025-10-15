@@ -1,8 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-
-const lib = require('../../src/appmixer/slack/lib.js');
+const testUtils = require('../../../../../test/utils.js');
 
 describe('SendDirectMessage component (options focus)', () => {
 
@@ -11,10 +9,12 @@ describe('SendDirectMessage component (options focus)', () => {
     let originalWebApiExports;
     let webApiPath;
     let SendDirectMessage;
+    let lib;
 
     function mockWebClient(openResult = { channel: { id: 'D123' } }) {
         const { resolve } = require;
-        webApiPath = resolve('@slack/web-api');
+        // Use the slack connector's @slack/web-api
+        webApiPath = resolve('../../node_modules/@slack/web-api');
         originalWebApiExports = require.cache[webApiPath] && require.cache[webApiPath].exports;
 
         class FakeWebClient {
@@ -23,6 +23,9 @@ describe('SendDirectMessage component (options focus)', () => {
         FakeWebClient.prototype.conversations = {
             open: sinon.stub().resolves(openResult)
         };
+        FakeWebClient.prototype.chat = {
+            postMessage: sinon.stub().resolves({ ok: true, message: { text: 'ok' } })
+        };
 
         require.cache[webApiPath].exports = { WebClient: FakeWebClient };
     }
@@ -30,8 +33,11 @@ describe('SendDirectMessage component (options focus)', () => {
     beforeEach(() => {
         // Mock Slack WebClient before requiring the component
         mockWebClient();
+        // Require lib fresh to ensure we have the current instance
+        delete require.cache[require.resolve('../../lib.js')];
+        lib = require('../../lib.js');
         // Now require the component so it picks up our mocked WebClient
-        SendDirectMessage = require('../../src/appmixer/slack/messages/SendDirectMessage/SendDirectMessage.js');
+        SendDirectMessage = require('../../messages/SendDirectMessage/SendDirectMessage.js');
 
         context = testUtils.createMockContext();
         context.auth = { accessToken: 'xoxb-fake' };
@@ -55,7 +61,7 @@ describe('SendDirectMessage component (options focus)', () => {
         if (webApiPath && originalWebApiExports) {
             require.cache[webApiPath].exports = originalWebApiExports;
         }
-        delete require.cache[require.resolve('../../src/appmixer/slack/messages/SendDirectMessage/SendDirectMessage.js')];
+        delete require.cache[require.resolve('../../messages/SendDirectMessage/SendDirectMessage.js')];
     });
 
     it('passes username and iconUrl in options when provided', async () => {
