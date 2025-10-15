@@ -2,16 +2,16 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const { createMockContext, createMutexLock } = require('../utils.js');
+const { createMockContext, createMutexLock } = require('../../../../../test/utils.js');
 
-describe('monday core ListBoards', function() {
+describe('monday core ListWorkspaces', function() {
 
-    let ListBoards;
+    let ListWorkspaces;
     let fetchStub;
 
     beforeEach(() => {
         // stub the PagingAggregator instance used by the module
-        fetchStub = sinon.stub().resolves([{ id: 'b1', name: 'Board 1' }]);
+        fetchStub = sinon.stub().resolves([{ id: 'w1', name: 'Workspace 1' }]);
 
         // Create a shim file node_modules/appmixer-lib/intex.js so tests/CI that
         // expect this file can require it. We write it into the repo's node_modules
@@ -36,7 +36,7 @@ module.exports = {
                     if (accumulatorFn) {
                         return accumulatorFn([], chunk);
                     }
-                    return chunk && chunk.boards ? chunk.boards : [];
+                    return chunk && chunk.workspaces ? chunk.workspaces : [];
                 }
             };
         }
@@ -54,9 +54,9 @@ module.exports = {
         });
 
         // Ensure module is reloaded so it picks up our stubbed PagingAggregator
-        const modulePath = require.resolve('../../src/appmixer/monday/core/ListBoards/ListBoards.js');
+        const modulePath = require.resolve('../../core/ListWorkspaces/ListWorkspaces.js');
         delete require.cache[modulePath];
-        ListBoards = require('../../src/appmixer/monday/core/ListBoards/ListBoards.js');
+        ListWorkspaces = require('../../core/ListWorkspaces/ListWorkspaces.js');
     });
 
     afterEach(() => {
@@ -74,7 +74,7 @@ module.exports = {
         sinon.restore();
     });
 
-    it('calls receive 20 times in parallel with same apiKey and staticCache.get delayed, aggregator.fetch should be called once', async () => {
+    it('calls receive 10 times in parallel with same apiKey and staticCache.get delayed, aggregator.fetch should be called once', async () => {
 
         // Prepare a context mock using shared project test utils
         const apiKey = 'test-api-key-123';
@@ -84,8 +84,8 @@ module.exports = {
 
         const slowStaticCache = {
             get: sinon.stub().callsFake(async (key) => {
-                // simulate a slow DB call taking between 20 and 50 ms
-                const delay = 20 + Math.floor(Math.random() * 10);
+                // simulate a slow DB call taking between 10 and 50 ms
+                const delay = 10 + Math.floor(Math.random() * 10);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return cacheSetValue; // initially null -> triggers fetch
             }),
@@ -106,20 +106,20 @@ module.exports = {
             lock: createMutexLock()
         });
 
-        // Create 20 parallel calls using shallow clones of context
-        const calls = Array.from({ length: 20 }, () => {
+        // Create 10 parallel calls using shallow clones of context
+        const calls = Array.from({ length: 10 }, () => {
             // shallow copy to simulate distinct context objects but same staticCache
             return Object.assign({}, baseContext);
         });
 
-        // Kick off 20 parallel receive invocations
-        const promises = calls.map(ctx => ListBoards.receive(ctx));
+        // Kick off 10 parallel receive invocations
+        const promises = calls.map(ctx => ListWorkspaces.receive(ctx));
 
         // Wait for all to finish
         await Promise.all(promises);
 
         assert.strictEqual(fetchStub.callCount, 1, 'aggregator.fetch should be called only once');
         assert.strictEqual(slowStaticCache.set.callCount, 1, 'staticCache.set should be called to populate cache');
-        assert.strictEqual(slowStaticCache.get.callCount, 20, 'staticCache.get should be called for each receive call');
+        assert.strictEqual(slowStaticCache.get.callCount, 10, 'staticCache.get should be called for each receive call');
     });
 });

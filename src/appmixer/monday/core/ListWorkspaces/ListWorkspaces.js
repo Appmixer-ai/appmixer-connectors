@@ -26,18 +26,36 @@ module.exports = {
 
     async receive(context) {
 
-        const options = {
-            query: queries.listWorkspaces,
-            options: {
-                variables: {
-                    page: 1,
-                    limit: 50
-                }
-            },
-            apiKey: context.auth.apiKey
-        };
-        const workspaces = await aggregator.fetch(options, 1, 50);
-        return context.sendJson({ workspaces }, 'out');
+        let lock;
+        try {
+            lock = await context.lock(context.auth.apiKey + '_workspaces');
+            let workspaces = await context.staticCache.get(context.auth.apiKey + '_workspaces');
+            if (workspaces) {
+                return context.sendJson({ workspaces }, 'out');
+            }
+
+            const options = {
+                query: queries.listWorkspaces,
+                options: {
+                    variables: {
+                        page: 1,
+                        limit: 50
+                    }
+                },
+                apiKey: context.auth.apiKey
+            };
+            workspaces = await aggregator.fetch(options, 1, 50);
+
+            await context.staticCache.set(
+                context.auth.apiKey + '_workspaces',
+                workspaces,
+                context.config.listWorkspacesCacheTTL || 20 * 1000
+            );
+
+            return context.sendJson({ workspaces }, 'out');
+        } finally {
+            lock?.unlock();
+        }
     },
 
     workspacesToSelectArray({ workspaces }) {
