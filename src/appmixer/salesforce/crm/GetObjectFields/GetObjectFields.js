@@ -8,7 +8,7 @@ module.exports = {
 
         const fields = await commons.api.getObjectFields(context, {
             objectName,
-            cache: context.properties.variableFectch || false
+            cache: context.properties.variableFetch || false
         });
 
         if (fieldName) {
