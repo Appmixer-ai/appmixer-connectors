@@ -13,10 +13,6 @@ module.exports = {
             throw new context.CancelError('Name is required');
         }
 
-        if (!senderType) {
-            throw new context.CancelError('Sender Type is required');
-        }
-
         if (!htmlContent) {
             throw new context.CancelError('HtmlContent is required');
         }
