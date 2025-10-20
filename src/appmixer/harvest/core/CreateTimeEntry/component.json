@@ -1,0 +1,191 @@
+{
+    "name": "appmixer.harvest.core.CreateTimeEntry",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new time entry.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:harvest"
+    },
+    "quota": {
+        "manager": "appmixer:harvest",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer"
+                    },
+                    "project_id": {
+                        "type": "integer"
+                    },
+                    "task_id": {
+                        "type": "integer"
+                    },
+                    "spent_date": {
+                        "type": "string"
+                    },
+                    "hours": {
+                        "type": "number"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "external_reference": {
+                        "type": "object"
+                    },
+                    "started_time": {
+                        "type": "string"
+                    },
+                    "ended_time": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "user_id": {
+                        "type": "number",
+                        "tooltip": "User ID. If omitted, uses authenticated user.",
+                        "label": "User Id",
+                        "index": 0
+                    },
+                    "project_id": {
+                        "type": "number",
+                        "tooltip": "Project ID.",
+                        "label": "Project Id",
+                        "index": 1
+                    },
+                    "task_id": {
+                        "type": "number",
+                        "tooltip": "Task ID.",
+                        "label": "Task Id",
+                        "index": 2
+                    },
+                    "spent_date": {
+                        "type": "text",
+                        "tooltip": "Date (YYYY-MM-DD).",
+                        "label": "Spent Date",
+                        "index": 3
+                    },
+                    "hours": {
+                        "type": "number",
+                        "tooltip": "Decimal hours.",
+                        "label": "Hours",
+                        "index": 4
+                    },
+                    "notes": {
+                        "type": "text",
+                        "tooltip": "Notes for the entry.",
+                        "label": "Notes",
+                        "index": 5
+                    },
+                    "external_reference": {
+                        "type": "text",
+                        "tooltip": "External reference payload to link to external systems.",
+                        "label": "External Reference",
+                        "index": 6
+                    },
+                    "started_time": {
+                        "type": "text",
+                        "tooltip": "Start time (if using start/stop timers).",
+                        "label": "Started Time",
+                        "index": 7
+                    },
+                    "ended_time": {
+                        "type": "text",
+                        "tooltip": "End time (if using start/stop timers).",
+                        "label": "Ended Time",
+                        "index": 8
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Id",
+                    "value": "id",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Spent Date",
+                    "value": "spent_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "User",
+                    "value": "user",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "title": "User.Id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Project",
+                    "value": "project",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "title": "Project.Id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Task",
+                    "value": "task",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "number",
+                                "title": "Task.Id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Hours",
+                    "value": "hours",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Notes",
+                    "value": "notes",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Running",
+                    "value": "is_running",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAM6SURBVFhHnVY9TxVBFD13lvcSqIwkJFYUSkwEYiHRmsLwG9DG2sRYiw0djQ01jY1GfoKxeJ1BkQQLCwIUr9HQqIX6DDD3WuzM7p27s/tevMlhZ3bOPffMx86DAGC0vbgqRFsgWSFyBQioAApP1VePKkQ1YlsASOhIGBL2EPpEIs+mn34Z0Gh7cVWAt0TUK4uqApQpbgvbkPDHmqj6ZVtYLoiw5sTLFgl65UBAadX0o3Do56BzrYYBAT3xsuVYsFI7pVoPqi1qNtVT7VPM02OJt7BsyTuABSuuICrAzcGGgO7bAshwksnk3xegwqVJBhnXEEK7YWtiDADQ6MWtsqkPnWnTlXlM3X4YMgB/8g787SA4LMNdu4Pixv1K+PLzK8iPYdkRVIcvaQNw7bOpQTNzKJbXSyytg2YXmpzZBRRLgbO8DpqZU8VbwED3FgRSIywnwgYHWJ5CuwGbrMNyx3GsloIDc7knbCDhfRxLxAVgTiGGw/q71zVY1eGwAtEdh8MRHWvnOv6Xk1mJ8hDqAU1gmVy8laM0Kt0a4QwEkk6wyIp3GMhqmToC0GjzplTfPfQNW//wuPm76D94WYv7c4Av6z4AuCmg6Ffd89ePwMOPtTF9D6h+fQZy++9VW0fRB3ozKVRxwOhomK2tL6KGCdW2yztJ6Fx9DpK2PoR29tFEfKrwB7s4f/M4gT/YTThlboTRVbVccgfE7zu5F5rfOJ8dg48GKc6OE07jbhF1X6h6Lusw57xLPJrXEfN81NP9uk44AzkTKtGegdx2tXGstnmvLqIuE0Z9EgO5VczUqs9Adv/jWEbcG2RNWh1TozwDOXcZ52PFDcfmt+g64bYlVQlWPMtv48SZN/nCQPH83tVNiPp3X5RYbFMBAkOGh5DhZ/DJB8j3r/W4ADTVB/7+CpxD8NF74PfPhKNNxo+G/jy5nniPPwlJ5N5NEnZVVOEY6U0YlkX3IS3LnUMXj4O24TpheJsoDIhXZix8CyxvjJYwvCOW/cR9xnX8j6ox4xZIWMnO1RSAWPYdMW2I8EWZZT8tBRbIhMjlWk0RviCmDTe9czpw7NYg2APjMus2N5MudOWVNfYcu7XpndPBP/KnJAy1daJ9AAAAAElFTkSuQmCC"
+}
