@@ -24,8 +24,6 @@ module.exports = {
 
         const records = data['_results'] || [];
 
-        context.log({ step: 'ListContactNotes response', records });
-
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

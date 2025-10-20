@@ -28,8 +28,6 @@ module.exports = {
             data: requestData
         });
 
-        context.log({ step: 'CreateContactNote response', data });
-
         return context.sendJson(data, 'out');
     }
 };

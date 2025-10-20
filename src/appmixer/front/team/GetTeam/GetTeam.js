@@ -17,8 +17,6 @@ module.exports = {
             }
         });
 
-        context.log({ step: 'GetTeam response', data });
-
         return context.sendJson(data, 'out');
     }
 };
