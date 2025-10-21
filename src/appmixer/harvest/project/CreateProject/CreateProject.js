@@ -4,13 +4,13 @@ module.exports = {
 
     async receive(context) {
         const {
-            client_id: clientId,
+            clientId,
             name,
-            is_active: isActive,
-            bill_by: billBy,
-            hourly_rate: hourlyRate,
+            isActive,
+            billBy,
+            hourlyRate,
             budget,
-            budget_is_monthly: budgetIsMonthly,
+            budgetIsMonthly,
             notes
         } = context.messages.in.content;
 

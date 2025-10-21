@@ -1,9 +1,8 @@
 {
-    "name": "appmixer.harvest.project.CreateProject",
+    "name": "appmixer.harvest.task.CreateTask",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new project assigned to a client.",
+    "description": "Create a new task.",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:harvest"
     },
@@ -17,82 +16,55 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "clientId": {
-                        "type": "string"
-                    },
                     "name": {
                         "type": "string"
                     },
                     "isActive": {
                         "type": "boolean"
                     },
-                    "billBy": {
-                        "type": "string"
-                    },
-                    "hourlyRate": {
-                        "type": "number"
-                    },
-                    "budget": {
-                        "type": "number"
-                    },
-                    "budgetIsMonthly": {
+                    "billableByDefault": {
                         "type": "boolean"
                     },
-                    "notes": {
-                        "type": "string"
+                    "defaultHourlyRate": {
+                        "type": "number"
+                    },
+                    "isDefault": {
+                        "type": "boolean"
                     }
                 },
-                "required": ["clientId", "name"]
+                "required": ["name"]
             },
             "inspector": {
                 "inputs": {
-                    "clientId": {
-                        "type": "text",
-                        "tooltip": "Client ID to associate the project with.",
-                        "label": "Client Id",
-                        "index": 0
-                    },
                     "name": {
                         "type": "text",
-                        "tooltip": "Project name.",
+                        "tooltip": "Task name.",
                         "label": "Name",
                         "index": 1
                     },
                     "isActive": {
                         "type": "toggle",
-                        "tooltip": "Set active or archived (default true).",
+                        "tooltip": "Active status (default true).",
                         "label": "Is Active",
                         "index": 2
                     },
-                    "billBy": {
-                        "type": "text",
-                        "tooltip": "Billing method, e.g., Project, People, Tasks, or None.",
-                        "label": "Bill By",
+                    "billableByDefault": {
+                        "type": "toggle",
+                        "tooltip": "Billable by default.",
+                        "label": "Billable By Default",
                         "index": 3
                     },
-                    "hourlyRate": {
+                    "defaultHourlyRate": {
                         "type": "number",
-                        "tooltip": "Default hourly rate if applicable.",
-                        "label": "Hourly Rate",
+                        "tooltip": "Default hourly rate.",
+                        "label": "Default Hourly Rate",
                         "index": 4
                     },
-                    "budget": {
-                        "type": "number",
-                        "tooltip": "Total budget for project.",
-                        "label": "Budget",
-                        "index": 5
-                    },
-                    "budgetIsMonthly": {
+                    "isDefault": {
                         "type": "toggle",
-                        "tooltip": "If true, budget resets monthly.",
-                        "label": "Budget Is Monthly",
-                        "index": 6
-                    },
-                    "notes": {
-                        "type": "text",
-                        "tooltip": "Internal notes.",
-                        "label": "Notes",
-                        "index": 7
+                        "tooltip": "Whether this is a default task.",
+                        "label": "Is Default",
+                        "index": 5
                     }
                 }
             }
@@ -103,14 +75,14 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Task ID",
                     "value": "id",
                     "schema": {
-                        "type": "number"
+                        "type": "integer"
                     }
                 },
                 {
-                    "label": "Name",
+                    "label": "Task Name",
                     "value": "name",
                     "schema": {
                         "type": "string"
@@ -124,48 +96,40 @@
                     }
                 },
                 {
-                    "label": "Client",
-                    "value": "client",
+                    "label": "Billable By Default",
+                    "value": "billable_by_default",
                     "schema": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "number",
-                                "title": "Client.Id"
-                            },
-                            "name": {
-                                "type": "string",
-                                "title": "Client.Name"
-                            }
-                        }
+                        "type": "boolean"
                     }
                 },
                 {
-                    "label": "Budget",
-                    "value": "budget",
+                    "label": "Is Default",
+                    "value": "is_default",
                     "schema": {
-                        "type": "number"
+                        "type": "boolean"
                     }
                 },
                 {
-                    "label": "Hourly Rate",
-                    "value": "hourly_rate",
+                    "label": "Default Hourly Rate",
+                    "value": "default_hourly_rate",
                     "schema": {
-                        "type": "number"
+                        "type": ["number", "null"]
                     }
                 },
                 {
                     "label": "Created At",
                     "value": "created_at",
                     "schema": {
-                        "type": "string"
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 {
                     "label": "Updated At",
                     "value": "updated_at",
                     "schema": {
-                        "type": "string"
+                        "type": "string",
+                        "format": "date-time"
                     }
                 }
             ]

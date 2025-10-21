@@ -9,7 +9,7 @@ module.exports = {
         return {
 
             accountNameFromProfileInfo: (context) => {
-                return `${context.profileInfo.email}`;
+                return `${context.profileInfo.user.email}`;
             },
 
             authUrl: (context) => {
