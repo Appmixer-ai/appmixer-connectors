@@ -1,7 +1,6 @@
 const assert = require('assert');
 const path = require('path');
 const dotenv = require('dotenv');
-const fetch = require('node-fetch');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '../.env') });
