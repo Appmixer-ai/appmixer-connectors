@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
-const action = require('../../../src/appmixer/sonarqube/core/FindMeasureHistory/FindMeasureHistory.js');
+const testUtils = require('../../../../../../test/utils.js');
+const action = require('../../../core/FindMeasureHistory/FindMeasureHistory.js');
 
 describe('FindMeasureHistory', function() {
 

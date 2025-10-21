@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
-const action = require('../../../src/appmixer/sonarqube/core/ShowFileDuplications/ShowFileDuplications.js');
+const testUtils = require('../../../../../../test/utils.js');
+const action = require('../../../core/ShowFileDuplications/ShowFileDuplications.js');
 
 describe('ShowFileDuplications', function() {
 

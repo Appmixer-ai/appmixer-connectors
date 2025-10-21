@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
-const action = require('../../../src/appmixer/sonarqube/core/FindProjectQualityGateStatus/FindProjectQualityGateStatus.js');
+const testUtils = require('../../../../../../test/utils.js');
+const action = require('../../../core/FindProjectQualityGateStatus/FindProjectQualityGateStatus.js');
 
 describe('FindProjectQualityGateStatus', function() {
 
