@@ -8,6 +8,14 @@ module.exports = {
             context.auth;
         const { listId, value } = context.messages.in.content;
 
+        if (!listId) {
+            throw new context.CancelError('List is required');
+        }
+
+        if (!value) {
+            throw new context.CancelError('IP or IPs is required');
+        }
+
         const ips = parseIPs(value);
 
         const body = {

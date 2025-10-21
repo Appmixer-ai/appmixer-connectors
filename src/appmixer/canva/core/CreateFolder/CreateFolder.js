@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { name, parentFolderId = 'root' } = context.messages.in.content;
+        if (!name) {
+            throw new context.CancelError('Name is required');
+        }
+
 
         // https://www.canva.dev/docs/connect/api-reference/folders/create-folder/#http-method-and-url-path
         const response = await context.httpRequest({

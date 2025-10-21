@@ -10,6 +10,10 @@ module.exports = {
         const client = new Canvas(accessToken, context);
 
         const { userId } = context.messages.in.content;
+        if (!userId) {
+            throw new context.CancelError('User ID is required');
+        }
+
 
         const { data } = await client.getUser(userId);
         return context.sendJson(data, 'out');

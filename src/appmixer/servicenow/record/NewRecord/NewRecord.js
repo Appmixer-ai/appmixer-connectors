@@ -1,19 +1,18 @@
-/* eslint-disable camelcase */
 'use strict';
+
+const eventName = (context) => `${(context.auth.instance)}.${(context.properties.tableName)}.insert`;
 
 module.exports = {
 
     async start(context) {
 
-        const tableName = context.properties.tableName;
-        context.log({ stage: 'start', name: `${tableName}.insert` });
-        return context.addListener(`${tableName}.insert`);
+        context.log({ stage: 'start', eventName: eventName(context) });
+        return context.addListener(eventName(context));
     },
 
     async stop(context) {
 
-        const tableName = context.properties.tableName;
-        return context.removeListener(`${tableName}.insert`);
+        return context.removeListener(eventName(context));
     },
 
     async receive(context) {

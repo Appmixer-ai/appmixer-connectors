@@ -1,0 +1,208 @@
+{
+    "name": "appmixer.front.drafts.CreateDraft",
+    "description": "Create a new message draft in a conversation. This allows you to prepare messages before sending them.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "channelId": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "authorId": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    },
+                    "bcc": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    }
+                },
+                "required": ["channelId", "body"]
+            },
+            "inspector": {
+                "inputs": {
+                    "channelId": {
+                        "type": "text",
+                        "label": "Channel ID",
+                        "index": 1,
+                        "tooltip": "The ID of the channel (if creating new conversation)"
+                    },
+                    "to": {
+                        "type": "text",
+                        "label": "To (Recipients)",
+                        "index": 2,
+                        "tooltip": "Comma-separated list of recipient email addresses"
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "label": "Body",
+                        "index": 3,
+                        "tooltip": "The body of the draft message (plain text or HTML)"
+                    },
+                    "authorId": {
+                        "type": "text",
+                        "label": "Author ID",
+                        "index": 4,
+                        "tooltip": "The teammate ID of the message author",
+                        "source": {
+                            "url": "/component/appmixer/front/teammates/ListTeammates?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeammates#toSelectArray"
+                            }
+                        }
+                    },
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "index": 5,
+                        "tooltip": "The subject line of the message"
+                    },
+                    "cc": {
+                        "type": "text",
+                        "label": "CC",
+                        "index": 6,
+                        "tooltip": "Comma-separated list of CC email addresses"
+                    },
+                    "bcc": {
+                        "type": "text",
+                        "label": "BCC",
+                        "index": 7,
+                        "tooltip": "Comma-separated list of BCC email addresses"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Draft Message ID", "value": "id" },
+                { "label": "Message UID", "value": "message_uid" },
+                { "label": "Type", "value": "type" },
+                { "label": "Is Inbound", "value": "is_inbound" },
+                { "label": "Is Draft", "value": "is_draft" },
+                { "label": "Created At", "value": "created_at" },
+                { "label": "Blurb", "value": "blurb" },
+                { "label": "Body", "value": "body" },
+                { "label": "Text", "value": "text" },
+                { "label": "Error Type", "value": "error_type" },
+                { "label": "Version", "value": "version" },
+                { "label": "Subject", "value": "subject" },
+                { "label": "Draft Mode", "value": "draft_mode" },
+                { "label": "Metadata", "value": "metadata", "schema": { "type": "object" } },
+                { 
+                    "label": "Author", 
+                    "value": "author",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "_links": {
+                                "type": "object",
+                                "properties": {
+                                    "self": { "type": "string" },
+                                    "related": {
+                                        "type": "object",
+                                        "properties": {
+                                            "inboxes": { "type": "string" },
+                                            "conversations": { "type": "string" }
+                                        }
+                                    }
+                                }
+                            },
+                            "id": { "type": "string" },
+                            "email": { "type": "string" },
+                            "username": { "type": "string" },
+                            "first_name": { "type": "string" },
+                            "last_name": { "type": "string" },
+                            "is_admin": { "type": "boolean" },
+                            "is_available": { "type": "boolean" },
+                            "is_blocked": { "type": "boolean" },
+                            "type": { "type": "string" },
+                            "custom_fields": { "type": "object" }
+                        }
+                    }
+                },
+                { 
+                    "label": "Recipients", 
+                    "value": "recipients", 
+                    "schema": { 
+                        "type": "array", 
+                        "items": { 
+                            "type": "object", 
+                            "properties": { 
+                                "_links": {
+                                    "type": "object",
+                                    "properties": {
+                                        "related": {
+                                            "type": "object",
+                                            "properties": {
+                                                "contact": { "type": ["object", "null"] }
+                                            }
+                                        }
+                                    }
+                                },
+                                "name": { "type": "string" }, 
+                                "handle": { "type": "string" }, 
+                                "role": { "type": "string" } 
+                            } 
+                        } 
+                    } 
+                },
+                {
+                    "label": "Attachments",
+                    "value": "attachments",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                { "label": "Signature", "value": "signature" },
+                { "label": "Conversation Reference", "value": "conversation_reference" },
+                { "label": "Status", "value": "status" },
+                {
+                    "label": "Links",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            },
+                            "related": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

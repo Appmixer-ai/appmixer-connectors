@@ -1,0 +1,195 @@
+{
+    "name": "appmixer.front.contacts.CreateContactNote",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Add a note to a contact.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "contactId": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "authorId": {
+                        "type": "string"
+                    }
+                },
+                "required": ["contactId", "body", "authorId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "contactId": {
+                        "type": "text",
+                        "label": "Contact ID",
+                        "index": 1,
+                        "tooltip": "The unique identifier of the contact"
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "label": "Note Body",
+                        "index": 2,
+                        "tooltip": "The content of the note (required)"
+                    },
+                    "authorId": {
+                        "type": "text",
+                        "label": "Author ID",
+                        "index": 3,
+                        "tooltip": "The ID of the teammate who is creating the note",
+                        "source": {
+                            "url": "/component/appmixer/front/teammates/ListTeammates?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeammates#toSelectArray"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Links",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "related": {
+                                "type": "object",
+                                "properties": {
+                                    "author": {
+                                        "type": "string"
+                                    },
+                                    "owner": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Author",
+                    "value": "author",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "_links": {
+                                "type": "object"
+                            },
+                            "id": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": "string"
+                            },
+                            "username": {
+                                "type": "string"
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "last_name": {
+                                "type": "string"
+                            },
+                            "is_admin": {
+                                "type": "boolean"
+                            },
+                            "is_available": {
+                                "type": "boolean"
+                            },
+                            "is_blocked": {
+                                "type": "boolean"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "custom_fields": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Author ID",
+                    "value": "author.id"
+                },
+                {
+                    "label": "Author Email",
+                    "value": "author.email"
+                },
+                {
+                    "label": "Author Username",
+                    "value": "author.username"
+                },
+                {
+                    "label": "Author First Name",
+                    "value": "author.first_name"
+                },
+                {
+                    "label": "Author Last Name",
+                    "value": "author.last_name"
+                },
+                {
+                    "label": "Author Is Admin",
+                    "value": "author.is_admin"
+                },
+                {
+                    "label": "Author Is Available",
+                    "value": "author.is_available"
+                },
+                {
+                    "label": "Author Is Blocked",
+                    "value": "author.is_blocked"
+                },
+                {
+                    "label": "Author Type",
+                    "value": "author.type"
+                },
+                {
+                    "label": "Author Custom Fields",
+                    "value": "author.custom_fields",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Body",
+                    "value": "body"
+                },
+                {
+                    "label": "Is Private",
+                    "value": "is_private"
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at"
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

@@ -1,0 +1,123 @@
+{
+    "name": "appmixer.front.drafts.UpdateDraft",
+    "description": "Update an existing message draft. This allows you to modify draft messages before sending them.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "draftId": {
+                        "type": "string"
+                    },
+                    "channelId": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "authorId": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    },
+                    "bcc": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    }
+                },
+                "required": ["draftId", "channelId", "version"]
+            },
+            "inspector": {
+                "inputs": {
+                    "draftId": {
+                        "type": "text",
+                        "label": "Draft Message ID",
+                        "index": 0,
+                        "tooltip": "The ID of the draft to update"
+                    },
+                    "channelId": {
+                        "type": "text",
+                        "label": "Channel ID",
+                        "index": 1,
+                        "tooltip": "ID of the channel from which the draft will be sent. Alternatively, you can supply the channel address as a resource alias"
+                    },
+                    "version": {
+                        "type": "text",
+                        "label": "Version",
+                        "index": 2,
+                        "tooltip": "Version of the draft"
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "label": "Body",
+                        "index": 3,
+                        "tooltip": "The body of the draft message (plain text or HTML)"
+                    },
+                    "to": {
+                        "type": "text",
+                        "label": "To (Recipients)",
+                        "index": 4,
+                        "tooltip": "Comma-separated list of recipient email addresses"
+                    },
+                    "authorId": {
+                        "type": "text",
+                        "label": "Author ID",
+                        "index": 5,
+                        "tooltip": "The teammate ID of the message author",
+                        "source": {
+                            "url": "/component/appmixer/front/teammates/ListTeammates?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeammates#toSelectArray"
+                            }
+                        }
+                    },
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "index": 6,
+                        "tooltip": "The subject line of the message"
+                    },
+                    "cc": {
+                        "type": "text",
+                        "label": "CC",
+                        "index": 7,
+                        "tooltip": "Comma-separated list of CC email addresses"
+                    },
+                    "bcc": {
+                        "type": "text",
+                        "label": "BCC",
+                        "index": 8,
+                        "tooltip": "Comma-separated list of BCC email addresses"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

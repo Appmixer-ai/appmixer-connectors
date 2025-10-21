@@ -10,6 +10,10 @@ module.exports = {
         const client = new Canvas(accessToken, context);
 
         const { courseId } = context.messages.in.content;
+        if (!courseId) {
+            throw new context.CancelError('Course ID is required');
+        }
+
 
         const { data } = await client.listAssignmentGroups(courseId);
 

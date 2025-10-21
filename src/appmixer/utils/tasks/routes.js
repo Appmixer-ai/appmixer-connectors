@@ -1,6 +1,5 @@
 'use strict';
 const check = require('check-types');
-const { parseMD } = require('./lib');
 
 /**
  * @param {Object} context
@@ -70,13 +69,13 @@ module.exports = (context, options) => {
         path: '/tasks',
         options: {
             handler: async req => {
+
                 const user = await context.http.auth.getUser(req);
                 const { selector, limit, offset, sort, projection } =
                     await utils.prepareTasksQuery(user, req.query);
                 const tasks = await Task.find(selector, { limit, skip: offset, sort, projection });
 
                 return tasks.map(task => {
-                    task.description = parseMD(context, task.description);
                     return task.addIsApprover(user, req.query.secret).toJson();
                 });
             },

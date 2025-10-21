@@ -1,15 +1,23 @@
-const commons = require('../salesforce-commons');
+const commons = require('../lib');
 
 module.exports = {
 
     async receive(context) {
 
-        const {
-            objectName
-        } = context.messages.in.content;
+        const { objectName, fieldName } = context.messages.in.content;
 
-        return context.sendJson({
-            fields: await commons.api.getObjectFields(context, { objectName })
-        }, 'out');
+        const fields = await commons.api.getObjectFields(context, {
+            objectName,
+            cache: context.properties.variableFetch || false
+        });
+
+        if (fieldName) {
+            const singleField = fields.find(field => field.name === fieldName);
+            if (singleField) {
+                return context.sendJson({ fields: [singleField] }, 'out');
+            }
+        }
+
+        return context.sendJson({ fields }, 'out');
     }
 };

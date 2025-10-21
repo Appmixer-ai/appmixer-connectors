@@ -5,6 +5,22 @@ const ActiveCampaign = require('../../ActiveCampaign');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.email) {
+            throw new context.CancelError('Email is required');
+        }
+
+        if (!context.messages.in.content.firstName) {
+            throw new context.CancelError('First name is required');
+        }
+
+        if (!context.messages.in.content.lastName) {
+            throw new context.CancelError('Last name is required');
+        }
+
+        if (!context.messages.in.content.phone) {
+            throw new context.CancelError('Phone is required');
+        }
+
 
         const {
             email,

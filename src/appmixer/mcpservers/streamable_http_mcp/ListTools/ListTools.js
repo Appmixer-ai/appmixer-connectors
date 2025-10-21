@@ -13,7 +13,7 @@ module.exports = {
         return context.sendJson(result, 'out');
     },
 
-    toolsToSelectArray: async function(out) {
+    toolsToSelectArray: function(out) {
 
         return (out.tools || []).map(tool => ({ label: tool.name, value: tool.name }));
     }

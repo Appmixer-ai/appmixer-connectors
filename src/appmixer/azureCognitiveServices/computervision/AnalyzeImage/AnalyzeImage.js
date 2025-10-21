@@ -6,6 +6,10 @@ const lib = require('../../lib');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.imageUrl) {
+            throw new context.CancelError('Image URL is required');
+        }
+
 
         let { imageUrl, language, visualFeatures } = context.messages.in.content;
 

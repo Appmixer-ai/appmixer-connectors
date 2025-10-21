@@ -3,6 +3,10 @@
 module.exports = {
     async receive(context) {
         const { type, name, width, height, title } = context.messages.in.content;
+        if (!type) {
+            throw new context.CancelError('Type Of Design is required');
+        }
+
 
         // https://www.canva.dev/docs/connect//create-design
         const body = {};

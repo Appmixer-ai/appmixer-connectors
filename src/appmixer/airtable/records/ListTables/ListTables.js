@@ -16,6 +16,11 @@ module.exports = {
             returnType
         } = context.properties;
         const { baseId, outputType, isSource } = context.messages.in.content;
+        if (!baseId) {
+            throw new context.CancelError('Base ID is required');
+        }
+
+
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }

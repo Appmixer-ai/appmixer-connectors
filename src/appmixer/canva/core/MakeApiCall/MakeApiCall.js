@@ -3,6 +3,14 @@
 module.exports = {
     async receive(context) {
         const { url, method, body } = context.messages.in.content;
+        if (!url) {
+            throw new context.CancelError('API Endpoint URL is required');
+        }
+
+        if (!method) {
+            throw new context.CancelError('HTTP Method is required');
+        }
+
 
         const requestOptions = {
             method: method,

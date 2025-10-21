@@ -11,6 +11,14 @@ module.exports = {
 
         const client = commons.getAsanaAPI(context.auth.accessToken);
         const { project } = context.messages.in.content;
+        if (!workspace) {
+            throw new context.CancelError('Workspace is required');
+        }
+
+        if (!project) {
+            throw new context.CancelError('Project is required');
+        }
+
 
         await client.projects.delete(project);
 

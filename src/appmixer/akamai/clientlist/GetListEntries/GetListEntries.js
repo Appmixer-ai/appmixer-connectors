@@ -11,6 +11,10 @@ module.exports = {
             context.auth;
         const { generateOutputPortOptions } = context.properties;
         const { listId, outputType, isSource } = context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List is required');
+        }
+
 
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);

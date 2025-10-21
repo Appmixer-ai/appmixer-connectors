@@ -4,6 +4,10 @@ const ActiveCampaign = require('../../ActiveCampaign');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.contactId) {
+            throw new context.CancelError('Contact is required');
+        }
+
 
         const { auth } = context;
         const {

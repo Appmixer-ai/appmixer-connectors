@@ -1,4 +1,5 @@
 'use strict';
+
 const lib = require('../../lib');
 
 module.exports = {
@@ -60,6 +61,7 @@ module.exports = {
         // Normalize and validate requester / approver (must be exactly one each)
         body.requester = normalizeSlackUser(body.requester, 'Requester');
         body.approver = normalizeSlackUser(body.approver, 'Approver');
+        body.webhookUrl = context.getWebhookUrl();
 
         if (body.decisionBy) {
             const decisionDate = new Date(body.decisionBy);
@@ -81,11 +83,7 @@ module.exports = {
             body
         });
 
-        const webhook = await context.callAppmixer({
-            endPoint: '/plugins/appmixer/slack/tasks/webhooks',
-            method: 'POST',
-            body: { url: context.getWebhookUrl(), taskId: task.taskId }
-        });
+        await context.addListener('slack_task_' + context.componentId, { accessToken: context.auth.accessToken });
 
         // Send Slack message to the channel when task is created
         const {
@@ -102,6 +100,9 @@ module.exports = {
         // Format decisionBy to YYYY-MM-DD HH:MM for human-readable display
         const decisionByReadable = decisionBy ? new Date(decisionBy).toLocaleString('sv-SE', { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' }).replace('T', ' ') : 'N/A';
 
+        const origin = new URL(context.getWebhookUrl()).origin;
+        // Max action value length is 2000 characters: https://docs.slack.dev/reference/block-kit/block-elements/button-element#fields
+        const actionValue = [task.taskId, origin].join('|');
         const blocks = [
             { type: 'section', text: { type: 'mrkdwn', text: `*${title}*\n${description}` } },
             { type: 'context', elements: [
@@ -109,8 +110,8 @@ module.exports = {
                 { type: 'mrkdwn', text: `*Decision by:* ${decisionByReadable}` }
             ] },
             { type: 'actions', elements: [
-                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: task.taskId, action_id: 'task_approve' },
-                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: task.taskId, action_id: 'task_reject' }
+                { type: 'button', text: { type: 'plain_text', text: 'Approve' }, style: 'primary', value: actionValue, action_id: 'task_approve' },
+                { type: 'button', text: { type: 'plain_text', text: 'Reject' }, style: 'danger', value: actionValue, action_id: 'task_reject' }
             ] }
         ];
 
@@ -129,20 +130,12 @@ module.exports = {
         );
 
         await context.sendJson(task, 'created');
-
-        await context.stateSet(webhook.webhookId, {});
     },
 
     async stop(context) {
 
-        const state = await context.loadState();
-
-        return Promise.all(Object.keys(state).map(webhookId => {
-
-            return context.callAppmixer({
-                endPoint: `/plugins/appmixer/slack/tasks/webhooks/${webhookId}`,
-                method: 'DELETE'
-            });
-        }));
+        // Remove all listeners created by this connector instance.
+        // This still leaves the tasks in the DB and scheduled jobs intact.
+        await context.removeListener('slack_task_' + context.componentId);
     }
 };

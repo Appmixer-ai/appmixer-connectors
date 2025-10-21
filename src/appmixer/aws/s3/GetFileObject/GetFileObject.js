@@ -10,6 +10,15 @@ module.exports = {
     async receive(context) {
 
         const { bucket, key } = context.messages.in.content;
+        if (!bucket) {
+            throw new context.CancelError('Bucket is required');
+        }
+
+        if (!key) {
+            throw new context.CancelError('Object Key is required');
+        }
+
+
         const { s3 } = commons.init(context);
         const params = { Bucket: bucket, Key: key };
         const metadata = await s3.headObject(params).promise();

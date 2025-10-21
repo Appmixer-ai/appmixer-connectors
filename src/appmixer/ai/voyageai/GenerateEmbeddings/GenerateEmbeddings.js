@@ -17,6 +17,10 @@ module.exports = {
             chunkSize = 500,
             chunkOverlap = 50
         } = context.messages.in.content;
+        if (!text) {
+            throw new context.CancelError('Text is required');
+        }
+
 
         const chunks = await this.splitText(text, chunkSize, chunkOverlap);
         await context.log({ step: 'split-text', message: 'Text succesfully split into chunks.', chunksLength: chunks.length });

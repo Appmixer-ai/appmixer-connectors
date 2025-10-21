@@ -34,6 +34,18 @@ module.exports = {
         const { apiKey, email } = context.auth;
         const { accountsFetch, listFetch } = context.properties;
         const { account, list, ips, ttl, comment } = context.messages.in.content;
+        if (!account) {
+            throw new context.CancelError('Account is required');
+        }
+
+        if (!list) {
+            throw new context.CancelError('List is required');
+        }
+
+        if (!ips) {
+            throw new context.CancelError('IPs is required');
+        }
+
 
         if (accountsFetch || listFetch) {
             return await lib.fetchInputs(context, { account, listFetch, accountsFetch });

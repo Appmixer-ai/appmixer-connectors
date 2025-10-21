@@ -5,6 +5,10 @@ const lib = require('../../lib');
 module.exports = {
     async receive(context) {
         const { folderId, outputType, sort } = context.messages.in.content;
+        if (!folderId) {
+            throw new context.CancelError('Folder ID is required');
+        }
+
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Lists', value: 'result' });

@@ -19,6 +19,14 @@ module.exports = {
             notifyAll,
             parent
         } = context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List ID is required');
+        }
+
+        if (!name) {
+            throw new context.CancelError('Name is required');
+        }
+
 
         const clickUpClient = new ClickUpClient(context);
 

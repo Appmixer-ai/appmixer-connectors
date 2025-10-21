@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../salesforce-commons');
+const commons = require('../lib');
 
 /**
  * Build contact.

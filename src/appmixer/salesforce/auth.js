@@ -1,6 +1,3 @@
-'use strict';
-const request = require('request-promise');
-
 module.exports = {
 
     type: 'oauth2',
@@ -33,7 +30,7 @@ module.exports = {
 
             accountNameFromProfileInfo: 'email',
 
-            requestAccessToken: context => {
+            requestAccessToken: async context => {
 
                 const { baseUrl = 'https://login.salesforce.com' } = context.authConfig;
 
@@ -50,40 +47,39 @@ module.exports = {
 
                 const tokenUrl = url.toString();
 
-                return request({
+                const { data } = await context.httpRequest({
                     method: 'POST',
-                    url: tokenUrl,
-                    json: true
-                }).then(result => {
-                    //token has no expiration date but there is timeout for session timeout
-                    //default value is 2hrs
-                    let newDate = new Date();
-                    newDate.setSeconds(newDate.getSeconds() + 60 * 120);
-                    instanceId = result['id'];
-                    instanceUrl = result['instance_url'];
-                    return {
-                        accessToken: result['access_token'],
-                        refreshToken: result['refresh_token'],
-                        accessTokenExpDate: newDate
-                    };
+                    url: tokenUrl
                 });
+
+                //token has no expiration date but there is timeout for session timeout
+                //default value is 2hrs
+                const newDate = new Date();
+                newDate.setSeconds(newDate.getSeconds() + 60 * 120);
+                instanceId = data['id'];
+                instanceUrl = data['instance_url'];
+
+                return {
+                    accessToken: data['access_token'],
+                    refreshToken: data['refresh_token'],
+                    accessTokenExpDate: newDate
+                };
             },
 
-            requestProfileInfo: context => {
+            requestProfileInfo: async context => {
 
-                return request({
+                const { data } = await context.httpRequest({
                     method: 'GET',
                     url: instanceId,
-                    auth: {
-                        bearer: context.accessToken
-                    },
-                    json: true
-                }).then(result => {
-                    return { instanceUrl: instanceUrl, email: result['email'] };
+                    headers: {
+                        'Authorization': `Bearer ${context.accessToken}`
+                    }
                 });
+
+                return { instanceUrl, instanceId, email: data['email'] };
             },
 
-            refreshAccessToken: context => {
+            refreshAccessToken: async context => {
 
                 const { baseUrl = 'https://login.salesforce.com' } = context.authConfig;
 
@@ -99,20 +95,19 @@ module.exports = {
 
                 const tokenRefreshUrl = url.toString();
 
-                return request({
+                const { data } = await context.httpRequest({
                     method: 'POST',
-                    url: tokenRefreshUrl,
-                    json: true
-                }).then(result => {
-                    let newDate = new Date();
-                    newDate.setSeconds(newDate.getSeconds() + 60 * 120);
-                    instanceId = result['id'];
-                    instanceUrl = result['instance_url'];
-                    return {
-                        accessToken: result['access_token'],
-                        accessTokenExpDate: newDate
-                    };
+                    url: tokenRefreshUrl
                 });
+
+                const newDate = new Date();
+                newDate.setSeconds(newDate.getSeconds() + 60 * 120);
+                instanceId = data['id'];
+                instanceUrl = data['instance_url'];
+                return {
+                    accessToken: data['access_token'],
+                    accessTokenExpDate: newDate
+                };
             },
 
             validateAccessToken: context => {

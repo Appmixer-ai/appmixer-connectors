@@ -1,4 +1,4 @@
-const commons = require('../salesforce-commons');
+const commons = require('../lib');
 
 module.exports = {
 

@@ -4,6 +4,11 @@ module.exports = {
     async receive(context) {
 
         const { mapName } = context.messages.in.content;
+        if (!mapName) {
+            throw new context.CancelError('Key Value Map Name  is required');
+        }
+
+
         const { org, env } = context.properties;
 
         // https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/v1/organizations.environments.keyvaluemaps.entries/list

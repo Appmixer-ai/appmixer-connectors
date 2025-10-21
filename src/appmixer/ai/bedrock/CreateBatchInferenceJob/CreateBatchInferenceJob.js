@@ -64,6 +64,39 @@ module.exports = {
         }
 
         const input = context.messages.in.content;
+        if (!input['region']) {
+            throw new context.CancelError('Region is required');
+        }
+
+        if (!input['model']) {
+            throw new context.CancelError('Model is required');
+        }
+
+        if (!input['roleArn']) {
+            throw new context.CancelError('Role ARN is required');
+        }
+
+        if (!input['jobName']) {
+            throw new context.CancelError('Job Name is required');
+        }
+
+        if (!input['s3OutputObjectBucket']) {
+            throw new context.CancelError('Output S3 Object Bucket is required');
+        }
+
+        if (!input['s3OutputObjectKey']) {
+            throw new context.CancelError('Output S3 Object Key is required');
+        }
+
+        if (!input['s3InputObjectBucket']) {
+            throw new context.CancelError('Input S3 Object Bucket is required');
+        }
+
+        if (!input['s3InputObjectKey']) {
+            throw new context.CancelError('Input S3 Object Key is required');
+        }
+
+
         const {
             jobName,
             roleArn,

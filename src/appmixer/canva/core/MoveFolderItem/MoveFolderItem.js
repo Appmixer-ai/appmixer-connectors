@@ -4,6 +4,14 @@ module.exports = {
     async receive(context) {
 
         const { itemId, toFolderId } = context.messages.in.content;
+        if (!itemId) {
+            throw new context.CancelError('Item ID is required');
+        }
+
+        if (!toFolderId) {
+            throw new context.CancelError('Destination Folder ID is required');
+        }
+
 
         // https://www.canva.dev/docs/connect/api-reference/folders/move-folder-item/#http-method-and-url-path
         const response = await context.httpRequest({

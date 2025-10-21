@@ -1,8 +1,11 @@
 'use strict';
 
+const { sendArrayOutput } = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
+
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const {
             outputType = 'array',
@@ -17,67 +20,48 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
-        try {
-            // Build query parameters
-            const queryParams = new URLSearchParams();
+        // Build query parameters
+        const queryParams = new URLSearchParams();
 
-            if (status) {
-                queryParams.append('status', status);
-            }
-
-            if (title) {
-                queryParams.append('title', title);
-            }
-
-            if (requester) {
-                queryParams.append('requester', requester);
-            }
-
-            if (approver) {
-                queryParams.append('approver', approver);
-            }
-
-            queryParams.append('limit', limit.toString());
-
-            // Make HTTP request to the tasks API
-            const response = await context.callAppmixer({
-                method: 'GET',
-                endPoint: `/plugins/appmixer/slack/tasks?${queryParams.toString()}`,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response) {
-                throw new Error('Failed to fetch request approvals');
-            }
-
-            // Transform tasks to include human-readable date
-            const transformedTasks = response.map(task => {
-                // Add human-readable decision by date
-                if (task.decisionBy) {
-                    const decisionByDate = new Date(task.decisionBy);
-                    task.decisionByReadable = decisionByDate.toLocaleString();
-                }
-
-                return task;
-            });
-
-            // Handle different output types
-            if (outputType === 'first') {
-                return context.sendJson(transformedTasks[0] || {}, 'out');
-            } else if (outputType === 'object') {
-                for (const task of transformedTasks) {
-                    await context.sendJson(task, 'out');
-                }
-                return;
-            } else { // array
-                return context.sendJson({ count: transformedTasks.length, result: transformedTasks }, 'out');
-            }
-        } catch (error) {
-            context.log('error', 'Failed to find request approvals', error);
-            throw new Error(`Failed to find request approvals: ${error.message}`);
+        if (status && status !== 'all') {
+            queryParams.append('status', status);
         }
+
+        if (title) {
+            queryParams.append('title', title);
+        }
+
+        if (requester) {
+            queryParams.append('requester', requester);
+        }
+
+        if (approver) {
+            queryParams.append('approver', approver);
+        }
+
+        queryParams.append('limit', limit.toString());
+
+        // Make HTTP request to the tasks API
+        const response = await context.callAppmixer({
+            method: 'GET',
+            endPoint: `/plugins/appmixer/slack/tasks?${queryParams.toString()}`,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Transform tasks to include human-readable date
+        const transformedTasks = response.map(task => {
+            // Add human-readable decision by date
+            if (task.decisionBy) {
+                const decisionByDate = new Date(task.decisionBy);
+                task.decisionByReadable = decisionByDate.toLocaleString();
+            }
+
+            return task;
+        });
+
+        return sendArrayOutput({ context, outputPortName: 'out', outputType, records: transformedTasks });
     },
 
     getOutputPortOptions(context, outputType) {
@@ -116,7 +100,7 @@ module.exports = {
                     created: { type: 'string', title: 'Created' }
                 } } } }
             ], 'out');
-        } else { // file (future-proof if added)
+        } else { // file
             return context.sendJson([
                 { label: 'File ID', value: 'fileId' },
                 { label: 'Total Count', value: 'count', schema: { type: 'integer' } }

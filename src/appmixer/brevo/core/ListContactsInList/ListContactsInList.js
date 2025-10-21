@@ -5,6 +5,10 @@ const lib = require('../../lib');
 module.exports = {
     async receive(context) {
         const { listId, outputType, sort } = context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List ID is required');
+        }
+
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Contacts', value: 'result' });

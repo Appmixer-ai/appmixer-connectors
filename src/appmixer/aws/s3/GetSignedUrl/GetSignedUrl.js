@@ -6,6 +6,15 @@ module.exports = {
     async receive(context) {
 
         const { bucket, key, expires = 86400, operation = 'getObject' } = context.messages.in.content;
+        if (!bucket) {
+            throw new context.CancelError('Bucket is required');
+        }
+
+        if (!key) {
+            throw new context.CancelError('Object Key is required');
+        }
+
+
         const { s3 } = commons.init(context);
         const url = await s3.getSignedUrlPromise(operation, { Bucket: bucket, Key: key, Expires: expires });
         const msg = {

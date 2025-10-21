@@ -30,6 +30,18 @@ module.exports = {
     async receive(context) {
 
         const { account, list, ips } = context.messages.in.content;
+        if (!account) {
+            throw new context.CancelError('Account is required');
+        }
+
+        if (!list) {
+            throw new context.CancelError('List is required');
+        }
+
+        if (!ips) {
+            throw new context.CancelError('IPs is required');
+        }
+
 
         const ipsList = lib.parseIPs(ips);
 

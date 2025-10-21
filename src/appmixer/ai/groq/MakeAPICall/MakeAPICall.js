@@ -14,9 +14,9 @@ module.exports = {
         }
 
         // https://console.groq.com/docs/api-reference#api-call
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: method,
-            url: `https://api.groq.com/v1/${url}`,
+            url: `https://api.groq.com/openai/v1/${url}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 ...headers // Spread any additional headers provided in the input
@@ -24,6 +24,10 @@ module.exports = {
             data: body || null // Use body if provided, otherwise null
         });
 
-        return context.sendJson(data, 'out');
+        await context.sendJson({
+            status: response.status,
+            headers: response.headers,
+            body: response.data
+        }, 'out');
     }
 };

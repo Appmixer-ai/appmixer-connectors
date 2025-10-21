@@ -1,0 +1,200 @@
+{
+    "name": "appmixer.front.message.ReplyMessage",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Reply to a conversation by sending a message and appending it to the existing conversation.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "conversationId": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "authorId": {
+                        "type": "string"
+                    },
+                    "senderName": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "cc": {
+                        "type": "string"
+                    },
+                    "bcc": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    },
+                    "archive": {
+                        "type": "boolean"
+                    }
+                },
+                "required": ["conversationId", "body"]
+            },
+            "inspector": {
+                "inputs": {
+                    "conversationId": {
+                        "type": "text",
+                        "label": "Conversation ID",
+                        "index": 0,
+                        "tooltip": "The ID of the conversation to reply to"
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "label": "Body",
+                        "index": 1,
+                        "tooltip": "The body of the message (plain text or HTML)"
+                    },
+                    "to": {
+                        "type": "text",
+                        "label": "To (Recipients)",
+                        "index": 2,
+                        "tooltip": "Comma-separated list of recipient email addresses"
+                    },
+                    "authorId": {
+                        "type": "text",
+                        "label": "Author ID",
+                        "index": 3,
+                        "tooltip": "The teammate ID of the message author",
+                        "source": {
+                            "url": "/component/appmixer/front/teammates/ListTeammates?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeammates#toSelectArray"
+                            }
+                        }
+                    },
+                    "senderName": {
+                        "type": "text",
+                        "label": "Sender Name",
+                        "index": 4,
+                        "tooltip": "Name to display as the sender"
+                    },
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "index": 5,
+                        "tooltip": "The subject line of the message"
+                    },
+                    "channelId": {
+                        "type": "text",
+                        "label": "Channel ID",
+                        "index": 6,
+                        "tooltip": "Channel ID the message is sent from"
+                    },
+                    "cc": {
+                        "type": "text",
+                        "label": "CC",
+                        "index": 7,
+                        "tooltip": "Comma-separated list of CC email addresses"
+                    },
+                    "bcc": {
+                        "type": "text",
+                        "label": "BCC",
+                        "index": 8,
+                        "tooltip": "Comma-separated list of BCC email addresses"
+                    },
+                    "tags": {
+                        "type": "text",
+                        "label": "Tags",
+                        "index": 9,
+                        "tooltip": "Comma-separated list of tags for the message"
+                    },
+                    "archive": {
+                        "type": "toggle",
+                        "label": "Archive",
+                        "index": 10,
+                        "defaultValue": true,
+                        "tooltip": "Archive the conversation right when sending the message"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Message ID", "value": "id" },
+                { "label": "Message UID", "value": "message_uid" },
+                { "label": "Type", "value": "type" },
+                { "label": "Is Inbound", "value": "is_inbound" },
+                { "label": "Is Draft", "value": "is_draft" },
+                { "label": "Created At", "value": "created_at" },
+                { "label": "Blurb", "value": "blurb" },
+                { "label": "Body", "value": "body" },
+                { "label": "Text", "value": "text" },
+                { "label": "Error Type", "value": "error_type" },
+                { "label": "Version", "value": "version" },
+                { "label": "Subject", "value": "subject" },
+                { "label": "Draft Mode", "value": "draft_mode" },
+                { "label": "Metadata", "value": "metadata", "schema": { "type": "object" } },
+                { "label": "Author", "value": "author" },
+                { 
+                    "label": "Recipients", 
+                    "value": "recipients", 
+                    "schema": { 
+                        "type": "array", 
+                        "items": { 
+                            "type": "object", 
+                            "properties": { 
+                                "name": { "type": "string" }, 
+                                "handle": { "type": "string" }, 
+                                "role": { "type": "string" } 
+                            } 
+                        } 
+                    } 
+                },
+                {
+                    "label": "Attachments",
+                    "value": "attachments",
+                    "schema": {
+                        "type": "array"
+                    }
+                },
+                { "label": "Signature", "value": "signature" },
+                { "label": "Conversation Reference", "value": "conversation_reference" },
+                { "label": "Status", "value": "status" },
+                {
+                    "label": "Links",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "string"
+                            },
+                            "related": {
+                                "type": "object"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

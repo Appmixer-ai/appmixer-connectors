@@ -38,6 +38,10 @@ function buildOptions(attributes) {
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.domain) {
+            throw new context.CancelError('Company domain is required');
+        }
+
 
         if (context.messages.webhook) {
             let res = context.messages.webhook.content.data.body;

@@ -49,7 +49,9 @@ module.exports = {
             filename = lib.escapeSpecialCharacters(filename);
             const query = `name='${filename}' and parents in '${folder ? folderId : 'root'}' and trashed=false`;
             const { data } = await drive.files.list({
-                q: query
+                q: query,
+                supportsAllDrives: true,
+                includeItemsFromAllDrives: true
             });
             const { files = [] } = data;
             if (files.length > 0) {
@@ -60,7 +62,8 @@ module.exports = {
                         mimeType: contentType,
                         body: fileStream
                     },
-                    fields: '*'
+                    fields: '*',
+                    supportsAllDrives: true
                 });
             } else {
                 // If no file exists, just create new file
@@ -70,7 +73,8 @@ module.exports = {
                         mimeType: contentType,
                         body: fileStream
                     },
-                    fields: '*'
+                    fields: '*',
+                    supportsAllDrives: true
                 });
             }
         } else {
@@ -80,7 +84,8 @@ module.exports = {
                     mimeType: contentType,
                     body: fileStream
                 },
-                fields: '*'
+                fields: '*',
+                supportsAllDrives: true
             });
         }
 
@@ -92,13 +97,13 @@ module.exports = {
 };
 
 const conversionTypes = {
-    'application/msword' : 'application/vnd.google-apps.document',  // doc
-    'application/rtf' : 'application/vnd.google-apps.document',  // rtf
-    'text/plain' : 'application/vnd.google-apps.document',  // txt
+    'application/msword': 'application/vnd.google-apps.document',  // doc
+    'application/rtf': 'application/vnd.google-apps.document',  // rtf
+    'text/plain': 'application/vnd.google-apps.document',  // txt
     'application/vnd.oasis.opendocument.text': 'application/vnd.google-apps.document',  // odt
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/vnd.google-apps.document', // docx
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'application/vnd.google-apps.document', // docx
 
-    'text/csv' : 'application/vnd.google-apps.spreadsheet',  // csv
+    'text/csv': 'application/vnd.google-apps.spreadsheet',  // csv
     'text/tab-separated-values': 'application/vnd.google-apps.spreadsheet',  // tsv
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'application/vnd.google-apps.spreadsheet',  // xlsx
     'application/x-vnd.oasis.opendocument.spreadsheet': 'application/vnd.google-apps.spreadsheet',  // ods

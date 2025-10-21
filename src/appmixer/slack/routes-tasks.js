@@ -3,9 +3,8 @@
 module.exports = (context) => {
 
     const querystring = require('querystring');
-    const utils = require('./tasks/utils.js')(context);
-    const Task = require('./tasks/SlackTaskModel.js')(context);
-    const Webhook = require('./tasks/SlackWebhookModel.js')(context);
+    const utils = require('./taskUtils.js')(context);
+    const Task = require('./SlackTaskModel.js')(context);
     const slackLib = require('./lib.js');
 
     context.http.router.register({
@@ -14,41 +13,6 @@ module.exports = (context) => {
         options: {
             handler: () => ({ version: '1.0' }),
             auth: false
-        }
-    });
-
-    context.http.router.register({
-        method: 'POST',
-        path: '/tasks/webhooks',
-        options: {
-            handler: req => {
-
-                const { url, taskId } = req.payload;
-
-                return new Webhook().populate({
-                    url,
-                    taskId,
-                    created: new Date(),
-                    status: Webhook.STATUS_PENDING
-                }).save();
-            },
-            validate: {
-                payload: context.http.Joi.object({
-                    url: context.http.Joi.string().uri().required(),
-                    taskId: context.http.Joi.string().required()
-                })
-            }
-        }
-    });
-
-    context.http.router.register({
-        method: 'DELETE',
-        path: '/tasks/webhooks/{webhookId}',
-        options: {
-            handler: async (req, h) => {
-                await Webhook.deleteById(req.params.webhookId);
-                return h.response({});
-            }
         }
     });
 
@@ -105,7 +69,7 @@ module.exports = (context) => {
             auth: false,
             validate: {
                 query: context.http.Joi.object({
-                    status: context.http.Joi.string().valid('pending', 'approved', 'rejected', 'due'),
+                    status: context.http.Joi.string().valid('pending', 'approved', 'rejected', 'due', 'error'),
                     title: context.http.Joi.string(),
                     requester: context.http.Joi.string(),
                     approver: context.http.Joi.string(),
@@ -140,6 +104,7 @@ module.exports = (context) => {
                     requester: context.http.Joi.string().required(), // Slack user ID
                     approver: context.http.Joi.string().required(), // Slack user ID
                     channel: context.http.Joi.string().required(), // Slack channel ID
+                    webhookUrl: context.http.Joi.string().uri().required(),
                     decisionBy: context.http.Joi.date().iso(),
                     username: context.http.Joi.string(),
                     iconUrl: context.http.Joi.string()
@@ -170,14 +135,70 @@ module.exports = (context) => {
                 const parsed = querystring.parse(rawBody);
                 const payload = JSON.parse(parsed.payload);
 
-                // Validate Slack signature
-                if (!slackLib.isValidPayload(context, req)) {
+                // Validate Slack signature if this is engine pod and not using AuthHub
+                const isFromAuthHub = !!req.headers?.['x-appmixer-forwarded-from-authhub'];
+                if (!isFromAuthHub && !slackLib.isValidPayload(context, req)) {
                     return h.response(undefined).code(401);
                 }
 
                 const { actions, response_url: responseUrl } = payload;
-                const taskId = actions[0].value;
+                if (!actions || !Array.isArray(actions) || actions.length === 0) {
+                    return h.response({ text: 'No actions found' }).code(400);
+                }
+                // value format: taskId|host, e.g. "taskId|https://api.acme.appmixer.cloud"
+                const [taskId, host] = actions[0].value?.split('|') || [];
+                if (!taskId) {
+                    context.log('error', 'slack-plugin-route-interaction-missing-task-id', payload);
+                    return h.response({ text: 'Missing task ID' }).code(400);
+                }
                 const action = actions[0].action_id;
+
+                // -- AuthHub processing start --
+                // If this is AuthHub, forward the request to the tenant
+                const isAuthHubPod = !!process.env.AUTH_HUB_URL && !process.env.AUTH_HUB_TOKEN;
+                if (isAuthHubPod) {
+                    if (!host) {
+                        context.log('error', 'slack-plugin-route-interaction-missing-host', { action, taskId });
+                        return h.response({ text: 'Missing tenant host information' }).code(400);
+                    } else if (process.env.AUTH_HUB_URL === host) {
+                        context.log('error', 'slack-plugin-route-interaction-invalid-host', { action, taskId, host });
+                        return h.response({ text: 'Invalid tenant host information' }).code(400);
+                    }
+
+                    // Forward the entire payload as-is to the tenant plugin
+                    // - we don't use the ususal context.triggerListeners because they trigger the component directly
+                    // - instead we need to go through the tenant's /interactions endpoint
+                    const tenantInteractionsURL = `${host}/plugins/appmixer/slack/interactions`;
+                    try {
+                        const { data, status } = await context.httpRequest({
+                            url: tenantInteractionsURL,
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'x-appmixer-forwarded-from-authhub': true
+                                // Not sending Slack signature headers, we already validated them
+                            },
+                            data: req.payload
+                        });
+                        return h.response(data).code(status);
+                    } catch (err) {
+                        // Possible reasons for failure:
+                        // - flow is stopped
+                        // - network error
+                        // - tenant pod not reachable
+                        // - tenant pod returns an error (4xx, 5xx)
+                        context.log('error', 'slack-plugin-route-interaction-forward-error', {
+                            action,
+                            taskId,
+                            host,
+                            error: context.utils.Error.stringify(err)
+                        });
+                        return h.response({ text: 'Error forwarding request to tenant' }).code(500);
+                    }
+                }
+                // -- AuthHub processing end --
+
+                // Normal processing below - tenant pod
 
                 // Handle Task Approval actions
                 if (action.startsWith('task_')) {
@@ -190,6 +211,7 @@ module.exports = (context) => {
         }
     });
 
+    /** This always runs in the tenant, never in AuthHub */
     async function handleTaskAction(context, h, action, taskId, payload, responseUrl) {
 
         const task = await Task.findById(taskId);
@@ -209,7 +231,7 @@ module.exports = (context) => {
             context.log('warn', 'slack-plugin-route-interaction-unauthorized-user', {
                 taskId,
                 actorUserId,
-                expectedApprover: task.approver()
+                expectedApprover: task.approver
             });
 
             // Send response to the user who clicked
@@ -218,7 +240,7 @@ module.exports = (context) => {
                 url: responseUrl,
                 headers: { 'Content-Type': 'application/json' },
                 data: {
-                    text: `❌ Only <@${task.approver()}> can approve or reject this task.`,
+                    text: `❌ Only <@${task.approver}> can approve or reject this task.`,
                     response_type: 'ephemeral'
                 }
             });
@@ -232,13 +254,13 @@ module.exports = (context) => {
             task.setStatus(Task.STATUS_APPROVED);
             task.setDecisionMade(new Date());
             task.setActor(actorUserId);
-            await utils.triggerWebhooks(task);
+            await utils.triggerWebhook(task);
             context.log('info', 'slack-plugin-route-interaction-task-approved', { taskId });
         } else if (action === 'task_reject') {
             task.setStatus(Task.STATUS_REJECTED);
             task.setDecisionMade(new Date());
             task.setActor(actorUserId);
-            await utils.triggerWebhooks(task);
+            await utils.triggerWebhook(task);
             context.log('info', 'slack-plugin-route-interaction-task-rejected', { taskId });
         } else {
             context.log('error', 'slack-plugin-route-interaction-unknown-action', { action });

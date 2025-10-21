@@ -5,6 +5,10 @@ const { BedrockRuntimeClient, ConverseCommand } = require('@aws-sdk/client-bedro
 module.exports = {
 
     receive: async function(context) {
+        if (!context.messages.in.content.model) {
+            throw new context.CancelError('Model is required');
+        }
+
 
         const { prompt, customInput = {}, region, model } = context.messages.in.content;
 

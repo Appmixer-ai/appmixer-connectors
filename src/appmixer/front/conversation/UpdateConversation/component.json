@@ -1,0 +1,97 @@
+{
+    "name": "appmixer.front.conversation.UpdateConversation",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Assign, move or change status of a conversation.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "assigneeId": {
+                        "type": "string"
+                    },
+                    "inboxId": {
+                        "type": "string"
+                    }
+                },
+                "required": ["id"]
+            },
+            "inspector": {
+                "inputs": {
+                    "id": {
+                        "type": "text",
+                        "label": "Conversation ID",
+                        "index": 0
+                    },
+                    "status": {
+                        "type": "select",
+                        "tooltip": "New status",
+                        "label": "Status",
+                        "options": [
+                            { "clearItem": true, "label": "<Empty>" },
+                            {
+                                "label": "Archived",
+                                "value": "archived"
+                            },
+                            {
+                                "label": "Open",
+                                "value": "open"
+                            },
+                            {
+                                "label": "Deleted",
+                                "value": "deleted"
+                            },
+                            {
+                                "label": "Spam",
+                                "value": "spam"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "assigneeId": {
+                        "type": "text",
+                        "tooltip": "Teammate ID to assign to",
+                        "label": "Assignee ID",
+                        "index": 2,
+                        "source": {
+                            "url": "/component/appmixer/front/teammates/ListTeammates?outPort=out",
+                            "data": {
+                                "message": {
+                                    "in/outputType": "array"
+                                },
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListTeammates#toSelectArray"
+                            }
+                        }
+                    },
+                    "inboxId": {
+                        "type": "text",
+                        "tooltip": "Move conversation to this inbox",
+                        "label": "Inbox ID",
+                        "index": 3
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

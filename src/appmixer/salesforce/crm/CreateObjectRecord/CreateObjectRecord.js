@@ -1,4 +1,4 @@
-const commons = require('../salesforce-commons');
+const commons = require('../lib');
 const _ = require('lodash');
 
 module.exports = {
@@ -58,36 +58,22 @@ async function generateInspector(context) {
     let fieldsInputs = {};
 
     if (objectName && !rawJson) {
-        const objectPropertiesCacheTTL = context.config.objectPropertiesCacheTTL || (5 * 60 * 1000);
-        const cacheKey = 'salesforce_properties_objectFields_' + objectName + '_' + context.auth.userId + context.auth.profileInfo.email;
-        let lock;
-        try {
-            lock = await context.lock(cacheKey);
-            const cached = await context.staticCache.get(cacheKey);
-            if (cached) {
-                fieldsInputs = cached;
-            } else {
-                const fields = await commons.api.getObjectFields(context, { objectName });
 
-                fieldsInputs = fields.reduce((res, item, index) => {
+        const fields = await commons.api.getObjectFields(context, { objectName, cache: true });
 
-                    if (item.createable) {
-                        res[item.name] = {
-                            index: index + 3,
-                            type: 'text',
-                            name: item.name,
-                            label: item.name,
-                            tooltip: item.label || item.name
-                        };
-                    }
-                    return res;
-                }, {});
+        fieldsInputs = fields.reduce((res, item, index) => {
 
-                await context.staticCache.set(cacheKey, fieldsInputs, objectPropertiesCacheTTL);
+            if (item.createable) {
+                res[item.name] = {
+                    index: index + 3,
+                    type: 'text',
+                    name: item.name,
+                    label: item.name,
+                    tooltip: item.label || item.name
+                };
             }
-        } finally {
-            lock?.unlock();
-        }
+            return res;
+        }, {});
 
     }
 

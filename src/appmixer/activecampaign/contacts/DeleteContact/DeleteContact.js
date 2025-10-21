@@ -8,6 +8,10 @@ module.exports = {
         const {
             contactId
         } = context.messages.in.content;
+        if (!contactId) {
+            throw new context.CancelError('Contact is required');
+        }
+
 
         const { auth } = context;
         const ac = new ActiveCampaign(auth.url, auth.apiKey, context);

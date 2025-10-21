@@ -68,6 +68,11 @@ module.exports = {
 
         const client = commons.getAsanaAPI(context.auth.accessToken);
         const { workspace, team } = context.messages.project.content;
+        if (!workspace) {
+            throw new context.CancelError('Workspace is required');
+        }
+
+
         let project = context.messages.project.content;
         let projectObj = buildProject(project, team, workspace);
 

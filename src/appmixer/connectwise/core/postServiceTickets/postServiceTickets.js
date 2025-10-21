@@ -14,6 +14,10 @@ module.exports = {
     httpRequest: async function(context) {
 
         const input = context.messages.in.content;
+        if (!input['summary']) {
+            throw new context.CancelError('Summary is required');
+        }
+
 
         let url = this.getBaseUrl(context) + '/service/tickets';
 

@@ -7,6 +7,14 @@ module.exports = {
     receive: async function(context) {
 
         const { text, jsonSchema: jsonSchemaString, model } = context.messages.in.content;
+        if (!text) {
+            throw new context.CancelError('Text is required');
+        }
+
+        if (!jsonSchema) {
+            throw new context.CancelError('Output JSON Schema is required');
+        }
+
 
         let jsonSchema;
         try {

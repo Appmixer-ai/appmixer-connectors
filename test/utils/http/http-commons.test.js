@@ -1,6 +1,3 @@
-const fs = require('fs');
-const { cwd } = require('process');
-const axios = require('axios');
 const sinon = require('sinon');
 const assert = require('assert');
 
@@ -8,15 +5,9 @@ describe('processResponse', () => {
 
     let axiosRequestStub;
 
-    before(() => {
-        // Stop if there are node modules installed in the connector folder.
-        const connectorPath = cwd() + '/src/appmixer/utils/http/node_modules';
-        if (fs.existsSync(connectorPath)) {
-            throw new Error(`For testing, please remove node_modules from ${connectorPath}`);
-        }
-    });
-
     beforeEach(() => {
+        // Stub axios from the http connector's node_modules
+        const axios = require('../../../src/appmixer/utils/http/node_modules/axios');
         axiosRequestStub = sinon.stub(axios, 'request').callsFake((options) => {
             return new Promise((resolve) => {
                 resolve({

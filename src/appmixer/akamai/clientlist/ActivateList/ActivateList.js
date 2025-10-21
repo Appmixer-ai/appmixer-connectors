@@ -8,6 +8,14 @@ module.exports = {
             context.auth;
         const { listId, network, comments } =
             context.messages.in.content;
+        if (!listId) {
+            throw new context.CancelError('List is required');
+        }
+
+        if (!network) {
+            throw new context.CancelError('Network is required');
+        }
+
 
         const body = { action: 'ACTIVATE', network, comments };
 

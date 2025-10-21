@@ -5,6 +5,11 @@ module.exports = {
     async receive(context) {
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { outputType } = context.messages.in.content;
+        if (!source) {
+            throw new context.CancelError('Currency Source is required');
+        }
+
+
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }

@@ -1,0 +1,124 @@
+{
+    "name": "appmixer.front.contacts.FindContacts",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Find contacts with sorting and date filtering options. Returns maximum 50 contacts per search.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:front"
+    },
+    "quota": {
+        "manager": "appmixer:front",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sortBy": {
+                        "type": "string",
+                        "enum": ["created_at", "updated_at"]
+                    },
+                    "sortOrder": {
+                        "type": "string",
+                        "enum": ["asc", "desc"]
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updatedBefore": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "sortBy": {
+                        "type": "select",
+                        "label": "Sort By",
+                        "index": 0,
+                        "tooltip": "Field to sort contacts by",
+                        "options": [
+                            { "label": "Created At", "value": "created_at" },
+                            { "label": "Updated At", "value": "updated_at" }
+                        ]
+                    },
+                    "sortOrder": {
+                        "type": "select",
+                        "label": "Sort Order",
+                        "index": 1,
+                        "tooltip": "Sort order for results",
+                        "options": [
+                            { "label": "Ascending", "value": "asc" },
+                            { "label": "Descending", "value": "desc" }
+                        ]
+                    },
+                    "updatedAfter": {
+                        "type": "date-time",
+                        "label": "Updated After",
+                        "index": 2,
+                        "tooltip": "Find contacts updated after this date and time"
+                    },
+                    "updatedBefore": {
+                        "type": "date-time",
+                        "label": "Updated Before",
+                        "index": 3,
+                        "tooltip": "Find contacts updated before this date and time"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/front/contacts/FindContacts?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAITgAACE4AUWWMWAAAAHhSURBVFhH7ZSxa9RgHIbf94sWtVfaQxB1celQx8KBuDjc5qIO3hlPxFHQofgXHDg6FccD63TlTP0HRKGTOAgOFRcpggilitrLtbbDXfI6yEn4NU01V3TJA9/yfL/kewhJgIKC/wytaDe6ZRdx3fpRofDJDyanrXdW4FfV2EEvEYftOdgr4F9SBBQBqZ+hF/G79UMENUX31vr9cLHb9oPSM+v/OgByVT+YWLY6LwcSsOiH51ysuwAviDhF6SvIl5BafjD1IjlrGekdCGryOvXuvJNegbwJ4gyBMZCnAdRAPu/Uw/byLR2x1w4ZKSByvYcg5wDuepK/IRqfd8KOoNSZ3AGLVzeqBO5Ynwp5Oaj1bliNUQKc581Zl0XscM865A1oNuUEVa3PRrPtRrdsba6A6dVvJQIl67MgSBe5k9bnCjg7fnwH0MD6/XCR19vlrPgTKi32Bb6xPhNp7drTY2tW5woAAMV6bF0WIhcAyvrcAZvl1UcCXlufhoQPR8cnHliPUQJutyp9L/YuQVixe0kkfQRx8cqC27R7SAuIOYggrOy1ojj6MZytL5XWw+2t8xDuA/iSvI+AUNB8fAiz159Mvk/uJUn9PeYhqMmjtzUTxTgx0GBjpjz1rtJi384VFFh+AjyJrpgJ+/G2AAAAAElFTkSuQmCC"
+}

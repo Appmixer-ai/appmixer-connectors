@@ -11,6 +11,10 @@ module.exports = {
 
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { workspace, outputType } = context.messages.in.content;
+        if (!workspace) {
+            throw new context.CancelError('Workspace is required');
+        }
+
 
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);

@@ -8,6 +8,10 @@ const commons = require('../../asana-commons');
 module.exports = {
 
     receive(context) {
+        if (!context.messages.in.content.task) {
+            throw new context.CancelError('Task is required');
+        }
+
 
         const client = commons.getAsanaAPI(context.auth.accessToken);
         let story = context.messages.story.content;

@@ -17,6 +17,10 @@ module.exports = {
             enrollmentTermId,
             enrollmentType
         } = context.messages.in.content;
+        if (!courseId) {
+            throw new context.CancelError('Course ID is required');
+        }
+
 
         // eslint-disable-next-line max-len
         const { data } = await client.listCourseEnrollmentUsers(courseId, enrollmentStatus, teacherId, gradingPeriodId, enrollmentTermId, enrollmentType);

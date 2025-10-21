@@ -8,6 +8,10 @@ module.exports = {
         const {
             dealId
         } = context.messages.in.content;
+        if (!dealId) {
+            throw new context.CancelError('Deal is required');
+        }
+
 
         const { auth } = context;
         const ac = new ActiveCampaign(auth.url, auth.apiKey, context);

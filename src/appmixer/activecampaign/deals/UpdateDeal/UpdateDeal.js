@@ -6,6 +6,10 @@ const { trimUndefined } = require('../../helpers');
 module.exports = {
 
     async receive(context) {
+        if (!context.messages.in.content.dealId) {
+            throw new context.CancelError('Deal is required');
+        }
+
 
         const {
             dealId,

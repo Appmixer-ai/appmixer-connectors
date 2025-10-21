@@ -8,6 +8,14 @@ module.exports = {
         const { apiToken } = context.auth;
         const { zoneId } = context.properties;
         const { ips, ttl } = context.messages.in.content;
+        if (!ips) {
+            throw new context.CancelError('IP address is required');
+        }
+
+        if (!ttl) {
+            throw new context.CancelError('TTL is required');
+        }
+
 
         if (ips.length === 0) {
             return context.sendJson([], 'out');
