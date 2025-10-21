@@ -10,15 +10,22 @@ module.exports = {
             throw new context.CancelError('Customer ID is required.');
         }
 
-        // https://developer.helpscout.com/mailbox-api/endpoints/customers/get/
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.helpscout.net/v2/customers/${id}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            }
-        });
+        try {
+            // https://developer.helpscout.com/mailbox-api/endpoints/customers/get/
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: `https://api.helpscout.net/v2/customers/${id}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
 
-        return context.sendJson(data, 'out');
+            return context.sendJson(data, 'out');
+        } catch (error) {
+            if (error.response?.status === 404) {
+                return context.sendJson({}, 'notFound');
+            }
+            throw error;
+        }
     }
 };

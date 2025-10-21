@@ -30,5 +30,12 @@ module.exports = {
 
         const records = data['_embedded']?.tags || [];
         return lib.sendArrayOutput({ context, records, outputType });
+    },
+
+    tagsToSelectArray(tags) {
+        return tags.map(tag => ({
+            label: tag.name,
+            value: tag.id
+        }));
     }
 };

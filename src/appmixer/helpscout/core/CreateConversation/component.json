@@ -21,69 +21,71 @@
                         "type": "string"
                     },
                     "mailboxId": {
-                        "type": "integer"
+                        "type": "string"
                     },
                     "subject": {
                         "type": "string"
                     },
-                    "customer|id": {
+                    "customerId": {
                         "type": "integer"
                     },
-                    "customer|email": {
+                    "customerEmail": {
                         "type": "string"
                     },
-                    "customer|firstName": {
+                    "customerFirstName": {
                         "type": "string"
                     },
-                    "customer|lastName": {
+                    "customerLastName": {
                         "type": "string"
                     },
-                    "threads|type": {
+                    "threadsType": {
                         "type": "string"
                     },
-                    "threads|text": {
+                    "threadsText": {
                         "type": "string"
                     },
-                    "threads|attachments|id": {
-                        "type": "string"
-                    },
-                    "tags": {
-                        "type": "object",
-                        "properties": {
-                            "AND": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "customFields|id": {
-                        "type": "integer"
-                    },
-                    "customFields|value": {
+                    "tags": {},
+                    "status": {
                         "type": "string"
                     }
-                }
+                },
+                "required": ["mailboxId", "subject", "threadsText", "type", "status"],
+                "anyOf": [
+                    {
+                        "required": ["customerId"]
+                    },
+                    {
+                        "required": ["customerEmail"]
+                    }
+                ]
             },
             "inspector": {
                 "inputs": {
                     "type": {
                         "type": "text",
-                        "tooltip": "Conversation type, e.g., email.",
+                        "tooltip": "Conversation type.",
                         "label": "Type",
-                        "index": 0
+                        "index": 0,
+                        "default": "email",
+                        "options": [
+                            {
+                                "label": "Email",
+                                "value": "email"
+                            },
+                            {
+                                "label": "Chat",
+                                "value": "chat"
+                            },
+                            {
+                                "label": "Phone",
+                                "value": "phone"
+                            }
+                        ]
                     },
                     "mailboxId": {
                         "type": "number",
                         "tooltip": "Mailbox ID where the conversation will be created.",
-                        "label": "Mailbox Id",
+                        "label": "Mailbox ID",
                         "index": 1
                     },
                     "subject": {
@@ -92,74 +94,90 @@
                         "label": "Subject",
                         "index": 2
                     },
-                    "customer|id": {
+                    "customerId": {
                         "type": "number",
                         "tooltip": "Existing customer ID.",
-                        "label": "Customer|id",
+                        "label": "Customer ID",
                         "index": 3
                     },
-                    "customer|email": {
+                    "customerEmail": {
                         "type": "text",
                         "tooltip": "Customer email.",
-                        "label": "Customer|email",
+                        "label": "Customer Email",
                         "index": 4
                     },
-                    "customer|firstName": {
+                    "customerFirstName": {
                         "type": "text",
                         "tooltip": "Customer first name.",
-                        "label": "Customer|first Name",
+                        "label": "Customer First Name",
                         "index": 5
                     },
-                    "customer|lastName": {
+                    "customerLastName": {
                         "type": "text",
                         "tooltip": "Customer last name.",
-                        "label": "Customer|last Name",
+                        "label": "Customer Last Name",
                         "index": 6
                     },
-                    "threads|type": {
+                    "threadsType": {
                         "type": "text",
-                        "tooltip": "Thread type: customer, agent, note.",
-                        "label": "Threads|type",
-                        "index": 7
+                        "tooltip": "Thread type.",
+                        "label": "Threads Type",
+                        "index": 7,
+                        "default": "customer",
+                        "options": [
+                            {
+                                "label": "Customer",
+                                "value": "customer"
+                            },
+                            {
+                                "label": "Agent",
+                                "value": "agent"
+                            },
+                            {
+                                "label": "Note",
+                                "value": "note"
+                            }
+                        ]
                     },
-                    "threads|text": {
+                    "threadsText": {
                         "type": "text",
-                        "tooltip": "Body (plain text or HTML).",
-                        "label": "Threads|text",
+                        "tooltip": "Body of the message.",
+                        "label": "Message",
                         "index": 8
                     },
-                    "threads|attachments|id": {
-                        "type": "text",
-                        "tooltip": "Attachment ID returned by /attachments.",
-                        "label": "Threads|attachments|id",
-                        "index": 9
-                    },
                     "tags": {
-                        "type": "expression",
-                        "tooltip": "Initial tags.",
+                        "type": "multiselect",
+                        "tooltip": "Tags to associate with the conversation.",
                         "label": "Tags",
-                        "levels": [
-                            "AND"
-                        ],
-                        "fields": {
-                            "tags_item": {
-                                "type": "text",
-                                "label": "Tags Item"
+                        "index": 9,
+                        "source": {
+                        "url": "/component/appmixer/helpscout/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray"
                             }
-                        },
-                        "index": 10
+                        }
+
                     },
-                    "customFields|id": {
-                        "type": "number",
-                        "tooltip": "Custom field ID.",
-                        "label": "Custom Fields|id",
-                        "index": 11
-                    },
-                    "customFields|value": {
+                    "status": {
                         "type": "text",
-                        "tooltip": "Value for the field.",
-                        "label": "Custom Fields|value",
-                        "index": 12
+                        "tooltip": "Conversation status.",
+                        "label": "Status",
+                        "index": 10,
+                        "default": "active",
+                        "options": [
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            },
+                            {
+                                "label": "Pending",
+                                "value": "pending"
+                            }
+                        ]
                     }
                 }
             }
@@ -170,46 +188,24 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
-                    "value": "id",
-                    "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Number",
-                    "value": "number",
-                    "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Subject",
-                    "value": "subject",
+                    "label": "Conversation Location",
+                    "value": "Location",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Status",
-                    "value": "status",
+                    "label": "Web URL",
+                    "value": "Web-Location",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Mailbox Id",
-                    "value": "mailboxId",
+                    "label": "Conversation ID",
+                    "value": "Resource-ID",
                     "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Links",
-                    "value": "_links",
-                    "schema": {
-                        "type": "object",
-                        "properties": {}
+                        "type": "string"
                     }
                 }
             ]
