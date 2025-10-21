@@ -36,11 +36,11 @@ module.exports = {
         });
 
         const records = data['_embedded']?.conversations || [];
-        
+
         if (records.length === 0) {
             return context.sendJson({}, 'notFound');
         }
-        
+
         return await lib.sendArrayOutput({ context, records, outputType });
     }
 };
