@@ -41,7 +41,7 @@ module.exports = {
 
     columnsToSelectArray({ columns }) {
 
-        return columns.map(column => {
+        return columns?.map(column => {
             return { label: column.title, value: column.id };
         });
     },
