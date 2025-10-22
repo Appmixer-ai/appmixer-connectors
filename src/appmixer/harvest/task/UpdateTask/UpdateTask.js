@@ -3,6 +3,7 @@
 module.exports = {
 
     async receive(context) {
+
         const {
             taskId,
             name,
@@ -44,8 +45,8 @@ module.exports = {
             url: `https://api.harvestapp.com/v2/tasks/${taskId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (auth@appmixer.ai)',
-                'Harvest-Account-ID': context.auth.accountId,
+                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'Harvest-Account-ID': context.auth.profileInfo.accountId,
                 'Content-Type': 'application/json'
             },
             data

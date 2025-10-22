@@ -1,9 +1,9 @@
-
 'use strict';
 
 module.exports = {
 
     async receive(context) {
+
         const {
             name,
             isActive,
@@ -37,8 +37,8 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/clients',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (auth@appmixer.ai)',
-                'Harvest-Account-ID': context.auth.accountId,
+                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'Harvest-Account-ID': context.auth.profileInfo.accountId,
                 'Content-Type': 'application/json'
             },
             data

@@ -2,6 +2,58 @@
 
 const lib = require('../../lib');
 
+module.exports = {
+
+    async receive(context) {
+
+        const {
+            client_id: clientId,
+            is_active: isActive,
+            updated_since: updatedSince,
+            outputType
+        } = context.messages.in.content;
+
+        // Generate output port schema dynamically based on outputType
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, projectSchema, { label: 'Projects' });
+        }
+
+        const params = {};
+
+        if (typeof isActive === 'boolean') {
+            params.is_active = isActive;
+        }
+
+        if (clientId) {
+            params.client_id = clientId;
+        }
+
+        if (updatedSince) {
+            params.updated_since = updatedSince;
+        }
+
+        // https://help.getharvest.com/api-v2/projects-api/projects/projects/#list-all-projects
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: 'https://api.harvestapp.com/v2/projects',
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`,
+                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'Harvest-Account-ID': context.auth.profileInfo.accountId
+            },
+            params
+        });
+
+        const projects = data.projects || [];
+
+        if (projects.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
+        return lib.sendArrayOutput({ context, records: projects, outputType });
+    }
+};
+
 // Schema for a single project
 const projectSchema = {
     'id': { 'type': 'integer', 'title': 'Project ID' },
@@ -36,55 +88,3 @@ const projectSchema = {
         'title': 'Client'
     }
 };
-
-module.exports = {
-
-    async receive(context) {
-        const {
-            client_id: clientId,
-            is_active: isActive,
-            updated_since: updatedSince,
-            outputType
-        } = context.messages.in.content;
-
-        // Generate output port schema dynamically based on outputType
-        if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, projectSchema, { label: 'Projects' });
-        }
-
-        const params = {};
-
-        if (typeof isActive === 'boolean') {
-            params.is_active = isActive;
-        }
-
-        if (clientId) {
-            params.client_id = clientId;
-        }
-
-        if (updatedSince) {
-            params.updated_since = updatedSince;
-        }
-
-        // https://help.getharvest.com/api-v2/projects-api/projects/projects/#list-all-projects
-        const response = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api.harvestapp.com/v2/projects',
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (auth@appmixer.ai)',
-                'Harvest-Account-ID': context.auth.accountId
-            },
-            params
-        });
-
-        const projects = response.data.projects || [];
-
-        if (projects.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
-
-        return lib.sendArrayOutput({ context, records: projects, outputType });
-    }
-};
-

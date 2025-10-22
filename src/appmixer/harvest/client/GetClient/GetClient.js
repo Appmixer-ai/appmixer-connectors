@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -16,13 +15,13 @@ module.exports = {
             url: `https://api.harvestapp.com/v2/clients/${clientId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Harvest-Account-Id': context.auth.accountId,
-                'User-Agent': 'Appmixer (support@appmixer.com)'
+                'Harvest-Account-Id': context.auth.profileInfo.accountId,
+                'User-Agent': 'Appmixer (info@appmixer.com)'
             }
         };
 
-        const response = await context.httpRequest(options);
+        const { data } = await context.httpRequest(options);
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data, 'out');
     }
 };

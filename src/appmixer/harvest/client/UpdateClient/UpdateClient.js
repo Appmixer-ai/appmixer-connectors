@@ -1,4 +1,3 @@
-
 'use strict';
 
 module.exports = {
@@ -23,8 +22,8 @@ module.exports = {
             url: `https://api.harvestapp.com/v2/clients/${clientId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Harvest-Account-Id': context.auth.accountId,
-                'User-Agent': 'Appmixer (support@appmixer.com)',
+                'Harvest-Account-Id': context.auth.profileInfo.accountId,
+                'User-Agent': 'Appmixer (info@appmixer.com)',
                 'Content-Type': 'application/json'
             },
             data: updateData

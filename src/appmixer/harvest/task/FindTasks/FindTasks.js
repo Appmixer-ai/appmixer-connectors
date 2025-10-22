@@ -5,32 +5,33 @@ const lib = require('../../lib');
 // Schema for a single task
 const taskSchema = {
     'id': { 'type': 'integer', 'title': 'Task ID' },
-    'name': { 'type': 'string', 'title': 'Task Name' },
-    'is_active': { 'type': 'boolean', 'title': 'Is Active' },
+    'name': { 'type': 'string', 'title': 'Name' },
     'billable_by_default': { 'type': 'boolean', 'title': 'Billable By Default' },
     'is_default': { 'type': 'boolean', 'title': 'Is Default' },
-    'default_hourly_rate': { 'type': ['number', 'null'], 'title': 'Default Hourly Rate' },
+    'is_active': { 'type': 'boolean', 'title': 'Is Active' },
     'created_at': { 'type': 'string', 'format': 'date-time', 'title': 'Created At' },
-    'updated_at': { 'type': 'string', 'format': 'date-time', 'title': 'Updated At' }
+    'updated_at': { 'type': 'string', 'format': 'date-time', 'title': 'Updated At' },
+    'default_hourly_rate': { 'type': 'number', 'title': 'Default Hourly Rate' }
 };
 
 module.exports = {
 
     async receive(context) {
+
         const {
             isActive,
             updatedSince,
             outputType
         } = context.messages.in.content;
 
-        context.log({ step: 'auth', auth: context.auth });
-
         // Generate output port schema dynamically based on outputType
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, taskSchema, { label: 'Tasks' });
         }
 
-        const params = {};
+        const params = {
+            per_page: 2000
+        };
 
         if (typeof isActive === 'boolean') {
             params.is_active = isActive;
@@ -41,18 +42,18 @@ module.exports = {
         }
 
         // https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/#list-all-tasks
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.harvestapp.com/v2/tasks',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (auth@appmixer.ai)',
-                'Harvest-Account-ID': context.auth.accountId
+                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'Harvest-Account-ID': context.auth.profileInfo.accountId
             },
             params
         });
 
-        const tasks = response.data.tasks || [];
+        const tasks = data.tasks || [];
 
         if (tasks.length === 0) {
             return context.sendJson({}, 'notFound');
