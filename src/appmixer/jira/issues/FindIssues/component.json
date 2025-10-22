@@ -14,9 +14,12 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "query": { "type": "string"},
-                    "validateQuery": { "type": "string"},
-                    "maxResults": { "type": "number"},
+                    "query": { "type": "string" },
+                    "maxResults": { "type": "number" },
+                    "fields": { "type": "string" },
+                    "properties": { "type": "string" },
+                    "fieldsByKeys": { "type": "boolean" },
+                    "failFast": { "type": "boolean" },
                     "sendWholeArray": { "type": "boolean" }
                 },
                 "required": ["query"]
@@ -24,39 +27,54 @@
             "inspector": {
                 "inputs": {
                     "query": {
-                        "type": "text",
+                        "type": "textarea",
                         "label": "JQL Query",
                         "tooltip": "JQL query string. <a href=\"https://confluence.atlassian.com/jirasoftwarecloud/advanced-searching-764478330.html\" target=\"_blank\">More about JQL</a>",
                         "index": 1
                     },
-                    "validateQuery": {
-                        "type": "select",
-                        "options": [
-                            { "value": "strict", "content": "strict" },
-                            { "value": "warn", "content": "warn" },
-                            { "value": "none", "content": "none" }
-                        ],
-                        "defaultValue": "none",
-                        "tooltip": "Determines how to validate the JQL query and treat the validation results",
-                        "label": "Validate Query",
-                        "index": 2
-                    },
                     "maxResults": {
                         "type": "number",
                         "label": "Max Results",
-                        "tooltip": "The maximum number of items to return. Default value is 50",
-                        "index": 3,
+                        "tooltip": "Maximum number of issues to return per query. Can be up to 5000 for optimal performance with ID/key only queries.",
+                        "index": 2,
                         "min": 1,
-                        "max": 100,
+                        "max": 5000,
                         "step": 1,
                         "defaultValue": 50
+                    },
+                    "fields": {
+                        "type": "text",
+                        "label": "Fields to Return",
+                        "tooltip": "A list of fields to return for each issue, use it to retrieve a subset of fields. This parameter accepts a comma-separated list.<br><br><strong>Options:</strong><br>• <code>*all</code> — Returns all fields<br>• <code>*navigable</code> — Returns navigable fields (default)<br>• <code>id</code> — Returns only issue IDs<br>• Any issue field, prefixed with a minus to exclude<br><br><strong>Examples:</strong><br>• <code>summary,comment</code> — Returns only summary and comments fields<br>• <code>-description</code> — Returns all navigable fields except description<br>• <code>*all,-comment</code> — Returns all fields except comments<br>• <code>id,key,summary,status</code> — Returns specific fields only",
+                        "index": 3,
+                        "defaultValue": "*navigable"
+                    },
+                    "properties": {
+                        "type": "text",
+                        "label": "Issue Properties",
+                        "tooltip": "Comma-separated list of up to 5 issue properties to include in results. Example: 'property1,property2'",
+                        "index": 4
+                    },
+                    "fieldsByKeys": {
+                        "type": "toggle",
+                        "label": "Reference Fields by Keys",
+                        "tooltip": "When enabled, fields are referenced by their keys rather than IDs in the response",
+                        "index": 5,
+                        "defaultValue": false
+                    },
+                    "failFast": {
+                        "type": "toggle",
+                        "label": "Fail Fast",
+                        "tooltip": "When enabled, the request fails early if all field data cannot be retrieved",
+                        "index": 6,
+                        "defaultValue": false
                     },
                     "sendWholeArray": {
                         "type": "toggle",
                         "defaultValue": false,
-                        "index": 4,
-                        "label": "Send all issues at once",
-                        "tooltip": "If set to true, all the issues will be sent as an array in a single message, otherwise each issue will be sent in a separate message"
+                        "index": 7,
+                        "label": "Send All Issues at Once",
+                        "tooltip": "If enabled, all issues are sent as an array in a single message. Otherwise, each issue is sent separately."
                     }
                 }
             }
