@@ -14,11 +14,17 @@ module.exports = {
         let filename;
         let contentType;
 
+        let fileInfo;
+        try {
+            fileInfo = await context.getFileInfo(fileId);
+        } catch (error) {
+            throw new context.CancelError('Incorrect File ID. Failed to get file information from Appmixer file storage.');
+        }
+
         if (fileNameInput) {
             filename = fileNameInput;
             contentType = mime.lookup(filename);
         } else {
-            const fileInfo = await context.getFileInfo(fileId);
             filename = fileInfo.filename;
             contentType = fileInfo.contentType || mime.lookup(filename);
         }
@@ -40,6 +46,7 @@ module.exports = {
 
             resource.parents = [folderId];
         }
+
 
         const fileStream = await context.getFileReadStream(fileId);
 
