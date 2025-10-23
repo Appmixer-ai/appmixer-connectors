@@ -1,0 +1,199 @@
+{
+    "title": "Create Invoice",
+    "description": "Create a new invoice for a client in Harvest. Invoices can include line items, taxes, discounts, and custom terms.",
+    "type": "action",
+    "method": "POST",
+    "endpointUrl": "/invoices",
+    "apiBaseUrl": "https://api.harvestapp.com/v2",
+    "documentation": "https://developer.harvest.com/api-v2/invoices-api/invoices/create-an-invoice/",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "client_id": {
+                "type": "integer",
+                "title": "Client ID",
+                "description": "The ID of the client to invoice. Required."
+            },
+            "number": {
+                "type": "string",
+                "title": "Invoice Number",
+                "description": "If no value is set, the number will be automatically generated."
+            },
+            "purchase_order": {
+                "type": "string",
+                "title": "Purchase Order",
+                "description": "The purchase order number."
+            },
+            "status": {
+                "type": "string",
+                "enum": [
+                    "draft",
+                    "sent",
+                    "viewed",
+                    "accepted",
+                    "declined",
+                    "approved",
+                    "disputed",
+                    "paid"
+                ],
+                "title": "Status",
+                "description": "The invoice's status. Defaults to 'draft'."
+            },
+            "issue_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Issue Date",
+                "description": "The date the invoice was issued. Defaults to today's date."
+            },
+            "due_date": {
+                "type": "string",
+                "format": "date",
+                "title": "Due Date",
+                "description": "The date the invoice is due."
+            },
+            "currency": {
+                "type": "string",
+                "title": "Currency",
+                "description": "The currency used by the invoice. If not provided, the client's currency will be used."
+            },
+            "tax": {
+                "type": "number",
+                "title": "Tax",
+                "description": "This percentage is applied to the subtotal, including line items and discounts."
+            },
+            "tax2": {
+                "type": "number",
+                "title": "Tax 2",
+                "description": "This percentage is applied to the subtotal, including line items and discounts."
+            },
+            "discount": {
+                "type": "number",
+                "title": "Discount",
+                "description": "This percentage is applied to the subtotal, including line items and discounts."
+            },
+            "subject": {
+                "type": "string",
+                "title": "Subject",
+                "description": "The invoice subject."
+            },
+            "notes": {
+                "type": "string",
+                "title": "Notes",
+                "description": "Notes about the invoice."
+            },
+            "terms": {
+                "type": "string",
+                "title": "Terms",
+                "description": "The invoice terms."
+            },
+            "line_items": {
+                "type": "array",
+                "title": "Line Items",
+                "description": "Array of line items for the invoice.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                            "enum": [
+                                "service",
+                                "product"
+                            ],
+                            "description": "The type of line item."
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "The line item description."
+                        },
+                        "quantity": {
+                            "type": "number",
+                            "description": "The line item quantity."
+                        },
+                        "unit_price": {
+                            "type": "number",
+                            "description": "The line item unit price."
+                        },
+                        "taxed": {
+                            "type": "boolean",
+                            "description": "Whether the line item is taxed."
+                        },
+                        "taxed2": {
+                            "type": "boolean",
+                            "description": "Whether the line item is subject to the second tax."
+                        }
+                    },
+                    "required": [
+                        "kind",
+                        "description",
+                        "quantity",
+                        "unit_price"
+                    ]
+                }
+            }
+        },
+        "required": [
+            "client_id"
+        ]
+    },
+    "sampleResponse": {
+        "id": 13150403,
+        "number": "1001",
+        "organization": "Acme Corp",
+        "line_items": [
+            {
+                "id": 240360,
+                "kind": "service",
+                "description": "Monthly retainer",
+                "quantity": 1,
+                "unit_price": 5000,
+                "amount": 5000,
+                "taxed": false,
+                "taxed2": false,
+                "project": null
+            }
+        ],
+        "estimate": null,
+        "client": {
+            "id": 5735776,
+            "name": "ABC Corp"
+        },
+        "invoice_item_categories": [
+            {
+                "id": 4,
+                "name": "Product"
+            }
+        ],
+        "created_at": "2017-06-27T16:38:27Z",
+        "updated_at": "2017-06-27T16:38:27Z",
+        "issued_at": "2017-06-27",
+        "sent_at": null,
+        "paid_at": null,
+        "closed_at": null,
+        "due_date": "2017-07-27",
+        "period_start": null,
+        "period_end": null,
+        "purchase_order": "PO-2017-001",
+        "amount": 5000,
+        "due_amount": 5000,
+        "tax": 0,
+        "tax_amount": 0,
+        "tax2": null,
+        "tax2_amount": 0,
+        "discount": 0,
+        "discount_amount": 0,
+        "subject": "Invoice for services rendered",
+        "notes": "Thank you for your business!",
+        "currency": "USD",
+        "status": "draft",
+        "payment_term": "net30",
+        "sent_by_email": false,
+        "viewed_by_client": false,
+        "recurring": false,
+        "last_sent_date": null,
+        "last_sent_by": null,
+        "reminder_will_be_sent_on": null
+    },
+    "outputType": {
+        "outputType": "object"
+    }
+}
