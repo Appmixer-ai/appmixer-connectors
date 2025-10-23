@@ -1,7 +1,7 @@
 {
     "name": "appmixer.helpscout.core.CreateConversation",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new email conversation in a mailbox.",
+    "description": "Create a new email conversation in a mailbox using an existing customer ID.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -29,40 +29,35 @@
                     "customerId": {
                         "type": "integer"
                     },
-                    "customerEmail": {
-                        "type": "string"
-                    },
-                    "customerFirstName": {
-                        "type": "string"
-                    },
-                    "customerLastName": {
-                        "type": "string"
-                    },
                     "threadsType": {
                         "type": "string"
                     },
                     "threadsText": {
                         "type": "string"
                     },
-                    "tags": {},
+                    "tags": {
+                        "type": [
+                            "array",
+                            "string"
+                        ]
+                    },
                     "status": {
                         "type": "string"
                     }
                 },
-                "required": ["mailboxId", "subject", "threadsText", "type", "status"],
-                "anyOf": [
-                    {
-                        "required": ["customerId"]
-                    },
-                    {
-                        "required": ["customerEmail"]
-                    }
+                "required": [
+                    "mailboxId",
+                    "subject",
+                    "threadsText",
+                    "type",
+                    "status",
+                    "customerId"
                 ]
             },
             "inspector": {
                 "inputs": {
                     "type": {
-                        "type": "text",
+                        "type": "select",
                         "tooltip": "Conversation type.",
                         "label": "Type",
                         "index": 0,
@@ -96,46 +91,36 @@
                     },
                     "customerId": {
                         "type": "number",
-                        "tooltip": "Existing customer ID.",
+                        "tooltip": "ID of an existing customer in HelpScout.",
                         "label": "Customer ID",
                         "index": 3
                     },
-                    "customerEmail": {
-                        "type": "text",
-                        "tooltip": "Customer email.",
-                        "label": "Customer Email",
-                        "index": 4
-                    },
-                    "customerFirstName": {
-                        "type": "text",
-                        "tooltip": "Customer first name.",
-                        "label": "Customer First Name",
-                        "index": 5
-                    },
-                    "customerLastName": {
-                        "type": "text",
-                        "tooltip": "Customer last name.",
-                        "label": "Customer Last Name",
-                        "index": 6
-                    },
                     "threadsType": {
-                        "type": "text",
-                        "tooltip": "Thread type.",
+                        "type": "select",
+                        "tooltip": "Thread type - the type of message or interaction being created.",
                         "label": "Threads Type",
-                        "index": 7,
+                        "index": 4,
                         "default": "customer",
                         "options": [
                             {
-                                "label": "Customer",
+                                "label": "Customer Message",
                                 "value": "customer"
                             },
                             {
-                                "label": "Agent",
-                                "value": "agent"
+                                "label": "Agent Reply",
+                                "value": "reply"
                             },
                             {
-                                "label": "Note",
+                                "label": "Private Note",
                                 "value": "note"
+                            },
+                            {
+                                "label": "Phone Call Log",
+                                "value": "phone"
+                            },
+                            {
+                                "label": "Chat Message",
+                                "value": "chat"
                             }
                         ]
                     },
@@ -143,26 +128,28 @@
                         "type": "text",
                         "tooltip": "Body of the message.",
                         "label": "Message",
-                        "index": 8
+                        "index": 5
                     },
                     "tags": {
                         "type": "multiselect",
                         "tooltip": "Tags to associate with the conversation.",
                         "label": "Tags",
-                        "index": 9,
+                        "index": 6,
                         "source": {
-                        "url": "/component/appmixer/helpscout/core/ListTags?outPort=out",
+                            "url": "/component/appmixer/helpscout/core/ListTags?outPort=out",
                             "data": {
-                                "transform": "./ListTags#tagsToSelectArray"
+                                "transform": "./ListTags#tagsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
                             }
                         }
-
                     },
                     "status": {
-                        "type": "text",
+                        "type": "select",
                         "tooltip": "Conversation status.",
                         "label": "Status",
-                        "index": 10,
+                        "index": 7,
                         "default": "active",
                         "options": [
                             {

@@ -7,16 +7,11 @@ const schema = { 'id':{ 'type':'number','title':'Id' },'name':{ 'type':'string',
 module.exports = {
     async receive(context) {
 
-        const { page, pageSize, outputType } = context.messages.in.content;
+        const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tags', value: 'tags' });
         }
-
-        // Build query parameters
-        const params = {};
-        if (page) params.page = page;
-        if (pageSize) params.pageSize = pageSize;
 
         // https://developer.helpscout.com/mailbox-api/endpoints/tags/list/
         const { data } = await context.httpRequest({
@@ -24,11 +19,15 @@ module.exports = {
             url: 'https://api.helpscout.net/v2/tags',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params
+            }
         });
 
         const records = data['_embedded']?.tags || [];
+
+        if (context.properties.isSource) {
+            return context.sendJson(records, 'out');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     },
 

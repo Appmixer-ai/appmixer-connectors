@@ -4,7 +4,7 @@
 module.exports = {
     async receive(context) {
 
-        const { firstName, lastName, photoUrl, emailValue, emailType, background } = context.messages.in.content;
+        const { firstName, lastName, emailValue, emailType } = context.messages.in.content;
 
         if (!firstName) {
             throw new context.CancelError('First Name is required.');
@@ -15,9 +15,7 @@ module.exports = {
 
         const requestData = {
             firstName,
-            lastName,
-            photoUrl,
-            background
+            lastName
         };
 
         // Add email if provided
@@ -33,8 +31,7 @@ module.exports = {
             method: 'POST',
             url: 'https://api.helpscout.net/v2/customers',
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${context.auth.accessToken}`
             },
             data: requestData
         });

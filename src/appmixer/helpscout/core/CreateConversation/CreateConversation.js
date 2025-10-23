@@ -9,9 +9,6 @@ module.exports = {
             mailboxId,
             subject,
             customerId,
-            customerEmail,
-            customerFirstName,
-            customerLastName,
             threadsType,
             threadsText,
             status,
@@ -38,40 +35,61 @@ module.exports = {
             throw new context.CancelError('Conversation status is required!');
         }
 
-        // Either customerId OR customerEmail is required
-        if (!customerId && !customerEmail) {
-            throw new context.CancelError('Either Customer ID or Customer Email is required!');
+        // Customer ID is required
+        if (!customerId) {
+            throw new context.CancelError('Customer ID is required!');
         }
 
-        const customerData = customerId
-            ? { id: parseInt(customerId) }
-            : {
-                email: customerEmail,
-                firstName: customerFirstName,
-                lastName: customerLastName
-            };
+        // Build customer object using customer ID
+        const customerData = {
+            id: parseInt(customerId)
+        };
+
+        // Build thread object based on thread type
+        const thread = {
+            type: threadsType || 'customer',
+            text: threadsText
+        };
+
+        // For customer threads, include customer reference
+        if ((threadsType || 'customer') === 'customer') {
+            thread.customer = { id: parseInt(customerId) };
+        }
 
         const requestBody = {
             type: type || 'email',
             mailboxId: parseInt(mailboxId),
             subject,
-            status: 'active',
+            status,
             customer: customerData,
-            threads: [{
-                type: threadsType || 'customer',
-                text: threadsText,
-                customer: customerData
-            }]
+            threads: [thread]
         };
 
-        // Normalize and add tags if provided
-        if (tags) {
-            // Handle multiselect normalization - tags can be array of strings or array of objects with value property
-            const normalizedTags = Array.isArray(tags)
-                ? tags.map(tag => typeof tag === 'object' && tag.value !== undefined ? tag.value : tag)
-                : [typeof tags === 'object' && tags.value !== undefined ? tags.value : tags];
+        context.log({ step: 'request body customer', customer: customerData });
+        context.log({ step: 'request body thread', thread: thread });
+        context.log({ step: 'request body tags', tags: tags });
 
-            if (normalizedTags.length > 0 && normalizedTags[0] !== '') {
+        // Normalize tags to array of strings as expected by API
+        if (tags) {
+            let normalizedTags = [];
+
+            if (Array.isArray(tags)) {
+                // Handle array input - convert each item to string
+                normalizedTags = tags.map(tag => {
+                    if (typeof tag === 'object' && tag.value !== undefined) {
+                        return String(tag.value);
+                    }
+                    return String(tag);
+                }).filter(tag => tag && tag !== '');
+            } else {
+                // Handle single value input - convert to string and put in array
+                const tagValue = typeof tags === 'object' && tags.value !== undefined ? tags.value : tags;
+                if (tagValue && String(tagValue) !== '') {
+                    normalizedTags = [String(tagValue)];
+                }
+            }
+
+            if (normalizedTags.length > 0) {
                 requestBody.tags = normalizedTags;
             }
         }
