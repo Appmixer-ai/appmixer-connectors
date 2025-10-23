@@ -87,7 +87,7 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Harvest-Account-Id': context.auth.accountId,
-                'User-Agent': 'Appmixer',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Content-Type': 'application/json'
             },
             data: body

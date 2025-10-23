@@ -4,8 +4,8 @@ const lib = require('../../lib');
 
 // Schema for a single task
 const taskSchema = {
-    'id': { 'type': 'integer', 'title': 'Task ID' },
-    'name': { 'type': 'string', 'title': 'Name' },
+    'id': { 'type': 'string', 'title': 'Task ID' },
+    'name': { 'type': 'string', 'title': 'Task Name' },
     'billable_by_default': { 'type': 'boolean', 'title': 'Billable By Default' },
     'is_default': { 'type': 'boolean', 'title': 'Is Default' },
     'is_active': { 'type': 'boolean', 'title': 'Is Active' },
@@ -47,7 +47,7 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/tasks',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Harvest-Account-ID': context.auth.profileInfo.accountId
             },
             params

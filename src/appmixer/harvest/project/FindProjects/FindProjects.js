@@ -7,9 +7,9 @@ module.exports = {
     async receive(context) {
 
         const {
-            client_id: clientId,
-            is_active: isActive,
-            updated_since: updatedSince,
+            clientId,
+            isActive,
+            updatedSince,
             outputType
         } = context.messages.in.content;
 
@@ -38,7 +38,7 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/projects',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Harvest-Account-ID': context.auth.profileInfo.accountId
             },
             params
@@ -56,7 +56,7 @@ module.exports = {
 
 // Schema for a single project
 const projectSchema = {
-    'id': { 'type': 'integer', 'title': 'Project ID' },
+    'id': { 'type': 'string', 'title': 'Project ID' },
     'name': { 'type': 'string', 'title': 'Project Name' },
     'code': { 'type': 'string', 'title': 'Project Code' },
     'is_active': { 'type': 'boolean', 'title': 'Is Active' },

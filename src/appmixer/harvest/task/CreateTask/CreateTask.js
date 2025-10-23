@@ -13,7 +13,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!name) {
-            throw new context.CancelError('Task name is required!');
+            throw new context.CancelError('Task Name is required!');
         }
 
         const data = {
@@ -42,7 +42,7 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/tasks',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Harvest-Account-ID': context.auth.profileInfo.accountId,
                 'Content-Type': 'application/json'
             },

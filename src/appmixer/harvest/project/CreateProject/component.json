@@ -23,11 +23,20 @@
                     "name": {
                         "type": "string"
                     },
-                    "isActive": {
+                    "isBillable": {
                         "type": "boolean"
                     },
                     "billBy": {
                         "type": "string"
+                    },
+                    "budgetBy": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "isFixedFee": {
+                        "type": "boolean"
                     },
                     "hourlyRate": {
                         "type": "number"
@@ -40,61 +49,110 @@
                     },
                     "notes": {
                         "type": "string"
+                    },
+                    "isActive": {
+                        "type": "boolean"
                     }
                 },
-                "required": ["clientId", "name"]
+                "required": [
+                    "clientId",
+                    "name",
+                    "billBy",
+                    "budgetBy"
+                ]
             },
             "inspector": {
                 "inputs": {
                     "clientId": {
                         "type": "text",
                         "tooltip": "Client ID to associate the project with.",
-                        "label": "Client Id",
+                        "label": "Client ID",
                         "index": 0
                     },
                     "name": {
                         "type": "text",
-                        "tooltip": "Project name.",
-                        "label": "Name",
+                        "label": "Project Name",
                         "index": 1
                     },
-                    "isActive": {
+                    "isBillable": {
                         "type": "toggle",
-                        "tooltip": "Set active or archived.",
-                        "label": "Is Active",
+                        "tooltip": "Whether the project is billable or not.",
+                        "label": "Is Billable",
                         "index": 2,
-                        "defaultValue": true
+                        "defaultValue": false
                     },
                     "billBy": {
-                        "type": "text",
-                        "tooltip": "Billing method, e.g., Project, People, Tasks, or None.",
+                        "type": "select",
+                        "tooltip": "The method by which the project is invoiced",
                         "label": "Bill By",
-                        "index": 3
+                        "index": 3,
+                        "options": [
+                            { "label": "None", "value": "none" },
+                            { "label": "Project", "value": "Project" },
+                            { "label": "People", "value": "People" },
+                            { "label": "Tasks", "value": "Tasks" }
+                        ],
+                        "defaultValue": "none"
+                    },
+                    "budgetBy": {
+                        "type": "select",
+                        "tooltip": "The method by which the project is budgeted",
+                        "label": "Budget By",
+                        "index": 4,
+                        "options": [
+                            { "label": "No Budget", "value": "none" },
+                            { "label": "Hours Per Project", "value": "project" },
+                            { "label": "Total Project Fees", "value": "project_cost" },
+                            { "label": "Hours Per Task", "value": "task" },
+                            { "label": "Fees Per Task", "value": "task_fees" },
+                            { "label": "Hours Per Person", "value": "person" }
+                        ],
+                        "defaultValue": "none"
+                    },
+                    "code": {
+                        "type": "text",
+                        "tooltip": "The code associated with the project",
+                        "label": "Code",
+                        "index": 5
+                    },
+                    "isFixedFee": {
+                        "type": "toggle",
+                        "tooltip": "Whether the project has a fixed-fee or not.",
+                        "label": "Is Fixed Fee",
+                        "index": 6,
+                        "defaultValue": false
                     },
                     "hourlyRate": {
                         "type": "number",
                         "tooltip": "Default hourly rate if applicable.",
                         "label": "Hourly Rate",
-                        "index": 4
+                        "index": 7
                     },
                     "budget": {
                         "type": "number",
                         "tooltip": "Total budget for project.",
                         "label": "Budget",
-                        "index": 5
+                        "index": 8
                     },
                     "budgetIsMonthly": {
                         "type": "toggle",
                         "tooltip": "If true, budget resets monthly.",
                         "label": "Budget Is Monthly",
-                        "index": 6,
+                        "index": 9,
                         "defaultValue": false
                     },
                     "notes": {
                         "type": "text",
-                        "tooltip": "Internal notes.",
+                        "tooltip": "Project notes.",
                         "label": "Notes",
-                        "index": 7
+                        "index": 10
+                    },
+                    "isActive": {
+                        "type": "toggle",
+                        "tooltip": "Set active or archived.",
+                        "label": "Is Active",
+                        "index": 11,
+                        "defaultValue": true
                     }
                 }
             }
@@ -105,15 +163,22 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Project ID",
                     "value": "id",
                     "schema": {
-                        "type": "number"
+                        "type": "string"
                     }
                 },
                 {
-                    "label": "Name",
+                    "label": "Project Name",
                     "value": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Code",
+                    "value": "code",
                     "schema": {
                         "type": "string"
                     }
@@ -126,34 +191,66 @@
                     }
                 },
                 {
-                    "label": "Client",
-                    "value": "client",
+                    "label": "Is Billable",
+                    "value": "is_billable",
                     "schema": {
-                        "type": "object",
-                        "properties": {
-                            "id": {
-                                "type": "number",
-                                "title": "Client.Id"
-                            },
-                            "name": {
-                                "type": "string",
-                                "title": "Client.Name"
-                            }
-                        }
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Is Fixed Fee",
+                    "value": "is_fixed_fee",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Bill By",
+                    "value": "bill_by",
+                    "schema": {
+                        "type": "string"
                     }
                 },
                 {
                     "label": "Budget",
                     "value": "budget",
                     "schema": {
-                        "type": "number"
+                        "type": "integer"
                     }
                 },
                 {
-                    "label": "Hourly Rate",
-                    "value": "hourly_rate",
+                    "label": "Budget By",
+                    "value": "budget_by",
                     "schema": {
-                        "type": "number"
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Budget Is Monthly",
+                    "value": "budget_is_monthly",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Notify When Over Budget",
+                    "value": "notify_when_over_budget",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Over Budget Notification Percentage",
+                    "value": "over_budget_notification_percentage",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Show Budget To All",
+                    "value": "show_budget_to_all",
+                    "schema": {
+                        "type": "boolean"
                     }
                 },
                 {
@@ -168,6 +265,83 @@
                     "value": "updated_at",
                     "schema": {
                         "type": "string"
+                    }
+                },
+                {
+                    "label": "Starts On",
+                    "value": "starts_on",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Ends On",
+                    "value": "ends_on",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Over Budget Notification Date",
+                    "value": "over_budget_notification_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Notes",
+                    "value": "notes",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Cost Budget",
+                    "value": "cost_budget",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Cost Budget Include Expenses",
+                    "value": "cost_budget_include_expenses",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Hourly Rate",
+                    "value": "hourly_rate",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Fee",
+                    "value": "fee",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Client",
+                    "value": "client",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Client.ID"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Client.Name"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Client.Currency"
+                            }
+                        }
                     }
                 }
             ]

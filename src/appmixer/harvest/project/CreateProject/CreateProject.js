@@ -7,12 +7,16 @@ module.exports = {
         const {
             clientId,
             name,
-            isActive,
+            isBillable,
             billBy,
+            budgetBy,
+            code,
+            isFixedFee,
             hourlyRate,
             budget,
             budgetIsMonthly,
-            notes
+            notes,
+            isActive
         } = context.messages.in.content;
 
         if (!clientId) {
@@ -23,33 +27,52 @@ module.exports = {
             throw new context.CancelError('Project name is required!');
         }
 
-        const data = {
+        if (isBillable === undefined || isBillable === null) {
+            throw new context.CancelError('Is Billable field is required!');
+        }
+
+        if (!billBy) {
+            throw new context.CancelError('Bill By field is required!');
+        }
+
+        if (!budgetBy) {
+            throw new context.CancelError('Budget By field is required!');
+        }
+
+        const body = {
             client_id: clientId,
-            name
+            name,
+            is_billable: isBillable,
+            bill_by: billBy,
+            budget_by: budgetBy
         };
 
         if (typeof isActive === 'boolean') {
-            data.is_active = isActive;
+            body.is_active = isActive;
         }
 
-        if (billBy) {
-            data.bill_by = billBy;
+        if (typeof isFixedFee === 'boolean') {
+            body.is_fixed_fee = isFixedFee;
         }
 
         if (hourlyRate !== undefined && hourlyRate !== null) {
-            data.hourly_rate = hourlyRate;
+            body.hourly_rate = hourlyRate;
         }
 
         if (budget !== undefined && budget !== null) {
-            data.budget = budget;
+            body.budget = budget;
         }
 
         if (typeof budgetIsMonthly === 'boolean') {
-            data.budget_is_monthly = budgetIsMonthly;
+            body.budget_is_monthly = budgetIsMonthly;
+        }
+
+        if (code) {
+            body.code = code;
         }
 
         if (notes) {
-            data.notes = notes;
+            body.notes = notes;
         }
 
         // https://help.getharvest.com/api-v2/projects-api/projects/projects/#create-a-project
@@ -58,12 +81,14 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/projects',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Harvest-Account-ID': context.auth.profileInfo.accountId,
                 'Content-Type': 'application/json'
             },
-            data
+            data: body
         });
+
+        context.log({ step: 'createProject', responseData });
 
         return context.sendJson(responseData, 'out');
     }

@@ -37,7 +37,7 @@ module.exports = {
             url: 'https://api.harvestapp.com/v2/clients',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'User-Agent': 'Appmixer (info@appmixer.com)',
+                'User-Agent': 'Appmixer (info@appmixer.ai)',
                 'Harvest-Account-ID': context.auth.profileInfo.accountId,
                 'Content-Type': 'application/json'
             },

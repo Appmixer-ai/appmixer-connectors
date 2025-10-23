@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
@@ -24,30 +26,28 @@ module.exports = {
             query.updated_since = updatedSince;
         }
 
-        const options = {
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: url,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Harvest-Account-Id': context.auth.profileInfo.accountId,
-                'User-Agent': 'Appmixer (info@appmixer.com)'
+                'User-Agent': 'Appmixer (info@appmixer.ai)'
             },
             params: query
-        };
-
-        const { data } = await context.httpRequest(options);
+        });
         const clients = data.clients || [];
 
         if (clients.length === 0) {
             return context.sendJson({}, 'notFound');
         }
 
-        return this.sendArrayOutput({ context, records: clients, outputType });
+        return lib.sendArrayOutput({ context, records: clients, outputType });
     }
 };
 
 const schema = {
-    'id': { 'type': 'integer', 'title': 'Client ID' },
+    'id': { 'type': 'string', 'title': 'Client ID' },
     'name': { 'type': 'string', 'title': 'Client Name' },
     'isActive': { 'type': 'boolean', 'title': 'Is Active' },
     'address': { 'type': 'string', 'title': 'Address' },
