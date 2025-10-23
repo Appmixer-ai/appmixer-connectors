@@ -65,10 +65,6 @@ module.exports = {
             threads: [thread]
         };
 
-        context.log({ step: 'request body customer', customer: customerData });
-        context.log({ step: 'request body thread', thread: thread });
-        context.log({ step: 'request body tags', tags: tags });
-
         // Normalize tags to array of strings as expected by API
         if (tags) {
             let normalizedTags = [];
@@ -95,7 +91,7 @@ module.exports = {
         }
 
         // https://developer.helpscout.com/mailbox-api/endpoints/conversations/create/
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
             url: 'https://api.helpscout.net/v2/conversations',
             headers: {
@@ -104,6 +100,11 @@ module.exports = {
             data: requestBody
         });
 
-        return context.sendJson(data, 'out');
+        const result = {
+            'Resource-ID': response.headers['resource-id'] || response.headers['Resource-ID'],
+            'Location': response.headers['location'] || response.headers['Location']
+        };
+
+        return context.sendJson(result, 'out');
     }
 };

@@ -1,7 +1,7 @@
 {
     "name": "appmixer.helpscout.core.CreateThreadInternalNote",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Add a private internal note to a conversation.",
+    "description": "Add a private internal note to a conversation with optional attachments and status change.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -23,30 +23,67 @@
                     "text": {
                         "type": "string"
                     },
-                    "attachments|id": {
+                    "status": {
                         "type": "string"
+                    },
+                    "imported": {
+                        "type": "boolean"
                     }
-                }
+                },
+                "required": ["id", "text"]
             },
             "inspector": {
                 "inputs": {
                     "id": {
                         "type": "number",
-                        "tooltip": "Conversation ID.",
+                        "tooltip": "Conversation ID where the note will be added.",
                         "label": "Conversation ID",
-                        "index": 0
-                    },
-                    "text": {
-                        "type": "text",
-                        "tooltip": "Note body.",
-                        "label": "Text",
                         "index": 1
                     },
-                    "attachments|id": {
-                        "type": "text",
-                        "tooltip": "Attachment ID from /attachments.",
-                        "label": "Attachments|id",
+                    "text": {
+                        "type": "textarea",
+                        "tooltip": "The note text content.",
+                        "label": "Note Text",
                         "index": 2
+                    },
+                    "status": {
+                        "type": "select",
+                        "tooltip": "Use this field to change conversation status when adding the note.",
+                        "label": "Conversation Status",
+                        "index": 4,
+                        "options": [
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "All",
+                                "value": "all"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            },
+                            {
+                                "label": "Open",
+                                "value": "open"
+                            },
+                            {
+                                "label": "Pending",
+                                "value": "pending"
+                            },
+                            {
+                                "label": "Spam",
+                                "value": "spam"
+                            }
+                        ]
+                    },
+                    "imported": {
+                        "type": "toggle",
+                        "tooltip": "When true, enables note to be created for historical purposes. No outgoing emails or notifications will be generated.",
+                        "label": "Imported (Historical)",
+                        "index": 5,
+                        "defaultValue": false
                     }
                 }
             }
@@ -57,22 +94,15 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Thread ID",
-                    "value": "id",
-                    "schema": {
-                        "type": "number"
-                    }
-                },
-                {
-                    "label": "Type",
-                    "value": "type",
+                    "label": "Note ID",
+                    "value": "Resource-ID",
                     "schema": {
                         "type": "string"
                     }
                 },
                 {
-                    "label": "Created At",
-                    "value": "createdAt",
+                    "label": "Created Date",
+                    "value": "Date",
                     "schema": {
                         "type": "string"
                     }
