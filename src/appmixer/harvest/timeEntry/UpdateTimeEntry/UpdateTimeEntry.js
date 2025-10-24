@@ -6,10 +6,11 @@ module.exports = {
 
         const {
             timeEntryId,
+            type,
             projectId,
             taskId,
-            spentDate,
             userId,
+            spentDate,
             hours,
             startedTime,
             endedTime,
@@ -20,42 +21,50 @@ module.exports = {
             throw new context.CancelError('Time Entry ID is required!');
         }
 
-        const data = {};
-
-        if (projectId !== undefined && projectId !== null) {
-            data.project_id = projectId;
+        // Validate type-specific requirements if type is provided
+        if (type === 'start_end_time') {
+            if (startedTime && !endedTime) {
+                throw new context.CancelError('Ended Time is required when updating with start/end time mode!');
+            }
+            if (!startedTime && endedTime) {
+                throw new context.CancelError('Started Time is required when updating with start/end time mode!');
+            }
         }
 
-        if (taskId !== undefined && taskId !== null) {
-            data.task_id = taskId;
+        const body = {};
+
+        if (projectId !== undefined && projectId !== null && projectId !== '') {
+            body.project_id = projectId;
         }
 
-        if (spentDate) {
-            data.spent_date = spentDate;
+        if (taskId !== undefined && taskId !== null && taskId !== '') {
+            body.task_id = taskId;
         }
 
-        if (userId !== undefined && userId !== null) {
-            data.user_id = userId;
+        if (spentDate !== undefined && spentDate !== null && spentDate !== '') {
+            body.spent_date = spentDate;
         }
 
-        if (hours !== undefined && hours !== null) {
-            data.hours = hours;
+        if (userId !== undefined && userId !== null && userId !== '') {
+            body.user_id = userId;
         }
 
-        if (startedTime) {
-            data.started_time = startedTime;
+        // Handle time-based fields based on type
+        if (type === 'duration' || !type) {
+            if (hours !== undefined && hours !== null && hours !== '') {
+                body.hours = hours;
+            }
+        } else if (type === 'start_end_time') {
+            if (startedTime !== undefined && startedTime !== null && startedTime !== '') {
+                body.started_time = startedTime;
+            }
+            if (endedTime !== undefined && endedTime !== null && endedTime !== '') {
+                body.ended_time = endedTime;
+            }
         }
 
-        if (endedTime) {
-            data.ended_time = endedTime;
-        }
-
-        if (notes) {
-            data.notes = notes;
-        }
-
-        if (Object.keys(data).length === 0) {
-            throw new context.CancelError('At least one field to update is required!');
+        if (notes !== undefined && notes !== null && notes !== '') {
+            body.notes = notes;
         }
 
         // https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/#update-a-time-entry
@@ -65,10 +74,9 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'User-Agent': 'Appmixer (info@appmixer.ai)',
-                'Harvest-Account-ID': context.auth.profileInfo.accountId,
-                'Content-Type': 'application/json'
+                'Harvest-Account-ID': context.auth.profileInfo.accountId
             },
-            data
+            data: body
         });
 
         return context.sendJson({}, 'out');

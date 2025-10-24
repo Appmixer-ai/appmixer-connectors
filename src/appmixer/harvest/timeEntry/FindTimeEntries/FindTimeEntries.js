@@ -91,48 +91,16 @@ module.exports = {
 
 // Schema for a single time entry
 const timeEntrySchema = {
-    'id': { 'type': 'integer', 'title': 'Time Entry ID' },
+    'id': { 'type': 'string', 'title': 'Time Entry ID' },
     'spent_date': { 'type': 'string', 'title': 'Spent Date' },
-    'user': {
-        'type': 'object',
-        'properties': {
-            'id': { 'type': 'integer', 'title': 'User ID' },
-            'name': { 'type': 'string', 'title': 'User Name' }
-        },
-        'title': 'User'
-    },
-    'client': {
-        'type': 'object',
-        'properties': {
-            'id': { 'type': 'integer', 'title': 'Client ID' },
-            'name': { 'type': 'string', 'title': 'Client Name' }
-        },
-        'title': 'Client'
-    },
-    'project': {
-        'type': 'object',
-        'properties': {
-            'id': { 'type': 'integer', 'title': 'Project ID' },
-            'name': { 'type': 'string', 'title': 'Project Name' }
-        },
-        'title': 'Project'
-    },
-    'task': {
-        'type': 'object',
-        'properties': {
-            'id': { 'type': 'integer', 'title': 'Task ID' },
-            'name': { 'type': 'string', 'title': 'Task Name' }
-        },
-        'title': 'Task'
-    },
     'hours': { 'type': 'number', 'title': 'Hours' },
     'hours_without_timer': { 'type': 'number', 'title': 'Hours Without Timer' },
     'rounded_hours': { 'type': 'number', 'title': 'Rounded Hours' },
     'notes': { 'type': 'string', 'title': 'Notes' },
     'is_locked': { 'type': 'boolean', 'title': 'Is Locked' },
     'locked_reason': { 'type': 'string', 'title': 'Locked Reason' },
-    'is_closed': { 'type': 'boolean', 'title': 'Is Closed' },
     'approval_status': { 'type': 'string', 'title': 'Approval Status' },
+    'is_closed': { 'type': 'boolean', 'title': 'Is Closed' },
     'is_billed': { 'type': 'boolean', 'title': 'Is Billed' },
     'timer_started_at': { 'type': 'string', 'title': 'Timer Started At' },
     'started_time': { 'type': 'string', 'title': 'Started Time' },
@@ -143,5 +111,68 @@ const timeEntrySchema = {
     'billable_rate': { 'type': 'number', 'title': 'Billable Rate' },
     'cost_rate': { 'type': 'number', 'title': 'Cost Rate' },
     'created_at': { 'type': 'string', 'title': 'Created At' },
-    'updated_at': { 'type': 'string', 'title': 'Updated At' }
+    'updated_at': { 'type': 'string', 'title': 'Updated At' },
+    'user': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'User ID' },
+            'name': { 'type': 'string', 'title': 'User Name' }
+        },
+        'title': 'User'
+    },
+    'client': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Client ID' },
+            'name': { 'type': 'string', 'title': 'Client Name' },
+            'currency': { 'type': 'string', 'title': 'Client Currency' }
+        },
+        'title': 'Client'
+    },
+    'project': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Project ID' },
+            'name': { 'type': 'string', 'title': 'Project Name' },
+            'code': { 'type': 'string', 'title': 'Project Code' }
+        },
+        'title': 'Project'
+    },
+    'task': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Task ID' },
+            'name': { 'type': 'string', 'title': 'Task Name' }
+        },
+        'title': 'Task'
+    },
+    'user_assignment': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'User Assignment ID' },
+            'is_project_manager': { 'type': 'boolean', 'title': 'Is Project Manager' },
+            'is_active': { 'type': 'boolean', 'title': 'Is Active' },
+            'use_default_rates': { 'type': 'boolean', 'title': 'Use Default Rates' },
+            'budget': { 'type': 'number', 'title': 'Budget' },
+            'created_at': { 'type': 'string', 'title': 'Created At' },
+            'updated_at': { 'type': 'string', 'title': 'Updated At' },
+            'hourly_rate': { 'type': 'number', 'title': 'Hourly Rate' }
+        },
+        'title': 'User Assignment'
+    },
+    'task_assignment': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Task Assignment ID' },
+            'billable': { 'type': 'boolean', 'title': 'Billable' },
+            'is_active': { 'type': 'boolean', 'title': 'Is Active' },
+            'created_at': { 'type': 'string', 'title': 'Created At' },
+            'updated_at': { 'type': 'string', 'title': 'Updated At' },
+            'hourly_rate': { 'type': 'number', 'title': 'Hourly Rate' },
+            'budget': { 'type': 'number', 'title': 'Budget' }
+        },
+        'title': 'Task Assignment'
+    },
+    'invoice': { 'type': 'object', 'title': 'Invoice' },
+    'external_reference': { 'type': 'object', 'title': 'External Reference' }
 };

@@ -88,8 +88,6 @@ module.exports = {
             data: body
         });
 
-        context.log({ step: 'createProject', responseData });
-
         return context.sendJson(responseData, 'out');
     }
 };

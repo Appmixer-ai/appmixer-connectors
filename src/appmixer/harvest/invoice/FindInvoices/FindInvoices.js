@@ -72,16 +72,20 @@ module.exports = {
 
 const schema = {
     'id': {
-        'type': 'number',
+        'type': 'string',
         'title': 'Invoice ID'
+    },
+    'client_key': {
+        'type': 'string',
+        'title': 'Client Key'
     },
     'number': {
         'type': 'string',
         'title': 'Number'
     },
-    'state': {
+    'purchase_order': {
         'type': 'string',
-        'title': 'State'
+        'title': 'Purchase Order'
     },
     'amount': {
         'type': 'number',
@@ -91,9 +95,49 @@ const schema = {
         'type': 'number',
         'title': 'Due Amount'
     },
+    'tax': {
+        'type': 'number',
+        'title': 'Tax'
+    },
+    'tax_amount': {
+        'type': 'number',
+        'title': 'Tax Amount'
+    },
+    'tax2': {
+        'type': 'number',
+        'title': 'Tax 2'
+    },
+    'tax2_amount': {
+        'type': 'number',
+        'title': 'Tax 2 Amount'
+    },
+    'discount': {
+        'type': 'number',
+        'title': 'Discount'
+    },
+    'discount_amount': {
+        'type': 'number',
+        'title': 'Discount Amount'
+    },
     'subject': {
         'type': 'string',
         'title': 'Subject'
+    },
+    'notes': {
+        'type': 'string',
+        'title': 'Notes'
+    },
+    'state': {
+        'type': 'string',
+        'title': 'State'
+    },
+    'period_start': {
+        'type': 'string',
+        'title': 'Period Start'
+    },
+    'period_end': {
+        'type': 'string',
+        'title': 'Period End'
     },
     'issue_date': {
         'type': 'string',
@@ -103,17 +147,25 @@ const schema = {
         'type': 'string',
         'title': 'Due Date'
     },
-    'client': {
-        'type': 'object',
-        'properties': {
-            'id': { 'type': 'number', 'title': 'Client.Id' },
-            'name': { 'type': 'string', 'title': 'Client.Name' }
-        },
-        'title': 'Client'
-    },
-    'currency': {
+    'payment_term': {
         'type': 'string',
-        'title': 'Currency'
+        'title': 'Payment Term'
+    },
+    'sent_at': {
+        'type': 'string',
+        'title': 'Sent At'
+    },
+    'paid_at': {
+        'type': 'string',
+        'title': 'Paid At'
+    },
+    'closed_at': {
+        'type': 'string',
+        'title': 'Closed At'
+    },
+    'recurring_invoice_id': {
+        'type': 'number',
+        'title': 'Recurring Invoice ID'
     },
     'created_at': {
         'type': 'string',
@@ -122,5 +174,51 @@ const schema = {
     'updated_at': {
         'type': 'string',
         'title': 'Updated At'
+    },
+    'paid_date': {
+        'type': 'string',
+        'title': 'Paid Date'
+    },
+    'currency': {
+        'type': 'string',
+        'title': 'Currency'
+    },
+    'payment_options': {
+        'type': 'array',
+        'items': {
+            'type': 'string'
+        },
+        'title': 'Payment Options'
+    },
+    'client': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Client.Id' },
+            'name': { 'type': 'string', 'title': 'Client.Name' }
+        },
+        'title': 'Client'
+    },
+    'estimate': {
+        'type': 'object',
+        'title': 'Estimate'
+    },
+    'retainer': {
+        'type': 'object',
+        'title': 'Retainer'
+    },
+    'creator': {
+        'type': 'object',
+        'properties': {
+            'id': { 'type': 'number', 'title': 'Creator.Id' },
+            'name': { 'type': 'string', 'title': 'Creator.Name' }
+        },
+        'title': 'Creator'
+    },
+    'line_items': {
+        'type': 'array',
+        'items': {
+            'type': 'object'
+        },
+        'title': 'Line Items'
     }
 };
