@@ -85,14 +85,26 @@ module.exports = {
 
         // Send JSON Patch array
         // https://developer.helpscout.com/mailbox-api/endpoints/conversations/update/
+
+        // Help Scout expects a single JSON Patch object for the conversations
+        // endpoint (not an array). If multiple fields are provided, ask the
+        // caller to send them in separate requests to avoid ambiguous parsing.
+        if (patches.length !== 1) {
+            throw new context.CancelError('The Help Scout /conversations endpoint accepts a single JSON Patch operation per request. Please provide exactly one updatable field per call.');
+        }
+
         const response = await context.httpRequest({
             method: 'PATCH',
             url: `https://api.helpscout.net/v2/conversations/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
-                'Content-Type': 'application/json'
+                // HelpScout expects JSON Patch payloads. Use the more specific media type
+                // so the server parses the object operation correctly.
+                'Content-Type': 'application/json-patch+json'
             },
-            data: patches
+            // Ensure we send a raw JSON string body of a single patch object to avoid any
+            // transport-specific transformations that might change the payload shape.
+            data: JSON.stringify(patches[0])
         });
 
         // HelpScout returns 204 No Content for successful updates
