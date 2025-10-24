@@ -52,14 +52,8 @@ module.exports = {
         }
 
         // Execute the search
-        context.log('debug', 'API request parameters', { params });
         const found = await commons.get(`${apiUrl}search/jql`, auth, params);
-        context.log('debug', 'API response', {
-            autoExpand: found.expand, // What Jira automatically includes
-            issueCount: found.issues?.length || 0,
-            hasNames: !!found.names,
-            hasSchema: !!found.schema
-        });
+
         // Handle results
         const issues = found?.issues || [];
 
