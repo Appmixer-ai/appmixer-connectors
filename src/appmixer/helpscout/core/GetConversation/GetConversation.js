@@ -9,23 +9,16 @@ module.exports = {
         if (!id) {
             throw new context.CancelError('Conversation ID is required.');
         }
-
-        try {
-            // https://developer.helpscout.com/mailbox-api/endpoints/conversations/get/
-            const { data } = await context.httpRequest({
-                method: 'GET',
-                url: `https://api.helpscout.net/v2/conversations/${id}`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`
-                }
-            });
-
-            return context.sendJson(data, 'out');
-        } catch (error) {
-            if (error.response?.status === 404) {
-                return context.sendJson({}, 'notFound');
+        // https://developer.helpscout.com/mailbox-api/endpoints/conversations/get/
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `https://api.helpscout.net/v2/conversations/${id}?embed=threads`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
             }
-            throw error;
-        }
+        });
+
+        return context.sendJson(data, 'out');
+
     }
 };

@@ -21,6 +21,11 @@ module.exports = {
         if (page) params.page = page;
         if (pageSize) params.pageSize = pageSize;
 
+        // Ensure results are always sorted by most recently modified first.
+        // These are enforced regardless of any incoming parameters.
+        params.sortField = 'modifiedAt';
+        params.sortOrder = 'desc';
+
         // https://developer.helpscout.com/mailbox-api/endpoints/customers/list/
         const { data } = await context.httpRequest({
             method: 'GET',
