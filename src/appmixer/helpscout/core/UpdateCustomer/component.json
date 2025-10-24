@@ -1,7 +1,7 @@
 {
     "name": "appmixer.helpscout.core.UpdateCustomer",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Update an existing customer.",
+    "description": "Update an existing customer via validated JSON Patch operations (common top-level fields exposed).",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -26,17 +26,31 @@
                     "lastName": {
                         "type": "string"
                     },
-                    "emails|value": {
-                        "type": "string"
-                    },
-                    "emails|type": {
-                        "type": "string"
-                    },
                     "background": {
+                        "type": "string"
+                    },
+                    "addEmailValue": {
+                        "type": "string"
+                    },
+                    "addEmailType": {
+                        "type": "string"
+                    },
+                    "removeEmailId": {
+                        "type": "integer"
+                    },
+                    "replaceEmailId": {
+                        "type": "integer"
+                    },
+                    "replaceEmailValue": {
+                        "type": "string"
+                    },
+                    "replaceEmailType": {
                         "type": "string"
                     }
                 },
-                "required": ["id"]
+                "required": [
+                    "id"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -58,23 +72,59 @@
                         "label": "Last Name",
                         "index": 2
                     },
-                    "emails|value": {
-                        "type": "text",
-                        "tooltip": "Email address.",
-                        "label": "Emails|value",
-                        "index": 3
-                    },
-                    "emails|type": {
-                        "type": "text",
-                        "tooltip": "Type (work, home, other).",
-                        "label": "Emails|type",
-                        "index": 4
-                    },
                     "background": {
                         "type": "text",
-                        "tooltip": "Internal notes/background.",
+                        "tooltip": "Internal notes/background (replace).",
                         "label": "Background",
+                        "index": 3
+                    },
+                    "addEmailValue": {
+                        "type": "text",
+                        "tooltip": "Add email - address value.",
+                        "label": "Add Email - Value",
+                        "index": 4
+                    },
+                    "addEmailType": {
+                        "type": "text",
+                        "tooltip": "Add email - type (work, home, other).",
+                        "label": "Add Email - Type",
                         "index": 5
+                    },
+                    "removeEmailId": {
+                        "type": "number",
+                        "tooltip": "Remove the email with this emailId (use emails list endpoint to get ids).",
+                        "label": "Remove Email ID",
+                        "index": 6
+                    },
+                    "replaceEmailId": {
+                        "type": "text",
+                        "tooltip": "Replace email value/type for this emailId.",
+                        "label": "Replace Email ID",
+                        "index": 7,
+                        "source": {
+                            "url": "/component/appmixer/helpscout/core/ListEmails?outPort=out",
+                            "data": {
+                                "transform": "./ListEmails#emailsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "messages": {
+                                    "in": "inputs/id"
+                                }
+                            }
+                        }
+                    },
+                    "replaceEmailValue": {
+                        "type": "text",
+                        "tooltip": "New email value for replace operation.",
+                        "label": "Replace Email - Value",
+                        "index": 8
+                    },
+                    "replaceEmailType": {
+                        "type": "text",
+                        "tooltip": "New email type for replace operation.",
+                        "label": "Replace Email - Type",
+                        "index": 9
                     }
                 }
             }

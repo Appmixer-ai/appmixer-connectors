@@ -8,45 +8,84 @@ module.exports = {
             id,
             firstName,
             lastName,
-            emailValue,
-            emailType,
-            background
+            background,
+            addEmailValue,
+            addEmailType,
+            removeEmailId,
+            replaceEmailId,
+            replaceEmailValue,
+            replaceEmailType
         } = context.messages.in.content;
 
         if (!id) {
             throw new context.CancelError('Customer ID is required!');
         }
 
-        const requestBody = {};
+        const patches = [];
 
-        // Add fields to update if provided
-        if (firstName) requestBody.firstName = firstName;
-        if (lastName) requestBody.lastName = lastName;
-        if (background) requestBody.background = background;
+        const toStringSafe = v => (v === null || v === undefined) ? '' : String(v);
+        const toNumberSafe = (v, name) => {
+            const n = typeof v === 'number' ? v : (typeof v === 'string' ? Number(v) : Number(v));
+            if (!Number.isFinite(n)) throw new context.CancelError(`${name} must be a number`);
+            return n;
+        };
 
-        if (emailValue) {
-            requestBody.emails = [{
-                value: emailValue,
-                type: emailType || 'work'
-            }];
+        if (firstName !== undefined) {
+            patches.push({ op: 'replace', path: '/firstName', value: toStringSafe(firstName) });
         }
 
-        // Only make request if there are fields to update
-        if (Object.keys(requestBody).length === 0) {
+        if (lastName !== undefined) {
+            patches.push({ op: 'replace', path: '/lastName', value: toStringSafe(lastName) });
+        }
+
+        if (background !== undefined) {
+            patches.push({ op: 'replace', path: '/background', value: toStringSafe(background) });
+        }
+
+        // Add an email entry
+        if (addEmailValue !== undefined) {
+            const value = toStringSafe(addEmailValue);
+            const type = toStringSafe(addEmailType) || 'other';
+            patches.push({ op: 'add', path: '/emails', value: { type, value } });
+        }
+
+        // Remove an email by id
+        if (removeEmailId !== undefined) {
+            const n = toNumberSafe(removeEmailId, 'removeEmailId');
+            patches.push({ op: 'remove', path: `/emails/${n}` });
+        }
+
+        // Replace email value/type for particular email id
+        if (replaceEmailId !== undefined) {
+            const n = toNumberSafe(replaceEmailId, 'replaceEmailId');
+            if (replaceEmailValue !== undefined) {
+                patches.push({ op: 'replace', path: `/emails/${n}/value`, value: toStringSafe(replaceEmailValue) });
+            }
+            if (replaceEmailType !== undefined) {
+                patches.push({ op: 'replace', path: `/emails/${n}/type`, value: toStringSafe(replaceEmailType) });
+            }
+        }
+
+        if (patches.length === 0) {
             throw new context.CancelError('At least one field must be provided to update!');
         }
 
-        // https://developer.helpscout.com/mailbox-api/endpoints/customers/update/
-        const { data } = await context.httpRequest({
-            method: 'PUT',
+        // Send JSON Patch array
+        const response = await context.httpRequest({
+            method: 'PATCH',
             url: `https://api.helpscout.net/v2/customers/${id}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json'
             },
-            data: requestBody
+            data: patches,
+            validateStatus: status => (status >= 200 && status < 300) || status === 204
         });
 
-        return context.sendJson(data, 'out');
+        if (response.status === 204) {
+            return context.sendJson({}, 'out');
+        }
+
+        return context.sendJson(response.data || {}, 'out');
     }
 };

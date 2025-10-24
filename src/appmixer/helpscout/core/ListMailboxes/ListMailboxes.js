@@ -2,20 +2,77 @@
 'use strict';
 
 const lib = require('../../lib.generated');
-const schema = { 'id':{ 'type':'number','title':'Id' },'name':{ 'type':'string','title':'Name' },'slug':{ 'type':'string','title':'Slug' },'createdAt':{ 'type':'string','title':'Created At' },'updatedAt':{ 'type':'string','title':'Updated At' },'email':{ 'type':'string','title':'Email' },'status':{ 'type':'string','title':'Status' } };
+const schema = {
+    id: {
+        type: 'number',
+        title: 'Id'
+    },
+    name: {
+        type: 'string',
+        title: 'Name'
+    },
+    slug: {
+        type: 'string',
+        title: 'Slug'
+    },
+    email: {
+        type: 'string',
+        title: 'Email'
+    },
+    createdAt: {
+        type: 'string',
+        title: 'Created At'
+    },
+    updatedAt: {
+        type: 'string',
+        title: 'Updated At'
+    },
+    _links: {
+        type: 'object',
+        properties: {
+            self: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Self.Href'
+                    }
+                },
+                title: 'Links.Self'
+            },
+            folders: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Folders.Href'
+                    }
+                },
+                title: 'Links.Folders'
+            },
+            fields: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Fields.Href'
+                    }
+                },
+                title: 'Links.Fields'
+            }
+        },
+        title: 'Links'
+    }
+};
 
 module.exports = {
     async receive(context) {
 
-        const { page, outputType } = context.messages.in.content;
+        const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Mailboxes' });
         }
-
-        // Build query parameters
-        const params = {};
-        if (page) params.page = page;
 
         // https://developer.helpscout.com/mailbox-api/endpoints/mailboxes/list/
         const { data } = await context.httpRequest({
@@ -23,8 +80,7 @@ module.exports = {
             url: 'https://api.helpscout.net/v2/mailboxes',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params
+            }
         });
 
         const records = data['_embedded']?.mailboxes || [];

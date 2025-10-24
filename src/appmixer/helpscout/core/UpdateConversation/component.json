@@ -1,7 +1,7 @@
 {
     "name": "appmixer.helpscout.core.UpdateConversation",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Update conversation properties such as status, assignee, tags, and custom fields.",
+    "description": "Update conversation properties such as subject, status, assignee, tags and other fields via validated JSON Patch operations.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -20,40 +20,36 @@
                     "id": {
                         "type": "integer"
                     },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "primaryCustomerId": {
+                        "type": "integer"
+                    },
+                    "draft": {
+                        "type": "boolean"
+                    },
+                    "mailboxId": {
+                        "type": "integer"
+                    },
                     "status": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "pending",
+                            "closed"
+                        ]
                     },
-                    "assignTo|id": {
+                    "assignToId": {
                         "type": "integer"
                     },
-                    "assignTo|type": {
-                        "type": "string"
-                    },
-                    "tags": {
-                        "type": "object",
-                        "properties": {
-                            "AND": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "customFields|id": {
-                        "type": "integer"
-                    },
-                    "customFields|value": {
-                        "type": "string"
+                    "unassign": {
+                        "type": "boolean"
                     }
                 },
-                "required": ["id"]
+                "required": [
+                    "id"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -63,50 +59,61 @@
                         "label": "Conversation ID",
                         "index": 0
                     },
-                    "status": {
+                    "subject": {
                         "type": "text",
-                        "tooltip": "open, pending, closed, spam.",
-                        "label": "Status",
+                        "tooltip": "Replace subject (string).",
+                        "label": "Subject",
                         "index": 1
                     },
-                    "assignTo|id": {
+                    "primaryCustomerId": {
                         "type": "number",
-                        "tooltip": "User ID to assign to.",
-                        "label": "Assign To|id",
+                        "tooltip": "Set primary customer by ID.",
+                        "label": "Primary Customer ID",
                         "index": 2
                     },
-                    "assignTo|type": {
-                        "type": "text",
-                        "tooltip": "Assignee type (user or team).",
-                        "label": "Assign To|type",
+                    "draft": {
+                        "type": "toggle",
+                        "tooltip": "Publish/unpublish draft (boolean).",
+                        "label": "Draft",
                         "index": 3
                     },
-                    "tags": {
-                        "type": "expression",
-                        "tooltip": "Replace tags with provided list.",
-                        "label": "Tags",
-                        "levels": [
-                            "AND"
-                        ],
-                        "fields": {
-                            "tags_item": {
-                                "type": "text",
-                                "label": "Tags Item"
-                            }
-                        },
+                    "mailboxId": {
+                        "type": "number",
+                        "tooltip": "Move conversation to mailbox (provide mailbox id).",
+                        "label": "Mailbox ID",
                         "index": 4
                     },
-                    "customFields|id": {
-                        "type": "number",
-                        "tooltip": "Custom field ID.",
-                        "label": "Custom Fields|id",
-                        "index": 5
+                    "status": {
+                        "type": "select",
+                        "tooltip": "Conversation status.",
+                        "label": "Status",
+                        "index": 5,
+                        "options": [
+                            {
+                                "label": "active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "pending",
+                                "value": "pending"
+                            },
+                            {
+                                "label": "closed",
+                                "value": "closed"
+                            }
+                        ]
                     },
-                    "customFields|value": {
-                        "type": "text",
-                        "tooltip": "Value for the field.",
-                        "label": "Custom Fields|value",
+                    "assignToId": {
+                        "type": "number",
+                        "tooltip": "Assignee ID. Provide the user ID to assign the conversation (when Unassign is off) or the same user ID to remove as owner (when Unassign is on). When Unassign is enabled this field is required.",
+                        "label": "Assignee ID (required when Unassign is on)",
                         "index": 6
+                    },
+                    "unassign": {
+                        "type": "toggle",
+                        "tooltip": "If true, removes assignee from conversation.",
+                        "label": "Unassign",
+                        "index": 8
                     }
                 }
             }
