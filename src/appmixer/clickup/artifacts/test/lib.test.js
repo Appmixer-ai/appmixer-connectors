@@ -1,97 +1,88 @@
 const assert = require('assert');
-const { normalizeMultiselectInput } = require('../../src/appmixer/clickup/lib');
 
-// Mock context for testing
-const mockContext = {
-    CancelError: class extends Error {
-        constructor(message) {
-            super(message);
-            this.name = 'CancelError';
-        }
-    }
-};
-
-describe('ClickUp lib', () => {
+describe('lib.js', () => {
 
     describe('normalizeMultiselectInput', () => {
 
+        const context = { CancelError: class CancelError extends Error {} };
+
         it('should return array as-is when input is already an array', () => {
             const input = ['completed', 'in progress'];
-            const result = normalizeMultiselectInput(input, mockContext, 'statuses');
+            const result = require('../../lib').normalizeMultiselectInput(input, context, 'statuses');
             assert.deepStrictEqual(result, ['completed', 'in progress']);
-            assert.strictEqual(result, input); // Should be the same reference
+            assert.strictEqual(result, input);
         });
 
         it('should handle single string value or comma-separated string', () => {
             // Single value without commas
             assert.deepStrictEqual(
-                normalizeMultiselectInput('single', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('single', context, 'statuses'),
                 ['single']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(' single ', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput(' single ', context, 'statuses'),
                 ['single']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('2023:123:1231Z12', mockContext, 'ids'),
+                require('../../lib').normalizeMultiselectInput('2023:123:1231Z12', context, 'ids'),
                 ['2023:123:1231Z12']
             );
 
             // Comma-separated values
             assert.deepStrictEqual(
-                normalizeMultiselectInput('completed,in progress', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('completed,in progress', context, 'statuses'),
                 ['completed', 'in progress']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('completed, in progress, to do', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('completed, in progress, to do', context, 'statuses'),
                 ['completed', 'in progress', 'to do']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(' completed , in progress , to do ', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput(' completed , in progress , to do ', context, 'statuses'),
                 ['completed', 'in progress', 'to do']
             );
         });
 
         it('should filter out empty strings after splitting', () => {
             assert.deepStrictEqual(
-                normalizeMultiselectInput('completed,,in progress', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('completed,,in progress', context, 'statuses'),
                 ['completed', 'in progress']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('completed, , in progress', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('completed, , in progress', context, 'statuses'),
                 ['completed', 'in progress']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(',', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput(',', context, 'statuses'),
                 []
             );
         });
 
         it('should throw error for invalid input types', () => {
             assert.throws(() => {
-                normalizeMultiselectInput(123, mockContext, 'statuses');
+                require('../../lib').normalizeMultiselectInput(123, context, 'statuses');
             }, /statuses must be a string or an array/);
 
             assert.throws(() => {
-                normalizeMultiselectInput(true, mockContext, 'statuses');
+                require('../../lib').normalizeMultiselectInput(true, context, 'statuses');
             }, /statuses must be a string or an array/);
 
             assert.throws(() => {
-                normalizeMultiselectInput(null, mockContext, 'statuses');
+                require('../../lib').normalizeMultiselectInput(null, context, 'statuses');
             }, /statuses must be a string or an array/);
         });
 
         it('should handle edge cases', () => {
             assert.deepStrictEqual(
-                normalizeMultiselectInput('   ', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('   ', context, 'statuses'),
                 []
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('completed,', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput('completed,', context, 'statuses'),
                 ['completed']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(',completed', mockContext, 'statuses'),
+                require('../../lib').normalizeMultiselectInput(',completed', context, 'statuses'),
                 ['completed']
             );
         });

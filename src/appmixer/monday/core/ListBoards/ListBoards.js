@@ -34,8 +34,11 @@ module.exports = {
                 return context.sendJson({ boards }, 'out');
             }
 
+            // Use simplified query if this is being called as a source for another component
+            const queryToUse = context.properties.isSource ? queries.listBoardsSimple : queries.listBoards;
+
             const options = {
-                query: queries.listBoards,
+                query: queryToUse,
                 options: {
                     variables: {
                         page: 1,
@@ -65,4 +68,3 @@ module.exports = {
         });
     }
 };
-

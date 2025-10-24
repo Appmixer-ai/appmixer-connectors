@@ -1,7 +1,6 @@
 'use strict';
 const moment = require('moment');
 const ActiveCampaign = require('../../ActiveCampaign');
-const Promise = require('bluebird');
 
 module.exports = {
 
@@ -28,7 +27,7 @@ module.exports = {
         });
 
         if (updated.size) {
-            await Promise.map(updated, task => {
+            const promises = Array.from(updated).map(task => {
                 const fields = {
                     id: task.id,
                     relationship: task.owner.type,
@@ -44,6 +43,7 @@ module.exports = {
 
                 return context.sendJson(fields, 'task');
             });
+            await Promise.all(promises);
         }
 
         await context.saveState({ since });

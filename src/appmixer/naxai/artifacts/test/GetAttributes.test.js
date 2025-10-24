@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
-const action = require('../../../src/appmixer/naxai/people/GetAttributes/GetAttributes.js');
+const testUtils = require('../../../../../test/utils.js');
+const action = require('../../people/GetAttributes/GetAttributes.js');
 
 describe('GetAttributes', function() {
 

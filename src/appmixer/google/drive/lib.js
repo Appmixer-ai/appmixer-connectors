@@ -178,7 +178,8 @@ const isSubfolderStructureChanged = (change, folderIds) => {
     const file = change.file;
     if (!file) return false;
     if (file.mimeType !== 'application/vnd.google-apps.folder') return;
-    const isSubfolder = arraysOverlap(file.parents.concat(file.id), folderIds);
+    // In some cases, `file.parents` may be undefined (e.g., with read-only access and/or shared drives).
+    const isSubfolder = arraysOverlap((file.parents || []).concat(file.id), folderIds);
     const isKnown = folderIds.includes(file.id);
 
     if (isSubfolder && change.removed) {

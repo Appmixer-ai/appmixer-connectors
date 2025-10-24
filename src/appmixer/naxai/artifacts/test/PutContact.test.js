@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../../utils.js');
-const action = require('../../../src/appmixer/naxai/people/PutContact/PutContact.js');
+const testUtils = require('../../../../../test/utils.js');
+const action = require('../../people/PutContact/PutContact.js');
 
 describe('PutContact', function() {
 

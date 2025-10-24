@@ -5,7 +5,7 @@ const assert = require('assert');
 describe('ActiveCampaign Required Field Validation', function() {
 
     it('DeleteContact should validate contactId is required', async function() {
-        const DeleteContact = require('../../src/appmixer/activecampaign/contacts/DeleteContact/DeleteContact.js');
+        const DeleteContact = require('../../contacts/DeleteContact/DeleteContact.js');
 
         const context = {
             messages: {

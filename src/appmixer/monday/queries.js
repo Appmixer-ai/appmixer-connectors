@@ -21,6 +21,19 @@ module.exports = {
         }
     }
     `,
+    listBoardsSimple: `
+    query listBoards ($page: Int, $limit: Int) {
+        boards(
+            state: all,
+            order_by: created_at,
+            page: $page,
+            limit: $limit
+        ) {
+            id
+            name
+        }
+    }
+    `,
     listWorkspaces: `
     query listWorkspaces ($page: Int, $limit: Int) {
         workspaces(page: $page, limit: $limit) {

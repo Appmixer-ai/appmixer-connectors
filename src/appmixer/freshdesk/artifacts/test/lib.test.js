@@ -1,97 +1,88 @@
 const assert = require('assert');
-const { normalizeMultiselectInput } = require('../../src/appmixer/freshdesk/lib');
 
-// Mock context for testing
-const mockContext = {
-    CancelError: class extends Error {
-        constructor(message) {
-            super(message);
-            this.name = 'CancelError';
-        }
-    }
-};
-
-describe('Freshdesk lib', () => {
+describe('lib.js', () => {
 
     describe('normalizeMultiselectInput', () => {
 
+        const context = { CancelError: class CancelError extends Error {} };
+
         it('should return array as-is when input is already an array', () => {
             const input = ['conversations', 'requester'];
-            const result = normalizeMultiselectInput(input, mockContext, 'embed');
+            const result = require('../../lib').normalizeMultiselectInput(input, context, 'embed');
             assert.deepStrictEqual(result, ['conversations', 'requester']);
-            assert.strictEqual(result, input); // Should be the same reference
+            assert.strictEqual(result, input);
         });
 
         it('should handle single string value or comma-separated string', () => {
             // Single value without commas
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations', context, 'embed'),
                 ['conversations']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(' requester ', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput(' requester ', context, 'embed'),
                 ['requester']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('company', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('company', context, 'embed'),
                 ['company']
             );
 
             // Comma-separated values
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations,requester', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations,requester', context, 'embed'),
                 ['conversations', 'requester']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations, requester, company', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations, requester, company', context, 'embed'),
                 ['conversations', 'requester', 'company']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(' conversations , requester , stats ', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput(' conversations , requester , stats ', context, 'embed'),
                 ['conversations', 'requester', 'stats']
             );
         });
 
         it('should filter out empty strings after splitting', () => {
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations,,requester', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations,,requester', context, 'embed'),
                 ['conversations', 'requester']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations, , requester', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations, , requester', context, 'embed'),
                 ['conversations', 'requester']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(',', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput(',', context, 'embed'),
                 []
             );
         });
 
         it('should throw error for invalid input types', () => {
             assert.throws(() => {
-                normalizeMultiselectInput(123, mockContext, 'embed');
+                require('../../lib').normalizeMultiselectInput(123, context, 'embed');
             }, /embed must be a string or an array/);
 
             assert.throws(() => {
-                normalizeMultiselectInput(true, mockContext, 'embed');
+                require('../../lib').normalizeMultiselectInput(true, context, 'embed');
             }, /embed must be a string or an array/);
 
             assert.throws(() => {
-                normalizeMultiselectInput(null, mockContext, 'embed');
+                require('../../lib').normalizeMultiselectInput(null, context, 'embed');
             }, /embed must be a string or an array/);
         });
 
         it('should handle edge cases', () => {
             assert.deepStrictEqual(
-                normalizeMultiselectInput('   ', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('   ', context, 'embed'),
                 []
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput('conversations,', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput('conversations,', context, 'embed'),
                 ['conversations']
             );
             assert.deepStrictEqual(
-                normalizeMultiselectInput(',conversations', mockContext, 'embed'),
+                require('../../lib').normalizeMultiselectInput(',conversations', context, 'embed'),
                 ['conversations']
             );
         });
