@@ -18,6 +18,11 @@ module.exports = {
                 type: 'text',
                 name: 'Password'
             },
+            apiKey: {
+                type: 'text',
+                name: 'API Key',
+                tooltip: 'If API Key is entered, the username and password is ignored'
+            },
             instance: {
                 type: 'text',
                 name: 'Instance name',
@@ -27,14 +32,20 @@ module.exports = {
 
         requestProfileInfo: async function(context) {
 
-            const basicAuth = Buffer.from(context.username + ':' + context.password).toString('base64');
+            const headers = {
+                'User-Agent': 'Appmixer (info@appmixer.com)'
+            };
+
+            if (context.apiKey) {
+                headers['x-sn-apikey'] = context.apiKey;
+            } else {
+                headers['Authorization'] = 'Basic ' + Buffer.from(context.username + ':' + context.password).toString('base64');
+            }
+
             const options = {
                 method: 'GET',
                 url: 'https://' + context.instance + '.service-now.com/api/now/table/problem?sysparm_limit=1',
-                headers: {
-                    'User-Agent': 'Appmixer (info@appmixer.com)',
-                    'Authorization': ('Basic ' + basicAuth)
-                }
+                headers
             };
 
             try {
@@ -49,13 +60,18 @@ module.exports = {
 
         validate: async function(context) {
 
-            const basicAuth = Buffer.from(context.username + ':' + context.password).toString('base64');
+            const headers = {};
+
+            if (context.apiKey) {
+                headers['x-sn-apikey'] = context.apiKey;
+            } else {
+                headers['Authorization'] = 'Basic ' + Buffer.from(context.username + ':' + context.password).toString('base64');
+            }
+
             const options = {
                 method: 'GET',
                 url: 'https://' + context.instance + '.service-now.com/api/now/table/problem?sysparm_limit=1',
-                headers: {
-                    'Authorization': ('Basic ' + basicAuth)
-                }
+                headers
             };
             await context.httpRequest(options);
 
