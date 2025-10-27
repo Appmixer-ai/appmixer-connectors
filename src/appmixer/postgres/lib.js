@@ -1,10 +1,13 @@
-const { Pool } = require('pg');
+const { Pool, Client } = require('pg');
 const QueryStream = require('pg-query-stream');
 const { stringify } = require('csv-stringify');
 const crypto = require('crypto');
 
 // ConnectionHash: { components: Set, pool: Pool }
 const POOLS = {};
+
+// Create a dummy client for escaping (no connection required for these methods)
+const dummyClient = new Client();
 
 module.exports = {
 
@@ -54,8 +57,49 @@ module.exports = {
             await record.pool.end();
             delete POOLS[context.connectionHash];
         }
+    },
+
+    sanitizeOperator: (operator, context) => {
+        const trimmedOperator = (operator ?? '').trim();
+        const normalizedOperator = trimmedOperator.toUpperCase();
+
+        if (!SAFE_OPERATORS.has(normalizedOperator)) {
+            throw new context.CancelError(`Unsupported operator "${operator}"`);
+        }
+
+        return normalizedOperator;
+    },
+
+    /**
+     * Escapes a PostgreSQL identifier (table name, column name, schema name, etc.)
+     * to prevent SQL injection.
+     * @param {string} identifier - The identifier to escape
+     * @returns {string} The escaped identifier wrapped in double quotes
+     */
+    escapeIdentifier: (identifier) => {
+        return dummyClient.escapeIdentifier(identifier);
+    },
+
+    /**
+     * Escapes a literal value for use in SQL queries to prevent SQL injection.
+     * @param {string} literal - The literal value to escape
+     * @returns {string} The escaped literal wrapped in single quotes
+     */
+    escapeLiteral: (literal) => {
+        return dummyClient.escapeLiteral(literal);
     }
 };
+
+// Operator sanitizer helper for components
+const SAFE_OPERATORS = new Set([
+    '=', '!=', '<>', '<', '<=', '>', '>=',
+    'CONTAINS', 'NOT CONTAINS', 'STARTS WITH', 'NOT STARTS WITH',
+    'ENDS WITH', 'NOT ENDS WITH', 'IN', 'NOT IN',
+    'LIKE', 'NOT LIKE', 'IS NULL', 'IS NOT NULL'
+]);
+
+
+module.exports.SAFE_OPERATORS = SAFE_OPERATORS;
 
 function ensurePool(context) {
 
