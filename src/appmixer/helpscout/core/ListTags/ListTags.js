@@ -5,7 +5,7 @@ const lib = require('../../lib.generated');
 const schema = {
     id: {
         type: 'number',
-        title: 'Id'
+        title: 'Tag ID'
     },
     slug: {
         type: 'string',

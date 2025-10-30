@@ -5,7 +5,7 @@ const lib = require('../../lib.generated');
 const schema = {
     id: {
         type: 'number',
-        title: 'Id'
+        title: 'Conversation ID'
     },
     number: {
         type: 'number',
@@ -21,7 +21,7 @@ const schema = {
     },
     folderId: {
         type: 'number',
-        title: 'Folder Id'
+        title: 'Folder ID'
     },
     status: {
         type: 'string',
@@ -41,14 +41,14 @@ const schema = {
     },
     mailboxId: {
         type: 'number',
-        title: 'Mailbox Id'
+        title: 'Mailbox ID'
     },
     assignee: {
         type: 'object',
         properties: {
             id: {
                 type: 'number',
-                title: 'Assignee.Id'
+                title: 'Assignee.ID'
             },
             type: {
                 type: 'string',
@@ -74,7 +74,7 @@ const schema = {
         properties: {
             id: {
                 type: 'number',
-                title: 'Created By.Id'
+                title: 'Created By.ID'
             },
             type: {
                 type: 'string',
@@ -100,7 +100,7 @@ const schema = {
         properties: {
             id: {
                 type: 'number',
-                title: 'Closed By User.Id'
+                title: 'Closed By User.ID'
             },
             type: {
                 type: 'string',
@@ -168,7 +168,7 @@ const schema = {
             properties: {
                 id: {
                     type: 'number',
-                    title: 'Tags.Id'
+                    title: 'Tags.ID'
                 },
                 color: {
                     type: 'string',
@@ -201,7 +201,7 @@ const schema = {
         properties: {
             id: {
                 type: 'number',
-                title: 'Primary Customer.Id'
+                title: 'Primary Customer.ID'
             },
             type: {
                 type: 'string',
@@ -253,7 +253,7 @@ const schema = {
             },
             userId: {
                 type: 'number',
-                title: 'Next Event.User Id'
+                title: 'Next Event.User ID'
             },
             cancelOnCustomerReply: {
                 type: 'boolean',
@@ -269,7 +269,7 @@ const schema = {
             properties: {
                 id: {
                     type: 'number',
-                    title: 'Custom Fields.Id'
+                    title: 'Custom Fields.ID'
                 },
                 name: {
                     type: 'string',

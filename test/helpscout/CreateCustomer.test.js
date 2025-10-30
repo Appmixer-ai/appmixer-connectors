@@ -48,7 +48,7 @@ describe('HelpScout CreateCustomer', () => {
         accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
     };
 
-    before(async function () {
+    before(async function() {
         // Skip all tests if the access token is not set
         if (!auth.accessToken) { this.skip(); }
     });

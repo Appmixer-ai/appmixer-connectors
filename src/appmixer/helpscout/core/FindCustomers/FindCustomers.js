@@ -5,7 +5,7 @@ const lib = require('../../lib.generated');
 const schema = {
     id: {
         type: 'number',
-        title: 'Id'
+        title: 'Customer ID'
     },
     firstName: {
         type: 'string',
@@ -29,7 +29,7 @@ const schema = {
     },
     organizationId: {
         type: 'number',
-        title: 'Organization Id'
+        title: 'Organization ID'
     },
     photoType: {
         type: 'string',
