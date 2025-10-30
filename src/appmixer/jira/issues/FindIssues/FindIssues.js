@@ -2,6 +2,8 @@
 const commons = require('../../jira-commons');
 
 /**
+ * Enhanced JQL search component using the new /rest/api/3/search/jql endpoint
+ * Supports advanced field selection, expansion options, and up to 5000 results
  * @extends {Component}
  */
 module.exports = {
@@ -9,25 +11,80 @@ module.exports = {
     async receive(context) {
 
         const { profileInfo: { apiUrl }, auth } = context;
-        const { query, validateQuery, maxResults, sendWholeArray } = context.messages.in.content;
+        const {
+            query,
+            maxResults = 50,
+            fields = '*navigable',
+            properties,
+            fieldsByKeys = false,
+            failFast = false,
+            sendWholeArray = false
+        } = context.messages.in.content;
 
-        const found = await commons.get(
-            `${apiUrl}search`,
-            auth,
-            { jql: query, maxResults, validateQuery }
-        );
-
-        const promises = [];
-        if (found?.issues) {
-            if (sendWholeArray) {
-                return context.sendJson({ issues: found.issues }, 'issue');
-            }
-
-            found.issues.forEach(issue => {
-                promises.push(context.sendJson(issue, 'issue'));
-            });
+        // Validate required parameters
+        if (!query || !query.trim()) {
+            throw new context.CancelError('JQL query is required');
         }
 
+        // Build query parameters
+        const params = {
+            jql: query.trim(),
+            maxResults: Math.min(maxResults, 5000), // Enforce API limit
+            fields: fields.trim()
+        };
+
+        // Add optional parameters only if they have values
+        if (properties && properties.trim()) {
+            // Limit to 5 properties as per API spec
+            const propList = properties.split(',').map(p => p.trim()).filter(p => p);
+            if (propList.length > 5) {
+                throw new context.CancelError('Maximum 5 issue properties are allowed');
+            }
+            params.properties = propList.join(',');
+        }
+
+        if (fieldsByKeys) {
+            params.fieldsByKeys = true;
+        }
+
+        if (failFast) {
+            params.failFast = true;
+        }
+
+        // Execute the search
+        const found = await commons.get(`${apiUrl}search/jql`, auth, params);
+
+        // Handle results
+        const issues = found?.issues || [];
+
+        if (issues.length === 0) {
+            return context.sendJson({
+                message: 'No issues found matching the query',
+                query: query,
+                totalCount: 0
+            }, 'issue');
+        }
+
+        if (sendWholeArray) {
+            return context.sendJson({
+                issues: issues,
+                totalCount: issues.length,
+                query: query,
+                maxResults: params.maxResults
+            }, 'issue');
+        }
+
+        // Send issues one by one
+        const promises = issues.map((issue, index) => {
+            return context.sendJson({
+                ...issue,
+                _metadata: {
+                    index: index,
+                    totalCount: issues.length,
+                    query: query
+                }
+            }, 'issue');
+        });
         return Promise.all(promises);
     }
 };

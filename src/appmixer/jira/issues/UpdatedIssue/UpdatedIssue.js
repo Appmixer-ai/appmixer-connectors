@@ -22,7 +22,8 @@ module.exports = {
 
         const params = {
             maxResults: 100,
-            jql: `updated > ${updatedTime}`
+            jql: `updated > ${updatedTime}`,
+            fields: '*navigable'
         };
 
         if (project) {
@@ -32,7 +33,7 @@ module.exports = {
         params.jql += ' ORDER BY updated ASC';
 
         const issues = await commons.getAPINoPagination({
-            endpoint: `${apiUrl}search`,
+            endpoint: `${apiUrl}search/jql`,
             credentials: auth,
             key: 'issues',
             params
