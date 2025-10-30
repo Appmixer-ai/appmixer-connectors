@@ -1,46 +1,62 @@
-'use strict';
-
 const assert = require('assert');
-const { checkAccessTokenOrSkip } = require('./testHelper');
+const path = require('path');
+const dotenv = require('dotenv');
+const axios = require('axios');
 
-describe('GetCurrentUser', function() {
-    this.timeout(30000); // 30 second timeout
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-    const componentPath = '../../src/appmixer/helpscout/core/GetCurrentUser/GetCurrentUser.js';
-    let component;
+// Import the component
+const GetCurrentUser = require('../../src/appmixer/helpscout/core/GetCurrentUser/GetCurrentUser');
 
-    before(function() {
-        // Skip all tests if no access token is available
-        checkAccessTokenOrSkip(this);
-        component = require(componentPath);
+// Mock context
+const createMockContext = (auth, messages = {}) => {
+    return {
+        auth,
+        messages,
+        properties: {},
+        httpRequest: async (options) => {
+            const response = await axios({
+                method: options.method || 'GET',
+                url: options.url,
+                headers: options.headers,
+                data: options.data
+            });
+
+            return {
+                data: response.data,
+                status: response.status,
+                headers: response.headers
+            };
+        },
+        sendJson: (data, port) => {
+            return { data, port };
+        }
+    };
+};
+
+describe('HelpScout GetCurrentUser', () => {
+    const auth = {
+        accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
+    };
+
+    before(async function() {
+        // Skip all tests if the access token is not set
+        if (!auth.accessToken) { this.skip(); }
     });
 
-    it('should return current user profile', async () => {
+    it('should get current user details', async () => {
+        const context = createMockContext(auth, {
+            in: { content: {} }
+        });
 
-        // Mock context
-        const context = {
-            auth: {
-                accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
-            },
-            messages: {
-                in: {
-                    content: {}
-                }
-            },
-            httpRequest: require('./httpRequest.js'),
-            sendJson: (data, port) => {
-                assert.strictEqual(port, 'out');
-                assert(data);
-                assert(typeof data === 'object');
-                assert(typeof data.id === 'number');
-                assert(typeof data.firstName === 'string');
-                assert(typeof data.email === 'string');
-                return data;
-            }
-        };
-
-        // Execute component
-        const result = await component.receive(context);
-        assert(result);
+        const result = await GetCurrentUser.receive(context);
+        
+        assert.strictEqual(result.port, 'out');
+        assert(result.data, 'Should return user data');
+        assert(result.data.id, 'Should have user ID');
+        assert(result.data.email, 'Should have user email');
+        assert(result.data.firstName, 'Should have user firstName');
+        assert(result.data.lastName, 'Should have user lastName');
     });
 });

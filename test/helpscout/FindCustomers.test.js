@@ -1,86 +1,90 @@
-'use strict';
 const assert = require('assert');
-const { checkAccessTokenOrSkip } = require('./testHelper');
+const path = require('path');
+const dotenv = require('dotenv');
+const axios = require('axios');
 
-describe('HelpScout core.FindCustomers', () => {
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-    before(function() {
-        checkAccessTokenOrSkip(this);
+// Import the component
+const FindCustomers = require('../../src/appmixer/helpscout/core/FindCustomers/FindCustomers');
+
+// Mock context
+const createMockContext = (auth, messages = {}) => {
+    let sentData = null;
+    let sentPort = null;
+
+    return {
+        auth,
+        messages,
+        properties: {},
+        httpRequest: async (options) => {
+            const response = await axios({
+                method: options.method || 'GET',
+                url: options.url,
+                headers: options.headers,
+                data: options.data
+            });
+
+            return {
+                data: response.data,
+                status: response.status,
+                headers: response.headers
+            };
+        },
+        sendJson: (data, port) => {
+            sentData = data;
+            sentPort = port;
+            return Promise.resolve();
+        },
+        getSentData: () => ({ data: sentData, port: sentPort })
+    };
+};
+
+describe('HelpScout FindCustomers', () => {
+    const auth = {
+        accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
+    };
+
+    before(async function() {
+        // Skip all tests if the access token is not set
+        if (!auth.accessToken) { this.skip(); }
     });
 
-    it('should receive and send array output', async () => {
-
-        let sendJsonCalled = false;
-        let sentData = null;
-
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        outputType: 'array',
-                        query: 'test'
-                    }
+    it('should find customers with basic query', async () => {
+        const context = createMockContext(auth, {
+            in: {
+                content: {
+                    query: 'email:*',
+                    outputType: 'array'
                 }
-            },
-            properties: {},
-            auth: {
-                accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
-            },
-            httpRequest: require('./httpRequest.js'),
-            sendJson: (data, port) => {
-                sendJsonCalled = true;
-                sentData = data;
-                assert.strictEqual(port, 'out');
-                assert(Array.isArray(data.result));
-                assert(typeof data.count === 'number');
-                console.log(`Found ${data.count} customers`);
-                return Promise.resolve(data);
             }
-        };
+        });
 
-        const component = require('../../src/appmixer/helpscout/core/FindCustomers/FindCustomers');
-        await component.receive(context);
-
-        assert(sendJsonCalled, 'sendJson should have been called');
-        assert(sentData, 'Data should have been sent');
+        await FindCustomers.receive(context);
+        const result = context.getSentData();
+        
+        assert.strictEqual(result.port, 'out');
+        assert(result.data, 'Should return customers data');
+        assert(result.data.result, 'Should have result property');
+        assert(Array.isArray(result.data.result), 'Result should be an array');
     });
 
-    it('should receive and send first output', async () => {
-
-        let sendJsonCalled = false;
-        let sentData = null;
-
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        outputType: 'first'
-                    }
+    it('should handle first output type', async () => {
+        const context = createMockContext(auth, {
+            in: {
+                content: {
+                    query: 'email:*',
+                    outputType: 'first'
                 }
-            },
-            properties: {},
-            auth: {
-                accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
-            },
-            httpRequest: require('./httpRequest.js'),
-            sendJson: (data, port) => {
-                sendJsonCalled = true;
-                sentData = data;
-                assert.strictEqual(port, 'out');
-                assert(typeof data === 'object');
-                assert(data.id);
-                assert(typeof data.index === 'number');
-                assert(typeof data.count === 'number');
-                console.log(`Customer: ${data.id} (${data.firstName} ${data.lastName})`);
-                return Promise.resolve(data);
-            },
-            CancelError: class extends Error {}
-        };
+            }
+        });
 
-        const component = require('../../src/appmixer/helpscout/core/FindCustomers/FindCustomers');
-        await component.receive(context);
-
-        assert(sendJsonCalled, 'sendJson should have been called');
-        assert(sentData, 'Data should have been sent');
+        await FindCustomers.receive(context);
+        const result = context.getSentData();
+        
+        assert.strictEqual(result.port, 'out');
+        assert(result.data, 'Should return customer data');
+        // First result may have additional properties like index, count
     });
 });

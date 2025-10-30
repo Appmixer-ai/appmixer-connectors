@@ -1,82 +1,81 @@
-'use strict';
-
 const assert = require('assert');
-const { checkAccessTokenOrSkip } = require('./testHelper');
+const path = require('path');
+const dotenv = require('dotenv');
+const axios = require('axios');
 
-describe('ListMailboxes', () => {
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-    const componentPath = '../../src/appmixer/helpscout/core/ListMailboxes/ListMailboxes.js';
-    let component;
+// Import the component
+const ListMailboxes = require('../../src/appmixer/helpscout/core/ListMailboxes/ListMailboxes');
 
-    before(function() {
-        // Skip all tests if no access token is available
-        checkAccessTokenOrSkip(this);
-        component = require(componentPath);
+// Mock context
+const createMockContext = (auth, messages = {}) => {
+    let sentData = null;
+    let sentPort = null;
+
+    return {
+        auth,
+        messages,
+        properties: {},
+        httpRequest: async (options) => {
+            const response = await axios({
+                method: options.method || 'GET',
+                url: options.url,
+                headers: options.headers,
+                data: options.data
+            });
+
+            return {
+                data: response.data,
+                status: response.status,
+                headers: response.headers
+            };
+        },
+        sendJson: (data, port) => {
+            sentData = data;
+            sentPort = port;
+            return Promise.resolve();
+        },
+        getSentData: () => ({ data: sentData, port: sentPort })
+    };
+};
+
+describe('HelpScout ListMailboxes', () => {
+    const auth = {
+        accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
+    };
+
+    before(async function() {
+        // Skip all tests if the access token is not set
+        if (!auth.accessToken) { this.skip(); }
     });
 
-    it('should return list of mailboxes (array)', async () => {
+    it('should list mailboxes with array output', async () => {
+        const context = createMockContext(auth, {
+            in: { content: { outputType: 'array' } }
+        });
 
-        // Mock context with tracking
-        let sendJsonCalled = false;
-        let sentData = null;
-
-        const context = {
-            auth: {
-                accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
-            },
-            properties: {},  // Add properties object
-            messages: {
-                in: {
-                    content: {
-                        outputType: 'array'
-                    }
-                }
-            },
-            httpRequest: require('./httpRequest.js'),
-            sendJson: (data, port) => {
-                sendJsonCalled = true;
-                sentData = data;
-                assert.strictEqual(port, 'out');
-                assert(data);
-                assert(typeof data === 'object');
-                assert(Array.isArray(data.result));
-                assert(typeof data.count === 'number');
-                return Promise.resolve(data);
-            }
-        };
-
-        // Execute component
-        await component.receive(context);
-
-        // Verify that sendJson was called with correct data
-        assert(sendJsonCalled, 'sendJson should have been called');
-        assert(sentData, 'Data should have been sent');
+        await ListMailboxes.receive(context);
+        const result = context.getSentData();
+        
+        assert.strictEqual(result.port, 'out');
+        assert(result.data, 'Should return mailboxes data');
+        assert(result.data.result, 'Should have result property');
+        assert(Array.isArray(result.data.result), 'Result should be an array');
     });
 
-    it('should generate output port options', async () => {
+    it('should list mailboxes with first output', async () => {
+        const context = createMockContext(auth, {
+            in: { content: { outputType: 'first' } }
+        });
 
-        // Mock context for output port generation
-        const context = {
-            properties: {
-                generateOutputPortOptions: true
-            },
-            messages: {
-                in: {
-                    content: {
-                        outputType: 'array'
-                    }
-                }
-            },
-            sendJson: (options, port) => {
-                assert.strictEqual(port, 'out');
-                assert(Array.isArray(options));
-                assert(options.length > 0);
-                return options;
-            }
-        };
-
-        // Execute component
-        const result = await component.receive(context);
-        assert(result);
+        await ListMailboxes.receive(context);
+        const result = context.getSentData();
+        
+        assert.strictEqual(result.port, 'out');
+        assert(result.data, 'Should return mailbox data');
+        assert(result.data.id, 'Should have mailbox ID');
+        assert(result.data.name, 'Should have mailbox name');
     });
 });

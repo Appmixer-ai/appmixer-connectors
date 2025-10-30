@@ -42,6 +42,11 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tags', value: 'tags' });
         }
 
+        // Validate required fields
+        if (!id) {
+            throw new context.CancelError('Customer ID is required!');
+        }
+
         // https://developer.helpscout.com/mailbox-api/endpoints/customers/emails/list/
         const { data } = await context.httpRequest({
             method: 'GET',

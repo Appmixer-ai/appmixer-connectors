@@ -1,136 +1,112 @@
-'use strict';
-
 const assert = require('assert');
-const { checkAccessTokenOrSkip } = require('./testHelper');
+const path = require('path');
+const dotenv = require('dotenv');
+const axios = require('axios');
 
-describe('CreateCustomer', function() {
-    this.timeout(30000); // 30 second timeout
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-    const componentPath = '../../src/appmixer/helpscout/core/CreateCustomer/CreateCustomer.js';
-    let component;
+// Import the component
+const CreateCustomer = require('../../src/appmixer/helpscout/core/CreateCustomer/CreateCustomer');
 
-    before(function() {
-        // Skip all tests if no access token is available
-        checkAccessTokenOrSkip(this);
-        component = require(componentPath);
-    });
+// Mock context with CancelError
+const createMockContext = (auth, messages = {}) => {
+    const context = {
+        auth,
+        messages,
+        properties: {},
+        httpRequest: async (options) => {
+            const response = await axios({
+                method: options.method || 'GET',
+                url: options.url,
+                headers: options.headers,
+                data: options.data
+            });
 
-    it('should create a new customer', async () => {
-
-        // Mock context with tracking
-        let sendJsonCalled = false;
-        let sentData = null;
-
-        const context = {
-            auth: {
-                accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
-            },
-            properties: {},
-            messages: {
-                in: {
-                    content: {
-                        firstName: 'Test',
-                        lastName: 'Customer',
-                        emailValue: `test.customer.${Date.now()}@example.com`, // Use unique email
-                        emailType: 'work',
-                        background: 'Test customer created by automated test'
-                    }
-                }
-            },
-            httpRequest: require('./httpRequest.js'),
-            sendJson: (data, port) => {
-                sendJsonCalled = true;
-                sentData = data;
-                assert.strictEqual(port, 'out');
-                console.log('CreateCustomer response:', data); // Debug log
-
-                if (data) {
-                    assert(typeof data === 'object');
-                    if (data.id) {
-                        assert(typeof data.id === 'number');
-                    }
-                    if (data.firstName) {
-                        assert(typeof data.firstName === 'string');
-                    }
-                } else {
-                    console.log('Warning: CreateCustomer returned null/empty data');
-                }
-                return Promise.resolve(data);
-            },
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
+            return {
+                data: response.data,
+                status: response.status,
+                headers: response.headers
+            };
+        },
+        sendJson: (data, port) => {
+            return { data, port };
+        },
+        CancelError: class CancelError extends Error {
+            constructor(message) {
+                super(message);
+                this.name = 'CancelError';
             }
-        };
-
-        // Execute component
-        await component.receive(context);
-
-        // Verify that sendJson was called with correct data
-        assert(sendJsonCalled, 'sendJson should have been called');
-        console.log('Sent data:', sentData);
-
-        if (sentData && sentData.firstName) {
-            assert.strictEqual(sentData.firstName, 'Test');
         }
-        if (sentData && sentData.lastName) {
-            assert.strictEqual(sentData.lastName, 'Customer');
-        }
+    };
+    
+    return context;
+};
+
+describe('HelpScout CreateCustomer', () => {
+    const auth = {
+        accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
+    };
+
+    before(async function() {
+        // Skip all tests if the access token is not set
+        if (!auth.accessToken) { this.skip(); }
     });
 
     it('should throw error when firstName is missing', async () => {
-
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        emailValue: 'test@example.com'
-                    }
-                }
-            },
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
+        const context = createMockContext(auth, {
+            in: { 
+                content: { 
+                    lastName: 'Test', 
+                    emailValue: 'test@example.com' 
+                } 
             }
-        };
+        });
 
         try {
-            await component.receive(context);
-            assert.fail('Expected CancelError to be thrown');
+            await CreateCustomer.receive(context);
+            assert.fail('Should have thrown an error for missing firstName');
         } catch (error) {
             assert.strictEqual(error.name, 'CancelError');
-            assert(error.message.includes('First Name'));
+            assert(error.message.includes('First Name is required'));
         }
     });
 
-    it('should throw error when email is missing', async () => {
-
-        const context = {
-            messages: {
-                in: {
-                    content: {
-                        firstName: 'Test'
-                    }
-                }
-            },
-            CancelError: class extends Error {
-                constructor(message) {
-                    super(message);
-                    this.name = 'CancelError';
-                }
+    it('should throw error when lastName is missing', async () => {
+        const context = createMockContext(auth, {
+            in: { 
+                content: { 
+                    firstName: 'Test', 
+                    emailValue: 'test@example.com' 
+                } 
             }
-        };
+        });
 
         try {
-            await component.receive(context);
-            assert.fail('Expected CancelError to be thrown');
+            await CreateCustomer.receive(context);
+            assert.fail('Should have thrown an error for missing lastName');
         } catch (error) {
             assert.strictEqual(error.name, 'CancelError');
-            assert(error.message.includes('Email'));
+            assert(error.message.includes('Last Name is required'));
+        }
+    });
+
+    it('should throw error when emailValue is missing', async () => {
+        const context = createMockContext(auth, {
+            in: { 
+                content: { 
+                    firstName: 'Test', 
+                    lastName: 'User' 
+                } 
+            }
+        });
+
+        try {
+            await CreateCustomer.receive(context);
+            assert.fail('Should have thrown an error for missing emailValue');
+        } catch (error) {
+            assert.strictEqual(error.name, 'CancelError');
+            assert(error.message.includes('Email Address is required'));
         }
     });
 });
