@@ -1,0 +1,79 @@
+{
+    "name": "appmixer.clerk.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Performs an arbitrary authorized API call to Clerk API.",
+    "private": false,
+    "auth": {
+        "service": "appmixer:clerk"
+    },
+    "quota": {
+        "manager": "appmixer:clerk",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+                        "default": "GET"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": ["url", "method"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint URL",
+                        "tooltip": "Enter the API endpoint URL. For example: <code>https://api.clerk.com/v1/users</code> or <code>https://api.clerk.com/v1/organizations/{org_id}</code>."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body for the API call (JSON format)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status Code", "value": "status" },
+                { "label": "Response Headers", "value": "headers" },
+                { "label": "Response Body", "value": "body", "schema": { "type": "object", "properties": {} } }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBpZD0iQ2xlcmstLVN0cmVhbWxpbmUtU2ltcGxlLUljb25zIiBoZWlnaHQ9IjI0IiB3aWR0aD0iMjQiPgogIDxkZXNjPgogICAgQ2xlcmsgU3RyZWFtbGluZSBJY29uOiBodHRwczovL3N0cmVhbWxpbmVocS5jb20KICA8L2Rlc2M+CiAgPHRpdGxlPkNsZXJrPC90aXRsZT4KICA8cGF0aCBkPSJtMjEuNDcgMjAuODI5IC0yLjg4MSAtMi44ODFhMC41NzIgMC41NzIgMCAwIDAgLTAuNyAtMC4wODQgNi44NTQgNi44NTQgMCAwIDEgLTcuMDgxIDAgMC41NzYgMC41NzYgMCAwIDAgLTAuNyAwLjA4NGwtMi44ODEgMi44ODFhMC41NzYgMC41NzYgMCAwIDAgLTAuMTAzIDAuNjkgMC41NyAwLjU3IDAgMCAwIDAuMTY2IDAuMTg2IDEyIDEyIDAgMCAwIDE0LjExMyAwIDAuNTggMC41OCAwIDAgMCAwLjIzOSAtMC40MjMgMC41NzYgMC41NzYgMCAwIDAgLTAuMTcyIC0wLjQ1M1ptMC4wMDIgLTE3LjY2OCAtMi44OCAyLjg4YTAuNTY5IDAuNTY5IDAgMCAxIC0wLjcwMSAwLjA4NEE2Ljg1NyA2Ljg1NyAwIDAgMCA4LjcyNCA4LjA4YTYuODYyIDYuODYyIDAgMCAwIC0xLjIyMiAzLjY5MiA2Ljg2IDYuODYgMCAwIDAgMC45NzggMy43NjQgMC41NzMgMC41NzMgMCAwIDEgLTAuMDgzIDAuNjk5bC0yLjg4MSAyLjg4YTAuNTY3IDAuNTY3IDAgMCAxIC0wLjg2NCAtMC4wNjNBMTEuOTkzIDExLjk5MyAwIDAgMSA2Ljc3MSAyLjdhMTEuOTkgMTEuOTkgMCAwIDEgMTQuNjM3IC0wLjQwNSAwLjU2NiAwLjU2NiAwIDAgMSAwLjIzMiAwLjQxOCAwLjU3IDAuNTcgMCAwIDEgLTAuMTY4IDAuNDQ4Wm0tNy4xMTggMTIuMjYxYTMuNDI3IDMuNDI3IDAgMSAwIDAgLTYuODU0IDMuNDI3IDMuNDI3IDAgMCAwIDAgNi44NTRaIiBmaWxsPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEiPjwvcGF0aD4KPC9zdmc+"
+}
