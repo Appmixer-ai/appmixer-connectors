@@ -270,7 +270,7 @@ Before completing, verify:
 ## Output Format
 
 1. Create both files with proper content
-2. Use .github/prompts/post-refactor-bundle-update.prompt.md to update the connector bundle
+2. Use .github/prompts/post-refactor-bundle-update.prompt.md to update the connector bundle minor version
 3. Provide a summary of:
    - API research findings
    - Key API requirements implemented
