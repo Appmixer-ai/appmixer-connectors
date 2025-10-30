@@ -40,7 +40,7 @@ describe('HelpScout GetCurrentUser', () => {
         accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
     };
 
-    before(async function() {
+    before(async function () {
         // Skip all tests if the access token is not set
         if (!auth.accessToken) { this.skip(); }
     });
@@ -51,7 +51,7 @@ describe('HelpScout GetCurrentUser', () => {
         });
 
         const result = await GetCurrentUser.receive(context);
-        
+
         assert.strictEqual(result.port, 'out');
         assert(result.data, 'Should return user data');
         assert(result.data.id, 'Should have user ID');

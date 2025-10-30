@@ -46,7 +46,7 @@ describe('HelpScout FindCustomers', () => {
         accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
     };
 
-    before(async function() {
+    before(async function () {
         // Skip all tests if the access token is not set
         if (!auth.accessToken) { this.skip(); }
     });
@@ -63,7 +63,7 @@ describe('HelpScout FindCustomers', () => {
 
         await FindCustomers.receive(context);
         const result = context.getSentData();
-        
+
         assert.strictEqual(result.port, 'out');
         assert(result.data, 'Should return customers data');
         assert(result.data.result, 'Should have result property');
@@ -82,7 +82,7 @@ describe('HelpScout FindCustomers', () => {
 
         await FindCustomers.receive(context);
         const result = context.getSentData();
-        
+
         assert.strictEqual(result.port, 'out');
         assert(result.data, 'Should return customer data');
         // First result may have additional properties like index, count

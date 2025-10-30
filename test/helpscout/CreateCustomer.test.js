@@ -39,7 +39,7 @@ const createMockContext = (auth, messages = {}) => {
             }
         }
     };
-    
+
     return context;
 };
 
@@ -48,18 +48,18 @@ describe('HelpScout CreateCustomer', () => {
         accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
     };
 
-    before(async function() {
+    before(async function () {
         // Skip all tests if the access token is not set
         if (!auth.accessToken) { this.skip(); }
     });
 
     it('should throw error when firstName is missing', async () => {
         const context = createMockContext(auth, {
-            in: { 
-                content: { 
-                    lastName: 'Test', 
-                    emailValue: 'test@example.com' 
-                } 
+            in: {
+                content: {
+                    lastName: 'Test',
+                    emailValue: 'test@example.com'
+                }
             }
         });
 
@@ -74,11 +74,11 @@ describe('HelpScout CreateCustomer', () => {
 
     it('should throw error when lastName is missing', async () => {
         const context = createMockContext(auth, {
-            in: { 
-                content: { 
-                    firstName: 'Test', 
-                    emailValue: 'test@example.com' 
-                } 
+            in: {
+                content: {
+                    firstName: 'Test',
+                    emailValue: 'test@example.com'
+                }
             }
         });
 
@@ -93,11 +93,11 @@ describe('HelpScout CreateCustomer', () => {
 
     it('should throw error when emailValue is missing', async () => {
         const context = createMockContext(auth, {
-            in: { 
-                content: { 
-                    firstName: 'Test', 
-                    lastName: 'User' 
-                } 
+            in: {
+                content: {
+                    firstName: 'Test',
+                    lastName: 'User'
+                }
             }
         });
 

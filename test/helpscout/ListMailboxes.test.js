@@ -46,7 +46,7 @@ describe('HelpScout ListMailboxes', () => {
         accessToken: process.env.HELPSCOUT_ACCESS_TOKEN
     };
 
-    before(async function() {
+    before(async function () {
         // Skip all tests if the access token is not set
         if (!auth.accessToken) { this.skip(); }
     });
@@ -58,7 +58,7 @@ describe('HelpScout ListMailboxes', () => {
 
         await ListMailboxes.receive(context);
         const result = context.getSentData();
-        
+
         assert.strictEqual(result.port, 'out');
         assert(result.data, 'Should return mailboxes data');
         assert(result.data.result, 'Should have result property');
@@ -72,7 +72,7 @@ describe('HelpScout ListMailboxes', () => {
 
         await ListMailboxes.receive(context);
         const result = context.getSentData();
-        
+
         assert.strictEqual(result.port, 'out');
         assert(result.data, 'Should return mailbox data');
         assert(result.data.id, 'Should have mailbox ID');
