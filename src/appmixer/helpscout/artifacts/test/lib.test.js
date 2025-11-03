@@ -170,7 +170,7 @@ describe('lib.generated.js', () => {
 
         it('should return object options for object output type', () => {
             lib.getOutputPortOptions(mockContext, 'object', testSchema, { label: 'Items', value: 'items' });
-            
+
             assert.strictEqual(mockContext.lastSent.port, 'out');
             assert(Array.isArray(mockContext.lastSent.data));
             assert(mockContext.lastSent.data.some(option => option.label === 'ID' && option.value === 'id'));
@@ -181,7 +181,7 @@ describe('lib.generated.js', () => {
 
         it('should return array options for array output type', () => {
             lib.getOutputPortOptions(mockContext, 'array', testSchema, { label: 'Items', value: 'items' });
-            
+
             assert.strictEqual(mockContext.lastSent.port, 'out');
             assert(Array.isArray(mockContext.lastSent.data));
             assert.strictEqual(mockContext.lastSent.data.length, 2);
@@ -194,7 +194,7 @@ describe('lib.generated.js', () => {
 
         it('should return file options for file output type', () => {
             lib.getOutputPortOptions(mockContext, 'file', testSchema, { label: 'Items', value: 'items' });
-            
+
             assert.strictEqual(mockContext.lastSent.port, 'out');
             assert(Array.isArray(mockContext.lastSent.data));
             assert.strictEqual(mockContext.lastSent.data.length, 1);
