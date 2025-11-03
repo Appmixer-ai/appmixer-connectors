@@ -72,7 +72,7 @@ module.exports = {
             return await sendFormData(context, url, headersParsed);
         }
 
-        return request('POST', context.messages.in.content)
+        return request(context, 'POST', context.messages.in.content)
             .then(response => {
                 return context.sendJson(response, 'response');
             });
@@ -80,11 +80,14 @@ module.exports = {
 };
 
 const sendBinaryData = async (context, url, headers, binaryFileId) => {
+
+    const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = context.messages.in.content;
+
     try {
         const fileStream = await context.getFileReadStream(binaryFileId);
         const fileInfo = await context.getFileInfo(binaryFileId);
 
-        const response = await context.httpRequest({
+        const requestOptions = {
             method: 'post',
             url,
             data: fileStream,
@@ -93,7 +96,22 @@ const sendBinaryData = async (context, url, headers, binaryFileId) => {
                 'Content-Length': fileInfo.length,
                 ...headers
             }
-        });
+        };
+
+        // Add HTTPS agent if certificates or SSL options are provided
+        const httpsAgent = await request.buildHttpsAgentFromFiles(
+            context,
+            caCertificateFileId,
+            clientCertificateFileId,
+            clientKeyFileId,
+            ignoreSsl
+        );
+
+        if (httpsAgent) {
+            requestOptions.httpsAgent = httpsAgent;
+        }
+
+        const response = await context.httpRequest(requestOptions);
 
         const processedResponse = await processResponse(response);
         return await context.sendJson(processedResponse, 'response');
@@ -104,7 +122,7 @@ const sendBinaryData = async (context, url, headers, binaryFileId) => {
 
 const sendFormData = async (context, url, headers) => {
 
-    const { bodyFormData } = context.messages.in.content;
+    const { bodyFormData, caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = context.messages.in.content;
     const variablesArray = bodyFormData?.ADD || [];
 
     const formData = new FormData();
@@ -132,12 +150,27 @@ const sendFormData = async (context, url, headers) => {
         }
     }
 
-    const response = await context.httpRequest({
+    const requestOptions = {
         method: 'post',
         url,
         data: formData,
         headers: { ...formData.getHeaders(), ...headers }
-    });
+    };
+
+    // Add HTTPS agent if certificates or SSL options are provided
+    const httpsAgent = await request.buildHttpsAgentFromFiles(
+        context,
+        caCertificateFileId,
+        clientCertificateFileId,
+        clientKeyFileId,
+        ignoreSsl
+    );
+
+    if (httpsAgent) {
+        requestOptions.httpsAgent = httpsAgent;
+    }
+
+    const response = await context.httpRequest(requestOptions);
 
     const processedResponse = await processResponse(response);
     return await context.sendJson(processedResponse, 'response');
