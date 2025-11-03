@@ -33,6 +33,7 @@ async function callEndpointCached(context, options) {
     let lock;
     try {
         const authToken = context.auth.apiKey || (context.auth.username + context.auth.password);
+
         const key = getCacheKey({ ...options, token: authToken });
 
         lock = await context.lock(key);

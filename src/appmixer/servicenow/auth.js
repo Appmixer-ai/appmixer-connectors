@@ -25,7 +25,7 @@ module.exports = {
             },
             instance: {
                 type: 'text',
-                name: 'Instance name',
+                name: 'Instance name (Required)',
                 tooltip: 'For example: dev144860'
             }
         },
@@ -52,7 +52,14 @@ module.exports = {
                 // Simply make a request to the API to see if the credentials are valid.
                 await context.httpRequest(options);
                 // If the request was successful, return the profile info.
-                return { account: context.instance + '-' + context.username };
+                if (context.apiKey) {
+                    // Use sliced API key when API key is provided
+                    const maskedApiKey = context.apiKey.slice(0, 8) + '...';
+                    return { account: context.instance + '-' + maskedApiKey };
+                } else {
+                    // Use username when username/password authentication is used
+                    return { account: context.instance + '-' + context.username };
+                }
             } catch (error) {
                 return error;
             }
