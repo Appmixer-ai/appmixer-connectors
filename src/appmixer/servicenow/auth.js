@@ -11,16 +11,16 @@ module.exports = {
         auth: {
             username: {
                 type: 'text',
-                name: 'Username',
+                name: 'Username (Auth Option 1)',
                 tooltip: 'For example: admin'
             },
             password: {
                 type: 'text',
-                name: 'Password'
+                name: 'Password (Auth Option 1)'
             },
             apiKey: {
                 type: 'text',
-                name: 'API Key',
+                name: 'API Key (Auth Option 2)',
                 tooltip: 'If API Key is entered, the username and password is ignored'
             },
             instance: {
