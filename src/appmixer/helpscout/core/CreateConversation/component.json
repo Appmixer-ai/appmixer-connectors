@@ -1,0 +1,198 @@
+{
+    "name": "appmixer.helpscout.core.CreateConversation",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new email conversation in a mailbox using an existing customer ID.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:helpscout"
+    },
+    "quota": {
+        "manager": "appmixer:helpscout",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "mailboxId": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "integer"
+                    },
+                    "threadsType": {
+                        "type": "string"
+                    },
+                    "threadsText": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "string"
+                        ]
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "mailboxId",
+                    "subject",
+                    "threadsText",
+                    "type",
+                    "status",
+                    "customerId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "type": {
+                        "type": "select",
+                        "tooltip": "Conversation type.",
+                        "label": "Type",
+                        "index": 0,
+                        "default": "email",
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            {
+                                "label": "Email",
+                                "value": "email"
+                            },
+                            {
+                                "label": "Chat",
+                                "value": "chat"
+                            },
+                            {
+                                "label": "Phone",
+                                "value": "phone"
+                            }
+                        ]
+                    },
+                    "mailboxId": {
+                        "type": "number",
+                        "tooltip": "Mailbox ID where the conversation will be created.",
+                        "label": "Mailbox ID",
+                        "index": 1
+                    },
+                    "subject": {
+                        "type": "text",
+                        "tooltip": "Subject line.",
+                        "label": "Subject",
+                        "index": 2
+                    },
+                    "customerId": {
+                        "type": "number",
+                        "tooltip": "ID of an existing customer in HelpScout.",
+                        "label": "Customer ID",
+                        "index": 3
+                    },
+                    "threadsType": {
+                        "type": "select",
+                        "tooltip": "Thread type - the type of message or interaction being created.",
+                        "label": "Threads Type",
+                        "index": 4,
+                        "default": "customer",
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            {
+                                "label": "Customer Message",
+                                "value": "customer"
+                            },
+                            {
+                                "label": "Agent Reply",
+                                "value": "reply"
+                            },
+                            {
+                                "label": "Private Note",
+                                "value": "note"
+                            },
+                            {
+                                "label": "Phone Call Log",
+                                "value": "phone"
+                            },
+                            {
+                                "label": "Chat Message",
+                                "value": "chat"
+                            }
+                        ]
+                    },
+                    "threadsText": {
+                        "type": "text",
+                        "tooltip": "Body of the message.",
+                        "label": "Message",
+                        "index": 5
+                    },
+                    "tags": {
+                        "type": "multiselect",
+                        "tooltip": "Tags to associate with the conversation.",
+                        "label": "Tags",
+                        "index": 6,
+                        "source": {
+                            "url": "/component/appmixer/helpscout/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
+                    },
+                    "status": {
+                        "type": "select",
+                        "tooltip": "Conversation status.",
+                        "label": "Status",
+                        "index": 7,
+                        "default": "active",
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "Closed",
+                                "value": "closed"
+                            },
+                            {
+                                "label": "Pending",
+                                "value": "pending"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Conversation Location",
+                    "value": "Location",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Conversation ID",
+                    "value": "Resource-ID",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPCEtLSBVcGxvYWRlZCB0bzogU1ZHIFJlcG8sIHd3dy5zdmdyZXBvLmNvbSwgR2VuZXJhdG9yOiBTVkcgUmVwbyBNaXhlciBUb29scyAtLT4KPHN2ZyB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9Ii0yNyAwIDMxMCAzMTAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQiPgogICAgPGc+CiAgICAgICAgPHBhdGggZD0iTTE4LjQzMiwxODAuOTY4NzI3IEwxMDguOTE2MzY0LDkwLjQ4NDM2MzYgQzEyMC42NDU4MTgsNzguOTQxMDkwOSAxMjcuOTA2OTA5LDYyLjc0MzI3MjcgMTI3LjkwNjkwOSw0NS4wNTYgQzEyNy45MDY5MDksMjcuNTU0OTA5MSAxMjAuODMyLDExLjU0MzI3MjcgMTA5LjQ3NDkwOSwwIEwxOC45OTA1NDU1LDkwLjQ4NDM2MzYgQzcuMjYxMDkwOTEsMTAyLjAyNzYzNiAwLDExOC4yMjU0NTUgMCwxMzUuOTEyNzI3IEMwLDE1My42IDcuMDc0OTA5MDksMTY5LjQyNTQ1NSAxOC40MzIsMTgwLjk2ODcyNyBaIE0yMzcuNTY4LDEyOC4wOTMwOTEgTDE0Ny4wODM2MzYsMjE4LjU3NzQ1NSBDMTM1LjM1NDE4MiwyMzAuMTIwNzI3IDEyOC4wOTMwOTEsMjQ2LjMxODU0NSAxMjguMDkzMDkxLDI2NC4wMDU4MTggQzEyOC4wOTMwOTEsMjgxLjUwNjkwOSAxMzUuMTY4LDI5Ny41MTg1NDUgMTQ2LjUyNTA5MSwzMDkuMDYxODE4IEwyMzcuMDA5NDU1LDIxOC41Nzc0NTUgQzI0OC43Mzg5MDksMjA3LjAzNDE4MiAyNTYsMTkwLjgzNjM2NCAyNTYsMTczLjE0OTA5MSBDMjU2LDE1NS40NjE4MTggMjQ4LjkyNTA5MSwxMzkuNjM2MzY0IDIzNy41NjgsMTI4LjA5MzA5MSBaIE0yMzcuMDA5NDU1LDkwLjY3MDU0NTUgQzI0OC43Mzg5MDksNzkuMTI3MjcyNyAyNTYsNjIuOTI5NDU0NSAyNTYsNDUuMjQyMTgxOCBDMjU2LDI3Ljc0MTA5MDkgMjQ4LjkyNTA5MSwxMS43Mjk0NTQ1IDIzNy41NjgsMC4xODYxODE4MTggTDE4Ljk5MDU0NTUsMjE4LjU3NzQ1NSBDNy4yNjEwOTA5MSwyMzAuMzA2OTA5IDAsMjQ2LjMxODU0NSAwLDI2NC4xOTIgQzAsMjgxLjY5MzA5MSA3LjA3NDkwOTA5LDI5Ny43MDQ3MjcgMTguNDMyLDMwOS4yNDggTDIzNy4wMDk0NTUsOTAuNjcwNTQ1NSBaIiBmaWxsPSIjMTI5MkVFIj4KDTwvcGF0aD4KICAgIDwvZz4KPC9zdmc+"
+}
