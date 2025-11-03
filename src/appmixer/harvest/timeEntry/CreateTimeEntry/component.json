@@ -1,0 +1,456 @@
+{
+    "name": "appmixer.harvest.timeEntry.CreateTimeEntry",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new time entry. You can create entries via duration (hours) or by start and end time.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:harvest"
+    },
+    "quota": {
+        "manager": "appmixer:harvest",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "taskId": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "spentDate": {
+                        "type": "string"
+                    },
+                    "hours": {
+                        "type": "number"
+                    },
+                    "startedTime": {
+                        "type": "string"
+                    },
+                    "endedTime": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "type",
+                    "projectId",
+                    "taskId",
+                    "spentDate"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "type": {
+                        "type": "select",
+                        "label": "Timer mode",
+                        "index": 0,
+                        "tooltip": "Choose how to create the time entry: via duration (hours) or start/end time. You should use the method that you have configured in your Harvest account settings.",
+                        "options": [
+                            {
+                                "label": "Track time via duration (Hours)",
+                                "value": "duration"
+                            },
+                            {
+                                "label": "Track time via start and end time",
+                                "value": "start_end_time"
+                            }
+                        ],
+                        "defaultValue": "duration"
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "tooltip": "The ID of the project to associate with the time entry.",
+                        "label": "Project ID",
+                        "index": 1
+                    },
+                    "taskId": {
+                        "type": "text",
+                        "tooltip": "The ID of the task to associate with the time entry. The task needs to be also assigned to the project.",
+                        "label": "Task ID",
+                        "index": 2
+                    },
+                    "userId": {
+                        "type": "text",
+                        "tooltip": "The ID of the user to associate with the time entry. Defaults to the currently authenticated user.",
+                        "label": "User ID",
+                        "index": 3
+                    },
+                    "spentDate": {
+                        "type": "date-time",
+                        "tooltip": "The date the time entry was spent. Format: YYYY-MM-DD.",
+                        "label": "Spent Date",
+                        "index": 4,
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "hours": {
+                        "type": "number",
+                        "tooltip": "The current amount of time tracked. If provided, the time entry will be created with the specified hours and is_running will be set to false. If not provided, hours will be set to 0.0 and is_running will be set to true.",
+                        "label": "Hours",
+                        "index": 5,
+                        "when": { "eq": { "./type": "duration" } }
+                    },
+                    "startedTime": {
+                        "type": "text",
+                        "tooltip": "The time the entry started (e.g., '8:00am').",
+                        "label": "Started Time",
+                        "index": 5,
+                        "when": { "eq": { "./type": "start_end_time" } }
+                    },
+                    "endedTime": {
+                        "type": "text",
+                        "tooltip": "The time the entry ended (e.g., '5:00pm').",
+                        "label": "Ended Time",
+                        "index": 6,
+                        "when": { "eq": { "./type": "start_end_time" } }
+                    },
+                    "notes": {
+                        "type": "textarea",
+                        "tooltip": "Any notes to be associated with the time entry.",
+                        "label": "Notes",
+                        "index": 7
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Time Entry ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Spent Date",
+                    "value": "spent_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Hours",
+                    "value": "hours",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Hours Without Timer",
+                    "value": "hours_without_timer",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Rounded Hours",
+                    "value": "rounded_hours",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Notes",
+                    "value": "notes",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Locked",
+                    "value": "is_locked",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Locked Reason",
+                    "value": "locked_reason",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Approval Status",
+                    "value": "approval_status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Closed",
+                    "value": "is_closed",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Is Billed",
+                    "value": "is_billed",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Timer Started At",
+                    "value": "timer_started_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Started Time",
+                    "value": "started_time",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Ended Time",
+                    "value": "ended_time",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Running",
+                    "value": "is_running",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Billable",
+                    "value": "billable",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Budgeted",
+                    "value": "budgeted",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Billable Rate",
+                    "value": "billable_rate",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Cost Rate",
+                    "value": "cost_rate",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "User",
+                    "value": "user",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "User.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "User.Name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Client",
+                    "value": "client",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Client.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Client.Name"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Client.Currency"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Project",
+                    "value": "project",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Project.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Project.Name"
+                            },
+                            "code": {
+                                "type": "string",
+                                "title": "Project.Code"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Task",
+                    "value": "task",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Task.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Task.Name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "User Assignment",
+                    "value": "user_assignment",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "User Assignment.Id"
+                            },
+                            "is_project_manager": {
+                                "type": "boolean",
+                                "title": "User Assignment.Is Project Manager"
+                            },
+                            "is_active": {
+                                "type": "boolean",
+                                "title": "User Assignment.Is Active"
+                            },
+                            "use_default_rates": {
+                                "type": "boolean",
+                                "title": "User Assignment.Use Default Rates"
+                            },
+                            "budget": {
+                                "type": "number",
+                                "title": "User Assignment.Budget"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "title": "User Assignment.Created At"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "title": "User Assignment.Updated At"
+                            },
+                            "hourly_rate": {
+                                "type": "number",
+                                "title": "User Assignment.Hourly Rate"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Task Assignment",
+                    "value": "task_assignment",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Task Assignment.Id"
+                            },
+                            "billable": {
+                                "type": "boolean",
+                                "title": "Task Assignment.Billable"
+                            },
+                            "is_active": {
+                                "type": "boolean",
+                                "title": "Task Assignment.Is Active"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "title": "Task Assignment.Created At"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "title": "Task Assignment.Updated At"
+                            },
+                            "hourly_rate": {
+                                "type": "number",
+                                "title": "Task Assignment.Hourly Rate"
+                            },
+                            "budget": {
+                                "type": "number",
+                                "title": "Task Assignment.Budget"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Invoice",
+                    "value": "invoice",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "External Reference",
+                    "value": "external_reference",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAM6SURBVFhHnVY9TxVBFD13lvcSqIwkJFYUSkwEYiHRmsLwG9DG2sRYiw0djQ01jY1GfoKxeJ1BkQQLCwIUr9HQqIX6DDD3WuzM7p27s/tevMlhZ3bOPffMx86DAGC0vbgqRFsgWSFyBQioAApP1VePKkQ1YlsASOhIGBL2EPpEIs+mn34Z0Gh7cVWAt0TUK4uqApQpbgvbkPDHmqj6ZVtYLoiw5sTLFgl65UBAadX0o3Do56BzrYYBAT3xsuVYsFI7pVoPqi1qNtVT7VPM02OJt7BsyTuABSuuICrAzcGGgO7bAshwksnk3xegwqVJBhnXEEK7YWtiDADQ6MWtsqkPnWnTlXlM3X4YMgB/8g787SA4LMNdu4Pixv1K+PLzK8iPYdkRVIcvaQNw7bOpQTNzKJbXSyytg2YXmpzZBRRLgbO8DpqZU8VbwED3FgRSIywnwgYHWJ5CuwGbrMNyx3GsloIDc7knbCDhfRxLxAVgTiGGw/q71zVY1eGwAtEdh8MRHWvnOv6Xk1mJ8hDqAU1gmVy8laM0Kt0a4QwEkk6wyIp3GMhqmToC0GjzplTfPfQNW//wuPm76D94WYv7c4Av6z4AuCmg6Ffd89ePwMOPtTF9D6h+fQZy++9VW0fRB3ozKVRxwOhomK2tL6KGCdW2yztJ6Fx9DpK2PoR29tFEfKrwB7s4f/M4gT/YTThlboTRVbVccgfE7zu5F5rfOJ8dg48GKc6OE07jbhF1X6h6Lusw57xLPJrXEfN81NP9uk44AzkTKtGegdx2tXGstnmvLqIuE0Z9EgO5VczUqs9Adv/jWEbcG2RNWh1TozwDOXcZ52PFDcfmt+g64bYlVQlWPMtv48SZN/nCQPH83tVNiPp3X5RYbFMBAkOGh5DhZ/DJB8j3r/W4ADTVB/7+CpxD8NF74PfPhKNNxo+G/jy5nniPPwlJ5N5NEnZVVOEY6U0YlkX3IS3LnUMXj4O24TpheJsoDIhXZix8CyxvjJYwvCOW/cR9xnX8j6ox4xZIWMnO1RSAWPYdMW2I8EWZZT8tBRbIhMjlWk0RviCmDTe9czpw7NYg2APjMus2N5MudOWVNfYcu7XpndPBP/KnJAy1daJ9AAAAAElFTkSuQmCC"
+}

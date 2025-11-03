@@ -1,0 +1,192 @@
+{
+    "name": "appmixer.harvest.timeEntry.FindTimeEntries",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Find time entries in Harvest based on user ID, client ID, project ID, task ID, approval status, or date range. This component will return a maximum of 2000 records per page.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:harvest"
+    },
+    "quota": {
+        "manager": "appmixer:harvest",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "taskId": {
+                        "type": "string"
+                    },
+                    "isBilled": {
+                        "type": "boolean"
+                    },
+                    "isRunning": {
+                        "type": "boolean"
+                    },
+                    "approvalStatus": {
+                        "type": "string"
+                    },
+                    "updatedSince": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string"
+                    },
+                    "to": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "userId": {
+                        "type": "text",
+                        "tooltip": "Only return time entries belonging to the user with the given ID.",
+                        "label": "User ID",
+                        "index": 0
+                    },
+                    "clientId": {
+                        "type": "text",
+                        "tooltip": "Only return time entries belonging to the client with the given ID.",
+                        "label": "Client ID",
+                        "index": 1
+                    },
+                    "projectId": {
+                        "type": "text",
+                        "tooltip": "Only return time entries belonging to the project with the given ID.",
+                        "label": "Project ID",
+                        "index": 2
+                    },
+                    "taskId": {
+                        "type": "text",
+                        "tooltip": "Only return time entries belonging to the task with the given ID.",
+                        "label": "Task ID",
+                        "index": 3
+                    },
+                    "isBilled": {
+                        "type": "toggle",
+                        "tooltip": "Pass true to only return time entries that have been invoiced and false to return time entries that have not been invoiced.",
+                        "label": "Is Billed",
+                        "index": 4
+                    },
+                    "isRunning": {
+                        "type": "toggle",
+                        "tooltip": "Pass true to only return running time entries and false to return non-running time entries.",
+                        "label": "Is Running",
+                        "index": 5
+                    },
+                    "approvalStatus": {
+                        "type": "select",
+                        "tooltip": "Only return time entries with the given approval status.",
+                        "label": "Approval Status",
+                        "index": 6,
+                        "options": [
+                            {
+                                "label": "Any",
+                                "clearItem": true
+                            },
+                            {
+                                "label": "Unsubmitted",
+                                "value": "unsubmitted"
+                            },
+                            {
+                                "label": "Submitted",
+                                "value": "submitted"
+                            },
+                            {
+                                "label": "Approved",
+                                "value": "approved"
+                            }
+                        ]
+                    },
+                    "updatedSince": {
+                        "type": "date-time",
+                        "tooltip": "Only return time entries that have been updated since the given date and time (ISO 8601).",
+                        "label": "Updated Since",
+                        "index": 7
+                    },
+                    "from": {
+                        "type": "date-time",
+                        "tooltip": "Only return time entries with a spent_date on or after the given date. Format: YYYY-MM-DD.",
+                        "label": "From",
+                        "index": 8,
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "to": {
+                        "type": "date-time",
+                        "tooltip": "Only return time entries with a spent_date on or before the given date. Format: YYYY-MM-DD.",
+                        "label": "To",
+                        "index": 9,
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 10,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/harvest/timeEntry/FindTimeEntries?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAM6SURBVFhHnVY9TxVBFD13lvcSqIwkJFYUSkwEYiHRmsLwG9DG2sRYiw0djQ01jY1GfoKxeJ1BkQQLCwIUr9HQqIX6DDD3WuzM7p27s/tevMlhZ3bOPffMx86DAGC0vbgqRFsgWSFyBQioAApP1VePKkQ1YlsASOhIGBL2EPpEIs+mn34Z0Gh7cVWAt0TUK4uqApQpbgvbkPDHmqj6ZVtYLoiw5sTLFgl65UBAadX0o3Do56BzrYYBAT3xsuVYsFI7pVoPqi1qNtVT7VPM02OJt7BsyTuABSuuICrAzcGGgO7bAshwksnk3xegwqVJBhnXEEK7YWtiDADQ6MWtsqkPnWnTlXlM3X4YMgB/8g787SA4LMNdu4Pixv1K+PLzK8iPYdkRVIcvaQNw7bOpQTNzKJbXSyytg2YXmpzZBRRLgbO8DpqZU8VbwED3FgRSIywnwgYHWJ5CuwGbrMNyx3GsloIDc7knbCDhfRxLxAVgTiGGw/q71zVY1eGwAtEdh8MRHWvnOv6Xk1mJ8hDqAU1gmVy8laM0Kt0a4QwEkk6wyIp3GMhqmToC0GjzplTfPfQNW//wuPm76D94WYv7c4Av6z4AuCmg6Ffd89ePwMOPtTF9D6h+fQZy++9VW0fRB3ozKVRxwOhomK2tL6KGCdW2yztJ6Fx9DpK2PoR29tFEfKrwB7s4f/M4gT/YTThlboTRVbVccgfE7zu5F5rfOJ8dg48GKc6OE07jbhF1X6h6Lusw57xLPJrXEfN81NP9uk44AzkTKtGegdx2tXGstnmvLqIuE0Z9EgO5VczUqs9Adv/jWEbcG2RNWh1TozwDOXcZ52PFDcfmt+g64bYlVQlWPMtv48SZN/nCQPH83tVNiPp3X5RYbFMBAkOGh5DhZ/DJB8j3r/W4ADTVB/7+CpxD8NF74PfPhKNNxo+G/jy5nniPPwlJ5N5NEnZVVOEY6U0YlkX3IS3LnUMXj4O24TpheJsoDIhXZix8CyxvjJYwvCOW/cR9xnX8j6ox4xZIWMnO1RSAWPYdMW2I8EWZZT8tBRbIhMjlWk0RviCmDTe9czpw7NYg2APjMus2N5MudOWVNfYcu7XpndPBP/KnJAy1daJ9AAAAAElFTkSuQmCC"
+}

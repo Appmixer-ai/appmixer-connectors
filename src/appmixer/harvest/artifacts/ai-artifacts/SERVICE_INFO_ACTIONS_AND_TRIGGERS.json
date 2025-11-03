@@ -1,0 +1,3179 @@
+{
+    "actions": [
+        {
+            "title": "List Clients",
+            "description": "Retrieve clients. Supports filtering by active state and updated_since.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/clients-api/clients/clients/",
+            "endpointUrl": "/clients",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "clients": [
+                    {
+                        "id": 12345,
+                        "name": "Acme Inc",
+                        "is_active": true,
+                        "address": "123 Any St",
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "updated_at": "2023-01-10T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "total_pages": 1,
+                "total_entries": 1,
+                "page": 1,
+                "links": {
+                    "next": null,
+                    "previous": null
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active (true) or archived (false) clients."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only return clients updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Pagination page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Number of records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "clients"
+            }
+        },
+        {
+            "title": "Get Client",
+            "description": "Retrieve a specific client by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/clients-api/clients/clients/",
+            "endpointUrl": "/clients/{client_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 12345,
+                "name": "Acme Inc",
+                "is_active": true,
+                "address": "123 Any St",
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-10T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "The client ID."
+                    }
+                },
+                "required": [
+                    "client_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Client",
+            "description": "Create a new client.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/clients-api/clients/clients/",
+            "endpointUrl": "/clients",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 12346,
+                "name": "Globex",
+                "is_active": true,
+                "address": null,
+                "created_at": "2023-02-01T10:00:00Z",
+                "updated_at": "2023-02-01T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Client name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Set client active or archived (default true)."
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "Client address block."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Default currency code for this client (e.g., USD)."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Client",
+            "description": "Update an existing client by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/clients-api/clients/clients/",
+            "endpointUrl": "/clients/{client_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 12345,
+                "name": "Acme Inc",
+                "is_active": false,
+                "address": "123 Any St",
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-03-01T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "The client ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Client name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "address": {
+                        "type": "string",
+                        "description": "Client address block."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Default currency code."
+                    }
+                },
+                "required": [
+                    "client_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Archive (Delete) Client",
+            "description": "Archive a client (soft delete).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/clients-api/clients/clients/",
+            "endpointUrl": "/clients/{client_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "The client ID."
+                    }
+                },
+                "required": [
+                    "client_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Projects",
+            "description": "Retrieve projects with filtering by client and active status.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/projects/",
+            "endpointUrl": "/projects",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "projects": [
+                    {
+                        "id": 111,
+                        "name": "Website Redesign",
+                        "code": "WBR",
+                        "is_active": true,
+                        "client": {
+                            "id": 12345,
+                            "name": "Acme Inc"
+                        },
+                        "bill_by": "Project",
+                        "budget": 100,
+                        "budget_is_monthly": false,
+                        "hourly_rate": 150,
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "updated_at": "2023-01-10T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "total_pages": 1,
+                "total_entries": 1,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Filter by client ID."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active (true) or archived (false)."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only return projects updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "projects"
+            }
+        },
+        {
+            "title": "Get Project",
+            "description": "Retrieve a project by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/projects/",
+            "endpointUrl": "/projects/{project_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 111,
+                "name": "Website Redesign",
+                "is_active": true,
+                "client": {
+                    "id": 12345,
+                    "name": "Acme Inc"
+                },
+                "budget": 100,
+                "hourly_rate": 150,
+                "created_at": "2023-01-01T10:00:00Z",
+                "updated_at": "2023-01-10T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Project",
+            "description": "Create a new project assigned to a client.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/projects/",
+            "endpointUrl": "/projects",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 112,
+                "name": "Mobile App",
+                "is_active": true,
+                "client": {
+                    "id": 12345,
+                    "name": "Acme Inc"
+                },
+                "budget": 200,
+                "hourly_rate": 175,
+                "created_at": "2023-02-01T10:00:00Z",
+                "updated_at": "2023-02-01T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Client ID to associate the project with."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Project name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Set active or archived (default true)."
+                    },
+                    "bill_by": {
+                        "type": "string",
+                        "description": "Billing method, e.g., Project, People, Tasks, or None."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Default hourly rate if applicable."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Total budget for project."
+                    },
+                    "budget_is_monthly": {
+                        "type": "boolean",
+                        "description": "If true, budget resets monthly."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Internal notes."
+                    }
+                },
+                "required": [
+                    "client_id",
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Project",
+            "description": "Update an existing project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/projects/",
+            "endpointUrl": "/projects/{project_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 111,
+                "name": "Website Redesign",
+                "is_active": false,
+                "client": {
+                    "id": 12345,
+                    "name": "Acme Inc"
+                },
+                "updated_at": "2023-03-01T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Project name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "bill_by": {
+                        "type": "string",
+                        "description": "Billing method."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Default hourly rate."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Project budget."
+                    },
+                    "budget_is_monthly": {
+                        "type": "boolean",
+                        "description": "Monthly budget flag."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Internal notes."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Archive (Delete) Project",
+            "description": "Archive a project (soft delete).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/projects/",
+            "endpointUrl": "/projects/{project_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Project Task Assignments",
+            "description": "List tasks assigned to a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/",
+            "endpointUrl": "/projects/{project_id}/task_assignments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "task_assignments": [
+                    {
+                        "id": 555,
+                        "task": {
+                            "id": 201,
+                            "name": "Design"
+                        },
+                        "is_active": true,
+                        "billable": true,
+                        "hourly_rate": 150,
+                        "budget": null,
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "updated_at": "2023-01-02T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1,
+                "total_pages": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active status."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only assignments updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "task_assignments"
+            }
+        },
+        {
+            "title": "Create Project Task Assignment",
+            "description": "Assign a task to a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/",
+            "endpointUrl": "/projects/{project_id}/task_assignments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 556,
+                "task": {
+                    "id": 202,
+                    "name": "Development"
+                },
+                "is_active": true,
+                "billable": true,
+                "hourly_rate": 160,
+                "budget": null
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "description": "The task ID to assign."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Set active or archived (default true)."
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "description": "Whether the task is billable."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Override hourly rate for this task on this project."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Budget for this task on this project."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "task_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Project Task Assignment",
+            "description": "Update a task assignment on a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/",
+            "endpointUrl": "/projects/{project_id}/task_assignments/{task_assignment_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 555,
+                "task": {
+                    "id": 201,
+                    "name": "Design"
+                },
+                "is_active": false,
+                "billable": true,
+                "hourly_rate": 150,
+                "budget": null
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "task_assignment_id": {
+                        "type": "integer",
+                        "description": "The task assignment ID."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "billable": {
+                        "type": "boolean",
+                        "description": "Billable flag."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Override hourly rate."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Budget for this task on this project."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "task_assignment_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Remove Project Task Assignment",
+            "description": "Remove a task from a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/task-assignments/",
+            "endpointUrl": "/projects/{project_id}/task_assignments/{task_assignment_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "task_assignment_id": {
+                        "type": "integer",
+                        "description": "The task assignment ID."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "task_assignment_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Project User Assignments",
+            "description": "List users assigned to a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/",
+            "endpointUrl": "/projects/{project_id}/user_assignments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "user_assignments": [
+                    {
+                        "id": 777,
+                        "user": {
+                            "id": 321,
+                            "name": "Jane Doe"
+                        },
+                        "is_active": true,
+                        "is_project_manager": false,
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "updated_at": "2023-01-02T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active status."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only assignments updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "user_assignments"
+            }
+        },
+        {
+            "title": "Create Project User Assignment",
+            "description": "Assign a user to a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/",
+            "endpointUrl": "/projects/{project_id}/user_assignments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 778,
+                "user": {
+                    "id": 322,
+                    "name": "John Smith"
+                },
+                "is_active": true,
+                "is_project_manager": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID to assign."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "is_project_manager": {
+                        "type": "boolean",
+                        "description": "Whether the user is project manager."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Override hourly rate for this user on this project."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Budget for this user on this project."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Project User Assignment",
+            "description": "Update a user assignment on a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/",
+            "endpointUrl": "/projects/{project_id}/user_assignments/{user_assignment_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 777,
+                "user": {
+                    "id": 321,
+                    "name": "Jane Doe"
+                },
+                "is_active": false,
+                "is_project_manager": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "user_assignment_id": {
+                        "type": "integer",
+                        "description": "The user assignment ID."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "is_project_manager": {
+                        "type": "boolean",
+                        "description": "Project manager flag."
+                    },
+                    "hourly_rate": {
+                        "type": "number",
+                        "description": "Override hourly rate."
+                    },
+                    "budget": {
+                        "type": "number",
+                        "description": "Budget for this user on this project."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "user_assignment_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Remove Project User Assignment",
+            "description": "Remove a user from a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/projects-api/projects/user-assignments/",
+            "endpointUrl": "/projects/{project_id}/user_assignments/{user_assignment_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "The project ID."
+                    },
+                    "user_assignment_id": {
+                        "type": "integer",
+                        "description": "The user assignment ID."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "user_assignment_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Tasks",
+            "description": "Retrieve tasks with filtering by active state and updated_since.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/",
+            "endpointUrl": "/tasks",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "tasks": [
+                    {
+                        "id": 201,
+                        "name": "Design",
+                        "is_active": true,
+                        "billable_by_default": true,
+                        "default_hourly_rate": 150,
+                        "is_default": false,
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "updated_at": "2023-01-10T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active status."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only return tasks updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "tasks"
+            }
+        },
+        {
+            "title": "Get Task",
+            "description": "Retrieve a task by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/",
+            "endpointUrl": "/tasks/{task_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 201,
+                "name": "Design",
+                "is_active": true,
+                "default_hourly_rate": 150,
+                "is_default": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "integer",
+                        "description": "The task ID."
+                    }
+                },
+                "required": [
+                    "task_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Task",
+            "description": "Create a new task.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/",
+            "endpointUrl": "/tasks",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 202,
+                "name": "Development",
+                "is_active": true,
+                "default_hourly_rate": 160,
+                "is_default": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Task name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status (default true)."
+                    },
+                    "billable_by_default": {
+                        "type": "boolean",
+                        "description": "Billable by default."
+                    },
+                    "default_hourly_rate": {
+                        "type": "number",
+                        "description": "Default hourly rate."
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "description": "Whether this is a default task."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Task",
+            "description": "Update an existing task.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/",
+            "endpointUrl": "/tasks/{task_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 201,
+                "name": "Design",
+                "is_active": false,
+                "default_hourly_rate": 150
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "integer",
+                        "description": "The task ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Task name."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    },
+                    "billable_by_default": {
+                        "type": "boolean",
+                        "description": "Billable by default."
+                    },
+                    "default_hourly_rate": {
+                        "type": "number",
+                        "description": "Default hourly rate."
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "description": "Default task flag."
+                    }
+                },
+                "required": [
+                    "task_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Archive (Delete) Task",
+            "description": "Archive a task (soft delete).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/tasks-api/tasks/tasks/",
+            "endpointUrl": "/tasks/{task_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "task_id": {
+                        "type": "integer",
+                        "description": "The task ID."
+                    }
+                },
+                "required": [
+                    "task_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Time Entries",
+            "description": "List time entries with extensive filtering options.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "time_entries": [
+                    {
+                        "id": 9001,
+                        "spent_date": "2023-03-10",
+                        "user": {
+                            "id": 321,
+                            "name": "Jane Doe"
+                        },
+                        "client": {
+                            "id": 12345,
+                            "name": "Acme Inc"
+                        },
+                        "project": {
+                            "id": 111,
+                            "name": "Website Redesign"
+                        },
+                        "task": {
+                            "id": 201,
+                            "name": "Design"
+                        },
+                        "hours": 3.5,
+                        "notes": "Homepage mockups",
+                        "is_locked": false,
+                        "is_billed": false,
+                        "is_running": false,
+                        "timer_started_at": null,
+                        "created_at": "2023-03-10T12:00:00Z",
+                        "updated_at": "2023-03-10T12:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "Filter by user ID."
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Filter by client ID."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Filter by project ID."
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "description": "Filter by task ID."
+                    },
+                    "is_billed": {
+                        "type": "boolean",
+                        "description": "Filter by billed status."
+                    },
+                    "is_running": {
+                        "type": "boolean",
+                        "description": "Filter by running timer."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only entries updated since this datetime (ISO 8601)."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)."
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "time_entries"
+            }
+        },
+        {
+            "title": "Get Time Entry",
+            "description": "Retrieve a specific time entry by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries/{time_entry_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 9001,
+                "spent_date": "2023-03-10",
+                "user": {
+                    "id": 321,
+                    "name": "Jane Doe"
+                },
+                "project": {
+                    "id": 111,
+                    "name": "Website Redesign"
+                },
+                "task": {
+                    "id": 201,
+                    "name": "Design"
+                },
+                "hours": 3.5,
+                "notes": "Homepage mockups",
+                "is_running": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "time_entry_id": {
+                        "type": "integer",
+                        "description": "The time entry ID."
+                    }
+                },
+                "required": [
+                    "time_entry_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Time Entry",
+            "description": "Create a new time entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 9002,
+                "spent_date": "2023-03-11",
+                "user": {
+                    "id": 321
+                },
+                "project": {
+                    "id": 111
+                },
+                "task": {
+                    "id": 201
+                },
+                "hours": 2,
+                "notes": "Wireframes",
+                "is_running": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "User ID. If omitted, uses authenticated user."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Project ID."
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "description": "Task ID."
+                    },
+                    "spent_date": {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD)."
+                    },
+                    "hours": {
+                        "type": "number",
+                        "description": "Decimal hours."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Notes for the entry."
+                    },
+                    "external_reference": {
+                        "type": "object",
+                        "description": "External reference payload to link to external systems."
+                    },
+                    "started_time": {
+                        "type": "string",
+                        "description": "Start time (if using start/stop timers)."
+                    },
+                    "ended_time": {
+                        "type": "string",
+                        "description": "End time (if using start/stop timers)."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "task_id",
+                    "spent_date"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Time Entry",
+            "description": "Update fields on a time entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries/{time_entry_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 9002,
+                "hours": 2.5,
+                "notes": "Wireframes (updated)"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "time_entry_id": {
+                        "type": "integer",
+                        "description": "The time entry ID."
+                    },
+                    "hours": {
+                        "type": "number",
+                        "description": "Decimal hours."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Notes."
+                    },
+                    "spent_date": {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD)."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Project ID."
+                    },
+                    "task_id": {
+                        "type": "integer",
+                        "description": "Task ID."
+                    }
+                },
+                "required": [
+                    "time_entry_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Time Entry",
+            "description": "Delete a time entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries/{time_entry_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "time_entry_id": {
+                        "type": "integer",
+                        "description": "The time entry ID."
+                    }
+                },
+                "required": [
+                    "time_entry_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Restart Time Entry",
+            "description": "Restart a stopped timer on a time entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries/{time_entry_id}/restart",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 9002,
+                "is_running": true,
+                "timer_started_at": "2023-03-11T12:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "time_entry_id": {
+                        "type": "integer",
+                        "description": "The time entry ID."
+                    }
+                },
+                "required": [
+                    "time_entry_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Stop Time Entry",
+            "description": "Stop a running timer.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/",
+            "endpointUrl": "/time_entries/{time_entry_id}/stop",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 9002,
+                "is_running": false,
+                "hours": 3
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "time_entry_id": {
+                        "type": "integer",
+                        "description": "The time entry ID."
+                    }
+                },
+                "required": [
+                    "time_entry_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Users",
+            "description": "Retrieve users. Admins can see all users; others may be restricted.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "users": [
+                    {
+                        "id": 321,
+                        "first_name": "Jane",
+                        "last_name": "Doe",
+                        "email": "jane@example.com",
+                        "is_active": true,
+                        "is_admin": true,
+                        "timezone": "America/New_York"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active status."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only return users updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "users"
+            }
+        },
+        {
+            "title": "Get User",
+            "description": "Retrieve a user by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users/{user_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 321,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "email": "jane@example.com",
+                "is_active": true,
+                "is_admin": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    }
+                },
+                "required": [
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Current User",
+            "description": "Retrieve the authenticated user's details.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users/me",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 321,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "email": "jane@example.com",
+                "is_active": true,
+                "is_admin": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create User",
+            "description": "Create a new user (admin required).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 400,
+                "first_name": "New",
+                "last_name": "User",
+                "email": "new.user@example.com",
+                "is_active": true,
+                "is_admin": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "first_name": {
+                        "type": "string",
+                        "description": "First name."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "Last name."
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "Email address."
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "description": "IANA timezone (e.g., America/New_York)."
+                    },
+                    "is_admin": {
+                        "type": "boolean",
+                        "description": "Admin flag."
+                    },
+                    "is_project_manager": {
+                        "type": "boolean",
+                        "description": "Project manager flag."
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "description": "Phone number."
+                    }
+                },
+                "required": [
+                    "first_name",
+                    "last_name",
+                    "email"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update User",
+            "description": "Update a user (admin required).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users/{user_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 321,
+                "is_active": false
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "description": "First name."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "Last name."
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "Email."
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "description": "IANA timezone."
+                    },
+                    "is_admin": {
+                        "type": "boolean",
+                        "description": "Admin flag."
+                    },
+                    "is_project_manager": {
+                        "type": "boolean",
+                        "description": "Project manager flag."
+                    },
+                    "telephone": {
+                        "type": "string",
+                        "description": "Phone number."
+                    }
+                },
+                "required": [
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Archive (Delete) User",
+            "description": "Archive a user (admin required).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/users/",
+            "endpointUrl": "/users/{user_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    }
+                },
+                "required": [
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List User Billable Rates",
+            "description": "List a user’s billable rates (historical).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/billable-rates/",
+            "endpointUrl": "/users/{user_id}/billable_rates",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "billable_rates": [
+                    {
+                        "amount": 150,
+                        "start_date": "2023-01-01"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    }
+                },
+                "required": [
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "billable_rates"
+            }
+        },
+        {
+            "title": "Create User Billable Rate",
+            "description": "Create a new billable rate for a user.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/billable-rates/",
+            "endpointUrl": "/users/{user_id}/billable_rates",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "amount": 175,
+                "start_date": "2023-04-01"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Hourly billable rate."
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)."
+                    }
+                },
+                "required": [
+                    "user_id",
+                    "amount",
+                    "start_date"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List User Cost Rates",
+            "description": "List a user’s cost rates (historical).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/cost-rates/",
+            "endpointUrl": "/users/{user_id}/cost_rates",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "cost_rates": [
+                    {
+                        "amount": 80,
+                        "start_date": "2023-01-01"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    }
+                },
+                "required": [
+                    "user_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "cost_rates"
+            }
+        },
+        {
+            "title": "Create User Cost Rate",
+            "description": "Create a new cost rate for a user.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/users-api/users/cost-rates/",
+            "endpointUrl": "/users/{user_id}/cost_rates",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "amount": 90,
+                "start_date": "2023-04-01"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "The user ID."
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Hourly cost rate."
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)."
+                    }
+                },
+                "required": [
+                    "user_id",
+                    "amount",
+                    "start_date"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Invoices",
+            "description": "Retrieve invoices with filtering by client, project, and status.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/",
+            "endpointUrl": "/invoices",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "invoices": [
+                    {
+                        "id": 5001,
+                        "client": {
+                            "id": 12345,
+                            "name": "Acme Inc"
+                        },
+                        "number": "2023-001",
+                        "amount": 1500,
+                        "currency": "USD",
+                        "state": "draft",
+                        "issue_date": "2023-03-01",
+                        "due_date": "2023-03-15",
+                        "created_at": "2023-03-01T10:00:00Z"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Filter by client ID."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Filter by project ID."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only invoices updated since this datetime (ISO 8601)."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "Start issue date (YYYY-MM-DD)."
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "End issue date (YYYY-MM-DD)."
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Filter by state: draft, open, paid, closed."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "invoices"
+            }
+        },
+        {
+            "title": "Get Invoice",
+            "description": "Retrieve a specific invoice by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/",
+            "endpointUrl": "/invoices/{invoice_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 5001,
+                "client": {
+                    "id": 12345,
+                    "name": "Acme Inc"
+                },
+                "number": "2023-001",
+                "amount": 1500,
+                "state": "draft",
+                "line_items": [
+                    {
+                        "id": 1,
+                        "kind": "Service",
+                        "description": "Design",
+                        "quantity": 10,
+                        "unit_price": 150,
+                        "amount": 1500
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    }
+                },
+                "required": [
+                    "invoice_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Invoice",
+            "description": "Create a new invoice (draft).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/",
+            "endpointUrl": "/invoices",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 5002,
+                "state": "draft",
+                "number": "2023-002",
+                "client": {
+                    "id": 12345
+                },
+                "line_items": [
+                    {
+                        "kind": "Service",
+                        "description": "Design",
+                        "quantity": 5,
+                        "unit_price": 150,
+                        "amount": 750
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Client ID."
+                    },
+                    "estimate_id": {
+                        "type": "integer",
+                        "description": "Create from estimate ID (optional)."
+                    },
+                    "retainer_id": {
+                        "type": "integer",
+                        "description": "Create from retainer (optional)."
+                    },
+                    "purchase_order": {
+                        "type": "string",
+                        "description": "PO number."
+                    },
+                    "issue_date": {
+                        "type": "string",
+                        "description": "Issue date (YYYY-MM-DD)."
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "description": "Due date (YYYY-MM-DD)."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Currency code (e.g., USD)."
+                    },
+                    "discount": {
+                        "type": "number",
+                        "description": "Discount percent."
+                    },
+                    "tax": {
+                        "type": "number",
+                        "description": "Tax percent."
+                    },
+                    "tax2": {
+                        "type": "number",
+                        "description": "Second tax percent."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Invoice subject."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Invoice notes."
+                    },
+                    "line_items": {
+                        "type": "array",
+                        "description": "Array of line items to include.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "description": "Type (e.g., Service, Product)."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Line description."
+                                },
+                                "quantity": {
+                                    "type": "number",
+                                    "description": "Quantity (hours, units)."
+                                },
+                                "unit_price": {
+                                    "type": "number",
+                                    "description": "Unit price."
+                                },
+                                "taxed": {
+                                    "type": "boolean",
+                                    "description": "Apply primary tax."
+                                },
+                                "taxed2": {
+                                    "type": "boolean",
+                                    "description": "Apply secondary tax."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "client_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Invoice",
+            "description": "Update invoice details or line items.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/",
+            "endpointUrl": "/invoices/{invoice_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 5002,
+                "state": "open",
+                "number": "2023-002",
+                "line_items": [
+                    {
+                        "id": 1,
+                        "description": "Design - revised",
+                        "quantity": 6,
+                        "unit_price": 150
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "purchase_order": {
+                        "type": "string",
+                        "description": "PO number."
+                    },
+                    "issue_date": {
+                        "type": "string",
+                        "description": "Issue date (YYYY-MM-DD)."
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "description": "Due date (YYYY-MM-DD)."
+                    },
+                    "currency": {
+                        "type": "string",
+                        "description": "Currency code."
+                    },
+                    "discount": {
+                        "type": "number",
+                        "description": "Discount percent."
+                    },
+                    "tax": {
+                        "type": "number",
+                        "description": "Tax percent."
+                    },
+                    "tax2": {
+                        "type": "number",
+                        "description": "Second tax percent."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Invoice subject."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Invoice notes."
+                    },
+                    "state": {
+                        "type": "string",
+                        "description": "Change state where applicable (e.g., open/close via messages)."
+                    },
+                    "line_items": {
+                        "type": "array",
+                        "description": "Full replacement line items array.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "description": "Line item ID (existing)."
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "description": "Type."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Description."
+                                },
+                                "quantity": {
+                                    "type": "number",
+                                    "description": "Quantity."
+                                },
+                                "unit_price": {
+                                    "type": "number",
+                                    "description": "Unit price."
+                                },
+                                "taxed": {
+                                    "type": "boolean",
+                                    "description": "Apply primary tax."
+                                },
+                                "taxed2": {
+                                    "type": "boolean",
+                                    "description": "Apply secondary tax."
+                                }
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "invoice_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Draft Invoice",
+            "description": "Delete an invoice in draft state.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/invoices/",
+            "endpointUrl": "/invoices/{invoice_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    }
+                },
+                "required": [
+                    "invoice_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Invoice Messages",
+            "description": "List messages and events for an invoice (including send, close, reopen).",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/messages/",
+            "endpointUrl": "/invoices/{invoice_id}/messages",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "messages": [
+                    {
+                        "id": 900,
+                        "event_type": "send",
+                        "recipients": [
+                            {
+                                "name": "Client A",
+                                "email": "client@example.com"
+                            }
+                        ],
+                        "sent_by": "jane@example.com",
+                        "sent_at": "2023-03-01T10:00:00Z"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page."
+                    }
+                },
+                "required": [
+                    "invoice_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "messages"
+            }
+        },
+        {
+            "title": "Create Invoice Message / Mark Sent",
+            "description": "Create an invoice message (e.g., send, close, reopen). Use event_type=send to mark as sent and optionally email recipients.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/messages/",
+            "endpointUrl": "/invoices/{invoice_id}/messages",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 901,
+                "event_type": "send",
+                "recipients": [
+                    {
+                        "email": "client@example.com"
+                    }
+                ],
+                "sent_by": "jane@example.com",
+                "sent_at": "2023-03-01T10:05:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "event_type": {
+                        "type": "string",
+                        "description": "send, close, reopen, draft."
+                    },
+                    "recipients": {
+                        "type": "array",
+                        "description": "Array of recipients for send events.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Recipient name."
+                                },
+                                "email": {
+                                    "type": "string",
+                                    "description": "Recipient email."
+                                }
+                            }
+                        }
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Email subject (send)."
+                    },
+                    "body": {
+                        "type": "string",
+                        "description": "Email body (send)."
+                    },
+                    "attach_pdf": {
+                        "type": "boolean",
+                        "description": "Attach PDF to email (send)."
+                    },
+                    "send_me_a_copy": {
+                        "type": "boolean",
+                        "description": "Send a copy to the sender (send)."
+                    }
+                },
+                "required": [
+                    "invoice_id",
+                    "event_type"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Invoice Message",
+            "description": "Delete an invoice message.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/messages/",
+            "endpointUrl": "/invoices/{invoice_id}/messages/{message_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "message_id": {
+                        "type": "integer",
+                        "description": "The invoice message ID."
+                    }
+                },
+                "required": [
+                    "invoice_id",
+                    "message_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Invoice Payments",
+            "description": "List recorded payments for an invoice.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/payments/",
+            "endpointUrl": "/invoices/{invoice_id}/payments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "payments": [
+                    {
+                        "id": 600,
+                        "amount": 500,
+                        "paid_at": "2023-03-05T10:00:00Z",
+                        "notes": "ACH"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    }
+                },
+                "required": [
+                    "invoice_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "payments"
+            }
+        },
+        {
+            "title": "Create Invoice Payment",
+            "description": "Record a payment for an invoice.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/payments/",
+            "endpointUrl": "/invoices/{invoice_id}/payments",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 601,
+                "amount": 1000,
+                "paid_at": "2023-03-10T10:00:00Z",
+                "notes": "Wire"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "amount": {
+                        "type": "number",
+                        "description": "Payment amount."
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "description": "Datetime paid (ISO 8601)."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Internal notes."
+                    }
+                },
+                "required": [
+                    "invoice_id",
+                    "amount",
+                    "paid_at"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Invoice Payment",
+            "description": "Delete a recorded payment from an invoice.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/invoices-api/invoices/payments/",
+            "endpointUrl": "/invoices/{invoice_id}/payments/{payment_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "invoice_id": {
+                        "type": "integer",
+                        "description": "The invoice ID."
+                    },
+                    "payment_id": {
+                        "type": "integer",
+                        "description": "The invoice payment ID."
+                    }
+                },
+                "required": [
+                    "invoice_id",
+                    "payment_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Expenses",
+            "description": "Retrieve expenses with filtering by user, client, project, and date range.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/",
+            "endpointUrl": "/expenses",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "expenses": [
+                    {
+                        "id": 8001,
+                        "spent_date": "2023-03-10",
+                        "user": {
+                            "id": 321,
+                            "name": "Jane Doe"
+                        },
+                        "project": {
+                            "id": 111,
+                            "name": "Website Redesign"
+                        },
+                        "category": {
+                            "id": 41,
+                            "name": "Meals"
+                        },
+                        "total_cost": 25.5,
+                        "is_billable": true,
+                        "is_invoiced": false,
+                        "notes": "Lunch"
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "Filter by user ID."
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Filter by client ID."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Filter by project ID."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only expenses updated since this datetime (ISO 8601)."
+                    },
+                    "from": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)."
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "expenses"
+            }
+        },
+        {
+            "title": "Get Expense",
+            "description": "Retrieve a specific expense by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/",
+            "endpointUrl": "/expenses/{expense_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 8001,
+                "spent_date": "2023-03-10",
+                "user": {
+                    "id": 321
+                },
+                "project": {
+                    "id": 111
+                },
+                "category": {
+                    "id": 41
+                },
+                "total_cost": 25.5,
+                "is_billable": true,
+                "is_invoiced": false,
+                "notes": "Lunch"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_id": {
+                        "type": "integer",
+                        "description": "The expense ID."
+                    }
+                },
+                "required": [
+                    "expense_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Expense",
+            "description": "Create a new expense entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/",
+            "endpointUrl": "/expenses",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 8002,
+                "spent_date": "2023-03-11",
+                "user": {
+                    "id": 321
+                },
+                "project": {
+                    "id": 111
+                },
+                "category": {
+                    "id": 41
+                },
+                "total_cost": 40,
+                "is_billable": true,
+                "notes": "Taxi"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "description": "User ID. If omitted, uses authenticated user."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Project ID."
+                    },
+                    "expense_category_id": {
+                        "type": "integer",
+                        "description": "Expense category ID."
+                    },
+                    "spent_date": {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD)."
+                    },
+                    "total_cost": {
+                        "type": "number",
+                        "description": "Total cost amount."
+                    },
+                    "units": {
+                        "type": "number",
+                        "description": "Units (if unit-based category)."
+                    },
+                    "is_billable": {
+                        "type": "boolean",
+                        "description": "Billable flag."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Notes."
+                    },
+                    "receipt": {
+                        "type": "object",
+                        "description": "Optional receipt file info when using uploads."
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "expense_category_id",
+                    "spent_date"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Expense",
+            "description": "Update an existing expense.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/",
+            "endpointUrl": "/expenses/{expense_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 8002,
+                "total_cost": 42,
+                "notes": "Taxi (tip added)"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_id": {
+                        "type": "integer",
+                        "description": "The expense ID."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Project ID."
+                    },
+                    "expense_category_id": {
+                        "type": "integer",
+                        "description": "Expense category ID."
+                    },
+                    "spent_date": {
+                        "type": "string",
+                        "description": "Date (YYYY-MM-DD)."
+                    },
+                    "total_cost": {
+                        "type": "number",
+                        "description": "Total cost amount."
+                    },
+                    "units": {
+                        "type": "number",
+                        "description": "Units."
+                    },
+                    "is_billable": {
+                        "type": "boolean",
+                        "description": "Billable flag."
+                    },
+                    "notes": {
+                        "type": "string",
+                        "description": "Notes."
+                    }
+                },
+                "required": [
+                    "expense_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Expense",
+            "description": "Delete an expense entry.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expenses/",
+            "endpointUrl": "/expenses/{expense_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_id": {
+                        "type": "integer",
+                        "description": "The expense ID."
+                    }
+                },
+                "required": [
+                    "expense_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Expense Categories",
+            "description": "Retrieve expense categories.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/",
+            "endpointUrl": "/expense_categories",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "expense_categories": [
+                    {
+                        "id": 41,
+                        "name": "Meals",
+                        "unit_name": null,
+                        "unit_price": null,
+                        "is_active": true
+                    }
+                ],
+                "per_page": 100,
+                "page": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Filter by active status."
+                    },
+                    "updated_since": {
+                        "type": "string",
+                        "description": "Only categories updated since this datetime (ISO 8601)."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "description": "Page number."
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "description": "Records per page (max typically 100)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "expense_categories"
+            }
+        },
+        {
+            "title": "Get Expense Category",
+            "description": "Retrieve a specific expense category.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/",
+            "endpointUrl": "/expense_categories/{expense_category_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 41,
+                "name": "Meals",
+                "is_active": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_category_id": {
+                        "type": "integer",
+                        "description": "The expense category ID."
+                    }
+                },
+                "required": [
+                    "expense_category_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Expense Category",
+            "description": "Create an expense category.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/",
+            "endpointUrl": "/expense_categories",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 42,
+                "name": "Taxi",
+                "unit_name": null,
+                "unit_price": null,
+                "is_active": true
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Category name."
+                    },
+                    "unit_name": {
+                        "type": "string",
+                        "description": "Unit name if unit-based (e.g., mi, km)."
+                    },
+                    "unit_price": {
+                        "type": "number",
+                        "description": "Price per unit if unit-based."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Expense Category",
+            "description": "Update an expense category.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/",
+            "endpointUrl": "/expense_categories/{expense_category_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 41,
+                "name": "Meals & Entertainment"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_category_id": {
+                        "type": "integer",
+                        "description": "The expense category ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Category name."
+                    },
+                    "unit_name": {
+                        "type": "string",
+                        "description": "Unit name if unit-based."
+                    },
+                    "unit_price": {
+                        "type": "number",
+                        "description": "Unit price if unit-based."
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Active status."
+                    }
+                },
+                "required": [
+                    "expense_category_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Expense Category",
+            "description": "Delete an expense category.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/expenses-api/expenses/expense-categories/",
+            "endpointUrl": "/expense_categories/{expense_category_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "expense_category_id": {
+                        "type": "integer",
+                        "description": "The expense category ID."
+                    }
+                },
+                "required": [
+                    "expense_category_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Uninvoiced Report",
+            "description": "Retrieve uninvoiced time and expenses over a date range.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/reports-api/reports/uninvoiced/",
+            "endpointUrl": "/reports/uninvoiced",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "results": [
+                    {
+                        "client_id": 12345,
+                        "client_name": "Acme Inc",
+                        "project_id": 111,
+                        "project_name": "Website Redesign",
+                        "hours": 12.5,
+                        "amount": 1875
+                    }
+                ],
+                "from": "2023-03-01",
+                "to": "2023-03-31"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "from": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)."
+                    },
+                    "to": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)."
+                    },
+                    "client_id": {
+                        "type": "integer",
+                        "description": "Filter by client ID."
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Filter by project ID."
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "description": "Filter by user ID."
+                    }
+                },
+                "required": [
+                    "from",
+                    "to"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "results"
+            }
+        },
+        {
+            "title": "Get Project Budget Report",
+            "description": "Retrieve budget utilization for a project.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/reports-api/reports/project-budget/",
+            "endpointUrl": "/reports/project_budget",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "project_id": 111,
+                "project_name": "Website Redesign",
+                "budget": 100,
+                "budget_is_monthly": false,
+                "hours_spent": 75,
+                "budget_spent": 75,
+                "budget_remaining": 25
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "description": "Project ID."
+                    }
+                },
+                "required": [
+                    "project_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Company",
+            "description": "Retrieve company settings and information.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/company-api/company/company/",
+            "endpointUrl": "/company",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 999,
+                "base_currency": "USD",
+                "full_domain": "example.harvestapp.com",
+                "name": "Example Co",
+                "is_pro": true,
+                "weekly_capacity": 126000,
+                "time_format": "decimal",
+                "clock": "12h",
+                "timezone": "America/New_York"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Roles",
+            "description": "Retrieve all user roles.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/roles-api/roles/roles/",
+            "endpointUrl": "/roles",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "roles": [
+                    {
+                        "id": 71,
+                        "name": "Designers",
+                        "user_ids": [
+                            321,
+                            322
+                        ]
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {}
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "roles"
+            }
+        },
+        {
+            "title": "Get Role",
+            "description": "Retrieve a specific role by ID.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/roles-api/roles/roles/",
+            "endpointUrl": "/roles/{role_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "GET",
+            "sampleResponse": {
+                "id": 71,
+                "name": "Designers",
+                "user_ids": [
+                    321,
+                    322
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "role_id": {
+                        "type": "integer",
+                        "description": "The role ID."
+                    }
+                },
+                "required": [
+                    "role_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Role",
+            "description": "Create a custom role.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/roles-api/roles/roles/",
+            "endpointUrl": "/roles",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "POST",
+            "sampleResponse": {
+                "id": 72,
+                "name": "QA",
+                "user_ids": []
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Role name."
+                    },
+                    "user_ids": {
+                        "type": "array",
+                        "description": "Array of user IDs to assign.",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Role",
+            "description": "Update role name and assigned users.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/roles-api/roles/roles/",
+            "endpointUrl": "/roles/{role_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "PATCH",
+            "sampleResponse": {
+                "id": 71,
+                "name": "Design & UX",
+                "user_ids": [
+                    321
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "role_id": {
+                        "type": "integer",
+                        "description": "The role ID."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Role name."
+                    },
+                    "user_ids": {
+                        "type": "array",
+                        "description": "Array of user IDs to assign.",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "required": [
+                    "role_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Role",
+            "description": "Delete a custom role.",
+            "type": "action",
+            "documentation": "https://help.getharvest.com/api-v2/roles-api/roles/roles/",
+            "endpointUrl": "/roles/{role_id}",
+            "apiBaseUrl": "https://api.harvestapp.com/v2",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "role_id": {
+                        "type": "integer",
+                        "description": "The role ID."
+                    }
+                },
+                "required": [
+                    "role_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "oauth2",
+        "authUrl": "https://id.getharvest.com/oauth2/authorize",
+        "tokenUrl": "https://id.getharvest.com/api/v2/oauth2/token",
+        "profileInfoUrl": "https://api.harvestapp.com/v2/users/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.harvest",
+        "label": "Harvest",
+        "category": "applications",
+        "description": "Harvest connector using API v2 for time tracking, projects, invoices, estimates, expenses, users, and reports. Base URL https://api.harvestapp.com/v2. Rate limit 100 requests per 15 seconds per account. All requests require Authorization: Bearer <token>, Harvest-Account-ID: <account_id>, and a User-Agent identifying your app.",
+        "version": "1.0.0",
+        "icon": "https://cdn.worldvectorlogo.com/logos/harvest-1.svg"
+    }
+}

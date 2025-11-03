@@ -1,0 +1,103 @@
+{
+    "name": "appmixer.harvest.project.FindProjects",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Find projects in Harvest based on client ID, active status, or last updated date.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:harvest"
+    },
+    "quota": {
+        "manager": "appmixer:harvest",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "clientId": {
+                        "type": "string"
+                    },
+                    "isActive": {
+                        "type": "boolean"
+                    },
+                    "updatedSince": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "clientId": {
+                        "type": "text",
+                        "tooltip": "Filter by client ID.",
+                        "label": "Client ID",
+                        "index": 0
+                    },
+                    "isActive": {
+                        "type": "toggle",
+                        "tooltip": "Filter by active (true) or archived (false).",
+                        "label": "Is Active",
+                        "index": 1
+                    },
+                    "updatedSince": {
+                        "type": "date-time",
+                        "tooltip": "Only return projects updated since this datetime (ISO 8601).",
+                        "label": "Updated Since",
+                        "index": 2
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/harvest/project/FindProjects?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAM6SURBVFhHnVY9TxVBFD13lvcSqIwkJFYUSkwEYiHRmsLwG9DG2sRYiw0djQ01jY1GfoKxeJ1BkQQLCwIUr9HQqIX6DDD3WuzM7p27s/tevMlhZ3bOPffMx86DAGC0vbgqRFsgWSFyBQioAApP1VePKkQ1YlsASOhIGBL2EPpEIs+mn34Z0Gh7cVWAt0TUK4uqApQpbgvbkPDHmqj6ZVtYLoiw5sTLFgl65UBAadX0o3Do56BzrYYBAT3xsuVYsFI7pVoPqi1qNtVT7VPM02OJt7BsyTuABSuuICrAzcGGgO7bAshwksnk3xegwqVJBhnXEEK7YWtiDADQ6MWtsqkPnWnTlXlM3X4YMgB/8g787SA4LMNdu4Pixv1K+PLzK8iPYdkRVIcvaQNw7bOpQTNzKJbXSyytg2YXmpzZBRRLgbO8DpqZU8VbwED3FgRSIywnwgYHWJ5CuwGbrMNyx3GsloIDc7knbCDhfRxLxAVgTiGGw/q71zVY1eGwAtEdh8MRHWvnOv6Xk1mJ8hDqAU1gmVy8laM0Kt0a4QwEkk6wyIp3GMhqmToC0GjzplTfPfQNW//wuPm76D94WYv7c4Av6z4AuCmg6Ffd89ePwMOPtTF9D6h+fQZy++9VW0fRB3ozKVRxwOhomK2tL6KGCdW2yztJ6Fx9DpK2PoR29tFEfKrwB7s4f/M4gT/YTThlboTRVbVccgfE7zu5F5rfOJ8dg48GKc6OE07jbhF1X6h6Lusw57xLPJrXEfN81NP9uk44AzkTKtGegdx2tXGstnmvLqIuE0Z9EgO5VczUqs9Adv/jWEbcG2RNWh1TozwDOXcZ52PFDcfmt+g64bYlVQlWPMtv48SZN/nCQPH83tVNiPp3X5RYbFMBAkOGh5DhZ/DJB8j3r/W4ADTVB/7+CpxD8NF74PfPhKNNxo+G/jy5nniPPwlJ5N5NEnZVVOEY6U0YlkX3IS3LnUMXj4O24TpheJsoDIhXZix8CyxvjJYwvCOW/cR9xnX8j6ox4xZIWMnO1RSAWPYdMW2I8EWZZT8tBRbIhMjlWk0RviCmDTe9czpw7NYg2APjMus2N5MudOWVNfYcu7XpndPBP/KnJAy1daJ9AAAAAElFTkSuQmCC"
+}

@@ -1,0 +1,464 @@
+{
+    "name": "appmixer.harvest.invoice.CreateInvoice",
+    "label": "Create Invoice",
+    "description": "Create a new invoice with line items.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:harvest"
+    },
+    "quota": {
+        "manager": "appmixer:harvest",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "clientId": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "number": {
+                        "type": "string"
+                    },
+                    "issueDate": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string"
+                    },
+                    "paymentTerm": {
+                        "type": "string"
+                    },
+                    "purchaseOrder": {
+                        "type": "string"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "tax": {
+                        "type": "number"
+                    },
+                    "tax2": {
+                        "type": "number"
+                    },
+                    "discount": {
+                        "type": "number"
+                    },
+                    "estimateId": {
+                        "type": "string"
+                    },
+                    "retainerId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "clientId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "clientId": {
+                        "type": "text",
+                        "label": "Client ID",
+                        "index": 0,
+                        "tooltip": "The ID of the client this invoice belongs to."
+                    },
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "index": 1,
+                        "tooltip": "The invoice subject."
+                    },
+                    "number": {
+                        "type": "text",
+                        "label": "Invoice Number",
+                        "index": 2,
+                        "tooltip": "Unique invoice number. If no value is set, the number will be automatically generated."
+                    },
+                    "issueDate": {
+                        "type": "date-time",
+                        "label": "Issue Date",
+                        "index": 3,
+                        "tooltip": "Date the invoice was issued. Defaults to today's date. Format: YYYY-MM-DD.",
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "paymentTerm": {
+                        "type": "select",
+                        "label": "Payment Term",
+                        "index": 4,
+                        "defaultValue": "custom",
+                        "tooltip": "The timeframe in which the invoice should be paid.",
+                        "options": [
+                            {
+                                "label": "Upon Receipt",
+                                "value": "upon receipt"
+                            },
+                            {
+                                "label": "Net 15",
+                                "value": "net 15"
+                            },
+                            {
+                                "label": "Net 30",
+                                "value": "net 30"
+                            },
+                            {
+                                "label": "Net 45",
+                                "value": "net 45"
+                            },
+                            {
+                                "label": "Net 60",
+                                "value": "net 60"
+                            },
+                            {
+                                "label": "Custom",
+                                "value": "custom"
+                            }
+                        ]
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "label": "Due Date",
+                        "index": 5,
+                        "tooltip": "Date the invoice is due. Only taken into account if Payment Term is set to 'Custom'. Format: YYYY-MM-DD.",
+                        "config": {
+                            "enableTime": false,
+                            "format": "YYYY-MM-DD"
+                        }
+                    },
+                    "purchaseOrder": {
+                        "type": "text",
+                        "label": "Purchase Order",
+                        "index": 6,
+                        "tooltip": "The purchase order number."
+                    },
+                    "notes": {
+                        "type": "textarea",
+                        "label": "Notes",
+                        "index": 7,
+                        "tooltip": "Any additional notes to include on the invoice."
+                    },
+                    "currency": {
+                        "type": "text",
+                        "label": "Currency",
+                        "index": 8,
+                        "tooltip": "The currency used by the invoice (e.g., USD, EUR)."
+                    },
+                    "tax": {
+                        "type": "number",
+                        "label": "Tax Percentage",
+                        "index": 9,
+                        "tooltip": "Tax percentage to apply to the subtotal (e.g., 10.0 for 10%)."
+                    },
+                    "tax2": {
+                        "type": "number",
+                        "label": "Tax2 Percentage",
+                        "index": 10,
+                        "tooltip": "Second tax percentage to apply to the subtotal."
+                    },
+                    "discount": {
+                        "type": "number",
+                        "label": "Discount Percentage",
+                        "index": 11,
+                        "tooltip": "Discount percentage to subtract from the subtotal (e.g., 10.0 for 10%)."
+                    },
+                    "estimateId": {
+                        "type": "text",
+                        "label": "Estimate ID",
+                        "index": 12,
+                        "tooltip": "The ID of the estimate associated with this invoice."
+                    },
+                    "retainerId": {
+                        "type": "text",
+                        "label": "Retainer ID",
+                        "index": 13,
+                        "tooltip": "The ID of the retainer you want to add funds to with this invoice."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Invoice ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Client Key",
+                    "value": "client_key",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Number",
+                    "value": "number",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Purchase Order",
+                    "value": "purchase_order",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Amount",
+                    "value": "amount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Due Amount",
+                    "value": "due_amount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Tax",
+                    "value": "tax",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Tax Amount",
+                    "value": "tax_amount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Tax2",
+                    "value": "tax2",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Tax2 Amount",
+                    "value": "tax2_amount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Discount",
+                    "value": "discount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Discount Amount",
+                    "value": "discount_amount",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Subject",
+                    "value": "subject",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Notes",
+                    "value": "notes",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "State",
+                    "value": "state",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Period Start",
+                    "value": "period_start",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Period End",
+                    "value": "period_end",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Issue Date",
+                    "value": "issue_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Due Date",
+                    "value": "due_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Payment Term",
+                    "value": "payment_term",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Sent At",
+                    "value": "sent_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Paid At",
+                    "value": "paid_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Closed At",
+                    "value": "closed_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Recurring Invoice ID",
+                    "value": "recurring_invoice_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Paid Date",
+                    "value": "paid_date",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Currency",
+                    "value": "currency",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Payment Options",
+                    "value": "payment_options",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                {
+                    "label": "Client",
+                    "value": "client",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Client.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Client.Name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Estimate",
+                    "value": "estimate",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Retainer",
+                    "value": "retainer",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Creator",
+                    "value": "creator",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "title": "Creator.Id"
+                            },
+                            "name": {
+                                "type": "string",
+                                "title": "Creator.Name"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Line Items",
+                    "value": "line_items",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAM6SURBVFhHnVY9TxVBFD13lvcSqIwkJFYUSkwEYiHRmsLwG9DG2sRYiw0djQ01jY1GfoKxeJ1BkQQLCwIUr9HQqIX6DDD3WuzM7p27s/tevMlhZ3bOPffMx86DAGC0vbgqRFsgWSFyBQioAApP1VePKkQ1YlsASOhIGBL2EPpEIs+mn34Z0Gh7cVWAt0TUK4uqApQpbgvbkPDHmqj6ZVtYLoiw5sTLFgl65UBAadX0o3Do56BzrYYBAT3xsuVYsFI7pVoPqi1qNtVT7VPM02OJt7BsyTuABSuuICrAzcGGgO7bAshwksnk3xegwqVJBhnXEEK7YWtiDADQ6MWtsqkPnWnTlXlM3X4YMgB/8g787SA4LMNdu4Pixv1K+PLzK8iPYdkRVIcvaQNw7bOpQTNzKJbXSyytg2YXmpzZBRRLgbO8DpqZU8VbwED3FgRSIywnwgYHWJ5CuwGbrMNyx3GsloIDc7knbCDhfRxLxAVgTiGGw/q71zVY1eGwAtEdh8MRHWvnOv6Xk1mJ8hDqAU1gmVy8laM0Kt0a4QwEkk6wyIp3GMhqmToC0GjzplTfPfQNW//wuPm76D94WYv7c4Av6z4AuCmg6Ffd89ePwMOPtTF9D6h+fQZy++9VW0fRB3ozKVRxwOhomK2tL6KGCdW2yztJ6Fx9DpK2PoR29tFEfKrwB7s4f/M4gT/YTThlboTRVbVccgfE7zu5F5rfOJ8dg48GKc6OE07jbhF1X6h6Lusw57xLPJrXEfN81NP9uk44AzkTKtGegdx2tXGstnmvLqIuE0Z9EgO5VczUqs9Adv/jWEbcG2RNWh1TozwDOXcZ52PFDcfmt+g64bYlVQlWPMtv48SZN/nCQPH83tVNiPp3X5RYbFMBAkOGh5DhZ/DJB8j3r/W4ADTVB/7+CpxD8NF74PfPhKNNxo+G/jy5nniPPwlJ5N5NEnZVVOEY6U0YlkX3IS3LnUMXj4O24TpheJsoDIhXZix8CyxvjJYwvCOW/cR9xnX8j6ox4xZIWMnO1RSAWPYdMW2I8EWZZT8tBRbIhMjlWk0RviCmDTe9czpw7NYg2APjMus2N5MudOWVNfYcu7XpndPBP/KnJAy1daJ9AAAAAElFTkSuQmCC"
+}
