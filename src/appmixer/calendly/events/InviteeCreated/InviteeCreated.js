@@ -8,7 +8,6 @@ const commons = require('../../calendly-commons');
 module.exports = {
 
     start(context) {
-        context.log({ step: 'auth', auth: context.auth });
 
         return this.registerWebhook(context);
     },
