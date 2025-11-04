@@ -232,7 +232,13 @@ async function buildRequestOptions(context, method, options) {
  * @param {boolean} [ignoreSsl] - Whether to ignore SSL certificate validation
  * @return {Promise<https.Agent|null>} HTTPS agent or null if no options provided
  */
-async function buildHttpsAgentFromFiles(context, caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl) {
+async function buildHttpsAgentFromFiles(
+    context,
+    caCertificateFileId,
+    clientCertificateFileId,
+    clientKeyFileId,
+    ignoreSsl
+) {
 
     // If no certificates or SSL options provided, return null
     if (!caCertificateFileId && !clientCertificateFileId && !clientKeyFileId && !ignoreSsl) {
@@ -245,34 +251,40 @@ async function buildHttpsAgentFromFiles(context, caCertificateFileId, clientCert
         agentOptions.rejectUnauthorized = false;
     }
 
-    // Read CA certificate if provided
+    // Read and validate CA certificate if provided
     if (caCertificateFileId) {
         const caBuffer = await context.getFileReadStream(caCertificateFileId);
         const caChunks = [];
         for await (const chunk of caBuffer) {
             caChunks.push(chunk);
         }
-        agentOptions.ca = Buffer.concat(caChunks).toString('utf8');
+        const caCert = Buffer.concat(caChunks).toString('utf8');
+        validatePemCertificate(caCert, 'CA Certificate');
+        agentOptions.ca = caCert;
     }
 
-    // Read client certificate if provided
+    // Read and validate client certificate if provided
     if (clientCertificateFileId) {
         const certBuffer = await context.getFileReadStream(clientCertificateFileId);
         const certChunks = [];
         for await (const chunk of certBuffer) {
             certChunks.push(chunk);
         }
-        agentOptions.cert = Buffer.concat(certChunks).toString('utf8');
+        const clientCert = Buffer.concat(certChunks).toString('utf8');
+        validatePemCertificate(clientCert, 'Client Certificate');
+        agentOptions.cert = clientCert;
     }
 
-    // Read client key if provided
+    // Read and validate client key if provided
     if (clientKeyFileId) {
         const keyBuffer = await context.getFileReadStream(clientKeyFileId);
         const keyChunks = [];
         for await (const chunk of keyBuffer) {
             keyChunks.push(chunk);
         }
-        agentOptions.key = Buffer.concat(keyChunks).toString('utf8');
+        const clientKey = Buffer.concat(keyChunks).toString('utf8');
+        validatePemCertificate(clientKey, 'Client Key');
+        agentOptions.key = clientKey;
     }
 
     return new https.Agent(agentOptions);
