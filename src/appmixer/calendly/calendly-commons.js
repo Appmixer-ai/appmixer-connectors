@@ -12,7 +12,6 @@ module.exports = {
     async registerWebhookSubscription(context, event) {
         const { accessToken, profileInfo: { resource } } = context.auth;
         const url = context.getWebhookUrl();
-        context.log({ step: 'registerWebhookSubscription webhookUrl', url });
 
         try {
             const { data } = await context.httpRequest({
@@ -29,11 +28,10 @@ module.exports = {
                     organization: resource.current_organization
                 }
             });
-            context.log({ step: 'registerWebhookSubscription response', data });
+            context.log({ step: 'registerWebhookSubscription', data });
             return data.resource;
         } catch (error) {
             if (error.response && error.response.status === 409) {
-                context.log({ step: 'Webhook already exists, fetching existing subscriptions...' });
                 const options = {
                     method: 'GET',
                     url: 'https://api.calendly.com/webhook_subscriptions',
@@ -51,14 +49,12 @@ module.exports = {
                 );
 
                 if (existing) {
-                    context.log({ step: 'found existing webhook', uri: existing.uri });
+                    context.log({ step: 'registerWebhookSubscription (fetched existing)', data: existing });
                     return { uri: existing.uri };
                 }
 
                 // If no matching webhook found, throw the original error
-                context.log({ step: 'no matching webhook found, rethrowing original error' });
                 throw error;
-
             }
         }
     },
