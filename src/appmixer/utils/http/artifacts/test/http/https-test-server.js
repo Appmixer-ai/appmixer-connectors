@@ -147,7 +147,10 @@ async function startHttpsTestServer(options = {}) {
         server.on('error', reject);
 
         server.listen(port, 'localhost', () => {
-            const url = `https://localhost:${port}`;
+            // When port 0 is used, the system assigns an ephemeral port.
+            // Use server.address().port to determine the actual listening port.
+            const actualPort = server.address().port;
+            const url = `https://localhost:${actualPort}`;
             resolve({
                 server,
                 url,
