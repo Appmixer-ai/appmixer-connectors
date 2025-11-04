@@ -122,7 +122,9 @@ const sendBinaryData = async (context, url, headers, binaryFileId) => {
 
 const sendFormData = async (context, url, headers) => {
 
-    const { bodyFormData, caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = context.messages.in.content;
+    const {
+        bodyFormData, caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl
+    } = context.messages.in.content;
     const variablesArray = bodyFormData?.ADD || [];
 
     const formData = new FormData();
