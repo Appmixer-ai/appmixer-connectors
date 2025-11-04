@@ -8,7 +8,7 @@ describe('processResponse', () => {
 
     beforeEach(() => {
         // Stub axios from the http connector's node_modules
-        const axios = require('../../../src/appmixer/utils/http/node_modules/axios');
+        const axios = require('../../../../http/node_modules/axios');
         axiosRequestStub = sinon.stub(axios, 'request').callsFake((options) => {
             return new Promise((resolve) => {
                 resolve({
@@ -32,7 +32,7 @@ describe('processResponse', () => {
 
         const testUrl = 'https://foo.bar/';
 
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const result = await request({}, 'get', {
             url: testUrl
         });
@@ -53,7 +53,7 @@ describe('buildHttpsAgent', () => {
 
     before(async function() {
         this.timeout(10000);
-        const { ensureCertsGenerated } = require('../http/https-test-server');
+        const { ensureCertsGenerated } = require('./https-test-server');
         await ensureCertsGenerated();
     });
 
@@ -74,26 +74,24 @@ describe('buildHttpsAgent', () => {
     }
 
     it('should return null when no SSL options are provided', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
         const context = createMockContext();
 
         const agent = await httpCommons.buildHttpsAgentFromFiles(context, null, null, null, false);
-
         assert.strictEqual(agent, null);
     });
 
     it('should create agent with rejectUnauthorized=false when ignoreSsl=true', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
         const context = createMockContext();
 
         const agent = await httpCommons.buildHttpsAgentFromFiles(context, null, null, null, true);
-
         assert(agent instanceof https.Agent);
         assert.strictEqual(agent.options.rejectUnauthorized, false);
     });
 
     it('should create agent with CA certificate when provided', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
 
         // Create a valid CA certificate for testing
         const validCaCert = `-----BEGIN CERTIFICATE-----
@@ -125,7 +123,6 @@ AA==
         });
 
         const agent = await httpCommons.buildHttpsAgentFromFiles(context, 'ca-cert-id', null, null, false);
-
         assert(agent instanceof https.Agent);
         assert(agent.options.ca);
         assert(typeof agent.options.ca === 'string');
@@ -133,7 +130,7 @@ AA==
     });
 
     it('should throw error for invalid PEM certificate format', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
 
         const invalidCert = 'not-a-valid-pem-certificate';
 
@@ -150,7 +147,7 @@ AA==
     });
 
     it('should create agent with client certificate and key for mutual TLS', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
 
         const validClientCert = `-----BEGIN CERTIFICATE-----
 MIIDazCCAlOgAwIBAgIUXoydS8qKJZZYW5w9QfqDUw0wDQYJKoZIhvcNAQELBQAw
@@ -182,8 +179,8 @@ uVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQ
 uVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQ
 uVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQ
 uVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQ
-uVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQuVuQ
 uVuQuVuQuVuQuVuQuVuQuVuQuVuQIDAQABAoIBABBBBBBBBBBBBBBBBBBBBBBB
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
@@ -199,92 +196,6 @@ BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 ECgYEA3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
 +N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+
 N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
-+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
 +N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
 +N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
 +N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
@@ -352,7 +263,7 @@ N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3+N3
     });
 
     it('should combine multiple SSL options in a single agent', async () => {
-        const httpCommons = require('../../../src/appmixer/utils/http/http-commons');
+        const httpCommons = require('../../../../http/http-commons');
 
         const validCaCert = `-----BEGIN CERTIFICATE-----
 MIIDazCCAlOgAwIBAgIUXoydS8qKJZZYW5w9QfqDUw0wDQYJKoZIhvcNAQELBQAw

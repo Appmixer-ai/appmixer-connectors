@@ -34,7 +34,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
 
     it('should create HTTPS agent with ignoreSsl=true', async function() {
         this.timeout(5000);
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const context = createMockContext();
         context.messages.in.content = {
             ignoreSsl: true
@@ -54,7 +54,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
 
     it('should create HTTPS agent with CA certificate', async function() {
         this.timeout(5000);
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const { ca: caCertPath } = getCertPaths();
         const caCertContent = fs.readFileSync(caCertPath, 'utf8');
         const context = createMockContext({ 'ca-cert-id': caCertContent });
@@ -73,7 +73,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
 
     it('should create HTTPS agent with mutual TLS', async function() {
         this.timeout(5000);
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const { cert: certPath, key: keyPath } = getCertPaths();
         const certContent = fs.readFileSync(certPath, 'utf8');
         const keyContent = fs.readFileSync(keyPath, 'utf8');
@@ -97,7 +97,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
 
     it('should return null without SSL options', async function() {
         this.timeout(5000);
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const context = createMockContext();
 
         const httpsAgent = await request.buildHttpsAgentFromFiles(
@@ -113,7 +113,7 @@ describe('HTTP POST Component with SSL/TLS Certificates', () => {
 
     it('should combine CA certificate with ignoreSsl', async function() {
         this.timeout(5000);
-        const request = require('../../../src/appmixer/utils/http/http-commons');
+        const request = require('../../../../http/http-commons');
         const { ca: caPath } = getCertPaths();
         const caContent = fs.readFileSync(caPath, 'utf8');
         const context = createMockContext({
