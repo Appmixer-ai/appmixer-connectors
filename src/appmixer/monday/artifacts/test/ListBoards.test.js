@@ -122,4 +122,38 @@ module.exports = {
         assert.strictEqual(slowStaticCache.set.callCount, 1, 'staticCache.set should be called to populate cache');
         assert.strictEqual(slowStaticCache.get.callCount, 10, 'staticCache.get should be called for each receive call');
     });
+
+    it('should use simplified query when isSource is true', async () => {
+
+        const apiKey = 'test-api-key-isSource';
+        const context = createMockContext({
+            auth: { apiKey },
+            properties: { isSource: true }
+        });
+
+        await ListBoards.receive(context);
+
+        // Verify that aggregator.fetch was called with 3 arguments (no isSource parameter)
+        assert(fetchStub.called, 'aggregator.fetch should have been called');
+        const callArgs = fetchStub.getCall(0).args;
+        assert.strictEqual(callArgs.length, 3, 'aggregator.fetch should be called with 3 arguments (options, page, pageSize)');
+        assert.strictEqual(callArgs[1], 1, 'initial page should be 1');
+        assert.strictEqual(callArgs[2], 50, 'page size should be 50');
+    });
+
+    it('should use full query when isSource is false', async () => {
+
+        const apiKey = 'test-api-key-not-source';
+        const context = createMockContext({
+            auth: { apiKey },
+            properties: { isSource: false }
+        });
+
+        await ListBoards.receive(context);
+
+        assert(fetchStub.called, 'aggregator.fetch should have been called');
+        const callArgs = fetchStub.getCall(0).args;
+        // Verify aggregator.fetch called with 3 arguments (options, page, pageSize - no isSource)
+        assert.strictEqual(callArgs.length, 3, 'aggregator.fetch should be called with 3 arguments');
+    });
 });
