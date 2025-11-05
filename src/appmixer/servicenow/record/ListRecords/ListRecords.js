@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 'use strict';
 
-const { getBasicAuth, sendArrayOutput, requestPaginated, isAppmixerVariable } = require('../../lib');
+const { getAuthHeaders, sendArrayOutput, requestPaginated, isAppmixerVariable } = require('../../lib');
 const { getOutPortSchemaFromTableSchema } = require('../../commons-table');
 
 module.exports = {
@@ -29,12 +29,13 @@ module.exports = {
             return await this.getOutputPortOptions(context, outputType);
         }
 
+        const authHeaders = getAuthHeaders(context);
         const options = {
             method: 'GET',
             url: `https://${context.auth.instance}.service-now.com/api/now/table/${tableName}`,
             headers: {
                 'User-Agent': 'Appmixer (info@appmixer.com)',
-                'Authorization': ('Basic ' + getBasicAuth(context.auth.username, context.auth.password))
+                ...authHeaders
             },
             params: {
                 sysparm_display_value,

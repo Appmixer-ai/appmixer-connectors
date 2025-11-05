@@ -1,4 +1,4 @@
-const { getBasicAuth } = require('./lib');
+const { getAuthHeaders } = require('./lib');
 
 /**
  * Converts table schema to outPort schema.
@@ -37,23 +37,24 @@ async function getOutPortSchemaFromTableSchema(context, tableName, outputType) {
  * @param {string} tableName Table name, eg `sys_user`.
  * @returns {object} Table schema object
  * @example [{
-	column_label: 'First name',
-	internal_type: 'string',
-	element: 'first_name'
+    column_label: 'First name',
+    internal_type: 'string',
+    element: 'first_name'
   },{
-	column_label: 'Created by',
-	internal_type: 'string',
-	element: 'sys_created_by'
+    column_label: 'Created by',
+    internal_type: 'string',
+    element: 'sys_created_by'
   }]
 */
 async function getTableSchema(context, tableName) {
 
+    const authHeaders = getAuthHeaders(context);
     const options = {
         method: 'GET',
         url: `https://${context.auth.instance}.service-now.com/api/now/table/sys_dictionary`,
         headers: {
             'User-Agent': 'Appmixer (info@appmixer.com)',
-            'Authorization': ('Basic ' + getBasicAuth(context.auth.username, context.auth.password))
+            ...authHeaders
         },
         params: {
             sysparm_display_value: false,

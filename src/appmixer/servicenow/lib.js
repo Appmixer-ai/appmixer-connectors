@@ -8,6 +8,18 @@ function getBasicAuth(username, password) {
     return Buffer.from(username + ':' + password).toString('base64');
 }
 
+function getAuthHeaders(context) {
+    if (context.auth.apiKey) {
+        return {
+            'x-sn-apikey': context.auth.apiKey
+        };
+    } else {
+        return {
+            'Authorization': 'Basic ' + getBasicAuth(context.auth.username, context.auth.password)
+        };
+    }
+}
+
 function getCacheKey(obj) {
     const str = JSON.stringify(obj);
     return crypto
@@ -20,7 +32,9 @@ async function callEndpointCached(context, options) {
 
     let lock;
     try {
-        const key = getCacheKey({ ...options, token: context.auth.username + context.auth.password });
+        const authToken = context.auth.apiKey || (context.auth.username + context.auth.password);
+
+        const key = getCacheKey({ ...options, token: authToken });
 
         lock = await context.lock(key);
 
@@ -51,12 +65,13 @@ async function callEndpoint(context, {
 }) {
 
     const url = `https://${context.auth.instance}.service-now.com/api/now/${action}`;
+    const authHeaders = getAuthHeaders(context);
     const options = {
         method,
         url,
         headers: {
             'User-Agent': 'Appmixer (info@appmixer.com)',
-            'Authorization': ('Basic ' + getBasicAuth(context.auth.username, context.auth.password))
+            ...authHeaders
         },
         data,
         params
@@ -204,7 +219,7 @@ function toOutputScheme(columns, fields = '') {
         : columns;
 
     const uniq = {}; // temporary object for removing duplicities.
-    return  columnsFiltered.reduce((res, column) => {
+    return columnsFiltered.reduce((res, column) => {
         if (column.active === 'true' && column.element && !uniq[column.element]) {
             uniq[column.element] = true;
             res.push({
@@ -273,6 +288,7 @@ function toInspector(context, { columns, fields = '', schema: initialSchemaField
 
 module.exports = {
     getBasicAuth,
+    getAuthHeaders,
     isAppmixerVariable,
     requestPaginated,
     sendArrayOutput,
