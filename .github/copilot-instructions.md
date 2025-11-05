@@ -1479,7 +1479,7 @@ Use `source` property to populate field options dynamically:
 
 #### File Handling
 
-For file input components:
+##### file input components
 
 ```json
 {
@@ -1501,6 +1501,25 @@ For file input components:
     }
   }
 }
+```
+
+##### file output components
+- use `context.saveFileStream()` in behavior JS
+- must return `fileId` in output message
+- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+
+Examples:
+
+```javascript
+const filename = `generated-image-${(new Date).toISOString()}.png`;
+const file = await context.saveFileStream(filename, readStream);
+return context.sendJson({ fileId: file.fileId, prompt, size }, 'out');
+```
+```javascript
+const outFilename = filename || `${Date.now()}_elevenlabs_soundeffect`;
+const file = await context.saveFileStream(outFilename, data);
+
+return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
 ```
 
 ## Testing Guidelines
