@@ -1,0 +1,182 @@
+{
+    "name": "appmixer.grok.core.StreamingResponse",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Get real-time token streaming for chat completions using SSE.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:grok"
+    },
+    "quota": {
+        "manager": "appmixer:grok",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "messages|role": {
+                        "type": "string"
+                    },
+                    "messages|content": {
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "text",
+                                                "image_url"
+                                            ]
+                                        },
+                                        "text": {
+                                            "type": "string"
+                                        },
+                                        "image_url": {
+                                            "type": "object",
+                                            "properties": {
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "detail": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "low",
+                                                        "high",
+                                                        "auto"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "type"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "stream": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "temperature": {
+                        "type": "number"
+                    },
+                    "max_tokens": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "select",
+                        "tooltip": "",
+                        "label": "Model",
+                        "options": [
+                            {
+                                "label": "grok-3-latest",
+                                "value": "grok-3-latest"
+                            },
+                            {
+                                "label": "grok-3-fast-latest",
+                                "value": "grok-3-fast-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-latest",
+                                "value": "grok-3-mini-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-fast-latest",
+                                "value": "grok-3-mini-fast-latest"
+                            },
+                            {
+                                "label": "grok-2-latest",
+                                "value": "grok-2-latest"
+                            }
+                        ],
+                        "index": 0
+                    },
+                    "messages|role": {
+                        "type": "select",
+                        "tooltip": "",
+                        "label": "Messages|role",
+                        "options": [
+                            {
+                                "label": "system",
+                                "value": "system"
+                            },
+                            {
+                                "label": "user",
+                                "value": "user"
+                            },
+                            {
+                                "label": "assistant",
+                                "value": "assistant"
+                            },
+                            {
+                                "label": "tool",
+                                "value": "tool"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "messages|content": {
+                        "type": "text",
+                        "tooltip": "",
+                        "label": "Messages|content",
+                        "index": 2
+                    },
+                    "stream": {
+                        "type": "toggle",
+                        "tooltip": "Enable SSE streaming.",
+                        "label": "Stream",
+                        "index": 3
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "tooltip": "",
+                        "label": "Temperature",
+                        "index": 4
+                    },
+                    "max_tokens": {
+                        "type": "number",
+                        "tooltip": "",
+                        "label": "Max Tokens",
+                        "index": 5
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Sse Example",
+                    "value": "sse_example",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="
+}

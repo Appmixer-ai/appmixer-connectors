@@ -1,0 +1,230 @@
+{
+    "name": "appmixer.grok.core.ImageUnderstanding",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Analyze and understand images by sending them as inputs in chat completions (multimodal).",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:grok"
+    },
+    "quota": {
+        "manager": "appmixer:grok",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "messages|role": {
+                        "type": "string"
+                    },
+                    "messages|content|type": {
+                        "type": "string"
+                    },
+                    "messages|content|text": {
+                        "type": "string"
+                    },
+                    "messages|content|image_url|url": {
+                        "type": "string"
+                    },
+                    "messages|content|image_url|detail": {
+                        "type": "string"
+                    },
+                    "max_tokens": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "select",
+                        "tooltip": "Vision-capable model.",
+                        "label": "Model",
+                        "options": [
+                            {
+                                "label": "grok-2-vision-latest",
+                                "value": "grok-2-vision-latest"
+                            },
+                            {
+                                "label": "grok-vision-beta",
+                                "value": "grok-vision-beta"
+                            }
+                        ],
+                        "index": 0
+                    },
+                    "messages|role": {
+                        "type": "select",
+                        "tooltip": "",
+                        "label": "Messages|role",
+                        "options": [
+                            {
+                                "label": "system",
+                                "value": "system"
+                            },
+                            {
+                                "label": "user",
+                                "value": "user"
+                            },
+                            {
+                                "label": "assistant",
+                                "value": "assistant"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "messages|content|type": {
+                        "type": "select",
+                        "tooltip": "",
+                        "label": "Messages|content|type",
+                        "options": [
+                            {
+                                "label": "text",
+                                "value": "text"
+                            },
+                            {
+                                "label": "image_url",
+                                "value": "image_url"
+                            }
+                        ],
+                        "index": 2
+                    },
+                    "messages|content|text": {
+                        "type": "text",
+                        "tooltip": "User text prompt or question about the image.",
+                        "label": "Messages|content|text",
+                        "index": 3
+                    },
+                    "messages|content|image_url|url": {
+                        "type": "text",
+                        "tooltip": "Public URL or base64 data URL of the image.",
+                        "label": "Messages|content|image Url|url",
+                        "index": 4
+                    },
+                    "messages|content|image_url|detail": {
+                        "type": "select",
+                        "tooltip": "Controls vision detail level.",
+                        "label": "Messages|content|image Url|detail",
+                        "options": [
+                            {
+                                "label": "low",
+                                "value": "low"
+                            },
+                            {
+                                "label": "high",
+                                "value": "high"
+                            },
+                            {
+                                "label": "auto",
+                                "value": "auto"
+                            }
+                        ],
+                        "index": 5
+                    },
+                    "max_tokens": {
+                        "type": "number",
+                        "tooltip": "Max tokens for the textual response.",
+                        "label": "Max Tokens",
+                        "index": 6
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Id",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Object",
+                    "value": "object",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created",
+                    "value": "created",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Model",
+                    "value": "model",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Choices",
+                    "value": "choices",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "number",
+                                    "title": "Choices.Index"
+                                },
+                                "message": {
+                                    "type": "object",
+                                    "properties": {
+                                        "role": {
+                                            "type": "string",
+                                            "title": "Choices.Message.Role"
+                                        },
+                                        "content": {
+                                            "type": "string",
+                                            "title": "Choices.Message.Content"
+                                        }
+                                    },
+                                    "title": "Choices.Message"
+                                },
+                                "finish_reason": {
+                                    "type": "string",
+                                    "title": "Choices.Finish Reason"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Usage",
+                    "value": "usage",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "prompt_tokens": {
+                                "type": "number",
+                                "title": "Usage.Prompt Tokens"
+                            },
+                            "completion_tokens": {
+                                "type": "number",
+                                "title": "Usage.Completion Tokens"
+                            },
+                            "total_tokens": {
+                                "type": "number",
+                                "title": "Usage.Total Tokens"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="
+}
