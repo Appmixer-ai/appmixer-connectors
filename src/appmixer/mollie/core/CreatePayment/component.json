@@ -1,0 +1,304 @@
+{
+    "name": "appmixer.mollie.core.CreatePayment",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Creates a new payment.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:mollie"
+    },
+    "quota": {
+        "manager": "appmixer:mollie",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "amount|currency": {
+                        "type": "string"
+                    },
+                    "amount|value": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "redirectUrl": {
+                        "type": "string"
+                    },
+                    "webhookUrl": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string"
+                    },
+                    "issuer": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "sequenceType": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "mandateId": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "object"
+                    },
+                    "testmode": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "amount|currency": {
+                        "type": "text",
+                        "tooltip": "ISO 4217 currency code, e.g. EUR, USD.",
+                        "label": "Amount|currency",
+                        "index": 0
+                    },
+                    "amount|value": {
+                        "type": "text",
+                        "tooltip": "Decimal amount as a string with 2 decimals, e.g. \"10.00\"",
+                        "label": "Amount|value",
+                        "index": 1
+                    },
+                    "description": {
+                        "type": "text",
+                        "tooltip": "Payment description, will be shown to the customer.",
+                        "label": "Description",
+                        "index": 2
+                    },
+                    "redirectUrl": {
+                        "type": "text",
+                        "tooltip": "URL the customer is redirected to after payment (required for most hosted checkout flows).",
+                        "label": "Redirect Url",
+                        "index": 3
+                    },
+                    "webhookUrl": {
+                        "type": "text",
+                        "tooltip": "Webhook URL Mollie calls for status updates.",
+                        "label": "Webhook Url",
+                        "index": 4
+                    },
+                    "method": {
+                        "type": "text",
+                        "tooltip": "Force a payment method (e.g., ideal, creditcard, paypal).",
+                        "label": "Method",
+                        "index": 5
+                    },
+                    "issuer": {
+                        "type": "text",
+                        "tooltip": "Specific issuer/bank (when applicable).",
+                        "label": "Issuer",
+                        "index": 6
+                    },
+                    "locale": {
+                        "type": "text",
+                        "tooltip": "Locale for the hosted payment pages, e.g. nl_NL, en_US.",
+                        "label": "Locale",
+                        "index": 7
+                    },
+                    "sequenceType": {
+                        "type": "text",
+                        "tooltip": "One-off or recurring indicator: oneoff, first, recurring.",
+                        "label": "Sequence Type",
+                        "index": 8
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "tooltip": "Customer ID if creating a payment for a customer.",
+                        "label": "Customer Id",
+                        "index": 9
+                    },
+                    "mandateId": {
+                        "type": "text",
+                        "tooltip": "Mandate ID when charging a customer with a mandate.",
+                        "label": "Mandate Id",
+                        "index": 10
+                    },
+                    "metadata": {
+                        "type": "text",
+                        "tooltip": "Arbitrary JSON you can store with the payment.",
+                        "label": "Metadata",
+                        "index": 11
+                    },
+                    "testmode": {
+                        "type": "toggle",
+                        "tooltip": "Set true to force testmode when using a live OAuth token (for development only).",
+                        "label": "Testmode",
+                        "index": 12
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Resource",
+                    "value": "resource",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Id",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Mode",
+                    "value": "mode",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "createdAt",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Amount",
+                    "value": "amount",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "title": "Amount.Currency"
+                            },
+                            "value": {
+                                "type": "string",
+                                "title": "Amount.Value"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Description",
+                    "value": "description",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Method",
+                    "value": "method",
+                    "schema": {
+                        "type": "null"
+                    }
+                },
+                {
+                    "label": "Metadata",
+                    "value": "metadata",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "order_id": {
+                                "type": "string",
+                                "title": "Metadata.Order Id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Cancelable",
+                    "value": "isCancelable",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Expires At",
+                    "value": "expiresAt",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Checkout Url",
+                    "value": "checkoutUrl",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Links",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "self": {
+                                "type": "object",
+                                "properties": {
+                                    "href": {
+                                        "type": "string",
+                                        "title": "Links.Self.Href"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "title": "Links.Self.Type"
+                                    }
+                                },
+                                "title": "Links.Self"
+                            },
+                            "checkout": {
+                                "type": "object",
+                                "properties": {
+                                    "href": {
+                                        "type": "string",
+                                        "title": "Links.Checkout.Href"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "title": "Links.Checkout.Type"
+                                    }
+                                },
+                                "title": "Links.Checkout"
+                            },
+                            "documentation": {
+                                "type": "object",
+                                "properties": {
+                                    "href": {
+                                        "type": "string",
+                                        "title": "Links.Documentation.Href"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "title": "Links.Documentation.Type"
+                                    }
+                                },
+                                "title": "Links.Documentation"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI2LjAuMywgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxvZ29fLV8yMDIyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiCgkgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTM1LjcgNDUzIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA5MzUuNyA0NTM7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4KCS5zdDB7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNzQxLjMsMjIwLjhjMTQuNywwLDI3LjksOS43LDMyLjUsMjMuNGgtNjQuOUM3MTMuNSwyMzAuNCw3MjYuNiwyMjAuOCw3NDEuMywyMjAuOEw3NDEuMywyMjAuOHogTTgwNi40LDI1NgoJYzAtMTcuMS02LjctMzMuMi0xOC43LTQ1LjRjLTEyLjEtMTIuMi0yOC4xLTE5LTQ1LjEtMTljLTAuMywwLTAuNiwwLTAuOCwwYy0xNy42LDAuMi0zNC4zLDcuMi00Ni44LDE5LjcKCWMtMTIuNSwxMi41LTE5LjUsMjkuMS0xOS43LDQ2LjhjLTAuMiwxOC4xLDYuNywzNS4xLDE5LjUsNDguMWMxMi44LDEzLDI5LjgsMjAuMSw0Ny44LDIwLjFoMC4xYzIzLjcsMCw0NS45LTEyLjcsNTgtMzNsMS41LTIuNgoJbC0yNi42LTEzLjFsLTEuMywyLjJjLTYuNywxMS0xOC4yLDE3LjUtMzEsMTcuNWMtMTYuNCwwLTMwLjUtMTAuOS0zNC45LTI2LjVoOThMODA2LjQsMjU2TDgwNi40LDI1Nkw4MDYuNCwyNTZ6IE02MzkuNywxNjguNgoJYy0xMS42LDAtMjEtOS40LTIxLTIxczkuNC0yMSwyMS0yMXMyMSw5LjQsMjEsMjFDNjYwLjgsMTU5LjIsNjUxLjMsMTY4LjYsNjM5LjcsMTY4LjYgTTYyMy42LDMyMy42aDMyLjJWMTk0LjNoLTMyLjJWMzIzLjZ6CgkgTTU2MiwxMjkuNGgzMi4ydjE5NC4zSDU2MlYxMjkuNHogTTUwMC40LDMyMy42aDMyLjJWMTI5LjRoLTMyLjJWMzIzLjZ6IE00MTUuNywyOTQuNGMtMTkuNSwwLTM1LjQtMTUuOS0zNS40LTM1LjQKCXMxNS45LTM1LjQsMzUuNC0zNS40czM1LjQsMTUuOSwzNS40LDM1LjRDNDUxLjEsMjc4LjUsNDM1LjIsMjk0LjQsNDE1LjcsMjk0LjRMNDE1LjcsMjk0LjR6IE00MTUuNywxOTEuNQoJYy0zNy4yLDAtNjcuNCwzMC4zLTY3LjQsNjcuNHMzMC4zLDY3LjQsNjcuNCw2Ny40czY3LjQtMzAuMyw2Ny40LTY3LjRTNDUyLjksMTkxLjUsNDE1LjcsMTkxLjVMNDE1LjcsMTkxLjVMNDE1LjcsMTkxLjV6CgkgTTI3OC4yLDE5MS43Yy0xLjgtMC4xLTMuNC0wLjItNS4yLTAuMmMtMTYuMiwwLTMxLjYsNi42LTQyLjcsMTguNGMtMTEuMS0xMS43LTI2LjQtMTguNC00Mi41LTE4LjRjLTMyLjIsMC01OC41LDI2LjItNTguNSw1OC40Cgl2NzMuN2gzMS41di03Mi44YzAtMTMuNCwxMS0yNS43LDIzLjktMjdjMC45LTAuMSwxLjgtMC4xLDIuNy0wLjFjMTQuNiwwLDI2LjUsMTEuOSwyNi41LDI2LjV2NzMuNWgzMi4ydi03Mi45CgljMC0xMy4zLDEwLjktMjUuNiwyMy45LTI2LjljMC45LTAuMSwxLjgtMC4xLDIuNy0wLjFjMTQuNiwwLDI2LjUsMTEuOCwyNi42LDI2LjN2NzMuN2gzMi4ydi03Mi44YzAtMTQuOC01LjUtMjktMTUuMy00MAoJQzMwNi40LDE5OS44LDI5Mi45LDE5MywyNzguMiwxOTEuNyIvPgo8L3N2Zz4K"
+}
