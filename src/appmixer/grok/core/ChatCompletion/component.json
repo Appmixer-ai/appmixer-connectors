@@ -1,9 +1,8 @@
 {
     "name": "appmixer.grok.core.ChatCompletion",
-    "author": "Appmixer <info@appmixer.com>",
     "description": "Generate text responses using Grok models with conversational context.",
+    "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:grok"
     },
@@ -18,12 +17,14 @@
                 "type": "object",
                 "properties": {
                     "model": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Model"
                     },
-                    "messages|role": {
-                        "type": "string"
+                    "messagesRole": {
+                        "type": "string",
+                        "title": "Messages Role"
                     },
-                    "messages|content": {
+                    "messagesContent": {
                         "oneOf": [
                             {
                                 "type": "string"
@@ -72,28 +73,36 @@
                                     ]
                                 }
                             }
-                        ]
+                        ],
+                        "title": "Messages Content"
                     },
-                    "messages|name": {
-                        "type": "string"
+                    "messagesName": {
+                        "type": "string",
+                        "title": "Messages Name"
                     },
-                    "messages|tool_call_id": {
-                        "type": "string"
+                    "messagesToolCallId": {
+                        "type": "string",
+                        "title": "Messages Tool Call ID"
                     },
                     "temperature": {
-                        "type": "number"
+                        "type": "number",
+                        "title": "Temperature"
                     },
-                    "top_p": {
-                        "type": "number"
+                    "topP": {
+                        "type": "number",
+                        "title": "Top P"
                     },
-                    "max_tokens": {
-                        "type": "integer"
+                    "maxTokens": {
+                        "type": "integer",
+                        "title": "Max Tokens"
                     },
-                    "presence_penalty": {
-                        "type": "number"
+                    "presencePenalty": {
+                        "type": "number",
+                        "title": "Presence Penalty"
                     },
-                    "frequency_penalty": {
-                        "type": "number"
+                    "frequencyPenalty": {
+                        "type": "number",
+                        "title": "Frequency Penalty"
                     },
                     "stop": {
                         "oneOf": [
@@ -106,19 +115,28 @@
                                     "type": "string"
                                 }
                             }
-                        ]
+                        ],
+                        "title": "Stop"
                     },
                     "n": {
-                        "type": "integer"
+                        "type": "integer",
+                        "title": "N"
                     },
                     "stream": {
                         "type": "boolean",
-                        "default": false
+                        "default": false,
+                        "title": "Stream"
                     },
                     "user": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "User"
                     }
-                }
+                },
+                "required": [
+                    "model",
+                    "messagesRole",
+                    "messagesContent"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -150,10 +168,10 @@
                         ],
                         "index": 0
                     },
-                    "messages|role": {
+                    "messagesRole": {
                         "type": "select",
                         "tooltip": "Message role.",
-                        "label": "Messages|role",
+                        "label": "Messages Role",
                         "options": [
                             {
                                 "label": "system",
@@ -172,24 +190,26 @@
                                 "value": "tool"
                             }
                         ],
-                        "index": 1
+                        "index": 1,
+                        "required": true
                     },
-                    "messages|content": {
-                        "type": "text",
+                    "messagesContent": {
+                        "type": "textarea",
                         "tooltip": "Message content as a string or structured parts for multimodal.",
-                        "label": "Messages|content",
-                        "index": 2
+                        "label": "Messages Content",
+                        "index": 2,
+                        "required": true
                     },
-                    "messages|name": {
+                    "messagesName": {
                         "type": "text",
                         "tooltip": "Tool name if role=tool.",
-                        "label": "Messages|name",
+                        "label": "Messages Name",
                         "index": 3
                     },
-                    "messages|tool_call_id": {
+                    "messagesToolCallId": {
                         "type": "text",
                         "tooltip": "Tool call ID if applicable.",
-                        "label": "Messages|tool Call Id",
+                        "label": "Messages Tool Call ID",
                         "index": 4
                     },
                     "temperature": {
@@ -198,25 +218,25 @@
                         "label": "Temperature",
                         "index": 5
                     },
-                    "top_p": {
+                    "topP": {
                         "type": "number",
                         "tooltip": "Nucleus sampling probability mass.",
                         "label": "Top P",
                         "index": 6
                     },
-                    "max_tokens": {
+                    "maxTokens": {
                         "type": "number",
                         "tooltip": "Maximum tokens to generate in the completion.",
                         "label": "Max Tokens",
                         "index": 7
                     },
-                    "presence_penalty": {
+                    "presencePenalty": {
                         "type": "number",
                         "tooltip": "Penalty for introducing new tokens.",
                         "label": "Presence Penalty",
                         "index": 8
                     },
-                    "frequency_penalty": {
+                    "frequencyPenalty": {
                         "type": "number",
                         "tooltip": "Penalty for repeating tokens.",
                         "label": "Frequency Penalty",
@@ -247,6 +267,12 @@
                         "index": 13
                     }
                 }
+            }
+        },
+        {
+            "name": "stream",
+            "schema": {
+                "type": "object"
             }
         }
     ],
@@ -292,25 +318,25 @@
                             "properties": {
                                 "index": {
                                     "type": "number",
-                                    "title": "Choices.Index"
+                                    "title": "Index"
                                 },
                                 "message": {
                                     "type": "object",
                                     "properties": {
                                         "role": {
                                             "type": "string",
-                                            "title": "Choices.Message.Role"
+                                            "title": "Role"
                                         },
                                         "content": {
                                             "type": "string",
-                                            "title": "Choices.Message.Content"
+                                            "title": "Content"
                                         }
                                     },
-                                    "title": "Choices.Message"
+                                    "title": "Message"
                                 },
                                 "finish_reason": {
                                     "type": "string",
-                                    "title": "Choices.Finish Reason"
+                                    "title": "Finish Reason"
                                 }
                             }
                         }
@@ -324,15 +350,15 @@
                         "properties": {
                             "prompt_tokens": {
                                 "type": "number",
-                                "title": "Usage.Prompt Tokens"
+                                "title": "Prompt Tokens"
                             },
                             "completion_tokens": {
                                 "type": "number",
-                                "title": "Usage.Completion Tokens"
+                                "title": "Completion Tokens"
                             },
                             "total_tokens": {
                                 "type": "number",
-                                "title": "Usage.Total Tokens"
+                                "title": "Total Tokens"
                             }
                         }
                     }

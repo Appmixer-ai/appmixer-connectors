@@ -1,7 +1,7 @@
 {
     "name": "appmixer.grok.core.StructuredOutput",
-    "author": "Appmixer <info@appmixer.com>",
     "description": "Generate responses constrained to a JSON schema using response_format.",
+    "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -20,76 +20,39 @@
                     "model": {
                         "type": "string"
                     },
-                    "messages|role": {
+                    "role": {
                         "type": "string"
                     },
-                    "messages|content": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "type": {
-                                            "type": "string",
-                                            "enum": [
-                                                "text",
-                                                "image_url"
-                                            ]
-                                        },
-                                        "text": {
-                                            "type": "string"
-                                        },
-                                        "image_url": {
-                                            "type": "object",
-                                            "properties": {
-                                                "url": {
-                                                    "type": "string"
-                                                },
-                                                "detail": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "low",
-                                                        "high",
-                                                        "auto"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "url"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "type"
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "response_format|type": {
+                    "content": {
                         "type": "string"
                     },
-                    "response_format|json_schema": {
+                    "responseFormatType": {
+                        "type": "string"
+                    },
+                    "jsonSchema": {
                         "type": "object"
                     },
-                    "response_format|strict": {
+                    "strict": {
                         "type": "boolean"
                     },
-                    "max_tokens": {
+                    "maxTokens": {
                         "type": "integer"
                     }
-                }
+                },
+                "required": [
+                    "model",
+                    "role",
+                    "content",
+                    "responseFormatType",
+                    "jsonSchema"
+                ]
             },
             "inspector": {
                 "inputs": {
                     "model": {
                         "type": "select",
-                        "tooltip": "",
                         "label": "Model",
+                        "index": 0,
                         "options": [
                             {
                                 "label": "grok-3-latest",
@@ -111,13 +74,12 @@
                                 "label": "grok-2-latest",
                                 "value": "grok-2-latest"
                             }
-                        ],
-                        "index": 0
+                        ]
                     },
-                    "messages|role": {
+                    "role": {
                         "type": "select",
-                        "tooltip": "",
-                        "label": "Messages|role",
+                        "label": "Role",
+                        "index": 1,
                         "options": [
                             {
                                 "label": "system",
@@ -135,42 +97,39 @@
                                 "label": "tool",
                                 "value": "tool"
                             }
-                        ],
-                        "index": 1
+                        ]
                     },
-                    "messages|content": {
-                        "type": "text",
-                        "tooltip": "",
-                        "label": "Messages|content",
+                    "content": {
+                        "type": "textarea",
+                        "label": "Content",
                         "index": 2
                     },
-                    "response_format|type": {
+                    "responseFormatType": {
                         "type": "select",
+                        "label": "Response Format Type",
+                        "index": 3,
                         "tooltip": "Set to json_schema to enable schema-constrained outputs.",
-                        "label": "Response Format|type",
                         "options": [
                             {
                                 "label": "json_schema",
                                 "value": "json_schema"
                             }
-                        ],
-                        "index": 3
+                        ]
                     },
-                    "response_format|json_schema": {
-                        "type": "text",
-                        "tooltip": "JSON Schema the model must follow.",
-                        "label": "Response Format|json Schema",
-                        "index": 4
+                    "jsonSchema": {
+                        "type": "textarea",
+                        "label": "JSON Schema",
+                        "index": 4,
+                        "tooltip": "JSON Schema the model must follow."
                     },
-                    "response_format|strict": {
+                    "strict": {
                         "type": "toggle",
-                        "tooltip": "If true, enforces strict schema adherence.",
-                        "label": "Response Format|strict",
-                        "index": 5
+                        "label": "Strict",
+                        "index": 5,
+                        "tooltip": "If true, enforces strict schema adherence."
                     },
-                    "max_tokens": {
+                    "maxTokens": {
                         "type": "number",
-                        "tooltip": "",
                         "label": "Max Tokens",
                         "index": 6
                     }
@@ -219,26 +178,21 @@
                             "type": "object",
                             "properties": {
                                 "index": {
-                                    "type": "number",
-                                    "title": "Choices.Index"
+                                    "type": "number"
                                 },
                                 "message": {
                                     "type": "object",
                                     "properties": {
                                         "role": {
-                                            "type": "string",
-                                            "title": "Choices.Message.Role"
+                                            "type": "string"
                                         },
                                         "content": {
-                                            "type": "string",
-                                            "title": "Choices.Message.Content"
+                                            "type": "string"
                                         }
-                                    },
-                                    "title": "Choices.Message"
+                                    }
                                 },
-                                "finish_reason": {
-                                    "type": "string",
-                                    "title": "Choices.Finish Reason"
+                                "finishReason": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -250,17 +204,14 @@
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "prompt_tokens": {
-                                "type": "number",
-                                "title": "Usage.Prompt Tokens"
+                            "promptTokens": {
+                                "type": "number"
                             },
-                            "completion_tokens": {
-                                "type": "number",
-                                "title": "Usage.Completion Tokens"
+                            "completionTokens": {
+                                "type": "number"
                             },
-                            "total_tokens": {
-                                "type": "number",
-                                "title": "Usage.Total Tokens"
+                            "totalTokens": {
+                                "type": "number"
                             }
                         }
                     }

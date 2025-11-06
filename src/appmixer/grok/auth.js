@@ -23,12 +23,12 @@ module.exports = {
             // Replace with a real Grok endpoint if available
             const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.grok.com/v1/me',
+                url: 'https://api.x.ai/v1/api-key',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`
                 }
             });
-            if (!response.data || !response.data.id) {
+            if (!response.data) {
                 throw new Error('Authentication failed: Invalid API Key or unexpected response.');
             }
             return true;

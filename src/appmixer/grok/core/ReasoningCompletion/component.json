@@ -1,7 +1,7 @@
 {
     "name": "appmixer.grok.core.ReasoningCompletion",
-    "author": "Appmixer <info@appmixer.com>",
     "description": "Generate responses with step-by-step reasoning using Grok mini reasoning models.",
+    "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -18,82 +18,109 @@
                 "type": "object",
                 "properties": {
                     "model": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Model"
                     },
-                    "messages|role": {
-                        "type": "string"
-                    },
-                    "messages|content": {
-                        "oneOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "type": {
-                                            "type": "string",
-                                            "enum": [
-                                                "text",
-                                                "image_url"
-                                            ]
-                                        },
-                                        "text": {
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role": {
+                                    "type": "string",
+                                    "title": "Role"
+                                },
+                                "content": {
+                                    "oneOf": [
+                                        {
                                             "type": "string"
                                         },
-                                        "image_url": {
-                                            "type": "object",
-                                            "properties": {
-                                                "url": {
-                                                    "type": "string"
+                                        {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "type": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "text",
+                                                            "image_url"
+                                                        ]
+                                                    },
+                                                    "text": {
+                                                        "type": "string"
+                                                    },
+                                                    "image_url": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "type": "string",
+                                                                "enum": [
+                                                                    "low",
+                                                                    "high",
+                                                                    "auto"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url"
+                                                        ]
+                                                    }
                                                 },
-                                                "detail": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "low",
-                                                        "high",
-                                                        "auto"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "url"
-                                            ]
+                                                "required": [
+                                                    "type"
+                                                ]
+                                            }
                                         }
-                                    },
-                                    "required": [
-                                        "type"
-                                    ]
+                                    ],
+                                    "title": "Content"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name"
+                                },
+                                "tool_call_id": {
+                                    "type": "string",
+                                    "title": "Tool Call Id"
                                 }
-                            }
-                        ]
-                    },
-                    "messages|name": {
-                        "type": "string"
-                    },
-                    "messages|tool_call_id": {
-                        "type": "string"
+                            },
+                            "required": [
+                                "role",
+                                "content"
+                            ]
+                        },
+                        "title": "Messages"
                     },
                     "reasoning_effort": {
                         "type": "string",
-                        "default": "medium"
+                        "default": "medium",
+                        "title": "Reasoning Effort"
                     },
                     "temperature": {
-                        "type": "number"
+                        "type": "number",
+                        "title": "Temperature"
                     },
                     "top_p": {
-                        "type": "number"
+                        "type": "number",
+                        "title": "Top P"
                     },
                     "max_tokens": {
-                        "type": "integer"
+                        "type": "integer",
+                        "title": "Max Tokens"
                     },
                     "stream": {
                         "type": "boolean",
-                        "default": false
+                        "default": false,
+                        "title": "Stream"
                     }
-                }
+                },
+                "required": [
+                    "model",
+                    "messages"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -113,47 +140,11 @@
                         ],
                         "index": 0
                     },
-                    "messages|role": {
-                        "type": "select",
-                        "tooltip": "",
-                        "label": "Messages|role",
-                        "options": [
-                            {
-                                "label": "system",
-                                "value": "system"
-                            },
-                            {
-                                "label": "user",
-                                "value": "user"
-                            },
-                            {
-                                "label": "assistant",
-                                "value": "assistant"
-                            },
-                            {
-                                "label": "tool",
-                                "value": "tool"
-                            }
-                        ],
+                    "messages": {
+                        "type": "text",
+                        "tooltip": "Array of message objects with role and content.",
+                        "label": "Messages",
                         "index": 1
-                    },
-                    "messages|content": {
-                        "type": "text",
-                        "tooltip": "",
-                        "label": "Messages|content",
-                        "index": 2
-                    },
-                    "messages|name": {
-                        "type": "text",
-                        "tooltip": "",
-                        "label": "Messages|name",
-                        "index": 3
-                    },
-                    "messages|tool_call_id": {
-                        "type": "text",
-                        "tooltip": "",
-                        "label": "Messages|tool Call Id",
-                        "index": 4
                     },
                     "reasoning_effort": {
                         "type": "select",
@@ -173,31 +164,31 @@
                                 "value": "high"
                             }
                         ],
-                        "index": 5
+                        "index": 2
                     },
                     "temperature": {
                         "type": "number",
-                        "tooltip": "",
+                        "tooltip": "What sampling temperature to use, between 0 and 2.",
                         "label": "Temperature",
-                        "index": 6
+                        "index": 3
                     },
                     "top_p": {
                         "type": "number",
-                        "tooltip": "",
+                        "tooltip": "An alternative to sampling with temperature.",
                         "label": "Top P",
-                        "index": 7
+                        "index": 4
                     },
                     "max_tokens": {
                         "type": "number",
-                        "tooltip": "",
+                        "tooltip": "The maximum number of tokens to generate.",
                         "label": "Max Tokens",
-                        "index": 8
+                        "index": 5
                     },
                     "stream": {
                         "type": "toggle",
-                        "tooltip": "",
+                        "tooltip": "Whether to stream the results.",
                         "label": "Stream",
-                        "index": 9
+                        "index": 6
                     }
                 }
             }
@@ -252,35 +243,35 @@
                                     "properties": {
                                         "role": {
                                             "type": "string",
-                                            "title": "Choices.Message.Role"
+                                            "title": "Message.Role"
                                         },
                                         "content": {
                                             "type": "string",
-                                            "title": "Choices.Message.Content"
+                                            "title": "Message.Content"
                                         }
                                     },
-                                    "title": "Choices.Message"
+                                    "title": "Message"
                                 },
                                 "finish_reason": {
                                     "type": "string",
-                                    "title": "Choices.Finish Reason"
+                                    "title": "Finish Reason"
                                 },
                                 "reasoning": {
                                     "type": "object",
                                     "properties": {
                                         "summary": {
                                             "type": "string",
-                                            "title": "Choices.Reasoning.Summary"
+                                            "title": "Reasoning.Summary"
                                         },
                                         "steps": {
                                             "type": "array",
                                             "items": {
                                                 "type": "string"
                                             },
-                                            "title": "Choices.Reasoning.Steps"
+                                            "title": "Reasoning.Steps"
                                         }
                                     },
-                                    "title": "Choices.Reasoning"
+                                    "title": "Reasoning"
                                 }
                             }
                         }
@@ -294,15 +285,15 @@
                         "properties": {
                             "prompt_tokens": {
                                 "type": "number",
-                                "title": "Usage.Prompt Tokens"
+                                "title": "Prompt Tokens"
                             },
                             "completion_tokens": {
                                 "type": "number",
-                                "title": "Usage.Completion Tokens"
+                                "title": "Completion Tokens"
                             },
                             "total_tokens": {
                                 "type": "number",
-                                "title": "Usage.Total Tokens"
+                                "title": "Total Tokens"
                             }
                         }
                     }

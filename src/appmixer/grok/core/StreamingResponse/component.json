@@ -1,7 +1,8 @@
 {
     "name": "appmixer.grok.core.StreamingResponse",
-    "author": "Appmixer <info@appmixer.com>",
+    "label": "Streaming Response",
     "description": "Get real-time token streaming for chat completions using SSE.",
+    "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -18,12 +19,14 @@
                 "type": "object",
                 "properties": {
                     "model": {
-                        "type": "string"
+                        "type": "string",
+                        "title": "Model"
                     },
-                    "messages|role": {
-                        "type": "string"
+                    "role": {
+                        "type": "string",
+                        "title": "Role"
                     },
-                    "messages|content": {
+                    "content": {
                         "oneOf": [
                             {
                                 "type": "string"
@@ -68,26 +71,36 @@
                                     ]
                                 }
                             }
-                        ]
+                        ],
+                        "title": "Content"
                     },
                     "stream": {
                         "type": "boolean",
-                        "default": true
+                        "default": true,
+                        "title": "Stream"
                     },
                     "temperature": {
-                        "type": "number"
+                        "type": "number",
+                        "title": "Temperature"
                     },
                     "max_tokens": {
-                        "type": "integer"
+                        "type": "integer",
+                        "title": "Max Tokens"
                     }
-                }
+                },
+                "required": [
+                    "model",
+                    "role",
+                    "content"
+                ]
             },
             "inspector": {
                 "inputs": {
                     "model": {
                         "type": "select",
-                        "tooltip": "",
                         "label": "Model",
+                        "tooltip": "Select the AI model to use",
+                        "index": 0,
                         "options": [
                             {
                                 "label": "grok-3-latest",
@@ -109,13 +122,13 @@
                                 "label": "grok-2-latest",
                                 "value": "grok-2-latest"
                             }
-                        ],
-                        "index": 0
+                        ]
                     },
-                    "messages|role": {
+                    "role": {
                         "type": "select",
-                        "tooltip": "",
-                        "label": "Messages|role",
+                        "label": "Role",
+                        "tooltip": "Specify the role for the message",
+                        "index": 1,
                         "options": [
                             {
                                 "label": "system",
@@ -133,31 +146,30 @@
                                 "label": "tool",
                                 "value": "tool"
                             }
-                        ],
-                        "index": 1
+                        ]
                     },
-                    "messages|content": {
-                        "type": "text",
-                        "tooltip": "",
-                        "label": "Messages|content",
+                    "content": {
+                        "type": "textarea",
+                        "label": "Content",
+                        "tooltip": "The message content to send",
                         "index": 2
                     },
                     "stream": {
                         "type": "toggle",
-                        "tooltip": "Enable SSE streaming.",
                         "label": "Stream",
+                        "tooltip": "Enable SSE streaming for real-time token responses",
                         "index": 3
                     },
                     "temperature": {
                         "type": "number",
-                        "tooltip": "",
                         "label": "Temperature",
+                        "tooltip": "Control randomness of responses (0.0 to 2.0)",
                         "index": 4
                     },
                     "max_tokens": {
                         "type": "number",
-                        "tooltip": "",
                         "label": "Max Tokens",
+                        "tooltip": "Maximum number of tokens to generate",
                         "index": 5
                     }
                 }
@@ -167,15 +179,9 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Sse Example",
-                    "value": "sse_example",
-                    "schema": {
-                        "type": "string"
-                    }
-                }
-            ]
+            "schema": {
+                "type": "string"
+            }
         }
     ],
     "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="

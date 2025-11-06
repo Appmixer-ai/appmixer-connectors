@@ -1,23 +1,73 @@
-
 'use strict';
 
-const lib = require('../../lib');
 module.exports = {
-    async receive(context) {        
+    async receive(context) {
 
-        const { model, messages|role, messages|content, response_format|type, response_format|json_schema, response_format|strict, max_tokens } = context.messages.in.content;
+        const { model, role, content, responseFormatType, jsonSchema, strict, maxTokens } = context.messages.in.content;
 
+        // Validate required inputs
+        if (!model) {
+            throw new context.CancelError('Model is required!');
+        }
+        if (!role) {
+            throw new context.CancelError('Role is required!');
+        }
+        if (!content) {
+            throw new context.CancelError('Content is required!');
+        }
+        if (!responseFormatType) {
+            throw new context.CancelError('Response Format Type is required!');
+        }
+        if (!jsonSchema) {
+            throw new context.CancelError('JSON Schema is required!');
+        }
+
+        // Parse JSON schema if it's a string
+        let parsedSchema = jsonSchema;
+        if (typeof jsonSchema === 'string') {
+            try {
+                parsedSchema = JSON.parse(jsonSchema);
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON Schema format!');
+            }
+        }
+
+        // Build request body
+        const requestBody = {
+            model: model,
+            messages: [
+                {
+                    role: role,
+                    content: content
+                }
+            ],
+            response_format: {
+                type: responseFormatType,
+                json_schema: {
+                    schema: parsedSchema
+                }
+            }
+        };
+
+        // Add optional parameters
+        if (strict !== undefined && strict !== null) {
+            requestBody.response_format.strict = strict;
+        }
+        if (maxTokens !== undefined && maxTokens !== null) {
+            requestBody.max_tokens = maxTokens;
+        }
 
         // https://docs.x.ai/docs/structured-outputs
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.x.ai/v1/https://api.x.ai/v1/chat/completions',
+            url: 'https://api.x.ai/v1/chat/completions',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
-            }
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            data: requestBody
         });
-    
 
-return context.sendJson(data, 'out');
+        return context.sendJson(data, 'out');
     }
 };
