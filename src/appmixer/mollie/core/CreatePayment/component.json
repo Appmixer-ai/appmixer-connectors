@@ -17,10 +17,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "amount|currency": {
+                    "currency": {
                         "type": "string"
                     },
-                    "amount|value": {
+                    "amount": {
                         "type": "string"
                     },
                     "description": {
@@ -33,110 +33,106 @@
                         "type": "string"
                     },
                     "method": {
-                        "type": "string"
-                    },
-                    "issuer": {
-                        "type": "string"
-                    },
-                    "locale": {
-                        "type": "string"
-                    },
-                    "sequenceType": {
-                        "type": "string"
-                    },
-                    "customerId": {
-                        "type": "string"
-                    },
-                    "mandateId": {
                         "type": "string"
                     },
                     "metadata": {
                         "type": "object"
                     },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "sequenceType": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "mandateId": {
+                        "type": "string"
+                    },
                     "testmode": {
                         "type": "boolean"
                     }
-                }
+                },
+                "required": [
+                    "amount",
+                    "currency",
+                    "description"
+                ]
             },
             "inspector": {
                 "inputs": {
-                    "amount|currency": {
+                    "amount": {
                         "type": "text",
-                        "tooltip": "ISO 4217 currency code, e.g. EUR, USD.",
-                        "label": "Amount|currency",
+                        "tooltip": "Decimal amount as a string, e.g. \"10.00\".",
+                        "label": "Amount",
                         "index": 0
                     },
-                    "amount|value": {
+                    "currency": {
                         "type": "text",
-                        "tooltip": "Decimal amount as a string with 2 decimals, e.g. \"10.00\"",
-                        "label": "Amount|value",
+                        "tooltip": "Three-letter ISO currency code, e.g. EUR.",
+                        "label": "Currency",
                         "index": 1
                     },
                     "description": {
                         "type": "text",
-                        "tooltip": "Payment description, will be shown to the customer.",
+                        "tooltip": "A description shown to the customer.",
                         "label": "Description",
                         "index": 2
                     },
                     "redirectUrl": {
                         "type": "text",
-                        "tooltip": "URL the customer is redirected to after payment (required for most hosted checkout flows).",
-                        "label": "Redirect Url",
+                        "tooltip": "Redirect URL after the payment completes.",
+                        "label": "Redirect URL",
                         "index": 3
                     },
                     "webhookUrl": {
                         "type": "text",
-                        "tooltip": "Webhook URL Mollie calls for status updates.",
-                        "label": "Webhook Url",
+                        "tooltip": "Webhook URL to receive payment status updates.",
+                        "label": "Webhook URL",
                         "index": 4
                     },
                     "method": {
                         "type": "text",
-                        "tooltip": "Force a payment method (e.g., ideal, creditcard, paypal).",
+                        "tooltip": "Preferred payment method, e.g. ideal, creditcard. Leave empty to allow customer choice.",
                         "label": "Method",
                         "index": 5
                     },
-                    "issuer": {
+                    "metadata": {
                         "type": "text",
-                        "tooltip": "Specific issuer/bank (when applicable).",
-                        "label": "Issuer",
+                        "tooltip": "Custom metadata (JSON object).",
+                        "label": "Metadata",
                         "index": 6
                     },
                     "locale": {
                         "type": "text",
-                        "tooltip": "Locale for the hosted payment pages, e.g. nl_NL, en_US.",
+                        "tooltip": "Locale, e.g. nl_NL, en_US.",
                         "label": "Locale",
                         "index": 7
                     },
                     "sequenceType": {
                         "type": "text",
-                        "tooltip": "One-off or recurring indicator: oneoff, first, recurring.",
+                        "tooltip": "Sequence type: oneoff, first, recurring.",
                         "label": "Sequence Type",
                         "index": 8
                     },
                     "customerId": {
                         "type": "text",
-                        "tooltip": "Customer ID if creating a payment for a customer.",
-                        "label": "Customer Id",
+                        "tooltip": "Customer ID for customer-specific payments (cst_...).",
+                        "label": "Customer ID",
                         "index": 9
                     },
                     "mandateId": {
                         "type": "text",
-                        "tooltip": "Mandate ID when charging a customer with a mandate.",
-                        "label": "Mandate Id",
+                        "tooltip": "Mandate ID for recurring payments (mdt_...).",
+                        "label": "Mandate ID",
                         "index": 10
-                    },
-                    "metadata": {
-                        "type": "text",
-                        "tooltip": "Arbitrary JSON you can store with the payment.",
-                        "label": "Metadata",
-                        "index": 11
                     },
                     "testmode": {
                         "type": "toggle",
-                        "tooltip": "Set true to force testmode when using a live OAuth token (for development only).",
-                        "label": "Testmode",
-                        "index": 12
+                        "tooltip": "Set to true to target test data.",
+                        "label": "Test Mode",
+                        "index": 11
                     }
                 }
             }
@@ -154,7 +150,7 @@
                     }
                 },
                 {
-                    "label": "Id",
+                    "label": "ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -180,13 +176,13 @@
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "currency": {
-                                "type": "string",
-                                "title": "Amount.Currency"
-                            },
                             "value": {
                                 "type": "string",
-                                "title": "Amount.Value"
+                                "title": "Value"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Currency"
                             }
                         }
                     }
@@ -202,20 +198,17 @@
                     "label": "Method",
                     "value": "method",
                     "schema": {
-                        "type": "null"
+                        "type": [
+                            "null",
+                            "string"
+                        ]
                     }
                 },
                 {
                     "label": "Metadata",
                     "value": "metadata",
                     "schema": {
-                        "type": "object",
-                        "properties": {
-                            "order_id": {
-                                "type": "string",
-                                "title": "Metadata.Order Id"
-                            }
-                        }
+                        "type": "object"
                     }
                 },
                 {
@@ -240,61 +233,10 @@
                     }
                 },
                 {
-                    "label": "Checkout Url",
-                    "value": "checkoutUrl",
-                    "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Links",
+                    "label": "Checkout URL",
                     "value": "_links",
                     "schema": {
-                        "type": "object",
-                        "properties": {
-                            "self": {
-                                "type": "object",
-                                "properties": {
-                                    "href": {
-                                        "type": "string",
-                                        "title": "Links.Self.Href"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "title": "Links.Self.Type"
-                                    }
-                                },
-                                "title": "Links.Self"
-                            },
-                            "checkout": {
-                                "type": "object",
-                                "properties": {
-                                    "href": {
-                                        "type": "string",
-                                        "title": "Links.Checkout.Href"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "title": "Links.Checkout.Type"
-                                    }
-                                },
-                                "title": "Links.Checkout"
-                            },
-                            "documentation": {
-                                "type": "object",
-                                "properties": {
-                                    "href": {
-                                        "type": "string",
-                                        "title": "Links.Documentation.Href"
-                                    },
-                                    "type": {
-                                        "type": "string",
-                                        "title": "Links.Documentation.Type"
-                                    }
-                                },
-                                "title": "Links.Documentation"
-                            }
-                        }
+                        "type": "object"
                     }
                 }
             ]

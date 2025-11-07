@@ -7,7 +7,7 @@ module.exports = {
             apiKey: {
                 type: 'text',
                 name: 'API Key',
-                tooltip: 'Log into your Mollie dashboard and find your API key in the Developers > API keys section.'
+                tooltip: 'Log into your Mollie dashboard and create an API key in the Developers > API keys section.'
             }
         },
 
@@ -20,10 +20,10 @@ module.exports = {
         accountNameFromProfileInfo: 'key',
 
         validate: async (context) => {
-            // Mollie API: https://docs.mollie.com/reference/v2/organizations-api/get-organization
+            // Mollie: https://docs.mollie.com/reference/v2/organizations-api/get-organization
             const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.mollie.com/v2/organizations/me',
+                url: 'https://api.mollie.com/v2/profiles/me',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`,
                     'Accept': 'application/json'

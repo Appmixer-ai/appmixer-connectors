@@ -1,6 +1,269 @@
 {
     "actions": [
         {
+            "title": "Cancel Subscription",
+            "description": "Cancel an existing subscription for a customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/cancel-subscription",
+            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "DELETE",
+            "sampleResponse": {
+                "resource": "subscription",
+                "id": "sub_12345678",
+                "mode": "test",
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "status": "canceled",
+                "amount": {
+                    "value": "10.00",
+                    "currency": "EUR"
+                },
+                "interval": "1 month",
+                "description": "Monthly subscription",
+                "customerId": "cst_ABC123"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The ID of the customer owning the subscription (cst_...)."
+                    },
+                    "subscriptionId": {
+                        "type": "string",
+                        "description": "The ID of the subscription to cancel (sub_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true when using a test API key and you need to target test data."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "subscriptionId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Customer",
+            "description": "Creates a simple minimal representation of a customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/create-customer",
+            "endpointUrl": "/v2/customers",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "customer",
+                "id": "cst_ABC123",
+                "mode": "test",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "locale": "en_US",
+                "metadata": {
+                    "crmId": "12345"
+                },
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers/cst_ABC123",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "The full name of the customer."
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "The email address of the customer."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "The customer’s locale, e.g. en_US, nl_NL."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Custom metadata to store with the customer (JSON object)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true when using a test API key and you need to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Mandate",
+            "description": "Create a mandate for a specific customer (IBAN or PayPal). Mandates allow you to charge a customer recurrently.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/create-mandate",
+            "endpointUrl": "/v2/customers/{customerId}/mandates",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "mandate",
+                "id": "mdt_7UmCakxeTz",
+                "status": "valid",
+                "method": "directdebit",
+                "consumerName": "J. Doe",
+                "consumerAccount": "NL55INGB0000000000",
+                "signatureDate": "2020-01-01",
+                "mandateReference": "YOUR-REF-12345",
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The ID of the customer (cst_...)."
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Payment method for the mandate. Allowed: directdebit or paypal."
+                    },
+                    "consumerName": {
+                        "type": "string",
+                        "description": "Consumer’s name (for directdebit)."
+                    },
+                    "consumerAccount": {
+                        "type": "string",
+                        "description": "IBAN of the consumer (for directdebit)."
+                    },
+                    "consumerBic": {
+                        "type": "string",
+                        "description": "BIC of the consumer’s bank (optional for directdebit)."
+                    },
+                    "signatureDate": {
+                        "type": "string",
+                        "description": "Date of signing the mandate (YYYY-MM-DD)."
+                    },
+                    "mandateReference": {
+                        "type": "string",
+                        "description": "Your reference for the mandate."
+                    },
+                    "paypalBillingAgreementId": {
+                        "type": "string",
+                        "description": "PayPal Billing Agreement ID (for PayPal mandates)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "method"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Subscription",
+            "description": "Create a subscription to schedule recurring payments for a customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/create-subscription",
+            "endpointUrl": "/v2/customers/{customerId}/subscriptions",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "subscription",
+                "id": "sub_abc123",
+                "mode": "test",
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "status": "active",
+                "amount": {
+                    "value": "25.00",
+                    "currency": "EUR"
+                },
+                "interval": "1 month",
+                "description": "Pro plan",
+                "startDate": "2020-02-01",
+                "times": null,
+                "customerId": "cst_ABC123"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The ID of the customer (cst_...)."
+                    },
+                    "amount": {
+                        "type": "object",
+                        "description": "Amount to charge for each interval.",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "Three-letter ISO currency code, e.g. EUR."
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Decimal amount as a string, e.g. \"10.00\"."
+                            }
+                        },
+                        "required": [
+                            "currency",
+                            "value"
+                        ]
+                    },
+                    "interval": {
+                        "type": "string",
+                        "description": "Interval for charges, e.g. \"1 month\", \"2 weeks\"."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description of the subscription."
+                    },
+                    "startDate": {
+                        "type": "string",
+                        "description": "Start date of the subscription (YYYY-MM-DD)."
+                    },
+                    "times": {
+                        "type": "integer",
+                        "description": "Number of charges, or null for infinite."
+                    },
+                    "mandateId": {
+                        "type": "string",
+                        "description": "Specific mandate ID to use (mdt_...)."
+                    },
+                    "webhookUrl": {
+                        "type": "string",
+                        "description": "Webhook URL for subscription payment events."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Custom metadata (JSON object)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "amount",
+                    "interval",
+                    "description"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
             "title": "Create Payment",
             "description": "Creates a new payment.",
             "type": "action",
@@ -10,40 +273,30 @@
             "method": "POST",
             "sampleResponse": {
                 "resource": "payment",
-                "id": "tr_7UhSN1zuXS",
+                "id": "tr_WDqYK6vllg",
                 "mode": "test",
-                "createdAt": "2025-01-15T10:05:12+00:00",
+                "createdAt": "2020-01-01T12:00:00+00:00",
                 "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
+                    "value": "10.00",
+                    "currency": "EUR"
                 },
                 "description": "Order #12345",
                 "method": null,
                 "metadata": {
-                    "order_id": "12345"
+                    "orderId": "12345"
                 },
                 "status": "open",
                 "isCancelable": false,
-                "expiresAt": "2025-01-15T10:20:12+00:00",
-                "checkoutUrl": "https://www.mollie.com/payscreen/select-method/7UhSN1zuXS",
+                "expiresAt": "2020-01-01T12:30:00+00:00",
                 "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS",
-                        "type": "application/hal+json"
-                    },
                     "checkout": {
-                        "href": "https://www.mollie.com/payscreen/select-method/7UhSN1zuXS",
-                        "type": "text/html"
-                    },
-                    "documentation": {
-                        "href": "https://docs.mollie.com/reference/v2/payments-api/create-payment",
+                        "href": "https://www.mollie.com/payscreen/select-method/tr_WDqYK6vllg",
                         "type": "text/html"
                     }
                 }
             },
             "inputSchema": {
                 "type": "object",
-                "description": "Body parameters to create a payment.",
                 "properties": {
                     "amount": {
                         "type": "object",
@@ -51,11 +304,11 @@
                         "properties": {
                             "currency": {
                                 "type": "string",
-                                "description": "ISO 4217 currency code, e.g. EUR, USD."
+                                "description": "Three-letter ISO currency code, e.g. EUR."
                             },
                             "value": {
                                 "type": "string",
-                                "description": "Decimal amount as a string with 2 decimals, e.g. \"10.00\""
+                                "description": "Decimal amount as a string, e.g. \"10.00\"."
                             }
                         },
                         "required": [
@@ -65,53 +318,48 @@
                     },
                     "description": {
                         "type": "string",
-                        "description": "Payment description, will be shown to the customer."
+                        "description": "A description shown to the customer."
                     },
                     "redirectUrl": {
                         "type": "string",
-                        "description": "URL the customer is redirected to after payment (required for most hosted checkout flows)."
+                        "description": "Redirect URL after the payment completes."
                     },
                     "webhookUrl": {
                         "type": "string",
-                        "description": "Webhook URL Mollie calls for status updates."
+                        "description": "Webhook URL to receive payment status updates."
                     },
                     "method": {
                         "type": "string",
-                        "description": "Force a payment method (e.g., ideal, creditcard, paypal)."
-                    },
-                    "issuer": {
-                        "type": "string",
-                        "description": "Specific issuer/bank (when applicable)."
-                    },
-                    "locale": {
-                        "type": "string",
-                        "description": "Locale for the hosted payment pages, e.g. nl_NL, en_US."
-                    },
-                    "sequenceType": {
-                        "type": "string",
-                        "description": "One-off or recurring indicator: oneoff, first, recurring."
-                    },
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID if creating a payment for a customer."
-                    },
-                    "mandateId": {
-                        "type": "string",
-                        "description": "Mandate ID when charging a customer with a mandate."
+                        "description": "Preferred payment method, e.g. ideal, creditcard. Leave empty to allow customer choice."
                     },
                     "metadata": {
                         "type": "object",
-                        "description": "Arbitrary JSON you can store with the payment."
+                        "description": "Custom metadata (JSON object)."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "Locale, e.g. nl_NL, en_US."
+                    },
+                    "sequenceType": {
+                        "type": "string",
+                        "description": "Sequence type: oneoff, first, recurring."
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "description": "Customer ID for customer-specific payments (cst_...)."
+                    },
+                    "mandateId": {
+                        "type": "string",
+                        "description": "Mandate ID for recurring payments (mdt_...)."
                     },
                     "testmode": {
                         "type": "boolean",
-                        "description": "Set true to force testmode when using a live OAuth token (for development only)."
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
                     "amount",
-                    "description",
-                    "redirectUrl"
+                    "description"
                 ]
             },
             "outputType": {
@@ -119,126 +367,94 @@
             }
         },
         {
-            "title": "Get Payment",
-            "description": "Retrieve a specific payment by its ID.",
+            "title": "Create Payment Link",
+            "description": "Creates a new payment link.",
             "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/payments-api/get-payment",
-            "endpointUrl": "/v2/payments/{paymentId}",
+            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/create-payment-link",
+            "endpointUrl": "/v2/payment-links",
             "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
+            "method": "POST",
             "sampleResponse": {
-                "resource": "payment",
-                "id": "tr_7UhSN1zuXS",
+                "resource": "payment-link",
+                "id": "pl_123abc",
                 "mode": "test",
-                "createdAt": "2025-01-15T10:05:12+00:00",
+                "description": "Pay your invoice #123",
                 "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
+                    "value": "15.00",
+                    "currency": "EUR"
                 },
-                "description": "Order #12345",
-                "status": "paid",
-                "paidAt": "2025-01-15T10:06:00+00:00",
+                "profileId": "pfl_ABC123",
+                "archived": false,
+                "createdAt": "2020-01-01T12:00:00+00:00",
                 "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS"
-                    },
-                    "documentation": {
-                        "href": "https://docs.mollie.com/reference/v2/payments-api/get-payment"
+                    "shortUrl": {
+                        "href": "https://pay.mollie.com/p/pl_123abc",
+                        "type": "text/html"
                     }
                 }
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "paymentId": {
+                    "description": {
                         "type": "string",
-                        "description": "The payment ID, e.g. tr_7UhSN1zuXS."
+                        "description": "Description of what the payment link is for."
                     },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Retrieve a testmode payment with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "paymentId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Payments",
-            "description": "Retrieve all payments. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/payments-api/list-payments",
-            "endpointUrl": "/v2/payments",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 2,
-                "_embedded": {
-                    "payments": [
-                        {
-                            "resource": "payment",
-                            "id": "tr_1",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "10.00"
+                    "amount": {
+                        "type": "object",
+                        "description": "Amount for the payment link.",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "Three-letter ISO currency code, e.g. EUR."
                             },
-                            "status": "paid"
+                            "value": {
+                                "type": "string",
+                                "description": "Decimal amount as a string, e.g. \"15.00\"."
+                            }
                         },
-                        {
-                            "resource": "payment",
-                            "id": "tr_2",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "15.00"
-                            },
-                            "status": "open"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payments?limit=10"
+                        "required": [
+                            "currency",
+                            "value"
+                        ]
                     },
-                    "previous": null,
-                    "next": {
-                        "href": "https://api.mollie.com/v2/payments?from=tr_2&limit=10"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
+                    "redirectUrl": {
                         "type": "string",
-                        "description": "Offset for pagination; the ID to start listing after."
+                        "description": "URL the customer is sent to after payment."
                     },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Number of items per page (max 250).",
-                        "default": 50
+                    "webhookUrl": {
+                        "type": "string",
+                        "description": "Webhook URL for payment status updates."
+                    },
+                    "expiresAt": {
+                        "type": "string",
+                        "description": "Expiration date-time for the payment link (RFC3339)."
                     },
                     "profileId": {
                         "type": "string",
-                        "description": "Filter by profile ID (OAuth apps)."
+                        "description": "Profile ID to create the link on (pfl_...)."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Custom metadata (JSON object)."
                     },
                     "testmode": {
                         "type": "boolean",
-                        "description": "List testmode payments with a live OAuth token."
+                        "description": "Set to true to target test data."
                     }
-                }
+                },
+                "required": [
+                    "description",
+                    "amount"
+                ]
             },
             "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.payments"
+                "outputType": "object"
             }
         },
         {
             "title": "Create Payment Refund",
-            "description": "Create a refund for a specific payment (full or partial).",
+            "description": "Creates a refund for a specific payment.",
             "type": "action",
             "documentation": "https://docs.mollie.com/reference/v2/refunds-api/create-payment-refund",
             "endpointUrl": "/v2/payments/{paymentId}/refunds",
@@ -248,27 +464,20 @@
                 "resource": "refund",
                 "id": "re_4qqhO89gsT",
                 "amount": {
-                    "currency": "EUR",
-                    "value": "5.00"
+                    "value": "5.00",
+                    "currency": "EUR"
                 },
                 "status": "pending",
-                "createdAt": "2025-01-15T11:00:00+00:00",
-                "paymentId": "tr_7UhSN1zuXS",
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS/refunds/re_4qqhO89gsT"
-                    },
-                    "documentation": {
-                        "href": "https://docs.mollie.com/reference/v2/refunds-api/create-payment-refund"
-                    }
-                }
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "paymentId": "tr_WDqYK6vllg",
+                "description": "Partial refund"
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "paymentId": {
                         "type": "string",
-                        "description": "Payment ID to refund."
+                        "description": "The payment ID to refund (tr_...)."
                     },
                     "amount": {
                         "type": "object",
@@ -276,25 +485,25 @@
                         "properties": {
                             "currency": {
                                 "type": "string",
-                                "description": "Currency of the refund."
+                                "description": "Currency of the refund, must match payment."
                             },
                             "value": {
                                 "type": "string",
-                                "description": "Decimal string, e.g. \"5.00\""
+                                "description": "Decimal amount as a string."
                             }
                         }
                     },
                     "description": {
                         "type": "string",
-                        "description": "Refund description (private)."
+                        "description": "Description for the refund."
                     },
                     "metadata": {
                         "type": "object",
-                        "description": "Arbitrary data for your bookkeeping."
+                        "description": "Custom metadata (JSON object)."
                     },
                     "testmode": {
                         "type": "boolean",
-                        "description": "Create a testmode refund with a live OAuth token."
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
@@ -306,8 +515,603 @@
             }
         },
         {
+            "title": "Create Shipment",
+            "description": "Creates a new shipment for specific order lines of an order.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/shipments-api/create-shipment",
+            "endpointUrl": "/v2/orders/{orderId}/shipments",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "shipment",
+                "id": "shp_3wmsgCJN4U",
+                "orderId": "ord_kEn1PlbGa",
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "lines": [
+                    {
+                        "id": "odl_dgtxyl",
+                        "quantity": 1
+                    }
+                ],
+                "tracking": {
+                    "carrier": "PostNL",
+                    "code": "3STBJG4739292",
+                    "url": "http://tracking.example.com/3STBJG4739292"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "The order ID to ship (ord_...)."
+                    },
+                    "lines": {
+                        "type": "array",
+                        "description": "Order lines to include in this shipment.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Order line ID (odl_...)."
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "description": "Quantity to ship for this line."
+                                }
+                            }
+                        }
+                    },
+                    "tracking": {
+                        "type": "object",
+                        "description": "Tracking details.",
+                        "properties": {
+                            "carrier": {
+                                "type": "string",
+                                "description": "Carrier name."
+                            },
+                            "code": {
+                                "type": "string",
+                                "description": "Tracking code."
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "Tracking URL."
+                            }
+                        }
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Order",
+            "description": "Creates a new order.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/orders-api/create-order",
+            "endpointUrl": "/v2/orders",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "order",
+                "id": "ord_kEn1PlbGa",
+                "profileId": "pfl_ABC123",
+                "amount": {
+                    "value": "100.00",
+                    "currency": "EUR"
+                },
+                "status": "created",
+                "orderNumber": "16738",
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/orders/ord_kEn1PlbGa",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "object",
+                        "description": "Total order amount.",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "Currency code, e.g. EUR."
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Decimal as string, e.g. \"100.00\""
+                            }
+                        },
+                        "required": [
+                            "currency",
+                            "value"
+                        ]
+                    },
+                    "orderNumber": {
+                        "type": "string",
+                        "description": "Your order reference number."
+                    },
+                    "lines": {
+                        "type": "array",
+                        "description": "Order lines.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Product name."
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "description": "Quantity ordered."
+                                },
+                                "unitPrice": {
+                                    "type": "object",
+                                    "description": "Price per unit.",
+                                    "properties": {
+                                        "currency": {
+                                            "type": "string",
+                                            "description": "Currency code."
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "Decimal amount as a string."
+                                        }
+                                    }
+                                },
+                                "totalAmount": {
+                                    "type": "object",
+                                    "description": "Total amount for this line.",
+                                    "properties": {
+                                        "currency": {
+                                            "type": "string",
+                                            "description": "Currency code."
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "Decimal amount as a string."
+                                        }
+                                    }
+                                },
+                                "vatRate": {
+                                    "type": "string",
+                                    "description": "VAT rate percentage as a string."
+                                },
+                                "vatAmount": {
+                                    "type": "object",
+                                    "description": "VAT amount.",
+                                    "properties": {
+                                        "currency": {
+                                            "type": "string",
+                                            "description": "Currency code."
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "Decimal amount as a string."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "billingAddress": {
+                        "type": "object",
+                        "description": "Billing address.",
+                        "properties": {
+                            "streetAndNumber": {
+                                "type": "string",
+                                "description": "Street and number."
+                            },
+                            "postalCode": {
+                                "type": "string",
+                                "description": "Postal code."
+                            },
+                            "city": {
+                                "type": "string",
+                                "description": "City."
+                            },
+                            "country": {
+                                "type": "string",
+                                "description": "Two-letter country code."
+                            }
+                        }
+                    },
+                    "shippingAddress": {
+                        "type": "object",
+                        "description": "Shipping address.",
+                        "properties": {
+                            "streetAndNumber": {
+                                "type": "string",
+                                "description": "Street and number."
+                            },
+                            "postalCode": {
+                                "type": "string",
+                                "description": "Postal code."
+                            },
+                            "city": {
+                                "type": "string",
+                                "description": "City."
+                            },
+                            "country": {
+                                "type": "string",
+                                "description": "Two-letter country code."
+                            }
+                        }
+                    },
+                    "redirectUrl": {
+                        "type": "string",
+                        "description": "Redirect URL after checkout."
+                    },
+                    "webhookUrl": {
+                        "type": "string",
+                        "description": "Webhook URL for status updates."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "Locale of the customer."
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Preferred payment method for order payment."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Custom metadata (JSON object)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "amount",
+                    "orderNumber",
+                    "lines"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Order Refund",
+            "description": "Creates a refund for a specific order.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/orders-api/create-order-refund",
+            "endpointUrl": "/v2/orders/{orderId}/refunds",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "refund",
+                "id": "re_12345",
+                "orderId": "ord_kEn1PlbGa",
+                "status": "pending",
+                "amount": {
+                    "value": "20.00",
+                    "currency": "EUR"
+                },
+                "lines": [
+                    {
+                        "id": "odl_dgtxyl",
+                        "quantity": 1
+                    }
+                ],
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "The order ID to refund (ord_...)."
+                    },
+                    "amount": {
+                        "type": "object",
+                        "description": "Total refund amount (optional with lines).",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "Currency code."
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Decimal amount as a string."
+                            }
+                        }
+                    },
+                    "lines": {
+                        "type": "array",
+                        "description": "Lines to refund.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Order line ID (odl_...)."
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "description": "Quantity to refund."
+                                },
+                                "amount": {
+                                    "type": "object",
+                                    "description": "Amount to refund for the line.",
+                                    "properties": {
+                                        "currency": {
+                                            "type": "string",
+                                            "description": "Currency code."
+                                        },
+                                        "value": {
+                                            "type": "string",
+                                            "description": "Decimal amount as a string."
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Description for the refund."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Custom metadata (JSON object)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Balance",
+            "description": "Retrieves a balance by its ID.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/balances-api/get-balance",
+            "endpointUrl": "/v2/balances/{balanceId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "balance",
+                "id": "bal_123456",
+                "type": "primary",
+                "currency": "EUR",
+                "availableAmount": {
+                    "value": "1000.00",
+                    "currency": "EUR"
+                },
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "balanceId": {
+                        "type": "string",
+                        "description": "The balance ID (bal_...)."
+                    }
+                },
+                "required": [
+                    "balanceId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Customer",
+            "description": "Retrieve a single customer by its ID.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/get-customer",
+            "endpointUrl": "/v2/customers/{customerId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "customer",
+                "id": "cst_ABC123",
+                "mode": "test",
+                "name": "John Doe",
+                "email": "john@example.com",
+                "locale": "en_US",
+                "metadata": {
+                    "crmId": "12345"
+                },
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The customer ID (cst_...)."
+                    }
+                },
+                "required": [
+                    "customerId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Mandate",
+            "description": "Retrieve a single mandate by its ID for a customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/get-mandate",
+            "endpointUrl": "/v2/customers/{customerId}/mandates/{mandateId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "mandate",
+                "id": "mdt_7UmCakxeTz",
+                "status": "valid",
+                "method": "directdebit",
+                "consumerName": "J. Doe",
+                "consumerAccount": "NL55INGB0000000000",
+                "signatureDate": "2020-01-01",
+                "mandateReference": "YOUR-REF-12345",
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The customer ID (cst_...)."
+                    },
+                    "mandateId": {
+                        "type": "string",
+                        "description": "The mandate ID (mdt_...)."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "mandateId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Subscription",
+            "description": "Retrieve a single subscription by its ID and the ID of its parent customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/get-subscription",
+            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "subscription",
+                "id": "sub_abc123",
+                "mode": "test",
+                "status": "active",
+                "amount": {
+                    "value": "25.00",
+                    "currency": "EUR"
+                },
+                "interval": "1 month",
+                "description": "Pro plan",
+                "customerId": "cst_ABC123"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The customer ID (cst_...)."
+                    },
+                    "subscriptionId": {
+                        "type": "string",
+                        "description": "The subscription ID (sub_...)."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "subscriptionId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Payment",
+            "description": "Retrieves a specific payment by its ID.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payments-api/get-payment",
+            "endpointUrl": "/v2/payments/{paymentId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "payment",
+                "id": "tr_WDqYK6vllg",
+                "mode": "test",
+                "amount": {
+                    "value": "10.00",
+                    "currency": "EUR"
+                },
+                "description": "Order #12345",
+                "status": "paid",
+                "paidAt": "2020-01-01T12:05:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "paymentId": {
+                        "type": "string",
+                        "description": "The payment ID (tr_...)."
+                    }
+                },
+                "required": [
+                    "paymentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Payment Link",
+            "description": "Retrieves a specific payment link by its token.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/get-payment-link",
+            "endpointUrl": "/v2/payment-links/{paymentLinkId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "payment-link",
+                "id": "pl_123abc",
+                "description": "Pay your invoice #123",
+                "amount": {
+                    "value": "15.00",
+                    "currency": "EUR"
+                },
+                "archived": false,
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "paymentLinkId": {
+                        "type": "string",
+                        "description": "The payment link ID (pl_...)."
+                    }
+                },
+                "required": [
+                    "paymentLinkId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
             "title": "Get Payment Refund",
-            "description": "Retrieve a specific refund for a payment.",
+            "description": "Retrieves a specific refund by its ID for a given payment.",
             "type": "action",
             "documentation": "https://docs.mollie.com/reference/v2/refunds-api/get-payment-refund",
             "endpointUrl": "/v2/payments/{paymentId}/refunds/{refundId}",
@@ -317,27 +1121,23 @@
                 "resource": "refund",
                 "id": "re_4qqhO89gsT",
                 "amount": {
-                    "currency": "EUR",
-                    "value": "5.00"
+                    "value": "5.00",
+                    "currency": "EUR"
                 },
-                "status": "refunded",
-                "createdAt": "2025-01-15T11:00:00+00:00",
-                "paymentId": "tr_7UhSN1zuXS"
+                "status": "pending",
+                "createdAt": "2020-01-01T12:00:00+00:00",
+                "paymentId": "tr_WDqYK6vllg"
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "paymentId": {
                         "type": "string",
-                        "description": "Payment ID."
+                        "description": "The payment ID (tr_...)."
                     },
                     "refundId": {
                         "type": "string",
-                        "description": "Refund ID."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Get a testmode refund with a live OAuth token."
+                        "description": "The refund ID (re_...)."
                     }
                 },
                 "required": [
@@ -350,8 +1150,465 @@
             }
         },
         {
+            "title": "Get Settlement",
+            "description": "Retrieves a specific settlement by its ID.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/settlements-api/get-settlement",
+            "endpointUrl": "/v2/settlements/{settlementId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "settlement",
+                "id": "stl_jDk30akdN",
+                "status": "open",
+                "amount": {
+                    "value": "250.00",
+                    "currency": "EUR"
+                },
+                "periods": {
+                    "2020": {
+                        "01": {
+                            "revenue": {
+                                "EUR": {
+                                    "value": "250.00",
+                                    "currency": "EUR"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "settlementId": {
+                        "type": "string",
+                        "description": "The settlement ID (stl_...) or special keywords open, pending, next."
+                    }
+                },
+                "required": [
+                    "settlementId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Order",
+            "description": "Retrieves a specific order by its ID.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/orders-api/get-order",
+            "endpointUrl": "/v2/orders/{orderId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "order",
+                "id": "ord_kEn1PlbGa",
+                "amount": {
+                    "value": "100.00",
+                    "currency": "EUR"
+                },
+                "status": "created",
+                "orderNumber": "16738",
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "The order ID (ord_...)."
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Balance Transactions",
+            "description": "Retrieve a list of all movements on a balance (payments, refunds, chargebacks, settlements).",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/balances-api/list-balance-transactions",
+            "endpointUrl": "/v2/balances/{balanceId}/transactions",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 2,
+                "_embedded": {
+                    "transactions": [
+                        {
+                            "resource": "balance-transaction",
+                            "id": "baltr_1",
+                            "type": "payment",
+                            "amount": {
+                                "value": "10.00",
+                                "currency": "EUR"
+                            }
+                        },
+                        {
+                            "resource": "balance-transaction",
+                            "id": "baltr_2",
+                            "type": "refund",
+                            "amount": {
+                                "value": "-5.00",
+                                "currency": "EUR"
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/balances/bal_123/transactions",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "balanceId": {
+                        "type": "string",
+                        "description": "The balance ID to list transactions for (bal_...)."
+                    },
+                    "fromDate": {
+                        "type": "string",
+                        "description": "Filter from date-time (RFC3339)."
+                    },
+                    "toDate": {
+                        "type": "string",
+                        "description": "Filter to date-time (RFC3339)."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Filter by transaction type (e.g. payment, refund, chargeback, settlement)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "balanceId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.transactions"
+            }
+        },
+        {
+            "title": "List Customers",
+            "description": "Retrieve a list of all customers.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/list-customers",
+            "endpointUrl": "/v2/customers",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "customers": [
+                        {
+                            "resource": "customer",
+                            "id": "cst_ABC123",
+                            "name": "John Doe",
+                            "email": "john@example.com"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.customers"
+            }
+        },
+        {
+            "title": "List Invoices",
+            "description": "Retrieve a list of invoices, optionally filtered by year or invoice reference.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/invoices-api/list-invoices",
+            "endpointUrl": "/v2/invoices",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "invoices": [
+                        {
+                            "resource": "invoice",
+                            "id": "inv_1234567",
+                            "reference": "2020.0001",
+                            "issuedAt": "2020-01-31",
+                            "amount": {
+                                "value": "50.00",
+                                "currency": "EUR"
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/invoices",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "year": {
+                        "type": "string",
+                        "description": "Filter by year (YYYY)."
+                    },
+                    "reference": {
+                        "type": "string",
+                        "description": "Filter by invoice reference (e.g. 2020.0001)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.invoices"
+            }
+        },
+        {
+            "title": "List Mandates",
+            "description": "Retrieve a list of all mandates for a customer.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/list-mandates",
+            "endpointUrl": "/v2/customers/{customerId}/mandates",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "mandates": [
+                        {
+                            "resource": "mandate",
+                            "id": "mdt_7UmCakxeTz",
+                            "status": "valid",
+                            "method": "directdebit"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers/cst_ABC123/mandates",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The customer ID (cst_...)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by mandate status (pending, valid, invalid)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "customerId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.mandates"
+            }
+        },
+        {
+            "title": "List Order Refunds",
+            "description": "Retrieves a list of all refunds created for a specific order.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/orders-api/list-order-refunds",
+            "endpointUrl": "/v2/orders/{orderId}/refunds",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "refunds": [
+                        {
+                            "resource": "refund",
+                            "id": "re_1",
+                            "status": "pending",
+                            "amount": {
+                                "value": "10.00",
+                                "currency": "EUR"
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/orders/ord_kEn1PlbGa/refunds",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "string",
+                        "description": "The order ID (ord_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "orderId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.refunds"
+            }
+        },
+        {
+            "title": "List Orders",
+            "description": "Retrieves all orders.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/orders-api/list-orders",
+            "endpointUrl": "/v2/orders",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "orders": [
+                        {
+                            "resource": "order",
+                            "id": "ord_kEn1PlbGa",
+                            "status": "created",
+                            "amount": {
+                                "value": "100.00",
+                                "currency": "EUR"
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/orders",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by order status (created, paid, authorized, canceled, shipping, completed, expired)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.orders"
+            }
+        },
+        {
+            "title": "List Payment Links",
+            "description": "Retrieves all payment links.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/list-payment-links",
+            "endpointUrl": "/v2/payment-links",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "payment_links": [
+                        {
+                            "resource": "payment-link",
+                            "id": "pl_123abc",
+                            "description": "Pay your invoice #123",
+                            "amount": {
+                                "value": "15.00",
+                                "currency": "EUR"
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/payment-links",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "description": "Filter archived vs active."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.payment_links"
+            }
+        },
+        {
             "title": "List Payment Refunds",
-            "description": "List refunds for a specific payment. The API returns paginated results; limit max 250.",
+            "description": "Retrieves a list of all refunds created for a specific payment.",
             "type": "action",
             "documentation": "https://docs.mollie.com/reference/v2/refunds-api/list-payment-refunds",
             "endpointUrl": "/v2/payments/{paymentId}/refunds",
@@ -363,21 +1620,20 @@
                     "refunds": [
                         {
                             "resource": "refund",
-                            "id": "re_4qqhO89gsT",
+                            "id": "re_1",
+                            "status": "pending",
                             "amount": {
-                                "currency": "EUR",
-                                "value": "5.00"
-                            },
-                            "status": "refunded"
+                                "value": "5.00",
+                                "currency": "EUR"
+                            }
                         }
                     ]
                 },
                 "_links": {
                     "self": {
-                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS/refunds"
-                    },
-                    "previous": null,
-                    "next": null
+                        "href": "https://api.mollie.com/v2/payments/tr_WDqYK6vllg/refunds",
+                        "type": "application/hal+json"
+                    }
                 }
             },
             "inputSchema": {
@@ -385,20 +1641,11 @@
                 "properties": {
                     "paymentId": {
                         "type": "string",
-                        "description": "Payment ID."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
+                        "description": "The payment ID (tr_...)."
                     },
                     "testmode": {
                         "type": "boolean",
-                        "description": "List testmode refunds with a live OAuth token."
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
@@ -411,63 +1658,97 @@
             }
         },
         {
-            "title": "List Refunds",
-            "description": "List all refunds across payments. The API returns paginated results; limit max 250.",
+            "title": "List Payments",
+            "description": "Retrieves all payments.",
             "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/refunds-api/list-refunds",
-            "endpointUrl": "/v2/refunds",
+            "documentation": "https://docs.mollie.com/reference/v2/payments-api/list-payments",
+            "endpointUrl": "/v2/payments",
             "apiBaseUrl": "https://api.mollie.com",
             "method": "GET",
             "sampleResponse": {
-                "count": 2,
+                "count": 1,
                 "_embedded": {
-                    "refunds": [
+                    "payments": [
                         {
-                            "resource": "refund",
-                            "id": "re_1",
+                            "resource": "payment",
+                            "id": "tr_WDqYK6vllg",
                             "amount": {
-                                "currency": "EUR",
-                                "value": "5.00"
-                            }
-                        },
-                        {
-                            "resource": "refund",
-                            "id": "re_2",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "3.50"
-                            }
+                                "value": "10.00",
+                                "currency": "EUR"
+                            },
+                            "status": "paid"
                         }
                     ]
                 },
                 "_links": {
                     "self": {
-                        "href": "https://api.mollie.com/v2/refunds?limit=10"
-                    },
-                    "next": {
-                        "href": "https://api.mollie.com/v2/refunds?from=re_2&limit=10"
+                        "href": "https://api.mollie.com/v2/payments",
+                        "type": "application/hal+json"
                     }
                 }
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
                     "profileId": {
                         "type": "string",
-                        "description": "Filter by profile ID (OAuth apps)."
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by payment status (open, pending, authorized, paid, failed, expired, canceled, refunded, charged_back)."
                     },
                     "testmode": {
                         "type": "boolean",
-                        "description": "List testmode refunds with a live OAuth token."
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.payments"
+            }
+        },
+        {
+            "title": "List Refunds",
+            "description": "Retrieves all refunds.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/refunds-api/list-refunds",
+            "endpointUrl": "/v2/refunds",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "refunds": [
+                        {
+                            "resource": "refund",
+                            "id": "re_4qqhO89gsT",
+                            "amount": {
+                                "value": "5.00",
+                                "currency": "EUR"
+                            },
+                            "status": "pending"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/refunds",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
                     }
                 }
             },
@@ -477,231 +1758,273 @@
             }
         },
         {
-            "title": "Create Payment Link",
-            "description": "Create a reusable payment link.",
+            "title": "List Settlements",
+            "description": "Retrieves all settlements.",
             "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/create-payment-link",
-            "endpointUrl": "/v2/payment-links",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "payment-link",
-                "id": "pl_4abcxyz",
-                "description": "Donation",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
-                },
-                "archived": false,
-                "createdAt": "2025-01-15T11:30:00+00:00",
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payment-links/pl_4abcxyz"
-                    },
-                    "paymentLink": {
-                        "href": "https://mollie.com/pay/pl_4abcxyz"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "description": {
-                        "type": "string",
-                        "description": "Description shown on checkout."
-                    },
-                    "amount": {
-                        "type": "object",
-                        "description": "Default amount for the link.",
-                        "properties": {
-                            "currency": {
-                                "type": "string",
-                                "description": "Currency, e.g. EUR"
-                            },
-                            "value": {
-                                "type": "string",
-                                "description": "Amount as decimal string"
-                            }
-                        }
-                    },
-                    "redirectUrl": {
-                        "type": "string",
-                        "description": "Redirect URL after payment."
-                    },
-                    "webhookUrl": {
-                        "type": "string",
-                        "description": "Webhook URL for updates."
-                    },
-                    "expiresAt": {
-                        "type": "string",
-                        "description": "ISO8601 date-time when the link expires."
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Arbitrary JSON."
-                    }
-                },
-                "required": [
-                    "description"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Payment Link",
-            "description": "Retrieve a payment link by ID.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/get-payment-link",
-            "endpointUrl": "/v2/payment-links/{paymentLinkId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "payment-link",
-                "id": "pl_4abcxyz",
-                "description": "Donation",
-                "archived": false,
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/payment-links/pl_4abcxyz"
-                    },
-                    "paymentLink": {
-                        "href": "https://mollie.com/pay/pl_4abcxyz"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "paymentLinkId": {
-                        "type": "string",
-                        "description": "Payment link ID (pl_...)."
-                    }
-                },
-                "required": [
-                    "paymentLinkId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Payment Links",
-            "description": "List all payment links. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/payment-links-api/list-payment-links",
-            "endpointUrl": "/v2/payment-links",
+            "documentation": "https://docs.mollie.com/reference/v2/settlements-api/list-settlements",
+            "endpointUrl": "/v2/settlements",
             "apiBaseUrl": "https://api.mollie.com",
             "method": "GET",
             "sampleResponse": {
                 "count": 1,
                 "_embedded": {
-                    "payment_links": [
+                    "settlements": [
                         {
-                            "resource": "payment-link",
-                            "id": "pl_4abcxyz",
-                            "description": "Donation"
+                            "resource": "settlement",
+                            "id": "stl_jDk30akdN",
+                            "status": "open",
+                            "amount": {
+                                "value": "250.00",
+                                "currency": "EUR"
+                            }
                         }
                     ]
                 },
                 "_links": {
                     "self": {
-                        "href": "https://api.mollie.com/v2/payment-links?limit=10"
+                        "href": "https://api.mollie.com/v2/settlements",
+                        "type": "application/hal+json"
                     }
                 }
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
                     }
                 }
             },
             "outputType": {
                 "outputType": "array",
-                "arrayPropertyValue": "_embedded.payment_links"
+                "arrayPropertyValue": "_embedded.settlements"
             }
         },
         {
-            "title": "Create Customer",
-            "description": "Create a customer.",
+            "title": "List Subscription Payments",
+            "description": "Retrieve all payments of a specific subscription (for a given customer).",
             "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/customers-api/create-customer",
-            "endpointUrl": "/v2/customers",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "customer",
-                "id": "cst_8wmqcHMN4U",
-                "mode": "test",
-                "name": "Jane Doe",
-                "email": "jane@example.com",
-                "createdAt": "2025-01-15T12:00:00+00:00",
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/customers/cst_8wmqcHMN4U"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "name": {
-                        "type": "string",
-                        "description": "Customer full name."
-                    },
-                    "email": {
-                        "type": "string",
-                        "description": "Customer email address."
-                    },
-                    "locale": {
-                        "type": "string",
-                        "description": "Customer locale (e.g., nl_NL)."
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Arbitrary JSON."
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Customer",
-            "description": "Retrieve a single customer by ID.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/customers-api/get-customer",
-            "endpointUrl": "/v2/customers/{customerId}",
+            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/list-subscription-payments",
+            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}/payments",
             "apiBaseUrl": "https://api.mollie.com",
             "method": "GET",
             "sampleResponse": {
-                "resource": "customer",
-                "id": "cst_8wmqcHMN4U",
-                "name": "Jane Doe",
-                "email": "jane@example.com",
-                "createdAt": "2025-01-15T12:00:00+00:00"
+                "count": 1,
+                "_embedded": {
+                    "payments": [
+                        {
+                            "resource": "payment",
+                            "id": "tr_1",
+                            "amount": {
+                                "value": "25.00",
+                                "currency": "EUR"
+                            },
+                            "status": "paid"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers/cst_ABC123/subscriptions/sub_abc123/payments",
+                        "type": "application/hal+json"
+                    }
+                }
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "customerId": {
                         "type": "string",
-                        "description": "Customer ID (cst_...)."
+                        "description": "The customer ID (cst_...)."
+                    },
+                    "subscriptionId": {
+                        "type": "string",
+                        "description": "The subscription ID (sub_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
-                    "customerId"
+                    "customerId",
+                    "subscriptionId"
+                ]
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.payments"
+            }
+        },
+        {
+            "title": "List all chargebacks",
+            "description": "Retrieve all chargebacks initiated for all your payments.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/chargebacks-api/list-chargebacks",
+            "endpointUrl": "/v2/chargebacks",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "chargebacks": [
+                        {
+                            "resource": "chargeback",
+                            "id": "chb_123",
+                            "amount": {
+                                "value": "10.00",
+                                "currency": "EUR"
+                            },
+                            "paymentId": "tr_WDqYK6vllg"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/chargebacks",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (pfl_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.chargebacks"
+            }
+        },
+        {
+            "title": "List balances",
+            "description": "Retrieve all the organization’s balances, including the primary balance.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/balances-api/list-balances",
+            "endpointUrl": "/v2/balances",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 1,
+                "_embedded": {
+                    "balances": [
+                        {
+                            "resource": "balance",
+                            "id": "bal_123456",
+                            "type": "primary",
+                            "currency": "EUR"
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/balances",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.balances"
+            }
+        },
+        {
+            "title": "Make API Call",
+            "description": "Performs an arbitrary authorized API call against the Mollie API.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/overview",
+            "endpointUrl": "{customPath}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "CUSTOM",
+            "sampleResponse": {
+                "example": "Response depends on the called endpoint."
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "description": "HTTP method to use: GET, POST, PATCH, DELETE."
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Path to call, e.g. /v2/payments."
+                    },
+                    "query": {
+                        "type": "object",
+                        "description": "Query parameters object."
+                    },
+                    "headers": {
+                        "type": "object",
+                        "description": "Additional headers (Authorization is added automatically)."
+                    },
+                    "body": {
+                        "type": "object",
+                        "description": "Request body (for POST/PATCH where applicable)."
+                    }
+                },
+                "required": [
+                    "method",
+                    "path"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Revoke Mandate",
+            "description": "Revoke a customer's mandate. You will no longer be able to charge the customer, and connected subscriptions will be canceled.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/revoke-mandate",
+            "endpointUrl": "/v2/customers/{customerId}/mandates/{mandateId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "DELETE",
+            "sampleResponse": {
+                "resource": "mandate",
+                "id": "mdt_7UmCakxeTz",
+                "status": "revoked",
+                "method": "directdebit",
+                "customerId": "cst_ABC123",
+                "createdAt": "2020-01-01T12:00:00+00:00"
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The customer ID (cst_...)."
+                    },
+                    "mandateId": {
+                        "type": "string",
+                        "description": "The mandate ID to revoke (mdt_...)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "mandateId"
                 ]
             },
             "outputType": {
@@ -718,411 +2041,46 @@
             "method": "PATCH",
             "sampleResponse": {
                 "resource": "customer",
-                "id": "cst_8wmqcHMN4U",
-                "name": "Jane A. Doe",
-                "email": "jane@example.com"
+                "id": "cst_ABC123",
+                "mode": "test",
+                "name": "Jane Doe",
+                "email": "jane@example.com",
+                "locale": "en_US",
+                "metadata": {
+                    "crmId": "12345"
+                },
+                "createdAt": "2020-01-01T12:00:00+00:00"
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "customerId": {
                         "type": "string",
-                        "description": "Customer ID (cst_...)."
+                        "description": "The customer ID to update (cst_...)."
                     },
                     "name": {
                         "type": "string",
-                        "description": "New name."
+                        "description": "Customer’s full name."
                     },
                     "email": {
                         "type": "string",
-                        "description": "New email."
+                        "description": "Customer’s email address."
                     },
                     "locale": {
                         "type": "string",
-                        "description": "Locale."
+                        "description": "Locale, e.g. en_US, nl_NL."
                     },
                     "metadata": {
                         "type": "object",
-                        "description": "Arbitrary JSON."
+                        "description": "Custom metadata (JSON object)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
                     "customerId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Customers",
-            "description": "List all customers. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/customers-api/list-customers",
-            "endpointUrl": "/v2/customers",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "customers": [
-                        {
-                            "resource": "customer",
-                            "id": "cst_8wmqcHMN4U",
-                            "name": "Jane Doe",
-                            "email": "jane@example.com"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/customers?limit=10"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.customers"
-            }
-        },
-        {
-            "title": "Create Mandate",
-            "description": "Create a mandate for a specific customer (IBAN Direct Debit or PayPal billing agreement).",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/create-mandate",
-            "endpointUrl": "/v2/customers/{customerId}/mandates",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "mandate",
-                "id": "mdt_h3gAaD5zP",
-                "status": "valid",
-                "method": "directdebit",
-                "consumerName": "Jane Doe",
-                "consumerAccount": "NL55INGB0000000000",
-                "signatureDate": "2025-01-15",
-                "createdAt": "2025-01-15T12:30:00+00:00"
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "method": {
-                        "type": "string",
-                        "description": "directdebit or paypal."
-                    },
-                    "consumerName": {
-                        "type": "string",
-                        "description": "Account holder name (required for directdebit)."
-                    },
-                    "consumerAccount": {
-                        "type": "string",
-                        "description": "IBAN (required for directdebit)."
-                    },
-                    "consumerBic": {
-                        "type": "string",
-                        "description": "BIC (optional for directdebit)."
-                    },
-                    "signatureDate": {
-                        "type": "string",
-                        "description": "YYYY-MM-DD; date of signature (directdebit)."
-                    },
-                    "mandateReference": {
-                        "type": "string",
-                        "description": "Your reference for the mandate."
-                    },
-                    "paypalBillingAgreementId": {
-                        "type": "string",
-                        "description": "PayPal billing agreement ID (required for PayPal mandates)."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Create a test mandate with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "method"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Mandate",
-            "description": "Retrieve a single mandate by ID.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/get-mandate",
-            "endpointUrl": "/v2/customers/{customerId}/mandates/{mandateId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "mandate",
-                "id": "mdt_h3gAaD5zP",
-                "status": "valid",
-                "method": "directdebit",
-                "consumerName": "Jane Doe",
-                "consumerAccount": "NL55INGB0000000000"
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "mandateId": {
-                        "type": "string",
-                        "description": "Mandate ID (mdt_...)."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Retrieve a test mandate with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "mandateId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Mandates",
-            "description": "List mandates for a customer. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/list-mandates",
-            "endpointUrl": "/v2/customers/{customerId}/mandates",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "mandates": [
-                        {
-                            "resource": "mandate",
-                            "id": "mdt_h3gAaD5zP",
-                            "status": "valid",
-                            "method": "directdebit"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/customers/cst_123/mandates"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "List test mandates with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId"
-                ]
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.mandates"
-            }
-        },
-        {
-            "title": "Revoke Mandate",
-            "description": "Revoke a customer's mandate. Connected subscriptions will be canceled.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/mandates-api/revoke-mandate",
-            "endpointUrl": "/v2/customers/{customerId}/mandates/{mandateId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "DELETE",
-            "sampleResponse": {},
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "mandateId": {
-                        "type": "string",
-                        "description": "Mandate ID (mdt_...)."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Revoke a test mandate with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "mandateId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Create Subscription",
-            "description": "Create a subscription for a customer.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/create-subscription",
-            "endpointUrl": "/v2/customers/{customerId}/subscriptions",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "subscription",
-                "id": "sub_rVKGtNd6s3",
-                "mode": "test",
-                "createdAt": "2025-01-15T13:00:00+00:00",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
-                },
-                "interval": "1 month",
-                "description": "Monthly donation",
-                "status": "active",
-                "startDate": "2025-02-01"
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "amount": {
-                        "type": "object",
-                        "description": "Recurring charge amount.",
-                        "properties": {
-                            "currency": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "currency",
-                            "value"
-                        ]
-                    },
-                    "interval": {
-                        "type": "string",
-                        "description": "Interval, e.g., \"1 month\", \"1 day\"."
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Subscription description."
-                    },
-                    "mandateId": {
-                        "type": "string",
-                        "description": "Charge with a specific mandate."
-                    },
-                    "startDate": {
-                        "type": "string",
-                        "description": "YYYY-MM-DD start date."
-                    },
-                    "times": {
-                        "type": "integer",
-                        "description": "Number of charges before automatically canceling."
-                    },
-                    "webhookUrl": {
-                        "type": "string",
-                        "description": "Webhook for subscription payments."
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Arbitrary JSON."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Create a test subscription with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "amount",
-                    "interval",
-                    "description"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Subscription",
-            "description": "Retrieve a subscription by ID.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/get-subscription",
-            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "subscription",
-                "id": "sub_rVKGtNd6s3",
-                "status": "active",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
-                },
-                "interval": "1 month"
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID (cst_...)."
-                    },
-                    "subscriptionId": {
-                        "type": "string",
-                        "description": "Subscription ID (sub_...)."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Retrieve a test subscription with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "subscriptionId"
                 ]
             },
             "outputType": {
@@ -1131,7 +2089,7 @@
         },
         {
             "title": "Update Subscription",
-            "description": "Update an existing subscription (cannot update canceled subscriptions).",
+            "description": "Update an existing subscription. Canceled subscriptions cannot be updated.",
             "type": "action",
             "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/update-subscription",
             "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}",
@@ -1139,927 +2097,93 @@
             "method": "PATCH",
             "sampleResponse": {
                 "resource": "subscription",
-                "id": "sub_rVKGtNd6s3",
+                "id": "sub_abc123",
+                "mode": "test",
                 "status": "active",
                 "amount": {
-                    "currency": "EUR",
-                    "value": "12.00"
+                    "value": "30.00",
+                    "currency": "EUR"
                 },
-                "interval": "1 month"
+                "interval": "1 month",
+                "description": "Pro plan (updated)",
+                "customerId": "cst_ABC123"
             },
             "inputSchema": {
                 "type": "object",
                 "properties": {
                     "customerId": {
                         "type": "string",
-                        "description": "Customer ID."
+                        "description": "The customer ID (cst_...)."
                     },
                     "subscriptionId": {
                         "type": "string",
-                        "description": "Subscription ID."
+                        "description": "The subscription ID (sub_...)."
                     },
                     "amount": {
                         "type": "object",
-                        "description": "New amount.",
+                        "description": "New amount per interval.",
                         "properties": {
                             "currency": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Currency code, e.g. EUR."
                             },
                             "value": {
-                                "type": "string"
+                                "type": "string",
+                                "description": "Decimal amount as a string."
                             }
                         }
                     },
                     "times": {
                         "type": "integer",
-                        "description": "Update number of remaining charges."
-                    },
-                    "startDate": {
-                        "type": "string",
-                        "description": "New start date (future)."
+                        "description": "Update number of charges."
                     },
                     "description": {
                         "type": "string",
-                        "description": "New description."
+                        "description": "Update subscription description."
                     },
                     "mandateId": {
                         "type": "string",
-                        "description": "Switch mandate."
+                        "description": "Mandate ID to use."
                     },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Arbitrary JSON."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Update a test subscription with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "subscriptionId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Cancel Subscription",
-            "description": "Cancel an existing subscription.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/cancel-subscription",
-            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "DELETE",
-            "sampleResponse": {},
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
+                    "startDate": {
                         "type": "string",
-                        "description": "Customer ID."
-                    },
-                    "subscriptionId": {
-                        "type": "string",
-                        "description": "Subscription ID."
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "Cancel a test subscription with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "subscriptionId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Subscription Payments",
-            "description": "List all payments for a subscription. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/subscriptions-api/list-subscription-payments",
-            "endpointUrl": "/v2/customers/{customerId}/subscriptions/{subscriptionId}/payments",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "payments": [
-                        {
-                            "resource": "payment",
-                            "id": "tr_abc",
-                            "status": "paid",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "10.00"
-                            }
-                        }
-                    ]
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "customerId": {
-                        "type": "string",
-                        "description": "Customer ID."
-                    },
-                    "subscriptionId": {
-                        "type": "string",
-                        "description": "Subscription ID."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
-                    "testmode": {
-                        "type": "boolean",
-                        "description": "List test payments with a live OAuth token."
-                    }
-                },
-                "required": [
-                    "customerId",
-                    "subscriptionId"
-                ]
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.payments"
-            }
-        },
-        {
-            "title": "Create Order",
-            "description": "Create an order (multi-line, supports shipments and order refunds).",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/orders-api/create-order",
-            "endpointUrl": "/v2/orders",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "order",
-                "id": "ord_kEn1PlbGa",
-                "profileId": "pfl_ABC",
-                "method": null,
-                "amount": {
-                    "currency": "EUR",
-                    "value": "139.00"
-                },
-                "status": "created",
-                "orderNumber": "16738",
-                "createdAt": "2025-01-15T13:30:00+00:00",
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/orders/ord_kEn1PlbGa"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "amount": {
-                        "type": "object",
-                        "description": "Total order amount.",
-                        "properties": {
-                            "currency": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        },
-                        "required": [
-                            "currency",
-                            "value"
-                        ]
-                    },
-                    "orderNumber": {
-                        "type": "string",
-                        "description": "Your reference."
-                    },
-                    "redirectUrl": {
-                        "type": "string",
-                        "description": "Redirect URL after payment."
+                        "description": "New start date (YYYY-MM-DD) if applicable."
                     },
                     "webhookUrl": {
                         "type": "string",
-                        "description": "Webhook URL for order status updates."
-                    },
-                    "locale": {
-                        "type": "string",
-                        "description": "Locale for checkout."
-                    },
-                    "billingAddress": {
-                        "type": "object",
-                        "description": "Billing address object."
-                    },
-                    "shippingAddress": {
-                        "type": "object",
-                        "description": "Shipping address object."
-                    },
-                    "consumerDateOfBirth": {
-                        "type": "string",
-                        "description": "YYYY-MM-DD (Klarna etc)."
+                        "description": "Webhook URL."
                     },
                     "metadata": {
                         "type": "object",
-                        "description": "Arbitrary JSON."
+                        "description": "Custom metadata (JSON object)."
                     },
-                    "lines": {
-                        "type": "array",
-                        "description": "Order lines (at least one).",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "type": {
-                                    "type": "string",
-                                    "description": "physical or digital"
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "description": "Product name"
-                                },
-                                "quantity": {
-                                    "type": "integer",
-                                    "description": "Quantity"
-                                },
-                                "unitPrice": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currency": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "totalAmount": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currency": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "vatRate": {
-                                    "type": "string",
-                                    "description": "VAT rate as percentage string, e.g. \"21.00\""
-                                },
-                                "vatAmount": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currency": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "required": [
-                                "name",
-                                "quantity",
-                                "unitPrice",
-                                "totalAmount"
-                            ]
-                        }
-                    },
-                    "method": {
-                        "type": "string",
-                        "description": "Preferred method (optional)."
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set to true to target test data."
                     }
                 },
                 "required": [
-                    "amount",
-                    "lines"
+                    "customerId",
+                    "subscriptionId"
                 ]
             },
             "outputType": {
                 "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Order",
-            "description": "Retrieve an order by ID.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/orders-api/get-order",
-            "endpointUrl": "/v2/orders/{orderId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "order",
-                "id": "ord_kEn1PlbGa",
-                "status": "created",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "139.00"
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "orderId": {
-                        "type": "string",
-                        "description": "Order ID (ord_...)."
-                    }
-                },
-                "required": [
-                    "orderId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Orders",
-            "description": "List all orders. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/orders-api/list-orders",
-            "endpointUrl": "/v2/orders",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "orders": [
-                        {
-                            "resource": "order",
-                            "id": "ord_kEn1PlbGa",
-                            "status": "created"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/orders?limit=10"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
-                    "profileId": {
-                        "type": "string",
-                        "description": "Filter by profile."
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.orders"
-            }
-        },
-        {
-            "title": "Create Order Refund",
-            "description": "Create a refund for an order (preferred over payment refunds for Orders API).",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/orders-api/create-order-refund",
-            "endpointUrl": "/v2/orders/{orderId}/refunds",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "refund",
-                "id": "re_123",
-                "status": "pending",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "10.00"
-                },
-                "orderId": "ord_kEn1PlbGa"
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "orderId": {
-                        "type": "string",
-                        "description": "Order ID (ord_...)."
-                    },
-                    "lines": {
-                        "type": "array",
-                        "description": "Lines/quantities to refund (for partial refunds).",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "description": "Order line ID"
-                                },
-                                "quantity": {
-                                    "type": "integer",
-                                    "description": "Quantity to refund"
-                                },
-                                "amount": {
-                                    "type": "object",
-                                    "properties": {
-                                        "currency": {
-                                            "type": "string"
-                                        },
-                                        "value": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "amount": {
-                        "type": "object",
-                        "description": "Total amount to refund (optional for full).",
-                        "properties": {
-                            "currency": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "required": [
-                    "orderId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Order Refunds",
-            "description": "List all refunds created for a specific order.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/orders-api/list-order-refunds",
-            "endpointUrl": "/v2/orders/{orderId}/refunds",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "refunds": [
-                        {
-                            "resource": "refund",
-                            "id": "re_123",
-                            "status": "refunded"
-                        }
-                    ]
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "orderId": {
-                        "type": "string",
-                        "description": "Order ID (ord_...)."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    }
-                },
-                "required": [
-                    "orderId"
-                ]
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.refunds"
-            }
-        },
-        {
-            "title": "Create Shipment",
-            "description": "Create a new shipment for specific order lines of an order.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/shipments-api/create-shipment",
-            "endpointUrl": "/v2/orders/{orderId}/shipments",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "POST",
-            "sampleResponse": {
-                "resource": "shipment",
-                "id": "shp_3wmsgCqnQ",
-                "orderId": "ord_kEn1PlbGa",
-                "createdAt": "2025-01-15T14:00:00+00:00",
-                "lines": [
-                    {
-                        "id": "odl_a",
-                        "quantity": 1
-                    }
-                ]
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "orderId": {
-                        "type": "string",
-                        "description": "Order ID (ord_...)."
-                    },
-                    "lines": {
-                        "type": "array",
-                        "description": "Order lines to ship.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "description": "Order line ID."
-                                },
-                                "quantity": {
-                                    "type": "integer",
-                                    "description": "Quantity to ship."
-                                }
-                            }
-                        }
-                    },
-                    "tracking": {
-                        "type": "object",
-                        "description": "Tracking info.",
-                        "properties": {
-                            "carrier": {
-                                "type": "string"
-                            },
-                            "code": {
-                                "type": "string"
-                            },
-                            "url": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "required": [
-                    "orderId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "Get Balance",
-            "description": "Retrieve a single balance by its ID (e.g., primary).",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/balances-api/get-balance",
-            "endpointUrl": "/v2/balances/{balanceId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "balance",
-                "id": "bal_123456",
-                "type": "primary",
-                "availableAmount": {
-                    "currency": "EUR",
-                    "value": "1200.00"
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/balances/bal_123456"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "balanceId": {
-                        "type": "string",
-                        "description": "Balance ID (bal_..., or the string \"primary\")."
-                    }
-                },
-                "required": [
-                    "balanceId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Balances",
-            "description": "Retrieve all balances for the organization. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/balances-api/list-balances",
-            "endpointUrl": "/v2/balances",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "balances": [
-                        {
-                            "resource": "balance",
-                            "id": "bal_123456",
-                            "type": "primary"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/balances"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.balances"
-            }
-        },
-        {
-            "title": "List Balance Transactions",
-            "description": "List all transactions on a given balance (payments, refunds, chargebacks, settlements). The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/balances-api/list-balance-transactions",
-            "endpointUrl": "/v2/balances/{balanceId}/transactions",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "transactions": [
-                        {
-                            "resource": "balance-transaction",
-                            "id": "bltr_1",
-                            "type": "payment",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "10.00"
-                            },
-                            "createdAt": "2025-01-15T14:30:00+00:00"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/balances/bal_123456/transactions"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "balanceId": {
-                        "type": "string",
-                        "description": "Balance ID (bal_...)."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
-                    "type": {
-                        "type": "string",
-                        "description": "Filter by transaction type."
-                    }
-                },
-                "required": [
-                    "balanceId"
-                ]
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.transactions"
-            }
-        },
-        {
-            "title": "List Settlements",
-            "description": "Retrieve all settlements. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/settlements-api/list-settlements",
-            "endpointUrl": "/v2/settlements",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "settlements": [
-                        {
-                            "resource": "settlement",
-                            "id": "stl_jDk30akd"
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/settlements"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    },
-                    "status": {
-                        "type": "string",
-                        "description": "Filter by status."
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.settlements"
-            }
-        },
-        {
-            "title": "Get Settlement",
-            "description": "Retrieve a specific settlement by ID (or use special IDs such as next/open when applicable).",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/settlements-api/get-settlement",
-            "endpointUrl": "/v2/settlements/{settlementId}",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "resource": "settlement",
-                "id": "stl_jDk30akd",
-                "status": "paidout",
-                "amount": {
-                    "currency": "EUR",
-                    "value": "1000.00"
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "settlementId": {
-                        "type": "string",
-                        "description": "Settlement ID (stl_...), or special values like next/open."
-                    }
-                },
-                "required": [
-                    "settlementId"
-                ]
-            },
-            "outputType": {
-                "outputType": "object"
-            }
-        },
-        {
-            "title": "List Invoices",
-            "description": "Retrieve all Mollie invoices for the organization. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/invoices-api/list-invoices",
-            "endpointUrl": "/v2/invoices",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "invoices": [
-                        {
-                            "resource": "invoice",
-                            "id": "inv_xxx",
-                            "reference": "2025.0001",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "25.00"
-                            }
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/invoices"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "year": {
-                        "type": "string",
-                        "description": "Filter by year, e.g. 2025."
-                    },
-                    "reference": {
-                        "type": "string",
-                        "description": "Filter by invoice reference."
-                    },
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.invoices"
-            }
-        },
-        {
-            "title": "List All Chargebacks",
-            "description": "Retrieve all chargebacks for all payments. The API returns paginated results; limit max 250.",
-            "type": "action",
-            "documentation": "https://docs.mollie.com/reference/v2/chargebacks-api/list-chargebacks",
-            "endpointUrl": "/v2/chargebacks",
-            "apiBaseUrl": "https://api.mollie.com",
-            "method": "GET",
-            "sampleResponse": {
-                "count": 1,
-                "_embedded": {
-                    "chargebacks": [
-                        {
-                            "resource": "chargeback",
-                            "id": "chb_123",
-                            "paymentId": "tr_7UhSN1zuXS",
-                            "amount": {
-                                "currency": "EUR",
-                                "value": "10.00"
-                            }
-                        }
-                    ]
-                },
-                "_links": {
-                    "self": {
-                        "href": "https://api.mollie.com/v2/chargebacks"
-                    }
-                }
-            },
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "from": {
-                        "type": "string",
-                        "description": "Offset for pagination."
-                    },
-                    "limit": {
-                        "type": "integer",
-                        "description": "Items per page (max 250).",
-                        "default": 50
-                    }
-                }
-            },
-            "outputType": {
-                "outputType": "array",
-                "arrayPropertyValue": "_embedded.chargebacks"
             }
         }
     ],
     "authentication": {
-        "type": "oauth2",
-        "authUrl": "https://www.mollie.com/oauth2/authorize",
-        "tokenUrl": "https://api.mollie.com/oauth2/tokens",
+        "type": "apiKey",
+        "authUrl": "",
+        "tokenUrl": "",
         "profileInfoUrl": "https://api.mollie.com/v2/organizations/me"
     },
     "serviceJson": {
         "name": "appmixer.mollie",
         "label": "Mollie",
         "category": "applications",
-        "description": "Mollie Payments API (v2). Base URL: https://api.mollie.com. Supports core operations: payments, refunds, payment links, customers, mandates, subscriptions, orders, shipments, balances, settlements, invoices, and chargebacks. Authentication: OAuth 2.0 (recommended for marketplace apps) via https://www.mollie.com/oauth2/authorize and https://api.mollie.com/oauth2/tokens. API keys are also supported for first-party integrations (Authorization: Bearer <api_key>). Common headers: Authorization: Bearer <token>, Content-Type: application/json, Accept: application/hal+json, optional Idempotency-Key for safely retryable POST requests. Common query params: from, limit (max 250), testmode (OAuth to access test data), profileId (OAuth context). Rate limiting: Mollie throttles requests and returns HTTP 429 with a Retry-After header; implement exponential backoff and honor Retry-After. Version: v2 endpoints under /v2.",
+        "description": "Mollie Payments API v2 integration: customers, mandates, subscriptions, payments, orders, refunds, settlements, balances, invoices, chargebacks, payment links.",
         "version": "1.0.0",
-        "icon": "https://avatars.githubusercontent.com/u/1815206?s=200&v=4"
+        "icon": "https://www.mollie.com/favicon.ico"
     }
 }

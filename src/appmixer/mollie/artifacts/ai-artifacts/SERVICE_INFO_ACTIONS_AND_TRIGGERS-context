@@ -1,5 +1,32 @@
 Mollie API Documentation URL: https://docs.mollie.com/reference/overview
 
+IMPORTANT: Mollie API Response Format
+All Mollie list endpoints return data in the following structure:
+{
+  "count": <number>,
+  "_embedded": {
+    "<resource_name>": [
+      // Array of items here
+    ]
+  },
+  "_links": { ... }
+}
+
+For example:
+- List Payments returns data under "_embedded.payments"
+- List Customers returns data under "_embedded.customers" 
+- List Refunds returns data under "_embedded.refunds"
+- List Orders returns data under "_embedded.orders"
+- List Payment Links returns data under "_embedded.payment_links"
+- List Mandates returns data under "_embedded.mandates"
+- List Balances returns data under "_embedded.balances"
+- List Transactions returns data under "_embedded.transactions"
+- List Settlements returns data under "_embedded.settlements"
+- List Invoices returns data under "_embedded.invoices"
+- List Chargebacks returns data under "_embedded.chargebacks"
+
+When generating components, always set arrayPropertyValue to "_embedded.<resource_name>" for list operations.
+
 Mollie
 Cancel Subscription
 Cancel an existing subscription.
