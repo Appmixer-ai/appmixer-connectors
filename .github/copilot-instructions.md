@@ -1467,14 +1467,6 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 - **Unnecessary Input Fields**: Do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
 
-- **Code Quality**: Ensure all AI-generated code follows the established coding standards:
-  - Use 4 spaces for indentation
-  - Add empty lines after function definitions
-  - Remove any commented-out code or placeholder comments
-  - Validate that all required inputs are properly checked with meaningful error messages
-
-These are already covered in Code Style and Development Guidelines sections above.
-
 ## Best Practices (Humans)
 
 ### Development Guidelines
