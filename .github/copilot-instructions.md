@@ -1565,3 +1565,17 @@ const file = await context.saveFileStream(outFilename, data);
 
 return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
 ```
+
+# Testing Guidelines
+
+### Unit Tests
+
+- Use `mocha` for unit tests
+- Place tests in `test/unit` directory
+- Use `assert` from Node.js for assertions
+
+When working on a single connector, you can run tests with:
+
+```bash
+npm run test-unit -- test/<connector_name>
+```
