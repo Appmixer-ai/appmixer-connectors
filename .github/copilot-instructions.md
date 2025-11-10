@@ -1395,8 +1395,10 @@ Trigger components monitor for events and start workflows when conditions are me
 - Use 4 spaces for indentation
 - Add one empty line after function definitions
 - Add one empty line after the `receive` function definition
-- Use camelCase for variable and function names
-- Snake case is allowed for connectors that rely on external APIs that use snake case
+- Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
+- Remove all unused variables and imports
+- Property names in component.json must use underscore `_` or camelCase as separator (NOT pipe `|`, e.g., `lock_type` or `lockType`, not `lock|type`)
+- Property names in component.json must exactly match those used in `context.messages.in.content`
 
 ## Development Guidelines (For All)
 
@@ -1429,7 +1431,41 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 - **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
 
-These are already covered in Code Style and Development Guidelines sections above.
+- **Property Name Consistency**: Property names in `component.json` (both schema and inspector) MUST exactly match the property names used in the behavior file's `context.messages.in.content`. Use underscore `_` or camelCase as separator, NOT pipe `|`. For example:
+  
+  ```
+  // component.json - WRONG
+  "properties": {
+    "lock|type": { "type": "string" },      // WRONG - uses pipe |
+    "lock|expires_at": { "type": "string" } // WRONG - uses pipe |
+  }
+  
+  // component.json - CORRECT (option 1: snake_case)
+  "properties": {
+    "lock_type": { "type": "string" },      
+    "lock_expires_at": { "type": "string" }
+  }
+  
+  // component.json - CORRECT (option 2: camelCase)
+  "properties": {
+    "lockType": { "type": "string" },      
+    "lockExpiresAt": { "type": "string" }
+  }
+  
+  // Behavior file - use camelCase variables
+  // If component.json uses snake_case, destructure with aliases:
+  const { 
+    lock_type: lockType,
+    lock_expires_at: lockExpiresAt
+  } = context.messages.in.content;
+  
+  // If component.json uses camelCase, destructure directly:
+  const { lockType, lockExpiresAt } = context.messages.in.content;
+  ```
+
+- **Unused Variables**: Remove all unused variables and imports. Every declared variable must be used in the code. If a property is not needed in the behavior logic, do not include it in component.json.
+
+- **Unnecessary Input Fields**: Do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
 
 ## Best Practices (Humans)
 
@@ -1522,7 +1558,7 @@ const file = await context.saveFileStream(outFilename, data);
 return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
 ```
 
-## Testing Guidelines
+# Testing Guidelines
 
 ### Unit Tests
 
@@ -1535,15 +1571,3 @@ When working on a single connector, you can run tests with:
 ```bash
 npm run test-unit -- test/<connector_name>
 ```
-
----
-
-# Document Information
-
-**Status**: Consolidated from two source files
-- Original File 1: `copilot-instructions.md` - Comprehensive connector development guide
-- Original File 2: `instructions.componentStandards.md` - Component-specific patterns and best practices
-
-**Purpose**: This consolidated document serves as the single source of truth for Appmixer connector and component development.
-
-**Note**: This document is designed to be split into separate focused guides for specific audiences (connectors, components, authentication, etc.) after review and approval.
