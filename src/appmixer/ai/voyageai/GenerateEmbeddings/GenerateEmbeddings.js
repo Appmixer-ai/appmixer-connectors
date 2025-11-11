@@ -1,6 +1,6 @@
 'use strict';
 
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
+const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 
 // See https://docs.voyageai.com/reference/embeddings-api
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings';

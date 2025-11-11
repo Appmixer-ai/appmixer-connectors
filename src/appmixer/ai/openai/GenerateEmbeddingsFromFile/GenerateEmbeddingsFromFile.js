@@ -1,7 +1,7 @@
 'use strict';
 
 const { Transform } = require('stream');
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
+const { RecursiveCharacterTextSplitter } = require('../text_splitter');
 const lib = require('../lib');
 
 // See https://platform.openai.com/docs/api-reference/embeddings/create#embeddings-create-input.
