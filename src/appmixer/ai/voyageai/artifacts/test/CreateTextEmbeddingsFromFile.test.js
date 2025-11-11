@@ -48,4 +48,12 @@ describe('ai/voyageai CreateTextEmbeddingsFromFile component', () => {
         assert.deepStrictEqual(result.embeddings[0].vector, [0.5, 0.6]);
         assert.strictEqual(sent[0].port, 'out');
     });
+
+    it('throws CancelError when fileId is missing', async () => {
+        const context = testUtils.createMockContext({ messages: { in: { content: {} } } });
+
+        await assert.rejects(async () => {
+            await component.receive(context);
+        }, /File ID is required|fileId is required/);
+    });
 });
