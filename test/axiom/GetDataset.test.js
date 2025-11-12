@@ -89,7 +89,7 @@ describe('GetDataset Component', function() {
         assert.strictEqual(data.id, 'test-dataset-id', 'Expected correct dataset ID');
         assert.strictEqual(data.name, 'Test Dataset', 'Expected correct dataset name');
         assert(mockHttpRequest.calledOnce, 'Expected httpRequest to be called once');
-        
+
         const callArgs = mockHttpRequest.firstCall.args[0];
         assert.strictEqual(callArgs.method, 'GET', 'Expected GET method');
         assert(callArgs.url.includes('test-dataset-id'), 'Expected URL to contain dataset ID');
