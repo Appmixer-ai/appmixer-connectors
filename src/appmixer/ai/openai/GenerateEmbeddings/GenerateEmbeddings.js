@@ -1,6 +1,6 @@
 'use strict';
 
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
+const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 const lib = require('../lib');
 
 // See https://platform.openai.com/docs/api-reference/embeddings/create#embeddings-create-input.
@@ -17,6 +17,10 @@ module.exports = {
             chunkSize = 500,
             chunkOverlap = 50
         } = context.messages.in.content;
+
+        if (!text) {
+            throw new context.CancelError('Text is required');
+        }
 
         const chunks = await this.splitText(text, chunkSize, chunkOverlap);
         await context.log({ step: 'split-text', message: 'Text successfully split into chunks.', chunksLength: chunks.length });

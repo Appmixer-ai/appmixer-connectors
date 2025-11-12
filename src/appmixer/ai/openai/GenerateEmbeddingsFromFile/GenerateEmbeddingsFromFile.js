@@ -1,7 +1,7 @@
 'use strict';
 
 const { Transform } = require('stream');
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
+const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 const lib = require('../lib');
 
 // See https://platform.openai.com/docs/api-reference/embeddings/create#embeddings-create-input.
@@ -16,6 +16,10 @@ module.exports = {
         const {
             fileId
         } = context.messages.in.content;
+
+        if (!fileId) {
+            throw new context.CancelError('File ID is required');
+        }
 
         const client = lib.sdk(context);
 
