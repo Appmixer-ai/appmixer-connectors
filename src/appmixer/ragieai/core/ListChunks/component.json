@@ -1,0 +1,82 @@
+{
+    "name": "appmixer.ragieai.core.ListChunks",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Lists chunks in RagieAI with optional filtering by document ID. Returns a maximum of 100 chunks per page.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ragieai"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "documentId": {
+                        "type": "string",
+                        "description": "Filter chunks by document ID"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "documentId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Document ID",
+                        "tooltip": "Optional: Filter chunks by document ID"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ragieai/core/ListChunks?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNCAxNmwtMiAyIDQgNGMxLjEgMS4xIDIuOSAxLjEgNCAwczEuMS0yLjkgMC00bC00LTQtMiAyeiIvPjxwYXRoIGQ9Ik0xMCA4bC0yIDJMNCw2Yy0xLjEtMS4xLTEuMS0yLjkgMC00czIuOS0xLjEgNCAwbDQgNCAyLTJ6Ci8+PGxpbmUgeDE9IjE0IiB5MT0iMTAiIHgyPSIxMCIgeTI9IjE0Ii8+PC9zdmc+"
+}

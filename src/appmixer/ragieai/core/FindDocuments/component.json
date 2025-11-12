@@ -1,0 +1,82 @@
+{
+    "name": "appmixer.ragieai.core.FindDocuments",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Lists and searches documents in RagieAI. Returns a maximum of 100 documents per page.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ragieai"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "filter": {
+                        "type": "string",
+                        "description": "Filter documents by name or metadata"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "filter": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Filter",
+                        "tooltip": "Filter documents by name or metadata"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ragieai/core/FindDocuments?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNCAxNmwtMiAyIDQgNGMxLjEgMS4xIDIuOSAxLjEgNCAwczEuMS0yLjkgMC00bC00LTQtMiAyeiIvPjxwYXRoIGQ9Ik0xMCA4bC0yIDJMNCw2Yy0xLjEtMS4xLTEuMS0yLjkgMC00czIuOS0xLjEgNCAwbDQgNCAyLTJ6Ii8+PGxpbmUgeDE9IjE0IiB5MT0iMTAiIHgyPSIxMCIgeTI9IjE0Ii8+PC9zdmc+"
+}
