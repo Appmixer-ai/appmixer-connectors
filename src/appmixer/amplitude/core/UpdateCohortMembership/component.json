@@ -1,0 +1,120 @@
+{
+    "name": "appmixer.amplitude.core.UpdateCohortMembership",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Incrementally add or remove users from an existing cohort.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:amplitude"
+    },
+    "quota": {
+        "manager": "appmixer:amplitude",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "cohort_id": {
+                        "type": "string"
+                    },
+                    "id_type": {
+                        "type": "string"
+                    },
+                    "adds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "removes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "cohort_id",
+                    "id_type"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "cohort_id": {
+                        "type": "text",
+                        "tooltip": "Existing cohort ID to update.",
+                        "label": "Cohort ID",
+                        "index": 0
+                    },
+                    "id_type": {
+                        "type": "select",
+                        "tooltip": "Type of identifiers for members.",
+                        "label": "ID Type",
+                        "options": [
+                            {
+                                "label": "user_id",
+                                "value": "user_id"
+                            },
+                            {
+                                "label": "amplitude_id",
+                                "value": "amplitude_id"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "adds": {
+                        "type": "textarea",
+                        "tooltip": "Comma-separated identifiers to add to the cohort (e.g., user123,user456)",
+                        "label": "Adds",
+                        "index": 2
+                    },
+                    "removes": {
+                        "type": "textarea",
+                        "tooltip": "Comma-separated identifiers to remove from the cohort (e.g., user123,user456)",
+                        "label": "Removes",
+                        "index": 3
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Cohort ID",
+                    "value": "cohort_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Added",
+                    "value": "added",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Removed",
+                    "value": "removed",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Message",
+                    "value": "message",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAgCAYAAADqgqNBAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAUASURBVFhHpZZdbBxXHcV/5+6aOFA563WayK69TlqoEF9J2gKtoCGClhYlhPCRN0y8dlXBA4gnPl+hKgKKeEKUtF4TyANVBYmoaKGUpgWkiEZRIkBCiNKMnURNY3uXiNZfM4eHtTcz47UTi9/TzDln9ujuzt77F9dJ31Dj1mIHn8C+2/Y7JfWCO4FZm4uS/or9YszCsfO1Lf/MP98O5YU8AyP1jyrxN5F257322EYnBN+OxkrP5t00q5b3f+7yTQqFH0vam/euG3OcjuLno5/ccDFvsVr54KGZPZZ+gbgx760X40u48JmJWteLeS/khUq1sS8RT69abNv4Ul5eDaEtKP7tYLXxsbyXKR8cadxlkickbUjrV/FELO+aGOveipLPYif5RDuEOu3kyf7R+vuy+hJ9Q42eYtFngJvSgRb2Itad0Xjp1LJUGan/APPlbHBNJuhkR/Sj0gzplRcLfmTVYgCFw9F46dTgSOOuynD9BFiLC/oW+L/56BoMeJbvLd8EgMrwzG3IQ5lYGjsBf3fp8oeI3ZVD9Q9fOLJpCvhZPr4Wsoe3Vad30Fq59DVQ2zd/iWejsdLLA9XpD4LeC0BgCEBJqOXDayKFmMJXAELvg//ZbPtAPpPGhKPNizCcEvdy0IVz410nDVEqfm3sT1e+UO8Oxbl4n6SOvH8Vx3F85de3P/hSh/AnW7K0udJ15U6Qwcczj1wDiQ3MJnuDAnvyZhqjkxeO9E9dnrvlA0jljJfE9wMEJ79J69eDCR8KRu/JGxmk3wNY3Je3gHsAZhfnTxjP5821EN6hyvDMVHZFySN2eDpIxcQUk+LC6fOHN08ODE/fHQgDiZKiUSGYAkBU6z4MMDAyM0yiPtAGcCfSRtk3GLrAm4TejuhfbjG+pEp1ZhFUaHXPz/dFP9/S9iD4f9g2Mj2YOLyyfG8zt7Lc/BF0AgA5isZKj25/oHHrYpy03wdceGmi1nVs++iVrXGcfDFvX8XvRuxv3Zm5Nl/7VUzy+MRYebRSnXkI9PW8v8SpaKx0x+Chf3cm6q5LZM8FMwkuI705K/tSMDqXFtPInAbA+njea2Hv6h+tl8+Nb59FtPb9ZQRfNXqtjX4uCM7kjWWSwNlKtX4z4l15r4UUlDTfeuHmz7WMeT0O8VmJwYze/AufCUbP541lOtTxDztZfdVLyN5Lc/P4XdbgqRBrV0ZbQuJ59Q01egpFXxC8KR/APo50+5qnHQCeurHjX70Ary3cchHUA2AnBwQHUGpbBmzPaV694cKRTVOyf5U2W0j7r10MoJ7L82+799SjdyyAmqecmQxuPGO0YoJBPBkdLc0EAAUexnY+sx4SxaMASooP25yW/CUXyh+RtDUTtJMk9ndovnRNKtWZGuhQJrguHMexbzv/0/JZAA66UHlL/c9ImdHJTh6bqJUfIF3eP1ovh5gz6S1wvdj+u4rsKwZPL8yH70uMZnyINMfO6GhzjMoMENuqjfcn+A/AxrS+PmyMkbKTsf16gvZM1kp/WZYygVfGNp0kiQ8aZtP6+pBWFMMbCfpUuph8OUA03vOUldy3ntl8LWy/Sgj3TtZKz+S9FeUAk4+XX1CxYydmXRPKCswvg+d3Ro91/Slvkf/N21Gp1u+x+YbkPdcYMpewjZ6T/VBU634u76a5jg9r0j/66lsVd+6Xkt3AO0C94I2gN8AXsf9mFV4QPhaNlV7OP9+O/wG4ggt4xTnEYgAAAABJRU5ErkJggg=="
+}
