@@ -1,0 +1,87 @@
+{
+    "name": "appmixer.triggerdev.core.ListRuns",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieves a list of all task runs. Returns up to 100 runs per request.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:triggerdev"
+    },
+    "quota": {
+        "manager": "appmixer:triggerdev",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "taskIdentifier": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "status": {
+                        "type": "select",
+                        "label": "Status",
+                        "index": 1,
+                        "tooltip": "Filter runs by status",
+                        "options": [
+                            { "label": "All", "value": "" },
+                            { "label": "Completed", "value": "COMPLETED" },
+                            { "label": "Failed", "value": "FAILED" },
+                            { "label": "Running", "value": "EXECUTING" },
+                            { "label": "Waiting", "value": "WAITING_FOR_DEPLOY" },
+                            { "label": "Queued", "value": "QUEUED" },
+                            { "label": "Canceled", "value": "CANCELED" }
+                        ]
+                    },
+                    "taskIdentifier": {
+                        "type": "text",
+                        "label": "Task Identifier",
+                        "index": 2,
+                        "tooltip": "Filter runs by task identifier"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/triggerdev/core/ListRuns?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiByeD0iMTYiIGZpbGw9IiMwRjE2MjQiLz4KPHBhdGggZD0iTTMyIDMySDk2VjQ4SDQ4Vjk2SDMyVjMyWiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyKSIvPgo8cGF0aCBkPSJNOTYgOTZIMzJWODBIODBWMzJIOTZWOTZaIiBmaWxsPSJ1cmwoI3BhaW50MV9saW5lYXIpIi8+CjxkZWZzPgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXIiIHgxPSI2NCIgeTE9IjMyIiB4Mj0iNjQiIHkyPSI5NiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjM0U2M0REIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZBQkRGRiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MV9saW5lYXIiIHgxPSI2NCIgeTE9Ijk2IiB4Mj0iNjQiIHkyPSIzMiIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPgo8c3RvcCBzdG9wLWNvbG9yPSIjM0U2M0REIi8+CjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzZBQkRGRiIvPgo8L2xpbmVhckdyYWRpZW50Pgo8L2RlZnM+Cjwvc3ZnPg=="
+}
