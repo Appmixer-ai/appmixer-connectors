@@ -8,7 +8,7 @@ module.exports = {
         const { paymentId } = context.messages.in.content;
 
         if (!paymentId) {
-            throw new context.CancelError('Payment Id is required!');
+            throw new context.CancelError('Payment ID is required!');
         }
 
         // https://docs.mollie.com/reference/v2/payments-api/get-payment
@@ -16,7 +16,7 @@ module.exports = {
             method: 'GET',
             url: `https://api.mollie.com/v2/payments/${paymentId}`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`
             }
         });
 

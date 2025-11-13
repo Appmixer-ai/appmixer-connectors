@@ -1,43 +1,53 @@
 'use strict';
 
-const lib = require('../../lib');
-
 module.exports = {
     async receive(context) {
-        const { paymentId, amount, description, metadata, testmode } = context.messages.in.content;
+        const {
+            paymentId,
+            amount_value: amountValue,
+            amount_currency: amountCurrency,
+            description,
+            metadata
+        } = context.messages.in.content;
 
         if (!paymentId) {
             throw new context.CancelError('Payment ID is required!');
         }
 
-        const data = {};
+        // Build the refund data object
+        const requestData = {};
 
-        if (amount) {
-            data.amount = amount;
+        // Add amount if provided
+        if (amountValue || amountCurrency) {
+            requestData.amount = {};
+            if (amountValue) {
+                requestData.amount.value = amountValue;
+            }
+            if (amountCurrency) {
+                requestData.amount.currency = amountCurrency;
+            }
         }
 
+        // Add optional fields
         if (description) {
-            data.description = description;
+            requestData.description = description;
         }
 
         if (metadata) {
-            data.metadata = metadata;
+            requestData.metadata = metadata;
         }
 
-        if (testmode !== undefined) {
-            data.testmode = testmode;
-        }
-
-        // https://docs.mollie.com/reference/v2/refunds-api/create-payment-refund
-        const response = await context.httpRequest({
+        // https://docs.mollie.com/reference/v2/refunds-api/create-refund
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://api.mollie.com/v2/payments/${paymentId}/refunds`,
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Accept': 'application/json'
             },
-            data
+            data: requestData
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(data, 'out');
     }
 };

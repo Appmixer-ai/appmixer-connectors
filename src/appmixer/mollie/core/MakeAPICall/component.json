@@ -1,8 +1,9 @@
 {
     "name": "appmixer.mollie.core.MakeAPICall",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Performs an arbitrary authorized API call against the Mollie API.",
+    "description": "Performs an arbitrary authorized API call. Provides flexibility for advanced integrations and accessing any Mollie API endpoint not covered by other components.",
     "version": "1.0.0",
+    "private": false,
     "auth": {
         "service": "appmixer:mollie"
     },
@@ -23,13 +24,16 @@
                         "type": "string"
                     },
                     "query": {
-                        "type": "object"
+                        "type": "object",
+                        "additionalProperties": true
                     },
                     "headers": {
-                        "type": "object"
+                        "type": "object",
+                        "additionalProperties": true
                     },
                     "body": {
-                        "type": "object"
+                        "type": "object",
+                        "additionalProperties": true
                     }
                 },
                 "required": [
@@ -40,34 +44,56 @@
             "inspector": {
                 "inputs": {
                     "method": {
-                        "type": "text",
+                        "type": "select",
+                        "tooltip": "HTTP method to use.",
                         "label": "Method",
                         "index": 0,
-                        "tooltip": "HTTP method to use: GET, POST, PATCH, DELETE."
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
                     },
                     "path": {
                         "type": "text",
+                        "tooltip": "Request path beginning with /v2, e.g., /v2/payments.",
                         "label": "Path",
-                        "index": 1,
-                        "tooltip": "Path to call, e.g. /v2/payments."
+                        "index": 1
                     },
                     "query": {
                         "type": "text",
+                        "tooltip": "Optional query string parameters as a JSON object.",
                         "label": "Query",
-                        "index": 2,
-                        "tooltip": "Query parameters object."
+                        "index": 2
                     },
                     "headers": {
                         "type": "text",
+                        "tooltip": "Optional additional headers to send as a JSON object.",
                         "label": "Headers",
-                        "index": 3,
-                        "tooltip": "Additional headers (Authorization is added automatically)."
+                        "index": 3
                     },
                     "body": {
                         "type": "text",
+                        "tooltip": "Optional JSON request body (for POST/PUT/PATCH).",
                         "label": "Body",
-                        "index": 4,
-                        "tooltip": "Request body (for POST/PATCH where applicable)."
+                        "index": 4
                     }
                 }
             }

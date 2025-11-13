@@ -1,66 +1,54 @@
+
 'use strict';
 
 module.exports = {
+
     async receive(context) {
-        const { amount, currency, description, redirectUrl, webhookUrl, method, metadata, locale, sequenceType, customerId, mandateId, testmode } = context.messages.in.content;
 
-        // Validate required inputs
-        if (!amount) {
-            throw new context.CancelError('Amount is required!');
-        }
-        if (!currency) {
-            throw new context.CancelError('Currency is required!');
-        }
-        if (!description) {
-            throw new context.CancelError('Description is required!');
-        }
+        const {
+            currency,
+            amount,
+            description,
+            redirectUrl,
+            webhookUrl,
+            method,
+            metadata,
+            locale,
+            sequenceType,
+            customerId,
+            mandateId,
+            profileId
+        } = context.messages.in.content;
 
-        // Build the payment request body
-        const paymentData = {
+        // Build the request payload
+        const payload = {
             amount: {
-                value: amount,
-                currency: currency
+                currency: currency,
+                value: amount
             },
-            description: description
+            description: description,
+            redirectUrl: redirectUrl
         };
 
         // Add optional fields if provided
-        if (redirectUrl) {
-            paymentData.redirectUrl = redirectUrl;
-        }
-        if (webhookUrl) {
-            paymentData.webhookUrl = webhookUrl;
-        }
-        if (method) {
-            paymentData.method = method;
-        }
-        if (metadata) {
-            paymentData.metadata = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
-        }
-        if (locale) {
-            paymentData.locale = locale;
-        }
-        if (sequenceType) {
-            paymentData.sequenceType = sequenceType;
-        }
-        if (customerId) {
-            paymentData.customerId = customerId;
-        }
-        if (mandateId) {
-            paymentData.mandateId = mandateId;
-        }
-        if (testmode !== undefined && testmode !== null) {
-            paymentData.testmode = testmode;
-        }
+        if (webhookUrl) payload.webhookUrl = webhookUrl;
+        if (method) payload.method = method;
+        if (metadata) payload.metadata = metadata;
+        if (locale) payload.locale = locale;
+        if (sequenceType) payload.sequenceType = sequenceType;
+        if (customerId) payload.customerId = customerId;
+        if (mandateId) payload.mandateId = mandateId;
+        if (profileId) payload.profileId = profileId;
 
         // https://docs.mollie.com/reference/v2/payments-api/create-payment
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.mollie.com/v2/payments',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
             },
-            data: paymentData
+            data: payload
         });
 
         return context.sendJson(data, 'out');

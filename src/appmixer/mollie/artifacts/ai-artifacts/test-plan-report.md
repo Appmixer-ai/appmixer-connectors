@@ -2,2437 +2,567 @@
 
 ## 1. CreateCustomer
 ```
-appmixer test component src/appmixer/mollie/core/CreateCustomer/ -i '{"name":"John Doe","email":"john.doe@example.com","locale":"en_US","testmode":true}'
+appmixer test component src/appmixer/mollie/core/CreateCustomer/ -i '{"name":"John Doe","email":"john.doe@example.com","locale":"en_US"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreateCustomer
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+```
+appmixer test component src/appmixer/mollie/core/CreateCustomer/ -i '{"in":{"name":"John Doe","email":"john.doe@example.com","locale":"en_US"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreateCustomer
+https://api.appmixer.com
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Creating authentication module.
 
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+```
+appmixer test component src/appmixer/mollie/core/CreateCustomer/ -i '{"name":"John Doe","email":"john.doe@example.com","locale":"en_US"}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreateCustomer
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 
 ## 2. GetCustomer
 ```
-appmixer test component src/appmixer/mollie/core/GetCustomer/ -i '{"customerId":"cst_8wmqcHMN4U"}'
+appmixer test component src/appmixer/mollie/core/CreateCustomer/ -i '{"name":"Test Customer GetCustomer","email":"testcustomer.getcustomer@example.com","locale":"en_US"}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreateCustomer
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+```
+appmixer test component src/appmixer/mollie/core/GetCustomer/ -i '{"customerId":"cst_4qqhO89gsT"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/GetCustomer
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+```
+appmixer test component src/appmixer/mollie/core/GetCustomer/ -p '{"customerId":"cst_4qqhO89gsT"}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/GetCustomer
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+[ERROR]:  Invalid input object: {"customerId":"cst_4qqhO89gsT"}.
 Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
+TypeError: Invalid input object: {"customerId":"cst_4qqhO89gsT"}.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Transformer.applyModifiers (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:227520)
+    at DevComponent.onConfig (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:287270)
     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Command.<anonymous> (/Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:552:13)
 </details>
 
 ## 3. ListCustomers
 ```
-appmixer test component src/appmixer/mollie/core/ListCustomers/ -i '{"testmode":true,"outputType":"array"}'
+appmixer test component src/appmixer/mollie/core/ListCustomers/ -i '{"outputType":"array"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/ListCustomers
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 
-## 4. UpdateCustomer
 ```
-appmixer test component src/appmixer/mollie/core/UpdateCustomer/ -i '{"customerId":"cst_8wmqcHMN4U","name":"Jane Doe Updated","email":"jane.doe.updated@example.com","locale":"nl_NL","testmode":true}'
+appmixer test component src/appmixer/mollie/core/ListCustomers/ -i '{"in":{"outputType":"array"}}'
 ```
 <details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/UpdateCustomer
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/ListCustomers
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 
-## 5. CreateMandate
+## 5. GetPayment
 ```
-appmixer test component src/appmixer/mollie/core/CreateMandate/ -i '{"customerId":"cst_8wmqcHMN4U","method":"directdebit","consumerName":"John Doe","consumerAccount":"NL91ABNA0417164300","consumerBic":"ABNANL2A","signatureDate":"2024-01-15","mandateReference":"mandate-ref-001","testmode":true}'
-```
-<details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreateMandate
-
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-</details>
-
-## 6. GetMandate
-```
-appmixer test component src/appmixer/mollie/core/GetMandate/ -i '{"customerId":"cst_8wmqcHMN4U","mandateId":"mdt_test001"}'
-```
-<details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/GetMandate
-
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-</details>
-
-## 7. ListMandates
-```
-appmixer test component src/appmixer/mollie/core/ListMandates/ -i '{"customerId":"cst_8wmqcHMN4U","testmode":true,"outputType":"array"}'
-```
-<details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/ListMandates
-
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-</details>
-
-## 8. RevokeMandate
-```
-appmixer test component src/appmixer/mollie/core/RevokeMandate/ -i '{"customerId":"cst_8wmqcHMN4U","mandateId":"mdt_test001","testmode":true}'
-```
-<details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/RevokeMandate
-
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-</details>
-
-## 9. CreatePayment
-```
-appmixer test component src/appmixer/mollie/core/CreatePayment/ -i '{"amount":"10.00","currency":"EUR","description":"Test Payment","redirectUrl":"https://example.com/return","method":"ideal","testmode":true}'
-```
-<details><summary>❌ output</summary>
-Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreatePayment
-
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-</details>
-
-## 10. GetPayment
-```
-appmixer test component src/appmixer/mollie/core/GetPayment/ -i '{"paymentId":"tr_WDqYK6vllg"}'
+appmixer test component src/appmixer/mollie/core/GetPayment/ -i '{"paymentId":"tr_7UhSN1zuXS"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/GetPayment
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 
-## 11. ListPayments
+## 6. ListPayments
 ```
-appmixer test component src/appmixer/mollie/core/ListPayments/ -i '{"testmode":true,"outputType":"array"}'
+appmixer test component src/appmixer/mollie/core/ListPayments/ -i '{"outputType":"array"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/ListPayments
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
-
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
-
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
-
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 
-## 12. CreatePaymentRefund
 ```
-appmixer test component src/appmixer/mollie/core/CreatePaymentRefund/ -i '{"paymentId":"tr_WDqYK6vllg","amount":{"currency":"EUR","value":"5.00"},"description":"Test refund","testmode":true}'
+appmixer test component src/appmixer/mollie/core/ListPayments/ -i '{"in":{"outputType":"array"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/ListPayments
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+## 7. CreatePaymentRefund
+```
+appmixer test component src/appmixer/mollie/core/CreatePaymentRefund/ -i '{"paymentId":"tr_7UhSN1zuXS","amount_value":"5.00","amount_currency":"EUR","description":"Test refund"}'
 ```
 <details><summary>❌ output</summary>
 Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreatePaymentRefund
+https://api.appmixer.com
 
-[ERROR]:  <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+Creating authentication module.
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Test server is listening on 2300
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Starting component.
 
-Stack trace:
-Error: <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
 
-    <style type="text/css">
-      body {
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        line-height: 1.66666667;
-        font-size: 16px;
-        color: #333;
-        background-color: #fff;
-        margin: 2em 1em;
-      }
-      h1 {
-        font-size: 28px;
-        font-weight: 400;
-      }
-      p {
-        margin: 0 0 10px;
-      }
-      .alert.alert-info {
-        background-color: #F0F0F0;
-        margin-top: 30px;
-        padding: 30px;
-      }
-      .alert p {
-        padding-left: 35px;
-      }
-      ul {
-        padding-left: 51px;
-        position: relative;
-      }
-      li {
-        font-size: 14px;
-        margin-bottom: 1em;
-      }
-      p.info {
-        position: relative;
-        font-size: 20px;
-      }
-      p.info:before, p.info:after {
-        content: "";
-        left: 0;
-        position: absolute;
-        top: 0;
-      }
-      p.info:before {
-        background: #0066CC;
-        border-radius: 16px;
-        color: #fff;
-        content: "i";
-        font: bold 16px/24px serif;
-        height: 24px;
-        left: 0px;
-        text-align: center;
-        top: 4px;
-        width: 24px;
-      }
+```
+appmixer test component src/appmixer/mollie/core/CreatePaymentRefund/ -i '{"in":{"paymentId":"tr_7UhSN1zuXS","amount_value":"5.00","amount_currency":"EUR","description":"Test refund"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/CreatePaymentRefund
+https://api.appmixer.com
 
-      @media (min-width: 768px) {
-        body {
-          margin: 6em;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div>
-      <h1>Application is not available</h1>
-      <p>The application is currently not serving requests at this endpoint. It may not have been started or is still starting.</p>
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
 
-      <div class="alert alert-info">
-        <p class="info">
-          Possible reasons you are seeing this page:
-        </p>
-        <ul>
-          <li>
-            <strong>The host doesn't exist.</strong>
-            Make sure the hostname was typed correctly and that a route matching this hostname exists.
-          </li>
-          <li>
-            <strong>The host exists, but doesn't have a matching path.</strong>
-            Check if the URL path was typed correctly and that the route was created using the desired path.
-          </li>
-          <li>
-            <strong>Route and path matches, but all pods are down.</strong>
-            Make sure that the resources exposed by this route (pods, services, deployment configs, etc) have at least one pod running.
-          </li>
-        </ul>
-      </div>
-    </div>
-  </body>
-</html>
+Creating authentication module.
 
-    at maybeWrapAsError (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:120051)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:74089
-    at safeCallback (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:261)
-    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/lib/index.js:1:4126
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+## 8. MakeAPICall
+```
+appmixer test component src/appmixer/mollie/core/MakeAPICall/ -i '{"method":"GET","path":"/v2/organizations/me"}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/MakeAPICall
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
+</details>
+
+```
+appmixer test component src/appmixer/mollie/core/MakeAPICall/ -i '{"in":{"method":"GET","path":"/v2/organizations/me"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/sayamnasir/Documents/GitHub/appmixer-connectors/src/appmixer/mollie/core/MakeAPICall
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/sayamnasir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+[ERROR]: Invalid messages object.
+TypeError: Invalid messages object.
+    at assertImpl (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261217)
+    at assertPredicate (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:261081)
+    at assertImpl.object (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:6:260973)
+    at Object.createDefaultInputObjects (/Users/sayamnasir/Documents/GitHub/appmixer-cli/dist/index.js:92:361032)
+    at /Users/sayamnasir/Documents/GitHub/appmixer-cli/appmixer-test-component.js:595:44
+    at tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Object.gotValue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:166:18)
+    at Object.gotAccum (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/reduce.js:155:25)
+    at Object.tryCatcher (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/util.js:16:23)
+    at Promise._settlePromiseFromHandler (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:547:31)
+    at Promise._settlePromise (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:604:18)
+    at Promise._settlePromiseCtx (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/promise.js:641:10)
+    at _drainQueueStep (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:97:12)
+    at _drainQueue (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:86:9)
+    at Async._drainQueues (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:102:5)
+    at Async.drainQueues [as _onImmediate] (/Users/sayamnasir/Documents/GitHub/appmixer-cli/node_modules/bluebird/js/release/async.js:15:14)
+    at process.processImmediate (node:internal/timers:505:21)
 </details>
 

@@ -13,13 +13,28 @@ const schema = {
         },
         'title': 'Amount'
     },
-    'status': { 'type': 'string', 'title': 'Status' }
+    'description': { 'type': 'string', 'title': 'Description' },
+    'status': { 'type': 'string', 'title': 'Status' },
+    '_links': {
+        'type': 'object',
+        'properties': {
+            'self': {
+                'type': 'object',
+                'properties': {
+                    'href': { 'type': 'string', 'title': 'Links.Self.Href' },
+                    'type': { 'type': 'string', 'title': 'Links.Self.Type' }
+                },
+                'title': 'Links.Self'
+            }
+        },
+        'title': 'Links'
+    }
 };
 
 module.exports = {
     async receive(context) {
 
-        const { profileId, status, testmode, outputType } = context.messages.in.content;
+        const { profileId, testmode, status, method, sequenceType, customerId, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'payments', value: 'payments' });
@@ -32,24 +47,37 @@ module.exports = {
             params.profileId = profileId;
         }
 
+        if (testmode !== undefined) {
+            params.testmode = testmode;
+        }
+
         if (status) {
             params.status = status;
         }
 
-        if (testmode) {
-            params.testmode = testmode;
+        if (method) {
+            params.method = method;
+        }
+
+        if (sequenceType) {
+            params.sequenceType = sequenceType;
+        }
+
+        if (customerId) {
+            params.customerId = customerId;
         }
 
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.mollie.com/v2/payments',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Accept': 'application/json'
             },
             params
         });
 
-        const records = data._embedded?.payments || [];
+        const records = data._embedded?.payments || data.payments || [];
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

@@ -1,7 +1,7 @@
 {
     "name": "appmixer.mollie.core.CreatePaymentRefund",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Creates a refund for a specific payment.",
+    "description": "Creates a refund for a specific payment. Critical for handling returns and customer service.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -20,25 +20,17 @@
                     "paymentId": {
                         "type": "string"
                     },
-                    "amount": {
-                        "type": "object",
-                        "properties": {
-                            "currency": {
-                                "type": "string"
-                            },
-                            "value": {
-                                "type": "string"
-                            }
-                        }
+                    "amount_value": {
+                        "type": "string"
+                    },
+                    "amount_currency": {
+                        "type": "string"
                     },
                     "description": {
                         "type": "string"
                     },
                     "metadata": {
                         "type": "object"
-                    },
-                    "testmode": {
-                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -49,42 +41,32 @@
                 "inputs": {
                     "paymentId": {
                         "type": "text",
-                        "tooltip": "The payment ID to refund (tr_...).",
+                        "tooltip": "The ID of the original payment to refund (e.g., tr_7UhSN1zuXS).",
                         "label": "Payment ID",
                         "index": 0
                     },
-                    "amount": {
-                        "type": "object",
-                        "index": 1,
-                        "properties": {
-                            "currency": {
-                                "type": "text",
-                                "tooltip": "Currency of the refund, must match payment (e.g., EUR, USD).",
-                                "label": "Currency"
-                            },
-                            "value": {
-                                "type": "text",
-                                "tooltip": "Decimal amount as a string (e.g., '10.00').",
-                                "label": "Value"
-                            }
-                        }
+                    "amount_value": {
+                        "type": "text",
+                        "tooltip": "Refund amount as a string with 2 decimals, e.g. \"5.00\". Optional - if not provided, the full payment amount will be refunded.",
+                        "label": "Amount Value",
+                        "index": 1
+                    },
+                    "amount_currency": {
+                        "type": "text",
+                        "tooltip": "ISO 4217 currency code of the refund amount (e.g., EUR, USD). Only required if specifying a custom amount.",
+                        "label": "Amount Currency",
+                        "index": 2
                     },
                     "description": {
-                        "type": "textarea",
-                        "tooltip": "Description for the refund.",
+                        "type": "text",
+                        "tooltip": "Optional description for the refund.",
                         "label": "Description",
-                        "index": 2
+                        "index": 3
                     },
                     "metadata": {
                         "type": "text",
-                        "tooltip": "Custom metadata as JSON object.",
+                        "tooltip": "Arbitrary data you can attach to the refund.",
                         "label": "Metadata",
-                        "index": 3
-                    },
-                    "testmode": {
-                        "type": "toggle",
-                        "tooltip": "Set to true to target test data.",
-                        "label": "Test Mode",
                         "index": 4
                     }
                 }
@@ -117,11 +99,11 @@
                         "properties": {
                             "value": {
                                 "type": "string",
-                                "title": "Amount Value"
+                                "title": "Value"
                             },
                             "currency": {
                                 "type": "string",
-                                "title": "Amount Currency"
+                                "title": "Currency"
                             }
                         }
                     }
@@ -141,6 +123,20 @@
                     }
                 },
                 {
+                    "label": "Description",
+                    "value": "description",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Metadata",
+                    "value": "metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
                     "label": "Payment ID",
                     "value": "paymentId",
                     "schema": {
@@ -148,10 +144,10 @@
                     }
                 },
                 {
-                    "label": "Description",
-                    "value": "description",
+                    "label": "Links",
+                    "value": "_links",
                     "schema": {
-                        "type": "string"
+                        "type": "object"
                     }
                 }
             ]

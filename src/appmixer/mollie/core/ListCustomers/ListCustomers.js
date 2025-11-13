@@ -6,7 +6,22 @@ const schema = {
     'resource': { 'type': 'string', 'title': 'Resource' },
     'id': { 'type': 'string', 'title': 'Id' },
     'name': { 'type': 'string', 'title': 'Name' },
-    'email': { 'type': 'string', 'title': 'Email' }
+    'email': { 'type': 'string', 'title': 'Email' },
+    'createdAt': { 'type': 'string', 'title': 'Created At' },
+    '_links': {
+        'type': 'object',
+        'properties': {
+            'self': {
+                'type': 'object',
+                'properties': {
+                    'href': { 'type': 'string', 'title': 'Links.Self.Href' },
+                    'type': { 'type': 'string', 'title': 'Links.Self.Type' }
+                },
+                'title': 'Links.Self'
+            }
+        },
+        'title': 'Links'
+    }
 };
 
 module.exports = {
@@ -18,28 +33,27 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Customers', value: 'customers' });
         }
 
+        // https://docs.mollie.com/reference/v2/customers-api/list-customers
         const params = {};
-
+        if (testmode !== undefined) {
+            params.testmode = testmode;
+        }
         if (profileId) {
             params.profileId = profileId;
         }
 
-        if (testmode) {
-            params.testmode = testmode;
-        }
-
-        // https://docs.mollie.com/reference/v2/customers-api/list-customers
         const { data } = await context.httpRequest({
             method: 'GET',
             url: 'https://api.mollie.com/v2/customers',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Accept': 'application/json'
             },
             params
         });
 
-        const records = data._embedded?.customers || [];
+        const customers = data._embedded?.customers || [];
 
-        return lib.sendArrayOutput({ context, records, outputType });
+        return lib.sendArrayOutput({ context, records: customers, outputType });
     }
 };
