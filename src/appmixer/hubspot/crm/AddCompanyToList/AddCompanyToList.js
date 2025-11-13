@@ -31,7 +31,7 @@ module.exports = {
         // Try v3 Lists API first
         try {
             const payload = {
-                recordIds: recordIds
+                recordIds
             };
 
             await hs.call('put', `crm/v3/lists/${listId}/memberships/add`, payload);

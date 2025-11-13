@@ -36,7 +36,7 @@ describe('HubSpot -> UpdateCompany', () => {
             await component.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
-            assert(error.message.includes('Either companyId or domain is required'), 'Should throw validation error');
+            assert(error.message.includes('Either Company ID or domain is required'), 'Should throw validation error');
         }
     });
 
