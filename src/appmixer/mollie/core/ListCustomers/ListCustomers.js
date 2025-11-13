@@ -52,7 +52,7 @@ module.exports = {
             params
         });
 
-        const customers = data._embedded?.customers || [];
+        const customers = data['_embedded']?.customers || [];
 
         return lib.sendArrayOutput({ context, records: customers, outputType });
     }

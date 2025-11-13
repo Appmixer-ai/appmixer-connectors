@@ -34,7 +34,9 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { profileId, testmode, status, method, sequenceType, customerId, outputType } = context.messages.in.content;
+        const {
+            profileId, testmode, status, method, sequenceType, customerId, outputType
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'payments', value: 'payments' });
@@ -77,7 +79,7 @@ module.exports = {
             params
         });
 
-        const records = data._embedded?.payments || data.payments || [];
+        const records = data['_embedded']?.payments || data.payments || [];
 
         return lib.sendArrayOutput({ context, records, outputType });
     }
