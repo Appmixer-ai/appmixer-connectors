@@ -716,6 +716,8 @@ Each component consists of:
 
 Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspector.inputs.<input_name>.type` match:
 - `string` → `text` or `textarea`
+- `string` with `format: "date-time"` → `date-time` 
+- `string` with `format: "date"` → `date-time` with `config: { enableTime: false }`
 - `integer` → `number`
 - `boolean` → `toggle`
 
@@ -1466,6 +1468,35 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 - **Unused Variables**: Remove all unused variables and imports. Every declared variable must be used in the code. If a property is not needed in the behavior logic, do not include it in component.json.
 
 - **Unnecessary Input Fields**: Do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
+
+- **Date/Time Input Types**: When a field accepts date or datetime values, use the appropriate inspector type:
+  - For datetime fields: Use inspector type `"date-time"` 
+  - Schema: `"type": "string", "format": "date-time"`
+  - Inspector: `"type": "date-time"`
+  - For date-only fields: Use inspector type `"date-time"` with config `{ "enableTime": false }`
+  - Do NOT use `"type": "text"` for date/datetime fields in the inspector
+  
+  Example:
+  ```json
+  {
+    "schema": {
+      "properties": {
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "inspector": {
+      "inputs": {
+        "expires_at": {
+          "type": "date-time",
+          "label": "Expires At"
+        }
+      }
+    }
+  }
+  ```
 
 ## Best Practices (Humans)
 
