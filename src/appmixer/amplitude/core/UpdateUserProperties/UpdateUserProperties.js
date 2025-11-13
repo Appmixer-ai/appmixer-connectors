@@ -23,15 +23,17 @@ module.exports = {
             throw new context.CancelError('User ID or Device ID is required!');
         }
 
-        // Build the identification object
-        const identification = {};
+        // Build the event object for user property updates
+        const event = {
+            event_type: '$identify'
+        };
 
         if (userId) {
-            identification.user_id = userId;
+            event.user_id = userId;
         }
 
         if (deviceId) {
-            identification.device_id = deviceId;
+            event.device_id = deviceId;
         }
 
         // Build user_properties object with operations
@@ -66,33 +68,32 @@ module.exports = {
             userProperties.$remove = typeof userPropertiesRemove === 'string' ? JSON.parse(userPropertiesRemove) : userPropertiesRemove;
         }
 
+        if (userProperties && Object.keys(userProperties).length > 0) {
+            event.user_properties = userProperties;
+        }
+
         if (groups) {
-            identification.groups = typeof groups === 'string' ? JSON.parse(groups) : groups;
+            event.groups = typeof groups === 'string' ? JSON.parse(groups) : groups;
         }
 
         if (groupProperties) {
-            identification.group_properties = typeof groupProperties === 'string' ? JSON.parse(groupProperties) : groupProperties;
+            event.group_properties = typeof groupProperties === 'string' ? JSON.parse(groupProperties) : groupProperties;
         }
 
-        // Only add user_properties if there are any operations
-        if (Object.keys(userProperties).length > 0) {
-            identification.user_properties = userProperties;
-        }
-
-        // Create the request payload
+        // Create the request payload using the HTTP V2 API format
         const payload = {
-            identification: [identification]
+            api_key: context.auth.apiKey,
+            events: [event]
         };
 
-        // Build Basic Auth header from apiKey and secretKey
-        const authHeader = Buffer.from(context.auth.apiKey + ':' + context.auth.secretKey).toString('base64');
+        // Make the HTTP request with Basic Auth
+        const basicAuth = Buffer.from(context.auth.apiKey + ':' + context.auth.secretKey).toString('base64');
 
-        // https://developers.amplitude.com/docs/identify-api
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.amplitude.com/identify',
+            url: 'https://api.amplitude.com/2/httpapi',
             headers: {
-                'Authorization': `Basic ${authHeader}`,
+                'Authorization': `Basic ${basicAuth}`,
                 'Content-Type': 'application/json'
             },
             data: payload

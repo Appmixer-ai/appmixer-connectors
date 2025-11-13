@@ -37,26 +37,19 @@ module.exports = {
             }
         }
 
-        // Build the request body with identification data
-        const requestBody = {
-            identification_request_body: [
-                {
-                    identification
-                }
-            ]
-        };
-
         // https://developers.amplitude.com/docs/identify-api
-        const { data } = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
-            url: 'https://api.amplitude.com/identify',
+            url: 'https://api.eu.amplitude.com/identify',
             headers: {
-                'Authorization': `Basic ${Buffer.from(context.auth.apiKey + ':' + context.auth.secretKey).toString('base64')}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/x-www-form-urlencoded'
             },
-            data: requestBody
+            data: {
+                api_key: context.auth.apiKey,
+                identification: JSON.stringify(identification)
+            }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({}, 'out');
     }
 };

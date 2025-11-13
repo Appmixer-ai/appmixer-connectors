@@ -1,143 +1,119 @@
-Based on my analysis of the Amplitude connector components, here's a comprehensive test plan that follows natural user workflows:
+Based on my analysis of the Amplitude connector components, here's a comprehensive **test plan** organized by logical workflow:
 
 ## **Amplitude Connector Test Plan**
 
-### **Test Sequence (Logical Order)**
+### **Phase 1: User & Event Foundation**
+These components establish the basic data infrastructure:
 
-```
-1. IdentifyUser
-2. SendEvent
-3. BatchUploadEvents
-4. GetUserProfile
-5. UpdateUserProperties
-6. CreateCohort
-7. ListCohorts
-8. GetCohort
-9. UpdateCohortMembership
-10. ExportEventData
-11. NewEventReceived (Trigger - Monitor)
-12. UserPropertyChanged (Trigger - Monitor)
-13. CohortUpdated (Trigger - Monitor)
-```
+1. **IdentifyUser** - Create/identify a user with user_id and device_id
+   - *Purpose*: Establish user identity before sending events
+   - *Output*: User identification confirmed
+   - *Reuse*: user_id for subsequent tests
 
----
+2. **SendEvent** - Send a single custom event for the identified user
+   - *Purpose*: Test basic event ingestion
+   - *Input*: user_id from IdentifyUser
+   - *Output*: Confirmation of event ingestion
+   - *Reuse*: event_type and user_id for batch operations
 
-### **Detailed Test Plan Rationale**
-
-#### **Phase 1: User Identification & Event Tracking (Foundation)**
-
-**1. IdentifyUser** ✓ *Start here*
-- **Why First**: Creates the user identity in Amplitude
-- **Test**: Associate a user_id with device_id and set initial properties
-- **Output to Reuse**: `user_id`, `device_id` for subsequent tests
-- **Expected**: Code 200, num_processed = 1
-
-**2. SendEvent** ✓ *Depends on: IdentifyUser*
-- **Why**: Track individual user behavior after identification
-- **Test**: Send a single event using the user_id from step 1
-- **Input**: Use `user_id` from IdentifyUser
-- **Output to Reuse**: `event_id`, `insert_id` for deduplication
-- **Expected**: Code 200, events_ingested = 1
-
-**3. BatchUploadEvents** ✓ *Depends on: IdentifyUser*
-- **Why**: Test bulk event ingestion (more efficient than single events)
-- **Test**: Upload multiple events with the same user_id
-- **Input**: Use `user_id` from IdentifyUser
-- **Expected**: Code 200, events_ingested > 1
+3. **BatchUploadEvents** - Upload multiple events in bulk
+   - *Purpose*: Test efficient batch event ingestion
+   - *Input*: Multiple events with user_ids from Phase 1
+   - *Output*: Batch ingestion metrics (events_ingested, payload_size_bytes)
 
 ---
 
-#### **Phase 2: User Profile Management**
+### **Phase 2: User Properties Management**
+These components manage user-level data:
 
-**4. GetUserProfile** ✓ *Depends on: IdentifyUser, SendEvent*
-- **Why**: Verify user data was properly ingested
-- **Test**: Retrieve profile using user_id from step 1
-- **Input**: Use `user_id` from IdentifyUser
-- **Output to Reuse**: `amplitude_id`, `cohorts` list
-- **Expected**: Returns user properties, cohorts, last_event_time
+4. **UpdateUserProperties** - Update user properties without sending events
+   - *Purpose*: Modify user attributes (plan, country, etc.)
+   - *Input*: user_id from Phase 1
+   - *Output*: Confirmation of property updates
+   - *Reuse*: Updated user properties for profile retrieval
 
-**5. UpdateUserProperties** ✓ *Depends on: IdentifyUser*
-- **Why**: Modify user attributes without sending events
-- **Test**: Update user properties (set, add, append operations)
-- **Input**: Use `user_id` from IdentifyUser
-- **Expected**: Code 200, num_processed = 1
-
----
-
-#### **Phase 3: Cohort Management (Create → Read → Update)**
-
-**6. CreateCohort** ✓ *Depends on: IdentifyUser*
-- **Why**: Create a cohort with identified users
-- **Test**: Create cohort with user_id from step 1
-- **Input**: Use `user_id` from IdentifyUser
-- **Output to Reuse**: `cohort_id` for all subsequent cohort operations
-- **Expected**: Returns cohort_id, name, message
-
-**7. ListCohorts** ✓ *Depends on: CreateCohort*
-- **Why**: Verify cohort was created and list all cohorts
-- **Test**: Retrieve all cohorts
-- **Output to Reuse**: Confirm `cohort_id` from step 6 appears in list
-- **Expected**: Array includes newly created cohort
-
-**8. GetCohort** ✓ *Depends on: CreateCohort*
-- **Why**: Export specific cohort data
-- **Test**: Request export of cohort created in step 6
-- **Input**: Use `cohort_id` from CreateCohort
-- **Output to Reuse**: `job_id`, `status`, `result.url`
-- **Expected**: Status = "ready" or "processing", returns download URL
-
-**9. UpdateCohortMembership** ✓ *Depends on: CreateCohort, IdentifyUser*
-- **Why**: Incrementally modify cohort membership
-- **Test**: Add/remove users from cohort
-- **Input**: Use `cohort_id` from CreateCohort, new user_ids
-- **Expected**: Returns added/removed counts
+5. **GetUserProfile** - Retrieve comprehensive user profile
+   - *Purpose*: Verify user properties, cohorts, and metadata
+   - *Input*: user_id from Phase 1
+   - *Output*: User properties, cohorts, last_event_time
+   - *Validation*: Confirm properties updated in step 4
 
 ---
 
-#### **Phase 4: Data Export & Analysis**
+### **Phase 3: Cohort Management**
+These components manage user groupings:
 
-**10. ExportEventData** ✓ *Depends on: SendEvent, BatchUploadEvents*
-- **Why**: Export raw event data for analysis
-- **Test**: Export events from a time range containing sent events
-- **Input**: Use timestamps from SendEvent/BatchUploadEvents
-- **Expected**: Returns gzipped archive with event data
+6. **CreateCohort** - Create a new cohort with user identifiers
+   - *Purpose*: Group users for segmentation
+   - *Input*: user_ids from Phase 1 (and additional test users)
+   - *Output*: cohort_id
+   - *Reuse*: cohort_id for subsequent cohort operations
 
----
+7. **ListCohorts** - Retrieve all available cohorts
+   - *Purpose*: Verify cohort creation and list all cohorts
+   - *Output*: List of cohorts including the one created in step 6
+   - *Validation*: Confirm newly created cohort appears in list
 
-#### **Phase 5: Triggers (Monitoring - Run in Parallel)**
+8. **GetCohort** - Export a specific cohort
+   - *Purpose*: Retrieve cohort data in CSV/JSON format
+   - *Input*: cohort_id from step 6
+   - *Output*: job_id, status, result URL
+   - *Reuse*: cohort_id for membership updates
 
-**11. NewEventReceived** ⏱️ *Trigger - Monitor*
-- **Why**: Verify event ingestion is detected
-- **Test**: Set up trigger, then run SendEvent/BatchUploadEvents
-- **Expected**: Trigger fires when new events arrive
-
-**12. UserPropertyChanged** ⏱️ *Trigger - Monitor*
-- **Why**: Verify property updates are detected
-- **Test**: Set up trigger, then run UpdateUserProperties
-- **Expected**: Trigger fires when user properties change
-
-**13. CohortUpdated** ⏱️ *Trigger - Monitor*
-- **Why**: Verify cohort changes are detected
-- **Test**: Set up trigger, then run CreateCohort/UpdateCohortMembership
-- **Expected**: Trigger fires on cohort creation/update/deletion
-
----
-
-### **Test Data Reuse Strategy**
-
-| Component | Produces | Used By |
-|-----------|----------|---------|
-| IdentifyUser | user_id, device_id | SendEvent, BatchUploadEvents, GetUserProfile, UpdateUserProperties, CreateCohort |
-| SendEvent | event_id, insert_id | GetUserProfile, ExportEventData, NewEventReceived |
-| CreateCohort | cohort_id | ListCohorts, GetCohort, UpdateCohortMembership, CohortUpdated |
-| GetUserProfile | amplitude_id, cohorts | Validation only |
+9. **UpdateCohortMembership** - Add/remove users from cohort
+   - *Purpose*: Incrementally modify cohort membership
+   - *Input*: cohort_id from step 6, user_ids to add/remove
+   - *Output*: added/removed counts
+   - *Validation*: Verify membership changes via GetCohort
 
 ---
 
-### **Key Testing Principles Applied**
+### **Phase 4: Data Export & Analytics**
+These components retrieve and analyze data:
 
-✅ **Dependencies First**: User identification → Events → Profiles → Cohorts → Exports  
-✅ **Data Reuse**: Each test output feeds into dependent tests  
-✅ **Natural Workflow**: Mimics real Amplitude usage (identify → track → analyze → segment)  
-✅ **Trigger Monitoring**: Async triggers tested after their triggering actions  
-✅ **Efficiency**: Batch operations tested alongside single operations
+10. **ExportEventData** - Export raw event data for time range
+    - *Purpose*: Retrieve historical event data
+    - *Input*: Time range covering events from Phase 1
+    - *Output*: Gzipped archive of events
+    - *Validation*: Confirm events sent in Phase 1 are included
+
+---
+
+### **Phase 5: Event Triggers (Monitoring)**
+These are trigger/listener components for real-time monitoring:
+
+11. **NewEventReceived** - Trigger on new events
+    - *Purpose*: Monitor incoming events in real-time
+    - *Input*: project_id
+    - *Trigger*: Fires when events from Phase 1-2 arrive
+    - *Output*: event_id, event_type, user_id, event_properties
+
+12. **UserPropertyChanged** - Trigger on user property updates
+    - *Purpose*: Monitor user property changes
+    - *Trigger*: Fires when properties updated in Phase 2
+    - *Output*: user_id, updated user_properties
+
+13. **CohortUpdated** - Trigger on cohort changes
+    - *Purpose*: Monitor cohort creation/updates
+    - *Trigger*: Fires when cohorts created/modified in Phase 3
+    - *Output*: cohort_id, name, size, event_type (created/updated/deleted)
+
+---
+
+## **Test Data Reuse Strategy**
+
+| Component | Creates | Outputs | Used By |
+|-----------|---------|---------|---------|
+| IdentifyUser | User identity | user_id | SendEvent, BatchUploadEvents, UpdateUserProperties, GetUserProfile, CreateCohort |
+| SendEvent | Event record | event_type | BatchUploadEvents, ExportEventData, NewEventReceived |
+| CreateCohort | Cohort | cohort_id | ListCohorts, GetCohort, UpdateCohortMembership |
+| UpdateUserProperties | Property updates | - | GetUserProfile, UserPropertyChanged |
+
+---
+
+## **Key Testing Principles Applied**
+
+✅ **Dependencies First**: User creation → Events → Properties → Cohorts → Export  
+✅ **Data Reuse**: Each test output feeds into subsequent tests  
+✅ **Natural Workflow**: Mimics real Amplitude usage (identify → track → segment → analyze)  
+✅ **Trigger Validation**: Monitoring components verify earlier operations succeeded
