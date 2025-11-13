@@ -26,7 +26,7 @@ module.exports = {
 
         // Need either companyId or domain
         if (!companyId && !domain) {
-            throw new Error('Either companyId or domain is required');
+            throw new Error('Either Company ID or domain is required!');
         }
 
         const { auth } = context;
@@ -56,7 +56,7 @@ module.exports = {
             if (searchData.results && searchData.results.length > 0) {
                 effectiveCompanyId = searchData.results[0].id;
             } else {
-                throw new Error(`Company with domain "${domain}" not found`);
+                throw new Error(`Company with domain "${domain}" not found!`);
             }
         }
 
@@ -83,7 +83,7 @@ module.exports = {
 
         // Remove undefined/null properties
         Object.keys(inputProperties).forEach(property => {
-            if (!inputProperties[property]) {
+            if (inputProperties[property] === undefined || inputProperties[property] === null) {
                 delete inputProperties[property];
             }
         });

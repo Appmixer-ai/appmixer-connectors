@@ -23,7 +23,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!domain) {
-            throw new Error('Company domain is required');
+            throw new Error('Company domain is required!');
         }
 
         const { auth } = context;
@@ -39,7 +39,7 @@ module.exports = {
         /* eslint-disable camelcase */
         const payload = {
             properties: {
-                domain: domain,
+                domain,
                 name: name || clearbit_company_name || '',
                 clearbit_company_name: clearbit_company_name || name || '',
                 numberofemployees: numberofemployees || '',
