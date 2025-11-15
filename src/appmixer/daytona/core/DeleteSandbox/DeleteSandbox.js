@@ -12,7 +12,7 @@ module.exports = {
 
         await context.httpRequest({
             method: 'DELETE',
-            url: `https://api.daytona.io/sandbox/${sandboxId}`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

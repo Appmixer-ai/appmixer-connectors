@@ -30,9 +30,9 @@ module.exports = {
             }
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.daytona.io/sandbox',
+            url: 'https://app.daytona.io/api/sandbox',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
@@ -41,12 +41,12 @@ module.exports = {
         });
 
         return context.sendJson({
-            id: data.id,
-            name: data.name,
-            language: data.language,
-            image: data.image,
-            status: data.status,
-            createdAt: data.created_at || data.createdAt
+            id: response.data.id,
+            name: response.data.name,
+            language: response.data.language,
+            image: response.data.image,
+            status: response.data.status,
+            createdAt: response.data.created_at || response.data.createdAt
         }, 'out');
     }
 };

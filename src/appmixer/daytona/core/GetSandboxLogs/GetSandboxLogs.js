@@ -15,9 +15,9 @@ module.exports = {
             params.tail = tail;
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: `https://api.daytona.io/sandbox/${sandboxId}/logs`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}/logs`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

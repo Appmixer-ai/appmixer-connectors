@@ -10,14 +10,16 @@ module.exports = {
             throw new context.CancelError('Sandbox ID is required!');
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: `https://api.daytona.io/sandbox/${sandboxId}`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
             }
         });
+
+        const data = response.data;
 
         return context.sendJson({
             id: data.id,

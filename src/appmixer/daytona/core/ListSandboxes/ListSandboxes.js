@@ -21,15 +21,12 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, outputPortSchema, { label: 'Sandboxes', value: 'sandboxes' });
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.daytona.io/sandbox',
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json'
-            }
+            url: 'https://app.daytona.io/api/sandbox'
         });
 
+        const data = response.data;
         const sandboxes = (data.sandboxes || data || []).map(sandbox => ({
             id: sandbox.id,
             name: sandbox.name,

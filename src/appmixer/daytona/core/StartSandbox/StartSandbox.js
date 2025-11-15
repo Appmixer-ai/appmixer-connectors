@@ -12,7 +12,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `https://api.daytona.io/sandbox/${sandboxId}/start`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}/start`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

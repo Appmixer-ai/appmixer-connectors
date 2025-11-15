@@ -29,7 +29,7 @@ module.exports = {
             // Validate by attempting to list sandboxes
             const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.daytona.io/sandbox',
+                url: 'https://app.daytona.io/api/api-keys/current',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`,
                     'Content-Type': 'application/json'

@@ -16,7 +16,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.daytona.io/sandbox/${sandboxId}/files`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}/files`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

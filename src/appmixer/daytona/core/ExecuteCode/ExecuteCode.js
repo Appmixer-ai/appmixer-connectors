@@ -22,9 +22,9 @@ module.exports = {
             requestBody.timeout = timeout;
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
-            url: `https://api.daytona.io/sandbox/${sandboxId}/exec`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}/exec`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

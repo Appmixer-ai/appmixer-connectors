@@ -18,9 +18,9 @@ module.exports = {
             throw new context.CancelError('Content is required!');
         }
 
-        const { data } = await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
-            url: `https://api.daytona.io/sandbox/${sandboxId}/files`,
+            url: `https://app.daytona.io/api/sandbox/${sandboxId}/files`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
@@ -32,8 +32,8 @@ module.exports = {
         });
 
         return context.sendJson({
-            path: data.path || path,
-            size: data.size || content.length
+            path: response.data.path || path,
+            size: response.data.size || content.length
         }, 'out');
     }
 };
