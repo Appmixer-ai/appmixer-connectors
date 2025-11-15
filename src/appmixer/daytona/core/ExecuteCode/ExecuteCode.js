@@ -22,7 +22,7 @@ module.exports = {
             requestBody.timeout = timeout;
         }
 
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'POST',
             url: `https://app.daytona.io/api/sandbox/${sandboxId}/exec`,
             headers: {
@@ -33,11 +33,11 @@ module.exports = {
         });
 
         return context.sendJson({
-            result: data.result || data.stdout || '',
-            exitCode: data.exit_code || data.exitCode || 0,
-            stdout: data.stdout || '',
-            stderr: data.stderr || '',
-            executionTime: data.execution_time || data.executionTime
+            result: data && (data.result || data.stdout) || '',
+            exitCode: data && (data.exit_code || data.exitCode) || 0,
+            stdout: data && data.stdout || '',
+            stderr: data && data.stderr || '',
+            executionTime: data && (data.execution_time || data.executionTime) || null
         }, 'out');
     }
 };

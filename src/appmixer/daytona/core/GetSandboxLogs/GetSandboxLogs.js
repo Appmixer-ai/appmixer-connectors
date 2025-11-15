@@ -15,7 +15,7 @@ module.exports = {
             params.tail = tail;
         }
 
-        const response = await context.httpRequest({
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://app.daytona.io/api/sandbox/${sandboxId}/logs`,
             headers: {
@@ -26,8 +26,8 @@ module.exports = {
         });
 
         return context.sendJson({
-            logs: data.logs || data.content || '',
-            timestamp: data.timestamp || new Date().toISOString()
+            logs: data && (data.logs || data.content) || '',
+            timestamp: data && (data.timestamp || new Date().toISOString()) || new Date().toISOString()
         }, 'out');
     }
 };
