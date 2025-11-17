@@ -1,16 +1,6 @@
 const { Transform } = require('stream');
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
 
 module.exports = {
-
-    splitText(text, chunkSize, chunkOverlap) {
-
-        const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize,
-            chunkOverlap
-        });
-        return splitter.splitText(text);
-    },
 
     /**
     * Splits a readable stream into chunks of n bytes.
