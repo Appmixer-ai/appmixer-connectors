@@ -28,9 +28,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src/appmixer/**/node_modules
+          # TODO: also cache package-lock.json files?
           key: ${{ runner.os }}-connector-npm-${{ hashFiles('src/appmixer/**/package.json') }}
       - name: Install connector dependencies
-        run: ./scripts/npm_install.sh
+        run: node ./scripts/npm_install.js
       - name: Run unit tests and coverage
         run: npm run test-unit-coverage
       - name: SonarQube Scan
