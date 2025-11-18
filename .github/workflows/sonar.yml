@@ -5,11 +5,13 @@ on:
   push:
     branches:
       - dev
-      # - sonar*
+      - sonar*
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   sonarqube:
-    if: github.event.repository.fork == false
+    # if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +34,7 @@ jobs:
       - name: Run unit tests and coverage
         run: npm run test-unit-coverage
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        uses: SonarSource/sonarqube-scan-action@v6
         with:
           args: >
             -Dsonar.projectKey=clientIO_appmixer-connectors_AY7J_O6GZsPR2eThxIf0
@@ -45,4 +47,4 @@ jobs:
             -Dsonar.coverage.exclusions=node_modules/**,test/**,src/appmixer/**/artifacts/test/**
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          # SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
