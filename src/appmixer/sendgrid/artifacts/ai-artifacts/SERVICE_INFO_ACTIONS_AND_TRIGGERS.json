@@ -1,0 +1,666 @@
+{
+    "actions": [
+        {
+            "title": "Send Email",
+            "description": "Send a transactional email via SendGrid. Supports multiple recipients (To/CC/BCC), plain text and HTML content, attachments (Base64), templates (standard and dynamic), custom headers, categories, custom_args, and scheduled sending (up to 72 hours ahead). Note: the API returns 202 Accepted with no JSON body on success.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send",
+            "endpointUrl": "/v3/mail/send",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "POST",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "from",
+                    "subject",
+                    "content",
+                    "personalizations"
+                ],
+                "properties": {
+                    "personalizations": {
+                        "type": "array",
+                        "description": "Array of personalization objects. Each personalization defines the recipients and optional per-recipient substitutions.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "to": {
+                                    "type": "array",
+                                    "description": "Primary recipients.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "description": "Recipient email address."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "Recipient display name."
+                                            }
+                                        },
+                                        "required": [
+                                            "email"
+                                        ]
+                                    }
+                                },
+                                "cc": {
+                                    "type": "array",
+                                    "description": "CC recipients.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "description": "CC recipient email address."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "CC recipient display name."
+                                            }
+                                        },
+                                        "required": [
+                                            "email"
+                                        ]
+                                    }
+                                },
+                                "bcc": {
+                                    "type": "array",
+                                    "description": "BCC recipients.",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "email": {
+                                                "type": "string",
+                                                "description": "BCC recipient email address."
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "description": "BCC recipient display name."
+                                            }
+                                        },
+                                        "required": [
+                                            "email"
+                                        ]
+                                    }
+                                },
+                                "subject": {
+                                    "type": "string",
+                                    "description": "Overrides top-level subject for this personalization only."
+                                },
+                                "headers": {
+                                    "type": "object",
+                                    "description": "Custom headers for this personalization.",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                },
+                                "custom_args": {
+                                    "type": "object",
+                                    "description": "Custom key-value pairs for tracking on this personalization.",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                },
+                                "dynamic_template_data": {
+                                    "type": "object",
+                                    "description": "Data for dynamic templates (Handlebars).",
+                                    "additionalProperties": true
+                                },
+                                "send_at": {
+                                    "type": "integer",
+                                    "description": "UNIX timestamp to schedule send (max 72 hours in future)."
+                                }
+                            },
+                            "required": [
+                                "to"
+                            ]
+                        }
+                    },
+                    "from": {
+                        "type": "object",
+                        "description": "Sender identity.",
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "description": "Sender email address."
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Sender display name."
+                            }
+                        },
+                        "required": [
+                            "email"
+                        ]
+                    },
+                    "reply_to": {
+                        "type": "object",
+                        "description": "Reply-To address.",
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "description": "Reply-To email address."
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Reply-To display name."
+                            }
+                        }
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Email subject line."
+                    },
+                    "content": {
+                        "type": "array",
+                        "description": "Message body parts. At least one item required.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "string",
+                                    "description": "MIME type (e.g., text/plain, text/html)."
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "description": "Content value for the given MIME type."
+                                }
+                            },
+                            "required": [
+                                "type",
+                                "value"
+                            ]
+                        },
+                        "minItems": 1
+                    },
+                    "attachments": {
+                        "type": "array",
+                        "description": "File attachments (Base64-encoded).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "content": {
+                                    "type": "string",
+                                    "description": "Base64-encoded file content."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "MIME type of the attachment."
+                                },
+                                "filename": {
+                                    "type": "string",
+                                    "description": "Filename including extension."
+                                },
+                                "disposition": {
+                                    "type": "string",
+                                    "description": "inline or attachment."
+                                },
+                                "content_id": {
+                                    "type": "string",
+                                    "description": "CID for inline attachments."
+                                }
+                            },
+                            "required": [
+                                "content",
+                                "filename"
+                            ]
+                        }
+                    },
+                    "template_id": {
+                        "type": "string",
+                        "description": "Template ID (dynamic templates start with 'd-')."
+                    },
+                    "categories": {
+                        "type": "array",
+                        "description": "Categories for analytics and grouping.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "custom_args": {
+                        "type": "object",
+                        "description": "Custom key-value pairs for tracking.",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "send_at": {
+                        "type": "integer",
+                        "description": "UNIX timestamp for scheduled sending (<= 72 hours)."
+                    },
+                    "batch_id": {
+                        "type": "string",
+                        "description": "Batch identifier for bulk emails."
+                    },
+                    "mail_settings": {
+                        "type": "object",
+                        "description": "Advanced mail settings (e.g., sandbox_mode).",
+                        "properties": {
+                            "sandbox_mode": {
+                                "type": "object",
+                                "description": "Enable sandbox mode for testing.",
+                                "properties": {
+                                    "enable": {
+                                        "type": "boolean",
+                                        "description": "If true, email is not actually sent."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "tracking_settings": {
+                        "type": "object",
+                        "description": "Tracking settings (click/open tracking).",
+                        "properties": {
+                            "click_tracking": {
+                                "type": "object",
+                                "properties": {
+                                    "enable": {
+                                        "type": "boolean"
+                                    },
+                                    "enable_text": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            },
+                            "open_tracking": {
+                                "type": "object",
+                                "properties": {
+                                    "enable": {
+                                        "type": "boolean"
+                                    },
+                                    "substitution_tag": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "subscription_tracking": {
+                                "type": "object",
+                                "properties": {
+                                    "enable": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create or Update Contact",
+            "description": "Create or update a contact in Marketing Campaigns. Returns a job_id indicating an async import operation. You can optionally add the contact to lists and set custom fields.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/contacts/add-or-update-a-contact",
+            "endpointUrl": "/v3/marketing/contacts",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "PUT",
+            "sampleResponse": {
+                "job_id": "c3f2b8a7-2e6e-4d2f-8d6e-1a2b3c4d5e6f"
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "contacts"
+                ],
+                "properties": {
+                    "list_ids": {
+                        "type": "array",
+                        "description": "IDs of lists to add the contact(s) to.",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "contacts": {
+                        "type": "array",
+                        "description": "Array of contact objects to upsert.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "email"
+                            ],
+                            "properties": {
+                                "email": {
+                                    "type": "string",
+                                    "description": "Contact email address."
+                                },
+                                "first_name": {
+                                    "type": "string",
+                                    "description": "First name."
+                                },
+                                "last_name": {
+                                    "type": "string",
+                                    "description": "Last name."
+                                },
+                                "address_line_1": {
+                                    "type": "string",
+                                    "description": "Address line 1."
+                                },
+                                "address_line_2": {
+                                    "type": "string",
+                                    "description": "Address line 2."
+                                },
+                                "city": {
+                                    "type": "string",
+                                    "description": "City."
+                                },
+                                "state_province_region": {
+                                    "type": "string",
+                                    "description": "State/Province/Region."
+                                },
+                                "postal_code": {
+                                    "type": "string",
+                                    "description": "Postal/ZIP code."
+                                },
+                                "country": {
+                                    "type": "string",
+                                    "description": "Country."
+                                },
+                                "custom_fields": {
+                                    "type": "object",
+                                    "description": "Custom field values keyed by custom field ID.",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Contacts",
+            "description": "Retrieve contacts from Marketing Campaigns. This component should NOT expose limit/offset inputs. It should internally request the maximum allowed page size (up to 500) and return the items from the first page. Returns a maximum of 500 records per call.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/contacts/get-all-contacts",
+            "endpointUrl": "/v3/marketing/contacts",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "GET",
+            "sampleResponse": {
+                "result": [
+                    {
+                        "id": "f1c2d3e4-5678-1234-9abc-def012345678",
+                        "email": "jane.doe@example.com",
+                        "first_name": "Jane",
+                        "last_name": "Doe",
+                        "created_at": "2023-10-10T12:34:56Z",
+                        "updated_at": "2023-10-12T09:10:11Z",
+                        "custom_fields": {},
+                        "list_ids": [
+                            "a1b2c3d4"
+                        ]
+                    }
+                ],
+                "contact_count": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Optional search expression (if supported). If provided, it is applied server-side."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "result"
+            }
+        },
+        {
+            "title": "Get Contact",
+            "description": "Retrieve a specific contact by ID.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/contacts/get-a-contact",
+            "endpointUrl": "/v3/marketing/contacts/{contact_id}",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "f1c2d3e4-5678-1234-9abc-def012345678",
+                "email": "jane.doe@example.com",
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "created_at": "2023-10-10T12:34:56Z",
+                "updated_at": "2023-10-12T09:10:11Z",
+                "custom_fields": {},
+                "list_ids": [
+                    "a1b2c3d4"
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "contact_id"
+                ],
+                "properties": {
+                    "contact_id": {
+                        "type": "string",
+                        "description": "The unique identifier of the contact."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Search Contacts",
+            "description": "Search contacts using the Marketing Contacts Search API with an advanced query string.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/contacts/search-contacts",
+            "endpointUrl": "/v3/marketing/contacts/search",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "POST",
+            "sampleResponse": {
+                "result": [
+                    {
+                        "id": "f1c2d3e4-5678-1234-9abc-def012345678",
+                        "email": "john.smith@example.com",
+                        "first_name": "John",
+                        "last_name": "Smith",
+                        "custom_fields": {}
+                    }
+                ],
+                "contact_count": 1
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "query"
+                ],
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Search query string (e.g., 'email LIKE \"*@example.com\" AND last_name=\"Doe\"')."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "result"
+            }
+        },
+        {
+            "title": "Delete Contacts",
+            "description": "Delete one or more contacts by ID. This operation is asynchronous and typically returns a job_id.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/contacts/delete-contacts",
+            "endpointUrl": "/v3/marketing/contacts",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "DELETE",
+            "sampleResponse": {
+                "job_id": "9b8a76cd-4321-4e5f-9ab0-1234567890ab"
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "ids"
+                ],
+                "properties": {
+                    "ids": {
+                        "type": "array",
+                        "description": "Array of contact IDs to delete.",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Template",
+            "description": "Create a new transactional email template. Supports dynamic or legacy generation types.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/transactional-templates/create-a-template",
+            "endpointUrl": "/v3/templates",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "POST",
+            "sampleResponse": {
+                "id": "d-1234567890abcdef1234567890abcdef",
+                "name": "Order Confirmation",
+                "generation": "dynamic",
+                "versions": []
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Template name."
+                    },
+                    "generation": {
+                        "type": "string",
+                        "description": "Template generation type.",
+                        "enum": [
+                            "dynamic",
+                            "legacy"
+                        ]
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Templates",
+            "description": "Retrieve all transactional templates. Do not expose pagination inputs in the component; request maximum page size internally. Returns a maximum of one page per call.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/transactional-templates/retrieve-templates",
+            "endpointUrl": "/v3/templates",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "GET",
+            "sampleResponse": {
+                "templates": [
+                    {
+                        "id": "d-1234567890abcdef1234567890abcdef",
+                        "name": "Order Confirmation",
+                        "generation": "dynamic",
+                        "versions": []
+                    },
+                    {
+                        "id": "d-abcdefabcdefabcdefabcdefabcdefab",
+                        "name": "Password Reset",
+                        "generation": "dynamic",
+                        "versions": []
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "generations": {
+                        "type": "string",
+                        "description": "Optional filter by generation (dynamic or legacy)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "templates"
+            }
+        },
+        {
+            "title": "Get Template",
+            "description": "Retrieve a specific transactional template by its ID.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/transactional-templates/retrieve-a-single-template",
+            "endpointUrl": "/v3/templates/{template_id}",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "GET",
+            "sampleResponse": {
+                "id": "d-1234567890abcdef1234567890abcdef",
+                "name": "Order Confirmation",
+                "generation": "dynamic",
+                "versions": []
+            },
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "template_id"
+                ],
+                "properties": {
+                    "template_id": {
+                        "type": "string",
+                        "description": "Template ID (dynamic templates start with 'd-')."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Template",
+            "description": "Delete a transactional template by ID. This action is irreversible.",
+            "type": "action",
+            "documentation": "https://www.twilio.com/docs/sendgrid/api-reference/transactional-templates/delete-a-template",
+            "endpointUrl": "/v3/templates/{template_id}",
+            "apiBaseUrl": "https://api.sendgrid.com",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "required": [
+                    "template_id"
+                ],
+                "properties": {
+                    "template_id": {
+                        "type": "string",
+                        "description": "Template ID to delete."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "",
+        "tokenUrl": "",
+        "profileInfoUrl": "https://api.sendgrid.com/v3/user/profile"
+    },
+    "serviceJson": {
+        "name": "appmixer.sendgrid",
+        "label": "SendGrid",
+        "category": "applications",
+        "description": "Twilio SendGrid API for sending transactional emails, managing contacts, and working with templates. Use Bearer API Key authentication. Global base URL: https://api.sendgrid.com (EU: https://api.eu.sendgrid.com).",
+        "version": "1.0.0",
+        "icon": "https://cdn.worldvectorlogo.com/logos/sendgrid-1.svg"
+    }
+}
