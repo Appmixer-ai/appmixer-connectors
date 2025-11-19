@@ -15,7 +15,9 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { name, status, tax_category: taxCategory, updated_after: updatedAfter, outputType } = context.messages.in.content;
+        const {
+            name, status, tax_category: taxCategory, updated_after: updatedAfter, outputType
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Products', value: 'products' });
