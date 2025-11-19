@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.ai.openai.Extractor",
+    "name": "appmixer.ai.openai.VariableExtractor",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Extract structured data from inputs using AI.",
+    "description": "Extract values for given variables from inputs using AI.",
     "auth": {
         "service": "appmixer:ai:openai"
     },
@@ -13,11 +13,12 @@
                 "file": { "type": "string" },
                 "text": { "type": "string" },
                 "model": { "type": "string" },
-                "outputVariables": { }
+                "outputVariables": {}
             },
+            "required": ["outputVariables"],
             "anyOf": [
-                { "required": ["text", "outputVariables"] },
-                { "required": ["file", "outputVariables"] }
+                { "required": ["text"] },
+                { "required": ["file"] }
             ]
         },
         "inspector": {
@@ -87,13 +88,14 @@
     "outPorts": [{
         "name": "out",
         "source": {
-            "url": "/component/appmixer/ai/openai/Extractor?outPort=out",
+            "url": "/component/appmixer/ai/openai/VariableExtractor?outPort=out",
             "data": {
                 "properties": {
                     "generateOutputPortOptions": true
                 },
                 "messages": {
-                    "in/text": "dummy"
+                    "in/text": "dummy",
+                    "in/outputVariables": "inputs/in/outputVariables"
                 }
             }
         }
