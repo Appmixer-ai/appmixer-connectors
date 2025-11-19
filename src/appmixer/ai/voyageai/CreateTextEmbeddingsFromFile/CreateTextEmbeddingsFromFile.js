@@ -1,7 +1,7 @@
 'use strict';
 
 const { Transform } = require('stream');
-const { RecursiveCharacterTextSplitter } = require('langchain/text_splitter');
+const { RecursiveCharacterTextSplitter } = require('@langchain/textsplitters');
 
 // See https://docs.voyageai.com/reference/embeddings-api
 const MAX_INPUT_LENGTH = 8192 * 4; // max 8192 tokens, 1 token ~ 4 characters.

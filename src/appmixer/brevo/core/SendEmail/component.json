@@ -17,6 +17,183 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "templateId": {
+                        "type": "number"
+                    },
+                    "params": {
+                        "type": [
+                            "array",
+                            "object",
+                            "string"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "valueType": {
+                                    "type": "string",
+                                    "enum": [
+                                        "text",
+                                        "number",
+                                        "boolean",
+                                        "json"
+                                    ]
+                                },
+                                "valueText": {
+                                    "type": "string"
+                                },
+                                "valueNumber": {
+                                    "type": "number"
+                                },
+                                "valueBoolean": {
+                                    "type": "boolean"
+                                },
+                                "valueJson": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "key",
+                                "valueType"
+                            ],
+                            "allOf": [
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "valueType": {
+                                                "const": "text"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "required": [
+                                            "valueText"
+                                        ],
+                                        "not": {
+                                            "anyOf": [
+                                                {
+                                                    "required": [
+                                                        "valueNumber"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueBoolean"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueJson"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "valueType": {
+                                                "const": "number"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "required": [
+                                            "valueNumber"
+                                        ],
+                                        "not": {
+                                            "anyOf": [
+                                                {
+                                                    "required": [
+                                                        "valueText"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueBoolean"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueJson"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "valueType": {
+                                                "const": "boolean"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "required": [
+                                            "valueBoolean"
+                                        ],
+                                        "not": {
+                                            "anyOf": [
+                                                {
+                                                    "required": [
+                                                        "valueText"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueNumber"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueJson"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                {
+                                    "if": {
+                                        "properties": {
+                                            "valueType": {
+                                                "const": "json"
+                                            }
+                                        }
+                                    },
+                                    "then": {
+                                        "required": [
+                                            "valueJson"
+                                        ],
+                                        "not": {
+                                            "anyOf": [
+                                                {
+                                                    "required": [
+                                                        "valueText"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueNumber"
+                                                    ]
+                                                },
+                                                {
+                                                    "required": [
+                                                        "valueBoolean"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
                     "to": {
                         "type": "object",
                         "properties": {
@@ -73,11 +250,21 @@
                     }
                 },
                 "required": [
-                    "senderEmail", "subject", "replyToEmail"
+                    "senderEmail",
+                    "subject",
+                    "replyToEmail"
                 ],
                 "oneOf": [
-                    { "required": ["htmlContent"] },
-                    { "required": ["textContent"] }
+                    {
+                        "required": [
+                            "htmlContent"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "textContent"
+                        ]
+                    }
                 ]
             },
             "inspector": {
@@ -87,7 +274,9 @@
                         "tooltip": "Recipients",
                         "label": "To",
                         "index": 0,
-                        "levels": ["ADD"],
+                        "levels": [
+                            "ADD"
+                        ],
                         "fields": {
                             "email": {
                                 "type": "text",
@@ -141,7 +330,9 @@
                         "type": "expression",
                         "label": "CC",
                         "index": 8,
-                        "levels": ["ADD"],
+                        "levels": [
+                            "ADD"
+                        ],
                         "fields": {
                             "email": {
                                 "type": "text",
@@ -158,7 +349,9 @@
                         "type": "expression",
                         "label": "BCC",
                         "index": 9,
-                        "levels": ["ADD"],
+                        "levels": [
+                            "ADD"
+                        ],
                         "fields": {
                             "email": {
                                 "type": "text",
@@ -170,6 +363,88 @@
                             }
                         },
                         "tooltip": "List of email addresses and names of the recipients in bcc."
+                    },
+                    "params": {
+                        "type": "expression",
+                        "label": "Template Params",
+                        "tooltip": "Add key/value pairs to populate Brevo template variables",
+                        "index": 10,
+                        "levels": [
+                            "ADD"
+                        ],
+                        "fields": {
+                            "key": {
+                                "type": "text",
+                                "label": "Key",
+                                "required": true
+                            },
+                            "valueType": {
+                                "type": "select",
+                                "label": "Value Type",
+                                "required": true,
+                                "options": [
+                                    {
+                                        "content": "Text",
+                                        "value": "text"
+                                    },
+                                    {
+                                        "content": "Number",
+                                        "value": "number"
+                                    },
+                                    {
+                                        "content": "Boolean",
+                                        "value": "boolean"
+                                    },
+                                    {
+                                        "content": "JSON",
+                                        "value": "json"
+                                    }
+                                ]
+                            },
+                            "valueText": {
+                                "type": "text",
+                                "label": "Text Value",
+                                "when": {
+                                    "eq": {
+                                        "./valueType": "text"
+                                    }
+                                }
+                            },
+                            "valueNumber": {
+                                "type": "number",
+                                "label": "Number Value",
+                                "when": {
+                                    "eq": {
+                                        "./valueType": "number"
+                                    }
+                                }
+                            },
+                            "valueBoolean": {
+                                "type": "toggle",
+                                "label": "Boolean Value",
+                                "when": {
+                                    "eq": {
+                                        "./valueType": "boolean"
+                                    }
+                                }
+                            },
+                            "valueJson": {
+                                "type": "textarea",
+                                "label": "JSON Value",
+                                "tooltip": "Paste an object or array. Example: {\"first\":\"Joe\"} or [{\"first\":\"John\"}, {\"second\":\"Doe\"}]",
+                                "when": {
+                                    "eq": {
+                                        "./valueType": "json"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "templateId": {
+                        "type": "number",
+                        "label": "Template ID",
+                        "tooltip": "ID of the Brevo email template to use",
+                        "index": 11
                     }
                 }
             }

@@ -18,11 +18,9 @@ module.exports = {
             'file_dev_resources:read',
             'file_dev_resources:write',
             'file_metadata:read',
-            'file_variables:read',
             'file_versions:read',
             'library_assets:read',
             'library_content:read',
-            'projects:read',
             'team_library_content:read',
             'webhooks:read',
             'webhooks:write'
