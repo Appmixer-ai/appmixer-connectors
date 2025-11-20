@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-const uploadScan = require('../../src/appmixer/wiz/core/UploadScan/UploadScan.js');
+const testUtils = require('../../../../../test/utils.js');
+const uploadScan = require('../../core/UploadScan/UploadScan.js');
 
 describe('wiz.uploadScan', () => {
 
