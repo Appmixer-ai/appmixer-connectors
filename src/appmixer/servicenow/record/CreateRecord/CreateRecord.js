@@ -1,46 +1,49 @@
 /* eslint-disable camelcase */
 'use strict';
 
-const lib = require('../../lib');
+const { getAuthHeaders } = require('../../lib');
 
 module.exports = {
 
     async receive(context) {
 
-        const { sysparm_fields } = context.messages.in.content;
-        const { tableName, generateInspector, generateOutputPortOptions } = context.properties;
+        const {
+            tableName,
+            record,
+            sysparm_display_value,
+            sysparm_exclude_reference_link,
+            sysparm_fields,
+            sysparm_view,
+            sysparm_query_no_domain
+        } = context.messages.in.content;
 
-        if (generateOutputPortOptions) {
-            const columns = await lib.getColumns(context, { tableName });
-            const schema = lib.toOutputScheme(columns, sysparm_fields);
-            return context.sendJson(schema, 'out');
+        let recordJson = {};
+        try {
+            recordJson = JSON.parse(record);
+        } catch (error) {
+            throw new context.CancelError('Invalid record JSON. Details: ' + error.message);
         }
 
-        if (generateInspector) {
-            const columns = await lib.getColumns(context, { tableName });
-            return lib.toInspector(context, {
-                columns,
-                fields: sysparm_fields,
-                schema: {
-                    properties: {
-                        sysparm_fields: { type: 'string' }
-                    },
-                    required: []
-                }
-            });
-        }
-
-        const inputs = context.messages.in.content;
-
-        const { data } = await lib.callEndpoint(context, {
+        const authHeaders = getAuthHeaders(context);
+        const options = {
             method: 'POST',
-            action: `table/${tableName}`,
-            data: inputs,
+            url: `https://${context.auth.instance}.service-now.com/api/now/table/${tableName}`,
+            headers: {
+                'User-Agent': 'Appmixer (info@appmixer.com)',
+                ...authHeaders
+            },
+            data: recordJson,
             params: {
-                // explicitly includes the sys_id param
-                sysparm_fields: sysparm_fields ? `${sysparm_fields},sys_id` : sysparm_fields
+                sysparm_display_value,
+                sysparm_exclude_reference_link,
+                sysparm_fields,
+                sysparm_view,
+                sysparm_query_no_domain
             }
-        });
+        };
+
+        context.log({ step: 'Making request', options });
+        const { data } = await context.httpRequest(options);
 
         return context.sendJson(data?.result, 'out');
     }
