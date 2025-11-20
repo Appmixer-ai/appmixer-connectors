@@ -46,7 +46,7 @@ module.exports = {
             await context.stateAddToSet('documents', { id: uuid(), data: document });
             const entries = await context.stateGet('documents') || [];
 
-            context.log({ step: 'receive', entries: entries.length });
+            await context.log({ step: 'receive', entries: entries.length });
 
             if (!scheduleValue || (threshold && entries.length >= threshold)) {
                 await this.processAllDocuments(context, { threshold });
@@ -137,23 +137,8 @@ module.exports = {
 
             lock = await context.lock('upload_lock_' + context.componentId, getLockConfiguration(context));
             await this.sendDocuments(context, { documents });
-            // Only clear the batch if sendDocuments succeeded
-            await context.stateUnset('documents-upload-batch');
-        } catch (error) {
-            // If sendDocuments failed, restore documents back to the main queue
-            const batchDocuments = await context.stateGet('documents-upload-batch');
-            if (batchDocuments && batchDocuments.length > 0) {
-                const existingDocuments = await context.stateGet('documents') || [];
-                await context.stateSet('documents', [...existingDocuments, ...batchDocuments]);
-                await context.stateUnset('documents-upload-batch');
-                await context.log({
-                    step: 'processSend error recovery',
-                    message: `Restored ${batchDocuments.length} documents back to queue after upload failure.`,
-                    error: error.message
-                });
-            }
-            throw error;
         } finally {
+            await context.stateUnset('documents-upload-batch');
             lock?.unlock();
         }
     },
@@ -181,10 +166,10 @@ module.exports = {
     async sendDocuments(context, { documents }) {
 
         const { integrationId, filename } = await context.stateGet('metadata') || {};
+
         if (!integrationId || !filename) {
             throw new context.CancelError('No metadata found in state. Cannot send documents.');
         }
-
 
         const { url, systemActivityId } = await lib.requestUpload(context, { filename });
 

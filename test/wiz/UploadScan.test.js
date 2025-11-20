@@ -260,41 +260,4 @@ describe('wiz.uploadScan', () => {
             prepareForSendSpy.restore();
         });
     });
-
-    describe('processAllDocuments - send documents failed', () => {
-
-        let sendDocumentsStub;
-
-        beforeEach(() => {
-            context.auth = {
-                url: 'https://api.wiz.io/graphql',
-                token: 'test-token'
-            };
-            context.config = {};
-            sendDocumentsStub = sinon.stub(uploadScan, 'sendDocuments').rejects();
-        });
-
-        afterEach(() => {
-            sendDocumentsStub.restore();
-        });
-
-        it('should restore documents to queue when sendDocuments fails', async () => {
-            const docs = [
-                { id: '1', data: 'doc1' },
-                { id: '2', data: 'doc2' },
-                { id: '3', data: 'doc3' }
-            ];
-            await context.stateSet('documents', docs);
-
-            await assert.rejects(
-                uploadScan.processAllDocuments(context, { threshold: 2 }), { name: 'Error' }
-            );
-
-            // Documents should be restored to the queue
-            const restoredDocs = await context.stateGet('documents');
-
-            assert(restoredDocs, 'Documents should be restored');
-            assert.equal(restoredDocs.length, 3, 'All documents should be restored');
-        });
-    });
 });
