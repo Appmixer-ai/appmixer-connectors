@@ -275,7 +275,7 @@ describe('wiz.uploadScan', () => {
         });
 
         afterEach(() => {
-            sendDocumentsStub.restore()
+            sendDocumentsStub.restore();
         });
 
         it('should restore documents to queue when sendDocuments fails', async () => {
@@ -287,7 +287,7 @@ describe('wiz.uploadScan', () => {
             await context.stateSet('documents', docs);
 
             await assert.rejects(
-                uploadScan.processAllDocuments(context, { threshold: 2 }),         { name: 'Error' }
+                uploadScan.processAllDocuments(context, { threshold: 2 }), { name: 'Error' }
             );
 
             // Documents should be restored to the queue
