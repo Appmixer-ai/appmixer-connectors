@@ -56,7 +56,6 @@ module.exports = {
 
     async processAllDocuments(context, { threshold, timeoutTrigger = false } = {}) {
         const documents = await this.prepareForSend(context, { threshold, timeoutTrigger });
-        console.log(documents);
         await this.processSend(context, { documents });
         const entries = await context.stateGet('documents') || [];
         if (threshold && entries.length >= threshold || timeoutTrigger && entries.length) {
@@ -77,7 +76,6 @@ module.exports = {
 
         if (threshold && !timeoutTrigger && (await context.stateGet('documents') || []).length < threshold) {
             await context.log({ step: 'pre-upload: skipping, not enough documents' });
-            console.log(`F---------------------`, threshold, timeoutTrigger);
             return [];
         }
 
@@ -101,7 +99,10 @@ module.exports = {
             } else {
                 let entries = (await context.stateGet('documents') || []);
 
-                if (threshold && entries.length > threshold) {
+                if (timeoutTrigger) {
+                    await context.stateUnset('documents');
+                    await context.stateSet('documents-upload-batch', entries); // take the last `threshold` entries
+                } else if (threshold && entries.length > threshold) {
                     await context.stateSet('documents', entries.slice(0, -threshold)); // keep all but the last `threshold` entries
                     await context.stateSet('documents-upload-batch', entries.slice(-threshold)); // take the last `threshold` entries
                     entries = entries.slice(-threshold);
@@ -136,13 +137,8 @@ module.exports = {
 
             lock = await context.lock('upload_lock_' + context.componentId, getLockConfiguration(context));
             await this.sendDocuments(context, { documents });
-
-
-
-            console.log('sendDocuments ----', documents.length);
             // Only clear the batch if sendDocuments succeeded
             await context.stateUnset('documents-upload-batch');
-
         } catch (error) {
             // If sendDocuments failed, restore documents back to the main queue
             const batchDocuments = await context.stateGet('documents-upload-batch');
