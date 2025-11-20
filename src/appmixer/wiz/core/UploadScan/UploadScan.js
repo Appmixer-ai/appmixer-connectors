@@ -34,7 +34,7 @@ module.exports = {
             await this.scheduleDrain(context);
             const entries = await context.stateGet('documents') || [];
             if (entries.length > 0) {
-                await this.processAllDocuments(context, { threshold });
+                await this.processAllDocuments(context, { threshold, timeoutTrigger: true });
             }
         } else {
             const { document, filename, integrationId } = context.messages.in.content;
@@ -54,16 +54,17 @@ module.exports = {
         }
     },
 
-    async processAllDocuments(context, { threshold } = {}) {
-        const documents = await this.prepareForSend(context, { threshold });
+    async processAllDocuments(context, { threshold, timeoutTrigger = false } = {}) {
+        const documents = await this.prepareForSend(context, { threshold, timeoutTrigger });
+        console.log(documents);
         await this.processSend(context, { documents });
         const entries = await context.stateGet('documents') || [];
-        if (threshold && entries.length >= threshold) {
-            await this.processAllDocuments(context, { threshold });
+        if (threshold && entries.length >= threshold || timeoutTrigger && entries.length) {
+            await this.processAllDocuments(context, { threshold, timeoutTrigger });
         }
     },
 
-    async prepareForSend(context, { threshold }) {
+    async prepareForSend(context, { threshold, timeoutTrigger = false }) {
 
         const entriesToUpload = await context.stateGet('documents-upload-batch');
         if (entriesToUpload) {
@@ -74,8 +75,9 @@ module.exports = {
             return [];
         }
 
-        if (threshold && (await context.stateGet('documents') || []).length < threshold) {
+        if (threshold && !timeoutTrigger && (await context.stateGet('documents') || []).length < threshold) {
             await context.log({ step: 'pre-upload: skipping, not enough documents' });
+            console.log(`F---------------------`, threshold, timeoutTrigger);
             return [];
         }
 
@@ -132,19 +134,29 @@ module.exports = {
 
         try {
 
-            const { integrationId, filename } = await context.stateGet('metadata') || {};
-            if (!integrationId || !filename) {
-                throw new context.CancelError('No metadata found in state. Cannot send documents.');
-            }
-
             lock = await context.lock('upload_lock_' + context.componentId, getLockConfiguration(context));
-            await this.sendDocuments(context, {
-                documents,
-                filename,
-                integrationId
-            });
+            await this.sendDocuments(context, { documents });
+
+
+
+            console.log('sendDocuments ----', documents.length);
+            // Only clear the batch if sendDocuments succeeded
             await context.stateUnset('documents-upload-batch');
 
+        } catch (error) {
+            // If sendDocuments failed, restore documents back to the main queue
+            const batchDocuments = await context.stateGet('documents-upload-batch');
+            if (batchDocuments && batchDocuments.length > 0) {
+                const existingDocuments = await context.stateGet('documents') || [];
+                await context.stateSet('documents', [...existingDocuments, ...batchDocuments]);
+                await context.stateUnset('documents-upload-batch');
+                await context.log({
+                    step: 'processSend error recovery',
+                    message: `Restored ${batchDocuments.length} documents back to queue after upload failure.`,
+                    error: error.message
+                });
+            }
+            throw error;
         } finally {
             lock?.unlock();
         }
@@ -170,7 +182,13 @@ module.exports = {
         await context.setTimeout({}, diff);
     },
 
-    async sendDocuments(context, { documents, filename, integrationId }) {
+    async sendDocuments(context, { documents }) {
+
+        const { integrationId, filename } = await context.stateGet('metadata') || {};
+        if (!integrationId || !filename) {
+            throw new context.CancelError('No metadata found in state. Cannot send documents.');
+        }
+
 
         const { url, systemActivityId } = await lib.requestUpload(context, { filename });
 
