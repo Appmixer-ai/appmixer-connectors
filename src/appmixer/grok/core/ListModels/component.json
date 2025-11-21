@@ -10,57 +10,55 @@
         "manager": "appmixer:grok",
         "resources": "requests"
     },
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "outputType": {
-                        "type": "string",
-                        "enum": [
-                            "first",
-                            "array",
-                            "object",
-                            "file"
-                        ]
-                    }
-                },
-                "required": [
-                    "outputType"
-                ]
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputType": {
+                    "type": "string",
+                    "enum": [
+                        "first",
+                        "array",
+                        "object",
+                        "file"
+                    ],
+                    "default": "array",
+                    "title": "Output Type"
+                }
             },
-            "inspector": {
-                "inputs": {
-                    "outputType": {
-                        "type": "select",
-                        "label": "Output Type",
-                        "index": 1,
-                        "defaultValue": "array",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
-                        "options": [
-                            {
-                                "label": "First Item Only",
-                                "value": "first"
-                            },
-                            {
-                                "label": "All items at once",
-                                "value": "array"
-                            },
-                            {
-                                "label": "One item at a time",
-                                "value": "object"
-                            },
-                            {
-                                "label": "Store to CSV file",
-                                "value": "file"
-                            }
-                        ]
-                    }
+            "required": [
+                "outputType"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "outputType": {
+                    "type": "select",
+                    "index": 1,
+                    "defaultValue": "array",
+                    "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only, or one item at a time, or stream the items to a file.",
+                    "options": [
+                        {
+                            "label": "First Item Only",
+                            "value": "first"
+                        },
+                        {
+                            "label": "All items at once",
+                            "value": "array"
+                        },
+                        {
+                            "label": "One item at a time",
+                            "value": "object"
+                        },
+                        {
+                            "label": "Store to CSV file",
+                            "value": "file"
+                        }
+                    ]
                 }
             }
         }
-    ],
+    },
     "outPorts": [
         {
             "name": "out",
@@ -68,10 +66,8 @@
                 "url": "/component/appmixer/grok/core/ListModels?outPort=out",
                 "data": {
                     "properties": {
-                        "generateOutputPortOptions": true
-                    },
-                    "messages": {
-                        "in": "messages/in"
+                        "generateOutputPortOptions": true,
+                        "outputType": "properties/outputType"
                     }
                 }
             }

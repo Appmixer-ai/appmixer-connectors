@@ -6,7 +6,7 @@ const schema = { 'b64_json': { 'type': 'string', 'title': 'B64 Json' }, 'revised
 module.exports = {
     async receive(context) {
 
-        const { model, prompt, n, response_format, user, outputType } = context.messages.in.content;
+        const { model, prompt, n, size, response_format, user, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
@@ -36,7 +36,8 @@ module.exports = {
             method: 'POST',
             url: 'https://api.x.ai/v1/images/generations',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
             },
             data: requestData
         });

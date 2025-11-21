@@ -1,7 +1,5 @@
 'use strict';
 
-const lib = require('../../lib');
-
 module.exports = {
 
     async receive(context) {
@@ -60,14 +58,14 @@ module.exports = {
         if (stream && response.data) {
             // For streaming responses, collect the data stream
             let fullResponse = '';
-            
+
             if (typeof response.data === 'string') {
                 fullResponse = response.data;
             } else if (response.data && typeof response.data === 'object') {
                 // If it's an object, convert to JSON string
                 fullResponse = JSON.stringify(response.data);
             }
-            
+
             return context.sendJson(fullResponse, 'out');
         } else {
             // For non-streaming responses, send the data object

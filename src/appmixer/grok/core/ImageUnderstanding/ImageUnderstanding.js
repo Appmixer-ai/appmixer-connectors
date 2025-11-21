@@ -61,7 +61,8 @@ module.exports = {
             method: 'POST',
             url: 'https://api.x.ai/v1/chat/completions',
             headers: {
-                'Authorization': `Bearer ${context.auth.apiKey}`
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json'
             },
             data: requestBody
         });

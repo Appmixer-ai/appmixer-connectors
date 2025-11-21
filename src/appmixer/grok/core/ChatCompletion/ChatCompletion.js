@@ -31,10 +31,26 @@ module.exports = {
             throw new context.CancelError('Messages Content is required!');
         }
 
-        // Build messages array
+        // Build messages array - support both string and structured content (multimodal)
+        let content = messagesContent;
+        if (typeof messagesContent === 'string') {
+            content = messagesContent;
+        } else if (Array.isArray(messagesContent)) {
+            // If it's JSON string, parse it
+            if (typeof messagesContent === 'string') {
+                try {
+                    content = JSON.parse(messagesContent);
+                } catch (err) {
+                    content = messagesContent;
+                }
+            } else {
+                content = messagesContent;
+            }
+        }
+
         const message = {
             role: messagesRole,
-            content: messagesContent
+            content: content
         };
 
         if (messagesName) {
