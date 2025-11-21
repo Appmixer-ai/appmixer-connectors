@@ -17,122 +17,138 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "description": {
+                        "type": "string"
+                    },
                     "currency": {
                         "type": "string"
                     },
                     "amount": {
                         "type": "string"
                     },
-                    "description": {
+                    "redirectUrl": {
                         "type": "string"
                     },
-                    "redirectUrl": {
+                    "cancelUrl": {
                         "type": "string"
                     },
                     "webhookUrl": {
                         "type": "string"
                     },
+                    "locale": {
+                        "type": "string",
+                        "enum": ["en_US", "en_GB", "nl_NL", "nl_BE", "de_DE", "de_AT", "de_CH", "fr_FR", "fr_BE", "es_ES", "ca_ES", "pt_PT", "it_IT", "nb_NO", "sv_SE", "fi_FI", "da_DK", "is_IS", "hu_HU", "pl_PL", "lv_LV", "lt_LT"]
+                    },
                     "method": {
-                        "type": "string"
+                        "type": "string",
+                        "enum": ["alma", "applepay", "bacs", "bancomatpay", "bancontact", "banktransfer", "belfius", "billie", "bizum", "blik", "creditcard", "directdebit", "eps", "giftcard", "ideal", "in3", "kbc", "klarna", "mbway", "mobilepay", "multibanco", "mybank", "paybybank", "payconiq", "paypal", "paysafecard", "pointofsale", "przelewy24", "riverty", "satispay", "swish", "trustly", "twint", "vipps", "voucher"]
                     },
                     "metadata": {
-                        "type": "object"
-                    },
-                    "locale": {
                         "type": "string"
-                    },
-                    "sequenceType": {
-                        "type": "string"
-                    },
-                    "customerId": {
-                        "type": "string"
-                    },
-                    "mandateId": {
-                        "type": "string"
-                    },
-                    "testmode": {
-                        "type": "boolean"
                     }
                 },
                 "required": [
+                    "description",
                     "amount",
                     "currency",
-                    "description"
+                    "redirectUrl"
                 ]
             },
             "inspector": {
                 "inputs": {
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "tooltip": "The description of the payment shown to your customer on their card or bank statement. Maximum 255 characters.",
+                        "index": 1
+                    },
                     "amount": {
                         "type": "text",
-                        "tooltip": "Decimal amount as a string, e.g. \"10.00\".",
                         "label": "Amount",
-                        "index": 0
+                        "tooltip": "The payment amount as a decimal string, e.g. '10.00'",
+                        "index": 2
                     },
                     "currency": {
                         "type": "text",
-                        "tooltip": "Three-letter ISO currency code, e.g. EUR.",
                         "label": "Currency",
-                        "index": 1
-                    },
-                    "description": {
-                        "type": "text",
-                        "tooltip": "A description shown to the customer.",
-                        "label": "Description",
-                        "index": 2
+                        "tooltip": "Three-character ISO 4217 currency code, e.g. 'EUR', 'USD'",
+                        "index": 3
                     },
                     "redirectUrl": {
                         "type": "text",
-                        "tooltip": "Redirect URL after the payment completes.",
                         "label": "Redirect URL",
-                        "index": 3
+                        "tooltip": "The URL your customer will be redirected to after completing the payment",
+                        "index": 4
+                    },
+                    "cancelUrl": {
+                        "type": "text",
+                        "label": "Cancel URL",
+                        "tooltip": "The URL your customer will be redirected to when they cancel the payment",
+                        "index": 5
                     },
                     "webhookUrl": {
                         "type": "text",
-                        "tooltip": "Webhook URL to receive payment status updates.",
                         "label": "Webhook URL",
-                        "index": 4
-                    },
-                    "method": {
-                        "type": "text",
-                        "tooltip": "Preferred payment method, e.g. ideal, creditcard. Leave empty to allow customer choice.",
-                        "label": "Method",
-                        "index": 5
-                    },
-                    "metadata": {
-                        "type": "text",
-                        "tooltip": "Custom metadata (JSON object).",
-                        "label": "Metadata",
+                        "tooltip": "The webhook URL where payment status updates will be sent",
                         "index": 6
                     },
                     "locale": {
-                        "type": "text",
-                        "tooltip": "Locale, e.g. nl_NL, en_US.",
+                        "type": "select",
                         "label": "Locale",
-                        "index": 7
+                        "tooltip": "The language to be used in the hosted payment pages. Setting this improves conversion rates.",
+                        "index": 7,
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            { "label": "English (US)", "value": "en_US" },
+                            { "label": "English (GB)", "value": "en_GB" },
+                            { "label": "Dutch (NL)", "value": "nl_NL" },
+                            { "label": "Dutch (BE)", "value": "nl_BE" },
+                            { "label": "German (DE)", "value": "de_DE" },
+                            { "label": "German (AT)", "value": "de_AT" },
+                            { "label": "German (CH)", "value": "de_CH" },
+                            { "label": "French (FR)", "value": "fr_FR" },
+                            { "label": "French (BE)", "value": "fr_BE" },
+                            { "label": "Spanish (ES)", "value": "es_ES" },
+                            { "label": "Catalan (ES)", "value": "ca_ES" },
+                            { "label": "Portuguese (PT)", "value": "pt_PT" },
+                            { "label": "Italian (IT)", "value": "it_IT" },
+                            { "label": "Norwegian (NO)", "value": "nb_NO" },
+                            { "label": "Swedish (SE)", "value": "sv_SE" },
+                            { "label": "Finnish (FI)", "value": "fi_FI" },
+                            { "label": "Danish (DK)", "value": "da_DK" },
+                            { "label": "Icelandic (IS)", "value": "is_IS" },
+                            { "label": "Hungarian (HU)", "value": "hu_HU" },
+                            { "label": "Polish (PL)", "value": "pl_PL" },
+                            { "label": "Latvian (LV)", "value": "lv_LV" },
+                            { "label": "Lithuanian (LT)", "value": "lt_LT" }
+                        ]
                     },
-                    "sequenceType": {
-                        "type": "text",
-                        "tooltip": "Sequence type: oneoff, first, recurring.",
-                        "label": "Sequence Type",
-                        "index": 8
+                    "method": {
+                        "type": "select",
+                        "label": "Payment Method",
+                        "tooltip": "Choose a specific payment method to skip the payment method selection screen, or leave empty to show all available methods",
+                        "index": 8,
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            { "label": "Credit Card", "value": "creditcard" },
+                            { "label": "PayPal", "value": "paypal" },
+                            { "label": "iDEAL", "value": "ideal" },
+                            { "label": "Bancontact", "value": "bancontact" },
+                            { "label": "Bank Transfer", "value": "banktransfer" },
+                            { "label": "SEPA Direct Debit", "value": "directdebit" },
+                            { "label": "Apple Pay", "value": "applepay" },
+                            { "label": "Klarna Pay Later", "value": "klarna" },
+                            { "label": "Sofort", "value": "directdebit" },
+                            { "label": "Gift Card", "value": "giftcard" },
+                            { "label": "KBC/CBC Payment Button", "value": "kbc" },
+                            { "label": "Belfius Pay Button", "value": "belfius" }
+                        ]
                     },
-                    "customerId": {
+                    "metadata": {
                         "type": "text",
-                        "tooltip": "Customer ID for customer-specific payments (cst_...).",
-                        "label": "Customer ID",
+                        "label": "Metadata",
+                        "tooltip": "Custom data as JSON string that will be saved alongside the payment (optional, max ~1kB)",
                         "index": 9
-                    },
-                    "mandateId": {
-                        "type": "text",
-                        "tooltip": "Mandate ID for recurring payments (mdt_...).",
-                        "label": "Mandate ID",
-                        "index": 10
-                    },
-                    "testmode": {
-                        "type": "toggle",
-                        "tooltip": "Set to true to target test data.",
-                        "label": "Test Mode",
-                        "index": 11
                     }
                 }
             }
@@ -150,7 +166,7 @@
                     }
                 },
                 {
-                    "label": "ID",
+                    "label": "Payment ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -171,7 +187,7 @@
                     }
                 },
                 {
-                    "label": "Amount",
+                    "label": "Payment Amount",
                     "value": "amount",
                     "schema": {
                         "type": "object",

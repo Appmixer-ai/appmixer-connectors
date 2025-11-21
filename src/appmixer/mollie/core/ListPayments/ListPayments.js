@@ -3,31 +3,123 @@
 const lib = require('../../lib');
 
 const schema = {
-    'resource': { 'type': 'string', 'title': 'Resource' },
-    'id': { 'type': 'string', 'title': 'Id' },
-    'amount': {
-        'type': 'object',
-        'properties': {
-            'value': { 'type': 'string', 'title': 'Amount.Value' },
-            'currency': { 'type': 'string', 'title': 'Amount.Currency' }
-        },
-        'title': 'Amount'
+    resource: {
+        type: 'string',
+        title: 'Resource'
     },
-    'description': { 'type': 'string', 'title': 'Description' },
-    'status': { 'type': 'string', 'title': 'Status' },
-    '_links': {
-        'type': 'object',
-        'properties': {
-            'self': {
-                'type': 'object',
-                'properties': {
-                    'href': { 'type': 'string', 'title': 'Links.Self.Href' },
-                    'type': { 'type': 'string', 'title': 'Links.Self.Type' }
-                },
-                'title': 'Links.Self'
+    id: {
+        type: 'string',
+        title: 'Payment ID'
+    },
+    mode: {
+        type: 'string',
+        title: 'Mode'
+    },
+    status: {
+        type: 'string',
+        title: 'Status'
+    },
+    isCancelable: {
+        type: 'boolean',
+        title: 'Is Cancelable'
+    },
+    sequenceType: {
+        type: 'string',
+        title: 'Sequence Type'
+    },
+    amount: {
+        type: 'object',
+        properties: {
+            value: {
+                type: 'string',
+                title: 'Amount.Value'
+            },
+            currency: {
+                type: 'string',
+                title: 'Amount.Currency'
             }
         },
-        'title': 'Links'
+        title: 'Amount'
+    },
+    description: {
+        type: 'string',
+        title: 'Description'
+    },
+    method: {
+        type: 'string',
+        title: 'Method'
+    },
+    metadata: {
+        type: 'null',
+        title: 'Metadata'
+    },
+    details: {
+        type: 'null',
+        title: 'Details'
+    },
+    profileId: {
+        type: 'string',
+        title: 'Profile Id'
+    },
+    redirectUrl: {
+        type: 'string',
+        title: 'Redirect Url'
+    },
+    createdAt: {
+        type: 'string',
+        title: 'Created At'
+    },
+    expiresAt: {
+        type: 'string',
+        title: 'Expires At'
+    },
+    _links: {
+        type: 'object',
+        properties: {
+            self: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Self.Href'
+                    },
+                    type: {
+                        type: 'string',
+                        title: 'Links.Self.Type'
+                    }
+                },
+                title: 'Links.Self'
+            },
+            checkout: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Checkout.Href'
+                    },
+                    type: {
+                        type: 'string',
+                        title: 'Links.Checkout.Type'
+                    }
+                },
+                title: 'Links.Checkout'
+            },
+            dashboard: {
+                type: 'object',
+                properties: {
+                    href: {
+                        type: 'string',
+                        title: 'Links.Dashboard.Href'
+                    },
+                    type: {
+                        type: 'string',
+                        title: 'Links.Dashboard.Type'
+                    }
+                },
+                title: 'Links.Dashboard'
+            }
+        },
+        title: 'Links'
     }
 };
 
@@ -35,38 +127,11 @@ module.exports = {
     async receive(context) {
 
         const {
-            profileId, testmode, status, method, sequenceType, customerId, outputType
+            outputType
         } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'payments', value: 'payments' });
-        }
-
-        // https://docs.mollie.com/reference/v2/payments-api/list-payments
-        const params = {};
-
-        if (profileId) {
-            params.profileId = profileId;
-        }
-
-        if (testmode !== undefined) {
-            params.testmode = testmode;
-        }
-
-        if (status) {
-            params.status = status;
-        }
-
-        if (method) {
-            params.method = method;
-        }
-
-        if (sequenceType) {
-            params.sequenceType = sequenceType;
-        }
-
-        if (customerId) {
-            params.customerId = customerId;
         }
 
         const { data } = await context.httpRequest({
@@ -75,8 +140,7 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/json'
-            },
-            params
+            }
         });
 
         const records = data['_embedded']?.payments || data.payments || [];

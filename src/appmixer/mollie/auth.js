@@ -14,7 +14,7 @@ module.exports = {
         async requestProfileInfo(context) {
             const apiKey = context.apiKey;
             return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
+                key: apiKey.slice(0, 4) + '...' + apiKey.slice(-3)
             };
         },
         accountNameFromProfileInfo: 'key',
