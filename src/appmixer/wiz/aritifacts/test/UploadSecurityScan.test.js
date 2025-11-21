@@ -1,6 +1,6 @@
 const assert = require('assert');
-const testUtils = require('../utils.js');
-const lib = require('../../src/appmixer/wiz/lib');
+const testUtils = require('../../../../../test/utils.js');
+const lib = require('../../lib');
 
 describe('wiz upload security scan status', () => {
 
