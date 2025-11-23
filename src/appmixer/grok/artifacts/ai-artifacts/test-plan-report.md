@@ -159,8 +159,6 @@ Component's state at the end:
 State is empty, component did not store anything into state.
 
 Stopping component.</details>
-
-## 3. StreamingResponse
 ```
 appmixer test component src/appmixer/grok/core/StreamingResponse/ -i '{"in":{"model":"grok-3-latest","role":"user","content":"What is the capital of France?","stream":true,"temperature":0.7,"max_tokens":100}}'
 ```
@@ -193,7 +191,7 @@ State is empty, component did not store anything into state.
 
 Stopping component.</details>
 
-## 4. ReasoningCompletion
+## 3. ReasoningCompletion
 ```
 appmixer test component src/appmixer/grok/core/ReasoningCompletion/ -i '{"in":{"model":"grok-3-mini-latest","messages":[{"role":"user","content":"What is 2+2? Please reason through this step by step."}],"reasoning_effort":"medium","temperature":0.7,"max_tokens":500}}'
 ```
@@ -231,7 +229,7 @@ State is empty, component did not store anything into state.
 
 Stopping component.</details>
 
-## 5. ImageGeneration
+## 4. ImageGeneration
 ```
 appmixer test component src/appmixer/grok/core/ImageGeneration/ -i '{"in":{"model":"grok-2-image-latest","prompt":"A serene landscape with mountains and a lake at sunset","n":1,"size":"1024x1024","response_format":"b64_json","outputType":"array"}}'
 ```
@@ -384,7 +382,7 @@ State is empty, component did not store anything into state.
 
 Stopping component.</details>
 
-## 6. ImageUnderstanding
+## 5. ImageUnderstanding
 ```
 appmixer test component src/appmixer/grok/core/ImageUnderstanding/ -i '{"in":{"model":"grok-2-vision-latest","role":"user","contentType":"image_url","text":"What is in this image? Please describe what you see.","imageUrl":"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1200px-Good_Food_Display_-_NCI_Visuals_Online.jpg","imageDetail":"auto","maxTokens":500}}'
 ```
@@ -579,7 +577,7 @@ State is empty, component did not store anything into state.
 
 Stopping component.</details>
 
-## 7. StructuredOutput
+## 6. StructuredOutput
 ```
 appmixer test component src/appmixer/grok/core/StructuredOutput/ -i '{"in":{"model":"grok-3-latest","role":"user","content":"Extract the name and age from this text: John is 30 years old.","responseFormatType":"json_schema","jsonSchema":{"type":"object","properties":{"name":{"type":"string","description":"The person'\''s name"},"age":{"type":"integer","description":"The person'\''s age"}},"required":["name","age"]},"strict":true,"maxTokens":200}}'
 ```

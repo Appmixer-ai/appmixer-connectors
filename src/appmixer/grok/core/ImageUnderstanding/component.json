@@ -1,6 +1,6 @@
 {
     "name": "appmixer.grok.core.ImageUnderstanding",
-    "description": "Analyze and understand images by sending them as inputs in chat completions (multimodal).",
+    "description": "Analyze and understand images by sending them as inputs in chat completions.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -20,12 +20,6 @@
                     "model": {
                         "type": "string"
                     },
-                    "role": {
-                        "type": "string"
-                    },
-                    "contentType": {
-                        "type": "string"
-                    },
                     "text": {
                         "type": "string"
                     },
@@ -41,8 +35,6 @@
                 },
                 "required": [
                     "model",
-                    "role",
-                    "contentType",
                     "imageUrl"
                 ]
             },
@@ -64,53 +56,17 @@
                         ],
                         "index": 0
                     },
-                    "role": {
-                        "type": "select",
-                        "label": "Role",
-                        "tooltip": "Role of the message sender.",
-                        "options": [
-                            {
-                                "label": "system",
-                                "value": "system"
-                            },
-                            {
-                                "label": "user",
-                                "value": "user"
-                            },
-                            {
-                                "label": "assistant",
-                                "value": "assistant"
-                            }
-                        ],
-                        "index": 1
-                    },
-                    "contentType": {
-                        "type": "select",
-                        "label": "Content Type",
-                        "tooltip": "Type of message content.",
-                        "options": [
-                            {
-                                "label": "text",
-                                "value": "text"
-                            },
-                            {
-                                "label": "image_url",
-                                "value": "image_url"
-                            }
-                        ],
-                        "index": 2
-                    },
                     "text": {
                         "type": "textarea",
                         "label": "Text",
                         "tooltip": "User text prompt or question about the image.",
-                        "index": 3
+                        "index": 1
                     },
                     "imageUrl": {
                         "type": "text",
                         "label": "Image URL",
                         "tooltip": "Public URL or base64 data URL of the image.",
-                        "index": 4
+                        "index": 2
                     },
                     "imageDetail": {
                         "type": "select",
@@ -130,13 +86,13 @@
                                 "value": "auto"
                             }
                         ],
-                        "index": 5
+                        "index": 3
                     },
                     "maxTokens": {
                         "type": "number",
                         "label": "Max Tokens",
                         "tooltip": "Max tokens for the textual response.",
-                        "index": 6
+                        "index": 4
                     }
                 }
             }
@@ -147,7 +103,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Image Understanding ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -196,6 +152,10 @@
                                         "content": {
                                             "type": "string",
                                             "title": "Choices.Message.Content"
+                                        },
+                                        "refusal": {
+                                            "type": "string",
+                                            "title": "Choices.Message.Refusal"
                                         }
                                     },
                                     "title": "Choices.Message"
@@ -225,8 +185,63 @@
                             "total_tokens": {
                                 "type": "number",
                                 "title": "Usage.Total Tokens"
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "text_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Prompt Tokens Details.Text Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Prompt Tokens Details.Audio Tokens"
+                                    },
+                                    "image_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Prompt Tokens Details.Image Tokens"
+                                    },
+                                    "cached_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Prompt Tokens Details.Cached Tokens"
+                                    }
+                                },
+                                "title": "Usage.Prompt Tokens Details"
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Completion Tokens Details.Reasoning Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Completion Tokens Details.Audio Tokens"
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Completion Tokens Details.Accepted Prediction Tokens"
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Usage.Completion Tokens Details.Rejected Prediction Tokens"
+                                    }
+                                },
+                                "title": "Usage.Completion Tokens Details"
+                            },
+                            "num_sources_used": {
+                                "type": "number",
+                                "title": "Usage.Num Sources Used"
                             }
                         }
+                    }
+                },
+                {
+                    "label": "System Fingerprint",
+                    "value": "system_fingerprint",
+                    "schema": {
+                        "type": "string"
                     }
                 }
             ]

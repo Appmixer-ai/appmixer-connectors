@@ -3,7 +3,7 @@
 module.exports = {
     async receive(context) {
 
-        const { model, role, content, responseFormatType, jsonSchema, strict, maxTokens } = context.messages.in.content;
+        const { model, role, content, jsonSchema, strict, maxTokens } = context.messages.in.content;
 
         // Validate required inputs
         if (!model) {
@@ -14,9 +14,6 @@ module.exports = {
         }
         if (!content) {
             throw new context.CancelError('Content is required!');
-        }
-        if (!responseFormatType) {
-            throw new context.CancelError('Response Format Type is required!');
         }
         if (!jsonSchema) {
             throw new context.CancelError('JSON Schema is required!');
@@ -42,7 +39,7 @@ module.exports = {
                 }
             ],
             response_format: {
-                type: responseFormatType,
+                type: 'json_schema',
                 json_schema: {
                     schema: parsedSchema
                 }
@@ -57,7 +54,7 @@ module.exports = {
             requestBody.max_tokens = maxTokens;
         }
 
-        // https://docs.x.ai/docs/structured-outputs
+        // https://grok-api.apidog.io/structured-outputs-934099m0
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.x.ai/v1/chat/completions',
@@ -67,6 +64,8 @@ module.exports = {
             },
             data: requestBody
         });
+
+        context.log({ step: 'response', data });
 
         return context.sendJson(data, 'out');
     }

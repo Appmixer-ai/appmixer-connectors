@@ -18,103 +18,26 @@
                 "type": "object",
                 "properties": {
                     "model": {
-                        "type": "string",
-                        "title": "Model"
+                        "type": "string"
                     },
                     "messages": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "role": {
-                                    "type": "string",
-                                    "title": "Role"
-                                },
-                                "content": {
-                                    "oneOf": [
-                                        {
-                                            "type": "string"
-                                        },
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "type": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "text",
-                                                            "image_url"
-                                                        ]
-                                                    },
-                                                    "text": {
-                                                        "type": "string"
-                                                    },
-                                                    "image_url": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "url": {
-                                                                "type": "string"
-                                                            },
-                                                            "detail": {
-                                                                "type": "string",
-                                                                "enum": [
-                                                                    "low",
-                                                                    "high",
-                                                                    "auto"
-                                                                ]
-                                                            }
-                                                        },
-                                                        "required": [
-                                                            "url"
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "type"
-                                                ]
-                                            }
-                                        }
-                                    ],
-                                    "title": "Content"
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "title": "Name"
-                                },
-                                "tool_call_id": {
-                                    "type": "string",
-                                    "title": "Tool Call Id"
-                                }
-                            },
-                            "required": [
-                                "role",
-                                "content"
-                            ]
-                        },
-                        "title": "Messages"
+                        "type": "object"
                     },
-                    "reasoning_effort": {
+                    "reasoningEffort": {
                         "type": "string",
-                        "default": "medium",
-                        "title": "Reasoning Effort"
+                        "default": "medium"
                     },
                     "temperature": {
-                        "type": "number",
-                        "title": "Temperature"
+                        "type": "number"
                     },
-                    "top_p": {
-                        "type": "number",
-                        "title": "Top P"
+                    "topP": {
+                        "type": "number"
                     },
-                    "max_tokens": {
-                        "type": "integer",
-                        "title": "Max Tokens"
+                    "maxTokens": {
+                        "type": "integer"
                     },
                     "stream": {
-                        "type": "boolean",
-                        "default": false,
-                        "title": "Stream"
+                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -141,26 +64,55 @@
                         "index": 0
                     },
                     "messages": {
-                        "type": "text",
+                        "type": "expression",
                         "tooltip": "Array of message objects with role and content.",
                         "label": "Messages",
-                        "index": 1
+                        "index": 1,
+                        "levels": ["ADD"],
+                        "fields": {
+                            "role": {
+                                "type": "select",
+                                "label": "Role",
+                                "tooltip": "The role of the message author.",
+                                "index": 1,
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "value": "system"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "value": "user"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "value": "assistant"
+                                    }
+                                ]
+                            },
+                            "content": {
+                                "type": "text",
+                                "label": "Content",
+                                "tooltip": "The content of the message.",
+                                "index": 2
+                            }
+                        }
                     },
-                    "reasoning_effort": {
+                    "reasoningEffort": {
                         "type": "select",
                         "tooltip": "Amount of compute spent in reasoning.",
                         "label": "Reasoning Effort",
                         "options": [
                             {
-                                "label": "low",
+                                "label": "Low",
                                 "value": "low"
                             },
                             {
-                                "label": "medium",
+                                "label": "Medium",
                                 "value": "medium"
                             },
                             {
-                                "label": "high",
+                                "label": "High",
                                 "value": "high"
                             }
                         ],
@@ -172,13 +124,13 @@
                         "label": "Temperature",
                         "index": 3
                     },
-                    "top_p": {
+                    "topP": {
                         "type": "number",
                         "tooltip": "An alternative to sampling with temperature.",
                         "label": "Top P",
                         "index": 4
                     },
-                    "max_tokens": {
+                    "maxTokens": {
                         "type": "number",
                         "tooltip": "The maximum number of tokens to generate.",
                         "label": "Max Tokens",
@@ -188,7 +140,8 @@
                         "type": "toggle",
                         "tooltip": "Whether to stream the results.",
                         "label": "Stream",
-                        "index": 6
+                        "index": 6,
+                        "defaultValue": false
                     }
                 }
             }
@@ -199,7 +152,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Reasoning Completion ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -248,6 +201,14 @@
                                         "content": {
                                             "type": "string",
                                             "title": "Message.Content"
+                                        },
+                                        "reasoning_content": {
+                                            "type": "string",
+                                            "title": "Message.Reasoning Content"
+                                        },
+                                        "refusal": {
+                                            "type": "string",
+                                            "title": "Message.Refusal"
                                         }
                                     },
                                     "title": "Message"
@@ -255,23 +216,6 @@
                                 "finish_reason": {
                                     "type": "string",
                                     "title": "Finish Reason"
-                                },
-                                "reasoning": {
-                                    "type": "object",
-                                    "properties": {
-                                        "summary": {
-                                            "type": "string",
-                                            "title": "Reasoning.Summary"
-                                        },
-                                        "steps": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            },
-                                            "title": "Reasoning.Steps"
-                                        }
-                                    },
-                                    "title": "Reasoning"
                                 }
                             }
                         }
@@ -294,8 +238,63 @@
                             "total_tokens": {
                                 "type": "number",
                                 "title": "Total Tokens"
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "text_tokens": {
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Text Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Audio Tokens"
+                                    },
+                                    "image_tokens": {
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Image Tokens"
+                                    },
+                                    "cached_tokens": {
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Cached Tokens"
+                                    }
+                                },
+                                "title": "Prompt Tokens Details"
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Reasoning Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Audio Tokens"
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Accepted Prediction Tokens"
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Rejected Prediction Tokens"
+                                    }
+                                },
+                                "title": "Completion Tokens Details"
+                            },
+                            "num_sources_used": {
+                                "type": "number",
+                                "title": "Number of Sources Used"
                             }
                         }
+                    }
+                },
+                {
+                    "label": "System Fingerprint",
+                    "value": "system_fingerprint",
+                    "schema": {
+                        "type": "string"
                     }
                 }
             ]

@@ -7,10 +7,10 @@ module.exports = {
         const {
             model,
             messages,
-            reasoning_effort,
+            reasoningEffort,
             temperature,
-            top_p,
-            max_tokens,
+            topP,
+            maxTokens,
             stream
         } = context.messages.in.content;
 
@@ -18,18 +18,17 @@ module.exports = {
             throw new context.CancelError('Model is required!');
         }
 
-        if (!messages) {
+        if (!messages || messages.ADD?.length === 0) {
             throw new context.CancelError('Messages is required!');
         }
 
-        // Build the messages array ensuring proper structure
-        const messagesArray = Array.isArray(messages) ? messages : [messages];
+        // Extract the actual messages array from the ADD property
+        const messagesArray = messages.ADD || messages;
 
-        // https://docs.x.ai/docs/chat-completions
         const body = {
             model,
             messages: messagesArray,
-            reasoning_effort: reasoning_effort || 'medium',
+            reasoning_effort: reasoningEffort || 'medium',
             stream: stream || false
         };
 
@@ -37,13 +36,14 @@ module.exports = {
         if (temperature !== undefined) {
             body.temperature = temperature;
         }
-        if (top_p !== undefined) {
-            body.top_p = top_p;
+        if (topP !== undefined) {
+            body.top_p = topP;
         }
-        if (max_tokens !== undefined) {
-            body.max_tokens = max_tokens;
+        if (maxTokens !== undefined) {
+            body.max_tokens = maxTokens;
         }
 
+        // https://grok-api.apidog.io/reasoning-15799160e0
         const response = await context.httpRequest({
             method: 'POST',
             url: 'https://api.x.ai/v1/chat/completions',
@@ -54,22 +54,6 @@ module.exports = {
             data: body
         });
 
-        // Handle streaming response
-        if (stream && response.data) {
-            // For streaming responses, collect the data stream
-            let fullResponse = '';
-
-            if (typeof response.data === 'string') {
-                fullResponse = response.data;
-            } else if (response.data && typeof response.data === 'object') {
-                // If it's an object, convert to JSON string
-                fullResponse = JSON.stringify(response.data);
-            }
-
-            return context.sendJson(fullResponse, 'out');
-        } else {
-            // For non-streaming responses, send the data object
-            return context.sendJson(response.data, 'out');
-        }
+        return context.sendJson(response.data, 'out');
     }
 };

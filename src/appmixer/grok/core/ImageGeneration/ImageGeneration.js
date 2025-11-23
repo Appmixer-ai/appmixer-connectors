@@ -1,12 +1,12 @@
 'use strict';
 
 const lib = require('../../lib');
-const schema = { 'b64_json': { 'type': 'string', 'title': 'B64 Json' }, 'revised_prompt': { 'type': 'string', 'title': 'Revised Prompt' } };
+const schema = { 'url': { 'type': 'string', 'title': 'Image URL' }, 'revised_prompt': { 'type': 'string', 'title': 'Revised Prompt' } };
 
 module.exports = {
     async receive(context) {
 
-        const { model, prompt, n, size, response_format, user, outputType } = context.messages.in.content;
+        const { model, prompt, n, user, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
@@ -20,12 +20,12 @@ module.exports = {
             throw new context.CancelError('Prompt is required!');
         }
 
-        // https://docs.x.ai/docs/images
+        // https://grok-api.apidog.io/-image-generations-15799848e0
         const requestData = {
             model: model,
             prompt: prompt,
             n: n || 1,
-            response_format: response_format || 'b64_json'
+            response_format: 'url'
         };
 
         if (user) {

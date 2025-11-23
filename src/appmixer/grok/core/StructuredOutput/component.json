@@ -1,6 +1,6 @@
 {
     "name": "appmixer.grok.core.StructuredOutput",
-    "description": "Generate responses constrained to a JSON schema using response_format.",
+    "description": "Generate responses constrained to a JSON schema.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -26,11 +26,8 @@
                     "content": {
                         "type": "string"
                     },
-                    "responseFormatType": {
-                        "type": "string"
-                    },
                     "jsonSchema": {
-                        "type": "object"
+                        "type": "string"
                     },
                     "strict": {
                         "type": "boolean"
@@ -43,7 +40,6 @@
                     "model",
                     "role",
                     "content",
-                    "responseFormatType",
                     "jsonSchema"
                 ]
             },
@@ -104,18 +100,6 @@
                         "label": "Content",
                         "index": 2
                     },
-                    "responseFormatType": {
-                        "type": "select",
-                        "label": "Response Format Type",
-                        "index": 3,
-                        "tooltip": "Set to json_schema to enable schema-constrained outputs.",
-                        "options": [
-                            {
-                                "label": "json_schema",
-                                "value": "json_schema"
-                            }
-                        ]
-                    },
                     "jsonSchema": {
                         "type": "textarea",
                         "label": "JSON Schema",
@@ -126,7 +110,8 @@
                         "type": "toggle",
                         "label": "Strict",
                         "index": 5,
-                        "tooltip": "If true, enforces strict schema adherence."
+                        "tooltip": "If true, enforces strict schema adherence.",
+                        "defaultValue": false
                     },
                     "maxTokens": {
                         "type": "number",
@@ -142,7 +127,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Id",
+                    "label": "Structured Output ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -188,10 +173,13 @@
                                         },
                                         "content": {
                                             "type": "string"
+                                        },
+                                        "refusal": {
+                                            "type": ["string", "null"]
                                         }
                                     }
                                 },
-                                "finishReason": {
+                                "finish_reason": {
                                     "type": "string"
                                 }
                             }
@@ -204,16 +192,60 @@
                     "schema": {
                         "type": "object",
                         "properties": {
-                            "promptTokens": {
+                            "prompt_tokens": {
                                 "type": "number"
                             },
-                            "completionTokens": {
+                            "completion_tokens": {
                                 "type": "number"
                             },
-                            "totalTokens": {
+                            "total_tokens": {
+                                "type": "number"
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "text_tokens": {
+                                        "type": "number"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number"
+                                    },
+                                    "image_tokens": {
+                                        "type": "number"
+                                    },
+                                    "cached_tokens": {
+                                        "type": "number"
+                                    }
+                                }
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "number"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number"
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "number"
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "number"
+                                    }
+                                }
+                            },
+                            "num_sources_used": {
                                 "type": "number"
                             }
                         }
+                    }
+                },
+                {
+                    "label": "System Fingerprint",
+                    "value": "system_fingerprint",
+                    "schema": {
+                        "type": "string"
                     }
                 }
             ]

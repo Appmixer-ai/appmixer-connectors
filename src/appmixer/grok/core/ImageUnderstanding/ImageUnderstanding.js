@@ -1,22 +1,12 @@
 'use strict';
 
-const lib = require('../../lib');
-
 module.exports = {
     async receive(context) {
 
-        const { model, role, contentType, text, imageUrl, imageDetail, maxTokens } = context.messages.in.content;
+        const { model, text, imageUrl, imageDetail, maxTokens } = context.messages.in.content;
 
         if (!model) {
             throw new context.CancelError('Model is required!');
-        }
-
-        if (!role) {
-            throw new context.CancelError('Role is required!');
-        }
-
-        if (!contentType) {
-            throw new context.CancelError('Content Type is required!');
         }
 
         if (!imageUrl) {
@@ -33,21 +23,19 @@ module.exports = {
             });
         }
 
-        if (contentType === 'image_url') {
-            content.push({
-                type: 'image_url',
-                image_url: {
-                    url: imageUrl,
-                    detail: imageDetail || 'auto'
-                }
-            });
-        }
+        content.push({
+            type: 'image_url',
+            image_url: {
+                url: imageUrl,
+                detail: imageDetail || 'auto'
+            }
+        });
 
         const requestBody = {
             model: model,
             messages: [
                 {
-                    role: role,
+                    role: 'user',
                     content: content
                 }
             ]
@@ -57,6 +45,7 @@ module.exports = {
             requestBody.max_tokens = maxTokens;
         }
 
+        // https://grok-api.apidog.io/image-understanding-934095m0
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.x.ai/v1/chat/completions',
@@ -66,6 +55,8 @@ module.exports = {
             },
             data: requestBody
         });
+
+        context.log({ step: 'response', data });
 
         return context.sendJson(data, 'out');
     }

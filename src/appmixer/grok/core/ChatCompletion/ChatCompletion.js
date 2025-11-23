@@ -53,7 +53,7 @@ module.exports = {
             content: content
         };
 
-        if (messagesName) {
+        if (messagesName && messagesRole === 'tool') {
             message.name = messagesName;
         }
         if (messagesToolCallId) {
@@ -94,7 +94,7 @@ module.exports = {
             payload.user = user;
         }
 
-        // https://docs.x.ai/docs/chat-completions
+        // https://grok-api.apidog.io/chat-15796842e0
         const { data } = await context.httpRequest({
             method: 'POST',
             url: 'https://api.x.ai/v1/chat/completions',
