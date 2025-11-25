@@ -50,13 +50,6 @@ module.exports = {
         // Use threadsType directly from inspector, default to "customer"
         const hsThreadType = (threadsType && threadsType.trim()) || 'customer';
 
-        // Help Scout does not allow creating a conversation with only note threads
-        if (hsThreadType === 'note') {
-            throw new context.CancelError(
-                'Help Scout does not allow creating a conversation with only a Private Note. Please choose Customer Message, Agent Reply, Phone Call Log, or Chat Message as the first thread.'
-            );
-        }
-
         // Build thread object based on thread type
         const thread = {
             type: hsThreadType,
