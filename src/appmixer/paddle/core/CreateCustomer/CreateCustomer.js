@@ -6,13 +6,6 @@ module.exports = {
             email,
             name,
             locale,
-            marketingConsent,
-            addressLine1,
-            addressLine2,
-            addressCity,
-            addressPostalCode,
-            addressRegion,
-            addressCountryCode,
             metadata
         } = context.messages.in.content;
 
@@ -32,22 +25,12 @@ module.exports = {
             requestBody.locale = locale;
         }
 
-        if (typeof marketingConsent === 'boolean') {
-            requestBody.marketing_consent = marketingConsent;
-        }
-
-        if (addressLine1 || addressLine2 || addressCity || addressPostalCode || addressRegion || addressCountryCode) {
-            requestBody.address = {};
-            if (addressLine1) requestBody.address.line_1 = addressLine1;
-            if (addressLine2) requestBody.address.line_2 = addressLine2;
-            if (addressCity) requestBody.address.city = addressCity;
-            if (addressPostalCode) requestBody.address.postal_code = addressPostalCode;
-            if (addressRegion) requestBody.address.region = addressRegion;
-            if (addressCountryCode) requestBody.address.country_code = addressCountryCode;
-        }
-
-        if (metadata && typeof metadata === 'object') {
-            requestBody.custom_data = metadata;
+        if (metadata) {
+            try {
+                requestBody.custom_data = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format in metadata field!');
+            }
         }
 
         const response = await context.httpRequest({
@@ -60,6 +43,6 @@ module.exports = {
             data: requestBody
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(response.data.data, 'out');
     }
 };

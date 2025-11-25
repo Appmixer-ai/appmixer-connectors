@@ -7,13 +7,7 @@ module.exports = {
             email,
             name,
             locale,
-            marketingConsent,
-            addressLine1,
-            addressLine2,
-            addressCity,
-            addressPostalCode,
-            addressRegion,
-            addressCountryCode,
+            status,
             metadata
         } = context.messages.in.content;
 
@@ -36,41 +30,16 @@ module.exports = {
             requestData.locale = locale;
         }
 
-        if (marketingConsent !== undefined) {
-            requestData.marketing_consent = marketingConsent;
+        if (status !== undefined) {
+            requestData.status = status;
         }
 
-        // Build address object if any address fields are provided
-        if (addressLine1 || addressLine2 || addressCity || addressPostalCode || addressRegion || addressCountryCode) {
-            requestData.address = {};
-
-            if (addressLine1 !== undefined) {
-                requestData.address.line1 = addressLine1;
+        if (metadata) {
+            try {
+                requestData.custom_data = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format in metadata field!');
             }
-
-            if (addressLine2 !== undefined) {
-                requestData.address.line2 = addressLine2;
-            }
-
-            if (addressCity !== undefined) {
-                requestData.address.city = addressCity;
-            }
-
-            if (addressPostalCode !== undefined) {
-                requestData.address.postal_code = addressPostalCode;
-            }
-
-            if (addressRegion !== undefined) {
-                requestData.address.region = addressRegion;
-            }
-
-            if (addressCountryCode !== undefined) {
-                requestData.address.country_code = addressCountryCode;
-            }
-        }
-
-        if (metadata !== undefined) {
-            requestData.metadata = metadata;
         }
 
         const { data } = await context.httpRequest({
@@ -82,6 +51,6 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson(data.data, 'out');
     }
 };

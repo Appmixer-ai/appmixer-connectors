@@ -3,26 +3,39 @@
 module.exports = {
     async receive(context) {
 
-        const { name, description, taxCategory, metadata } = context.messages.in.content;
+        const { name, description, taxCategory, type, imageUrl, metadata } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
 
+        if (!taxCategory) {
+            throw new context.CancelError('Tax Category is required!');
+        }
+
         const requestData = {
-            name: name
+            name: name,
+            tax_category: taxCategory
         };
 
         if (description) {
             requestData.description = description;
         }
 
-        if (taxCategory) {
-            requestData.tax_category = taxCategory;
+        if (type) {
+            requestData.type = type;
+        }
+
+        if (imageUrl) {
+            requestData.image_url = imageUrl;
         }
 
         if (metadata) {
-            requestData.metadata = metadata;
+            try {
+                requestData.custom_data = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format in metadata field!');
+            }
         }
 
         const response = await context.httpRequest({
@@ -34,6 +47,6 @@ module.exports = {
             data: requestData
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(response.data.data, 'out');
     }
 };
