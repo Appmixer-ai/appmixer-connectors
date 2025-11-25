@@ -1,63 +1,36 @@
+/**
+ * IP Blocking Policy Script
+ * IMPORTANT: ECMAScript version 5 only!
+ */
+
 /* eslint-disable */
-var blockedIPsEntry = context.getVariable('blocked-ips');
-var blockedIPs = [];
-
-if (blockedIPsEntry) {
-    try {
-        var blockedIPsObject = entryToList(blockedIPsEntry);
-        print('Number of entries: ' + Object.keys(blockedIPsObject).length);
-
-        var currentTime = new Date();
-
-        Object.keys(blockedIPsObject).forEach(function(ip) {
-            var entry = blockedIPsObject[ip];
-
-            if (entry.expiration) {
-                var expirationDate = new Date(entry.expiration);
-                if (expirationDate > currentTime) {
-                    blockedIPs.push(entry.ip);
-                }
-            } else {
-                blockedIPs.push(entry.ip);
-            }
-        });
-
-        context.setVariable('blocked.ips.simple', JSON.stringify(blockedIPs));
-        context.setVariable('blocked.ips.count', blockedIPs.length.toString());
-        context.setVariable('blocked.ips.loaded', 'true');
-
-    } catch (e) {
-        print('Raw value (first 500 chars): ' + (blockedIPsEntry ? blockedIPsEntry.substring(0, 500) : 'null'));
-        context.setVariable('blocked.ips.loaded', false);
-        context.setVariable('blocked.ips.error', e.message);
-    }
-}
+var NUM_OF_IP_GROUPS = 500;
 
 var clientIP = context.getVariable('request.header.X-Forwarded-For') ||
     context.getVariable('request.header.X-Real-IP') ||
     context.getVariable('request.ip') ||
     context.getVariable('client.ip');
 
-print('Raw client IP: ' + clientIP);
-
-if (clientIP?.indexOf(',') > -1) {
+if (clientIP.indexOf(',') > -1) {
     clientIP = clientIP.split(',')[0].trim();
 }
 
-print('Processed client IP: ' + clientIP);
+var blockedIPs = getBlockedIps();
 
-// Separate individual IPs from CIDR ranges
 var individualIPs = [];
-var cidrRanges = [];
 
-blockedIPs.forEach(function(entry) {
+var cidrRanges = [];
+blockedIPs.forEach(function (entry) {
     if (entry.indexOf('/') > -1) {
+
         cidrRanges.push(entry);
     } else {
         individualIPs.push(entry);
     }
 });
 
+print('Processed client IP: ' + clientIP);
+print('Blocked IPs loaded: ' + JSON.stringify(blockedIPs));
 print('Individual IPs to check: ' + JSON.stringify(individualIPs));
 print('CIDR ranges to check: ' + JSON.stringify(cidrRanges));
 
@@ -89,6 +62,44 @@ if (isBlocked) {
   Helper functions
 
  */
+
+function getBlockedIps() {
+
+    var blockedIPsEntry = context.getVariable('blocked.ip.list');
+
+    var blockedIPs = [];
+
+    if (blockedIPsEntry) {
+        try {
+            var blockedIPsObject = entryToList(blockedIPsEntry);
+
+            var currentTime = new Date();
+
+            Object.keys(blockedIPsObject).forEach(function (ip) {
+                var entry = blockedIPsObject[ip];
+
+                if (entry.expiration) {
+                    var expirationDate = new Date(entry.expiration);
+                    if (expirationDate > currentTime) {
+                        blockedIPs.push(entry.ip);
+                    }
+                } else {
+                    blockedIPs.push(entry.ip);
+                }
+            });
+
+            context.setVariable('blocked.ips.simple', JSON.stringify(blockedIPs));
+            context.setVariable('blocked.ips.count', blockedIPs.length.toString());
+            context.setVariable('blocked.ips.loaded', 'true');
+
+        } catch (e) {
+            print('Raw value (first 500 chars): ' + (blockedIPsEntry ? blockedIPsEntry.substring(0, 500) :   'null'));
+            context.setVariable('blocked.ips.loaded', false);
+            context.setVariable('blocked.ips.error', e.message);
+        }
+    }
+    return blockedIPs;
+}
 
 function entryToList(entry) {
     if (!entry) {
@@ -139,8 +150,9 @@ function isIPInCIDR(ip, cidr) {
 // Helper function to convert IP to integer
 function ipToInt(ip) {
     var parts = ip.split('.');
-    return (parseInt(parts[0], 10) << 24) +
-        (parseInt(parts[1], 10) << 16) +
-        (parseInt(parts[2], 10) << 8) +
+    // Use multiplication to avoid signed integer overflow issues
+    return (parseInt(parts[0], 10) * 16777216) +  // 256^3
+        (parseInt(parts[1], 10) * 65536) +      // 256^2
+        (parseInt(parts[2], 10) * 256) +        // 256^1
         parseInt(parts[3], 10);
 }
