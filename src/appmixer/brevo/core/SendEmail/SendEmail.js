@@ -37,6 +37,11 @@ module.exports = {
             processedTemplateId = templateIdInt;
         }
 
+        // Validate that either templateId or content is provided
+        if (!processedTemplateId && !htmlContent && !textContent) {
+            throw new context.CancelError('Either Template ID or HTML Content or Text Content must be provided');
+        }
+
         const toArr = to.ADD.map((recipient) => {
             return {
                 name: recipient.name,
