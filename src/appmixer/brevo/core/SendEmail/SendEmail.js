@@ -115,7 +115,6 @@ module.exports = {
                 paramsObj[key] = value;
             }
         }
-        context.log({ step: 'final params object', paramsObj: paramsObj });
 
         // https://developers.brevo.com/reference/sendtransacemail
         const options = {
@@ -144,7 +143,6 @@ module.exports = {
                 ...(Object.keys(paramsObj).length ? { params: paramsObj } : {})
             }
         };
-        context.log({ step: 'request options', options: options });
         const { data } = await context.httpRequest(options);
 
         return context.sendJson(data, 'out');
