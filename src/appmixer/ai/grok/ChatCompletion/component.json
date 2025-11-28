@@ -1,9 +1,8 @@
 {
-    "name": "appmixer.ai.grok.core.ReasoningCompletion",
-    "description": "Generate responses with step-by-step reasoning using Grok mini reasoning models.",
+    "name": "appmixer.ai.grok.ChatCompletion",
+    "description": "Generate text responses using Grok models with conversational context.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
-    "private": false,
     "auth": {
         "service": "appmixer:ai:grok"
     },
@@ -17,27 +16,17 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "model": {
-                        "type": "string"
-                    },
                     "messages": {
                         "type": "object"
                     },
-                    "reasoningEffort": {
-                        "type": "string",
-                        "default": "medium"
-                    },
-                    "temperature": {
-                        "type": "number"
-                    },
-                    "topP": {
-                        "type": "number"
-                    },
-                    "maxTokens": {
-                        "type": "integer"
+                    "model": {
+                        "type": "string"
                     },
                     "stream": {
                         "type": "boolean"
+                    },
+                    "temperature": {
+                        "type": "number"
                     }
                 },
                 "required": [
@@ -49,9 +38,17 @@
                 "inputs": {
                     "model": {
                         "type": "select",
-                        "tooltip": "Reasoning-capable model (e.g., grok-3-mini-latest, grok-3-mini-fast-latest).",
+                        "tooltip": "Model to use. Examples: grok-3-latest, grok-3-fast-latest, grok-3-mini-latest, grok-3-mini-fast-latest, grok-2-latest.",
                         "label": "Model",
                         "options": [
+                            {
+                                "label": "grok-3-latest",
+                                "value": "grok-3-latest"
+                            },
+                            {
+                                "label": "grok-3-fast-latest",
+                                "value": "grok-3-fast-latest"
+                            },
                             {
                                 "label": "grok-3-mini-latest",
                                 "value": "grok-3-mini-latest"
@@ -59,6 +56,10 @@
                             {
                                 "label": "grok-3-mini-fast-latest",
                                 "value": "grok-3-mini-fast-latest"
+                            },
+                            {
+                                "label": "grok-2-latest",
+                                "value": "grok-2-latest"
                             }
                         ],
                         "index": 0
@@ -98,50 +99,18 @@
                             }
                         }
                     },
-                    "reasoningEffort": {
-                        "type": "select",
-                        "tooltip": "Amount of compute spent in reasoning.",
-                        "label": "Reasoning Effort",
-                        "options": [
-                            {
-                                "label": "Low",
-                                "value": "low"
-                            },
-                            {
-                                "label": "Medium",
-                                "value": "medium"
-                            },
-                            {
-                                "label": "High",
-                                "value": "high"
-                            }
-                        ],
-                        "index": 2
+                    "stream": {
+                        "type": "toggle",
+                        "tooltip": "If true, returns tokens via server-sent events (SSE).",
+                        "label": "Stream",
+                        "index": 2,
+                        "defaultValue": false
                     },
                     "temperature": {
                         "type": "number",
-                        "tooltip": "What sampling temperature to use, between 0 and 2.",
+                        "tooltip": "Sampling temperature. Higher values produce more random output.",
                         "label": "Temperature",
                         "index": 3
-                    },
-                    "topP": {
-                        "type": "number",
-                        "tooltip": "An alternative to sampling with temperature.",
-                        "label": "Top P",
-                        "index": 4
-                    },
-                    "maxTokens": {
-                        "type": "number",
-                        "tooltip": "The maximum number of tokens to generate.",
-                        "label": "Max Tokens",
-                        "index": 5
-                    },
-                    "stream": {
-                        "type": "toggle",
-                        "tooltip": "Whether to stream the results.",
-                        "label": "Stream",
-                        "index": 6,
-                        "defaultValue": false
                     }
                 }
             }
@@ -152,7 +121,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Reasoning Completion ID",
+                    "label": "Chat Completion ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -189,26 +158,22 @@
                             "properties": {
                                 "index": {
                                     "type": "number",
-                                    "title": "Choices.Index"
+                                    "title": "Index"
                                 },
                                 "message": {
                                     "type": "object",
                                     "properties": {
                                         "role": {
                                             "type": "string",
-                                            "title": "Message.Role"
+                                            "title": "Role"
                                         },
                                         "content": {
                                             "type": "string",
-                                            "title": "Message.Content"
-                                        },
-                                        "reasoning_content": {
-                                            "type": "string",
-                                            "title": "Message.Reasoning Content"
+                                            "title": "Content"
                                         },
                                         "refusal": {
-                                            "type": "string",
-                                            "title": "Message.Refusal"
+                                            "type": ["string", "null"],
+                                            "title": "Refusal"
                                         }
                                     },
                                     "title": "Message"
@@ -244,19 +209,19 @@
                                 "properties": {
                                     "text_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Text Tokens"
+                                        "title": "Text Tokens"
                                     },
                                     "audio_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Audio Tokens"
+                                        "title": "Audio Tokens"
                                     },
                                     "image_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Image Tokens"
+                                        "title": "Image Tokens"
                                     },
                                     "cached_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Cached Tokens"
+                                        "title": "Cached Tokens"
                                     }
                                 },
                                 "title": "Prompt Tokens Details"
@@ -266,19 +231,19 @@
                                 "properties": {
                                     "reasoning_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Reasoning Tokens"
+                                        "title": "Reasoning Tokens"
                                     },
                                     "audio_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Audio Tokens"
+                                        "title": "Audio Tokens"
                                     },
                                     "accepted_prediction_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Accepted Prediction Tokens"
+                                        "title": "Accepted Prediction Tokens"
                                     },
                                     "rejected_prediction_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Rejected Prediction Tokens"
+                                        "title": "Rejected Prediction Tokens"
                                     }
                                 },
                                 "title": "Completion Tokens Details"

@@ -1,6 +1,6 @@
 {
-    "name": "appmixer.ai.grok.core.StructuredOutput",
-    "description": "Generate responses constrained to a JSON schema.",
+    "name": "appmixer.ai.grok.ReasoningCompletion",
+    "description": "Generate responses with step-by-step reasoning using Grok mini reasoning models.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -20,44 +20,38 @@
                     "model": {
                         "type": "string"
                     },
-                    "role": {
-                        "type": "string"
+                    "messages": {
+                        "type": "object"
                     },
-                    "content": {
-                        "type": "string"
+                    "reasoningEffort": {
+                        "type": "string",
+                        "default": "medium"
                     },
-                    "jsonSchema": {
-                        "type": "string"
+                    "temperature": {
+                        "type": "number"
                     },
-                    "strict": {
-                        "type": "boolean"
+                    "topP": {
+                        "type": "number"
                     },
                     "maxTokens": {
                         "type": "integer"
+                    },
+                    "stream": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "model",
-                    "role",
-                    "content",
-                    "jsonSchema"
+                    "messages"
                 ]
             },
             "inspector": {
                 "inputs": {
                     "model": {
                         "type": "select",
+                        "tooltip": "Reasoning-capable model (e.g., grok-3-mini-latest, grok-3-mini-fast-latest).",
                         "label": "Model",
-                        "index": 0,
                         "options": [
-                            {
-                                "label": "grok-3-latest",
-                                "value": "grok-3-latest"
-                            },
-                            {
-                                "label": "grok-3-fast-latest",
-                                "value": "grok-3-fast-latest"
-                            },
                             {
                                 "label": "grok-3-mini-latest",
                                 "value": "grok-3-mini-latest"
@@ -65,58 +59,89 @@
                             {
                                 "label": "grok-3-mini-fast-latest",
                                 "value": "grok-3-mini-fast-latest"
-                            },
-                            {
-                                "label": "grok-2-latest",
-                                "value": "grok-2-latest"
                             }
-                        ]
+                        ],
+                        "index": 0
                     },
-                    "role": {
-                        "type": "select",
-                        "label": "Role",
+                    "messages": {
+                        "type": "expression",
+                        "tooltip": "Array of message objects with role and content.",
+                        "label": "Messages",
                         "index": 1,
+                        "levels": ["ADD"],
+                        "fields": {
+                            "role": {
+                                "type": "select",
+                                "label": "Role",
+                                "tooltip": "The role of the message author.",
+                                "index": 1,
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "value": "system"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "value": "user"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "value": "assistant"
+                                    }
+                                ]
+                            },
+                            "content": {
+                                "type": "text",
+                                "label": "Content",
+                                "tooltip": "The content of the message.",
+                                "index": 2
+                            }
+                        }
+                    },
+                    "reasoningEffort": {
+                        "type": "select",
+                        "tooltip": "Amount of compute spent in reasoning.",
+                        "label": "Reasoning Effort",
                         "options": [
                             {
-                                "label": "system",
-                                "value": "system"
+                                "label": "Low",
+                                "value": "low"
                             },
                             {
-                                "label": "user",
-                                "value": "user"
+                                "label": "Medium",
+                                "value": "medium"
                             },
                             {
-                                "label": "assistant",
-                                "value": "assistant"
-                            },
-                            {
-                                "label": "tool",
-                                "value": "tool"
+                                "label": "High",
+                                "value": "high"
                             }
-                        ]
-                    },
-                    "content": {
-                        "type": "textarea",
-                        "label": "Content",
+                        ],
                         "index": 2
                     },
-                    "jsonSchema": {
-                        "type": "textarea",
-                        "label": "JSON Schema",
-                        "index": 4,
-                        "tooltip": "JSON Schema the model must follow."
+                    "temperature": {
+                        "type": "number",
+                        "tooltip": "What sampling temperature to use, between 0 and 2.",
+                        "label": "Temperature",
+                        "index": 3
                     },
-                    "strict": {
-                        "type": "toggle",
-                        "label": "Strict",
-                        "index": 5,
-                        "tooltip": "If true, enforces strict schema adherence.",
-                        "defaultValue": false
+                    "topP": {
+                        "type": "number",
+                        "tooltip": "An alternative to sampling with temperature.",
+                        "label": "Top P",
+                        "index": 4
                     },
                     "maxTokens": {
                         "type": "number",
+                        "tooltip": "The maximum number of tokens to generate.",
                         "label": "Max Tokens",
-                        "index": 6
+                        "index": 5
+                    },
+                    "stream": {
+                        "type": "toggle",
+                        "tooltip": "Whether to stream the results.",
+                        "label": "Stream",
+                        "index": 6,
+                        "defaultValue": false
                     }
                 }
             }
@@ -127,7 +152,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Structured Output ID",
+                    "label": "Reasoning Completion ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -163,24 +188,34 @@
                             "type": "object",
                             "properties": {
                                 "index": {
-                                    "type": "number"
+                                    "type": "number",
+                                    "title": "Choices.Index"
                                 },
                                 "message": {
                                     "type": "object",
                                     "properties": {
                                         "role": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "title": "Message.Role"
                                         },
                                         "content": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "title": "Message.Content"
+                                        },
+                                        "reasoning_content": {
+                                            "type": "string",
+                                            "title": "Message.Reasoning Content"
                                         },
                                         "refusal": {
-                                            "type": ["string", "null"]
+                                            "type": "string",
+                                            "title": "Message.Refusal"
                                         }
-                                    }
+                                    },
+                                    "title": "Message"
                                 },
                                 "finish_reason": {
-                                    "type": "string"
+                                    "type": "string",
+                                    "title": "Finish Reason"
                                 }
                             }
                         }
@@ -193,50 +228,64 @@
                         "type": "object",
                         "properties": {
                             "prompt_tokens": {
-                                "type": "number"
+                                "type": "number",
+                                "title": "Prompt Tokens"
                             },
                             "completion_tokens": {
-                                "type": "number"
+                                "type": "number",
+                                "title": "Completion Tokens"
                             },
                             "total_tokens": {
-                                "type": "number"
+                                "type": "number",
+                                "title": "Total Tokens"
                             },
                             "prompt_tokens_details": {
                                 "type": "object",
                                 "properties": {
                                     "text_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Text Tokens"
                                     },
                                     "audio_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Audio Tokens"
                                     },
                                     "image_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Image Tokens"
                                     },
                                     "cached_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Prompt Tokens Details.Cached Tokens"
                                     }
-                                }
+                                },
+                                "title": "Prompt Tokens Details"
                             },
                             "completion_tokens_details": {
                                 "type": "object",
                                 "properties": {
                                     "reasoning_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Reasoning Tokens"
                                     },
                                     "audio_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Audio Tokens"
                                     },
                                     "accepted_prediction_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Accepted Prediction Tokens"
                                     },
                                     "rejected_prediction_tokens": {
-                                        "type": "number"
+                                        "type": "number",
+                                        "title": "Completion Tokens Details.Rejected Prediction Tokens"
                                     }
-                                }
+                                },
+                                "title": "Completion Tokens Details"
                             },
                             "num_sources_used": {
-                                "type": "number"
+                                "type": "number",
+                                "title": "Number of Sources Used"
                             }
                         }
                     }

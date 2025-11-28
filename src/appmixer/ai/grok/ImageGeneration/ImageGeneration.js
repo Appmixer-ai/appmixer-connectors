@@ -1,6 +1,6 @@
 'use strict';
 
-const lib = require('../../lib');
+const lib = require('../lib');
 const schema = { 'url': { 'type': 'string', 'title': 'Image URL' }, 'revised_prompt': { 'type': 'string', 'title': 'Revised Prompt' } };
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
         const { model, prompt, n, user, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Data' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Images' });
         }
 
         // Validate required inputs

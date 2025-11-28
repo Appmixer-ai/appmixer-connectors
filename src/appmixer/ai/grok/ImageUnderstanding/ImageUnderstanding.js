@@ -56,8 +56,6 @@ module.exports = {
             data: requestBody
         });
 
-        context.log({ step: 'response', data });
-
         return context.sendJson(data, 'out');
     }
 };
