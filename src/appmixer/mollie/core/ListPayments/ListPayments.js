@@ -140,6 +140,9 @@ module.exports = {
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Accept': 'application/json'
+            },
+            params: {
+                limit: 250
             }
         });
 
