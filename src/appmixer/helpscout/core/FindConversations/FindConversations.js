@@ -395,20 +395,16 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { query, outputType } = context.messages.in.content;
+        const { query, status, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Conversations' });
         }
 
-        if (!query) {
-            throw new context.CancelError('Search query is required.');
-        }
-
-        // Build query parameters — the component UI exposes only `query` and `outputType`.
-        // We no longer accept page/pageSize/sortBy/sortOrder as inputs.
+        // Build query parameters — the component UI exposes `query`, `status`, and `outputType`.
         const params = {};
         if (query) params.query = query;
+        if (status) params.status = status;
 
         // Ensure results are always sorted by most recently modified first.
         // These are enforced regardless of any incoming parameters.
