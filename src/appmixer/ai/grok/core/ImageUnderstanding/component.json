@@ -1,14 +1,14 @@
 {
-    "name": "appmixer.grok.core.ReasoningCompletion",
-    "description": "Generate responses with step-by-step reasoning using Grok mini reasoning models.",
+    "name": "appmixer.ai.grok.core.ImageUnderstanding",
+    "description": "Analyze and understand images by sending them as inputs in chat completions.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:grok"
+        "service": "appmixer:ai:grok"
     },
     "quota": {
-        "manager": "appmixer:grok",
+        "manager": "appmixer:ai:grok",
         "resources": "requests"
     },
     "inPorts": [
@@ -20,128 +20,79 @@
                     "model": {
                         "type": "string"
                     },
-                    "messages": {
-                        "type": "object"
+                    "text": {
+                        "type": "string"
                     },
-                    "reasoningEffort": {
-                        "type": "string",
-                        "default": "medium"
+                    "imageUrl": {
+                        "type": "string"
                     },
-                    "temperature": {
-                        "type": "number"
-                    },
-                    "topP": {
-                        "type": "number"
+                    "imageDetail": {
+                        "type": "string"
                     },
                     "maxTokens": {
                         "type": "integer"
-                    },
-                    "stream": {
-                        "type": "boolean"
                     }
                 },
                 "required": [
                     "model",
-                    "messages"
+                    "imageUrl"
                 ]
             },
             "inspector": {
                 "inputs": {
                     "model": {
                         "type": "select",
-                        "tooltip": "Reasoning-capable model (e.g., grok-3-mini-latest, grok-3-mini-fast-latest).",
                         "label": "Model",
+                        "tooltip": "Vision-capable model.",
                         "options": [
                             {
-                                "label": "grok-3-mini-latest",
-                                "value": "grok-3-mini-latest"
+                                "label": "grok-2-vision-latest",
+                                "value": "grok-2-vision-latest"
                             },
                             {
-                                "label": "grok-3-mini-fast-latest",
-                                "value": "grok-3-mini-fast-latest"
+                                "label": "grok-vision-beta",
+                                "value": "grok-vision-beta"
                             }
                         ],
                         "index": 0
                     },
-                    "messages": {
-                        "type": "expression",
-                        "tooltip": "Array of message objects with role and content.",
-                        "label": "Messages",
-                        "index": 1,
-                        "levels": ["ADD"],
-                        "fields": {
-                            "role": {
-                                "type": "select",
-                                "label": "Role",
-                                "tooltip": "The role of the message author.",
-                                "index": 1,
-                                "options": [
-                                    {
-                                        "label": "System",
-                                        "value": "system"
-                                    },
-                                    {
-                                        "label": "User",
-                                        "value": "user"
-                                    },
-                                    {
-                                        "label": "Assistant",
-                                        "value": "assistant"
-                                    }
-                                ]
-                            },
-                            "content": {
-                                "type": "text",
-                                "label": "Content",
-                                "tooltip": "The content of the message.",
-                                "index": 2
-                            }
-                        }
+                    "text": {
+                        "type": "textarea",
+                        "label": "Text",
+                        "tooltip": "User text prompt or question about the image.",
+                        "index": 1
                     },
-                    "reasoningEffort": {
+                    "imageUrl": {
+                        "type": "text",
+                        "label": "Image URL",
+                        "tooltip": "Public URL or base64 data URL of the image.",
+                        "index": 2
+                    },
+                    "imageDetail": {
                         "type": "select",
-                        "tooltip": "Amount of compute spent in reasoning.",
-                        "label": "Reasoning Effort",
+                        "label": "Image Detail",
+                        "tooltip": "Controls vision detail level.",
                         "options": [
                             {
-                                "label": "Low",
+                                "label": "low",
                                 "value": "low"
                             },
                             {
-                                "label": "Medium",
-                                "value": "medium"
+                                "label": "high",
+                                "value": "high"
                             },
                             {
-                                "label": "High",
-                                "value": "high"
+                                "label": "auto",
+                                "value": "auto"
                             }
                         ],
-                        "index": 2
-                    },
-                    "temperature": {
-                        "type": "number",
-                        "tooltip": "What sampling temperature to use, between 0 and 2.",
-                        "label": "Temperature",
                         "index": 3
-                    },
-                    "topP": {
-                        "type": "number",
-                        "tooltip": "An alternative to sampling with temperature.",
-                        "label": "Top P",
-                        "index": 4
                     },
                     "maxTokens": {
                         "type": "number",
-                        "tooltip": "The maximum number of tokens to generate.",
                         "label": "Max Tokens",
-                        "index": 5
-                    },
-                    "stream": {
-                        "type": "toggle",
-                        "tooltip": "Whether to stream the results.",
-                        "label": "Stream",
-                        "index": 6,
-                        "defaultValue": false
+                        "tooltip": "Max tokens for the textual response.",
+                        "index": 4
                     }
                 }
             }
@@ -152,7 +103,7 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Reasoning Completion ID",
+                    "label": "Image Understanding ID",
                     "value": "id",
                     "schema": {
                         "type": "string"
@@ -196,26 +147,22 @@
                                     "properties": {
                                         "role": {
                                             "type": "string",
-                                            "title": "Message.Role"
+                                            "title": "Choices.Message.Role"
                                         },
                                         "content": {
                                             "type": "string",
-                                            "title": "Message.Content"
-                                        },
-                                        "reasoning_content": {
-                                            "type": "string",
-                                            "title": "Message.Reasoning Content"
+                                            "title": "Choices.Message.Content"
                                         },
                                         "refusal": {
                                             "type": "string",
-                                            "title": "Message.Refusal"
+                                            "title": "Choices.Message.Refusal"
                                         }
                                     },
-                                    "title": "Message"
+                                    "title": "Choices.Message"
                                 },
                                 "finish_reason": {
                                     "type": "string",
-                                    "title": "Finish Reason"
+                                    "title": "Choices.Finish Reason"
                                 }
                             }
                         }
@@ -229,63 +176,63 @@
                         "properties": {
                             "prompt_tokens": {
                                 "type": "number",
-                                "title": "Prompt Tokens"
+                                "title": "Usage.Prompt Tokens"
                             },
                             "completion_tokens": {
                                 "type": "number",
-                                "title": "Completion Tokens"
+                                "title": "Usage.Completion Tokens"
                             },
                             "total_tokens": {
                                 "type": "number",
-                                "title": "Total Tokens"
+                                "title": "Usage.Total Tokens"
                             },
                             "prompt_tokens_details": {
                                 "type": "object",
                                 "properties": {
                                     "text_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Text Tokens"
+                                        "title": "Usage.Prompt Tokens Details.Text Tokens"
                                     },
                                     "audio_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Audio Tokens"
+                                        "title": "Usage.Prompt Tokens Details.Audio Tokens"
                                     },
                                     "image_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Image Tokens"
+                                        "title": "Usage.Prompt Tokens Details.Image Tokens"
                                     },
                                     "cached_tokens": {
                                         "type": "number",
-                                        "title": "Prompt Tokens Details.Cached Tokens"
+                                        "title": "Usage.Prompt Tokens Details.Cached Tokens"
                                     }
                                 },
-                                "title": "Prompt Tokens Details"
+                                "title": "Usage.Prompt Tokens Details"
                             },
                             "completion_tokens_details": {
                                 "type": "object",
                                 "properties": {
                                     "reasoning_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Reasoning Tokens"
+                                        "title": "Usage.Completion Tokens Details.Reasoning Tokens"
                                     },
                                     "audio_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Audio Tokens"
+                                        "title": "Usage.Completion Tokens Details.Audio Tokens"
                                     },
                                     "accepted_prediction_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Accepted Prediction Tokens"
+                                        "title": "Usage.Completion Tokens Details.Accepted Prediction Tokens"
                                     },
                                     "rejected_prediction_tokens": {
                                         "type": "number",
-                                        "title": "Completion Tokens Details.Rejected Prediction Tokens"
+                                        "title": "Usage.Completion Tokens Details.Rejected Prediction Tokens"
                                     }
                                 },
-                                "title": "Completion Tokens Details"
+                                "title": "Usage.Completion Tokens Details"
                             },
                             "num_sources_used": {
                                 "type": "number",
-                                "title": "Number of Sources Used"
+                                "title": "Usage.Num Sources Used"
                             }
                         }
                     }

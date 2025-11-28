@@ -28,7 +28,7 @@ module.exports = {
         const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Models', value: 'result' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Models' });
         }
 
         // https://docs.x.ai/docs/api-reference#list-models
