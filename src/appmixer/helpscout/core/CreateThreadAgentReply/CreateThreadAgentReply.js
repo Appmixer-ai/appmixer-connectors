@@ -36,11 +36,17 @@ module.exports = {
 
         // Add optional fields if provided
         if (cc && cc.trim()) {
-            requestBody.cc = [cc.trim()];
+            // Parse comma-separated email addresses and convert to array
+            requestBody.cc = cc.split(',')
+                .map(email => email.trim())
+                .filter(email => email.length > 0);
         }
 
         if (bcc && bcc.trim()) {
-            requestBody.bcc = [bcc.trim()];
+            // Parse comma-separated email addresses and convert to array
+            requestBody.bcc = bcc.split(',')
+                .map(email => email.trim())
+                .filter(email => email.length > 0);
         }
 
         if (from && from.trim()) {
@@ -63,9 +69,6 @@ module.exports = {
             'Resource-ID': response.headers['resource-id'] || response.headers['Resource-ID'],
             'Date': response.headers['date'] || response.headers['Date']
         };
-
-        context.log({ step: 'response headers', headers: response.headers });
-        context.log({ step: 'extracted result', result: result });
 
         return context.sendJson(result, 'out');
     }

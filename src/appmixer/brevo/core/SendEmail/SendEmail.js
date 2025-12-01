@@ -37,6 +37,11 @@ module.exports = {
             processedTemplateId = templateIdInt;
         }
 
+        // Validate that either templateId or content is provided
+        if (!processedTemplateId && !htmlContent && !textContent) {
+            throw new context.CancelError('Either Template ID or HTML Content or Text Content must be provided');
+        }
+
         const toArr = to.ADD.map((recipient) => {
             return {
                 name: recipient.name,
@@ -60,7 +65,7 @@ module.exports = {
 
         // Build params object from expression
         const paramsObj = {};
-        if (params && Array.isArray(params.ADD)) {
+        if (params?.ADD?.length) {
             for (const row of params.ADD) {
                 const key = String(row.key || '').trim();
                 const type = row.valueType;
@@ -76,35 +81,43 @@ module.exports = {
                 if (type === 'text') {
                     value = row.valueText ?? '';
                 } else if (type === 'number') {
-                    const n = Number(row.valueNumber);
-                    if (Number.isNaN(n)) {
+                    value = Number(row.valueNumber);
+                    if (Number.isNaN(value)) {
                         throw new context.CancelError(`Template Param "${key}" has an invalid Number Value.`);
                     }
-                    value = n;
                 } else if (type === 'boolean') {
                     value = Boolean(row.valueBoolean);
                 } else if (type === 'json') {
                     const raw = row.valueJson;
-                    if (raw == null || String(raw).trim() === '') {
+                    if (raw == null) {
                         throw new context.CancelError(`Template Param "${key}" JSON Value is empty.`);
                     }
-                    try {
-                        value = JSON.parse(raw);
-                    } catch (e) {
-                        throw new context.CancelError(`Template Param "${key}" JSON Value is not valid JSON.`);
+
+                    // If it's already a non-string value, use it directly
+                    if (typeof raw !== 'string') {
+                        value = raw;
+                    } else {
+                        // Parse JSON string
+                        const rawStr = raw.trim();
+                        if (!rawStr) {
+                            throw new context.CancelError(`Template Param "${key}" JSON Value is empty.`);
+                        }
+                        try {
+                            value = JSON.parse(rawStr);
+                        } catch (e) {
+                            throw new context.CancelError(`Template Param "${key}" JSON Value is not valid JSON.`);
+                        }
                     }
                 } else {
                     throw new context.CancelError(`Unsupported Value Type "${type}" for Template Param "${key}".`);
                 }
 
-                // Last write wins if duplicate keys appear
                 paramsObj[key] = value;
             }
         }
 
         // https://developers.brevo.com/reference/sendtransacemail
-
-        const { data } = await context.httpRequest({
+        const options = {
             method: 'POST',
             url: 'https://api.brevo.com/v3/smtp/email',
             headers: {
@@ -129,7 +142,8 @@ module.exports = {
                 // include params only when present
                 ...(Object.keys(paramsObj).length ? { params: paramsObj } : {})
             }
-        });
+        };
+        const { data } = await context.httpRequest(options);
 
         return context.sendJson(data, 'out');
     }

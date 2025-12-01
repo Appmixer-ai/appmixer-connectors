@@ -1,0 +1,129 @@
+{
+    "name": "appmixer.paddle.core.FindTransactions",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search and list transactions. Returns a maximum of 200 records per request.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:paddle"
+    },
+    "quota": {
+        "manager": "appmixer:paddle",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "createdAfter": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "outputType"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "status": {
+                        "type": "select",
+                        "tooltip": "Filter by transaction status.",
+                        "label": "Status",
+                        "index": 0,
+                        "options": [
+                            {
+                                "label": "All",
+                                "value": ""
+                            },
+                            {
+                                "label": "Ready",
+                                "value": "ready"
+                            },
+                            {
+                                "label": "Pending",
+                                "value": "pending"
+                            },
+                            {
+                                "label": "Completed",
+                                "value": "completed"
+                            },
+                            {
+                                "label": "Canceled",
+                                "value": "canceled"
+                            }
+                        ]
+                    },
+                    "customer_id": {
+                        "type": "text",
+                        "tooltip": "Filter by customer ID (cus_...).",
+                        "label": "Customer ID",
+                        "index": 1
+                    },
+                    "createdAfter": {
+                        "type": "date-time",
+                        "tooltip": "Return transactions created after this timestamp.",
+                        "label": "Created After",
+                        "index": 2
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/paddle/core/FindTransactions?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz48c3ZnIGlkPSJhIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTAgMTUwIj48ZGVmcz48c3R5bGU+LmJ7ZmlsbDojZmZkZDM1O30uY3tmaWxsOiMwNDBmMTE7fS5ke2ZpbGw6bm9uZTt9PC9zdHlsZT48L2RlZnM+PHBhdGggY2xhc3M9ImQiIGQ9Ik0wLDBIMTUwVjE1MEgwVjBaIi8+PHJlY3QgY2xhc3M9ImIiIHg9IjEzLjgxIiB5PSIxNC4xOSIgd2lkdGg9IjEyMy45OCIgaGVpZ2h0PSIxMjMuOTgiLz48cGF0aCBjbGFzcz0iYyIgZD0iTTM3LjI4LDY1Ljd2LTMuNDFjNC4yLDAsOC4yMy0xLjY2LDExLjIxLTQuNjEsMi45Ny0yLjk0LDQuNjQtNi45NSw0LjY1LTExLjEzaDMuMTdjMCw0LjE5LDEuNjYsOC4yLDQuNjQsMTEuMTUsMi45OCwyLjk3LDcuMDIsNC42MywxMS4yMiw0LjYydjMuNDFjLTQuMiwwLTguMjMsMS42Ni0xMS4yMSw0LjYxLTIuOTcsMi45NC00LjY0LDYuOTUtNC42NSwxMS4xM2gtMy4xN2MwLTQuMTktMS42Ni04LjItNC42NC0xMS4xNS0yLjk5LTIuOTYtNy4wMi00LjYyLTExLjIyLTQuNjJaIi8+PHBhdGggY2xhc3M9ImMiIGQ9Ik01My4xNCw0MC42NGgyNy4yN2MxMy4zMiwwLDIyLjg0LDkuNDUsMjIuODQsMjMuM3MtOS41MSwyMy4zLTIyLjg0LDIzLjNoLTI3LjI4djM5LjY4aDExLjQxdi0yOS42aDE1Ljg2YzE5LjE2LDAsMzQuMjYtMTQuOTksMzQuMjYtMzMuMzhzLTE1LjEtMzMuMzgtMzQuMjYtMzMuMzhoLTI3LjI3djEwLjA4WiIvPjwvc3ZnPg=="
+}
