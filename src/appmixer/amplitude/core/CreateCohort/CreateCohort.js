@@ -3,48 +3,55 @@
 module.exports = {
     async receive(context) {
 
-        const { name, description, id_type, members, action } = context.messages.in.content;
+        const { name, appId, idType, ids, owner, published } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
 
-        if (!id_type) {
-            throw new context.CancelError('Id Type is required!');
+        if (!appId) {
+            throw new context.CancelError('App ID is required!');
         }
 
-        if (!members) {
-            throw new context.CancelError('Members is required!');
+        if (!idType) {
+            throw new context.CancelError('ID Type is required!');
         }
 
-        if (!action) {
-            throw new context.CancelError('Action is required!');
+        if (!ids) {
+            throw new context.CancelError('IDs is required!');
         }
 
-        // Parse members if it's a string (textarea input)
-        let membersList;
-        if (typeof members === 'string') {
-            membersList = members.split('\n').filter(item => item.trim());
-        } else if (Array.isArray(members)) {
-            membersList = members;
+        if (!owner) {
+            throw new context.CancelError('Owner is required!');
+        }
+
+        if (published === undefined || published === null) {
+            throw new context.CancelError('Published is required!');
+        }
+
+        // Parse ids if it's a string (textarea input)
+        let idsList;
+        if (typeof ids === 'string') {
+            idsList = ids.split(',').map(item => item.trim()).filter(item => item);
         } else {
-            throw new context.CancelError('Members must be a list of identifiers!');
+            throw new context.CancelError('IDs must be a list of identifiers!');
         }
 
-        // https://developers.amplitude.com/docs/behavioral-cohorts-api#upload-cohort
+        // API expects snake_case parameter names
         const payload = {
             name,
-            [id_type]: membersList,
-            action
+            app_id: appId,
+            id_type: idType,
+            ids: idsList,
+            owner,
+            published
         };
 
-        if (description) {
-            payload.description = description;
-        }
+        const isEU = context.auth.isEU === 'true';
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://amplitude.com/api/3/cohorts/upload',
+            url: isEU ? 'https://analytics.eu.amplitude.com/api/3/cohorts/upload' : 'https://amplitude.com/api/3/cohorts/upload',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Basic ${Buffer.from(context.auth.apiKey + ':' + context.auth.secretKey).toString('base64')}`
@@ -52,6 +59,15 @@ module.exports = {
             data: payload
         });
 
-        return context.sendJson(data, 'out');
+        // The API returns cohort details in cohortsById object keyed by cohort ID
+        const cohortId = data.cohortId;
+        const cohortDetails = data.cohortsById && data.cohortsById[cohortId] ? data.cohortsById[cohortId] : {};
+
+        const transformedResponse = {
+            cohortId,
+            ...cohortDetails
+        };
+
+        return context.sendJson(transformedResponse, 'out');
     }
 };

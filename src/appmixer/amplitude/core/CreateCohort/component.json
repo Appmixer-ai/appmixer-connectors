@@ -20,27 +20,29 @@
                     "name": {
                         "type": "string"
                     },
-                    "description": {
+                    "appId": {
                         "type": "string"
                     },
-                    "id_type": {
+                    "idType": {
                         "type": "string"
                     },
-                    "members": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    },
-                    "action": {
+                    "ids": {
                         "type": "string"
+                    },
+                    "owner": {
+                        "type": "string"
+                    },
+                    "published": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "name",
-                    "id_type",
-                    "members",
-                    "action"
+                    "appId",
+                    "idType",
+                    "ids",
+                    "owner",
+                    "published"
                 ]
             },
             "inspector": {
@@ -48,52 +50,49 @@
                     "name": {
                         "type": "text",
                         "label": "Name",
-                        "tooltip": "Name of the cohort to create.",
+                        "tooltip": "A name for the cohort.",
                         "index": 0
                     },
-                    "description": {
+                    "appId": {
                         "type": "text",
-                        "label": "Description",
-                        "tooltip": "Optional description for the cohort.",
+                        "label": "Project ID (App ID)",
+                        "tooltip": "An identifier for the Amplitude project containing the cohort. Can be found in Organization settings -> Projects.",
                         "index": 1
                     },
-                    "id_type": {
+                    "idType": {
                         "type": "select",
-                        "label": "Id Type",
-                        "tooltip": "Type of identifiers provided in members.",
+                        "label": "ID Type",
+                        "tooltip": "The kind of ID sent in the IDs field.",
                         "options": [
                             {
-                                "label": "user_id",
-                                "value": "user_id"
+                                "label": "By User ID",
+                                "value": "BY_USER_ID"
                             },
                             {
-                                "label": "amplitude_id",
-                                "value": "amplitude_id"
+                                "label": "By Amplitude ID",
+                                "value": "BY_AMP_ID"
                             }
                         ],
                         "index": 2
                     },
-                    "members": {
+                    "ids": {
                         "type": "textarea",
-                        "label": "Members",
-                        "tooltip": "List of user identifiers (one per line) to include in the cohort.",
+                        "label": "IDs",
+                        "tooltip": "One or more user or Amplitude IDs to include in the cohort (separated by commas). Select the ID type in the ID Type field. Both type of IDs can be found at User Profiles",
                         "index": 3
                     },
-                    "action": {
-                        "type": "select",
-                        "label": "Action",
-                        "tooltip": "Insert to add members to an existing cohort name, or replace to set exactly the provided set for the cohort name.",
-                        "options": [
-                            {
-                                "label": "insert",
-                                "value": "insert"
-                            },
-                            {
-                                "label": "replace",
-                                "value": "replace"
-                            }
-                        ],
+                    "owner": {
+                        "type": "text",
+                        "label": "Owner",
+                        "tooltip": "The login email of the cohort's owner in Amplitude.",
                         "index": 4
+                    },
+                    "published": {
+                        "type": "toggle",
+                        "label": "Published",
+                        "tooltip": "Whether the cohort is discoverable or hidden.",
+                        "index": 5,
+                        "defaultValue": false
                     }
                 }
             }
@@ -104,8 +103,15 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Cohort Id",
-                    "value": "cohort_id",
+                    "label": "Cohort ID",
+                    "value": "cohortId",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Project ID (App ID)",
+                    "value": "appId",
                     "schema": {
                         "type": "string"
                     }
@@ -118,10 +124,208 @@
                     }
                 },
                 {
-                    "label": "Message",
-                    "value": "message",
+                    "label": "Archived",
+                    "value": "archived",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Description",
+                    "value": "description",
                     "schema": {
                         "type": "string"
+                    }
+                },
+                {
+                    "label": "Finished",
+                    "value": "finished",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Published",
+                    "value": "published",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Type",
+                    "value": "type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Last Modified",
+                    "value": "lastMod",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "createdAt",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Last Computed",
+                    "value": "lastComputed",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Hidden",
+                    "value": "hidden",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "View Count",
+                    "value": "view_count",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Popularity",
+                    "value": "popularity",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Last Viewed",
+                    "value": "last_viewed",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Chart ID",
+                    "value": "chart_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Edit ID",
+                    "value": "edit_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Predictive",
+                    "value": "is_predictive",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Is Official Content",
+                    "value": "is_official_content",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Location ID",
+                    "value": "location_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Cohort Definition Type",
+                    "value": "cohort_definition_type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Cohort Output Type",
+                    "value": "cohort_output_type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Generated Content",
+                    "value": "is_generated_content",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Owners",
+                    "value": "owners",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "label": "Viewers",
+                    "value": "viewers",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "label": "Size",
+                    "value": "size",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Definition",
+                    "value": "definition",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Metadata",
+                    "value": "metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Shortcut IDs",
+                    "value": "shortcut_ids",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "label": "Per App Metadata",
+                    "value": "per_app_metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Include Data App Types",
+                    "value": "include_data_app_types",
+                    "schema": {
+                        "type": "array"
                     }
                 }
             ]

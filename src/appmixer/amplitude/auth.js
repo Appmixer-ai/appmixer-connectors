@@ -13,23 +13,29 @@ module.exports = {
                 type: 'text',
                 name: 'Secret Key',
                 tooltip: 'Log into your Amplitude account and find your Secret Key in the project settings.'
+            },
+            isEU: {
+                type: 'text',
+                name: 'Use EU Data Center',
+                tooltip: 'Type "true" if your Amplitude project is hosted in the EU data center, otherwise leave it blank or type "false".'
             }
         },
 
         async requestProfileInfo(context) {
             const apiKey = context.apiKey;
+            const isEU = context.isEU === 'true';
             return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
+                key: `[${isEU ? 'EU' : 'US'}] ` + apiKey.substr(0, 3) + '...' + apiKey.substr(4)
             };
         },
         accountNameFromProfileInfo: 'key',
 
         validate: async (context) => {
-            // Amplitude's /2/usersearch endpoint can be used to check API key validity
-            // We'll use a dummy search for a non-existent user
+            const isEU = context.isEU === 'true';
+
             const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://analytics.eu.amplitude.com/api/3/cohorts',
+                url: isEU ? 'https://analytics.eu.amplitude.com/api/3/cohorts' : 'https://amplitude.com/api/3/cohorts',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -39,6 +45,7 @@ module.exports = {
                     user: 'nonexistentuserfortest'
                 }
             });
+
             // If the API key is invalid, Amplitude returns 401 or 403
             // If valid, it returns 200 with a JSON body
             if (!response.data || typeof response.data !== 'object') {
