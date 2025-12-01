@@ -8,10 +8,7 @@
     },
     "quota": {
         "manager": "appmixer:constantContact",
-        "resources": "requests",
-        "scope": {
-            "userId": ""
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -37,22 +34,47 @@
                     "htmlContent": {
                         "type": "string"
                     },
-                    "textContent": {
+                    "preheader": {
                         "type": "string"
                     },
-                    "listIds": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
+                    "addressLine1": {
+                        "type": "string"
+                    },
+                    "addressLine2": {
+                        "type": "string"
+                    },
+                    "addressLine3": {
+                        "type": "string"
+                    },
+                    "addressOptional": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "stateCode": {
+                        "type": "string"
+                    },
+                    "stateNonUsName": {
+                        "type": "string"
+                    },
+                    "postalCode": {
+                        "type": "string"
+                    },
+                    "countryCode": {
+                        "type": "string"
+                    },
+                    "organizationName": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "name",
-                    "subject",
+                    "subject", 
+                    "fromName",
                     "fromEmail",
-                    "htmlContent",
-                    "listIds"
+                    "replyToEmail",
+                    "htmlContent"
                 ]
             },
             "inspector": {
@@ -61,7 +83,7 @@
                         "type": "text",
                         "index": 1,
                         "label": "Campaign Name",
-                        "tooltip": "Human-readable name for the campaign"
+                        "tooltip": "Name for the campaign"
                     },
                     "subject": {
                         "type": "text",
@@ -85,7 +107,7 @@
                         "type": "text",
                         "index": 5,
                         "label": "Reply-To Email",
-                        "tooltip": "Reply-to email address (optional)"
+                        "tooltip": "Reply-to email address"
                     },
                     "htmlContent": {
                         "type": "textarea",
@@ -93,17 +115,71 @@
                         "label": "HTML Content",
                         "tooltip": "HTML body content"
                     },
-                    "textContent": {
-                        "type": "textarea",
+                    "preheader": {
+                        "type": "text",
                         "index": 7,
-                        "label": "Text Content",
-                        "tooltip": "Plain text body content (optional)"
+                        "label": "Preheader",
+                        "tooltip": "Short summary that follows the subject line in the email client"
                     },
-                    "listIds": {
-                        "type": "expression",
+                    "addressLine1": {
+                        "type": "text",
                         "index": 8,
-                        "label": "Target List IDs",
-                        "tooltip": "Array of list IDs for campaign audience"
+                        "label": "Address Line 1",
+                        "tooltip": "First line of physical address for the footer"
+                    },
+                    "addressLine2": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Address Line 2",
+                        "tooltip": "Second line of physical address for the footer"
+                    },
+                    "addressLine3": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Address Line 3",
+                        "tooltip": "Third line of physical address for the footer"
+                    },
+                    "addressOptional": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Additional Address Info",
+                        "tooltip": "Optional additional address information for the footer"
+                    },
+                    "city": {
+                        "type": "text",
+                        "index": 12,
+                        "label": "City",
+                        "tooltip": "City name"
+                    },
+                    "stateCode": {
+                        "type": "text",
+                        "index": 13,
+                        "label": "State Code",
+                        "tooltip": "State code (e.g., CA, NY, MA)"
+                    },
+                    "stateNonUsName": {
+                        "type": "text",
+                        "index": 14,
+                        "label": "State/Province (Non-US)",
+                        "tooltip": "State or province name for non-US addresses"
+                    },
+                    "postalCode": {
+                        "type": "text",
+                        "index": 15,
+                        "label": "Postal Code",
+                        "tooltip": "ZIP code or postal code"
+                    },
+                    "countryCode": {
+                        "type": "text",
+                        "index": 16,
+                        "label": "Country Code",
+                        "tooltip": "Country code (e.g., US, CA, GB)"
+                    },
+                    "organizationName": {
+                        "type": "text",
+                        "index": 17,
+                        "label": "Organization Name",
+                        "tooltip": "Name of the organization"
                     }
                 }
             }
@@ -114,24 +190,73 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Campaign ID",
-                    "value": "campaign_id"
+                    "label": "Campaign Activities",
+                    "value": "campaign_activities",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "campaign_activity_id": {
+                                    "type": "string",
+                                    "title": "Campaign Activities.Campaign Activity Id"
+                                },
+                                "role": {
+                                    "type": "string",
+                                    "title": "Campaign Activities.Role"
+                                }
+                            }
+                        }
+                    }
                 },
                 {
-                    "label": "Name",
-                    "value": "name"
-                },
-                {
-                    "label": "Status",
-                    "value": "status"
+                    "label": "Campaign Id",
+                    "value": "campaign_id",
+                    "schema": {
+                        "type": "string"
+                    }
                 },
                 {
                     "label": "Created At",
-                    "value": "created_at"
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Current Status",
+                    "value": "current_status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Name",
+                    "value": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Type",
+                    "value": "type",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Type Code",
+                    "value": "type_code",
+                    "schema": {
+                        "type": "number"
+                    }
                 },
                 {
                     "label": "Updated At",
-                    "value": "updated_at"
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string"
+                    }
                 }
             ]
         }

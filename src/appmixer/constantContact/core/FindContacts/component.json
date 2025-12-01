@@ -1,7 +1,7 @@
 {
     "name": "appmixer.constantContact.core.FindContacts",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Search and list contacts. Returns a maximum of 500 contacts per request. Constant Contact paginates responses; use the maximum available per page internally.",
+    "description": "Search and list contacts. Returns a maximum of 500 contacts per request.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -9,10 +9,7 @@
     },
     "quota": {
         "manager": "appmixer:constantContact",
-        "resources": "requests",
-        "scope": {
-            "userId": ""
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -20,22 +17,40 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "status": {"type": ["array", "string"]
+                    },
                     "email": {
                         "type": "string"
                     },
-                    "status": {
-                        "type": "string"
+                    "lists": {"type": ["array", "string"]
                     },
-                    "listId": {
-                        "type": "string"
+                    "tags": {"type": ["array", "string"]
                     },
-                    "createdAfter": {
+                    "updated_after": {
                         "type": "string",
                         "format": "date-time"
                     },
-                    "updatedAfter": {
+                    "updated_before": {
                         "type": "string",
                         "format": "date-time"
+                    },
+                    "created_after": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "created_before": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "optout_after": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "optout_before": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "sms_status": {"type": ["array", "string"]
                     },
                     "outputType": {
                         "type": "string"
@@ -44,62 +59,140 @@
             },
             "inspector": {
                 "inputs": {
-                    "email": {
-                        "type": "text",
-                        "tooltip": "Filter by an exact email address.",
-                        "label": "Email",
-                        "index": 0
-                    },
                     "status": {
-                        "type": "select",
-                        "tooltip": "Filter by subscription status.",
+                        "type": "multiselect",
+                        "tooltip": "Filter by subscription status. Accepts one or more values.",
                         "label": "Status",
                         "options": [
                             {
                                 "label": "All",
-                                "value": ""
+                                "value": "all"
                             },
                             {
-                                "label": "Subscribed",
-                                "value": "subscribed"
+                                "label": "Active",
+                                "value": "active"
                             },
                             {
-                                "label": "Unsubscribed",
-                                "value": "unsubscribed"
+                                "label": "Deleted",
+                                "value": "deleted"
                             },
                             {
                                 "label": "Not Set",
                                 "value": "not_set"
                             },
                             {
-                                "label": "Archived",
-                                "value": "archived"
+                                "label": "Pending Confirmation",
+                                "value": "pending_confirmation"
+                            },
+                            {
+                                "label": "Temp Hold",
+                                "value": "temp_hold"
+                            },
+                            {
+                                "label": "Unsubscribed",
+                                "value": "unsubscribed"
                             }
                         ],
                         "index": 1
                     },
-                    "listId": {
+                    "email": {
                         "type": "text",
-                        "tooltip": "Filter by contacts that are members of the specified list ID.",
-                        "label": "List ID",
+                        "tooltip": "Filter by an exact email address.",
+                        "label": "Email",
                         "index": 2
                     },
-                    "createdAfter": {
-                        "type": "date-time",
-                        "tooltip": "Return contacts created after this date and time.",
-                        "label": "Created After",
-                        "index": 3
+                    "lists": {
+                        "type": "multiselect",
+                        "tooltip": "Filter by contacts that are members of one or more specified lists. Up to 25 list IDs.",
+                        "label": "Lists",
+                        "index": 3,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/FindContactLists?outPort=out",
+                            "data": {
+                                "transform": "./FindContactLists#listsToSelectArray"
+                            }
+                        }
                     },
-                    "updatedAfter": {
+                    "tags": {
+                        "type": "multiselect",
+                        "tooltip": "Get contact details for up to 50 specified tags.",
+                        "label": "Tags",
+                        "index": 5,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray"
+                            }
+                        }
+                    },
+                    "updated_after": {
                         "type": "date-time",
-                        "tooltip": "Return contacts updated after this date and time.",
+                        "tooltip": "Return contacts updated after this date and time (ISO-8601 format).",
                         "label": "Updated After",
-                        "index": 4
+                        "index": 6
+                    },
+                    "updated_before": {
+                        "type": "date-time",
+                        "tooltip": "Return contacts updated before this date and time (ISO-8601 format).",
+                        "label": "Updated Before",
+                        "index": 7
+                    },
+                    "created_after": {
+                        "type": "date-time",
+                        "tooltip": "Return contacts created after this date and time (ISO-8601 format).",
+                        "label": "Created After",
+                        "index": 8
+                    },
+                    "created_before": {
+                        "type": "date-time",
+                        "tooltip": "Return contacts created before this date and time (ISO-8601 format).",
+                        "label": "Created Before",
+                        "index": 9
+                    },
+                    "optout_after": {
+                        "type": "date-time",
+                        "tooltip": "Return contacts that unsubscribed after this date and time (ISO-8601 format).",
+                        "label": "Optout After",
+                        "index": 10
+                    },
+                    "optout_before": {
+                        "type": "date-time",
+                        "tooltip": "Return contacts that unsubscribed before this date and time (ISO-8601 format).",
+                        "label": "Optout Before",
+                        "index": 11
+                    },
+                    "sms_status": {
+                        "type": "multiselect",
+                        "tooltip": "Get contacts by their SMS status.",
+                        "label": "SMS Status",
+                        "index": 12,
+                        "options": [
+                            {
+                                "label": "All",
+                                "value": "all"
+                            },
+                            {
+                                "label": "Explicit",
+                                "value": "explicit"
+                            },
+                            {
+                                "label": "Unsubscribed",
+                                "value": "unsubscribed"
+                            },
+                            {
+                                "label": "Pending Confirmation",
+                                "value": "pending_confirmation"
+                            },
+                            {
+                                "label": "Not Set",
+                                "value": "not_set"
+                            }
+                        ]
                     },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 5,
+                        "index": 13,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [

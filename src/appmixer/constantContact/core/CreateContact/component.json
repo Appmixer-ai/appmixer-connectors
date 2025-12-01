@@ -1,7 +1,7 @@
 {
     "name": "appmixer.constantContact.core.CreateContact",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Create a new contact. At minimum, provide an email address and a create source.",
+    "description": "Create a new contact.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -18,13 +18,11 @@
                 "type": "object",
                 "properties": {
                     "email_address": {
-                        "type": "string",
-                        "title": "Email Address"
-                    },
+                        "type": "string"
+                    },                  
                     "permission_to_send": {
-                        "type": "string",
-                        "title": "Permission To Send"
-                    },
+                        "type": "string"
+                    },  
                     "first_name": {
                         "type": "string",
                         "title": "First Name"
@@ -42,14 +40,14 @@
                         "title": "Job Title"
                     },
                     "list_memberships": {
-                        "type": "array",
+                        "type": ["array", "string"],
                         "items": {
                             "type": "string"
                         },
                         "title": "List Memberships"
                     },
                     "tags": {
-                        "type": "array",
+                        "type": ["array", "string"],
                         "items": {
                             "type": "string"
                         },
@@ -70,14 +68,14 @@
                 "inputs": {
                     "email_address": {
                         "type": "text",
-                        "tooltip": "Email address (required).",
                         "label": "Email Address",
-                        "index": 0
+                        "tooltip": "Email address of the contact.",
+                        "index": 1
                     },
                     "permission_to_send": {
                         "type": "select",
-                        "tooltip": "Permission level for sending.",
                         "label": "Permission To Send",
+                        "tooltip": "Identifies the type of permission that the Constant Contact account has been granted to send email to the contact.",
                         "options": [
                             {
                                 "label": "Explicit",
@@ -86,6 +84,18 @@
                             {
                                 "label": "Implicit",
                                 "value": "implicit"
+                            },
+                            {
+                                "label": "Pending Confirmation",
+                                "value": "pending_confirmation"
+                            },
+                            {
+                                "label": "Unsubscribed",
+                                "value": "unsubscribed"
+                            },
+                            {
+                                "label": "Temporary Hold",
+                                "value": "temp_hold"
                             },
                             {
                                 "label": "Not Set",
@@ -119,16 +129,28 @@
                         "index": 5
                     },
                     "list_memberships": {
-                        "type": "textarea",
-                        "tooltip": "Array of list IDs to subscribe the contact to (one per line or JSON array format).",
+                        "type": "multiselect",
+                        "tooltip": "List IDs to subscribe the contact to.",
                         "label": "List Memberships",
-                        "index": 6
+                        "index": 6,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/FindContactLists?outPort=out",
+                            "data": {
+                                "transform": "./FindContactLists#listsToSelectArray"
+                            }
+                        }
                     },
                     "tags": {
-                        "type": "textarea",
-                        "tooltip": "Tags to apply to the contact (one per line or JSON array format).",
+                        "type": "multiselect",
+                        "tooltip": "Tags to apply to the contact.",
                         "label": "Tags",
-                        "index": 7
+                        "index": 7,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray"
+                            }
+                        }
                     },
                     "create_source": {
                         "type": "select",
@@ -165,7 +187,17 @@
                     "label": "Email Address",
                     "value": "email_address",
                     "schema": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "type": "string",
+                                "title": "Email Address.Address"
+                            },
+                            "permission_to_send": {
+                                "type": "string",
+                                "title": "Email Address.Permission To Send"
+                            }
+                        }
                     }
                 },
                 {
@@ -183,6 +215,13 @@
                     }
                 },
                 {
+                    "label": "Job Title",
+                    "value": "job_title",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
                     "label": "Company Name",
                     "value": "company_name",
                     "schema": {
@@ -190,10 +229,114 @@
                     }
                 },
                 {
-                    "label": "Job Title",
-                    "value": "job_title",
+                    "label": "Create Source",
+                    "value": "create_source",
                     "schema": {
                         "type": "string"
+                    }
+                },
+                {
+                    "label": "Birthday Month",
+                    "value": "birthday_month",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Birthday Day",
+                    "value": "birthday_day",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Anniversary",
+                    "value": "anniversary",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Custom Fields",
+                    "value": "custom_fields",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "custom_field_id": {
+                                    "type": "string",
+                                    "title": "Custom Fields.Custom Field Id"
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "title": "Custom Fields.Value"
+                                },
+                                "choice_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "title": "Custom Fields.Choice Ids"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Phone Numbers",
+                    "value": "phone_numbers",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "phone_number": {
+                                    "type": "string",
+                                    "title": "Phone Numbers.Phone Number"
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "title": "Phone Numbers.Kind"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Street Addresses",
+                    "value": "street_addresses",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Kind"
+                                },
+                                "street": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Street"
+                                },
+                                "city": {
+                                    "type": "string",
+                                    "title": "Street Addresses.City"
+                                },
+                                "state": {
+                                    "type": "string",
+                                    "title": "Street Addresses.State"
+                                },
+                                "postal_code": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Postal Code"
+                                },
+                                "country": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Country"
+                                }
+                            }
+                        }
                     }
                 },
                 {
@@ -207,8 +350,8 @@
                     }
                 },
                 {
-                    "label": "Tags",
-                    "value": "tags",
+                    "label": "Taggings",
+                    "value": "taggings",
                     "schema": {
                         "type": "array",
                         "items": {
@@ -217,24 +360,61 @@
                     }
                 },
                 {
-                    "label": "Create Source",
-                    "value": "create_source",
+                    "label": "Notes",
+                    "value": "notes",
                     "schema": {
-                        "type": "string"
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "note_id": {
+                                    "type": "string",
+                                    "title": "Notes.Note Id"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "title": "Notes.Created At"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "title": "Notes.Content"
+                                }
+                            }
+                        }
                     }
                 },
                 {
-                    "label": "Created At",
-                    "value": "created_at",
+                    "label": "Sms Channel",
+                    "value": "sms_channel",
                     "schema": {
-                        "type": "string"
-                    }
-                },
-                {
-                    "label": "Updated At",
-                    "value": "updated_at",
-                    "schema": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                            "full_sms_address": {
+                                "type": "string",
+                                "title": "Sms Channel.Full Sms Address"
+                            },
+                            "sms_channel_consents": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sms_consent_permission": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Sms Consent Permission"
+                                        },
+                                        "consent_type": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Consent Type"
+                                        },
+                                        "consent_medium_details": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Consent Medium Details"
+                                        }
+                                    }
+                                },
+                                "title": "Sms Channel.Sms Channel Consents"
+                            }
+                        }
                     }
                 }
             ]

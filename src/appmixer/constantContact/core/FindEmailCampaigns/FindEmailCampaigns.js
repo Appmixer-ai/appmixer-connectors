@@ -3,17 +3,44 @@
 const lib = require('../../lib');
 
 const schema = {
-    'campaign_id': { 'type': 'string', 'title': 'Campaign Id' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'status': { 'type': 'string', 'title': 'Status' },
-    'created_at': { 'type': 'string', 'title': 'Created At' },
-    'updated_at': { 'type': 'string', 'title': 'Updated At' }
+    campaign_id: {
+        type: 'string',
+        title: 'Campaign Id'
+    },
+    created_at: {
+        type: 'string',
+        title: 'Created At'
+    },
+    current_status: {
+        type: 'string',
+        title: 'Current Status'
+    },
+    name: {
+        type: 'string',
+        title: 'Name'
+    },
+    type: {
+        type: 'string',
+        title: 'Type'
+    },
+    type_code: {
+        type: 'number',
+        title: 'Type Code'
+    },
+    updated_at: {
+        type: 'string',
+        title: 'Updated At'
+    }
 };
 
 module.exports = {
     async receive(context) {
 
-        const { name, status, updatedAfter, outputType } = context.messages.in.content;
+        const {
+            after_date: afterDate,
+            before_date: beforeDate,
+            outputType
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns', value: 'campaigns' });
@@ -22,21 +49,17 @@ module.exports = {
         // https://v3.developer.constantcontact.com/api_reference/index.html#!/Email_Campaigns/listEmailCampaigns
         const params = {};
 
-        if (name) {
-            params.name = name;
+        if (afterDate) {
+            params.after_date = afterDate;
         }
 
-        if (status) {
-            params.status = status;
+        if (beforeDate) {
+            params.before_date = beforeDate;
         }
-
-        if (updatedAfter) {
-            params.updated_after = updatedAfter;
-        }
-
+        params.limit = 500;
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.cc.email/v3/email_campaigns',
+            url: 'https://api.cc.email/v3/emails',
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },

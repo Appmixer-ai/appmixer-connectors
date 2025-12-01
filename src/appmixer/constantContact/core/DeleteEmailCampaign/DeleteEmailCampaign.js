@@ -12,7 +12,7 @@ module.exports = {
         // https://v3.developer.constantcontact.com/api_reference/index.html#!/Email_Campaigns/deleteEmailCampaign
         await context.httpRequest({
             method: 'DELETE',
-            url: `https://api.cc.email/v3/email_campaigns/${campaignId}`,
+            url: `https://api.cc.email/v3/emails/${campaignId}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             }

@@ -1,7 +1,7 @@
 {
     "name": "appmixer.constantContact.core.FindContactLists",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Search for contact lists. Returns a maximum of 50 records per page.",
+    "description": "Search for contact lists. Returns a maximum of 500 records.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -9,10 +9,7 @@
     },
     "quota": {
         "manager": "appmixer:constantContact",
-        "resources": "requests",
-        "scope": {
-            "userId": ""
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -23,11 +20,11 @@
                     "name": {
                         "type": "string"
                     },
-                    "favorite": {
-                        "type": "boolean"
+                    "status": {
+                        "type": ["array", "string"]
                     },
-                    "includeCount": {
-                        "type": "boolean"
+                    "channelType": {
+                        "type": "string"
                     },
                     "outputType": {
                         "type": "string"
@@ -38,21 +35,47 @@
                 "inputs": {
                     "name": {
                         "type": "text",
-                        "tooltip": "Filter lists by name (case-insensitive contains match).",
+                        "tooltip": "Filter lists by name.",
                         "label": "Name",
                         "index": 0
                     },
-                    "favorite": {
-                        "type": "toggle",
-                        "tooltip": "Filter by whether the list is marked as favorite.",
-                        "label": "Favorite",
-                        "index": 1
+                    "status": {
+                        "type": "select",
+                        "label": "Status",
+                        "index": 1,
+                        "tooltip": "Filter by list status. The default value is 'Active'.",
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            {
+                                "label": "All",
+                                "value": "all"
+                            },
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "Deleted",
+                                "value": "deleted"
+                            }
+                        ]
                     },
-                    "includeCount": {
-                        "type": "toggle",
-                        "tooltip": "If true, include membership_count in results.",
-                        "label": "Include Count",
-                        "index": 2
+                    "channelType": {
+                        "type": "select",
+                        "label": "Channel Type",
+                        "index": 2,
+                        "tooltip": "Filter by channel type. The default value is 'Email'.",
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            {
+                                "label": "Email",
+                                "value": "email"
+                            },
+                            {
+                                "label": "SMS",
+                                "value": "sms"
+                            }
+                        ]
                     },
                     "outputType": {
                         "type": "select",
