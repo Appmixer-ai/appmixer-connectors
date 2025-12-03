@@ -1,0 +1,149 @@
+{
+    "name": "appmixer.sendgrid.core.CreateorUpdateContact",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create or update a contact in Marketing Campaigns. Returns a job_id indicating an async import operation. You can optionally add the contact to lists and set custom fields.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:sendgrid"
+    },
+    "quota": {
+        "manager": "appmixer:sendgrid",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string"
+                    },
+                    "last_name": {
+                        "type": "string"
+                    },
+                    "address_line_1": {
+                        "type": "string"
+                    },
+                    "address_line_2": {
+                        "type": "string"
+                    },
+                    "city": {
+                        "type": "string"
+                    },
+                    "state_province_region": {
+                        "type": "string"
+                    },
+                    "postal_code": {
+                        "type": "string"
+                    },
+                    "country": {
+                        "type": "string"
+                    },
+                    "custom_fields": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "list_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "email": {
+                        "type": "text",
+                        "tooltip": "Contact email address.",
+                        "label": "Email",
+                        "index": 1
+                    },
+                    "first_name": {
+                        "type": "text",
+                        "tooltip": "First name.",
+                        "label": "First Name",
+                        "index": 2
+                    },
+                    "last_name": {
+                        "type": "text",
+                        "tooltip": "Last name.",
+                        "label": "Last Name",
+                        "index": 3
+                    },
+                    "address_line_1": {
+                        "type": "text",
+                        "tooltip": "Address line 1.",
+                        "label": "Address Line 1",
+                        "index": 4
+                    },
+                    "address_line_2": {
+                        "type": "text",
+                        "tooltip": "Address line 2.",
+                        "label": "Address Line 2",
+                        "index": 5
+                    },
+                    "city": {
+                        "type": "text",
+                        "tooltip": "City.",
+                        "label": "City",
+                        "index": 6
+                    },
+                    "state_province_region": {
+                        "type": "text",
+                        "tooltip": "State/Province/Region.",
+                        "label": "State Province Region",
+                        "index": 7
+                    },
+                    "postal_code": {
+                        "type": "text",
+                        "tooltip": "Postal/ZIP code.",
+                        "label": "Postal Code",
+                        "index": 8
+                    },
+                    "country": {
+                        "type": "text",
+                        "tooltip": "Country.",
+                        "label": "Country",
+                        "index": 9
+                    },
+                    "list_ids": {
+                        "type": "text",
+                        "tooltip": "IDs of lists to add the contact to (comma-separated).",
+                        "label": "List IDs",
+                        "index": 10
+                    },
+                    "custom_fields": {
+                        "type": "text",
+                        "tooltip": "Custom field values as JSON object, keyed by custom field ID.",
+                        "label": "Custom Fields",
+                        "index": 11
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Job ID",
+                    "value": "job_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAVHSURBVFhHlZZriJRVGMd/57yz47qz6+5qankrtyQvZUaggX6JCqK+FFQSRkiZpEhJGWVlRmEWGWhpUaQkQhpJaBaFgRooYd4110uW13V3Xd3Wuay7s/Oepw8z5/XMcUbtwO7M/zz35/mfM0dlMhkREYwxAGitAcpipRRKqSuwiCAi1y23WIsIQLRh/9w9u9x999PX9e3LYQCVTCZFRAiCAIAwDKMsXSOtdVSZxW4wCtVS6FY5fStXSqG1Jtr1M8NxeD3LTbrU8n3bpdLpdMQB66RU5m4nLMZJ8lpynM7YJSL5DrhOXKFdfmW+fjl5qSUFItqlksmkcBV2l8MdPSHnchAag84aYhKglaJ/FVT3yvNJax11xu+EKnAgIqF/3Eq13iYgIqxozfHykU4CINEE1W2CAJ88kuDBW2NX6NsC/AR04V9RoCAIijK3ctcwDEMCBSEGrQRQICCSn7PVt8Uo9+w7xUYckDLzdOVdRmjKKpqykO4RpCuHzhpyMaGrxpCrg1xwud1+5b5PAG2MidhpW2YrtYGt/N9QsSUNW9LCsZTBJLuQZBeZ6pD2BsX54ZCrCYoqFxHCMCwKWtRdu+EG9LsRYRRKGWxBSmkUClSBM3J5XH7lfgzrP7oHyga1GKGxPcdXh3MApMjRrkOMCP2rNPVVMZRSPNVfM6628gr7kj5Fii8iHMLYtkXYhGw93sP0dZcQBeNHxnloQm+UUtxdBaPigilxWtxOuCS2MbWtXjunwc68CKu8YwCNQlBQuMmNMVBw7AdyW+4np917wP8xcp2JCIFWnE6G/Hq0G6UUA/tqGgZVYYyhfyykXyxA62LS+p1wC4oSTKVSQpn5XBXnN/MVFr67ctfG37cypRTaDSCSb6xt2xVBXezItVLkL6LL8sifAuV1UznXehEHduw7yMy57zJ/0VLSnZeiMUTZejNWWjPvwyV0Z3v46pu1vPD6u3y4bDkXOjryiWnNpq1/sGHj5ggv/Xo1za1tUcwoAYCPlq5g2pQnuX/iBHpX9uJiOs2BxiNke3KcPNPM6bMtnDzTDAhNLec41XSWrTv28PnKNZw41cRrs56jX30t63/exInTZznf3kFtTYJhg26i42KKQ0f/ZveBRjKZzqhTlzkArPruB9as+4n7J93LYw8/wBsLlzDytuGkMxla2i4wbMhN7N53iOeffpxVazfQcPMQdh34k759almxeAE79zfy+849xOMV7N1/iOrqBPV1NfStq2Pb9t3cM3Y0v/y2jdWfL2L40MEeB4zhvonj+X7Fp5xpbuX9T78k2ZmhqaWV1rZ2csYw45nJ3DXmdn7cuJmpkx/lgzdnE49VMHDgAA4c/osRtwxlZEMD23fvxwAL5r7E+HF3cvjYccbfM5b5c2Zxx6gRRTyLRiAivPPRMqa9Mo+j/xxn+pQn6JOoojqRYOzoEcRjFQRaIwrumzSBL1d9y4tvfUC2J8ecGVP5+LPlvLf4C1auXc+rM58lCDQVsTgiwrgxI9m19yCz315I46FjiDhkdO8BAU6dbqJffR2JRBXZnhwt59oYfOMA0plL1NQkSGc66RWvoDvbgxEhzOWor63BCDS3nOOGfn2pjFdwMZWmtk8furq7MWFIrCJGRzJFZTxOVe9KYrHCmyGVSoklob9sm0ph+72cTjTaq+hHHLCbVsE/bqWw1cd7PbnBzDVeV2I5YI1KZW3x/5FbmRvI7vk4epBYAx/7lVjsy21lLrbBStlbeTSCUpVYQ1fu4uhGLCP3/ZWS6yAIimaqvUep9n+WHbl1FgRBVK3VtxjvUWr1rc//AKf/aNkhRHOTAAAAAElFTkSuQmCC"
+}

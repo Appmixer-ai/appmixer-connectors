@@ -1,0 +1,85 @@
+{
+    "name": "appmixer.sendgrid.core.ListContacts",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Retrieve contacts from Marketing Campaigns. Returns a maximum of 500 records per call.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:sendgrid"
+    },
+    "quota": {
+        "manager": "appmixer:sendgrid",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "tooltip": "Optional search expression (if supported). If provided, it is applied server-side.",
+                        "label": "Query",
+                        "index": 0
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/sendgrid/core/ListContacts?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAeCAYAAABNChwpAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAVHSURBVFhHlZZriJRVGMd/57yz47qz6+5qankrtyQvZUaggX6JCqK+FFQSRkiZpEhJGWVlRmEWGWhpUaQkQhpJaBaFgRooYd4110uW13V3Xd3Wuay7s/Oepw8z5/XMcUbtwO7M/zz35/mfM0dlMhkREYwxAGitAcpipRRKqSuwiCAi1y23WIsIQLRh/9w9u9x999PX9e3LYQCVTCZFRAiCAIAwDKMsXSOtdVSZxW4wCtVS6FY5fStXSqG1Jtr1M8NxeD3LTbrU8n3bpdLpdMQB66RU5m4nLMZJ8lpynM7YJSL5DrhOXKFdfmW+fjl5qSUFItqlksmkcBV2l8MdPSHnchAag84aYhKglaJ/FVT3yvNJax11xu+EKnAgIqF/3Eq13iYgIqxozfHykU4CINEE1W2CAJ88kuDBW2NX6NsC/AR04V9RoCAIijK3ctcwDEMCBSEGrQRQICCSn7PVt8Uo9+w7xUYckDLzdOVdRmjKKpqykO4RpCuHzhpyMaGrxpCrg1xwud1+5b5PAG2MidhpW2YrtYGt/N9QsSUNW9LCsZTBJLuQZBeZ6pD2BsX54ZCrCYoqFxHCMCwKWtRdu+EG9LsRYRRKGWxBSmkUClSBM3J5XH7lfgzrP7oHyga1GKGxPcdXh3MApMjRrkOMCP2rNPVVMZRSPNVfM6628gr7kj5Fii8iHMLYtkXYhGw93sP0dZcQBeNHxnloQm+UUtxdBaPigilxWtxOuCS2MbWtXjunwc68CKu8YwCNQlBQuMmNMVBw7AdyW+4np917wP8xcp2JCIFWnE6G/Hq0G6UUA/tqGgZVYYyhfyykXyxA62LS+p1wC4oSTKVSQpn5XBXnN/MVFr67ctfG37cypRTaDSCSb6xt2xVBXezItVLkL6LL8sifAuV1UznXehEHduw7yMy57zJ/0VLSnZeiMUTZejNWWjPvwyV0Z3v46pu1vPD6u3y4bDkXOjryiWnNpq1/sGHj5ggv/Xo1za1tUcwoAYCPlq5g2pQnuX/iBHpX9uJiOs2BxiNke3KcPNPM6bMtnDzTDAhNLec41XSWrTv28PnKNZw41cRrs56jX30t63/exInTZznf3kFtTYJhg26i42KKQ0f/ZveBRjKZzqhTlzkArPruB9as+4n7J93LYw8/wBsLlzDytuGkMxla2i4wbMhN7N53iOeffpxVazfQcPMQdh34k759almxeAE79zfy+849xOMV7N1/iOrqBPV1NfStq2Pb9t3cM3Y0v/y2jdWfL2L40MEeB4zhvonj+X7Fp5xpbuX9T78k2ZmhqaWV1rZ2csYw45nJ3DXmdn7cuJmpkx/lgzdnE49VMHDgAA4c/osRtwxlZEMD23fvxwAL5r7E+HF3cvjYccbfM5b5c2Zxx6gRRTyLRiAivPPRMqa9Mo+j/xxn+pQn6JOoojqRYOzoEcRjFQRaIwrumzSBL1d9y4tvfUC2J8ecGVP5+LPlvLf4C1auXc+rM58lCDQVsTgiwrgxI9m19yCz315I46FjiDhkdO8BAU6dbqJffR2JRBXZnhwt59oYfOMA0plL1NQkSGc66RWvoDvbgxEhzOWor63BCDS3nOOGfn2pjFdwMZWmtk8furq7MWFIrCJGRzJFZTxOVe9KYrHCmyGVSoklob9sm0ph+72cTjTaq+hHHLCbVsE/bqWw1cd7PbnBzDVeV2I5YI1KZW3x/5FbmRvI7vk4epBYAx/7lVjsy21lLrbBStlbeTSCUpVYQ1fu4uhGLCP3/ZWS6yAIimaqvUep9n+WHbl1FgRBVK3VtxjvUWr1rc//AKf/aNkhRHOTAAAAAElFTkSuQmCC"
+}
