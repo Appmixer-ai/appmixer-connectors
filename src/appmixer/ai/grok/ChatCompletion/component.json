@@ -1,0 +1,269 @@
+{
+    "name": "appmixer.ai.grok.ChatCompletion",
+    "description": "Generate text responses using Grok models with conversational context.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:grok"
+    },
+    "quota": {
+        "manager": "appmixer:ai:grok",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "messages": {
+                        "type": "object"
+                    },
+                    "model": {
+                        "type": "string"
+                    },
+                    "stream": {
+                        "type": "boolean"
+                    },
+                    "temperature": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "model",
+                    "messages"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "select",
+                        "tooltip": "Model to use. Examples: grok-3-latest, grok-3-fast-latest, grok-3-mini-latest, grok-3-mini-fast-latest, grok-2-latest.",
+                        "label": "Model",
+                        "options": [
+                            {
+                                "label": "grok-3-latest",
+                                "value": "grok-3-latest"
+                            },
+                            {
+                                "label": "grok-3-fast-latest",
+                                "value": "grok-3-fast-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-latest",
+                                "value": "grok-3-mini-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-fast-latest",
+                                "value": "grok-3-mini-fast-latest"
+                            },
+                            {
+                                "label": "grok-2-latest",
+                                "value": "grok-2-latest"
+                            }
+                        ],
+                        "index": 0
+                    },
+                    "messages": {
+                        "type": "expression",
+                        "tooltip": "Array of message objects with role and content.",
+                        "label": "Messages",
+                        "index": 1,
+                        "levels": ["ADD"],
+                        "fields": {
+                            "role": {
+                                "type": "select",
+                                "label": "Role",
+                                "tooltip": "The role of the message author.",
+                                "index": 1,
+                                "options": [
+                                    {
+                                        "label": "System",
+                                        "value": "system"
+                                    },
+                                    {
+                                        "label": "User",
+                                        "value": "user"
+                                    },
+                                    {
+                                        "label": "Assistant",
+                                        "value": "assistant"
+                                    }
+                                ]
+                            },
+                            "content": {
+                                "type": "text",
+                                "label": "Content",
+                                "tooltip": "The content of the message.",
+                                "index": 2
+                            }
+                        }
+                    },
+                    "stream": {
+                        "type": "toggle",
+                        "tooltip": "If true, returns tokens via server-sent events (SSE).",
+                        "label": "Stream",
+                        "index": 2,
+                        "defaultValue": false
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "tooltip": "Sampling temperature. Higher values produce more random output.",
+                        "label": "Temperature",
+                        "index": 3
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Chat Completion ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Object",
+                    "value": "object",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created",
+                    "value": "created",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Model",
+                    "value": "model",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Choices",
+                    "value": "choices",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "number",
+                                    "title": "Index"
+                                },
+                                "message": {
+                                    "type": "object",
+                                    "properties": {
+                                        "role": {
+                                            "type": "string",
+                                            "title": "Role"
+                                        },
+                                        "content": {
+                                            "type": "string",
+                                            "title": "Content"
+                                        },
+                                        "refusal": {
+                                            "type": ["string", "null"],
+                                            "title": "Refusal"
+                                        }
+                                    },
+                                    "title": "Message"
+                                },
+                                "finish_reason": {
+                                    "type": "string",
+                                    "title": "Finish Reason"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Usage",
+                    "value": "usage",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "prompt_tokens": {
+                                "type": "number",
+                                "title": "Prompt Tokens"
+                            },
+                            "completion_tokens": {
+                                "type": "number",
+                                "title": "Completion Tokens"
+                            },
+                            "total_tokens": {
+                                "type": "number",
+                                "title": "Total Tokens"
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "text_tokens": {
+                                        "type": "number",
+                                        "title": "Text Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Audio Tokens"
+                                    },
+                                    "image_tokens": {
+                                        "type": "number",
+                                        "title": "Image Tokens"
+                                    },
+                                    "cached_tokens": {
+                                        "type": "number",
+                                        "title": "Cached Tokens"
+                                    }
+                                },
+                                "title": "Prompt Tokens Details"
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "number",
+                                        "title": "Reasoning Tokens"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number",
+                                        "title": "Audio Tokens"
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Accepted Prediction Tokens"
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "number",
+                                        "title": "Rejected Prediction Tokens"
+                                    }
+                                },
+                                "title": "Completion Tokens Details"
+                            },
+                            "num_sources_used": {
+                                "type": "number",
+                                "title": "Number of Sources Used"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "System Fingerprint",
+                    "value": "system_fingerprint",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="
+}

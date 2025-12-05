@@ -1,0 +1,255 @@
+{
+    "name": "appmixer.ai.grok.StructuredOutput",
+    "description": "Generate responses constrained to a JSON schema.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:ai:grok"
+    },
+    "quota": {
+        "manager": "appmixer:ai:grok",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "jsonSchema": {
+                        "type": "string"
+                    },
+                    "strict": {
+                        "type": "boolean"
+                    },
+                    "maxTokens": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "model",
+                    "role",
+                    "content",
+                    "jsonSchema"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "select",
+                        "label": "Model",
+                        "index": 0,
+                        "options": [
+                            {
+                                "label": "grok-3-latest",
+                                "value": "grok-3-latest"
+                            },
+                            {
+                                "label": "grok-3-fast-latest",
+                                "value": "grok-3-fast-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-latest",
+                                "value": "grok-3-mini-latest"
+                            },
+                            {
+                                "label": "grok-3-mini-fast-latest",
+                                "value": "grok-3-mini-fast-latest"
+                            },
+                            {
+                                "label": "grok-2-latest",
+                                "value": "grok-2-latest"
+                            }
+                        ]
+                    },
+                    "role": {
+                        "type": "select",
+                        "label": "Role",
+                        "index": 1,
+                        "options": [
+                            {
+                                "label": "system",
+                                "value": "system"
+                            },
+                            {
+                                "label": "user",
+                                "value": "user"
+                            },
+                            {
+                                "label": "assistant",
+                                "value": "assistant"
+                            },
+                            {
+                                "label": "tool",
+                                "value": "tool"
+                            }
+                        ]
+                    },
+                    "content": {
+                        "type": "textarea",
+                        "label": "Content",
+                        "index": 2
+                    },
+                    "jsonSchema": {
+                        "type": "textarea",
+                        "label": "JSON Schema",
+                        "index": 4,
+                        "tooltip": "JSON Schema the model must follow."
+                    },
+                    "strict": {
+                        "type": "toggle",
+                        "label": "Strict",
+                        "index": 5,
+                        "tooltip": "If true, enforces strict schema adherence.",
+                        "defaultValue": false
+                    },
+                    "maxTokens": {
+                        "type": "number",
+                        "label": "Max Tokens",
+                        "index": 6
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Structured Output ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Object",
+                    "value": "object",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created",
+                    "value": "created",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Model",
+                    "value": "model",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Choices",
+                    "value": "choices",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "number"
+                                },
+                                "message": {
+                                    "type": "object",
+                                    "properties": {
+                                        "role": {
+                                            "type": "string"
+                                        },
+                                        "content": {
+                                            "type": "string"
+                                        },
+                                        "refusal": {
+                                            "type": ["string", "null"]
+                                        }
+                                    }
+                                },
+                                "finish_reason": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Usage",
+                    "value": "usage",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "prompt_tokens": {
+                                "type": "number"
+                            },
+                            "completion_tokens": {
+                                "type": "number"
+                            },
+                            "total_tokens": {
+                                "type": "number"
+                            },
+                            "prompt_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "text_tokens": {
+                                        "type": "number"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number"
+                                    },
+                                    "image_tokens": {
+                                        "type": "number"
+                                    },
+                                    "cached_tokens": {
+                                        "type": "number"
+                                    }
+                                }
+                            },
+                            "completion_tokens_details": {
+                                "type": "object",
+                                "properties": {
+                                    "reasoning_tokens": {
+                                        "type": "number"
+                                    },
+                                    "audio_tokens": {
+                                        "type": "number"
+                                    },
+                                    "accepted_prediction_tokens": {
+                                        "type": "number"
+                                    },
+                                    "rejected_prediction_tokens": {
+                                        "type": "number"
+                                    }
+                                }
+                            },
+                            "num_sources_used": {
+                                "type": "number"
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "System Fingerprint",
+                    "value": "system_fingerprint",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="
+}

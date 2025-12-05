@@ -1,0 +1,120 @@
+{
+    "name": "appmixer.ai.grok.ImageGeneration",
+    "description": "Generate images from text prompts using Grok models.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:grok"
+    },
+    "quota": {
+        "manager": "appmixer:ai:grok",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "title": "Model"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "title": "Prompt"
+                    },
+                    "n": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10,
+                        "default": 1,
+                        "title": "Number of Images"
+                    },
+                    "user": {
+                        "type": "string",
+                        "title": "User ID"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "title": "Output Type"
+                    }
+                },
+                "required": [
+                    "model",
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "select",
+                        "label": "Model",
+                        "tooltip": "Image generation model to use.",
+                        "options": [
+                            {
+                                "label": "grok-2-image-latest",
+                                "value": "grok-2-image-latest"
+                            }
+                        ],
+                        "index": 0
+                    },
+                    "prompt": {
+                        "type": "textarea",
+                        "label": "Prompt",
+                        "tooltip": "Natural language description of the desired image.",
+                        "index": 1
+                    },
+                    "n": {
+                        "type": "number",
+                        "label": "Number of Images",
+                        "tooltip": "Number of images to generate (1-10).",
+                        "index": 2
+                    },
+                    "user": {
+                        "type": "text",
+                        "label": "User ID",
+                        "tooltip": "Unique end-user identifier for monitoring and abuse detection.",
+                        "index": 3
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "tooltip": "Choose how to receive the result set: as one list, first item only, one item at a time, or stream to CSV file.",
+                        "options": [
+                            {
+                                "label": "All Items at Once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One Item at a Time",
+                                "value": "object"
+                            }
+                        ],
+                        "index": 4,
+                        "defaultValue": "array"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ai/grok/ImageGeneration?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/model": "abc",
+                        "in/prompt": "def"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAALVSURBVFhH7ZcxS+tQGIbfJBqE2nZQUKGLiDi6KW5S1C4OijiJq4uKq4pD8Q+4uDooCP6DbkrUtgoVWgehGLoogkIcpIqF9nvvcPVcctQaL1cdrg+c5Xu/nDzknBwSQ0RqAAx8DzRERAzD+BYBkjT14lfzI/B/CFQqFb2k+HSBfD6PcrmslxV/LXB/f49cLgfHcVAsFiEiegscx4HrumhpadGjP4iI8APk83mOjY3Rtm0CUKOjo4MrKyu8u7sjSe7t7TEej7Pe9CIiHxJYX19nY2MjAdC2bfb39zORSLCnp4ehUIjz8/O8uLig4zgMhULc2trSp/DxIYHNzU0CoGVZXFxcpOd5vvzx8ZEkub+/z+bmZgLg+fm5r0cnsMD19TUjkQgNw+D29rYeKw4PDxkOh9WyXF1d6S0+Agusrq4SAKempvRIkU6nGQ6HOTw8zKamJgLgycmJ3uYjsMDAwAAB8Pj4WI9IktlslrFYjDs7OyTJ6elpAuDGxobe6iOwQGtrKxsaGlitVvWIR0dHjMfjdF1X1dbW1giAS0tLvl4dEZFA54CIwLIsmKa/PZfLIZVKIZVKoaurS9UtywKernuPQAKdnZ2oVCooFouqViqV8PDwgGQyCdu2ff2FQgF4uu5dgizB8vIyAXBubo78/ejUgaPjeR6j0SgNw2CpVNJjH4H3QDabJQCapsl0Oq3Himq1yvHxcQLgxMSEHr8gsEAmkyEAzszMqI2ob0jXdZlIJAiAbW1tvLy89OWvEVhgdnaWyWSSJHlwcMDR0VFGIhEODQ1xcnKSfX19NE2TABiLxVgoFPQpXiWQwO7uru99zmQyHBkZUTd8HtFolAsLCy+O6HqIiNT9Kj47O8PNzQ0GBwf1CJ7n4fT0FOVyGe3t7ejt7X3xNrwHybc/yz3Pw+3tLbq7u/Xon1FXoFarqQPls2C9/4LPvvkzbwp8FT8C3y5gfPfv+S/zgpjO35lQeQAAAABJRU5ErkJggg=="
+}
