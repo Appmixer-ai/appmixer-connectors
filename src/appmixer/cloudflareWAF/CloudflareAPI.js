@@ -1,3 +1,5 @@
+const config = require('./config');
+
 module.exports = class CloudflareAPI {
 
     constructor({ email, apiKey, zoneId, token }) {
@@ -49,13 +51,26 @@ module.exports = class CloudflareAPI {
 
     async getRules(context, rulesetId) {
 
-        const response = await context.httpRequest({
+        const { generatedRuleRefPrefix } = config(context);
+
+        const { data } = await context.httpRequest({
             method: 'GET',
             url: `https://api.cloudflare.com/client/v4/zones/${this.zoneId}/rulesets/${rulesetId}`,
             headers: this.getHeaders()
         });
 
-        return response.data;
+        let { result: { rules = [] } } = data;
+
+        console.log(generatedRuleRefPrefix, '---slkajdflkajsd-----------------------')
+        data.result.rules = rules.filter(rule => {
+            const namePattern = new RegExp(`^${generatedRuleRefPrefix}#\\d+$`);
+            console.log(rule.ref, namePattern.test(rule.ref))
+            return namePattern.test(rule.ref);
+        });
+
+        console.log("-=-=-=-=--")
+        console.log(data.result.rules)
+        return data;
     }
 
     async createRulesetAndBlockRule(context, rules) {
