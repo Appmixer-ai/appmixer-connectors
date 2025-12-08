@@ -1,5 +1,4 @@
-const lib = require('../../waf/lib');
-const jobLibs = require('../../jobs.waf');
+const lib = require('../../lib');
 const assert = require('assert');
 
 describe('Cloudflare', () => {
@@ -16,7 +15,7 @@ describe('Cloudflare', () => {
 
             const ipsToRemove = ['123.0.2.0', '123.0.2.1'];
 
-            const updatedRule = jobLibs.removeIpsFromRule(rule, ipsToRemove);
+            const updatedRule = lib.removeIpsFromRule(rule, ipsToRemove);
 
             assert.equal(updatedRule.expression, '(ip.src in {123.0.2.2})', '2 ips has been removed.');
             assert.equal(updatedRule.id, '123');
@@ -25,6 +24,7 @@ describe('Cloudflare', () => {
 
     describe('prepare rules', () => {
 
+        const context = { config: {} };
         it('create or update rules', async () => {
 
             const rules = [{
@@ -38,12 +38,12 @@ describe('Cloudflare', () => {
             const ips = ['111.0.2.1', '111.0.2.2', '111.0.2.3'];
 
             let rulesToUpdateOrCreate;
-            rulesToUpdateOrCreate = lib.prepareRulesForCreateOrUpdate(ips, rules, 1000);
+            rulesToUpdateOrCreate = lib.prepareRulesForCreateOrUpdate(context, ips, rules, 1000);
             assert.equal(rulesToUpdateOrCreate.length, 1);
             assert.equal(rulesToUpdateOrCreate[0].id, '123', 'new ips should fit in the id:123 rule');
             assert.ok(rulesToUpdateOrCreate[0].expression.includes('111.0.2.3'));
 
-            rulesToUpdateOrCreate = lib.prepareRulesForCreateOrUpdate(ips, rules, 40);
+            rulesToUpdateOrCreate = lib.prepareRulesForCreateOrUpdate(context, ips, rules, 40);
             assert.equal(rulesToUpdateOrCreate.length, 2, 'it should update id:222 and create a new one');
             assert.equal(rulesToUpdateOrCreate[0].id, '222', 'new ips should fit in the id:222 rule');
             assert.ok(rulesToUpdateOrCreate[0].expression.includes('111.0.2.1'));

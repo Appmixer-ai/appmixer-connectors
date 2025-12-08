@@ -313,5 +313,6 @@ module.exports = {
     deleteExpireIps,
     extractIPs,
     removeIpsFromRule,
-    initializeBlockRule
+    initializeBlockRule,
+    getIpsFromRules
 };
