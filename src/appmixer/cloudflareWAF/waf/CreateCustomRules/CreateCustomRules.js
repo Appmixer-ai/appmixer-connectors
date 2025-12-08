@@ -2,6 +2,15 @@ const CloudflareAPI = require('../../CloudflareAPI');
 const lib = require('../lib');
 const crypto = require('crypto');
 
+async function getGeneratedRules(context, client, rulesetId) {
+    const { result: { rules = [] } } = await client.getRules(context, rulesetId);
+
+    return rules.filter(rule => {
+        const namePattern = new RegExp(`^${lib.RULE_REFERENCE_PREFIX}#\\d+$`);
+        return namePattern.test(rule.ref);
+    });
+}
+
 module.exports = {
     async receive(context) {
 
@@ -30,15 +39,12 @@ module.exports = {
 
         let resultRules = []; // all affected rules - created or updated
         if (!ruleset) {
-            const data = await client.createRulesetAndBlockRule(context, [lib.getBlockRule(1, parsedIps)]);
+            const data = await client.createRulesetAndBlockRule(context, [lib.initializeBlockRule(1, parsedIps)]);
             ruleset = data?.result;
             resultRules = data?.result?.rules || [];
         } else {
-            const { result: { rules = [] } } = await client.getRules(context, ruleset.id);
+            const rules = await getGeneratedRules(context, client, ruleset.id);
             resultRules = rules;
-
-            console.log("-----------------")
-
 
             const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(parsedIps, rules);
 

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const lib = require('../../../cloudflareWAF/waf/lib');
+const lib = require('../../waf/lib');
 
 describe('CloudFlare WAF', function() {
 

@@ -1,5 +1,5 @@
-const lib = require('../../src/appmixer/cloudflareWAF/waf/lib');
-const jobLibs = require('../../src/appmixer/cloudflareWAF/jobs.waf');
+const lib = require('../../waf/lib');
+const jobLibs = require('../../jobs.waf');
 const assert = require('assert');
 
 describe('Cloudflare', () => {

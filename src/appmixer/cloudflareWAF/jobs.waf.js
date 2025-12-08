@@ -1,5 +1,7 @@
 const CloudflareAPI = require('./CloudflareAPI');
 const { Address4, Address6 } = require('ip-address');
+const GENERATED_RULE_NAME_PREFIX = 'Generated Rule';
+const RULE_REFERENCE_PREFIX = 'generated_rule';
 
 const getModel = (context) => require('./RulesIPsModel')(context);
 
@@ -162,6 +164,16 @@ function removeInterfaceIdentifierAndAddCidr(ip) {
     return `${networkPrefix}::/64`;
 }
 
+function initializeBlockRule(index, ips) {
+    return {
+        action: 'block',
+        description: `${GENERATED_RULE_NAME_PREFIX}#${index}`,
+        enabled: true,
+        expression: getBlockExpression(ips),
+        ref: `${RULE_REFERENCE_PREFIX}#${index}`
+    };
+}
+
 /**
  * remove sensitive info from objects
  * @param items
@@ -180,5 +192,7 @@ module.exports = {
     deleteExpireIps,
     getBlockExpression,
     extractIPs,
-    removeIpsFromRule
+    removeIpsFromRule,
+    initializeBlockRule,
+    RULE_REFERENCE_PREFIX
 };

@@ -1,10 +1,8 @@
-const ruleDescription = 'Generated Rule';
-const ruleRefPrefix = 'generated_rule';
 const RULE_MAX_CAPACITY = 4096;
 
-// extractIPs, getBlockExpression  are also used in jobs.waf. They cannot be here, as jobs.waf
+// extractIPs, getBlockExpression are also used in jobs.waf. They cannot be here, as jobs.waf
 // cannot require waf/lib, therefore these methods are defined in the jobs.waf.js file
-const { extractIPs, getBlockExpression } = require('../jobs.waf');
+const { extractIPs, getBlockExpression, initializeBlockRule } = require('../jobs.waf');
 
 const parseIPs = (input) => {
 
@@ -64,7 +62,6 @@ function findIpsInRules(rules, refIps = []) {
 }
 
 function prepareRulesForCreateOrUpdate(ips, rules, ruleCapacity) {
-    console.log('---------------------', ips, rules);
     const ipsList = assignIpsToRules(ips, rules, ruleCapacity);
 
     const ipsGroupedByRules = Object.keys(ipsList).reduce((acc, ip) => {
@@ -86,20 +83,10 @@ function prepareRulesForCreateOrUpdate(ips, rules, ruleCapacity) {
                 res.push({ ...existingRule, expression });
             }
         } else {
-            res.push(this.getBlockRule(groups.length, entry[1]));
+            res.push(initializeBlockRule(groups.length, entry[1]));
         }
     });
     return res;
-}
-
-function getBlockRule(index, ips) {
-    return {
-        action: 'block',
-        description: `${ruleDescription}#${index}`,
-        enabled: true,
-        expression: getBlockExpression(ips),
-        ref: `${ruleRefPrefix}#${index}`
-    };
 }
 
 function assignIpsToRules(ips, rules, ruleCapacity) {
@@ -134,7 +121,7 @@ function getAvailableRule(rules, requiredCapacity, ruleCapacity = RULE_MAX_CAPAC
 module.exports = {
     getIpsFromRules,
     prepareRulesForCreateOrUpdate,
-    getBlockRule,
+    initializeBlockRule,
     findIpsInRules,
     extractIPs,
     parseIPs
