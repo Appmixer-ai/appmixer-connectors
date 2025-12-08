@@ -167,8 +167,6 @@ function initializeBlockRule(context, index, ips) {
 
     const { generatedRuleRefPrefix, generatedRuleNamePrefix } = config(context);
 
-    console.log("AaAAA", generatedRuleRefPrefix, generatedRuleNamePrefix)
-
     return {
         action: 'block',
         description: `${generatedRuleNamePrefix}#${index}`,
