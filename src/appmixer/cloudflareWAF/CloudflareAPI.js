@@ -61,15 +61,11 @@ module.exports = class CloudflareAPI {
 
         let { result: { rules = [] } } = data;
 
-        console.log(generatedRuleRefPrefix, '---slkajdflkajsd-----------------------')
         data.result.rules = rules.filter(rule => {
             const namePattern = new RegExp(`^${generatedRuleRefPrefix}#\\d+$`);
-            console.log(rule.ref, namePattern.test(rule.ref))
             return namePattern.test(rule.ref);
         });
 
-        console.log("-=-=-=-=--")
-        console.log(data.result.rules)
         return data;
     }
 
