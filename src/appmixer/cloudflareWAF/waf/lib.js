@@ -64,6 +64,7 @@ function findIpsInRules(rules, refIps = []) {
 }
 
 function prepareRulesForCreateOrUpdate(ips, rules, ruleCapacity) {
+    console.log('---------------------', ips, rules);
     const ipsList = assignIpsToRules(ips, rules, ruleCapacity);
 
     const ipsGroupedByRules = Object.keys(ipsList).reduce((acc, ip) => {

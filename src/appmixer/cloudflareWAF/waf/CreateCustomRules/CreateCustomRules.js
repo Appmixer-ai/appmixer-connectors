@@ -21,6 +21,7 @@ module.exports = {
             return context.sendJson([], 'out');
         }
 
+
         const parsedIps = lib.parseIPs(ips);
         const client = new CloudflareAPI({ zoneId, token: apiToken });
 
@@ -35,6 +36,9 @@ module.exports = {
         } else {
             const { result: { rules = [] } } = await client.getRules(context, ruleset.id);
             resultRules = rules;
+
+            console.log("-----------------")
+
 
             const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(parsedIps, rules);
 
