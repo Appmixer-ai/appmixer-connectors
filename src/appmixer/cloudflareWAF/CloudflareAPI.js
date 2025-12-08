@@ -59,9 +59,10 @@ module.exports = class CloudflareAPI {
             headers: this.getHeaders()
         });
 
-        let { result: { rules = [] } } = data;
+        const { result: { rules = [] } } = data;
 
         data.result.rules = rules.filter(rule => {
+            if (!rule.ref) return false;
             const namePattern = new RegExp(`^${generatedRuleRefPrefix}#\\d+$`);
             return namePattern.test(rule.ref);
         });
