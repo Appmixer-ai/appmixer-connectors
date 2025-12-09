@@ -2,8 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const sinon = require('sinon');
 const assert = require('assert');
-const testUtils = require('../../utils.js');
-const AddRow = require('../../../src/appmixer/utils/csv/AddRow/AddRow');
+const testUtils = require('../../../../../../test/utils.js');
+const AddRow = require('../../AddRow/AddRow');
 
 const pathToCSV = path.join(__dirname, 'ID,Email,Name-3.csv');
 

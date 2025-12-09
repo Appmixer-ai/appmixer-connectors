@@ -108,7 +108,7 @@ module.exports = class CSVProcessor {
             await this.loadHeaders();
             const headerIdx = this.getHeaderIndex(options.positioningColumn);
             idx = positioningMethod === 'beforeColumn' ? headerIdx : headerIdx + 1;
-        } else if (options.index) {
+        } else if (typeof options.index === 'number') {
             idx = options.index;
         } else {
             throw new Error('No position specified for the new column');
@@ -201,8 +201,8 @@ module.exports = class CSVProcessor {
                 }
             } else {
                 if (passesIndexFilter(idx, indexes)) {
-                    const values = Array.isArray(indexedValues) ? indexedValues : [indexedValues];
-                    values.forEach(val => {
+                    const indexedValuesArray = Array.isArray(indexedValues) ? indexedValues : [indexedValues];
+                    indexedValuesArray.forEach(val => {
                         Object.entries(val).forEach(([key, value]) => {
                             row[key] = value;
                         });
@@ -264,6 +264,18 @@ module.exports = class CSVProcessor {
         return new Promise((resolve, reject) => {
             const rows = [];
             let idx = 0;
+            let settled = false;
+
+            const settle = (err) => {
+                if (settled) return;
+                settled = true;
+                lock.unlock();
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            };
 
             readStream.on('data', row => {
                 try {
@@ -292,14 +304,11 @@ module.exports = class CSVProcessor {
                     readStream.destroy(err);
                 }
             }).on('error', err => {
-                lock.unlock();
-                reject(err);
+                settle(err);
             }).on('close', () => {
-                lock.unlock();
-                resolve(rows);
+                settle();
             }).on('end', () => {
-                lock.unlock();
-                resolve(rows);
+                settle();
             });
         });
     }
@@ -339,16 +348,15 @@ module.exports = class CSVProcessor {
                 try {
                     const newRow = closure(index, row);
                     if (newRow) {
-                        writeStream.write(newRow.join(this.delimiter) + '\n');
+                        writeStream.write(this.formatRow(newRow));
                     }
                     index = index + 1;
                 } catch (err) {
                     writeStream.destroy(err);
                 }
-            }).on('close', (err) => {
-                if (err) {
-                    writeStream.destroy(err);
-                }
+            }).on('close', () => {
+                // Note: close event does not pass an error argument
+                // Errors are handled by the 'error' event
             }).on('error', (err) => {
                 writeStream.destroy(err);
             }).on('end', async () => {
@@ -477,11 +485,30 @@ module.exports = class CSVProcessor {
         }
     }
 
+    /**
+     * Escape a cell value for CSV output.
+     * Wraps the value in quotes if it contains the delimiter, quotes, or newlines.
+     * @param {*} value
+     * @returns {string}
+     * @protected
+     */
+    escapeCell(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const str = String(value);
+        // If the value contains delimiter, double quotes, or newlines, wrap in quotes and escape existing quotes
+        if (str.includes(this.delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
+    }
+
     formatRow(rowData) {
         if (!Array.isArray(rowData)) {
             throw new Error('Unexpected row data format: ' + JSON.stringify(rowData));
         }
-        return rowData.join(this.delimiter) + '\n';
+        return rowData.map(cell => this.escapeCell(cell)).join(this.delimiter) + '\n';
     }
 
     writeRows(writeStream, rows) {
@@ -535,14 +562,18 @@ module.exports = class CSVProcessor {
             trim: true
         });
 
-        return pipeline(
+        const resultStream = pipeline(
             readStream, // Read stream from GridFS
             chunkedStream, // Chunked stream to split data into smaller chunks
             autoDetectDecoderStream, // Auto-detect encoding
             csvReadableStream, // CSV reader stream
             (err) => {
+                if (err) {
+                    resultStream.destroy(err);
+                }
             }
         );
+        return resultStream;
     }
 
     /**
