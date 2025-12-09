@@ -429,13 +429,24 @@ module.exports = class CSVProcessor {
 
                 // Reading all data because we need to always check the last line. And sometimes the first line for headers.
                 readStream.on('data', (data) => {
+                    // Skip undefined or null data chunks
+                    if (data === undefined || data === null) {
+                        return;
+                    }
+
                     // Read the first row to get the headers. Only if we use headers.
                     if (firstRowRead && this.withHeaders) {
                         firstRowRead = false;
                         try {
-                            this.header = parse(data, { delimiter: this.delimiter })[0];
+                            const dataStr = typeof data === 'string' ? data : data.toString();
+                            if (!dataStr || dataStr.trim() === '') {
+                                reject(new this.context.CancelError('Cannot read headers: CSV file appears to be empty or contains only whitespace.'));
+                                return;
+                            }
+                            this.header = parse(dataStr, { delimiter: this.delimiter })[0];
                         } catch (error) {
-                            reject(new this.context.CancelError('Error reading headers', error));
+                            reject(new this.context.CancelError('Error reading headers: ' + error.message));
+                            return;
                         }
                     }
 
