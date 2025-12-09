@@ -377,12 +377,15 @@ module.exports = class CSVProcessor {
         let readStream;
         let writeStream;
         let lockExtendInterval;
+        let destroyed = false;
 
-        const destroy = function() {
+        const destroy = () => {
+            if (destroyed) return;
+            destroyed = true;
 
+            if (lockExtendInterval) clearInterval(lockExtendInterval);
             if (readStream) readStream.destroy();
             if (writeStream) writeStream.destroy();
-            if (lockExtendInterval) clearInterval(lockExtendInterval);
             if (lock) lock.unlock();
         };
 
@@ -392,16 +395,6 @@ module.exports = class CSVProcessor {
             const max = Math.ceil((1000 * 60 * 22) / lockExtendTime); // max execution time 23 minutes
             let i = 0;
 
-            // Extend the lock every 59 seconds up to 22 minutes
-            lockExtendInterval = setInterval(async () => {
-                i++;
-                if (i > max) {
-                    destroy();
-                    throw new Error('Lock extend failed. Max attempts reached.');
-                }
-                await lock.extend(lockExtendTime);
-            }, config.lockExtendInterval || 59000);
-
             // We're not interested in the data, we just need to read the first row to get the headers and the last line.
             readStream = await this.context.getFileReadStream(this.fileId);
             writeStream = new PassThrough();
@@ -409,6 +402,22 @@ module.exports = class CSVProcessor {
             let firstRowRead = true;
             let lastLine = null;
             const promise = new Promise((resolve, reject) => {
+
+                // Extend the lock every 59 seconds up to 22 minutes
+                lockExtendInterval = setInterval(async () => {
+                    i++;
+                    if (i > max) {
+                        destroy();
+                        reject(new Error('Lock extend failed. Max attempts reached.'));
+                        return;
+                    }
+                    try {
+                        await lock.extend(lockExtendTime);
+                    } catch (err) {
+                        destroy();
+                        reject(new Error('Lock extend failed: ' + err.message));
+                    }
+                }, config.lockExtendInterval || 59000);
 
                 // Reading all data because we need to always check the last line. And sometimes the first line for headers.
                 readStream.on('data', (data) => {
@@ -429,9 +438,16 @@ module.exports = class CSVProcessor {
 
                 readStream.on('end', () => {
                     // If there is no empty line at the end of the file, add one
-                    if (!lastLine.toString().endsWith('\n')) {
+                    if (lastLine && !lastLine.toString().endsWith('\n')) {
                         writeStream.write('\n');
                     }
+
+                    // Handle empty file or file with no data rows
+                    if (this.withHeaders && !this.header) {
+                        reject(new this.context.CancelError('Cannot add rows: CSV file is empty or headers could not be read.'));
+                        return;
+                    }
+
                     const rowsToAdd = this.withHeaders ? this.addHeaders(rows, this.getHeaders()) : rows;
                     // Append new rows to the end of the file
                     this.writeRows(writeStream, rowsToAdd);
