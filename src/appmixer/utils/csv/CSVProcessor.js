@@ -429,7 +429,7 @@ module.exports = class CSVProcessor {
 
                 // Reading all data because we need to always check the last line. And sometimes the first line for headers.
                 readStream.on('data', (data) => {
-                    // Skip undefined or null data chunks
+                    // Skip undefined or null data chunks to prevent charCodeAt errors
                     if (data === undefined || data === null) {
                         return;
                     }
