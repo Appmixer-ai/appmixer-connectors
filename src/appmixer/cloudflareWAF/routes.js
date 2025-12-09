@@ -32,7 +32,7 @@ module.exports = (context, options) => {
         // path: '/test',
         path: '/test/{flowId}/{componentId}',
         options: {
-            // auth: false, // public,  when auth is false otherwise it requires Appmixer access token
+            auth: false, // public when auth is false otherwise it requires Appmixer access token
             payload: {
                 // allow: ['application/json'], // allowed content types, allow any if not provided
             },
