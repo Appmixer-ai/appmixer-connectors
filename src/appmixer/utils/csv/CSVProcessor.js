@@ -379,6 +379,9 @@ module.exports = class CSVProcessor {
 
         const config = this.context.config;
         const defaultTtl = 180000; // Default and minimum  TTL is 3 minutes
+        const extendThreshold = 40000; // Extend the lock when less than 40 seconds left
+        const timeout = 30000; // Run a check every 30 seconds to see if the lock is about to expire
+
         const lock = await this.context.lock(this.fileId, {
             ttl: Math.max(parseInt(config.lockTTL, 10) || defaultTtl, defaultTtl)
         });
@@ -399,8 +402,6 @@ module.exports = class CSVProcessor {
         };
 
         try {
-            const extendThreshold = 40000; // Extend the lock when less than 40 seconds left
-            const timeout = 30000; // Check the remaining time to expire every 30 seconds
             const lockExtendTime = Math.max(parseInt(config.lockExtendTime, 10) || defaultTtl, defaultTtl);
             // max execution time 23 minutes0
             const max = Math.ceil((1000 * 60 * 23) / (lockExtendTime - extendThreshold));
