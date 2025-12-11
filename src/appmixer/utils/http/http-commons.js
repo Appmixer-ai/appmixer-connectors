@@ -329,3 +329,4 @@ module.exports = async function(context, method, json) {
 };
 
 module.exports.buildHttpsAgentFromFiles = buildHttpsAgentFromFiles;
+module.exports.buildHttpsAgent = buildHttpsAgent;
