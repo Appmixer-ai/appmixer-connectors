@@ -378,8 +378,9 @@ module.exports = class CSVProcessor {
     async addRows({ rows }) {
 
         const config = this.context.config;
+        const defaultTtl = 180000; // Default and minimum  TTL is 3 minutes
         const lock = await this.context.lock(this.fileId, {
-            ttl: parseInt(config.lockTTL, 10) || 60000 // Default 1 minute TTL
+            ttl: Math.max(parseInt(config.lockTTL, 10) || defaultTtl, defaultTtl)
         });
 
         let readStream;
@@ -398,34 +399,37 @@ module.exports = class CSVProcessor {
         };
 
         try {
-
-            const lockExtendTime = parseInt(config.lockExtendTime, 10) || 1000 * 60 * 1;
-            const max = Math.ceil((1000 * 60 * 22) / lockExtendTime); // max execution time 23 minutes
-            let i = 0;
-
+            const extendThreshold = 40000; // Extend the lock when less than 40 seconds left
+            const timeout = 30000; // Check the remaining time to expire every 30 seconds
+            const lockExtendTime = Math.max(parseInt(config.lockExtendTime, 10) || defaultTtl, defaultTtl);
+            // max execution time 23 minutes0
+            const max = Math.ceil((1000 * 60 * 23) / (lockExtendTime - extendThreshold));
             // We're not interested in the data, we just need to read the first row to get the headers and the last line.
+
             readStream = await this.context.getFileReadStream(this.fileId);
             writeStream = new PassThrough();
-
             let firstRowRead = true;
+
             let lastLine = null;
             const promise = new Promise((resolve, reject) => {
-
-                // Extend the lock every 59 seconds up to 22 minutes
+                let i = 0;
                 lockExtendInterval = setInterval(async () => {
-                    i++;
+
                     if (i > max) {
                         destroy();
                         reject(new Error('Lock extend failed. Max attempts reached.'));
                         return;
                     }
                     try {
-                        await lock.extend(lockExtendTime);
+                        if (lock.expiration && lock.expiration - Date.now().valueOf() < extendThreshold) {
+                            await lock.extend(lockExtendTime);
+                            i++;
+                        }
                     } catch (err) {
                         destroy();
                         reject(new Error('Lock extend failed: ' + err.message));
                     }
-                }, config.lockExtendInterval || 59000);
+                }, timeout); // Every 30 seconds
 
                 // Reading all data because we need to always check the last line. And sometimes the first line for headers.
                 readStream.on('data', (data) => {
@@ -473,7 +477,10 @@ module.exports = class CSVProcessor {
 
                     // If all the new rows are empty, warn the user.
                     if (rowsToAdd.every(row => row.every(cell => !cell))) {
-                        this.context.log({ warning: 'Empty rows added', details: 'Please make sure you are adding the correct data and using the correct delimiter.' });
+                        this.context.log({
+                            warning: 'Empty rows added',
+                            details: 'Please make sure you are adding the correct data and using the correct delimiter.'
+                        });
                     }
                 });
 
@@ -494,6 +501,7 @@ module.exports = class CSVProcessor {
         } finally {
             destroy();
         }
+
     }
 
     /**
@@ -549,6 +557,7 @@ module.exports = class CSVProcessor {
                 this.chunkSize = chunkSize;
                 this.buffer = Buffer.alloc(0);
             }
+
             _transform(chunk, encoding, callback) {
                 this.buffer = Buffer.concat([this.buffer, Buffer.from(chunk)]);
                 while (this.buffer.length >= this.chunkSize) {
@@ -557,6 +566,7 @@ module.exports = class CSVProcessor {
                 }
                 callback();
             }
+
             _flush(callback) {
                 if (this.buffer.length > 0) {
                     this.push(this.buffer);
@@ -564,6 +574,7 @@ module.exports = class CSVProcessor {
                 callback();
             }
         }
+
         const chunkedStream = new ChunkedStream(SAFE_CSV_STREAM_CHUNK_SIZE);
         const autoDetectDecoderStream = new AutoDetectDecoderStream();
         const csvReadableStream = new CsvReadableStream({
