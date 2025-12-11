@@ -21,6 +21,8 @@ function isNewFileOrFolder(change) {
 
 module.exports = {
 
+    isNewFileOrFolder,
+
     async start(context) {
 
         return lib.registerWebhook(context);
