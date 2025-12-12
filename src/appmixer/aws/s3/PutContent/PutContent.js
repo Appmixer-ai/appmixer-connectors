@@ -26,22 +26,24 @@ module.exports = {
             throw new context.CancelError('Content Type is required');
         }
 
-        if (!acl) {
-            throw new context.CancelError('Access Control is required');
-        }
-
-
         const { s3 } = commons.init(context);
 
-        const result = await s3.upload({
+        // Build upload parameters
+        const uploadParams = {
             Bucket: bucket,
             Key: key,
             Body: content,
-            ACL: acl,
             ContentType: contentType,
             Expires: expiryDate,
             ContentEncoding: 'utf8'
-        }).promise();
+        };
+
+        // Only add ACL if provided (optional for buckets with ACLs disabled)
+        if (acl) {
+            uploadParams.ACL = acl;
+        }
+
+        const result = await s3.upload(uploadParams).promise();
 
         const object = Object.assign({
             ContentType: contentType,

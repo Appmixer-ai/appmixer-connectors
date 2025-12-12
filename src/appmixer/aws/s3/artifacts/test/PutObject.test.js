@@ -58,7 +58,7 @@ describe('AWS S3 PutObject component', () => {
 
         assert(s3Mock.upload.calledOnce, 'S3 upload should be called once');
         const uploadParams = s3Mock.upload.firstCall.args[0];
-        
+
         assert.strictEqual(uploadParams.Bucket, 'test-bucket');
         assert.strictEqual(uploadParams.Key, 'test-file.txt');
         assert.strictEqual(uploadParams.ContentType, 'text/plain');
@@ -90,7 +90,7 @@ describe('AWS S3 PutObject component', () => {
 
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
         const output = context.sendJson.firstCall.args[0];
-        
+
         assert.strictEqual(output.Bucket, 'test-bucket');
         assert.strictEqual(output.Key, 'test-file.txt');
         assert.strictEqual(output.ETag, '"abc123"');
