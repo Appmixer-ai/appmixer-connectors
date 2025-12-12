@@ -101,7 +101,6 @@ describe('AWS S3 PutObject component', () => {
 
         assert(context.sendJson.calledOnce, 'sendJson should be called once');
         const output = context.sendJson.firstCall.args[0];
-
         assert.strictEqual(output.Bucket, 'test-bucket');
         assert.strictEqual(output.Key, 'test-file.txt');
         assert.strictEqual(output.ETag, '"abc123"');
