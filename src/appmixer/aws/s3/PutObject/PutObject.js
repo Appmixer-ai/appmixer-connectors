@@ -1,5 +1,4 @@
 'use strict';
-const s3Stream = require('s3-upload-stream');
 const commons = require('../../aws-commons');
 
 /**
@@ -20,6 +19,7 @@ module.exports = {
             maxPartSize,
             concurrentParts
         } = context.messages.in.content;
+
         if (!bucket) {
             throw new context.CancelError('Bucket is required');
         }
@@ -32,48 +32,45 @@ module.exports = {
             throw new context.CancelError('File ID is required');
         }
 
-        if (!acl) {
-            throw new context.CancelError('Access Control is required');
-        }
-
-
         const { s3 } = commons.init(context);
 
-        const uploadFn = () => {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const stream = s3Stream(s3);
-                    const pipe = stream.upload({
-                        Bucket: bucket,
-                        Key: key,
-                        ACL: acl,
-                        ContentType: contentType,
-                        Expires: expiryDate
-                    }).on('error', error => {
-                        reject(error);
-                    }).on('uploaded', details => {
-                        resolve(details);
-                    });
+        // Get file stream from Appmixer storage
+        const readStream = await context.getFileReadStream(fileId);
 
-                    let sizeInBytes = 20971520; // 20 MB
-                    if (maxPartSize) {
-                        sizeInBytes = maxPartSize * 1048576;
-                    }
-                    pipe.maxPartSize(sizeInBytes);
-                    pipe.concurrentParts(concurrentParts || 1);
-
-                    const readStream = await context.getFileReadStream(fileId);
-                    readStream.pipe(pipe);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        };
-
-        return context.sendJson(Object.assign({
+        // Build upload parameters
+        const uploadParams = {
             Bucket: bucket,
+            Key: key,
+            Body: readStream,
             ContentType: contentType,
             Expires: expiryDate
-        }, await uploadFn()), 'object');
+        };
+
+        // Only add ACL if provided (optional for buckets with ACLs disabled)
+        if (acl) {
+            uploadParams.ACL = acl;
+        }
+
+        // Configure multipart upload options
+        const uploadOptions = {};
+        if (maxPartSize) {
+            uploadOptions.partSize = maxPartSize * 1048576; // Convert MB to bytes
+        }
+        if (concurrentParts) {
+            uploadOptions.queueSize = concurrentParts;
+        }
+
+        // Use AWS SDK's native upload method (handles multipart automatically)
+        const result = await s3.upload(uploadParams, uploadOptions).promise();
+
+        // Return consistent output format
+        return context.sendJson({
+            Bucket: bucket,
+            Key: result.Key,
+            ETag: result.ETag,
+            Location: result.Location,
+            ContentType: contentType,
+            Expires: expiryDate
+        }, 'object');
     }
 };
