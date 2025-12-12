@@ -174,7 +174,7 @@ const sendFormData = async (context, url, headers) => {
 
     const response = await context.httpRequest(requestOptions);
 
-    const processedResponse = await processResponse(response);
+    const processedResponse = processResponse(response);
     return await context.sendJson(processedResponse, 'response');
 };
 

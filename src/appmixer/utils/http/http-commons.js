@@ -68,7 +68,8 @@ async function buildHttpsAgent(context, certOptions) {
     }
 
     // Read and validate CA certificate if provided
-    if (caCertificateFileId) {
+    // Skip CA certificate if ignoreSsl is true (contradictory options)
+    if (caCertificateFileId && !ignoreSsl) {
         const caBuffer = await context.getFileReadStream(caCertificateFileId);
         const caChunks = [];
         for await (const chunk of caBuffer) {
@@ -252,7 +253,8 @@ async function buildHttpsAgentFromFiles(
     }
 
     // Read and validate CA certificate if provided
-    if (caCertificateFileId) {
+    // Skip CA certificate if ignoreSsl is true (contradictory options)
+    if (caCertificateFileId && !ignoreSsl) {
         const caBuffer = await context.getFileReadStream(caCertificateFileId);
         const caChunks = [];
         for await (const chunk of caBuffer) {
