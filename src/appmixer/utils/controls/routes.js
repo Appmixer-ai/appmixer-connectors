@@ -1,51 +1,93 @@
 'use strict';
 
-module.exports = (context, options) => {
+module.exports = context => {
 
-    const RulesIPsModel = require('./EachItems')(context);
+    const EachItemsModel = require('./EachItems')(context);
 
+    // POST - Store delayed items for later processing
     context.http.router.register({
         method: 'POST',
-        path: '/store-delayed-each-items',
+        path: '/{id}',
         options: {
             handler: async req => {
+                const { id } = req.params;
+                const { items, delay, correlationId, count, currentIndex } = req.payload;
 
-                const {items, id} = req.payload.items;
-                return await (context.db.collection(RulesIPsModel.collection)).bulkWrite(operations);
+                const eachItems = new EachItemsModel({
+                    id,
+                    items,
+                    delay,
+                    correlationId,
+                    count,
+                    currentIndex
+                });
+
+                await eachItems.save();
+                return { success: true, id };
             }
         }
     });
 
+    // GET - Fetch delayed items by id
     context.http.router.register({
         method: 'GET',
-        path: '/delayed-each-items/{id}',
+        path: '/{id}',
         options: {
             handler: async req => {
+                const { id } = req.params;
 
-                // get delayed itesm by id
-                return await (context.db.collection(RulesIPsModel.collection)).bulkWrite(operations);
+                const eachItems = await EachItemsModel.findById(id);
+                if (!eachItems) {
+                    return null;
+                }
+
+                return eachItems.toObject();
             }
         }
     });
 
+    // PUT - Update delayed items (e.g., update currentIndex)
+    context.http.router.register({
+        method: 'PUT',
+        path: '/{id}',
+        options: {
+            handler: async req => {
+                const { id } = req.params;
+                const { items, delay, correlationId, count, currentIndex } = req.payload;
+
+                const eachItems = await EachItemsModel.findById(id);
+                if (!eachItems) {
+                    return { success: false, error: 'Not found' };
+                }
+
+                // Update fields
+                if (items !== undefined) eachItems.items = items;
+                if (delay !== undefined) eachItems.delay = delay;
+                if (correlationId !== undefined) eachItems.correlationId = correlationId;
+                if (count !== undefined) eachItems.count = count;
+                if (currentIndex !== undefined) eachItems.currentIndex = currentIndex;
+
+                await eachItems.save();
+                return { success: true, id };
+            }
+        }
+    });
+
+    // DELETE - Remove delayed items when fully consumed
     context.http.router.register({
         method: 'DELETE',
-        path: '/delayed-each-items/{id}',
+        path: '/{id}',
         options: {
             handler: async req => {
+                const { id } = req.params;
 
-                // delete list when the is consumed
-                return await (context.db.collection(RulesIPsModel.collection)).bulkWrite(operations);
-            }
-        }
-    });
+                const eachItems = await EachItemsModel.findById(id);
+                if (!eachItems) {
+                    return { success: false, error: 'Not found' };
+                }
 
-    context.http.router.register({
-        method: 'GET',
-        path: '/test',
-        options: {
-            handler: async req => {
-                return { XXX: 1 }
+                await eachItems.remove();
+                return { success: true, id };
             }
         }
     });

@@ -18,6 +18,11 @@ module.exports = context => {
 
             return [
                 'id',
+                'items',
+                'delay',
+                'correlationId',
+                'count',
+                'currentIndex'
             ];
         }
     }
