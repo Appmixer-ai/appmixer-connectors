@@ -54,18 +54,6 @@ module.exports = {
     async receive(context) {
 
         const { buildOutPortOptions = false } = context.properties;
-
-        if (context.messages.timeout) {
-
-            let { id } = context.messages.timeout.content;
-
-            // fetch tjhe list from the db via plugin
-            // when the timeout is reached, consume another batch, prepare next timeout if needed
-            // of the list is consumed, clear the mongo db document
-
-             return;
-        }
-
         if (buildOutPortOptions) {
 
             const componentConfig = context.flowDescriptor[context.componentId].config?.transform['in'] || {};
@@ -136,35 +124,11 @@ module.exports = {
 
             let count = 0;
             const eachCorrelationId = uuid.v4();
-            let { delay} = context.messages.in.content;
 
             await context.log({ 'step': 'conterxtud', context: context.id });
             if (Array.isArray(list)) {
 
                 if (delay) {
-
-                    // store  the list in th mongo db via plugin
-
-                    await context.callAppmixer({
-                        endPoint: `/plugins/appmixer/utils/controls/${connectionId}`,
-                        method: 'POST',
-                        body: {
-                            id: context.id,
-                            items: list
-                        }
-
-                    });
-
-
-                    await  context.setTimeout({ id: context.id }, 3 *60 * 1000);
-
-                    // start consuming of the fisrt batch. batch is defined by the delay and set timeout.
-                    // in the fisrt batch we can consume n messsages, n = (3*60*1000) / delay.
-
-                    // store the index of sent item in the state
-                    // same logic as the norma each:                     const lastSentIndexCache = await context.stateGet(contextId); ...
-
-                    return
 
                 } else {
                     count = list.length;
@@ -186,6 +150,8 @@ module.exports = {
                         });
                     }
                 }
+
+
             }
 
             await context.sendJson({ count, correlationId: eachCorrelationId }, 'done');
