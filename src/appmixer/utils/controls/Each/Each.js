@@ -2,7 +2,7 @@
 const uuid = require('uuid');
 
 // Timeout interval in milliseconds (3 minutes)
-const TIMEOUT_INTERVAL = (context) => context.config.timeoutIntervalMs || 180000; // 3 minutes
+const TIMEOUT_INTERVAL = (context) => parseInt(context.config.timeoutIntervalMs, 10) || 180000; // 3 minutes
 
 function parseVariable(listVariable) {
 
@@ -70,6 +70,8 @@ async function sendBatch(context, items, startIndex, count, correlationId, delay
 
         // Add delay between items (except for the last item)
         if (delay && i < items.length - 1) {
+
+            await context.log({ 'step': 'timeout', delay });
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
@@ -157,10 +159,12 @@ module.exports = {
             const { id } = context.messages.timeout.content;
 
             // Fetch the stored data from the plugin (items list only)
-            const { data: storedData } = await context.callAppmixer({
-                endPoint: `/plugins/appmixer/utils/controls/${id}`,
+            const storedData = await context.callAppmixer({
+                endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
                 method: 'GET'
             });
+
+            await context.log({ 'step': 'timeout trigger', data: storedData, id });
 
             if (!storedData || !storedData.items) {
                 // Data no longer exists, nothing to process
@@ -179,7 +183,7 @@ module.exports = {
             if (remainingItems.length === 0) {
                 // All items have been processed, clean up and send done
                 await context.callAppmixer({
-                    endPoint: `/plugins/appmixer/utils/controls/${id}`,
+                    endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
                     method: 'DELETE'
                 });
                 await context.stateUnset(id);
@@ -200,14 +204,15 @@ module.exports = {
             if (newIndex >= items.length) {
                 // All items have been sent, clean up and send done
                 await context.callAppmixer({
-                    endPoint: `/plugins/appmixer/utils/controls/${id}`,
+                    endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
                     method: 'DELETE'
                 });
                 await context.stateUnset(id);
                 await context.sendJson({ count, correlationId }, 'done');
             } else {
                 // Schedule next timeout
-                await context.setTimeout({ id }, TIMEOUT_INTERVAL);
+                await context.log({ 'step': 'SSS' , ti: TIMEOUT_INTERVAL(context) });
+                await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
             }
 
             return;
@@ -231,7 +236,8 @@ module.exports = {
         const count = list.length;
 
         if (delay) {
-            const contextId = context.id;
+            // Ensure contextId is a string (context.id might be an object)
+            const id = context.id;
             const batchSize = calculateBatchSize(context, delay);
 
             // Calculate how many items we can send in the first batch
@@ -241,13 +247,14 @@ module.exports = {
             // Send the first batch immediately with delays
             await sendBatch(context, firstBatchItems, 0, count, eachCorrelationId, delay);
 
+            await context.log({ 'step': 'ddd', firstBatchItems, currentIndex, count: list.length });
             if (currentIndex >= list.length) {
                 // All items sent in first batch, we're done
                 await context.sendJson({ count, correlationId: eachCorrelationId }, 'done');
             } else {
                 // Store the list in MongoDB via plugin for later processing
                 await context.callAppmixer({
-                    endPoint: `/plugins/appmixer/utils/controls/${contextId}`,
+                    endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
                     method: 'POST',
                     body: {
                         items: list,
@@ -258,12 +265,11 @@ module.exports = {
                 });
 
                 // Store current index in state (same pattern as non-delayed Each)
-                await context.stateSet(contextId, { index: currentIndex });
+                await context.stateSet(id, { index: currentIndex });
 
                 // Schedule timeout to process the next batch
-                await context.setTimeout({ id: contextId }, TIMEOUT_INTERVAL);
+                await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
             }
-
             return;
         }
 

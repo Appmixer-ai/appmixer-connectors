@@ -10,11 +10,16 @@ module.exports = context => {
         path: '/{id}',
         options: {
             handler: async req => {
-                const { id } = req.params;
+                if (!req.params?.id) {
+                    throw new Error('[utils.controls.each] id is not defined.');
+                }
+                // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
+                const id = decodeURIComponent(req.params.id);
                 const { items, delay, correlationId, count } = req.payload;
 
-                const eachItems = new EachItemsModel({
-                    id,
+                await context.log('info', '[utils.controls.each] POST ' + JSON.stringify({ id, correlationId, delay, count }));
+
+                const eachItems = new EachItemsModel(id).populate({
                     items,
                     delay,
                     correlationId,
@@ -33,14 +38,21 @@ module.exports = context => {
         path: '/{id}',
         options: {
             handler: async req => {
-                const { id } = req.params;
+                if (!req.params?.id) {
+                    throw new Error('[utils.controls.each] id is not defined.');
+                }
+                // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
+                const id = decodeURIComponent(req.params.id);
+                await context.log('info', '[utils.controls.each] get all ' + JSON.stringify({ id, all: await EachItemsModel.find({}) }));
 
                 const eachItems = await EachItemsModel.findById(id);
+                await context.log('info', '[utils.controls.each] get ' + JSON.stringify({ id, eachItems }));
+
                 if (!eachItems) {
                     return null;
                 }
 
-                return eachItems.toObject();
+                return eachItems;
             }
         }
     });
@@ -51,14 +63,18 @@ module.exports = context => {
         path: '/{id}',
         options: {
             handler: async req => {
-                const { id } = req.params;
+                if (!req.params?.id) {
+                    throw new Error('[utils.controls.each] id is not defined.');
+                }
+                // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
+                const id = decodeURIComponent(req.params.id);
+                await context.log('info', '[utils.controls.each] DELETE ' + JSON.stringify({ id }));
 
-                const eachItems = await EachItemsModel.findById(id);
+                const eachItems = await EachItemsModel.deleteById(id);
                 if (!eachItems) {
                     return { success: false, error: 'Not found' };
                 }
 
-                await eachItems.remove();
                 return { success: true, id };
             }
         }
