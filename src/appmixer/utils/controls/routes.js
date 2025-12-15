@@ -11,15 +11,14 @@ module.exports = context => {
         options: {
             handler: async req => {
                 const { id } = req.params;
-                const { items, delay, correlationId, count, currentIndex } = req.payload;
+                const { items, delay, correlationId, count } = req.payload;
 
                 const eachItems = new EachItemsModel({
                     id,
                     items,
                     delay,
                     correlationId,
-                    count,
-                    currentIndex
+                    count
                 });
 
                 await eachItems.save();
@@ -42,33 +41,6 @@ module.exports = context => {
                 }
 
                 return eachItems.toObject();
-            }
-        }
-    });
-
-    // PUT - Update delayed items (e.g., update currentIndex)
-    context.http.router.register({
-        method: 'PUT',
-        path: '/{id}',
-        options: {
-            handler: async req => {
-                const { id } = req.params;
-                const { items, delay, correlationId, count, currentIndex } = req.payload;
-
-                const eachItems = await EachItemsModel.findById(id);
-                if (!eachItems) {
-                    return { success: false, error: 'Not found' };
-                }
-
-                // Update fields
-                if (items !== undefined) eachItems.items = items;
-                if (delay !== undefined) eachItems.delay = delay;
-                if (correlationId !== undefined) eachItems.correlationId = correlationId;
-                if (count !== undefined) eachItems.count = count;
-                if (currentIndex !== undefined) eachItems.currentIndex = currentIndex;
-
-                await eachItems.save();
-                return { success: true, id };
             }
         }
     });

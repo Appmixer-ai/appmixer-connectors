@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { normalizeMultiselectInput } = require('../../../src/appmixer/utils/controls/lib');
+const { normalizeMultiselectInput } = require('../../lib');
 
 // Mock context for testing
 const mockContext = {

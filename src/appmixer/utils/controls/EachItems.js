@@ -21,8 +21,7 @@ module.exports = context => {
                 'items',
                 'delay',
                 'correlationId',
-                'count',
-                'currentIndex'
+                'count'
             ];
         }
     }
