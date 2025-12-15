@@ -6,14 +6,22 @@ function isNewFileOrFolder(change) {
     const file = change.file;
     if (!file) return false;
 
-    return change.changeType === 'file' &&
-    !change.removed &&  // exclude removed files
-    !file.trashed &&  // exclude trashed files
-    new Date(file.createdTime) >= new Date(file.modifiedTime) &&  // exclude updates to a file
-    new Date(file.createdTime) >= new Date(file.viewedByMeTime);  // exclude visiting a folder/file.
+    if (change.changeType !== 'file') return false;
+    if (change.removed) return false;
+    if (file.trashed) return false;
+
+    const created = new Date(file.createdTime).getTime();
+    const modified = new Date(file.modifiedTime).getTime();
+    const viewed = file.viewedByMeTime ? new Date(file.viewedByMeTime).getTime() : 0;
+
+    if (isNaN(created) || isNaN(modified)) return false;
+
+    return created >= modified && created >= viewed;
 }
 
 module.exports = {
+
+    isNewFileOrFolder,
 
     async start(context) {
 

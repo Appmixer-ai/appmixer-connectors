@@ -1,0 +1,708 @@
+{
+    "actions": [
+        {
+            "title": "FindProducts",
+            "description": "Search and list products. Returns an array of products. The API uses server-side pagination; integrations should internally fetch using the maximum allowed page size and respect rate limits.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/products",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "pro_01HXYZABCDEF123456",
+                        "name": "Pro Plan",
+                        "description": "Monthly subscription product",
+                        "tax_category": "standard",
+                        "status": "active",
+                        "created_at": "2024-01-01T12:00:00Z",
+                        "updated_at": "2024-05-01T12:00:00Z"
+                    }
+                ],
+                "meta": {
+                    "request_id": "req_01JABCXYZ",
+                    "pagination": {
+                        "per_page": 50,
+                        "next": null
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters to filter products.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Filter by product name (partial match)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by product status, e.g., active or archived."
+                    },
+                    "taxCategory": {
+                        "type": "string",
+                        "description": "Filter by tax category of the product."
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return products updated after this ISO 8601 timestamp."
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "description": "Controls how results are emitted downstream: array, object (one item at a time), first, or file."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "CreateProduct",
+            "description": "Create a new product.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/products",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "id": "pro_01HXYZABCDEF123456",
+                    "name": "Pro Plan",
+                    "description": "Monthly subscription product",
+                    "tax_category": "standard",
+                    "status": "active",
+                    "created_at": "2024-01-01T12:00:00Z",
+                    "updated_at": "2024-01-01T12:00:00Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields required to create a product.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Product display name."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Product description."
+                    },
+                    "taxCategory": {
+                        "type": "string",
+                        "description": "Tax category to apply to this product."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary key/value metadata to attach to the product."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetProduct",
+            "description": "Retrieve a product by its unique identifier.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/products/{product_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": {
+                    "id": "pro_01HXYZABCDEF123456",
+                    "name": "Pro Plan",
+                    "description": "Monthly subscription product",
+                    "tax_category": "standard",
+                    "status": "active",
+                    "created_at": "2024-01-01T12:00:00Z",
+                    "updated_at": "2024-05-01T12:00:00Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path and query parameters for retrieving a product.",
+                "properties": {
+                    "product_id": {
+                        "type": "string",
+                        "description": "The unique product ID (pro_...)."
+                    }
+                },
+                "required": [
+                    "product_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "UpdateProduct",
+            "description": "Update an existing product. Only provided fields will be updated.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/products/{product_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "PATCH",
+            "sampleResponse": {
+                "data": {
+                    "id": "pro_01HXYZABCDEF123456",
+                    "name": "Pro Plan (Updated)",
+                    "description": "Updated description",
+                    "tax_category": "standard",
+                    "status": "active",
+                    "created_at": "2024-01-01T12:00:00Z",
+                    "updated_at": "2024-05-01T12:34:56Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields to update for the specified product.",
+                "properties": {
+                    "product_id": {
+                        "type": "string",
+                        "description": "The unique product ID (pro_...)."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "New product name."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "New product description."
+                    },
+                    "taxCategory": {
+                        "type": "string",
+                        "description": "New tax category."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "New status for the product (e.g., active, archived)."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Metadata to set or update."
+                    }
+                },
+                "required": [
+                    "product_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindCustomers",
+            "description": "Search and list customers. Returns an array of customers.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/customers",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "cus_01HXYZABCDEF123456",
+                        "email": "jane.doe@example.com",
+                        "name": "Jane Doe",
+                        "status": "active",
+                        "marketing_consent": true,
+                        "created_at": "2024-02-01T10:10:10Z",
+                        "updated_at": "2024-05-01T10:10:10Z"
+                    }
+                ],
+                "meta": {
+                    "request_id": "req_01JABCXYZ",
+                    "pagination": {
+                        "per_page": 50,
+                        "next": null
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters to filter customers.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Filter by customer email (exact match)."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Filter by customer name (partial match)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by customer status."
+                    },
+                    "createdAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return customers created after this ISO 8601 timestamp."
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "description": "Controls how results are emitted downstream: array, object (one item at a time), first, or file."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "CreateCustomer",
+            "description": "Create a new customer.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/customers",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "id": "cus_01HXYZABCDEF123456",
+                    "email": "jane.doe@example.com",
+                    "name": "Jane Doe",
+                    "status": "active",
+                    "marketing_consent": true,
+                    "created_at": "2024-02-01T10:10:10Z",
+                    "updated_at": "2024-02-01T10:10:10Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields required to create a customer.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "Customer email address."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Customer full name."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "Customer locale (e.g., en, fr)."
+                    },
+                    "marketingConsent": {
+                        "type": "boolean",
+                        "description": "Whether the customer has provided marketing consent."
+                    },
+                    "address": {
+                        "type": "object",
+                        "description": "Customer billing address details.",
+                        "properties": {
+                            "line1": {
+                                "type": "string",
+                                "description": "Address line 1."
+                            },
+                            "line2": {
+                                "type": "string",
+                                "description": "Address line 2."
+                            },
+                            "city": {
+                                "type": "string",
+                                "description": "City."
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "description": "Postal/ZIP code."
+                            },
+                            "region": {
+                                "type": "string",
+                                "description": "State/region/province."
+                            },
+                            "country_code": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 country code."
+                            }
+                        }
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary key/value metadata to attach to the customer."
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetCustomer",
+            "description": "Retrieve a customer by its unique identifier.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/customers/{customer_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": {
+                    "id": "cus_01HXYZABCDEF123456",
+                    "email": "jane.doe@example.com",
+                    "name": "Jane Doe",
+                    "status": "active",
+                    "marketing_consent": true,
+                    "created_at": "2024-02-01T10:10:10Z",
+                    "updated_at": "2024-05-01T10:10:10Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameters for retrieving a customer.",
+                "properties": {
+                    "customer_id": {
+                        "type": "string",
+                        "description": "The unique customer ID (cus_...)."
+                    }
+                },
+                "required": [
+                    "customer_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "UpdateCustomer",
+            "description": "Update an existing customer. Only provided fields will be updated.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/customers/{customer_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "PATCH",
+            "sampleResponse": {
+                "data": {
+                    "id": "cus_01HXYZABCDEF123456",
+                    "email": "jane.updated@example.com",
+                    "name": "Jane Doe",
+                    "status": "active",
+                    "marketing_consent": true,
+                    "created_at": "2024-02-01T10:10:10Z",
+                    "updated_at": "2024-05-10T09:00:00Z"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields to update for the specified customer.",
+                "properties": {
+                    "customer_id": {
+                        "type": "string",
+                        "description": "The unique customer ID (cus_...)."
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "New email address."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "New customer name."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "New locale."
+                    },
+                    "marketingConsent": {
+                        "type": "boolean",
+                        "description": "Updated marketing consent."
+                    },
+                    "address": {
+                        "type": "object",
+                        "description": "Updated billing address.",
+                        "properties": {
+                            "line1": {
+                                "type": "string",
+                                "description": "Address line 1."
+                            },
+                            "line2": {
+                                "type": "string",
+                                "description": "Address line 2."
+                            },
+                            "city": {
+                                "type": "string",
+                                "description": "City."
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "description": "Postal/ZIP code."
+                            },
+                            "region": {
+                                "type": "string",
+                                "description": "State/region/province."
+                            },
+                            "country_code": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 country code."
+                            }
+                        }
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Metadata to set or update."
+                    }
+                },
+                "required": [
+                    "customer_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "FindTransactions",
+            "description": "Search and list transactions. Returns an array of transactions.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/transactions",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": [
+                    {
+                        "id": "txn_01HXYZABCDEF123456",
+                        "status": "completed",
+                        "customer_id": "cus_01HXYZABCDEF123456",
+                        "created_at": "2024-03-15T08:00:00Z",
+                        "items": [
+                            {
+                                "price_id": "pri_01HXYZABCDEF123456",
+                                "quantity": 1
+                            }
+                        ],
+                        "currency_code": "USD"
+                    }
+                ],
+                "meta": {
+                    "request_id": "req_01JABCXYZ",
+                    "pagination": {
+                        "per_page": 50,
+                        "next": null
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Input parameters to filter transactions.",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by transaction status (e.g., ready, pending, completed, canceled)."
+                    },
+                    "customer_id": {
+                        "type": "string",
+                        "description": "Filter by customer ID (cus_...)."
+                    },
+                    "createdAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return transactions created after this ISO 8601 timestamp."
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "description": "Controls how results are emitted downstream: array, object (one item at a time), first, or file."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "data"
+            }
+        },
+        {
+            "title": "CreateTransaction",
+            "description": "Create a new transaction for one-time charges. Provide at least one line item with a price ID.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/transactions",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "POST",
+            "sampleResponse": {
+                "data": {
+                    "id": "txn_01HXYZABCDEF123456",
+                    "status": "ready",
+                    "customer_id": "cus_01HXYZABCDEF123456",
+                    "created_at": "2024-03-15T08:00:00Z",
+                    "items": [
+                        {
+                            "price_id": "pri_01HXYZABCDEF123456",
+                            "quantity": 1
+                        }
+                    ],
+                    "currency_code": "USD"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields required to create a transaction.",
+                "properties": {
+                    "customer_id": {
+                        "type": "string",
+                        "description": "The customer to bill (cus_...)."
+                    },
+                    "items": {
+                        "type": "array",
+                        "description": "Line items for the transaction.",
+                        "items": {
+                            "type": "object",
+                            "description": "A single line item referencing a price.",
+                            "properties": {
+                                "price_id": {
+                                    "type": "string",
+                                    "description": "The price ID (pri_...) to charge."
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "description": "Quantity for the price.",
+                                    "minimum": 1,
+                                    "default": 1
+                                }
+                            },
+                            "required": [
+                                "price_id"
+                            ]
+                        }
+                    },
+                    "currency_code": {
+                        "type": "string",
+                        "description": "ISO 4217 currency code for the transaction."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary key/value metadata to attach to the transaction."
+                    }
+                },
+                "required": [
+                    "items"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "GetTransaction",
+            "description": "Retrieve a transaction by its unique identifier.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/transactions/{transaction_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "GET",
+            "sampleResponse": {
+                "data": {
+                    "id": "txn_01HXYZABCDEF123456",
+                    "status": "completed",
+                    "customer_id": "cus_01HXYZABCDEF123456",
+                    "created_at": "2024-03-15T08:00:00Z",
+                    "items": [
+                        {
+                            "price_id": "pri_01HXYZABCDEF123456",
+                            "quantity": 1
+                        }
+                    ],
+                    "currency_code": "USD"
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameters for retrieving a transaction.",
+                "properties": {
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "The unique transaction ID (txn_...)."
+                    }
+                },
+                "required": [
+                    "transaction_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "UpdateTransaction",
+            "description": "Update an existing transaction. Only provided fields will be updated. Depending on status and business rules, some fields may be immutable after creation.",
+            "type": "action",
+            "documentation": "https://developer.paddle.com/api-reference",
+            "endpointUrl": "/transactions/{transaction_id}",
+            "apiBaseUrl": "https://api.paddle.com",
+            "method": "PATCH",
+            "sampleResponse": {
+                "data": {
+                    "id": "txn_01HXYZABCDEF123456",
+                    "status": "completed",
+                    "customer_id": "cus_01HXYZABCDEF123456",
+                    "created_at": "2024-03-15T08:00:00Z",
+                    "items": [
+                        {
+                            "price_id": "pri_01HXYZABCDEF123456",
+                            "quantity": 1
+                        }
+                    ],
+                    "currency_code": "USD",
+                    "updated_at": "2024-03-15T08:30:00Z",
+                    "metadata": {
+                        "sales_order": "SO-10987"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Fields to update for the specified transaction.",
+                "properties": {
+                    "transaction_id": {
+                        "type": "string",
+                        "description": "The unique transaction ID (txn_...)."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Metadata to set or update."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Update status if allowed by API (e.g., void, capture, or similar)."
+                    }
+                },
+                "required": [
+                    "transaction_id"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "authUrl": "",
+        "tokenUrl": "",
+        "profileInfoUrl": ""
+    },
+    "serviceJson": {
+        "name": "appmixer.paddle",
+        "label": "Paddle",
+        "category": "applications",
+        "description": "Paddle Billing REST API for products, customers, and transactions. Base URL https://api.paddle.com. Authenticate with an API key using Authorization: Bearer <api_key> and set any required version headers as per Paddle docs.",
+        "version": "1.0.0",
+        "icon": ""
+    }
+}

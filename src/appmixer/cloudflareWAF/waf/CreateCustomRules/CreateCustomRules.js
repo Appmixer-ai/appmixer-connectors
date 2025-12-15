@@ -1,5 +1,5 @@
 const CloudflareAPI = require('../../CloudflareAPI');
-const lib = require('../lib');
+const lib = require('../../lib');
 const crypto = require('crypto');
 
 module.exports = {
@@ -16,7 +16,6 @@ module.exports = {
             throw new context.CancelError('TTL is required');
         }
 
-
         if (ips.length === 0) {
             return context.sendJson([], 'out');
         }
@@ -29,14 +28,17 @@ module.exports = {
 
         let resultRules = []; // all affected rules - created or updated
         if (!ruleset) {
-            const data = await client.createRulesetAndBlockRule(context, [lib.getBlockRule(1, parsedIps)]);
+            const data = await client.createRulesetAndBlockRule(
+                context,
+                [lib.initializeBlockRule(context, 1, parsedIps)]
+            );
             ruleset = data?.result;
             resultRules = data?.result?.rules || [];
         } else {
             const { result: { rules = [] } } = await client.getRules(context, ruleset.id);
             resultRules = rules;
 
-            const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(parsedIps, rules);
+            const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(context, parsedIps, rules);
 
             const promises = rulesToUpdate.map(rule => {
                 return rule.id ?
