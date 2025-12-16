@@ -243,7 +243,6 @@ module.exports = {
         const count = list.length;
 
         if (delay) {
-            // Ensure contextId is a string (context.id might be an object)
             const id = context.id;
             const batchSize = calculateBatchSize(context, delay);
 
@@ -301,7 +300,7 @@ module.exports = {
         await context.sendJson({ count, correlationId: eachCorrelationId }, 'done');
         // at this point we will remove the store index. Otherwise, the state would keep growing until it would
         // reach the limit of the document
-        return context.stateUnset(context.id);
+        return context.stateUnset(contextId);
         // if now the engine crashes, the array and all its items would be sent to the output port again
     }
 };

@@ -12,6 +12,53 @@ describe('Each Component', () => {
         sinon.restore();
     });
 
+    describe('Input Handling', () => {
+
+        it('should throw CancelError for invalid JSON string', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                messages: {
+                    in: {
+                        content: {
+                            list: 'not valid json'
+                        }
+                    }
+                },
+                properties: {}
+            });
+
+            await assert.rejects(
+                async () => Each.receive(context),
+                (err) => {
+                    assert.ok(err instanceof context.CancelError);
+                    assert.ok(err.message.includes('Property \'list\' should be array'));
+                    return true;
+                }
+            );
+        });
+
+        it('should send done with count 0 for non-array input', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                messages: {
+                    in: {
+                        content: {
+                            list: { key: 'value' }  // Object, not array
+                        }
+                    }
+                },
+                properties: {}
+            });
+
+            await Each.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const doneCall = context.sendJson.getCall(0);
+            assert.strictEqual(doneCall.args[0].count, 0);
+            assert.strictEqual(doneCall.args[1], 'done');
+        });
+    });
+
     describe('Normal Each (no delay)', () => {
 
         it('should iterate over array and send each item to output', async () => {
@@ -130,6 +177,39 @@ describe('Each Component', () => {
             assert.strictEqual(firstCorrelationId, secondCorrelationId);
             assert.strictEqual(firstCorrelationId, doneCorrelationId);
         });
+
+        it('should resume from lastSentIndexCache if available', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                messages: {
+                    in: {
+                        content: {
+                            list: ['a', 'b', 'c', 'd', 'e']
+                        }
+                    }
+                },
+                properties: {}
+            });
+
+            // Simulate a crash recovery - we were at index 3
+            context.stateGet = sinon.stub().resolves({ index: 3 });
+
+            await Each.receive(context);
+
+            // Should only send items from index 3 onwards (d, e)
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 2);
+
+            // Check that index continues from where we left off
+            assert.strictEqual(itemCalls[0].args[0].index, 3);
+            assert.strictEqual(itemCalls[0].args[0].value, 'd');
+            assert.strictEqual(itemCalls[1].args[0].index, 4);
+            assert.strictEqual(itemCalls[1].args[0].value, 'e');
+
+            // Done should still have original count
+            const doneCall = context.sendJson.getCalls().find(call => call.args[1] === 'done');
+            assert.strictEqual(doneCall.args[0].count, 5);
+        });
     });
 
     describe('Delayed Each', () => {
@@ -183,7 +263,9 @@ describe('Each Component', () => {
 
             // Should schedule timeout
             assert.ok(context.setTimeout.calledOnce);
-            assert.deepStrictEqual(context.setTimeout.getCall(0).args[0], { id: 'test-context-id' });
+            const setTimeoutArg = context.setTimeout.getCall(0).args[0];
+            assert.strictEqual(setTimeoutArg.id, 'test-context-id');
+            assert.ok(setTimeoutArg.timestamp instanceof Date);
         });
 
         it('should complete immediately if all items fit in first batch', async () => {
@@ -242,7 +324,7 @@ describe('Each Component', () => {
                 config: { timeoutIntervalMs: 10 },
                 messages: {
                     timeout: {
-                        content: { id: 'test-context-id' }
+                        content: { id: 'test-context-id', timestamp: new Date() }
                     }
                 },
                 properties: {}
@@ -253,7 +335,7 @@ describe('Each Component', () => {
 
             // Mock callAppmixer for GET and DELETE
             context.callAppmixer = sinon.stub();
-            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves({ data: storedData });
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
             context.callAppmixer.withArgs(sinon.match({ method: 'DELETE' })).resolves({ success: true });
 
             await Each.receive(context);
@@ -292,7 +374,7 @@ describe('Each Component', () => {
                 config: { timeoutIntervalMs: 10 },
                 messages: {
                     timeout: {
-                        content: { id: 'test-context-id' }
+                        content: { id: 'test-context-id', timestamp: new Date() }
                     }
                 },
                 properties: {}
@@ -302,7 +384,7 @@ describe('Each Component', () => {
             context.stateGet = sinon.stub().resolves({ index: 0 });
 
             context.callAppmixer = sinon.stub();
-            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves({ data: storedData });
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
 
             await Each.receive(context);
 
@@ -319,7 +401,361 @@ describe('Each Component', () => {
 
             // Should schedule next timeout
             assert.ok(context.setTimeout.calledOnce);
-            assert.deepStrictEqual(context.setTimeout.getCall(0).args[0], { id: 'test-context-id' });
+            const setTimeoutArg2 = context.setTimeout.getCall(0).args[0];
+            assert.strictEqual(setTimeoutArg2.id, 'test-context-id');
+            assert.ok(setTimeoutArg2.timestamp instanceof Date);
+        });
+
+        it('should return early when storedData is null on timeout', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // callAppmixer returns null (data was deleted)
+            context.callAppmixer = sinon.stub().resolves(null);
+
+            await Each.receive(context);
+
+            // Should not send any items or done
+            assert.strictEqual(context.sendJson.callCount, 0);
+
+            // Should log that there's nothing to process
+            assert.ok(context.log.calledWith(sinon.match({ step: 'nothing to process' })));
+        });
+
+        it('should return early when storedData has no items on timeout', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // callAppmixer returns object without items
+            context.callAppmixer = sinon.stub().resolves({ delay: 5, correlationId: 'test' });
+
+            await Each.receive(context);
+
+            // Should not send any items or done
+            assert.strictEqual(context.sendJson.callCount, 0);
+
+            // Should log that there's nothing to process
+            assert.ok(context.log.calledWith(sinon.match({ step: 'nothing to process' })));
+        });
+
+        it('should clean up and send done when remainingItems is 0 on timeout', async () => {
+            const delay = 5;
+            const storedData = {
+                items: ['a', 'b', 'c'],
+                delay,
+                correlationId: 'test-correlation-id',
+                count: 3
+            };
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // Index is at the end - all items already processed
+            context.stateGet = sinon.stub().resolves({ index: 3 });
+
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
+            context.callAppmixer.withArgs(sinon.match({ method: 'DELETE' })).resolves({ success: true });
+
+            await Each.receive(context);
+
+            // Should NOT send any items (all were already sent)
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 0);
+
+            // Should send done with original count
+            const doneCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'done');
+            assert.strictEqual(doneCalls.length, 1);
+            assert.strictEqual(doneCalls[0].args[0].count, 3);
+            assert.strictEqual(doneCalls[0].args[0].correlationId, 'test-correlation-id');
+
+            // Should delete stored data
+            assert.ok(context.callAppmixer.calledWith(sinon.match({ method: 'DELETE' })));
+
+            // Should clean up state
+            assert.ok(context.stateUnset.calledWith('test-context-id'));
+        });
+
+        it('should handle null stateGet on timeout (use index 0)', async () => {
+            const delay = 5;
+            const storedData = {
+                items: ['a', 'b', 'c'],
+                delay,
+                correlationId: 'test-correlation-id',
+                count: 3
+            };
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 100 },  // Large enough for all items
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // stateGet returns null (no cached index)
+            context.stateGet = sinon.stub().resolves(null);
+
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
+            context.callAppmixer.withArgs(sinon.match({ method: 'DELETE' })).resolves({ success: true });
+
+            await Each.receive(context);
+
+            // Should process all items from index 0
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 3);
+            assert.strictEqual(itemCalls[0].args[0].index, 0);
+            assert.strictEqual(itemCalls[0].args[0].value, 'a');
+        });
+    });
+
+    describe('buildOutPortOptions', () => {
+
+        it('should return default output options when buildOutPortOptions is true with no input config', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                componentId: 'each-component-1',
+                flowDescriptor: {
+                    'each-component-1': {
+                        config: {
+                            transform: {
+                                'in': {}
+                            }
+                        }
+                    }
+                },
+                messages: {},
+                properties: {
+                    buildOutPortOptions: true
+                }
+            });
+
+            await Each.receive(context);
+
+            // Should send default output options
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const call = context.sendJson.getCall(0);
+            assert.strictEqual(call.args[1], 'item');
+
+            const options = call.args[0];
+            assert.ok(options.some(opt => opt.value === 'index'));
+            assert.ok(options.some(opt => opt.value === 'value'));
+            assert.ok(options.some(opt => opt.value === 'count'));
+            assert.ok(options.some(opt => opt.value === 'correlationId'));
+        });
+
+        it('should return default output options when getInputConfig returns null', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                componentId: 'each-component-1',
+                flowDescriptor: {
+                    'each-component-1': {
+                        config: {
+                            transform: {
+                                'in': {
+                                    // Invalid config that will cause getInputConfig to return null
+                                    'sender-1': {
+                                        'out': null
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                messages: {},
+                properties: {
+                    buildOutPortOptions: true
+                }
+            });
+
+            await Each.receive(context);
+
+            // Should fall through to default output options
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const options = context.sendJson.getCall(0).args[0];
+            assert.strictEqual(options.length, 4);  // index, value, count, correlationId
+        });
+
+        it('should return default output options when inputConfig has modifiers', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                componentId: 'each-component-1',
+                flowDescriptor: {
+                    'each-component-1': {
+                        config: {
+                            transform: {
+                                'in': {
+                                    'sender-1': {
+                                        'out': {
+                                            modifiers: {
+                                                list: {
+                                                    'mod-1': {
+                                                        variable: 'sender-1.out.items',
+                                                        functions: ['someModifier']  // Has modifiers
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                messages: {},
+                properties: {
+                    buildOutPortOptions: true
+                }
+            });
+
+            await Each.receive(context);
+
+            // Should return default options when modifiers exist
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const options = context.sendJson.getCall(0).args[0];
+            assert.strictEqual(options.length, 4);
+        });
+
+        it('should generate dynamic output options from input variable schema', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                componentId: 'each-component-1',
+                flowDescriptor: {
+                    'each-component-1': {
+                        config: {
+                            transform: {
+                                'in': {
+                                    'sender-1': {
+                                        'out': {
+                                            modifiers: {
+                                                list: {
+                                                    'mod-1': {
+                                                        // Note: Leading dot in variable format: .componentId.port.path
+                                                        variable: '.sender-1.out.items',
+                                                        functions: []  // No modifiers
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                messages: {},
+                properties: {
+                    buildOutPortOptions: true
+                }
+            });
+
+            // Mock loadOutputSchemaProperties to return schema for the sender component
+            // The variable is '.sender-1.out.items', so componentId='sender-1', port='out'
+            const schemaProperties = {
+                'out': [
+                    { path: 'out.items', type: 'array', label: 'Items' },
+                    { path: 'out.items.id', type: 'string', label: 'Item ID' },
+                    { path: 'out.items.name', type: 'string', label: 'Item Name' },
+                    { path: 'out.items.tags', type: 'array', label: 'Tags' },
+                    { path: 'out.items.tags.name', type: 'string', label: 'Tag Name' }  // Nested in array
+                ]
+            };
+            context.loadOutputSchemaProperties = sinon.stub().resolves(schemaProperties);
+
+            await Each.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const options = context.sendJson.getCall(0).args[0];
+
+            // Should include mapped properties + default properties
+            assert.ok(options.some(opt => opt.value === 'value.id'), 'Should have value.id');
+            assert.ok(options.some(opt => opt.value === 'value.name'), 'Should have value.name');
+            // Tags array itself should be included
+            assert.ok(options.some(opt => opt.value === 'value.tags'), 'Should have value.tags');
+            // But nested tag name should NOT be included (has array parent)
+            assert.ok(!options.some(opt => opt.value === 'value.tags.name'), 'Should not have value.tags.name');
+            // Default options should be present
+            assert.ok(options.some(opt => opt.value === 'index'), 'Should have index');
+            assert.ok(options.some(opt => opt.value === 'value'), 'Should have value');
+            assert.ok(options.some(opt => opt.value === 'count'), 'Should have count');
+            assert.ok(options.some(opt => opt.value === 'correlationId'), 'Should have correlationId');
+        });
+
+        it('should use fallback label when property has no label', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                componentId: 'each-component-1',
+                flowDescriptor: {
+                    'each-component-1': {
+                        config: {
+                            transform: {
+                                'in': {
+                                    'sender-1': {
+                                        'out': {
+                                            modifiers: {
+                                                list: {
+                                                    'mod-1': {
+                                                        // Note: Leading dot in variable format
+                                                        variable: '.sender-1.out.items',
+                                                        functions: []
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                messages: {},
+                properties: {
+                    buildOutPortOptions: true
+                }
+            });
+
+            // Property without label should use fallback
+            const schemaProperties = {
+                'out': [
+                    { path: 'out.items', type: 'array', label: 'Items' },
+                    { path: 'out.items.foo', type: 'string' }  // No label
+                ]
+            };
+            context.loadOutputSchemaProperties = sinon.stub().resolves(schemaProperties);
+
+            await Each.receive(context);
+
+            const options = context.sendJson.getCall(0).args[0];
+            // Should use fallback label 'item.foo'
+            assert.ok(options.some(opt => opt.label === 'item.foo' && opt.value === 'value.foo'));
         });
     });
 });
