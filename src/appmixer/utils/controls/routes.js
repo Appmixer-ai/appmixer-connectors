@@ -13,7 +13,6 @@ module.exports = context => {
                 if (!req.params?.id) {
                     throw new Error('[utils.controls.each] id is not defined.');
                 }
-                // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
                 const id = decodeURIComponent(req.params.id);
                 const { items, delay, correlationId, count } = req.payload;
 
@@ -43,10 +42,8 @@ module.exports = context => {
                 }
                 // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
                 const id = decodeURIComponent(req.params.id);
-                await context.log('info', '[utils.controls.each] get all ' + JSON.stringify({ id, all: await EachItemsModel.find({}) }));
 
                 const eachItems = await EachItemsModel.findById(id);
-                await context.log('info', '[utils.controls.each] get ' + JSON.stringify({ id, eachItems }));
 
                 if (!eachItems) {
                     return null;
