@@ -59,12 +59,11 @@ function calculateBatchSize(context, delay) {
  * @param {number} delay - Delay between items in milliseconds
  */
 async function sendBatch(context, items, startIndex, count, correlationId, delay) {
-    const start = new Date();
+
     for (let i = 0; i < items.length; i++) {
         const listItem = {
             index: startIndex + i,
             value: items[i],
-            diff: new Date() - start,
             count,
             correlationId
         };
@@ -156,7 +155,7 @@ module.exports = {
         const { buildOutPortOptions = false } = context.properties;
 
         if (context.messages.timeout) {
-            const { id, timestamp } = context.messages.timeout.content;
+            const { id } = context.messages.timeout.content;
 
             // Fetch the stored data from the plugin (items list only)
             const storedData = await context.callAppmixer({
@@ -164,11 +163,8 @@ module.exports = {
                 method: 'GET'
             });
 
-            await context.log({ 'step': 'timeout trigger', timespan: new Date() - timestamp, timestamp });
-
             if (!storedData || !storedData.items) {
                 // Data no longer exists, nothing to process
-                await context.log({ 'step': 'nothing to process' });
                 return;
             }
 
@@ -180,13 +176,6 @@ module.exports = {
 
             const batchSize = calculateBatchSize(context, delay);
             const remainingItems = items.slice(currentIndex);
-            await context.log({
-                'step': 'info',
-                currentIndex,
-                length: items.length,
-                remaining: remainingItems.length,
-                batchSize
-            });
 
             if (remainingItems.length === 0) {
                 // All items have been processed, clean up and send done
@@ -219,7 +208,7 @@ module.exports = {
                 await context.sendJson({ count, correlationId }, 'done');
             } else {
                 // Schedule next timeout
-                await context.setTimeout({ id, timestamp: new Date() }, TIMEOUT_INTERVAL(context));
+                await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
             }
 
             return;
