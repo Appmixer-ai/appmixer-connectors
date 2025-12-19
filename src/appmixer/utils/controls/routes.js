@@ -16,8 +16,6 @@ module.exports = context => {
                 const id = decodeURIComponent(req.params.id);
                 const { items, delay, correlationId, count } = req.payload;
 
-                await context.log('info', '[utils.controls.each] POST ' + JSON.stringify({ id, correlationId, delay, count }));
-
                 const eachItems = new EachItemsModel(id).populate({
                     items,
                     delay,
@@ -65,7 +63,6 @@ module.exports = context => {
                 }
                 // Decode URI component and replace colons (MongoDB doesn't allow colons in _id)
                 const id = decodeURIComponent(req.params.id);
-                await context.log('info', '[utils.controls.each] DELETE ' + JSON.stringify({ id }));
 
                 const eachItems = await EachItemsModel.deleteById(id);
                 if (!eachItems) {
