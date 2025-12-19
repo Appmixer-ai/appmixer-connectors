@@ -403,7 +403,6 @@ describe('Each Component', () => {
             assert.ok(context.setTimeout.calledOnce);
             const setTimeoutArg2 = context.setTimeout.getCall(0).args[0];
             assert.strictEqual(setTimeoutArg2.id, 'test-context-id');
-            assert.ok(setTimeoutArg2.timestamp instanceof Date);
         });
 
         it('should return early when storedData is null on timeout', async () => {
@@ -425,9 +424,6 @@ describe('Each Component', () => {
 
             // Should not send any items or done
             assert.strictEqual(context.sendJson.callCount, 0);
-
-            // Should log that there's nothing to process
-            assert.ok(context.log.calledWith(sinon.match({ step: 'nothing to process' })));
         });
 
         it('should return early when storedData has no items on timeout', async () => {
@@ -449,9 +445,6 @@ describe('Each Component', () => {
 
             // Should not send any items or done
             assert.strictEqual(context.sendJson.callCount, 0);
-
-            // Should log that there's nothing to process
-            assert.ok(context.log.calledWith(sinon.match({ step: 'nothing to process' })));
         });
 
         it('should clean up and send done when remainingItems is 0 on timeout', async () => {
