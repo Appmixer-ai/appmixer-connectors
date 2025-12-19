@@ -165,6 +165,7 @@ module.exports = {
 
             if (!storedData || !storedData.items) {
                 // Data no longer exists, nothing to process
+                await context.log({ 'step': 'no-data', message: 'Each timeout: nothing to process, stored data missing or has no items' });
                 return;
             }
 
