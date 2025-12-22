@@ -66,7 +66,7 @@ module.exports = {
     async prepareForSend(context, { threshold, timeoutTrigger = false }) {
 
         const entriesToUpload = await context.stateGet('documents-upload-batch');
-        if (entriesToUpload) {
+        if (entriesToUpload && entriesToUpload.length > 0) {
             await context.log({
                 step: 'pre-upload: skipping, upload already in progress',
                 message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
@@ -128,6 +128,8 @@ module.exports = {
     async processSend(context, { documents }) {
 
         if (!documents || documents.length === 0) {
+            // Clear the batch state even if empty to prevent infinite loop
+            await context.stateUnset('documents-upload-batch');
             return;
         }
 
