@@ -163,7 +163,6 @@ module.exports = {
             // because it did not finish correctly), state was 'JsonSent' and timeout was set
             // for the second time. At this point, two timeouts can be in the DB, but we have
             // to process only one, let's process the one with the same timeoutId as in the 'state'
-            await context.log({ 'step': 'timeoutId', timeoutId, messageTimeoutId: context.messages.timeout.timeoutId });
             return;
         }
 
