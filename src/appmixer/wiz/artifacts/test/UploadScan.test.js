@@ -311,6 +311,61 @@ describe('wiz.uploadScan', () => {
             assert.equal(callArgs[1].documents.length, 1, 'Should process the document');
         });
 
+        it('should prepare documents-upload-batch when timeoutTrigger is true', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            // timeoutTrigger=true should prepare batch regardless of threshold
+            await uploadScan.processAllDocuments(context, { threshold: 10, timeoutTrigger: true });
+
+            // Should have called sendDocuments (batch was prepared)
+            assert(sendDocumentsStub.calledOnce, 'sendDocuments should be called when timeoutTrigger is true');
+            const callArgs = sendDocumentsStub.getCall(0).args;
+            assert.equal(callArgs[1].documents.length, 2, 'Should prepare all 2 documents for upload');
+        });
+
+        it('should prepare documents-upload-batch when entries.length >= threshold', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' },
+                { id: '3', data: 'doc3' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            // entries.length (3) >= threshold (3) should prepare batch
+            await uploadScan.processAllDocuments(context, { threshold: 3 });
+
+            // Should have called sendDocuments (batch was prepared)
+            assert(sendDocumentsStub.calledOnce, 'sendDocuments should be called when entries >= threshold');
+            const callArgs = sendDocumentsStub.getCall(0).args;
+            assert.equal(callArgs[1].documents.length, 3, 'Should prepare all 3 documents for upload');
+        });
+
+        it('should not prepare any documents-upload-batch when entries.length < threshold', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' },
+                { id: '3', data: 'doc3' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            await uploadScan.processAllDocuments(context, { threshold: 5 });
+
+            assert(sendDocumentsStub.notCalled, 'sendDocuments should not be called when there is not enough documents.');
+        });
+
         it('should skip processing when documents-upload-batch has items (upload in progress)', async () => {
             // Simulate an upload already in progress
             await context.stateSet('documents-upload-batch', [

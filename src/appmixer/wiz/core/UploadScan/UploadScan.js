@@ -103,16 +103,14 @@ module.exports = {
             } else {
                 let entries = (await context.stateGet('documents') || []);
 
-                if (timeoutTrigger) {
-                    await context.stateUnset('documents');
-                    if (entries.length > 0) {
-                        await context.stateSet('documents-upload-batch', entries);
-                    }
-                } else if (threshold && entries.length > threshold) {
-                    await context.stateSet('documents', entries.slice(0, -threshold)); // keep all but the last `threshold` entries
-                    await context.stateSet('documents-upload-batch', entries.slice(-threshold)); // take the last `threshold` entries
-                    entries = entries.slice(-threshold);
+                if (!timeoutTrigger && threshold && entries.length >= threshold) {
+                    // Split: keep extras, process last `threshold` entries
+                    const batchEntries = entries.slice(-threshold);
+                    await context.stateSet('documents', entries.slice(0, -threshold));
+                    await context.stateSet('documents-upload-batch', batchEntries);
+                    entries = batchEntries;
                 } else {
+                    // Process all entries (timeout drain or at/below threshold)
                     if (entries.length > 0) {
                         await context.stateSet('documents-upload-batch', entries);
                     }
