@@ -97,8 +97,7 @@ module.exports = {
                 documents = entriesToUpload.map(entry => entry.data);
                 await context.log({
                     step: 'documents-upload-batch docs',
-                    message: `Prepared ${documents.length} documents for upload.`,
-                    lock: prepareDocumentsLock
+                    message: `Prepared ${documents.length} documents for upload.`
                 });
 
             } else {
@@ -158,18 +157,31 @@ module.exports = {
         const now = moment();
         const referenceDate = moment();
 
+        const timeoutId = await context.stateGet('timeoutId');
+
+        if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
+            // handling the case, when timeout has been set, but system crashed, and the timeoutId
+            // has not been saved into state, then the `original` timeout has been triggered again(
+            // because it did not finish correctly), state was 'JsonSent' and timeout was set
+            // for the second time. At this point, two timeouts can be in the DB, but we have
+            // to process only one, let's process the one with the same timeoutId as in the 'state'
+            await context.log({ 'step': 'timeoutId', timeoutId, messageTimeoutId: context.messages.timeout.timeoutId });
+            return;
+        }
+
         if (!['minutes', 'hours', 'days'].includes(scheduleType)) {
             throw new context.CancelError(`Invalid scheduleType: ${scheduleType}`);
         }
 
         const nextDate = referenceDate.add(scheduleValue, scheduleType);
-        await context.log({ step: 'schedule', nextDate: nextDate.toISOString() });
         const diff = nextDate.diff(now);
         if (diff <= 0) {
             throw new context.CancelError(`Computed timeout is non‑positive (${diff} ms). Check schedule parameters.`);
         }
 
-        await context.setTimeout({}, diff);
+        const newTimeoutId = await context.setTimeout({}, diff);
+        await context.stateSet('timeoutId', newTimeoutId);
+        await context.log({ step: 'schedule', nextDate: nextDate.toISOString(), timeoutId: newTimeoutId });
     },
 
     async sendDocuments(context, { documents }) {
