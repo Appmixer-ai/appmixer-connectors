@@ -1,5 +1,7 @@
 'use strict';
 
+const pathModule = require('path');
+
 module.exports = {
 
     async receive(context) {
@@ -28,9 +30,6 @@ module.exports = {
             responseType: 'arraybuffer'
         });
 
-        // Convert buffer to base64 for output
-        const fileDataBase64 = Buffer.from(data).toString('base64');
-
         // Generate filename based on document title and format
         const extensionMap = {
             'application/pdf': 'pdf',
@@ -55,6 +54,7 @@ module.exports = {
                     'Authorization': `Bearer ${context.auth.accessToken}`
                 }
             });
+
             if (docResponse.data.name) {
                 fileName = `${docResponse.data.name.replace(/[^a-zA-Z0-9\s-_]/g, '')}.${extension}`;
             }
@@ -62,8 +62,11 @@ module.exports = {
             // Use default filename if title fetch fails
         }
 
+        // Save file stream and get fileId
+        const file = await context.saveFileStream(pathModule.normalize(fileName), Buffer.from(data));
+
         return context.sendJson({
-            fileData: fileDataBase64,
+            fileId: file.fileId,
             fileName: fileName,
             mimeType: mimeType
         }, 'out');
