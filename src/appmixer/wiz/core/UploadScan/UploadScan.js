@@ -158,11 +158,11 @@ module.exports = {
         const timeoutId = await context.stateGet('timeoutId');
 
         if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
-            // handling the case, when timeout has been set, but system crashed, and the timeoutId
-            // has not been saved into state, then the `original` timeout has been triggered again(
-            // because it did not finish correctly), state was 'JsonSent' and timeout was set
-            // for the second time. At this point, two timeouts can be in the DB, but we have
-            // to process only one, let's process the one with the same timeoutId as in the 'state'
+            // Handle the case when a timeout was scheduled but the system crashed before the
+            // corresponding timeoutId was saved into the state. The original timeout then fired
+            // again, state was 'JsonSent', and a new timeout was scheduled for the second time.
+            // At this point, there can be two timeouts persisted in the DB. We must process only
+            // the timeout whose ID matches the value stored in the state and ignore the others.
             return;
         }
 
