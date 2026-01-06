@@ -1,4 +1,5 @@
 'use strict';
+const { Upload } = require('@aws-sdk/lib-storage');
 const commons = require('../../aws-commons');
 
 /**
@@ -34,7 +35,7 @@ module.exports = {
             Key: key,
             Body: content,
             ContentType: contentType,
-            Expires: expiryDate,
+            Expires: expiryDate ? new Date(expiryDate) : undefined,
             ContentEncoding: 'utf8'
         };
 
@@ -43,7 +44,12 @@ module.exports = {
             uploadParams.ACL = acl;
         }
 
-        const result = await s3.upload(uploadParams).promise();
+        const upload = new Upload({
+            client: s3,
+            params: uploadParams
+        });
+
+        const result = await upload.done();
 
         const object = Object.assign({
             ContentType: contentType,

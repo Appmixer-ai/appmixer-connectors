@@ -1,4 +1,5 @@
 'use strict';
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -18,9 +19,8 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
         const { s3 } = commons.init(context);
-        await s3.deleteObject({ Bucket: bucket, Key: key }).promise();
+        await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 
         return context.sendJson({ Bucket: bucket, Key: key }, 'deleted');
     }

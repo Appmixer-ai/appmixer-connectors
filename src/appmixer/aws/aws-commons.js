@@ -1,30 +1,33 @@
 'use strict';
-const AWS = require('aws-sdk');
+const { S3Client, GetBucketNotificationConfigurationCommand, PutBucketNotificationConfigurationCommand } = require('@aws-sdk/client-s3');
+const { LambdaClient } = require('@aws-sdk/client-lambda');
+const { SNSClient, CreateTopicCommand, SetTopicAttributesCommand, SubscribeCommand, UnsubscribeCommand, DeleteTopicCommand, ConfirmSubscriptionCommand } = require('@aws-sdk/client-sns');
+const { KMSClient, DescribeKeyCommand, ListKeyPoliciesCommand, GetKeyPolicyCommand } = require('@aws-sdk/client-kms');
 const crypto = require('crypto');
 
 module.exports = {
 
     init(context) {
 
-        const region = context.messages.in?.content?.region || context.properties.region;
+        const region = context.messages.in?.content?.region || context.properties.region || 'us-east-1';
 
-        AWS.config.update({
-            signatureVersion: 'v4',
-            region: region || 'us-east-1'
-        });
         const { accessKeyId, secretKey } = context.auth;
-        const credentials = new AWS.Credentials(accessKeyId, secretKey);
+        const credentials = {
+            accessKeyId,
+            secretAccessKey: secretKey
+        };
 
-        const lambda = new AWS.Lambda({ apiVersion: '2015-03-31', credentials });
-        const s3 = new AWS.S3({ apiVersion: '2006-03-01', credentials });
-        const sns = new AWS.SNS({ apiVersion: '2010-03-31', credentials });
-        const kms = new AWS.KMS({ apiVersion: '2014-11-01', credentials });
+        const lambda = new LambdaClient({ region, credentials });
+        const s3 = new S3Client({ region, credentials });
+        const sns = new SNSClient({ region, credentials });
+        const kms = new KMSClient({ region, credentials });
 
         return {
             lambda,
             s3,
             sns,
-            kms
+            kms,
+            region
         };
     },
 
@@ -74,7 +77,8 @@ module.exports = {
                 maxRetryCount: 60
             });
 
-            const { TopicConfigurations } = await s3.getBucketNotificationConfiguration({ Bucket: bucket }).promise();
+            const notificationConfig = await s3.send(new GetBucketNotificationConfigurationCommand({ Bucket: bucket }));
+            const TopicConfigurations = notificationConfig.TopicConfigurations || [];
             const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn.includes(payload.topicPrefix));
 
             if (filteredTopics.length > 0) {
@@ -109,8 +113,8 @@ module.exports = {
                     // AWS describeKey to ensure existence / accessibility.
                     let keyMetadata;
                     try {
-                        const { KeyMetadata } = await kms.describeKey({ KeyId: kmsMasterKeyId }).promise();
-                        keyMetadata = KeyMetadata;
+                        const describeKeyResponse = await kms.send(new DescribeKeyCommand({ KeyId: kmsMasterKeyId }));
+                        keyMetadata = describeKeyResponse.KeyMetadata;
                     } catch (e) {
                         context.log({ step: 'kmsDescribeKeyError', error: e.message });
                         throw new context.CancelError('KMS key not found or not accessible.');
@@ -118,12 +122,15 @@ module.exports = {
 
                     // Obtain key policy (default). Ensure S3 service allowed to decrypt & generate data keys.
                     try {
-                        const { PolicyNames } = await kms.listKeyPolicies({ KeyId: keyMetadata.KeyId }).promise();
+                        const keyId = keyMetadata.KeyId;
+                        const listPoliciesResponse = await kms.send(new ListKeyPoliciesCommand({ KeyId: keyId }));
+                        const PolicyNames = listPoliciesResponse.PolicyNames;
                         const policyName = PolicyNames.includes('default') ? 'default' : (PolicyNames[0] || 'default');
-                        const { Policy } = await kms.getKeyPolicy({
-                            KeyId: keyMetadata.KeyId,
+                        const getPolicyResponse = await kms.send(new GetKeyPolicyCommand({
+                            KeyId: keyId,
                             PolicyName: policyName
-                        }).promise();
+                        }));
+                        const Policy = getPolicyResponse.Policy;
                         let policyJson;
                         try {
                             policyJson = JSON.parse(Policy);
@@ -168,8 +175,8 @@ module.exports = {
                     };
                 }
 
-                const response = await sns.createTopic(createParams).promise();
-                topicARN = response.TopicArn;
+                const createTopicResponse = await sns.send(new CreateTopicCommand(createParams));
+                topicARN = createTopicResponse.TopicArn;
 
                 // If trusted account IDs provided, build restrictive policy. Otherwise keep legacy public policy for backwards compatibility.
                 // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
@@ -223,11 +230,11 @@ module.exports = {
                     ] };
                 }
 
-                await sns.setTopicAttributes({
+                await sns.send(new SetTopicAttributesCommand({
                     TopicArn: topicARN,
                     AttributeName: 'Policy',
                     AttributeValue: JSON.stringify(policy)
-                }).promise();
+                }));
 
                 const topicConfigurations = TopicConfigurations.filter(topic => {
                     const events = topic.Events.filter(arr => !arr.includes(payload.eventPrefix));
@@ -241,18 +248,18 @@ module.exports = {
                     ]
                 });
 
-                await s3.putBucketNotificationConfiguration({
+                await s3.send(new PutBucketNotificationConfigurationCommand({
                     Bucket: bucket,
                     NotificationConfiguration: {
                         TopicConfigurations: topicConfigurations
                     }
-                }).promise();
+                }));
             }
         } finally {
             await lock?.unlock();
         }
 
-        return sns.subscribe({ TopicArn: topicARN, Protocol: 'https', Endpoint: url }).promise();
+        return sns.send(new SubscribeCommand({ TopicArn: topicARN, Protocol: 'https', Endpoint: url }));
     },
 
     /**
@@ -271,7 +278,7 @@ module.exports = {
         const { s3, sns } = this.init(context);
 
         let promises = [
-            sns.unsubscribe({ SubscriptionArn: subscriptionArn }).promise()
+            sns.send(new UnsubscribeCommand({ SubscriptionArn: subscriptionArn }))
         ];
         if (!notificationInBucket) {
 
@@ -285,19 +292,20 @@ module.exports = {
                 });
 
                 // eslint-disable-next-line max-len
-                const { TopicConfigurations } = await s3.getBucketNotificationConfiguration({ Bucket: bucket }).promise();
+                const notificationConfig = await s3.send(new GetBucketNotificationConfigurationCommand({ Bucket: bucket }));
+                const TopicConfigurations = notificationConfig.TopicConfigurations || [];
                 const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn !== topicARN);
-                await s3.putBucketNotificationConfiguration({
+                await s3.send(new PutBucketNotificationConfigurationCommand({
                     Bucket: bucket,
                     NotificationConfiguration: {
                         TopicConfigurations: filteredTopics
                     }
-                }).promise();
+                }));
             } finally {
                 await lock?.unlock();
             }
 
-            promises.push(sns.deleteTopic({ TopicArn: topicARN }).promise());
+            promises.push(sns.send(new DeleteTopicCommand({ TopicArn: topicARN })));
         }
 
         return Promise.all(promises);
@@ -314,7 +322,8 @@ module.exports = {
         const { sns } = this.init(context);
 
         const { TopicArn, Token } = payload;
-        const { SubscriptionArn } = await sns.confirmSubscription({ TopicArn, Token }).promise();
+        const confirmResponse = await sns.send(new ConfirmSubscriptionCommand({ TopicArn, Token }));
+        const SubscriptionArn = confirmResponse.SubscriptionArn;
 
         const state = await context.loadState();
         state.topicARN = TopicArn;

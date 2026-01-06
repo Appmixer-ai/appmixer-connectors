@@ -1,5 +1,6 @@
 'use strict';
 const Promise = require('bluebird');
+const { ListObjectVersionsCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -48,12 +49,13 @@ module.exports = {
                 const { object } = record.s3;
 
                 if (object) {
-                    const { Versions = [] } = await s3.listObjectVersions({
+                    const versionsResponse = await s3.send(new ListObjectVersionsCommand({
                         Bucket: bucket,
                         Prefix: object.key,
                         MaxKeys: 10
-                    }).promise();
+                    }));
 
+                    const Versions = versionsResponse.Versions || [];
                     const versions = Versions.filter(version => version.Key === object.key);
 
                     // We only want to trigger the first time the object is uploaded (i.e. it is the first and only version

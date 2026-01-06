@@ -1,4 +1,6 @@
 'use strict';
+const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const commons = require('../../aws-commons');
 
 module.exports = {
@@ -14,9 +16,13 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
         const { s3 } = commons.init(context);
-        const url = await s3.getSignedUrlPromise(operation, { Bucket: bucket, Key: key, Expires: expires });
+
+        // Choose the appropriate command based on operation
+        const Command = operation === 'putObject' ? PutObjectCommand : GetObjectCommand;
+        const command = new Command({ Bucket: bucket, Key: key });
+
+        const url = await getSignedUrl(s3, command, { expiresIn: expires });
         const msg = {
             Bucket: bucket,
             Key: key,

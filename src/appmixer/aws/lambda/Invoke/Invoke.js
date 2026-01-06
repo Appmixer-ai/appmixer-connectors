@@ -1,4 +1,5 @@
 'use strict';
+const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const commons = require('../../aws-commons');
 
 /**
@@ -13,7 +14,8 @@ module.exports = {
             return this.getOutputPortOptions(context, context.messages.in.content.invocationType);
         }
 
-        const { name, invocationType, clientContext, logType, payload, qualifier } = context.messages.in.content;
+        const { region, name, invocationType, clientContext, logType, payload, qualifier } =
+            context.messages.in.content;
         if (!region) {
             throw new context.CancelError('Region is required');
         }
@@ -21,7 +23,6 @@ module.exports = {
         if (!name) {
             throw new context.CancelError('FunctionName is required');
         }
-
 
         const { lambda } = commons.init(context);
 
@@ -31,18 +32,21 @@ module.exports = {
             // See https://docs.aws.amazon.com/lambda/latest/dg/nodejs-context.html for clientContext usage.
             ClientContext: clientContext,
             LogType: logType,
-            Payload: payload,
+            Payload: payload ? Buffer.from(JSON.stringify(payload)) : undefined,
             Qualifier: qualifier
         };
-        const {
-            ExecutedVersion,
-            FunctionError,
-            LogResult,
-            Payload,
-            StatusCode
-        } = await lambda.invoke(params).promise();
+        const response = await lambda.send(new InvokeCommand(params));
 
-        return context.sendJson({ ExecutedVersion, FunctionError, LogResult, Payload, StatusCode }, 'out');
+        // In SDK v3, Payload is a Uint8Array, convert to string
+        const PayloadString = response.Payload ? new TextDecoder().decode(response.Payload) : null;
+
+        return context.sendJson({
+            ExecutedVersion: response.ExecutedVersion,
+            FunctionError: response.FunctionError,
+            LogResult: response.LogResult,
+            Payload: PayloadString,
+            StatusCode: response.StatusCode
+        }, 'out');
     },
 
     getOutputPortOptions(context, invocationType) {

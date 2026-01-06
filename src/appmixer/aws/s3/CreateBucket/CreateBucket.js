@@ -1,4 +1,5 @@
 'use strict';
+const { CreateBucketCommand, PutBucketVersioningCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -19,25 +20,26 @@ module.exports = {
             throw new context.CancelError('Enable Versioning. is required');
         }
 
-
         const { s3 } = commons.init(context);
 
-        const { Location } = await s3.createBucket({
+        const createBucketParams = {
             Bucket: name,
             ACL: acl,
             CreateBucketConfiguration: {
                 LocationConstraint: region || 'us-east-1'
             },
             ObjectLockEnabledForBucket: lockEnabled
-        }).promise();
+        };
 
-        await s3.putBucketVersioning({
+        const createResponse = await s3.send(new CreateBucketCommand(createBucketParams));
+
+        await s3.send(new PutBucketVersioningCommand({
             Bucket: name,
             VersioningConfiguration: {
                 Status: versionEnabled ? 'Enabled' : 'Suspended'
             }
-        }).promise();
+        }));
 
-        return context.sendJson({ Name: name, Location }, 'bucket');
+        return context.sendJson({ Name: name, Location: createResponse.Location }, 'bucket');
     }
 };

@@ -1,4 +1,5 @@
 'use strict';
+const { ListBucketsCommand } = require('@aws-sdk/client-s3');
 const { init } = require('../../aws-commons');
 
 function processBuckets(buckets, deletedBuckets, bucket) {
@@ -18,7 +19,8 @@ module.exports = {
     async tick(context) {
 
         const { s3 } = init(context);
-        const { Buckets } = await s3.listBuckets().promise();
+        const response = await s3.send(new ListBucketsCommand({}));
+        const Buckets = response.Buckets || [];
 
         const { buckets } = context.state;
         let diff = new Set();

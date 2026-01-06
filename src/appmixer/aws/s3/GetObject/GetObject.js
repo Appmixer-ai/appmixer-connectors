@@ -1,4 +1,5 @@
 'use strict';
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -18,9 +19,8 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
         const { s3 } = commons.init(context);
-        const response = await s3.getObject({ Bucket: bucket, Key: key }).promise();
+        const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
         const object = Object.assign({ Bucket: bucket, Key: key }, response);
         return context.sendJson(object, 'object');
     }

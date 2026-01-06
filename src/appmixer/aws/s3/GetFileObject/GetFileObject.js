@@ -1,4 +1,5 @@
 'use strict';
+const { GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -18,11 +19,12 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
         const { s3 } = commons.init(context);
         const params = { Bucket: bucket, Key: key };
-        const metadata = await s3.headObject(params).promise();
-        const stream = await s3.getObject(params).createReadStream();
+        const metadata = await s3.send(new HeadObjectCommand(params));
+        const getObjectResponse = await s3.send(new GetObjectCommand(params));
+        // In SDK v3, the Body is a readable stream
+        const stream = getObjectResponse.Body;
         const file = await context.saveFileStream(key, stream);
         const object = Object.assign(params, metadata, { FileID: file.fileId });
         return context.sendJson(object, 'object');

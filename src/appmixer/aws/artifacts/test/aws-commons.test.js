@@ -3,13 +3,10 @@
 const assert = require('assert');
 const sinon = require('sinon');
 
-// We will proxy-require the commons after stubbing AWS SDK.
-const AWS = require('aws-sdk');
-const fs = require('fs');
-let AWS_LOCAL;
-if (fs.existsSync(require('path').join(__dirname, '../../node_modules/aws-sdk'))) {
-    AWS_LOCAL = require('../../node_modules/aws-sdk');
-}
+// AWS SDK v3 clients
+const s3Client = require('@aws-sdk/client-s3');
+const snsClient = require('@aws-sdk/client-sns');
+const kmsClient = require('@aws-sdk/client-kms');
 
 // Helper to build fake context object.
 function buildContext(properties = {}) {
@@ -26,45 +23,75 @@ function buildContext(properties = {}) {
     };
 }
 
-// Stubs container reused per test.
-let snsStub;
-let s3Stub;
-let kmsStub;
+// Track calls per command type
+let commandCalls = {};
 
 function resetStubs() {
-    // Restore all sinon stubs before creating new ones
     sinon.restore();
+    commandCalls = {};
 
-    snsStub = {
-        createTopic: sinon.stub(),
-        setTopicAttributes: sinon.stub(),
-        subscribe: sinon.stub(),
-        confirmSubscription: sinon.stub()
-    };
-    s3Stub = {
-        getBucketNotificationConfiguration: sinon.stub(),
-        putBucketNotificationConfiguration: sinon.stub(),
-        listObjectVersions: sinon.stub()
-    };
-    kmsStub = {
-        describeKey: sinon.stub().returns({ promise: () => Promise.resolve({ KeyMetadata: { KeyId: 'mock-key-id' } }) }),
-        listKeyPolicies: sinon.stub().returns({ promise: () => Promise.resolve({ PolicyNames: ['default'] }) }),
-        getKeyPolicy: sinon.stub().returns({ promise: () => Promise.resolve({ Policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                { Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111111111111:root' }, Action: 'kms:*', Resource: '*' },
-                { Effect: 'Allow', Principal: { Service: 's3.amazonaws.com' }, Action: ['kms:Decrypt', 'kms:GenerateDataKey*'], Resource: '*' }
-            ]
-        }) }) })
-    };
+    // Stub the send methods on the prototypes
+    sinon.stub(s3Client.S3Client.prototype, 'send').callsFake(async (command) => {
+        const commandName = command.constructor.name;
+        if (!commandCalls[commandName]) {
+            commandCalls[commandName] = [];
+        }
+        commandCalls[commandName].push(command.input);
 
-    // Stub the connector-local aws-sdk instance (aws-commons uses this)
-    // If AWS_LOCAL is not available (e.g., in CI without local node_modules), stub the global AWS instead
-    const awsToStub = AWS_LOCAL || AWS;
-    sinon.stub(awsToStub, 'SNS').callsFake(() => snsStub);
-    sinon.stub(awsToStub, 'S3').callsFake(() => s3Stub);
-    sinon.stub(awsToStub, 'Lambda').callsFake(() => ({ }));
-    sinon.stub(awsToStub, 'KMS').callsFake(() => kmsStub);
+        if (commandName === 'GetBucketNotificationConfigurationCommand') {
+            return { TopicConfigurations: [] };
+        }
+        if (commandName === 'PutBucketNotificationConfigurationCommand') {
+            return {};
+        }
+        return {};
+    });
+
+    sinon.stub(snsClient.SNSClient.prototype, 'send').callsFake(async (command) => {
+        const commandName = command.constructor.name;
+        if (!commandCalls[commandName]) {
+            commandCalls[commandName] = [];
+        }
+        commandCalls[commandName].push(command.input);
+
+        if (commandName === 'CreateTopicCommand') {
+            return { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic1' };
+        }
+        if (commandName === 'SetTopicAttributesCommand') {
+            return {};
+        }
+        if (commandName === 'SubscribeCommand') {
+            return { SubscriptionArn: 'sub-arn' };
+        }
+        return {};
+    });
+
+    sinon.stub(kmsClient.KMSClient.prototype, 'send').callsFake(async (command) => {
+        const commandName = command.constructor.name;
+        if (!commandCalls[commandName]) {
+            commandCalls[commandName] = [];
+        }
+        commandCalls[commandName].push(command.input);
+
+        if (commandName === 'DescribeKeyCommand') {
+            return { KeyMetadata: { KeyId: 'mock-key-id' } };
+        }
+        if (commandName === 'ListKeyPoliciesCommand') {
+            return { PolicyNames: ['default'] };
+        }
+        if (commandName === 'GetKeyPolicyCommand') {
+            return {
+                Policy: JSON.stringify({
+                    Version: '2012-10-17',
+                    Statement: [
+                        { Effect: 'Allow', Principal: { AWS: 'arn:aws:iam::111111111111:root' }, Action: 'kms:*', Resource: '*' },
+                        { Effect: 'Allow', Principal: { Service: 's3.amazonaws.com' }, Action: ['kms:Decrypt', 'kms:GenerateDataKey*'], Resource: '*' }
+                    ]
+                })
+            };
+        }
+        return {};
+    });
 }
 
 function restoreStubs() {
@@ -86,16 +113,8 @@ describe('aws-commons registerWebhook security options', () => {
     });
 
     it('creates encrypted topic with restrictive policy when kmsMasterKeyId and trustedAccountIds provided', async () => {
-        const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic1' };
-        snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
-        snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
-        snsStub.subscribe.returns({ promise: () => Promise.resolve({ SubscriptionArn: 'sub-arn' }) });
-
-        s3Stub.getBucketNotificationConfiguration.returns({
-            promise: () => Promise.resolve({ TopicConfigurations: [] })
-        });
-        s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
-
+        // Clear require cache to get fresh module
+        delete require.cache[require.resolve('../../aws-commons')];
         const commons = require('../../aws-commons');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1', kmsMasterKeyId: 'alias/my-key', trustedAccountIds: '123456789012, 210987654321' });
@@ -103,13 +122,16 @@ describe('aws-commons registerWebhook security options', () => {
         await commons.registerWebhook(context, { topicPrefix: 'ObjectCreated_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: context.properties.kmsMasterKeyId, trustedAccountIds: context.properties.trustedAccountIds });
 
         // Verify createTopic got encryption attribute
-        assert(snsStub.createTopic.calledOnce, 'createTopic not called');
-        const params = snsStub.createTopic.firstCall.args[0];
-        assert.strictEqual(params.Attributes.KmsMasterKeyId, 'alias/my-key');
+        assert(commandCalls['CreateTopicCommand'], 'CreateTopicCommand not called');
+        assert.strictEqual(commandCalls['CreateTopicCommand'].length, 1, 'CreateTopicCommand should be called once');
+        const createParams = commandCalls['CreateTopicCommand'][0];
+        assert.strictEqual(createParams.Attributes.KmsMasterKeyId, 'alias/my-key');
 
         // Verify restrictive policy principal list contains normalized root ARNs
-        assert(snsStub.setTopicAttributes.calledOnce, 'setTopicAttributes not called');
-        const policy = JSON.parse(snsStub.setTopicAttributes.firstCall.args[0].AttributeValue);
+        assert(commandCalls['SetTopicAttributesCommand'], 'SetTopicAttributesCommand not called');
+        assert.strictEqual(commandCalls['SetTopicAttributesCommand'].length, 1, 'SetTopicAttributesCommand should be called once');
+        const setAttrParams = commandCalls['SetTopicAttributesCommand'][0];
+        const policy = JSON.parse(setAttrParams.AttributeValue);
         const principal = policy.Statement[0].Principal.AWS;
         assert(Array.isArray(principal), 'Principal should be array when multiple accounts');
         assert(principal.includes('arn:aws:iam::123456789012:root'));
@@ -120,43 +142,27 @@ describe('aws-commons registerWebhook security options', () => {
         assert.strictEqual(s3Stmt.Principal.Service, 's3.amazonaws.com');
         assert.strictEqual(s3Stmt.Condition.StringEquals['aws:SourceAccount'], '111111111111');
         assert.strictEqual(s3Stmt.Condition.ArnLike['aws:SourceArn'], 'arn:aws:s3:*:*:my-bucket');
-        assert.strictEqual(s3Stmt.Condition.StringEquals['aws:SourceAccount'], '111111111111');
-        assert(s3Stmt.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
 
     it('falls back to legacy open policy when trustedAccountIds not provided', async () => {
-        const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic2' };
-        snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
-        snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
-        snsStub.subscribe.returns({ promise: () => Promise.resolve({ SubscriptionArn: 'sub-arn' }) });
-
-        s3Stub.getBucketNotificationConfiguration.returns({
-            promise: () => Promise.resolve({ TopicConfigurations: [] })
-        });
-        s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
-
+        // Clear require cache to get fresh module
+        delete require.cache[require.resolve('../../aws-commons')];
         const commons = require('../../aws-commons');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1' });
 
         await commons.registerWebhook(context, { topicPrefix: 'ObjectRemoved_', eventPrefix: 's3:ObjectRemoved:', eventType: 's3:ObjectRemoved:*' });
 
-        const policy = JSON.parse(snsStub.setTopicAttributes.firstCall.args[0].AttributeValue);
+        assert(commandCalls['SetTopicAttributesCommand'], 'SetTopicAttributesCommand not called');
+        const setAttrParams = commandCalls['SetTopicAttributesCommand'][0];
+        const policy = JSON.parse(setAttrParams.AttributeValue);
         const principals = policy.Statement.map(s => s.Principal.AWS);
         assert(principals.includes('*'), 'Legacy policy should remain public');
     });
 
     it('calls setTopicAttributes with correct policy when trustedAccountIds is passed', async () => {
-        const createResp = { TopicArn: 'arn:aws:sns:us-east-1:111111111111:topic3' };
-        snsStub.createTopic.returns({ promise: () => Promise.resolve(createResp) });
-        snsStub.setTopicAttributes.returns({ promise: () => Promise.resolve() });
-        snsStub.subscribe.returns({ promise: () => Promise.resolve({ SubscriptionArn: 'sub-arn' }) });
-
-        s3Stub.getBucketNotificationConfiguration.returns({
-            promise: () => Promise.resolve({ TopicConfigurations: [] })
-        });
-        s3Stub.putBucketNotificationConfiguration.returns({ promise: () => Promise.resolve() });
-
+        // Clear require cache to get fresh module
+        delete require.cache[require.resolve('../../aws-commons')];
         const commons = require('../../aws-commons');
 
         const context = buildContext({
@@ -173,8 +179,9 @@ describe('aws-commons registerWebhook security options', () => {
         });
 
         // Verify setTopicAttributes is called with correct policy
-        assert(snsStub.setTopicAttributes.calledOnce, 'setTopicAttributes not called');
-        const policy = JSON.parse(snsStub.setTopicAttributes.firstCall.args[0].AttributeValue);
+        assert(commandCalls['SetTopicAttributesCommand'], 'SetTopicAttributesCommand not called');
+        const setAttrParams = commandCalls['SetTopicAttributesCommand'][0];
+        const policy = JSON.parse(setAttrParams.AttributeValue);
         const principal = policy.Statement[0].Principal.AWS;
         assert(Array.isArray(principal), 'Principal should be an array');
         assert(principal.includes('arn:aws:iam::123456789012:root'), 'Policy does not include trusted account 123456789012');
@@ -184,6 +191,5 @@ describe('aws-commons registerWebhook security options', () => {
         assert.strictEqual(s3Stmt2.Principal.Service, 's3.amazonaws.com');
         assert.strictEqual(s3Stmt2.Condition.StringEquals['aws:SourceAccount'], '111111111111');
         assert.strictEqual(s3Stmt2.Condition.ArnLike['aws:SourceArn'], 'arn:aws:s3:*:*:my-bucket');
-        assert(s3Stmt2.Condition.ArnLike['aws:SourceArn'].includes('my-bucket'));
     });
 });

@@ -1,4 +1,5 @@
 'use strict';
+const { DeleteBucketCommand } = require('@aws-sdk/client-s3');
 const commons = require('../../aws-commons');
 
 /**
@@ -16,8 +17,7 @@ module.exports = {
             throw new context.CancelError('Bucket is required');
         }
 
-
-        await s3.deleteBucket({ Bucket: bucket }).promise();
+        await s3.send(new DeleteBucketCommand({ Bucket: bucket }));
 
         return context.sendJson({ Name: bucket }, 'deleted');
     }

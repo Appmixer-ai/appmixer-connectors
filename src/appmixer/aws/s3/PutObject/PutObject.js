@@ -1,4 +1,5 @@
 'use strict';
+const { Upload } = require('@aws-sdk/lib-storage');
 const commons = require('../../aws-commons');
 
 /**
@@ -43,7 +44,7 @@ module.exports = {
             Key: key,
             Body: readStream,
             ContentType: contentType,
-            Expires: expiryDate
+            Expires: expiryDate ? new Date(expiryDate) : undefined
         };
 
         // Only add ACL if provided (optional for buckets with ACLs disabled)
@@ -52,7 +53,10 @@ module.exports = {
         }
 
         // Configure multipart upload options
-        const uploadOptions = {};
+        const uploadOptions = {
+            client: s3,
+            params: uploadParams
+        };
         if (maxPartSize) {
             uploadOptions.partSize = maxPartSize * 1048576; // Convert MB to bytes
         }
@@ -60,8 +64,9 @@ module.exports = {
             uploadOptions.queueSize = concurrentParts;
         }
 
-        // Use AWS SDK's native upload method (handles multipart automatically)
-        const result = await s3.upload(uploadParams, uploadOptions).promise();
+        // Use @aws-sdk/lib-storage Upload class (handles multipart automatically)
+        const upload = new Upload(uploadOptions);
+        const result = await upload.done();
 
         // Return consistent output format
         return context.sendJson({

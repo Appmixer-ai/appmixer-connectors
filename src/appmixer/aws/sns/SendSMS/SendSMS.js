@@ -1,4 +1,5 @@
 'use strict';
+const { PublishCommand } = require('@aws-sdk/client-sns');
 const commons = require('../../aws-commons');
 
 /**
@@ -22,28 +23,27 @@ module.exports = {
             throw new context.CancelError('Message. is required');
         }
 
-
         const { sns } = commons.init(context);
 
         const messageAttributes = {
-            DefaultSMSType: {
+            'AWS.SNS.SMS.SMSType': {
                 DataType: 'String',
                 StringValue: type
             }
         };
 
         if (senderId) {
-            messageAttributes['SenderID'] = {
+            messageAttributes['AWS.SNS.SMS.SenderID'] = {
                 DataType: 'String',
                 StringValue: senderId
             };
         }
 
-        const result = await sns.publish({
+        const result = await sns.send(new PublishCommand({
             PhoneNumber: phoneNumber,
             Message: message,
             MessageAttributes: messageAttributes
-        }).promise();
+        }));
 
         const object = {
             MessageID: result.MessageId,
