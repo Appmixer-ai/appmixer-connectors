@@ -1,4 +1,5 @@
 'use strict';
+
 const { S3Client, GetBucketNotificationConfigurationCommand, PutBucketNotificationConfigurationCommand } = require('@aws-sdk/client-s3');
 const { LambdaClient } = require('@aws-sdk/client-lambda');
 const { SNSClient, CreateTopicCommand, SetTopicAttributesCommand, SubscribeCommand, UnsubscribeCommand, DeleteTopicCommand, ConfirmSubscriptionCommand } = require('@aws-sdk/client-sns');
