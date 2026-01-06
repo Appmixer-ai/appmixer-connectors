@@ -1,6 +1,6 @@
 'use strict';
 const Promise = require('bluebird');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Component which triggers whenever an object is deleted.
@@ -18,12 +18,12 @@ module.exports = {
             kmsMasterKeyId,
             trustedAccountIds
         };
-        return commons.registerWebhook(context, payload);
+        return lib.registerWebhook(context, payload);
     },
 
     stop(context) {
 
-        return commons.unregisterWebhook(context);
+        return lib.unregisterWebhook(context);
     },
 
     /**
@@ -37,7 +37,7 @@ module.exports = {
         const payload = JSON.parse(data);
 
         if (headers && headers['x-amz-sns-message-type'] === 'SubscriptionConfirmation') {
-            return commons.confirmSubscription(context, payload);
+            return lib.confirmSubscription(context, payload);
         }
 
         const message = JSON.parse(payload.Message);

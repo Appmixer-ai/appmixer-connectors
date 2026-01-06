@@ -1,6 +1,6 @@
 'use strict';
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Invoke Lambda function.
@@ -24,7 +24,7 @@ module.exports = {
             throw new context.CancelError('FunctionName is required');
         }
 
-        const { lambda } = commons.init(context);
+        const { lambda } = lib.init(context);
 
         // Handle payload - SDK v3 requires Buffer or Uint8Array
         let payloadBuffer;

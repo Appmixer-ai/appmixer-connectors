@@ -1,6 +1,6 @@
 'use strict';
 const { Upload } = require('@aws-sdk/lib-storage');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Puts a UTF8 content in a bucket.
@@ -27,7 +27,7 @@ module.exports = {
             throw new context.CancelError('Content Type is required');
         }
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         // Build upload parameters
         const uploadParams = {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { PublishCommand } = require('@aws-sdk/client-sns');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Sends a text message (SMS message) directly to a phone number.
@@ -24,7 +24,7 @@ module.exports = {
             throw new context.CancelError('Message is required');
         }
 
-        const { sns } = commons.init(context);
+        const { sns } = lib.init(context);
 
         const messageAttributes = {
             'AWS.SNS.SMS.SMSType': {

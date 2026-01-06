@@ -1,6 +1,6 @@
 'use strict';
 const { CreateBucketCommand, PutBucketVersioningCommand } = require('@aws-sdk/client-s3');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Creates bucket.
@@ -20,7 +20,7 @@ module.exports = {
             throw new context.CancelError('Enable Versioning. is required');
         }
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         const createBucketParams = {
             Bucket: name,

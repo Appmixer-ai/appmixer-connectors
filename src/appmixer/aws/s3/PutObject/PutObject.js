@@ -1,6 +1,6 @@
 'use strict';
 const { Upload } = require('@aws-sdk/lib-storage');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Uploads an object.
@@ -33,7 +33,7 @@ module.exports = {
             throw new context.CancelError('File ID is required');
         }
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         // Get file stream from Appmixer storage
         const readStream = await context.getFileReadStream(fileId);

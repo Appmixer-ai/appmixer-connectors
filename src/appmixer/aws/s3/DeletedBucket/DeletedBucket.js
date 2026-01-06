@@ -1,6 +1,6 @@
 'use strict';
 const { ListBucketsCommand } = require('@aws-sdk/client-s3');
-const { init } = require('../../aws-commons');
+const { init } = require('../lib');
 
 function processBuckets(buckets, deletedBuckets, bucket) {
 

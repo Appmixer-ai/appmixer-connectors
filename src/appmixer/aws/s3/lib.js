@@ -1,7 +1,6 @@
 'use strict';
 
 const { S3Client, GetBucketNotificationConfigurationCommand, PutBucketNotificationConfigurationCommand } = require('@aws-sdk/client-s3');
-const { LambdaClient } = require('@aws-sdk/client-lambda');
 const { SNSClient, CreateTopicCommand, SetTopicAttributesCommand, SubscribeCommand, UnsubscribeCommand, DeleteTopicCommand, ConfirmSubscriptionCommand } = require('@aws-sdk/client-sns');
 const { KMSClient, DescribeKeyCommand, ListKeyPoliciesCommand, GetKeyPolicyCommand } = require('@aws-sdk/client-kms');
 const crypto = require('crypto');
@@ -18,13 +17,11 @@ module.exports = {
             secretAccessKey: secretKey
         };
 
-        const lambda = new LambdaClient({ region, credentials });
         const s3 = new S3Client({ region, credentials });
         const sns = new SNSClient({ region, credentials });
         const kms = new KMSClient({ region, credentials });
 
         return {
-            lambda,
             s3,
             sns,
             kms,
@@ -78,9 +75,13 @@ module.exports = {
                 maxRetryCount: 60
             });
 
-            const notificationConfig = await s3.send(new GetBucketNotificationConfigurationCommand({ Bucket: bucket }));
+            const notificationConfig = await s3.send(
+                new GetBucketNotificationConfigurationCommand({ Bucket: bucket })
+            );
             const TopicConfigurations = notificationConfig.TopicConfigurations || [];
-            const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn.includes(payload.topicPrefix));
+            const filteredTopics = TopicConfigurations.filter(
+                topic => topic.TopicArn.includes(payload.topicPrefix)
+            );
 
             if (filteredTopics.length > 0) {
                 topicARN = filteredTopics[0].TopicArn;
@@ -100,7 +101,9 @@ module.exports = {
                     const kmsMasterKeyId = payload.kmsMasterKeyId.trim();
 
                     // Soft format check (KeyId/UUID, ARN key, ARN alias, alias name, raw key id)
+                    // eslint-disable-next-line max-len
                     const reKeyArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:key\/([0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/;
+                    // eslint-disable-next-line max-len
                     const reAliasArn = /^arn:aws:kms:[a-z0-9-]+:\d{12}:alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
                     const reAlias = /^alias\/[A-Za-z0-9/_+=,.@-]{1,256}$/;
                     const reKeyId = /^(?:[0-9a-fA-F-]{36}|mrk-[A-Za-z0-9-]{8,})$/; // UUID or mrk- key id
@@ -108,25 +111,35 @@ module.exports = {
                         reAliasArn.test(kmsMasterKeyId) ||
                         reAlias.test(kmsMasterKeyId) ||
                         reKeyId.test(kmsMasterKeyId))) {
-                        throw new context.CancelError('kmsMasterKeyId format is invalid. Must be a KMS key ARN, alias ARN, alias/<name>, or key UUID.');
+                        throw new context.CancelError(
+                            'kmsMasterKeyId format is invalid. ' +
+                            'Must be a KMS key ARN, alias ARN, alias/<name>, or key UUID.'
+                        );
                     }
 
                     // AWS describeKey to ensure existence / accessibility.
                     let keyMetadata;
                     try {
-                        const describeKeyResponse = await kms.send(new DescribeKeyCommand({ KeyId: kmsMasterKeyId }));
+                        const describeKeyResponse = await kms.send(
+                            new DescribeKeyCommand({ KeyId: kmsMasterKeyId })
+                        );
                         keyMetadata = describeKeyResponse.KeyMetadata;
                     } catch (e) {
                         context.log({ step: 'kmsDescribeKeyError', error: e.message });
                         throw new context.CancelError('KMS key not found or not accessible.');
                     }
 
-                    // Obtain key policy (default). Ensure S3 service allowed to decrypt & generate data keys.
+                    // Obtain key policy (default). Ensure S3 service allowed to decrypt & generate
+                    // data keys.
                     try {
                         const keyId = keyMetadata.KeyId;
-                        const listPoliciesResponse = await kms.send(new ListKeyPoliciesCommand({ KeyId: keyId }));
+                        const listPoliciesResponse = await kms.send(
+                            new ListKeyPoliciesCommand({ KeyId: keyId })
+                        );
                         const PolicyNames = listPoliciesResponse.PolicyNames;
-                        const policyName = PolicyNames.includes('default') ? 'default' : (PolicyNames[0] || 'default');
+                        const policyName = PolicyNames.includes('default')
+                            ? 'default'
+                            : (PolicyNames[0] || 'default');
                         const getPolicyResponse = await kms.send(new GetKeyPolicyCommand({
                             KeyId: keyId,
                             PolicyName: policyName
@@ -143,26 +156,34 @@ module.exports = {
                             : [policyJson.Statement];
                         const hasS3Statement = statements.some(stmt => {
                             if (!stmt || stmt.Effect !== 'Allow') return false;
-                            // Principal can be structure like { Service: 's3.amazonaws.com' } or { AWS: 'arn:...' } or arrays.
+                            // Principal can be structure like { Service: 's3.amazonaws.com' }
+                            // or { AWS: 'arn:...' } or arrays.
                             let principalService = null;
                             if (stmt.Principal) {
                                 if (typeof stmt.Principal.Service === 'string') {
                                     principalService = stmt.Principal.Service;
                                 } else if (Array.isArray(stmt.Principal.Service)) {
-                                    principalService = stmt.Principal.Service.find(s => s === 's3.amazonaws.com') || null;
+                                    principalService = stmt.Principal.Service.find(
+                                        s => s === 's3.amazonaws.com'
+                                    ) || null;
                                 }
                             }
                             const actions = Array.isArray(stmt.Action) ? stmt.Action : [stmt.Action];
                             const serviceMatch = principalService === 's3.amazonaws.com';
                             const decryptOk = actions.includes('kms:Decrypt');
-                            const dataKeyOk = actions.includes('kms:GenerateDataKey*') || actions.includes('kms:GenerateDataKey');
+                            const dataKeyOk = actions.includes('kms:GenerateDataKey*') ||
+                                actions.includes('kms:GenerateDataKey');
                             const resourceOk = !stmt.Resource || stmt.Resource === '*' || (
                                 Array.isArray(stmt.Resource) && stmt.Resource.includes('*')
                             );
                             return serviceMatch && decryptOk && dataKeyOk && resourceOk;
                         });
                         if (!hasS3Statement) {
-                            throw new context.CancelError('KMS key policy missing required S3 permissions (kms:Decrypt, kms:GenerateDataKey* for Principal Service s3.amazonaws.com).');
+                            throw new context.CancelError(
+                                'KMS key policy missing required S3 permissions ' +
+                                '(kms:Decrypt, kms:GenerateDataKey* for Principal Service ' +
+                                's3.amazonaws.com).'
+                            );
                         }
                     } catch (e) {
                         if (e instanceof context.CancelError) throw e; // rethrow validation errors
@@ -179,12 +200,17 @@ module.exports = {
                 const createTopicResponse = await sns.send(new CreateTopicCommand(createParams));
                 topicARN = createTopicResponse.TopicArn;
 
-                // If trusted account IDs provided, build restrictive policy. Otherwise keep legacy public policy for backwards compatibility.
+                // If trusted account IDs provided, build restrictive policy. Otherwise keep
+                // legacy public policy for backwards compatibility.
                 // trustedAccountIds can be string (comma separated) or array of account IDs / ARNs.
                 const { trustedAccountIds } = payload;
                 let policy;
-                if (trustedAccountIds && (Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string')) {
-                    let accounts = Array.isArray(trustedAccountIds) ? trustedAccountIds : trustedAccountIds.split(',');
+                if (trustedAccountIds && (
+                    Array.isArray(trustedAccountIds) || typeof trustedAccountIds === 'string'
+                )) {
+                    let accounts = Array.isArray(trustedAccountIds)
+                        ? trustedAccountIds
+                        : trustedAccountIds.split(',');
                     accounts = accounts.map(a => a.trim()).filter(Boolean).map(a => {
                         // Normalize to full root ARN if just the numeric account id provided.
                         if (/^\d{12}$/.test(a)) {
@@ -201,12 +227,15 @@ module.exports = {
                                 {
                                     Sid: 'AllowTrustedAccounts',
                                     Effect: 'Allow',
-                                    Principal: { AWS: accounts.length === 1 ? accounts[0] : accounts },
+                                    Principal: {
+                                        AWS: accounts.length === 1 ? accounts[0] : accounts
+                                    },
                                     Action: ['SNS:Publish', 'SNS:Subscribe', 'SNS:Receive'],
                                     Resource: topicARN
                                 },
-                                // Explicitly allow S3 to publish to the topic from the bucket (needed for bucket notifications)
-                                // to avoid error: Invalid Argument: Unable to validate the following destination configurations.
+                                // Explicitly allow S3 to publish to the topic from the bucket
+                                // (needed for bucket notifications) to avoid error: Invalid Argument:
+                                // Unable to validate the following destination configurations.
                                 {
                                     Sid: 'AllowS3BucketPublish',
                                     Effect: 'Allow',
@@ -225,10 +254,26 @@ module.exports = {
 
                 if (!policy) {
                     // Legacy open policy for compatibility (previous behavior).
-                    policy = { Version: '2008-10-17', Id: '__default_policy_ID', Statement: [
-                        { Sid: '__console_pub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: 'SNS:Publish', Resource: topicARN },
-                        { Sid: '__console_sub_0', Effect: 'Allow', Principal: { AWS: '*' }, Action: ['SNS:Subscribe', 'SNS:Receive'], Resource: topicARN }
-                    ] };
+                    policy = {
+                        Version: '2008-10-17',
+                        Id: '__default_policy_ID',
+                        Statement: [
+                            {
+                                Sid: '__console_pub_0',
+                                Effect: 'Allow',
+                                Principal: { AWS: '*' },
+                                Action: 'SNS:Publish',
+                                Resource: topicARN
+                            },
+                            {
+                                Sid: '__console_sub_0',
+                                Effect: 'Allow',
+                                Principal: { AWS: '*' },
+                                Action: ['SNS:Subscribe', 'SNS:Receive'],
+                                Resource: topicARN
+                            }
+                        ]
+                    };
                 }
 
                 await sns.send(new SetTopicAttributesCommand({
@@ -260,7 +305,11 @@ module.exports = {
             await lock?.unlock();
         }
 
-        return sns.send(new SubscribeCommand({ TopicArn: topicARN, Protocol: 'https', Endpoint: url }));
+        return sns.send(new SubscribeCommand({
+            TopicArn: topicARN,
+            Protocol: 'https',
+            Endpoint: url
+        }));
     },
 
     /**
@@ -292,10 +341,13 @@ module.exports = {
                     maxRetryCount: 60
                 });
 
-                // eslint-disable-next-line max-len
-                const notificationConfig = await s3.send(new GetBucketNotificationConfigurationCommand({ Bucket: bucket }));
+                const notificationConfig = await s3.send(
+                    new GetBucketNotificationConfigurationCommand({ Bucket: bucket })
+                );
                 const TopicConfigurations = notificationConfig.TopicConfigurations || [];
-                const filteredTopics = TopicConfigurations.filter(topic => topic.TopicArn !== topicARN);
+                const filteredTopics = TopicConfigurations.filter(
+                    topic => topic.TopicArn !== topicARN
+                );
                 await s3.send(new PutBucketNotificationConfigurationCommand({
                     Bucket: bucket,
                     NotificationConfiguration: {
@@ -313,7 +365,8 @@ module.exports = {
     },
 
     /**
-     * Verifies an endpoint owner's intent to receive messages by validating the token sent to the endpoint.
+     * Verifies an endpoint owner's intent to receive messages by validating the token sent
+     * to the endpoint.
      * @param {Context} context
      * @param {Object} payload
      * @return {Promise}

@@ -2,20 +2,24 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
+const { Readable } = require('stream');
 const testUtils = require('../../../../../../test/utils');
-
-// Load commons so we can stub its methods before loading component.
-const commons = require('../../../aws-commons');
-
-// Component under test.
-const PutObject = require('../../PutObject/PutObject');
 
 describe('AWS S3 PutObject component', () => {
 
     let context;
-    let s3Mock;
+    let uploadDoneStub;
+    let uploadParams;
+    let lib;
+    let libStorage;
+    let PutObject;
 
     beforeEach(() => {
+        // Clear module cache for fresh imports
+        delete require.cache[require.resolve('../../lib')];
+        delete require.cache[require.resolve('../../PutObject/PutObject')];
+        delete require.cache[require.resolve('@aws-sdk/lib-storage')];
+
         context = testUtils.createMockContext();
         context.messages = {
             in: {
@@ -29,24 +33,35 @@ describe('AWS S3 PutObject component', () => {
         };
         context.properties = { region: 'us-east-1' };
 
-        // Mock S3 upload
-        s3Mock = {
-            upload: sinon.stub().returns({
-                promise: sinon.stub().resolves({
-                    Key: 'test-file.txt',
-                    ETag: '"abc123"',
-                    Location: 'https://test-bucket.s3.amazonaws.com/test-file.txt'
-                })
-            })
-        };
-
-        // Mock commons.init to return our mocked S3
-        sinon.stub(commons, 'init').returns({ s3: s3Mock });
-
-        // Mock file stream
-        context.getFileReadStream = sinon.stub().resolves({
-            pipe: sinon.stub()
+        // Mock file stream - return a proper readable stream
+        const mockStream = new Readable({
+            read() {
+                this.push(null); // End the stream
+            }
         });
+        context.getFileReadStream = sinon.stub().resolves(mockStream);
+
+        // Load and stub lib module
+        lib = require('../../lib');
+        sinon.stub(lib, 'init').returns({ s3: {} });
+
+        // Load libStorage and stub Upload class
+        libStorage = require('@aws-sdk/lib-storage');
+        uploadParams = null;
+        uploadDoneStub = sinon.stub().resolves({
+            Key: 'test-file.txt',
+            ETag: '"abc123"',
+            Location: 'https://test-bucket.s3.amazonaws.com/test-file.txt'
+        });
+        sinon.stub(libStorage, 'Upload').callsFake(function(options) {
+            uploadParams = options;
+            return {
+                done: uploadDoneStub
+            };
+        });
+
+        // Now load the component (which will use our stubbed modules)
+        PutObject = require('../../PutObject/PutObject');
     });
 
     afterEach(() => {
@@ -56,13 +71,11 @@ describe('AWS S3 PutObject component', () => {
     it('uploads file without ACL when ACL is not provided', async () => {
         await PutObject.receive(context);
 
-        assert(s3Mock.upload.calledOnce, 'S3 upload should be called once');
-        const uploadParams = s3Mock.upload.firstCall.args[0];
-
-        assert.strictEqual(uploadParams.Bucket, 'test-bucket');
-        assert.strictEqual(uploadParams.Key, 'test-file.txt');
-        assert.strictEqual(uploadParams.ContentType, 'text/plain');
-        assert(!uploadParams.ACL, 'ACL should not be set when not provided');
+        assert(libStorage.Upload.calledOnce, 'Upload should be instantiated once');
+        assert.strictEqual(uploadParams.params.Bucket, 'test-bucket');
+        assert.strictEqual(uploadParams.params.Key, 'test-file.txt');
+        assert.strictEqual(uploadParams.params.ContentType, 'text/plain');
+        assert(!uploadParams.params.ACL, 'ACL should not be set when not provided');
     });
 
     it('uploads file with ACL when ACL is provided', async () => {
@@ -70,8 +83,7 @@ describe('AWS S3 PutObject component', () => {
 
         await PutObject.receive(context);
 
-        const uploadParams = s3Mock.upload.firstCall.args[0];
-        assert.strictEqual(uploadParams.ACL, 'public-read');
+        assert.strictEqual(uploadParams.params.ACL, 'public-read');
     });
 
     it('configures multipart upload options when provided', async () => {
@@ -80,9 +92,8 @@ describe('AWS S3 PutObject component', () => {
 
         await PutObject.receive(context);
 
-        const uploadOptions = s3Mock.upload.firstCall.args[1];
-        assert.strictEqual(uploadOptions.partSize, 10 * 1048576);
-        assert.strictEqual(uploadOptions.queueSize, 5);
+        assert.strictEqual(uploadParams.partSize, 10 * 1048576);
+        assert.strictEqual(uploadParams.queueSize, 5);
     });
 
     it('returns correct output format', async () => {

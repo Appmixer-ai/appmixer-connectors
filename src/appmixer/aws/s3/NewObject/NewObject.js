@@ -1,7 +1,7 @@
 'use strict';
 const Promise = require('bluebird');
 const { ListObjectVersionsCommand } = require('@aws-sdk/client-s3');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Component which triggers whenever new object is created.
@@ -19,12 +19,12 @@ module.exports = {
             kmsMasterKeyId,
             trustedAccountIds
         };
-        return commons.registerWebhook(context, payload);
+        return lib.registerWebhook(context, payload);
     },
 
     stop(context) {
 
-        return commons.unregisterWebhook(context);
+        return lib.unregisterWebhook(context);
     },
 
     /**
@@ -34,13 +34,13 @@ module.exports = {
     async receive(context) {
 
         const { bucket } = context.properties;
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         const { headers, data } = context.messages.webhook.content;
         const payload = JSON.parse(data);
 
         if (headers && headers['x-amz-sns-message-type'] === 'SubscriptionConfirmation') {
-            return commons.confirmSubscription(context, payload);
+            return lib.confirmSubscription(context, payload);
         }
 
         const message = JSON.parse(payload.Message);
@@ -63,7 +63,7 @@ module.exports = {
                     if (versions.length === 1 || versions.length === 0) {
                         object.Bucket = bucket;
                         object.EventType = record.eventName;
-                        object.ObjectUrl = commons.getObjectUrl(bucket, object.key, context.properties.region);
+                        object.ObjectUrl = lib.getObjectUrl(bucket, object.key, context.properties.region);
 
                         const normalizedObjectKey = decodeURIComponent(object.key.replace(/\+/g, ' '));
                         object.key = normalizedObjectKey;

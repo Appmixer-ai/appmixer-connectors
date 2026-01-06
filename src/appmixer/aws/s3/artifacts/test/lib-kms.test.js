@@ -120,7 +120,7 @@ async function expectCancel(promise, msgFragment) {
     }
 }
 
-describe('aws-commons KMS validation', () => {
+describe('s3/lib KMS validation', () => {
 
     beforeEach(() => {
         resetStubs();
@@ -132,12 +132,12 @@ describe('aws-commons KMS validation', () => {
 
     it('creates encrypted topic when kms key alias policy allows S3', async () => {
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'bucket-a', region: 'us-east-1' });
 
-        await commons.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' });
+        await lib.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' });
 
         assert(commandCalls['CreateTopicCommand'], 'CreateTopicCommand not called');
         const params = commandCalls['CreateTopicCommand'][0];
@@ -146,11 +146,11 @@ describe('aws-commons KMS validation', () => {
 
     it('rejects invalid kmsMasterKeyId format', async () => {
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
-        await expectCancel(commons.registerWebhook(context, { topicPrefix: 'X_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'bad-format-key' }), 'kmsMasterKeyId format is invalid');
+        await expectCancel(lib.registerWebhook(context, { topicPrefix: 'X_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'bad-format-key' }), 'kmsMasterKeyId format is invalid');
         assert.strictEqual(commandCalls['CreateTopicCommand'], undefined, 'Should not attempt CreateTopicCommand on invalid format');
     });
 
@@ -158,11 +158,11 @@ describe('aws-commons KMS validation', () => {
         kmsDescribeKeyError = new Error('NotFound');
 
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'bucket-a', region: 'us-east-1' });
-        await expectCancel(commons.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key not found');
+        await expectCancel(lib.registerWebhook(context, { topicPrefix: 'Obj_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key not found');
         assert.strictEqual(commandCalls['CreateTopicCommand'], undefined, 'CreateTopicCommand should not be called if describeKey fails');
     });
 
@@ -180,21 +180,21 @@ describe('aws-commons KMS validation', () => {
         };
 
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
-        await expectCancel(commons.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key policy missing required S3 permissions');
+        await expectCancel(lib.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'KMS key policy missing required S3 permissions');
     });
 
     it('rejects when key policy JSON invalid', async () => {
         kmsGetKeyPolicyResponse = { Policy: '{not-json' };
 
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'bkt', region: 'us-east-1' });
-        await expectCancel(commons.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'Unable to parse KMS key policy JSON');
+        await expectCancel(lib.registerWebhook(context, { topicPrefix: 'T_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: 'alias/my-key' }), 'Unable to parse KMS key policy JSON');
     });
 });

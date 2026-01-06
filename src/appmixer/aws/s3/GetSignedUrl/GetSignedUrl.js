@@ -1,7 +1,7 @@
 'use strict';
 const { GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 module.exports = {
 
@@ -16,7 +16,7 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         // Choose the appropriate command based on operation
         const Command = operation === 'putObject' ? PutObjectCommand : GetObjectCommand;

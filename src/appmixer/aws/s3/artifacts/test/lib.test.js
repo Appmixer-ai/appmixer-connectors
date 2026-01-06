@@ -98,7 +98,7 @@ function restoreStubs() {
     sinon.restore();
 }
 
-describe('aws-commons registerWebhook security options', () => {
+describe('s3/lib registerWebhook security options', () => {
 
     beforeEach(() => {
         resetStubs();
@@ -114,12 +114,12 @@ describe('aws-commons registerWebhook security options', () => {
 
     it('creates encrypted topic with restrictive policy when kmsMasterKeyId and trustedAccountIds provided', async () => {
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1', kmsMasterKeyId: 'alias/my-key', trustedAccountIds: '123456789012, 210987654321' });
 
-        await commons.registerWebhook(context, { topicPrefix: 'ObjectCreated_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: context.properties.kmsMasterKeyId, trustedAccountIds: context.properties.trustedAccountIds });
+        await lib.registerWebhook(context, { topicPrefix: 'ObjectCreated_', eventPrefix: 's3:ObjectCreated:', eventType: 's3:ObjectCreated:*', kmsMasterKeyId: context.properties.kmsMasterKeyId, trustedAccountIds: context.properties.trustedAccountIds });
 
         // Verify createTopic got encryption attribute
         assert(commandCalls['CreateTopicCommand'], 'CreateTopicCommand not called');
@@ -146,12 +146,12 @@ describe('aws-commons registerWebhook security options', () => {
 
     it('falls back to legacy open policy when trustedAccountIds not provided', async () => {
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({ bucket: 'my-bucket', region: 'us-east-1' });
 
-        await commons.registerWebhook(context, { topicPrefix: 'ObjectRemoved_', eventPrefix: 's3:ObjectRemoved:', eventType: 's3:ObjectRemoved:*' });
+        await lib.registerWebhook(context, { topicPrefix: 'ObjectRemoved_', eventPrefix: 's3:ObjectRemoved:', eventType: 's3:ObjectRemoved:*' });
 
         assert(commandCalls['SetTopicAttributesCommand'], 'SetTopicAttributesCommand not called');
         const setAttrParams = commandCalls['SetTopicAttributesCommand'][0];
@@ -162,8 +162,8 @@ describe('aws-commons registerWebhook security options', () => {
 
     it('calls setTopicAttributes with correct policy when trustedAccountIds is passed', async () => {
         // Clear require cache to get fresh module
-        delete require.cache[require.resolve('../../aws-commons')];
-        const commons = require('../../aws-commons');
+        delete require.cache[require.resolve('../../lib')];
+        const lib = require('../../lib');
 
         const context = buildContext({
             bucket: 'my-bucket',
@@ -171,7 +171,7 @@ describe('aws-commons registerWebhook security options', () => {
             trustedAccountIds: '123456789012, 210987654321'
         });
 
-        await commons.registerWebhook(context, {
+        await lib.registerWebhook(context, {
             topicPrefix: 'ObjectCreated_',
             eventPrefix: 's3:ObjectCreated:',
             eventType: 's3:ObjectCreated:*',

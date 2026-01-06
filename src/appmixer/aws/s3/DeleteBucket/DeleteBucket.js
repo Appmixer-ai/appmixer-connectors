@@ -1,6 +1,6 @@
 'use strict';
 const { DeleteBucketCommand } = require('@aws-sdk/client-s3');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * Deletes bucket.
@@ -10,7 +10,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         const { bucket } = context.messages.in.content;
         if (!bucket) {

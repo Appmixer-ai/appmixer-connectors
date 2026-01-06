@@ -1,6 +1,6 @@
 'use strict';
 const { ListBucketsCommand } = require('@aws-sdk/client-s3');
-const commons = require('../../aws-commons');
+const lib = require('../lib');
 
 /**
  * List all buckets.
@@ -12,7 +12,7 @@ module.exports = {
 
         const { sendWholeArray } = context.properties;
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
         try {
             const response = await s3.send(new ListBucketsCommand({}));
             const Buckets = response.Buckets || [];

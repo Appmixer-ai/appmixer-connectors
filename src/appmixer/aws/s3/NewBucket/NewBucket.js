@@ -1,6 +1,6 @@
 'use strict';
 const { ListBucketsCommand } = require('@aws-sdk/client-s3');
-const { init, processItems } = require('../../aws-commons');
+const { init, processItems } = require('../lib');
 
 /**
  * Component which triggers whenever new bucket is created.
