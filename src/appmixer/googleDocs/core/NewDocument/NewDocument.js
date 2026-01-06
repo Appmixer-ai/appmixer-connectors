@@ -2,10 +2,102 @@
 
 const GOOGLE_DOCS_MIME_TYPE = 'application/vnd.google-apps.document';
 const FOLDER_MIME_TYPE = 'application/vnd.google-apps.folder';
-const FOLDER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const FOLDER_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const BATCH_SIZE = 100; // Google Drive batch API limit
 
 /**
- * Fetches all subfolder IDs for a given folder using batched breadth-first traversal.
+ * Builds the query string for finding subfolders of a given parent.
+ * @param {string} parentId - Parent folder ID
+ * @returns {string} URL-encoded query string
+ */
+function buildSubfolderQuery(parentId) {
+
+    const q = `'${parentId}' in parents and mimeType='${FOLDER_MIME_TYPE}' and trashed=false`;
+    return `q=${encodeURIComponent(q)}&fields=${encodeURIComponent('files(id)')}&pageSize=1000`;
+}
+
+/**
+ * Builds multipart/mixed body for Google Drive batch API.
+ * @param {string[]} folderIds - Array of folder IDs to query
+ * @param {string} boundary - Multipart boundary string
+ * @returns {string} Multipart request body
+ */
+function buildBatchRequestBody(folderIds, boundary) {
+
+    const parts = folderIds.map((folderId, index) => {
+        const queryString = buildSubfolderQuery(folderId);
+        return [
+            `--${boundary}`,
+            'Content-Type: application/http',
+            `Content-ID: <${index}>`,
+            '',
+            `GET /drive/v3/files?${queryString}`,
+            '',
+            ''
+        ].join('\r\n');
+    });
+
+    return parts.join('') + `--${boundary}--`;
+}
+
+/**
+ * Parses multipart/mixed response from Google Drive batch API.
+ * @param {string} responseBody - Raw response body
+ * @param {string} boundary - Multipart boundary string
+ * @returns {Object[]} Array of parsed JSON responses
+ */
+function parseBatchResponse(responseBody, boundary) {
+
+    const results = [];
+    const parts = responseBody.split(`--${boundary}`);
+
+    for (const part of parts) {
+        if (part.trim() === '' || part.trim() === '--') continue;
+
+        // Find the JSON body - it's after the HTTP headers (double newline)
+        const jsonMatch = part.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            try {
+                results.push(JSON.parse(jsonMatch[0]));
+            } catch (e) {
+                // Skip malformed responses
+            }
+        }
+    }
+
+    return results;
+}
+
+/**
+ * Executes a batch request to Google Drive API.
+ * @param {Object} context - Appmixer context
+ * @param {string[]} folderIds - Array of folder IDs to query for subfolders
+ * @returns {Promise<Object[]>} Array of response objects with files arrays
+ */
+async function executeBatchRequest(context, folderIds) {
+
+    const boundary = `batch_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const body = buildBatchRequestBody(folderIds, boundary);
+
+    const response = await context.httpRequest({
+        method: 'POST',
+        url: 'https://www.googleapis.com/batch/drive/v3',
+        headers: {
+            'Authorization': `Bearer ${context.auth.accessToken}`,
+            'Content-Type': `multipart/mixed; boundary=${boundary}`
+        },
+        data: body
+    });
+
+    // Extract boundary from response content-type
+    const contentType = response.headers['content-type'] || '';
+    const responseBoundary = contentType.match(/boundary=([^;]+)/)?.[1] || boundary;
+
+    return parseBatchResponse(response.data, responseBoundary);
+}
+
+/**
+ * Fetches all subfolder IDs using Google Drive batch API.
  * @param {Object} context - Appmixer context
  * @param {string} folderId - Parent folder ID
  * @returns {Promise<string[]>} Array of all subfolder IDs
@@ -16,27 +108,11 @@ async function getSubfolderIds(context, folderId) {
     let foldersToProcess = [folderId];
 
     while (foldersToProcess.length > 0) {
-        const batch = foldersToProcess.splice(0, 10);
+        const batch = foldersToProcess.splice(0, BATCH_SIZE);
+        const responses = await executeBatchRequest(context, batch);
 
-        const batchResults = await Promise.all(
-            batch.map(async (parentId) => {
-                const { data } = await context.httpRequest({
-                    method: 'GET',
-                    url: 'https://www.googleapis.com/drive/v3/files',
-                    params: {
-                        q: `'${parentId}' in parents and mimeType='${FOLDER_MIME_TYPE}' and trashed=false`,
-                        fields: 'files(id)',
-                        pageSize: 1000
-                    },
-                    headers: {
-                        'Authorization': `Bearer ${context.auth.accessToken}`
-                    }
-                });
-                return data.files || [];
-            })
-        );
-
-        for (const files of batchResults) {
+        for (const response of responses) {
+            const files = response.files || [];
             for (const folder of files) {
                 allFolderIds.push(folder.id);
                 foldersToProcess.push(folder.id);
