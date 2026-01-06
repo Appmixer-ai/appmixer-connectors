@@ -138,6 +138,8 @@ Contains bundle metadata and version history.
 }
 ```
 
+**IMPORTANT - Single Version Rule**: For unreleased connectors (new connectors being developed), the bundle.json must have only ONE version entry (typically 1.0.0). Do NOT pre-create multiple version entries (e.g., 1.0.0, 1.1.0, 1.2.0) before the connector is released. New versions should only be added when actual releases occur, not during initial development.
+
 ### quota.js
 
 Defines rate limiting rules to prevent API quota violations.
@@ -1901,6 +1903,129 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 - **Locking**: Use locking mechanisms for shared resources
 - **Batching**: Batch API calls when possible to reduce requests
 
+#### Cache TTL using staticCache
+
+When caching data (e.g., folder structures, user lists, property definitions), use `context.staticCache` with a TTL (Time-To-Live) to ensure the cache is refreshed periodically:
+
+```javascript
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async tick(context) {
+    const cacheKey = `myconnector_data_${context.componentId}`;
+    let cachedData = await context.staticCache.get(cacheKey);
+
+    if (!cachedData) {
+        // Cache miss - fetch fresh data
+        cachedData = await fetchData(context);
+        // staticCache handles expiration automatically
+        await context.staticCache.set(cacheKey, cachedData, CACHE_TTL_MS);
+    }
+
+    // ... rest of tick logic using cachedData
+}
+```
+
+**Best practices for staticCache**:
+- Use descriptive cache keys with connector name prefix (e.g., `hubspot_properties_contacts`)
+- Include relevant identifiers in the key (e.g., user ID, folder ID) to avoid cache collisions
+- Use TTL between 10-60 minutes depending on how frequently the data changes
+- Combine with `context.lock()` when the fetch operation is expensive (see locking section below)
+
+**Example with lock** (from hubspot/commons.js):
+```javascript
+async getObjectProperties(context, objectType) {
+    const cacheKey = `hubspot_properties_${objectType}`;
+    let lock;
+    try {
+        lock = await context.lock(cacheKey);
+        const cached = await context.staticCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Fetch data from API
+        const { data } = await context.httpRequest({ /* ... */ });
+
+        // Cache with 1 minute TTL
+        await context.staticCache.set(cacheKey, data, 60 * 1000);
+        return data;
+    } finally {
+        await lock?.unlock();
+    }
+}
+```
+
+**Why staticCache is preferred over state-based caching**: `staticCache` provides built-in TTL support, handles expiration automatically, and is shared across component instances. State-based caching requires manual timestamp tracking and persists in the database unnecessarily.
+
+#### Locking for Long-Running Tick Operations
+
+When a `tick()` function may take a long time to execute (e.g., fetching nested folder structures), use a lock to prevent concurrent execution:
+
+```javascript
+async tick(context) {
+    let lock;
+    try {
+        lock = await context.lock(context.componentId, {
+            ttl: 5 * 60 * 1000, // 5 minute lock TTL
+            maxRetryCount: 0    // Don't wait, skip if already running
+        });
+    } catch (e) {
+        // Another tick is already running, skip this one
+        return;
+    }
+
+    try {
+        // ... long-running tick logic
+    } finally {
+        lock?.unlock();
+    }
+}
+```
+
+**Why locking is important**: The Appmixer engine calls `tick()` at regular intervals (default: 60 seconds). If a tick operation takes longer than the interval, multiple concurrent tick executions can overwhelm external APIs and cause race conditions.
+
+#### Batching Recursive API Calls
+
+When fetching hierarchical data (e.g., recursive folder structures), use batched concurrent requests instead of sequential recursive calls:
+
+```javascript
+// ❌ BAD: Sequential recursive calls - slow and can timeout
+async function getSubfoldersRecursive(context, folderId, result = []) {
+    const { data } = await context.httpRequest({ /* ... */ });
+    for (const folder of data.files) {
+        result.push(folder.id);
+        await getSubfoldersRecursive(context, folder.id, result); // Sequential!
+    }
+    return result;
+}
+
+// ✅ GOOD: Batched breadth-first traversal - faster and more reliable
+async function getSubfolders(context, rootFolderId) {
+    const allFolderIds = [];
+    let foldersToProcess = [rootFolderId];
+
+    while (foldersToProcess.length > 0) {
+        // Process in batches of 10 to avoid overwhelming the API
+        const batch = foldersToProcess.splice(0, 10);
+
+        const batchResults = await Promise.all(
+            batch.map(parentId => context.httpRequest({ /* ... */ }))
+        );
+
+        for (const { data } of batchResults) {
+            for (const folder of (data.files || [])) {
+                allFolderIds.push(folder.id);
+                foldersToProcess.push(folder.id);
+            }
+        }
+    }
+
+    return allFolderIds;
+}
+```
+
+**Why batching is important**: Deep recursive folder structures with hundreds of subfolders can take minutes to traverse sequentially. Batched concurrent requests significantly reduce total execution time and are less likely to timeout.
+    
 ### Common Patterns
 
 #### When Adding New Field to component.json
