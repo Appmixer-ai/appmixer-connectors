@@ -17,8 +17,15 @@ module.exports = {
             throw new context.CancelError('Bucket is required');
         }
 
-        await s3.send(new DeleteBucketCommand({ Bucket: bucket }));
+        try {
+            await s3.send(new DeleteBucketCommand({ Bucket: bucket }));
 
-        return context.sendJson({ Name: bucket }, 'deleted');
+            return context.sendJson({ Name: bucket }, 'deleted');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

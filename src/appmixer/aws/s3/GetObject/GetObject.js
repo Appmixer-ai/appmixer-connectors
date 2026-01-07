@@ -1,4 +1,5 @@
 'use strict';
+
 const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const lib = require('../lib');
 
@@ -20,8 +21,15 @@ module.exports = {
         }
 
         const { s3 } = lib.init(context);
-        const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-        const object = Object.assign({ Bucket: bucket, Key: key }, response);
-        return context.sendJson(object, 'object');
+        try {
+            const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+            const object = Object.assign({ Bucket: bucket, Key: key }, response);
+            return context.sendJson(object, 'object');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

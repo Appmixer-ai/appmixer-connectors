@@ -1,4 +1,5 @@
 'use strict';
+
 const { ListBucketsCommand } = require('@aws-sdk/client-s3');
 const lib = require('../lib');
 
@@ -31,7 +32,8 @@ module.exports = {
                 // When used as a source, return an empty array on error or insufficient permissions.
                 return context.sendJson([], 'bucket');
             }
-            throw err;
+
+            throw err?.message || err;
         }
     },
 

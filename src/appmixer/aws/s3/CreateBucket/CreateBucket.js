@@ -1,4 +1,5 @@
 'use strict';
+
 const { CreateBucketCommand, PutBucketVersioningCommand } = require('@aws-sdk/client-s3');
 const lib = require('../lib');
 
@@ -31,15 +32,22 @@ module.exports = {
             ObjectLockEnabledForBucket: lockEnabled
         };
 
-        const createResponse = await s3.send(new CreateBucketCommand(createBucketParams));
+        try {
+            const createResponse = await s3.send(new CreateBucketCommand(createBucketParams));
 
-        await s3.send(new PutBucketVersioningCommand({
-            Bucket: name,
-            VersioningConfiguration: {
-                Status: versionEnabled ? 'Enabled' : 'Suspended'
-            }
-        }));
+            await s3.send(new PutBucketVersioningCommand({
+                Bucket: name,
+                VersioningConfiguration: {
+                    Status: versionEnabled ? 'Enabled' : 'Suspended'
+                }
+            }));
 
-        return context.sendJson({ Name: name, Location: createResponse.Location }, 'bucket');
+            return context.sendJson({ Name: name, Location: createResponse.Location }, 'bucket');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };
