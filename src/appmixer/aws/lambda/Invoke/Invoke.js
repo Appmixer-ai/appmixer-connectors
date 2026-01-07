@@ -1,4 +1,5 @@
 'use strict';
+
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const lib = require('../lib');
 
@@ -48,20 +49,27 @@ module.exports = {
             Payload: payloadBuffer,
             Qualifier: qualifier
         };
-        const response = await lambda.send(new InvokeCommand(params));
+        try {
+            const response = await lambda.send(new InvokeCommand(params));
 
-        // In SDK v3, Payload is a Uint8Array, convert to string using Buffer for Node.js compatibility
-        const PayloadString = response.Payload
-            ? Buffer.from(response.Payload).toString('utf-8')
-            : null;
+            // In SDK v3, Payload is a Uint8Array, convert to string using Buffer for Node.js compatibility
+            const PayloadString = response.Payload
+                ? Buffer.from(response.Payload).toString('utf-8')
+                : null;
 
-        return context.sendJson({
-            ExecutedVersion: response.ExecutedVersion,
-            FunctionError: response.FunctionError,
-            LogResult: response.LogResult,
-            Payload: PayloadString,
-            StatusCode: response.StatusCode
-        }, 'out');
+            return context.sendJson({
+                ExecutedVersion: response.ExecutedVersion,
+                FunctionError: response.FunctionError,
+                LogResult: response.LogResult,
+                Payload: PayloadString,
+                StatusCode: response.StatusCode
+            }, 'out');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     },
 
     getOutputPortOptions(context, invocationType) {
