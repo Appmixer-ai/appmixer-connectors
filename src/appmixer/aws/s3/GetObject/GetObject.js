@@ -23,7 +23,21 @@ module.exports = {
         const { s3 } = lib.init(context);
         try {
             const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-            const object = Object.assign({ Bucket: bucket, Key: key }, response);
+            let bodyBuffer = null;
+            if (response.Body) {
+                // AWS SDK v3 returns a stream, so we need to read it into a Buffer for backward compatibility
+                const chunks = [];
+                for await (const chunk of response.Body) {
+                    chunks.push(chunk);
+                }
+                bodyBuffer = Buffer.concat(chunks);
+            }
+            const object = {
+                Bucket: bucket,
+                Key: key,
+                ...response,
+                Body: bodyBuffer ? bodyBuffer.toJSON() : null
+            };
             return context.sendJson(object, 'object');
         } catch (error) {
             // Re-throw with just the error message. Otherwise a

@@ -1,4 +1,5 @@
 'use strict';
+
 const { DeleteBucketCommand } = require('@aws-sdk/client-s3');
 const lib = require('../lib');
 

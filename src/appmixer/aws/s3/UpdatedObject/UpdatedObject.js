@@ -1,5 +1,5 @@
 'use strict';
-const Promise = require('bluebird');
+
 const { ListObjectVersionsCommand } = require('@aws-sdk/client-s3');
 const lib = require('../lib');
 
@@ -45,7 +45,7 @@ module.exports = {
 
         const message = JSON.parse(payload.Message);
         if (Array.isArray(message.Records)) {
-            await Promise.map(message.Records, async record => {
+            await Promise.all(message.Records.map(async record => {
                 const { object } = record.s3;
 
                 if (object) {
@@ -68,7 +68,7 @@ module.exports = {
                         return context.sendJson(object, 'object');
                     }
                 }
-            });
+            }));
         }
 
         return context.response();
