@@ -65,17 +65,24 @@ module.exports = {
         }
 
         // Use @aws-sdk/lib-storage Upload class (handles multipart automatically)
-        const upload = new Upload(uploadOptions);
-        const result = await upload.done();
+        try {
+            const upload = new Upload(uploadOptions);
+            const result = await upload.done();
 
-        // Return consistent output format
-        return context.sendJson({
-            Bucket: bucket,
-            Key: result.Key,
-            ETag: result.ETag,
-            Location: result.Location,
-            ContentType: contentType,
-            Expires: expiryDate
-        }, 'object');
+            // Return consistent output format
+            return context.sendJson({
+                Bucket: bucket,
+                Key: result.Key,
+                ETag: result.ETag,
+                Location: result.Location,
+                ContentType: contentType,
+                Expires: expiryDate
+            }, 'object');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message || error);
+        }
     }
 };
