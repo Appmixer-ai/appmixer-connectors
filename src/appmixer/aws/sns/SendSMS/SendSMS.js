@@ -40,20 +40,27 @@ module.exports = {
             };
         }
 
-        const result = await sns.send(new PublishCommand({
-            PhoneNumber: phoneNumber,
-            Message: message,
-            MessageAttributes: messageAttributes
-        }));
+        try {
+            const result = await sns.send(new PublishCommand({
+                PhoneNumber: phoneNumber,
+                Message: message,
+                MessageAttributes: messageAttributes
+            }));
 
-        const object = {
-            MessageID: result.MessageId,
-            SMSType: type,
-            PhoneNumber: phoneNumber,
-            Message: message,
-            SenderID: senderId
-        };
+            const object = {
+                MessageID: result.MessageId,
+                SMSType: type,
+                PhoneNumber: phoneNumber,
+                Message: message,
+                SenderID: senderId
+            };
 
-        return context.sendJson(object, 'sms');
+            return context.sendJson(object, 'sms');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };
