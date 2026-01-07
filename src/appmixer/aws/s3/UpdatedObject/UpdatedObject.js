@@ -45,7 +45,7 @@ module.exports = {
 
         const message = JSON.parse(payload.Message);
         if (Array.isArray(message.Records)) {
-            await Promise.all(message.Records.map(async record => {
+            const results = await Promise.allSettled(message.Records.map(async record => {
                 const { object } = record.s3;
 
                 if (object) {
@@ -69,6 +69,12 @@ module.exports = {
                     }
                 }
             }));
+
+            // Check for any errors after all items have been processed
+            const errors = results.filter(result => result.status === 'rejected');
+            if (errors.length > 0) {
+                throw errors[0].reason;
+            }
         }
 
         return context.response();

@@ -14,11 +14,7 @@ module.exports = {
         const { region } = context.properties;
         const { name, acl, lockEnabled, versionEnabled } = context.messages.in.content;
         if (!name) {
-            throw new context.CancelError('Bucket Name. is required');
-        }
-
-        if (!versionEnabled) {
-            throw new context.CancelError('Enable Versioning. is required');
+            throw new context.CancelError('Bucket Name is required');
         }
 
         const { s3 } = lib.init(context);
