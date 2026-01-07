@@ -1,5 +1,6 @@
 'use strict';
-const commons = require('../../aws-commons');
+const { Upload } = require('@aws-sdk/lib-storage');
+const lib = require('../lib');
 
 /**
  * Uploads an object.
@@ -32,7 +33,7 @@ module.exports = {
             throw new context.CancelError('File ID is required');
         }
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         // Get file stream from Appmixer storage
         const readStream = await context.getFileReadStream(fileId);
@@ -43,7 +44,7 @@ module.exports = {
             Key: key,
             Body: readStream,
             ContentType: contentType,
-            Expires: expiryDate
+            Expires: expiryDate ? new Date(expiryDate) : undefined
         };
 
         // Only add ACL if provided (optional for buckets with ACLs disabled)
@@ -52,7 +53,10 @@ module.exports = {
         }
 
         // Configure multipart upload options
-        const uploadOptions = {};
+        const uploadOptions = {
+            client: s3,
+            params: uploadParams
+        };
         if (maxPartSize) {
             uploadOptions.partSize = maxPartSize * 1048576; // Convert MB to bytes
         }
@@ -60,17 +64,25 @@ module.exports = {
             uploadOptions.queueSize = concurrentParts;
         }
 
-        // Use AWS SDK's native upload method (handles multipart automatically)
-        const result = await s3.upload(uploadParams, uploadOptions).promise();
+        // Use @aws-sdk/lib-storage Upload class (handles multipart automatically)
+        try {
+            const upload = new Upload(uploadOptions);
+            const result = await upload.done();
 
-        // Return consistent output format
-        return context.sendJson({
-            Bucket: bucket,
-            Key: result.Key,
-            ETag: result.ETag,
-            Location: result.Location,
-            ContentType: contentType,
-            Expires: expiryDate
-        }, 'object');
+            // Return consistent output format
+            return context.sendJson({
+                Bucket: bucket,
+                Key: result.Key,
+                ETag: result.ETag,
+                Location: result.Location,
+                ContentType: contentType,
+                Expires: expiryDate
+            }, 'object');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message || error);
+        }
     }
 };

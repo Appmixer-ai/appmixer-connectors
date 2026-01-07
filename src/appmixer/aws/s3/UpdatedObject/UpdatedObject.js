@@ -1,6 +1,7 @@
 'use strict';
-const Promise = require('bluebird');
-const commons = require('../../aws-commons');
+
+const { ListObjectVersionsCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * Component which triggers whenever new object is created.
@@ -18,12 +19,12 @@ module.exports = {
             kmsMasterKeyId,
             trustedAccountIds
         };
-        return commons.registerWebhook(context, payload);
+        return lib.registerWebhook(context, payload);
     },
 
     stop(context) {
 
-        return commons.unregisterWebhook(context);
+        return lib.unregisterWebhook(context);
     },
 
     /**
@@ -33,27 +34,28 @@ module.exports = {
     async receive(context) {
 
         const { bucket } = context.properties;
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         const { headers, data } = context.messages.webhook.content;
         const payload = JSON.parse(data);
 
         if (headers && headers['x-amz-sns-message-type'] === 'SubscriptionConfirmation') {
-            return commons.confirmSubscription(context, payload);
+            return lib.confirmSubscription(context, payload);
         }
 
         const message = JSON.parse(payload.Message);
         if (Array.isArray(message.Records)) {
-            await Promise.map(message.Records, async record => {
+            await Promise.all(message.Records.map(async record => {
                 const { object } = record.s3;
 
                 if (object) {
-                    const { Versions } = await s3.listObjectVersions({
+                    const versionsResponse = await s3.send(new ListObjectVersionsCommand({
                         Bucket: bucket,
                         Prefix: object.key,
                         MaxKeys: 10
-                    }).promise();
+                    }));
 
+                    const Versions = versionsResponse.Versions || [];
                     const versions = Versions.filter(version => version.Key === object.key);
 
                     if (versions.length > 1) {
@@ -66,7 +68,7 @@ module.exports = {
                         return context.sendJson(object, 'object');
                     }
                 }
-            });
+            }));
         }
 
         return context.response();
