@@ -1,5 +1,5 @@
 'use strict';
-
+const ClickUpClient = require('../../ClickUpClient');
 const lib = require('../../lib');
 
 const outputPortName = 'tasks';
@@ -11,38 +11,33 @@ module.exports = {
     async receive(context) {
 
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
-        const { listId, folderId, assigneeIds, statuses, tags, orderBy, outputType } = context.messages.in.content;
-
+        const { listId, assigneeIds, statuses, tags, orderBy, outputType, limit } = context.messages.in.content;
         if (!listId) {
             throw new context.CancelError('List ID is required');
         }
+
 
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }
 
-        const params = {
-            assignees: commaSeparatedStringToArray(assigneeIds),
-            statuses: statuses ? lib.normalizeMultiselectInput(statuses, context, 'Statuses') : undefined,
-            tags: commaSeparatedStringToArray(tags),
-            order_by: orderBy,
-            paramsSerializer: { indexes: false }
-        };
+        const cu = new ClickUpClient(context);
 
-        const url = folderId
-            ? `/folder/${folderId}/list/${listId}/task`
-            : `/list/${listId}/task`;
+        // Normalize multiselect inputs (statuses is a true multiselect field)
+        const normalizedStatuses = statuses ?
+            lib.normalizeMultiselectInput(statuses, context, 'Statuses') : undefined;
 
-        const response = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.clickup.com/api/v2${url}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params
+        const tasks = await cu.requestPaginated('GET', `/list/${listId}/task`, {
+            dataKey: 'tasks',
+            countLimit: limit,
+            params: {
+                assignees: commaSeparatedStringToArray(assigneeIds),
+                statuses: normalizedStatuses,
+                tags: commaSeparatedStringToArray(tags),
+                order_by: orderBy,
+                paramsSerializer: { indexes: false }
+            }
         });
-
-        const tasks = response.data?.tasks || [];
 
         if (!tasks || tasks.length === 0) {
             return context.sendJson({}, 'notFound');
@@ -165,6 +160,7 @@ module.exports = {
                 { label: 'File ID', value: 'fileId' }
             ], outputPortName);
         } else {
+            // Default to array output
             return context.sendJson([], outputPortName);
         }
     }
