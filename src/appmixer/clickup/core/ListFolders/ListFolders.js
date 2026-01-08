@@ -7,28 +7,40 @@ module.exports = {
         const { spaceId, archived = false } = context.messages.in.content;
 
         if (!spaceId) {
+            // When used as dynamic source, return empty response instead of error
+            if (context.properties.variableFetch) {
+                return context.sendJson({ folders: [] }, 'out');
+            }
             throw new context.CancelError('Space Id is required!');
         }
 
-        let url = `https://api.clickup.com/api/v2/space/${spaceId}/folder`;
-        const params = {};
+        try {
+            let url = `https://api.clickup.com/api/v2/space/${spaceId}/folder`;
+            const params = {};
 
-        if (archived !== undefined && archived !== null) {
-            params.archived = archived;
+            if (archived !== undefined && archived !== null) {
+                params.archived = archived;
+            }
+
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                },
+                params
+            });
+
+            const folders = data.folders || [];
+
+            return context.sendJson({ folders }, 'out');
+        } catch (err) {
+            // When used as dynamic source, return empty response instead of error
+            if (context.properties.variableFetch) {
+                return context.sendJson({ folders: [] }, 'out');
+            }
+            throw err;
         }
-
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params
-        });
-
-        const folders = data.folders || [];
-
-        return context.sendJson({ folders }, 'out');
     },
 
     toSelectArray(out) {

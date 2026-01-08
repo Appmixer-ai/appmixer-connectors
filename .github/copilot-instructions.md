@@ -1850,6 +1850,63 @@ When using `source` to dynamically populate field options or output port schemas
 }
 ```
 
+**Using `variableFetch` for Error Handling in Dynamic Sources**
+
+When a component is used as a dynamic data source (via `source` URL), it may fail due to permissions, invalid configuration, or API errors. In the UI context (populating dropdown options), these errors should be gracefully handled by returning an empty response rather than throwing an exception that would break the UI.
+
+The `variableFetch` property signals to the component that it's being called as a dynamic data source, not as a regular flow component. When `variableFetch: true`:
+- **Ignore errors** and return an empty response (e.g., `{ items: [] }`)
+- This prevents UI breakage when the dynamic source call fails
+
+When the same component is used directly in a flow (without `variableFetch`):
+- **Throw errors** normally so the user is aware of failures
+
+**component.json example** (setting `variableFetch` in source):
+```json
+{
+    "driveId": {
+        "type": "text",
+        "label": "Drive ID",
+        "source": {
+            "url": "/component/appmixer/microsoft/onedrive/ListDrives?outPort=out",
+            "data": {
+                "properties": {
+                    "variableFetch": true
+                },
+                "transform": "./ListDrives#sitesToSelectArray"
+            }
+        }
+    }
+}
+```
+
+**JavaScript implementation example** (handling `variableFetch`):
+```javascript
+module.exports = {
+    async receive(context) {
+        try {
+            const drives = await listItems(context, 'me/drives?');
+            return context.sendJson({ drives }, 'out');
+        } catch (err) {
+            // When used as dynamic source, return empty response instead of error
+            if (context.properties.variableFetch) {
+                return context.sendJson({ drives: [] }, 'out');
+            }
+            // When used in flow, throw error normally
+            context.log({ stage: 'Error', err });
+            throw new Error(err);
+        }
+    },
+
+    sitesToSelectArray({ drives }) {
+        return drives.map((drive) => ({
+            label: `${drive.name || drive.driveType} / ${drive.webUrl || drive.id}`,
+            value: drive.id
+        }));
+    }
+};
+```
+
 ---
 
 # Part 8: Best Practices
