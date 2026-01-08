@@ -9,13 +9,13 @@ module.exports = {
         }
 
         const { data } = await context.httpRequest({
-            method: 'GET',
-            url: 'https://api.unkey.dev/v1/apis.getApi',
+            method: 'POST',
+            url: 'https://api.unkey.com/v2/apis.getApi',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
             },
-            params: {
+            data: {
                 apiId
             }
         });

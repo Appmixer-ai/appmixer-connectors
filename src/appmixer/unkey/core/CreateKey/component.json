@@ -31,31 +31,28 @@
                     "byteLength": {
                         "type": "integer"
                     },
-                    "ownerId": {
+                    "externalId": {
                         "type": "string"
                     },
                     "meta": {
                         "type": "string"
                     },
+                    "roles": {
+                        "type": "string"
+                    },
+                    "permissions": {
+                        "type": "string"
+                    },
                     "expires": {
                         "type": "integer"
                     },
-                    "ratelimitType": {
+                    "ratelimits": {
                         "type": "string"
                     },
-                    "ratelimitLimit": {
-                        "type": "integer"
-                    },
-                    "ratelimitRefillRate": {
-                        "type": "integer"
-                    },
-                    "ratelimitRefillInterval": {
-                        "type": "integer"
-                    },
-                    "remaining": {
-                        "type": "integer"
-                    },
                     "enabled": {
+                        "type": "boolean"
+                    },
+                    "recoverable": {
                         "type": "boolean"
                     }
                 },
@@ -85,67 +82,57 @@
                         "type": "number",
                         "label": "Byte Length",
                         "index": 4,
-                        "tooltip": "Length of the key in bytes (default: 16)"
+                        "tooltip": "Length of the key in bytes (16-255, default: 16). Higher values increase security."
                     },
-                    "ownerId": {
+                    "externalId": {
                         "type": "text",
-                        "label": "Owner ID",
+                        "label": "External ID",
                         "index": 5,
-                        "tooltip": "The ID of the user who owns this key"
+                        "tooltip": "Your system's identifier for the user/entity. Returned during verification for user identification."
                     },
                     "meta": {
                         "type": "textarea",
                         "label": "Metadata (JSON)",
                         "index": 6,
-                        "tooltip": "JSON object with custom metadata for the key"
+                        "tooltip": "JSON object with custom metadata returned during verification. Avoid sensitive data."
+                    },
+                    "roles": {
+                        "type": "textarea",
+                        "label": "Roles (JSON array)",
+                        "index": 7,
+                        "tooltip": "JSON array of role names to assign (e.g., [\"admin\", \"editor\"]). Roles must exist in workspace."
+                    },
+                    "permissions": {
+                        "type": "textarea",
+                        "label": "Permissions (JSON array)",
+                        "index": 8,
+                        "tooltip": "JSON array of permissions (e.g., [\"documents.read\", \"documents.write\"]). Supports wildcards."
                     },
                     "expires": {
                         "type": "number",
-                        "label": "Expires (milliseconds)",
-                        "index": 7,
-                        "tooltip": "Time in milliseconds until the key expires"
-                    },
-                    "ratelimitType": {
-                        "type": "select",
-                        "label": "Rate Limit Type",
-                        "index": 8,
-                        "options": [
-                            { "label": "None", "value": "" },
-                            { "label": "Fast", "value": "fast" },
-                            { "label": "Consistent", "value": "consistent" }
-                        ],
-                        "tooltip": "Type of rate limiting algorithm to use"
-                    },
-                    "ratelimitLimit": {
-                        "type": "number",
-                        "label": "Rate Limit",
+                        "label": "Expires (Unix timestamp ms)",
                         "index": 9,
-                        "tooltip": "Maximum number of requests allowed in the interval"
+                        "tooltip": "Unix timestamp in milliseconds when key expires. Omit for permanent keys."
                     },
-                    "ratelimitRefillRate": {
-                        "type": "number",
-                        "label": "Refill Rate",
+                    "ratelimits": {
+                        "type": "textarea",
+                        "label": "Rate Limits (JSON array)",
                         "index": 10,
-                        "tooltip": "Number of tokens to refill"
-                    },
-                    "ratelimitRefillInterval": {
-                        "type": "number",
-                        "label": "Refill Interval (ms)",
-                        "index": 11,
-                        "tooltip": "Interval in milliseconds for refilling tokens"
-                    },
-                    "remaining": {
-                        "type": "number",
-                        "label": "Remaining Uses",
-                        "index": 12,
-                        "tooltip": "Number of times this key can be used before expiring"
+                        "tooltip": "JSON array of rate limit objects with name, limit, duration (ms), and autoApply fields."
                     },
                     "enabled": {
                         "type": "toggle",
                         "label": "Enabled",
-                        "index": 13,
+                        "index": 11,
                         "defaultValue": true,
-                        "tooltip": "Whether the key is enabled"
+                        "tooltip": "Whether the key is active immediately upon creation"
+                    },
+                    "recoverable": {
+                        "type": "toggle",
+                        "label": "Recoverable",
+                        "index": 12,
+                        "defaultValue": false,
+                        "tooltip": "Store plaintext key in encrypted vault for later retrieval. Only enable if absolutely necessary."
                     }
                 }
             }
@@ -156,10 +143,7 @@
             "name": "out",
             "options": [
                 { "label": "Key ID", "value": "keyId" },
-                { "label": "Key", "value": "key" },
-                { "label": "API ID", "value": "apiId" },
-                { "label": "Name", "value": "name" },
-                { "label": "Owner ID", "value": "ownerId" }
+                { "label": "Key", "value": "key" }
             ]
         }
     ],

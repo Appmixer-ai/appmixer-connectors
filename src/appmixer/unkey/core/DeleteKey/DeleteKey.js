@@ -10,7 +10,7 @@ module.exports = {
 
         await context.httpRequest({
             method: 'POST',
-            url: 'https://api.unkey.dev/v1/keys.deleteKey',
+            url: 'https://api.unkey.com/v2/keys.deleteKey',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

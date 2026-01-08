@@ -882,6 +882,7 @@ Action components perform operations when triggered by input data. They don't ru
                     },
                     "messages": {
                         "in/outputType": "inputs/in/outputType"
+                        // Fake any other required inputs here if needed
                     }
                 }
             }
@@ -913,6 +914,8 @@ module.exports = {
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'tasks' });
         }
+
+        // any required inputs validation can be done here
 
         let url = 'https://api.service.com/tasks';
         const params = {};
@@ -1110,6 +1113,7 @@ const toCsv = (array) => {
                     },
                     "messages": {
                         "in/outputType": "inputs/in/outputType"
+                        // Fake any other required inputs here if needed
                     }
                 }
             }

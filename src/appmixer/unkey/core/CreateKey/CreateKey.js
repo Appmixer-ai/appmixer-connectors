@@ -7,15 +7,14 @@ module.exports = {
             prefix,
             name,
             byteLength,
-            ownerId,
+            externalId,
             meta,
+            roles,
+            permissions,
             expires,
-            ratelimitType,
-            ratelimitLimit,
-            ratelimitRefillRate,
-            ratelimitRefillInterval,
-            remaining,
-            enabled
+            ratelimits,
+            enabled,
+            recoverable
         } = context.messages.in.content;
 
         if (!apiId) {
@@ -29,7 +28,9 @@ module.exports = {
         if (prefix) body.prefix = prefix;
         if (name) body.name = name;
         if (byteLength) body.byteLength = byteLength;
-        if (ownerId) body.ownerId = ownerId;
+        if (externalId) body.externalId = externalId;
+
+        // Parse and validate meta JSON
         if (meta) {
             try {
                 body.meta = JSON.parse(meta);
@@ -37,23 +38,54 @@ module.exports = {
                 throw new context.CancelError('Invalid JSON in metadata field');
             }
         }
-        if (expires) body.expires = expires;
-        if (remaining) body.remaining = remaining;
-        if (typeof enabled === 'boolean') body.enabled = enabled;
 
-        // Add rate limit configuration if specified
-        if (ratelimitType) {
-            body.ratelimit = {
-                type: ratelimitType
-            };
-            if (ratelimitLimit) body.ratelimit.limit = ratelimitLimit;
-            if (ratelimitRefillRate) body.ratelimit.refillRate = ratelimitRefillRate;
-            if (ratelimitRefillInterval) body.ratelimit.refillInterval = ratelimitRefillInterval;
+        // Parse and validate roles array
+        if (roles) {
+            try {
+                const parsedRoles = JSON.parse(roles);
+                if (!Array.isArray(parsedRoles)) {
+                    throw new context.CancelError('Roles must be a JSON array');
+                }
+                body.roles = parsedRoles;
+            } catch (e) {
+                throw new context.CancelError('Invalid JSON in roles field: ' + e.message);
+            }
         }
 
-        const { data } = await context.httpRequest({
+        // Parse and validate permissions array
+        if (permissions) {
+            try {
+                const parsedPermissions = JSON.parse(permissions);
+                if (!Array.isArray(parsedPermissions)) {
+                    throw new context.CancelError('Permissions must be a JSON array');
+                }
+                body.permissions = parsedPermissions;
+            } catch (e) {
+                throw new context.CancelError('Invalid JSON in permissions field: ' + e.message);
+            }
+        }
+
+        if (expires) body.expires = expires;
+
+        // Parse and validate ratelimits array
+        if (ratelimits) {
+            try {
+                const parsedRatelimits = JSON.parse(ratelimits);
+                if (!Array.isArray(parsedRatelimits)) {
+                    throw new context.CancelError('Rate limits must be a JSON array');
+                }
+                body.ratelimits = parsedRatelimits;
+            } catch (e) {
+                throw new context.CancelError('Invalid JSON in ratelimits field: ' + e.message);
+            }
+        }
+
+        if (typeof enabled === 'boolean') body.enabled = enabled;
+        if (typeof recoverable === 'boolean') body.recoverable = recoverable;
+
+        const response = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.unkey.dev/v1/keys.createKey',
+            url: 'https://api.unkey.com/v2/keys.createKey',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
@@ -62,11 +94,8 @@ module.exports = {
         });
 
         return context.sendJson({
-            keyId: data.keyId,
-            key: data.key,
-            apiId,
-            name,
-            ownerId
+            keyId: response.data.data.keyId,
+            key: response.data.data.key
         }, 'out');
     }
 };

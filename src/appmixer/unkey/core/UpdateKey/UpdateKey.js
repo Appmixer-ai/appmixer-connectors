@@ -5,13 +5,8 @@ module.exports = {
         const {
             keyId,
             name,
-            ownerId,
-            meta,
+            externalId,
             expires,
-            ratelimitType,
-            ratelimitLimit,
-            ratelimitRefillRate,
-            ratelimitRefillInterval,
             enabled
         } = context.messages.in.content;
 
@@ -23,31 +18,14 @@ module.exports = {
             keyId
         };
 
-        if (name) body.name = name;
-        if (ownerId) body.ownerId = ownerId;
-        if (meta) {
-            try {
-                body.meta = JSON.parse(meta);
-            } catch (e) {
-                throw new context.CancelError('Invalid JSON in metadata field');
-            }
-        }
-        if (expires) body.expires = expires;
+        if (name !== undefined && name !== null) body.name = name;
+        if (externalId !== undefined && externalId !== null) body.externalId = externalId;
+        if (expires !== undefined && expires !== null) body.expires = expires;
         if (typeof enabled === 'boolean') body.enabled = enabled;
-
-        // Add rate limit configuration if specified
-        if (ratelimitType) {
-            body.ratelimit = {
-                type: ratelimitType
-            };
-            if (ratelimitLimit) body.ratelimit.limit = ratelimitLimit;
-            if (ratelimitRefillRate) body.ratelimit.refillRate = ratelimitRefillRate;
-            if (ratelimitRefillInterval) body.ratelimit.refillInterval = ratelimitRefillInterval;
-        }
 
         await context.httpRequest({
             method: 'POST',
-            url: 'https://api.unkey.dev/v1/keys.updateKey',
+            url: 'https://api.unkey.com/v2/keys.updateKey',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'

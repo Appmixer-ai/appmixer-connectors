@@ -2,13 +2,13 @@
 
 module.exports = {
     async receive(context) {
-        const { keyId, op, value } = context.messages.in.content;
+        const { keyId, operation, value } = context.messages.in.content;
 
         if (!keyId) {
             throw new context.CancelError('Key ID is required!');
         }
 
-        if (!op) {
+        if (!operation) {
             throw new context.CancelError('Operation is required!');
         }
 
@@ -18,20 +18,20 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.unkey.dev/v1/keys.updateRemaining',
+            url: 'https://api.unkey.com/v2/keys.updateCredits',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json'
             },
             data: {
                 keyId,
-                op,
+                operation,
                 value
             }
         });
 
         return context.sendJson({
-            remaining: data.remaining
+            credits: data.data?.credits
         }, 'out');
     }
 };
