@@ -291,6 +291,46 @@ module.exports = {
 
 For services using OAuth 2.0 flow.
 
+#### Simplified URL-Based Format
+
+For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
+
+**Example (ClickUp)**:
+```javascript
+module.exports = {
+    type: 'oauth2',
+
+    definition: () => {
+        return {
+            scope: [],
+
+            authUrl: 'https://app.clickup.com/api',
+
+            requestAccessToken: 'https://api.clickup.com/api/v2/oauth/token',
+
+            requestProfileInfo: 'https://api.clickup.com/api/v2/user',
+
+            accountNameFromProfileInfo: 'user.username',
+
+            validateAccessToken: 'https://api.clickup.com/api/v2/user'
+        };
+    }
+};
+```
+
+**Key Differences from Function-Based Format**:
+- `authUrl`: String URL instead of function - Appmixer handles OAuth parameters automatically
+- `requestAccessToken`: String URL instead of async function - Appmixer handles the token exchange
+- `requestProfileInfo`: String URL instead of async function - Appmixer makes GET request with Bearer token
+- `accountNameFromProfileInfo`: Dot-notation path to extract account name from profile response (e.g., `'user.username'`)
+- `validateAccessToken`: String URL instead of async function - Appmixer makes GET request to validate token
+
+This format is simpler and works when the service follows standard OAuth 2.0 conventions. Use the function-based format (below) when you need custom logic for token handling or non-standard endpoints.
+
+#### Function-Based Format
+
+For services that require custom OAuth logic or have non-standard endpoints:
+
 **Generic Example**:
 ```javascript
 module.exports = {

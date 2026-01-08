@@ -1,10 +1,15 @@
 {
-    "name": "appmixer.clickup.core.GetLists",
+    "name": "appmixer.clickup.core.ListFolders",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Get lists from a space or folder.",
+    "description": "Retrieve a list of all folders in a ClickUp space. Returns a maximum of 100 folders per request.",
+    "version": "1.0.0",
     "private": false,
     "auth": {
         "service": "appmixer:clickup"
+    },
+    "quota": {
+        "manager": "appmixer:clickup",
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -15,8 +20,8 @@
                     "spaceId": {
                         "type": "string"
                     },
-                    "folderId": {
-                        "type": "string"
+                    "archived": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
@@ -27,30 +32,15 @@
                 "inputs": {
                     "spaceId": {
                         "type": "text",
-                        "label": "Space ID",
-                        "index": 1,
-                        "tooltip": "Enter a Space ID or select it from the picker.",
-                        "source": {
-                            "url": "/component/appmixer/clickup/core/GetSpaces?outPort=out",
-                            "data": {
-                                "transform": "./GetSpaces#toSelectArray"
-                            }
-                        }
+                        "tooltip": "The ID of the space containing the folders",
+                        "label": "Space Id",
+                        "index": 0
                     },
-                    "folderId": {
-                        "type": "text",
-                        "label": "Folder ID",
-                        "index": 2,
-                        "tooltip": "Optional. Lists within a specific folder. Leave empty to get lists from the space.",
-                        "source": {
-                            "url": "/component/appmixer/clickup/core/ListFolders?outPort=out",
-                            "data": {
-                                "properties": {
-                                    "spaceId": "inputs/in/spaceId"
-                                },
-                                "transform": "./ListFoldersFolders#toSelectArray"
-                            }
-                        }
+                    "archived": {
+                        "type": "toggle",
+                        "tooltip": "Filter to show archived folders only",
+                        "label": "Archived",
+                        "index": 1
                     }
                 }
             }
@@ -61,8 +51,8 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Lists",
-                    "value": "lists",
+                    "label": "Folders",
+                    "value": "folders",
                     "schema": {
                         "type": "array",
                         "items": {
@@ -70,95 +60,53 @@
                             "properties": {
                                 "id": {
                                     "type": "string",
-                                    "title": "Lists.Id"
+                                    "title": "Id"
                                 },
                                 "name": {
                                     "type": "string",
-                                    "title": "Lists.Name"
+                                    "title": "Name"
                                 },
                                 "orderindex": {
-                                    "type": "number",
-                                    "title": "Lists.Orderindex"
-                                },
-                                "content": {
-                                    "type": "string",
-                                    "title": "Lists.Content"
-                                },
-                                "status": {
-                                    "type": "null",
-                                    "title": "Lists.Status"
-                                },
-                                "priority": {
-                                    "type": "null",
-                                    "title": "Lists.Priority"
-                                },
-                                "assignee": {
-                                    "type": "null",
-                                    "title": "Lists.Assignee"
-                                },
-                                "task_count": {
-                                    "type": "number",
-                                    "title": "Lists.Task Count"
-                                },
-                                "due_date": {
-                                    "type": "null",
-                                    "title": "Lists.Due Date"
-                                },
-                                "start_date": {
-                                    "type": "null",
-                                    "title": "Lists.Start Date"
-                                },
-                                "folder": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string",
-                                            "title": "Lists.Folder.Id"
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "title": "Lists.Folder.Name"
-                                        },
-                                        "hidden": {
-                                            "type": "boolean",
-                                            "title": "Lists.Folder.Hidden"
-                                        },
-                                        "access": {
-                                            "type": "boolean",
-                                            "title": "Lists.Folder.Access"
-                                        }
-                                    },
-                                    "title": "Lists.Folder"
-                                },
-                                "space": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string",
-                                            "title": "Lists.Space.Id"
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "title": "Lists.Space.Name"
-                                        },
-                                        "access": {
-                                            "type": "boolean",
-                                            "title": "Lists.Space.Access"
-                                        }
-                                    },
-                                    "title": "Lists.Space"
-                                },
-                                "archived": {
-                                    "type": "boolean",
-                                    "title": "Lists.Archived"
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "title": "Orderindex"
                                 },
                                 "override_statuses": {
                                     "type": "boolean",
-                                    "title": "Lists.Override Statuses"
+                                    "title": "Override Statuses"
+                                },
+                                "hidden": {
+                                    "type": "boolean",
+                                    "title": "Hidden"
+                                },
+                                "space": {
+                                    "type": "object",
+                                    "title": "Space"
+                                },
+                                "task_count": {
+                                    "type": [
+                                        "string",
+                                        "integer"
+                                    ],
+                                    "title": "Task Count"
+                                },
+                                "archived": {
+                                    "type": "boolean",
+                                    "title": "Archived"
+                                },
+                                "statuses": {
+                                    "type": "array",
+                                    "title": "Statuses"
+                                },
+                                "lists": {
+                                    "type": "array",
+                                    "title": "Lists"
                                 },
                                 "permission_level": {
                                     "type": "string",
-                                    "title": "Lists.Permission Level"
+                                    "title": "Permission Level"
                                 }
                             }
                         }
