@@ -1799,6 +1799,38 @@ async receive(context) {
 ```
 
 #### Dynamic Output Port Schema
+
+When using `source` to dynamically populate field options or output port schemas, the `data` object can contain either `messages` or `properties` depending on the target component's input type:
+
+- **Use `messages`**: When the target component has `inPorts` (action components)
+- **Use `properties`**: When the target component uses `properties` instead of `inPorts` (trigger components)
+
+**IMPORTANT**: All **required** fields of the target component MUST be defined. You can use dummy data for fields that aren't needed for the specific call, but every required field must have a value.
+
+**Example with `messages`** (target component has `inPorts`):
+```json
+{
+    "inspector": {
+        "inputs": {
+            "folderId": {
+                "type": "text",
+                "label": "Folder ID",
+                "source": {
+                    "url": "/component/appmixer/clickup/core/ListFolders?outPort=out",
+                    "data": {
+                        "messages": {
+                            "in/spaceId": "inputs/in/spaceId"
+                        },
+                        "transform": "./ListFolders#toSelectArray"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Example with `properties`** (target component uses `properties`):
 ```json
 {
     "outPorts": [

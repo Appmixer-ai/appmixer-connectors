@@ -4,7 +4,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { spaceId, archived } = context.messages.in.content;
+        const { spaceId, archived = false } = context.messages.in.content;
 
         if (!spaceId) {
             throw new context.CancelError('Space Id is required!');
@@ -29,5 +29,15 @@ module.exports = {
         const folders = data.folders || [];
 
         return context.sendJson({ folders }, 'out');
+    },
+
+    toSelectArray(out) {
+
+        return (out.folders || []).map(space => {
+            return {
+                label: space.name,
+                value: space.id
+            };
+        });
     }
 };
