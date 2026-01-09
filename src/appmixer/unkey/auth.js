@@ -31,15 +31,15 @@ module.exports = {
         },
 
         validate: async (context) => {
-            // Test the API key by listing keys (limited to 1)
+            // Test the API key by listing roles (limited to 1)
             await context.httpRequest({
-                method: 'GET',
-                url: 'https://api.unkey.dev/v1/keys.listKeys',
+                method: 'POST',
+                url: 'https://api.unkey.com/v2/permissions.listRoles',
                 headers: {
                     'Authorization': `Bearer ${context.apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                params: {
+                data: {
                     limit: 1
                 }
             });
