@@ -60,7 +60,7 @@ describe('HubSpot -> AddCompanyToList', () => {
     // TODO: Add HTTP mocking tests
     // The following tests require proper axios/HTTP mocking to work in CI environment:
     // - should add single company to list using v3 API
-    // - should add multiple companies to list using v3 API  
+    // - should add multiple companies to list using v3 API
     // - should fallback to v1 API if v3 fails with 404
     // - should fallback to v1 API if v3 fails with 400
     // - should throw error when both APIs fail

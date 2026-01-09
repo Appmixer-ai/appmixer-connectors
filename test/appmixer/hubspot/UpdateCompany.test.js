@@ -47,7 +47,7 @@ describe('HubSpot -> UpdateCompany', () => {
     // - should update company with overwrite strategy
     // - should handle no fields to update with merge strategy
     // - should throw error when domain not found
-    // - should handle Clearbit fields correctly
+    // - should handle additionalProperties for custom fields (e.g. Clearbit fields)
     //
     // These components have been tested in staging environment with real HubSpot API.
     // The merge strategy logic (only updating empty fields) has been verified to work correctly.

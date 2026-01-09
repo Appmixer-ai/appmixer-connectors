@@ -9,18 +9,8 @@ module.exports = {
             companyId,
             domain,
             name,
-            clearbit_company_name, // eslint-disable-line camelcase
             numberofemployees,
-            hs_employee_range, // eslint-disable-line camelcase
             industry,
-            clearbit_company_sector, // eslint-disable-line camelcase
-            clearbit_company_industry_group, // eslint-disable-line camelcase
-            clearbit_company_sub_industry, // eslint-disable-line camelcase
-            last_pageview_at, // eslint-disable-line camelcase
-            pageviews_current_day, // eslint-disable-line camelcase
-            pageviews_current_month, // eslint-disable-line camelcase
-            pageviews_current_week, // eslint-disable-line camelcase
-            change_pageviews_week_over_week, // eslint-disable-line camelcase
             updateStrategy
         } = context.messages.in.content;
 
@@ -61,25 +51,13 @@ module.exports = {
         }
 
         // Build input properties object
-        /* eslint-disable camelcase */
         const inputProperties = {
             domain,
             name,
-            clearbit_company_name,
             numberofemployees,
-            hs_employee_range,
             industry,
-            clearbit_company_sector,
-            clearbit_company_industry_group,
-            clearbit_company_sub_industry,
-            last_pageview_at,
-            pageviews_current_day,
-            pageviews_current_month,
-            pageviews_current_week,
-            change_pageviews_week_over_week,
             ...additionalProperties
         };
-        /* eslint-enable camelcase */
 
         // Remove undefined/null properties
         Object.keys(inputProperties).forEach(property => {
@@ -128,4 +106,3 @@ module.exports = {
         }, 'out');
     }
 };
-
