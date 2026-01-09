@@ -27,7 +27,6 @@ module.exports = {
 
         return context.sendJson({ lists: data.lists }, 'out');
     },
-
     toSelectArray(out) {
 
         return (out.lists || []).map(list => {
