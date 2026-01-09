@@ -45,10 +45,10 @@ module.exports = {
 
     toSelectArray(out) {
 
-        return (out.folders || []).map(space => {
+        return (out.folders || []).map(folder => {
             return {
-                label: space.name,
-                value: space.id
+                label: folder.name,
+                value: folder.id
             };
         });
     }
