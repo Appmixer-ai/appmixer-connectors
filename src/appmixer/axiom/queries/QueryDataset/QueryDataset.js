@@ -4,29 +4,57 @@ module.exports = {
 
     async receive(context) {
 
-        const { query, startTime, endTime } = context.messages.in.content;
+        const {
+            datasetName, startTime, endTime, resolution, limit, filterField, filterValue
+        } = context.messages.in.content;
 
-        if (!query) {
-            throw new context.CancelError('Query is required!');
+        if (!datasetName) {
+            throw new context.CancelError('Dataset name is required!');
         }
 
-        const requestBody = { apl: query };
-
-        if (startTime) {
-            requestBody.startTime = startTime;
+        if (!startTime) {
+            throw new context.CancelError('Start time is required!');
         }
 
-        if (endTime) {
-            requestBody.endTime = endTime;
+        if (!endTime) {
+            throw new context.CancelError('End time is required!');
         }
+
+        if (!resolution) {
+            throw new context.CancelError('Resolution is required!');
+        }
+
+        const requestBody = {
+            startTime,
+            endTime,
+            resolution
+        };
+
+        if (limit !== undefined && limit !== null) {
+            requestBody.limit = limit;
+        }
+
+        // Add filter if provided
+        if (filterField && filterValue) {
+            requestBody.filter = {
+                op: 'eq',
+                field: filterField,
+                value: filterValue
+            };
+        }
+
+        const url = `https://api.axiom.co/v1/datasets/${datasetName}/query`;
+
+        const headers = {
+            'Authorization': `Bearer ${context.auth.apiToken}`,
+            'Content-Type': 'application/json',
+            'x-axiom-org-id': context.auth.organizationId
+        };
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.axiom.co/v1/datasets/_apl',
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
-            },
+            url,
+            headers,
             data: requestBody
         });
 

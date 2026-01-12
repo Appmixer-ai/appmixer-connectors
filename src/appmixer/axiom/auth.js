@@ -11,13 +11,13 @@ module.exports = {
         auth: {
             apiToken: {
                 type: 'text',
-                name: 'API Token',
-                tooltip: 'Your Axiom API token. You can create one in your Axiom account settings.'
+                name: 'Personal Access Token (PAT)',
+                tooltip: 'Your Axiom personal access token. You can create one in your Axiom account settings.'
             },
             organizationId: {
                 type: 'text',
                 name: 'Organization ID',
-                tooltip: 'Your Axiom organization ID (optional). If not provided, the default organization will be used.'
+                tooltip: 'Your Axiom organization ID. You can find it in your Axiom account.'
             }
         },
 
@@ -26,21 +26,26 @@ module.exports = {
         },
 
         requestProfileInfo: async (context) => {
-            return context.httpRequest({
+            // Use /v2/user endpoint as per OpenAPI docs, require PAT and orgId
+            const response = await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.axiom.co/v1/user',
+                url: 'https://api.axiom.co/v2/user',
                 headers: {
-                    'Authorization': `Bearer ${context.apiToken}`
+                    'Authorization': `Bearer ${context.apiToken}`,
+                    'x-axiom-org-id': context.organizationId
                 }
             });
+            return response.data || response;
         },
 
         validate: async (context) => {
+            // Use /v2/user endpoint as per OpenAPI docs, require PAT and orgId
             await context.httpRequest({
                 method: 'GET',
-                url: 'https://api.axiom.co/v1/user',
+                url: 'https://api.axiom.co/v2/user',
                 headers: {
-                    'Authorization': `Bearer ${context.apiToken}`
+                    'Authorization': `Bearer ${context.apiToken}`,
+                    'x-axiom-org-id': context.organizationId
                 }
             });
             return true;

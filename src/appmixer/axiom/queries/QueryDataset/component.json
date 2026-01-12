@@ -1,7 +1,8 @@
 {
-    "name": "appmixer.axiom.queries.QueryDataset",
+    "name": "appmixer.axiom.core.QueryDataset",
+    "label": "Query Dataset",
+    "description": "Execute a query against an Axiom dataset. Returns events matching filter criteria.",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Execute an APL query against an Axiom dataset. APL (Axiom Processing Language) is the query language used by Axiom.",
     "version": "1.0.0",
     "auth": {
         "service": "appmixer:axiom"
@@ -19,37 +20,78 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "query": {
+                    "datasetName": {
                         "type": "string"
                     },
                     "startTime": {
                         "type": "string"
                     },
                     "endTime": {
+                        "type": "string"
+                    },
+                    "resolution": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    },
+                    "filterField": {
+                        "type": "string"
+                    },
+                    "filterValue": {
                         "type": "string"
                     }
                 },
-                "required": ["query"]
+                "required": [
+                    "datasetName",
+                    "startTime",
+                    "endTime",
+                    "resolution"
+                ]
             },
             "inspector": {
                 "inputs": {
-                    "query": {
-                        "type": "textarea",
-                        "label": "APL Query",
+                    "datasetName": {
+                        "type": "text",
+                        "label": "Dataset Name",
                         "index": 1,
-                        "tooltip": "APL query to execute. Example: ['my-dataset'] | where severity == 'error' | limit 100"
+                        "tooltip": "The name of the dataset to query"
                     },
                     "startTime": {
-                        "type": "date-time",
+                        "type": "text",
                         "label": "Start Time",
                         "index": 2,
-                        "tooltip": "Optional start time for the query (ISO 8601 format)"
+                        "tooltip": "Start time in RFC3339 format or relative expression (e.g., 'now-1h', 'now-1d')"
                     },
                     "endTime": {
-                        "type": "date-time",
+                        "type": "text",
                         "label": "End Time",
                         "index": 3,
-                        "tooltip": "Optional end time for the query (ISO 8601 format)"
+                        "tooltip": "End time in RFC3339 format or relative expression (e.g., 'now')"
+                    },
+                    "resolution": {
+                        "type": "text",
+                        "label": "Resolution",
+                        "index": 4,
+                        "tooltip": "Time resolution in seconds. Use 'auto' or a number (query range /100 to /1000)"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "label": "Limit",
+                        "index": 5,
+                        "tooltip": "Maximum number of events to return (default 1000, max 50000)"
+                    },
+                    "filterField": {
+                        "type": "text",
+                        "label": "Filter Field",
+                        "index": 6,
+                        "tooltip": "Optional field name to filter on"
+                    },
+                    "filterValue": {
+                        "type": "text",
+                        "label": "Filter Value",
+                        "index": 7,
+                        "tooltip": "Optional value to match in the filter field"
                     }
                 }
             }
@@ -59,9 +101,42 @@
         {
             "name": "out",
             "options": [
-                { "label": "Status", "value": "status" },
-                { "label": "Matches", "value": "matches" },
-                { "label": "Buckets", "value": "buckets" }
+                {
+                    "label": "Matches",
+                    "value": "matches",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "_rowId": { "type": "string" },
+                                "_time": { "type": "string" },
+                                "_sysTime": { "type": "string" },
+                                "data": { "type": "object" }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "rowsMatched": { "type": "integer" },
+                            "rowsExamined": { "type": "integer" },
+                            "blocksExamined": { "type": "integer" },
+                            "elapsedTime": { "type": "integer" }
+                        }
+                    }
+                },
+                {
+                    "label": "Buckets",
+                    "value": "buckets",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
             ]
         }
     ],

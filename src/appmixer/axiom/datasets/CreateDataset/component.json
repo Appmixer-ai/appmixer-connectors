@@ -1,7 +1,8 @@
 {
-    "name": "appmixer.axiom.datasets.CreateDataset",
-    "author": "Appmixer <info@appmixer.com>",
+    "name": "appmixer.axiom.core.CreateDataset",
+    "label": "Create Dataset",
     "description": "Create a new dataset in Axiom.",
+    "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
         "service": "appmixer:axiom"
@@ -24,9 +25,30 @@
                     },
                     "description": {
                         "type": "string"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "enum": [
+                            "otel:metrics:v1",
+                            "otel:traces:v1",
+                            "otel:logs:v1",
+                            "axiom:events:v1"
+                        ],
+                        "default": "axiom:events:v1"
+                    },
+                    "retentionDays": {
+                        "type": "integer"
+                    },
+                    "useRetentionPeriod": {
+                        "type": "boolean"
+                    },
+                    "region": {
+                        "type": "string"
                     }
                 },
-                "required": ["name"]
+                "required": [
+                    "name"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -34,13 +56,56 @@
                         "type": "text",
                         "label": "Dataset Name",
                         "index": 1,
-                        "tooltip": "The name of the dataset to create"
+                        "tooltip": "The unique name of the dataset to create"
                     },
                     "description": {
                         "type": "textarea",
                         "label": "Description",
                         "index": 2,
                         "tooltip": "Optional description of the dataset"
+                    },
+                    "kind": {
+                        "type": "select",
+                        "label": "Dataset Kind",
+                        "index": 3,
+                        "defaultValue": "axiom:events:v1",
+                        "tooltip": "The type of dataset to create",
+                        "options": [
+                            {
+                                "label": "Axiom Events",
+                                "value": "axiom:events:v1"
+                            },
+                            {
+                                "label": "OpenTelemetry Metrics",
+                                "value": "otel:metrics:v1"
+                            },
+                            {
+                                "label": "OpenTelemetry Traces",
+                                "value": "otel:traces:v1"
+                            },
+                            {
+                                "label": "OpenTelemetry Logs",
+                                "value": "otel:logs:v1"
+                            }
+                        ]
+                    },
+                    "retentionDays": {
+                        "type": "number",
+                        "label": "Retention Days",
+                        "index": 4,
+                        "tooltip": "Number of days to retain data in the dataset"
+                    },
+                    "useRetentionPeriod": {
+                        "type": "toggle",
+                        "label": "Use Retention Period",
+                        "index": 5,
+                        "tooltip": "Whether to use the retention period"
+                    },
+                    "region": {
+                        "type": "text",
+                        "label": "Region",
+                        "index": 6,
+                        "tooltip": "Optional region of the dataset"
                     }
                 }
             }
@@ -50,11 +115,69 @@
         {
             "name": "out",
             "options": [
-                { "label": "Dataset ID", "value": "id" },
-                { "label": "Name", "value": "name" },
-                { "label": "Description", "value": "description" },
-                { "label": "Created By", "value": "who" },
-                { "label": "Created At", "value": "created" }
+                {
+                    "label": "Dataset ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Name",
+                    "value": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Description",
+                    "value": "description",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Kind",
+                    "value": "kind",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Retention Days",
+                    "value": "retentionDays",
+                    "schema": {
+                        "type": "integer"
+                    }
+                },
+                {
+                    "label": "Use Retention Period",
+                    "value": "useRetentionPeriod",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Created By",
+                    "value": "who",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Can Write",
+                    "value": "canWrite",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                }
             ]
         }
     ],

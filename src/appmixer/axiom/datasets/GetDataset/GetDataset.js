@@ -10,13 +10,16 @@ module.exports = {
             throw new context.CancelError('Dataset ID is required!');
         }
 
+        const headers = {
+            'Authorization': `Bearer ${context.auth.apiToken}`,
+            'Content-Type': 'application/json',
+            'x-axiom-org-id': context.auth.organizationId
+        };
+
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.axiom.co/v1/datasets/${datasetId}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
-            }
+            url: `https://api.axiom.co/v2/datasets/${datasetId}`,
+            headers
         });
 
         return context.sendJson(data, 'out');

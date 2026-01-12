@@ -20,16 +20,22 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Datasets', value: 'datasets' });
         }
 
-        const { data } = await context.httpRequest({
+        const headers = {
+            'Authorization': `Bearer ${context.auth.apiToken}`,
+            'x-axiom-org-id': context.auth.organizationId
+        };
+
+        const response = await context.httpRequest({
             method: 'GET',
-            url: 'https://api.axiom.co/v1/datasets',
-            headers: {
-                'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
-            }
+            url: 'https://api.axiom.co/v2/datasets',
+            headers
         });
 
-        const datasets = Array.isArray(data) ? data : [];
+        const datasets = Array.isArray(response.data) ? response.data : [];
+
+        if (datasets.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: datasets, outputType });
     }

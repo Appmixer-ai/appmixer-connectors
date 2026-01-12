@@ -10,10 +10,10 @@ module.exports = {
             throw new context.CancelError('Dataset ID is required!');
         }
 
-        const url = `https://api.axiom.co/v2/datasets/${datasetId}`;
+        const url = `https://api.axiom.co/v2/datasets/${datasetId}/vacuum`;
 
         await context.httpRequest({
-            method: 'DELETE',
+            method: 'POST',
             url,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`,
