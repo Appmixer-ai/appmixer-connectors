@@ -24,13 +24,13 @@ module.exports = {
             'x-axiom-org-id': context.auth.organizationId
         };
 
-        const response = await context.httpRequest({
+        await context.httpRequest({
             method: 'PUT',
             url: `https://api.axiom.co/v2/datasets/${datasetId}`,
             headers,
             data: requestBody
         });
 
-        return context.sendJson(response.data || {}, 'out');
+        return context.sendJson({}, 'out');
     }
 };
