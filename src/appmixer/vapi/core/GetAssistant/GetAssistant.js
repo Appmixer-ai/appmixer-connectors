@@ -16,6 +16,12 @@ module.exports = {
             }
         });
 
-        return context.sendJson(data, 'out');
+        return context.sendJson({
+            id: data.id,
+            orgId: data.orgId,
+            name: data.name,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt
+        }, 'out');
     }
 };

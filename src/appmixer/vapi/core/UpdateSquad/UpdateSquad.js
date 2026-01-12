@@ -16,6 +16,9 @@ module.exports = {
 
         if (members) {
             payload.members = typeof members === 'string' ? JSON.parse(members) : members;
+        } else {
+            // If members is not provided, send an empty array
+            payload.members = [];
         }
 
         await context.httpRequest({

@@ -4,19 +4,23 @@ module.exports = {
     async receive(context) {
         const { phoneNumberId, customerId, assistantId, squadId } = context.messages.in.content;
 
-        const payload = {};
-
-        if (phoneNumberId) {
-            payload.phoneNumberId = phoneNumberId;
+        if (!phoneNumberId) {
+            throw new context.CancelError('Phone Number ID is required!');
         }
 
-        if (customerId) {
-            payload.customerId = customerId;
+        if (!customerId) {
+            throw new context.CancelError('Customer ID is required!');
         }
 
-        if (assistantId) {
-            payload.assistantId = assistantId;
+        if (!assistantId) {
+            throw new context.CancelError('Assistant ID is required!');
         }
+
+        const payload = {
+            phoneNumberId,
+            customerId,
+            assistantId
+        };
 
         if (squadId) {
             payload.squadId = squadId;
