@@ -1,5 +1,6 @@
 'use strict';
-const commons = require('../../aws-commons');
+const { Upload } = require('@aws-sdk/lib-storage');
+const lib = require('../lib');
 
 /**
  * Puts a UTF8 content in a bucket.
@@ -26,22 +27,29 @@ module.exports = {
             throw new context.CancelError('Content Type is required');
         }
 
-        if (!acl) {
-            throw new context.CancelError('Access Control is required');
-        }
+        const { s3 } = lib.init(context);
 
-
-        const { s3 } = commons.init(context);
-
-        const result = await s3.upload({
+        // Build upload parameters
+        const uploadParams = {
             Bucket: bucket,
             Key: key,
             Body: content,
-            ACL: acl,
             ContentType: contentType,
-            Expires: expiryDate,
+            Expires: expiryDate ? new Date(expiryDate) : undefined,
             ContentEncoding: 'utf8'
-        }).promise();
+        };
+
+        // Only add ACL if provided (optional for buckets with ACLs disabled)
+        if (acl) {
+            uploadParams.ACL = acl;
+        }
+
+        const upload = new Upload({
+            client: s3,
+            params: uploadParams
+        });
+
+        const result = await upload.done();
 
         const object = Object.assign({
             ContentType: contentType,

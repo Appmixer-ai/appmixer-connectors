@@ -259,5 +259,142 @@ describe('wiz.uploadScan', () => {
 
             prepareForSendSpy.restore();
         });
+
+        it('should not loop infinitely when timeoutTrigger is true with empty documents', async () => {
+            // This test replicates the infinite loop bug:
+            // When timeoutTrigger=true and documents is empty, prepareForSend would set
+            // 'documents-upload-batch' to [], then processSend would return early without
+            // clearing it. On next iteration, if the empty array wasn't handled properly,
+            // it could cause infinite recursion.
+
+            await context.stateSet('documents', []);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            const prepareForSendSpy = sinon.spy(uploadScan, 'prepareForSend');
+
+            try {
+                // This should complete without hanging
+                await uploadScan.processAllDocuments(context, { timeoutTrigger: true });
+
+                // prepareForSend should only be called once (no infinite recursion)
+                assert.equal(prepareForSendSpy.callCount, 1, 'prepareForSend should be called exactly once');
+
+                // sendDocuments should not be called (no documents)
+                assert(sendDocumentsStub.notCalled, 'sendDocuments should not be called for empty documents');
+
+                // documents-upload-batch should NOT be set (empty entries are not stored)
+                const batch = await context.stateGet('documents-upload-batch');
+                assert.equal(batch, undefined, 'documents-upload-batch should not be set for empty entries');
+            } finally {
+                prepareForSendSpy.restore();
+            }
+        });
+
+        it('should clear empty documents-upload-batch from previous interrupted run', async () => {
+            // Simulate a scenario where documents-upload-batch was set to empty array
+            // (e.g., from a previous interrupted run)
+            await context.stateSet('documents-upload-batch', []);
+            await context.stateSet('documents', [
+                { id: '1', data: 'doc1' }
+            ]);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            await uploadScan.processAllDocuments(context, {});
+
+            // Should clear the empty batch and process normally
+            assert(sendDocumentsStub.calledOnce, 'sendDocuments should be called after clearing empty batch');
+            const callArgs = sendDocumentsStub.getCall(0).args;
+            assert.equal(callArgs[1].documents.length, 1, 'Should process the document');
+        });
+
+        it('should prepare documents-upload-batch when timeoutTrigger is true', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            // timeoutTrigger=true should prepare batch regardless of threshold
+            await uploadScan.processAllDocuments(context, { threshold: 10, timeoutTrigger: true });
+
+            // Should have called sendDocuments (batch was prepared)
+            assert(sendDocumentsStub.calledOnce, 'sendDocuments should be called when timeoutTrigger is true');
+            const callArgs = sendDocumentsStub.getCall(0).args;
+            assert.equal(callArgs[1].documents.length, 2, 'Should prepare all 2 documents for upload');
+        });
+
+        it('should prepare documents-upload-batch when entries.length >= threshold', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' },
+                { id: '3', data: 'doc3' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            // entries.length (3) >= threshold (3) should prepare batch
+            await uploadScan.processAllDocuments(context, { threshold: 3 });
+
+            // Should have called sendDocuments (batch was prepared)
+            assert(sendDocumentsStub.calledOnce, 'sendDocuments should be called when entries >= threshold');
+            const callArgs = sendDocumentsStub.getCall(0).args;
+            assert.equal(callArgs[1].documents.length, 3, 'Should prepare all 3 documents for upload');
+        });
+
+        it('should not prepare any documents-upload-batch when entries.length < threshold', async () => {
+            const docs = [
+                { id: '1', data: 'doc1' },
+                { id: '2', data: 'doc2' },
+                { id: '3', data: 'doc3' }
+            ];
+            await context.stateSet('documents', docs);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            await uploadScan.processAllDocuments(context, { threshold: 5 });
+
+            assert(sendDocumentsStub.notCalled, 'sendDocuments should not be called when there is not enough documents.');
+        });
+
+        it('should skip processing when documents-upload-batch has items (upload in progress)', async () => {
+            // Simulate an upload already in progress
+            await context.stateSet('documents-upload-batch', [
+                { id: '1', data: 'doc1' }
+            ]);
+            await context.stateSet('documents', [
+                { id: '2', data: 'doc2' }
+            ]);
+
+            const unlockStub = sinon.stub();
+            context.lock.resolves({ unlock: unlockStub });
+
+            const prepareForSendSpy = sinon.spy(uploadScan, 'prepareForSend');
+
+            try {
+                await uploadScan.processAllDocuments(context, {});
+
+                // prepareForSend should return early
+                assert.equal(prepareForSendSpy.callCount, 1, 'prepareForSend should be called once');
+
+                // sendDocuments should not be called (upload already in progress)
+                assert(sendDocumentsStub.notCalled, 'sendDocuments should not be called when upload in progress');
+
+                // documents-upload-batch should still have the original items
+                const batch = await context.stateGet('documents-upload-batch');
+                assert.equal(batch.length, 1, 'documents-upload-batch should still have the in-progress items');
+            } finally {
+                prepareForSendSpy.restore();
+            }
+        });
     });
 });

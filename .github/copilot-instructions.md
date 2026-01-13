@@ -138,6 +138,8 @@ Contains bundle metadata and version history.
 }
 ```
 
+**IMPORTANT - Single Version Rule**: For unreleased connectors (new connectors being developed), the bundle.json must have only ONE version entry (typically 1.0.0). Do NOT pre-create multiple version entries (e.g., 1.0.0, 1.1.0, 1.2.0) before the connector is released. New versions should only be added when actual releases occur, not during initial development.
+
 ### quota.js
 
 Defines rate limiting rules to prevent API quota violations.
@@ -288,6 +290,46 @@ module.exports = {
 ### OAuth 2.0 Authentication
 
 For services using OAuth 2.0 flow.
+
+#### Simplified URL-Based Format
+
+For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
+
+**Example (ClickUp)**:
+```javascript
+module.exports = {
+    type: 'oauth2',
+
+    definition: () => {
+        return {
+            scope: [],
+
+            authUrl: 'https://app.clickup.com/api',
+
+            requestAccessToken: 'https://api.clickup.com/api/v2/oauth/token',
+
+            requestProfileInfo: 'https://api.clickup.com/api/v2/user',
+
+            accountNameFromProfileInfo: 'user.username',
+
+            validateAccessToken: 'https://api.clickup.com/api/v2/user'
+        };
+    }
+};
+```
+
+**Key Differences from Function-Based Format**:
+- `authUrl`: String URL instead of function - Appmixer handles OAuth parameters automatically
+- `requestAccessToken`: String URL instead of async function - Appmixer handles the token exchange
+- `requestProfileInfo`: String URL instead of async function - Appmixer makes GET request with Bearer token
+- `accountNameFromProfileInfo`: Dot-notation path to extract account name from profile response (e.g., `'user.username'`)
+- `validateAccessToken`: String URL instead of async function - Appmixer makes GET request to validate token
+
+This format is simpler and works when the service follows standard OAuth 2.0 conventions. Use the function-based format (below) when you need custom logic for token handling or non-standard endpoints.
+
+#### Function-Based Format
+
+For services that require custom OAuth logic or have non-standard endpoints:
 
 **Generic Example**:
 ```javascript
@@ -1757,6 +1799,38 @@ async receive(context) {
 ```
 
 #### Dynamic Output Port Schema
+
+When using `source` to dynamically populate field options or output port schemas, the `data` object can contain either `messages` or `properties` depending on the target component's input type:
+
+- **Use `messages`**: When the target component has `inPorts` (action components)
+- **Use `properties`**: When the target component uses `properties` instead of `inPorts` (trigger components)
+
+**IMPORTANT**: All **required** fields of the target component MUST be defined. You can use dummy data for fields that aren't needed for the specific call, but every required field must have a value.
+
+**Example with `messages`** (target component has `inPorts`):
+```json
+{
+    "inspector": {
+        "inputs": {
+            "folderId": {
+                "type": "text",
+                "label": "Folder ID",
+                "source": {
+                    "url": "/component/appmixer/clickup/core/ListFolders?outPort=out",
+                    "data": {
+                        "messages": {
+                            "in/spaceId": "inputs/in/spaceId"
+                        },
+                        "transform": "./ListFolders#toSelectArray"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Example with `properties`** (target component uses `properties`):
 ```json
 {
     "outPorts": [
@@ -1774,6 +1848,63 @@ async receive(context) {
         }
     ]
 }
+```
+
+**Using `variableFetch` for Error Handling in Dynamic Sources**
+
+When a component is used as a dynamic data source (via `source` URL), it may fail due to permissions, invalid configuration, or API errors. In the UI context (populating dropdown options), these errors should be gracefully handled by returning an empty response rather than throwing an exception that would break the UI.
+
+The `variableFetch` property signals to the component that it's being called as a dynamic data source, not as a regular flow component. When `variableFetch: true`:
+- **Ignore errors** and return an empty response (e.g., `{ items: [] }`)
+- This prevents UI breakage when the dynamic source call fails
+
+When the same component is used directly in a flow (without `variableFetch`):
+- **Throw errors** normally so the user is aware of failures
+
+**component.json example** (setting `variableFetch` in source):
+```json
+{
+    "driveId": {
+        "type": "text",
+        "label": "Drive ID",
+        "source": {
+            "url": "/component/appmixer/microsoft/onedrive/ListDrives?outPort=out",
+            "data": {
+                "properties": {
+                    "variableFetch": true
+                },
+                "transform": "./ListDrives#sitesToSelectArray"
+            }
+        }
+    }
+}
+```
+
+**JavaScript implementation example** (handling `variableFetch`):
+```javascript
+module.exports = {
+    async receive(context) {
+        try {
+            const drives = await listItems(context, 'me/drives?');
+            return context.sendJson({ drives }, 'out');
+        } catch (err) {
+            // When used as dynamic source, return empty response instead of error
+            if (context.properties.variableFetch) {
+                return context.sendJson({ drives: [] }, 'out');
+            }
+            // When used in flow, throw error normally
+            context.log({ stage: 'Error', err });
+            throw new Error(err);
+        }
+    },
+
+    sitesToSelectArray({ drives }) {
+        return drives.map((drive) => ({
+            label: `${drive.name || drive.driveType} / ${drive.webUrl || drive.id}`,
+            value: drive.id
+        }));
+    }
+};
 ```
 
 ---
@@ -1901,6 +2032,129 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 - **Locking**: Use locking mechanisms for shared resources
 - **Batching**: Batch API calls when possible to reduce requests
 
+#### Cache TTL using staticCache
+
+When caching data (e.g., folder structures, user lists, property definitions), use `context.staticCache` with a TTL (Time-To-Live) to ensure the cache is refreshed periodically:
+
+```javascript
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async tick(context) {
+    const cacheKey = `myconnector_data_${context.componentId}`;
+    let cachedData = await context.staticCache.get(cacheKey);
+
+    if (!cachedData) {
+        // Cache miss - fetch fresh data
+        cachedData = await fetchData(context);
+        // staticCache handles expiration automatically
+        await context.staticCache.set(cacheKey, cachedData, CACHE_TTL_MS);
+    }
+
+    // ... rest of tick logic using cachedData
+}
+```
+
+**Best practices for staticCache**:
+- Use descriptive cache keys with connector name prefix (e.g., `hubspot_properties_contacts`)
+- Include relevant identifiers in the key (e.g., user ID, folder ID) to avoid cache collisions
+- Use TTL between 10-60 minutes depending on how frequently the data changes
+- Combine with `context.lock()` when the fetch operation is expensive (see locking section below)
+
+**Example with lock** (from hubspot/commons.js):
+```javascript
+async getObjectProperties(context, objectType) {
+    const cacheKey = `hubspot_properties_${objectType}`;
+    let lock;
+    try {
+        lock = await context.lock(cacheKey);
+        const cached = await context.staticCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Fetch data from API
+        const { data } = await context.httpRequest({ /* ... */ });
+
+        // Cache with 1 minute TTL
+        await context.staticCache.set(cacheKey, data, 60 * 1000);
+        return data;
+    } finally {
+        await lock?.unlock();
+    }
+}
+```
+
+**Why staticCache is preferred over state-based caching**: `staticCache` provides built-in TTL support, handles expiration automatically, and is shared across component instances. State-based caching requires manual timestamp tracking and persists in the database unnecessarily.
+
+#### Locking for Long-Running Tick Operations
+
+When a `tick()` function may take a long time to execute (e.g., fetching nested folder structures), use a lock to prevent concurrent execution:
+
+```javascript
+async tick(context) {
+    let lock;
+    try {
+        lock = await context.lock(context.componentId, {
+            ttl: 5 * 60 * 1000, // 5 minute lock TTL
+            maxRetryCount: 0    // Don't wait, skip if already running
+        });
+    } catch (e) {
+        // Another tick is already running, skip this one
+        return;
+    }
+
+    try {
+        // ... long-running tick logic
+    } finally {
+        lock?.unlock();
+    }
+}
+```
+
+**Why locking is important**: The Appmixer engine calls `tick()` at regular intervals (default: 60 seconds). If a tick operation takes longer than the interval, multiple concurrent tick executions can overwhelm external APIs and cause race conditions.
+
+#### Batching Recursive API Calls
+
+When fetching hierarchical data (e.g., recursive folder structures), use batched concurrent requests instead of sequential recursive calls:
+
+```javascript
+// ❌ BAD: Sequential recursive calls - slow and can timeout
+async function getSubfoldersRecursive(context, folderId, result = []) {
+    const { data } = await context.httpRequest({ /* ... */ });
+    for (const folder of data.files) {
+        result.push(folder.id);
+        await getSubfoldersRecursive(context, folder.id, result); // Sequential!
+    }
+    return result;
+}
+
+// ✅ GOOD: Batched breadth-first traversal - faster and more reliable
+async function getSubfolders(context, rootFolderId) {
+    const allFolderIds = [];
+    let foldersToProcess = [rootFolderId];
+
+    while (foldersToProcess.length > 0) {
+        // Process in batches of 10 to avoid overwhelming the API
+        const batch = foldersToProcess.splice(0, 10);
+
+        const batchResults = await Promise.all(
+            batch.map(parentId => context.httpRequest({ /* ... */ }))
+        );
+
+        for (const { data } of batchResults) {
+            for (const folder of (data.files || [])) {
+                allFolderIds.push(folder.id);
+                foldersToProcess.push(folder.id);
+            }
+        }
+    }
+
+    return allFolderIds;
+}
+```
+
+**Why batching is important**: Deep recursive folder structures with hundreds of subfolders can take minutes to traverse sequentially. Batched concurrent requests significantly reduce total execution time and are less likely to timeout.
+    
 ### Common Patterns
 
 #### When Adding New Field to component.json

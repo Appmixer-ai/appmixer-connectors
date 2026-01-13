@@ -67,11 +67,16 @@ module.exports = {
 
         const entriesToUpload = await context.stateGet('documents-upload-batch');
         if (entriesToUpload) {
-            await context.log({
-                step: 'pre-upload: skipping, upload already in progress',
-                message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
-            });
-            return [];
+            if (entriesToUpload.length > 0) {
+                await context.log({
+                    step: 'pre-upload: skipping, upload already in progress',
+                    message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
+                });
+                return [];
+            } else {
+                // Empty batch from previous interrupted run, clean it up
+                await context.stateUnset('documents-upload-batch');
+            }
         }
 
         if (threshold && !timeoutTrigger && (await context.stateGet('documents') || []).length < threshold) {
@@ -92,22 +97,23 @@ module.exports = {
                 documents = entriesToUpload.map(entry => entry.data);
                 await context.log({
                     step: 'documents-upload-batch docs',
-                    message: `Prepared ${documents.length} documents for upload.`,
-                    lock: prepareDocumentsLock
+                    message: `Prepared ${documents.length} documents for upload.`
                 });
 
             } else {
                 let entries = (await context.stateGet('documents') || []);
 
-                if (timeoutTrigger) {
-                    await context.stateUnset('documents');
-                    await context.stateSet('documents-upload-batch', entries); // take the last `threshold` entries
-                } else if (threshold && entries.length > threshold) {
-                    await context.stateSet('documents', entries.slice(0, -threshold)); // keep all but the last `threshold` entries
-                    await context.stateSet('documents-upload-batch', entries.slice(-threshold)); // take the last `threshold` entries
-                    entries = entries.slice(-threshold);
+                if (!timeoutTrigger && threshold && entries.length >= threshold) {
+                    // Split: keep extras, process last `threshold` entries
+                    const batchEntries = entries.slice(-threshold);
+                    await context.stateSet('documents', entries.slice(0, -threshold));
+                    await context.stateSet('documents-upload-batch', batchEntries);
+                    entries = batchEntries;
                 } else {
-                    await context.stateSet('documents-upload-batch', entries);
+                    // Process all entries (timeout drain or at/below threshold)
+                    if (entries.length > 0) {
+                        await context.stateSet('documents-upload-batch', entries);
+                    }
                     await context.stateUnset('documents');
                 }
                 await context.log({
@@ -149,18 +155,30 @@ module.exports = {
         const now = moment();
         const referenceDate = moment();
 
+        const timeoutId = await context.stateGet('timeoutId');
+
+        if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
+            // Handle the case when a timeout was scheduled but the system crashed before the
+            // corresponding timeoutId was saved into the state. The original timeout then fired
+            // again, state was 'JsonSent', and a new timeout was scheduled for the second time.
+            // At this point, there can be two timeouts persisted in the DB. We must process only
+            // the timeout whose ID matches the value stored in the state and ignore the others.
+            return;
+        }
+
         if (!['minutes', 'hours', 'days'].includes(scheduleType)) {
             throw new context.CancelError(`Invalid scheduleType: ${scheduleType}`);
         }
 
         const nextDate = referenceDate.add(scheduleValue, scheduleType);
-        await context.log({ step: 'schedule', nextDate: nextDate.toISOString() });
         const diff = nextDate.diff(now);
         if (diff <= 0) {
             throw new context.CancelError(`Computed timeout is non‑positive (${diff} ms). Check schedule parameters.`);
         }
 
-        await context.setTimeout({}, diff);
+        const newTimeoutId = await context.setTimeout({}, diff);
+        await context.stateSet('timeoutId', newTimeoutId);
+        await context.log({ step: 'schedule', nextDate: nextDate.toISOString(), timeoutId: newTimeoutId });
     },
 
     async sendDocuments(context, { documents }) {

@@ -1,5 +1,7 @@
 'use strict';
-const commons = require('../../aws-commons');
+
+const { CreateBucketCommand, PutBucketVersioningCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * Creates bucket.
@@ -12,32 +14,36 @@ module.exports = {
         const { region } = context.properties;
         const { name, acl, lockEnabled, versionEnabled } = context.messages.in.content;
         if (!name) {
-            throw new context.CancelError('Bucket Name. is required');
+            throw new context.CancelError('Bucket Name is required');
         }
 
-        if (!versionEnabled) {
-            throw new context.CancelError('Enable Versioning. is required');
-        }
+        const { s3 } = lib.init(context);
 
-
-        const { s3 } = commons.init(context);
-
-        const { Location } = await s3.createBucket({
+        const createBucketParams = {
             Bucket: name,
             ACL: acl,
             CreateBucketConfiguration: {
                 LocationConstraint: region || 'us-east-1'
             },
             ObjectLockEnabledForBucket: lockEnabled
-        }).promise();
+        };
 
-        await s3.putBucketVersioning({
-            Bucket: name,
-            VersioningConfiguration: {
-                Status: versionEnabled ? 'Enabled' : 'Suspended'
-            }
-        }).promise();
+        try {
+            const createResponse = await s3.send(new CreateBucketCommand(createBucketParams));
 
-        return context.sendJson({ Name: name, Location }, 'bucket');
+            await s3.send(new PutBucketVersioningCommand({
+                Bucket: name,
+                VersioningConfiguration: {
+                    Status: versionEnabled ? 'Enabled' : 'Suspended'
+                }
+            }));
+
+            return context.sendJson({ Name: name, Location: createResponse.Location }, 'bucket');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

@@ -16,7 +16,6 @@ module.exports = {
             throw new context.CancelError('List ID is required');
         }
 
-
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
         }

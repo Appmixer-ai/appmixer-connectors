@@ -1,5 +1,7 @@
 'use strict';
-const commons = require('../../aws-commons');
+
+const { DeleteBucketCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * Deletes bucket.
@@ -9,16 +11,22 @@ module.exports = {
 
     async receive(context) {
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
 
         const { bucket } = context.messages.in.content;
         if (!bucket) {
             throw new context.CancelError('Bucket is required');
         }
 
+        try {
+            await s3.send(new DeleteBucketCommand({ Bucket: bucket }));
 
-        await s3.deleteBucket({ Bucket: bucket }).promise();
-
-        return context.sendJson({ Name: bucket }, 'deleted');
+            return context.sendJson({ Name: bucket }, 'deleted');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

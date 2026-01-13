@@ -1,0 +1,199 @@
+{
+    "name": "appmixer.constantContact.core.UpdateContact",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Update an existing contact by Id.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:constantContact"
+    },
+    "quota": {
+        "manager": "appmixer:constantContact",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "contact_id": {
+                        "type": "string"
+                    },
+                    "email_address": {
+                        "type": "string"
+                    },
+                    "permission_to_send": {
+                        "type": "string"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "title": "First Name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Last Name"
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "title": "Company Name"
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "title": "Job Title"
+                    },
+                    "list_memberships": {
+                        "type": [
+                            "array",
+                            "string"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "List Memberships"
+                    },
+                    "tags": {
+                        "type": [
+                            "array",
+                            "string"
+                        ],
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Tags"
+                    },
+                    "update_source": {
+                        "type": "string",
+                        "title": "Update Source"
+                    }
+                },
+                "required": [
+                    "contact_id",
+                    "update_source"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "contact_id": {
+                        "type": "text",
+                        "tooltip": "The unique Id of the contact to update.",
+                        "label": "Contact Id",
+                        "index": 0
+                    },
+                    "email_address": {
+                        "type": "text",
+                        "label": "Email Address",
+                        "tooltip": "Email address of the contact.",
+                        "index": 1
+                    },
+                    "permission_to_send": {
+                        "type": "select",
+                        "label": "Permission To Send",
+                        "tooltip": "Identifies the type of permission that the Constant Contact account has been granted to send email to the contact.",
+                        "options": [
+                            {
+                                "label": "Explicit",
+                                "value": "explicit"
+                            },
+                            {
+                                "label": "Implicit",
+                                "value": "implicit"
+                            },
+                            {
+                                "label": "Pending Confirmation",
+                                "value": "pending_confirmation"
+                            },
+                            {
+                                "label": "Unsubscribed",
+                                "value": "unsubscribed"
+                            },
+                            {
+                                "label": "Temporary Hold",
+                                "value": "temp_hold"
+                            },
+                            {
+                                "label": "Not Set",
+                                "value": "not_set"
+                            }
+                        ],
+                        "index": 2
+                    },
+                    "first_name": {
+                        "type": "text",
+                        "tooltip": "First name of the contact.",
+                        "label": "First Name",
+                        "index": 3
+                    },
+                    "last_name": {
+                        "type": "text",
+                        "tooltip": "Last name of the contact.",
+                        "label": "Last Name",
+                        "index": 4
+                    },
+                    "company_name": {
+                        "type": "text",
+                        "tooltip": "Company name.",
+                        "label": "Company Name",
+                        "index": 5
+                    },
+                    "job_title": {
+                        "type": "text",
+                        "tooltip": "Job title.",
+                        "label": "Job Title",
+                        "index": 6
+                    },
+                    "list_memberships": {
+                        "type": "multiselect",
+                        "tooltip": "List IDs to subscribe the contact to.",
+                        "label": "List Memberships",
+                        "index": 7,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/FindContactLists?outPort=out",
+                            "data": {
+                                "transform": "./FindContactLists#listsToSelectArray"
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "multiselect",
+                        "tooltip": "Tags to apply to the contact.",
+                        "label": "Tags",
+                        "index": 8,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray"
+                            }
+                        }
+                    },
+                    "update_source": {
+                        "type": "select",
+                        "tooltip": "Source of the update operation.",
+                        "label": "Update Source",
+                        "options": [
+                            {
+                                "clearItem": true,
+                                "content": "-- Clear selection --"
+                            },
+                            {
+                                "label": "Account",
+                                "value": "Account"
+                            },
+                            {
+                                "label": "Contact",
+                                "value": "Contact"
+                            }
+                        ],
+                        "index": 9
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQyLjUgNDIuNiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDIuNSA0Mi42OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CiA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgogIC5zdDB7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7ZmlsbDojRkY5RTFBO30KCS5zdDF7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7ZmlsbDojMTg1NkVEO30KIDwvc3R5bGU+CiA8Zz4KICA8Zz4KICAgPHBhdGggY2xhc3M9InN0MCIgZD0iTTI3LjQsMTcuNWMwLjQsMS4xLDEuNCwxLjgsMi42LDEuOGMwLjMsMCwwLjYtMC4xLDAuOS0wLjJjMS40LTAuNSwyLjItMi4xLDEuNy0zLjVjLTAuOS0yLjUtMi44LTQuNS01LjQtNS43CgkJCWMtMS40LTAuNi0zLDAtMy43LDEuNGMtMC42LDEuNCwwLDMsMS40LDMuN0MyNi4yLDE1LjUsMjcuMSwxNi40LDI3LjQsMTcuNXoiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yNi41LDAuMWMtMS41LTAuMy0yLjksMC43LTMuMiwyLjJjLTAuMywxLjUsMC43LDIuOSwyLjIsMy4yQzMxLjcsNi44LDM2LDEwLjksMzcsMTcKCQkJYzAuMiwxLjQsMS40LDIuMywyLjcsMi4zYzAuMiwwLDAuMywwLDAuNS0wLjFjMS41LTAuMywyLjUtMS43LDIuMy0zLjJDNDEsNy43LDM1LDEuNywyNi41LDAuMXoiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xOS41LDI3LjdjLTIuNSwwLTQuNi0yLTQuNi00LjZjMC0yLjUsMi00LjYsNC42LTQuNmMxLjUsMCwyLjgtMS4yLDIuOC0yLjhjMC0xLjUtMS4yLTIuOC0yLjgtMi44CgkJCWMtNS42LDAtMTAuMSw0LjUtMTAuMSwxMC4xczQuNSwxMC4xLDEwLjEsMTAuMWM1LjYsMCwxMC4xLTQuNSwxMC4xLTEwLjFjMC0xLjUtMS4yLTIuOC0yLjgtMi44Yy0xLjUsMC0yLjgsMS4yLTIuOCwyLjgKCQkJQzI0LjEsMjUuNiwyMiwyNy43LDE5LjUsMjcuN3oiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zNi4yLDIwLjNjLTEuNSwwLTIuOCwxLjItMi44LDIuOGMwLDcuNy02LjMsMTQtMTQsMTRzLTE0LTYuMy0xNC0xNGMwLTcuNyw2LjMtMTQsMTQtMTQKCQkJYzEuNSwwLDIuOC0xLjIsMi44LTIuOGMwLTEuNS0xLjItMi44LTIuOC0yLjhDOC44LDMuNiwwLDEyLjQsMCwyMy4xYzAsMTAuNyw4LjgsMTkuNSwxOS41LDE5LjVjMTAuNywwLDE5LjUtOC44LDE5LjUtMTkuNQoJCQlDMzguOSwyMS42LDM3LjcsMjAuMywzNi4yLDIwLjN6Ij4KICAgPC9wYXRoPgogIDwvZz4KIDwvZz4KPC9zdmc+"
+}
