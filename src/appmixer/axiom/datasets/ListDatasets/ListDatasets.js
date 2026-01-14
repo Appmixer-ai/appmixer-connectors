@@ -33,10 +33,6 @@ module.exports = {
 
         const datasets = Array.isArray(response.data) ? response.data : [];
 
-        if (datasets.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
-
         return lib.sendArrayOutput({ context, records: datasets, outputType });
     }
 };
