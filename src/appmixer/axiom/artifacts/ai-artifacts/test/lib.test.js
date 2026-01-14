@@ -6,7 +6,7 @@ describe('Axiom lib module', function() {
     let lib;
 
     before(function() {
-        lib = require(path.join(__dirname, '../../src/appmixer/axiom/lib.js'));
+        lib = require(path.join(__dirname, '../lib.js'));
     });
 
     describe('sendArrayOutput', function() {

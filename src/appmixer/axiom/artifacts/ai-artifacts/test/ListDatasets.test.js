@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../.env') });
 const assert = require('assert');
 const sinon = require('sinon');
 
@@ -17,7 +17,7 @@ describe('ListDatasets Component', function() {
         }
 
         // Load the component
-        ListDatasets = require(path.join(__dirname, '../../src/appmixer/axiom/datasets/ListDatasets/ListDatasets.js'));
+        ListDatasets = require(path.join(__dirname, '../datasets/ListDatasets/ListDatasets.js'));
 
         // Mock context
         context = {
