@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('FindComments Component', function() {
@@ -15,7 +15,7 @@ describe('FindComments Component', function() {
             this.skip();
         }
         // Load the component
-        FindComments = require(path.join(__dirname, '../../src/appmixer/figma/core/FindComments/FindComments.js'));
+        FindComments = require(path.join(__dirname, '../../core/FindComments/FindComments.js'));
 
         // Mock context
         context = {

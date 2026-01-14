@@ -1,10 +1,10 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
-describe('FindFileVersionHistory Component', function() {
+describe('PostComment Component', function() {
     let context;
-    let FindFileVersionHistory;
+    let PostComment;
 
     this.timeout(30000);
 
@@ -15,7 +15,7 @@ describe('FindFileVersionHistory Component', function() {
             this.skip();
         }
         // Load the component
-        FindFileVersionHistory = require(path.join(__dirname, '../../src/appmixer/figma/core/FindFileVersionHistory/FindFileVersionHistory.js'));
+        PostComment = require(path.join(__dirname, '../../core/PostComment/PostComment.js'));
 
         // Mock context
         context = {
@@ -40,7 +40,7 @@ describe('FindFileVersionHistory Component', function() {
         assert(context.auth.accessToken, 'FIGMA_ACCESS_TOKEN environment variable is required for tests');
     });
 
-    it('should find file version history', async function() {
+    it('should post a comment to a file', async function() {
         if (!process.env.FIGMA_FILE_ID) {
             console.log('Skipping test - FIGMA_FILE_ID not set');
             this.skip();
@@ -51,35 +51,68 @@ describe('FindFileVersionHistory Component', function() {
             data = output;
         };
 
+        const testMessage = `Test comment from automated test - ${new Date().toISOString()}`;
+
         context.messages.in.content = {
             fileId: process.env.FIGMA_FILE_ID,
-            outputType: 'array'
+            message: testMessage
         };
 
         try {
-            await FindFileVersionHistory.receive(context);
+            await PostComment.receive(context);
 
-            console.log('FindFileVersionHistory result:', JSON.stringify(data, null, 2));
+            console.log('PostComment result:', JSON.stringify(data, null, 2));
 
-            assert(data && typeof data === 'object', 'Expected sendJsonData.data to be an object');
-            assert(Array.isArray(data.result), 'Expected sendJsonData.data.result to be an array');
-            assert(typeof data.count === 'number', 'Expected sendJsonData.data.count to be a number');
+            assert(data && typeof data === 'object', 'Expected response data to be an object');
+            assert.strictEqual(context.sendJson.lastCall?.[1], 'out', 'Expected output port to be "out"');
 
-            // Verify the count matches array length
-            assert.strictEqual(data.count, data.result.length, `Expected count (${data.count}) to match result array length (${data.result.length})`);
-
-            if (data.result.length > 0) {
-                const version = data.result[0];
-                assert(version.id, 'Expected version to have id property');
-                assert(version.created_at, 'Expected version to have created_at property');
-
-                // Verify required fields are present
-                const requiredFields = ['id', 'created_at'];
-                for (const field of requiredFields) {
-                    assert(field in version, `Expected version to have ${field} property`);
-                }
+            // Verify the comment was created with expected properties
+            if (data.id) {
+                assert(data.id, 'Expected response to have id property');
+                assert(data.message, 'Expected response to have message property');
+                assert(data.created_at, 'Expected response to have created_at property');
             }
         } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - access token may be expired');
+                console.log('Error details:', error.response.data);
+                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the FIGMA_ACCESS_TOKEN in .env file');
+            }
+            if (error.response && error.response.status === 404) {
+                console.log('File not found - check FIGMA_FILE_ID');
+                console.log('Error details:', error.response.data);
+                throw new Error('File not found: Please check the FIGMA_FILE_ID in .env file');
+            }
+            if (error.response && error.response.status === 403) {
+                console.log('Permission denied - check file permissions and scope');
+                console.log('Error details:', error.response.data);
+                throw new Error('Permission denied: Check that the file allows comments and the access token has comment permissions');
+            }
+            throw error;
+        }
+    });
+
+    it('should handle empty message', async function() {
+        if (!process.env.FIGMA_FILE_ID) {
+            console.log('Skipping test - FIGMA_FILE_ID not set');
+            this.skip();
+        }
+
+        context.messages.in.content = {
+            fileId: process.env.FIGMA_FILE_ID,
+            message: ''
+        };
+
+        try {
+            await PostComment.receive(context);
+            // If this succeeds, we can verify the response
+            // If it fails, we expect certain error patterns
+        } catch (error) {
+            if (error.response && error.response.status === 400) {
+                console.log('Expected error for empty message:', error.response.data);
+                // This is expected behavior for empty message
+                return;
+            }
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
                 console.log('Error details:', error.response.data);
@@ -94,7 +127,32 @@ describe('FindFileVersionHistory Component', function() {
         }
     });
 
-    it('should default to array output type when not specified', async function() {
+    it('should handle invalid fileId', async function() {
+        context.messages.in.content = {
+            fileId: 'invalid-file-id',
+            message: 'Test comment'
+        };
+
+        try {
+            await PostComment.receive(context);
+            // If this succeeds unexpectedly, that's an issue
+            assert.fail('Expected an error for invalid fileId');
+        } catch (error) {
+            if (error.response && (error.response.status === 404 || error.response.status === 400)) {
+                console.log('Expected error for invalid fileId:', error.response.data);
+                // This is expected behavior for invalid fileId
+                return;
+            }
+            if (error.response && error.response.status === 401) {
+                console.log('Authentication failed - access token may be expired');
+                console.log('Error details:', error.response.data);
+                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the FIGMA_ACCESS_TOKEN in .env file');
+            }
+            throw error;
+        }
+    });
+
+    it('should handle long message', async function() {
         if (!process.env.FIGMA_FILE_ID) {
             console.log('Skipping test - FIGMA_FILE_ID not set');
             this.skip();
@@ -105,65 +163,20 @@ describe('FindFileVersionHistory Component', function() {
             data = output;
         };
 
-        context.messages.in.content = {
-            fileId: process.env.FIGMA_FILE_ID
-        };
-
-        try {
-            await FindFileVersionHistory.receive(context);
-
-            assert(data && typeof data === 'object', 'Expected sendJsonData.data to be an object');
-            assert(Array.isArray(data.result), 'Expected sendJsonData.data.result to be an array');
-            assert(typeof data.count === 'number', 'Expected sendJsonData.data.count to be a number');
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
-                console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the FIGMA_ACCESS_TOKEN in .env file');
-            }
-            if (error.response && error.response.status === 404) {
-                console.log('File not found - check FIGMA_FILE_ID');
-                console.log('Error details:', error.response.data);
-                throw new Error('File not found: Please check the FIGMA_FILE_ID in .env file');
-            }
-            throw error;
-        }
-    });
-
-    it('should handle object output type', async function() {
-        if (!process.env.FIGMA_FILE_ID) {
-            console.log('Skipping test - FIGMA_FILE_ID not set');
-            this.skip();
-        }
+        // Create a long message (but not too long to avoid rate limits)
+        const longMessage = `This is a long test comment that includes multiple sentences and various characters. It tests whether the Figma API can handle longer comment messages. Generated at ${new Date().toISOString()}. Lorem ipsum dolor sit amet, consectetur adipiscing elit.`;
 
         context.messages.in.content = {
             fileId: process.env.FIGMA_FILE_ID,
-            outputType: 'object'
-        };
-
-        // Mock sendJson to capture all calls
-        const sendJsonCalls = [];
-        context.sendJson = function(data, port) {
-            sendJsonCalls.push({ data, port });
-            return { data, port };
+            message: longMessage
         };
 
         try {
-            await FindFileVersionHistory.receive(context);
+            await PostComment.receive(context);
 
-            console.log('FindFileVersionHistory object output type calls count:', sendJsonCalls.length);
+            console.log('PostComment long message result:', JSON.stringify(data, null, 2));
 
-            assert(sendJsonCalls.length >= 0, 'Expected sendJson to be called');
-
-            // For object output type, each version should be sent individually
-            const callsToCheck = Math.min(sendJsonCalls.length, 3);
-            for (let i = 0; i < callsToCheck; i++) {
-                const call = sendJsonCalls[i];
-                assert(call.data && typeof call.data === 'object', `Expected call ${i} data to be an object`);
-                assert(typeof call.data.index === 'number', `Expected call ${i} data to have index property (number)`);
-                assert(typeof call.data.count === 'number', `Expected call ${i} data to have count property (number)`);
-                assert.strictEqual(call.port, 'out', `Expected call ${i} port to be "out"`);
-            }
+            assert(data && typeof data === 'object', 'Expected response data to be an object');
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Authentication failed - access token may be expired');
@@ -175,47 +188,10 @@ describe('FindFileVersionHistory Component', function() {
                 console.log('Error details:', error.response.data);
                 throw new Error('File not found: Please check the FIGMA_FILE_ID in .env file');
             }
-            throw error;
-        }
-    });
-
-    it('should handle first output type', async function() {
-        if (!process.env.FIGMA_FILE_ID) {
-            console.log('Skipping test - FIGMA_FILE_ID not set');
-            this.skip();
-        }
-
-        let data;
-        context.sendJson = function(output, port) {
-            data = output;
-        };
-
-        context.messages.in.content = {
-            fileId: process.env.FIGMA_FILE_ID,
-            outputType: 'first'
-        };
-
-        try {
-            await FindFileVersionHistory.receive(context);
-
-            assert(data && typeof data === 'object', 'Expected sendJsonData.data to be an object');
-            assert(typeof data.index === 'number', 'Expected sendJsonData.data.index to be a number');
-            assert(typeof data.count === 'number', 'Expected sendJsonData.data.count to be a number');
-            assert.strictEqual(data.index, 0, 'Expected first item to have index 0');
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                console.log('Authentication failed - access token may be expired');
+            if (error.response && error.response.status === 403) {
+                console.log('Permission denied - check file permissions and scope');
                 console.log('Error details:', error.response.data);
-                throw new Error('Authentication failed: Access token is invalid or expired. Please refresh the FIGMA_ACCESS_TOKEN in .env file');
-            }
-            if (error.response && error.response.status === 404) {
-                console.log('File not found - check FIGMA_FILE_ID');
-                console.log('Error details:', error.response.data);
-                throw new Error('File not found: Please check the FIGMA_FILE_ID in .env file');
-            }
-            if (error.name === 'CancelError' && error.message.includes('No records available')) {
-                console.log('No versions found for first output type test - this is expected if no versions exist');
-                return; // This is acceptable
+                throw new Error('Permission denied: Check that the file allows comments and the access token has comment permissions');
             }
             throw error;
         }

@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('MakeAPICall Component', function() {
@@ -15,7 +15,7 @@ describe('MakeAPICall Component', function() {
             this.skip();
         }
         // Load the component
-        MakeAPICall = require(path.join(__dirname, '../../src/appmixer/figma/core/MakeAPICall/MakeAPICall.js'));
+        MakeAPICall = require(path.join(__dirname, '../../core/MakeAPICall/MakeAPICall.js'));
 
         // Mock context
         context = {

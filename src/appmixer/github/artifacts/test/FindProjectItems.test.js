@@ -4,10 +4,10 @@ const dotenv = require('dotenv');
 const axios = require('axios');
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../test/.env') });
 
 // Import the component
-const FindProjectItems = require('../../src/appmixer/github/project/FindProjectItems/FindProjectItems');
+const FindProjectItems = require('../../project/FindProjectItems/FindProjectItems');
 
 // Mock context
 const createMockContext = (auth, messages = {}) => {
