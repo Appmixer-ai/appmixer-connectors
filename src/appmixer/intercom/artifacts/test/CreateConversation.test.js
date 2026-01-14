@@ -1,9 +1,9 @@
 const assert = require('assert');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { createMockContext } = require('../utils');
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
+const { createMockContext } = require('../../../../../test/utils');
 const httpRequest = require('./httpRequest');
-const component = require('../../src/appmixer/intercom/core/CreateConversation/CreateConversation');
+const component = require('../../core/CreateConversation/CreateConversation');
 
 // Make createMockContext available globally
 global.createMockContext = createMockContext;

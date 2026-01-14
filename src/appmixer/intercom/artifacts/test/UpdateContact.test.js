@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('UpdateContact Component', function() {
@@ -7,6 +7,7 @@ describe('UpdateContact Component', function() {
     let UpdateContact;
     let CreateContact;
     let createdContactId;
+    let createdEmail;
 
     this.timeout(30000);
 
@@ -18,8 +19,8 @@ describe('UpdateContact Component', function() {
         }
 
         // Load the components
-        UpdateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/UpdateContact/UpdateContact.js'));
-        CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
+        UpdateContact = require('../../core/UpdateContact/UpdateContact.js');
+        CreateContact = require('../../core/CreateContact/CreateContact.js');
 
         // Mock context
         context = {
@@ -46,11 +47,11 @@ describe('UpdateContact Component', function() {
 
     beforeEach(async function() {
         // Create a test contact before each test
-        const randomEmail = `test-update-${Date.now()}@example.com`;
+        createdEmail = `test-update-${Date.now()}@example.com`;
 
         context.messages.in.content = {
-            email: randomEmail,
-            name: 'Original Name'
+            email: createdEmail,
+            name: 'Test Update User'
         };
 
         try {
@@ -63,10 +64,10 @@ describe('UpdateContact Component', function() {
     });
 
     it('should update a contact name', async function() {
-        const newName = `Updated Name ${Date.now()}`;
+        const newName = 'Updated Name ' + Date.now();
 
         context.messages.in.content = {
-            contact_id: createdContactId,
+            id: createdContactId,
             name: newName
         };
 
@@ -74,9 +75,9 @@ describe('UpdateContact Component', function() {
             const result = await UpdateContact.receive(context);
 
             assert(result, 'Should return a result');
-            assert(result.data, 'Should return result data');
-            // Update components should return empty object according to guidelines
-            assert(typeof result.data === 'object', 'Should return an object');
+            assert(result.data, 'Should return contact data');
+            assert(result.data.id === createdContactId, 'Should return correct contact id');
+            assert(result.data.name === newName, 'Should have updated name');
         } catch (error) {
             console.error('Error updating contact:', error.response?.data || error.message);
             throw error;
@@ -87,7 +88,7 @@ describe('UpdateContact Component', function() {
         const newEmail = `updated-${Date.now()}@example.com`;
 
         context.messages.in.content = {
-            contact_id: createdContactId,
+            id: createdContactId,
             email: newEmail
         };
 
@@ -95,46 +96,42 @@ describe('UpdateContact Component', function() {
             const result = await UpdateContact.receive(context);
 
             assert(result, 'Should return a result');
-            assert(result.data, 'Should return result data');
-            assert(typeof result.data === 'object', 'Should return an object');
+            assert(result.data, 'Should return contact data');
+            assert(result.data.id === createdContactId, 'Should return correct contact id');
+            assert(result.data.email === newEmail, 'Should have updated email');
         } catch (error) {
             console.error('Error updating contact email:', error.response?.data || error.message);
             throw error;
         }
     });
 
-    it('should update contact custom attributes', async function() {
-        const customAttributes = {
-            test_field: 'test_value'
-        };
+    it('should update multiple contact fields', async function() {
+        const newName = 'Multi Update ' + Date.now();
+        const newPhone = '+1234567890';
 
         context.messages.in.content = {
-            contact_id: createdContactId,
-            custom_attributes: customAttributes
+            id: createdContactId,
+            name: newName,
+            phone: newPhone
         };
 
         try {
             const result = await UpdateContact.receive(context);
 
             assert(result, 'Should return a result');
-            assert(result.data, 'Should return result data');
-            assert(typeof result.data === 'object', 'Should return an object');
+            assert(result.data, 'Should return contact data');
+            assert(result.data.id === createdContactId, 'Should return correct contact id');
+            assert(result.data.name === newName, 'Should have updated name');
+            assert(result.data.phone === newPhone, 'Should have updated phone');
         } catch (error) {
-            // Custom attributes might not exist in Intercom, which is expected
-            if (error.response && error.response.status === 400 &&
-                error.response.data && error.response.data.errors &&
-                error.response.data.errors[0].code === 'parameter_invalid') {
-                console.log('Expected error for non-existent custom attribute');
-                return; // This is acceptable behavior
-            }
-            console.error('Error updating contact custom attributes:', error.response?.data || error.message);
+            console.error('Error updating multiple fields:', error.response?.data || error.message);
             throw error;
         }
     });
 
     it('should throw error when id is missing', async function() {
         context.messages.in.content = {
-            name: 'Updated Name'
+            name: 'Test Name'
         };
 
         try {
@@ -142,21 +139,20 @@ describe('UpdateContact Component', function() {
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
-            assert(error.message.includes('Contact ID is required'), 'Should have appropriate error message');
+            assert(error.message.includes('ID is required'), 'Should have appropriate error message');
         }
     });
 
     it('should handle non-existent contact id gracefully', async function() {
         context.messages.in.content = {
-            contact_id: 'non-existent-contact-12345',
-            name: 'Updated Name'
+            id: 'non-existent-contact-12345',
+            name: 'Test Name'
         };
 
         try {
             await UpdateContact.receive(context);
-            // This might succeed or fail depending on Intercom's behavior
+            assert.fail('Should have thrown an error for non-existent contact');
         } catch (error) {
-            // If it fails, it should be a 404 error
             assert(error.response, 'Should have response data');
             assert(error.response.status === 404, 'Should return 404 for non-existent contact');
         }

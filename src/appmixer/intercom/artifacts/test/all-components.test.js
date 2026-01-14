@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 
 describe('Intercom Connector - All Components', function() {
     this.timeout(60000);
@@ -26,4 +26,5 @@ describe('Intercom Connector - All Components', function() {
     require('./SendMessage.test.js');
     require('./ReplytoConversation.test.js');
     require('./UpdateContact.test.js');
+    require('./AddContactToCompany.test.js');
 });

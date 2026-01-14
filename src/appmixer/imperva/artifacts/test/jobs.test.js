@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-const jobs = require('../../src/appmixer/imperva/jobs.js');
+const testUtils = require('../../../../../test/utils.js');
+const jobs = require('../../jobs.js');
 
 describe('imperva-rule-block-ips-delete-job', () => {
 

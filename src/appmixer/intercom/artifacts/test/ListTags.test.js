@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('ListTags Component', function() {
@@ -20,7 +20,7 @@ describe('ListTags Component', function() {
             sendJson: (data, port) => ({ data, port })
         };
 
-        const ListTags = require('../../src/appmixer/intercom/core/ListTags/ListTags');
+        const ListTags = require('../../core/ListTags/ListTags');
         const result = await ListTags.receive(mockContext);
 
         assert(result, 'Result should be defined');
@@ -47,7 +47,7 @@ describe('ListTags Component', function() {
             sendJson: (data, port) => ({ data, port })
         };
 
-        const ListTags = require('../../src/appmixer/intercom/core/ListTags/ListTags');
+        const ListTags = require('../../core/ListTags/ListTags');
 
         try {
             await ListTags.receive(mockContext);

@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('SendMessage Component', function() {
@@ -20,9 +20,9 @@ describe('SendMessage Component', function() {
         }
 
         // Load the components
-        SendMessage = require(path.join(__dirname, '../../src/appmixer/intercom/core/SendMessage/SendMessage.js'));
-        CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
-        ListAdmins = require(path.join(__dirname, '../../src/appmixer/intercom/core/ListAdmins/ListAdmins.js'));
+        SendMessage = require('../../core/SendMessage/SendMessage.js');
+        CreateContact = require('../../core/CreateContact/CreateContact.js');
+        ListAdmins = require('../../core/ListAdmins/ListAdmins.js');
 
         // Mock context
         context = {

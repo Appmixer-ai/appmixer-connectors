@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('GetConversation Component', function() {
@@ -17,7 +17,7 @@ describe('GetConversation Component', function() {
         }
 
         // Load the component
-        GetConversation = require(path.join(__dirname, '../../src/appmixer/intercom/core/GetConversation/GetConversation.js'));
+        GetConversation = require('../../core/GetConversation/GetConversation.js');
 
         // Mock context
         context = {
@@ -48,8 +48,8 @@ describe('GetConversation Component', function() {
 
         // Create a test conversation first
         try {
-            const CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
-            const CreateConversation = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateConversation/CreateConversation.js'));
+            const CreateContact = require('../../core/CreateContact/CreateContact.js');
+            const CreateConversation = require('../../core/CreateConversation/CreateConversation.js');
 
             // Create a contact first
             const createContactContext = { ...context };

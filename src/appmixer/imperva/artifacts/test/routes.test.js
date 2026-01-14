@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-const routes = require('../../src/appmixer/imperva/routes.js');
+const testUtils = require('../../../../../test/utils.js');
+const routes = require('../../routes.js');
 
 describe('POST /rules-block-ips handler', () => {
 

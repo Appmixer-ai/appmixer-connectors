@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const testUtils = require('../utils.js');
-const SetBlockIPRule = require('../../src/appmixer/imperva/waf/SetBlockIPRule/SetBlockIPRule.js');
+const testUtils = require('../../../../../test/utils.js');
+const SetBlockIPRule = require('../../waf/SetBlockIPRule/SetBlockIPRule.js');
 
 describe('SetBlockIPRule', () => {
 

@@ -1,11 +1,12 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
-describe('GetContact Component', function() {
+describe('GetCompany Component', function() {
     let context;
-    let GetContact;
-    let testContactId;
+    let GetCompany;
+    let testCompanyId;
+    let testIntercomId;
 
     this.timeout(30000);
 
@@ -17,7 +18,7 @@ describe('GetContact Component', function() {
         }
 
         // Load the component
-        GetContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/GetContact/GetContact.js'));
+        GetCompany = require('../../core/GetCompany/GetCompany.js');
 
         // Mock context
         context = {
@@ -46,41 +47,42 @@ describe('GetContact Component', function() {
             }
         };
 
-        // Create a test contact first
+        // Create a test company first
         try {
-            const CreateContact = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateContact/CreateContact.js'));
+            testCompanyId = `test-get-company-${Date.now()}`;
+            const CreateUpdateCompany = require('../../core/CreateUpdateCompany/CreateUpdateCompany.js');
 
             const createContext = { ...context };
             createContext.messages = {
                 in: {
                     content: {
-                        email: `test-get-contact-${Date.now()}@example.com`,
-                        name: 'Test Contact for Get'
+                        company_id: testCompanyId,
+                        name: 'Test Company for Get'
                     }
                 }
             };
 
-            const result = await CreateContact.receive(createContext);
-            testContactId = result.data.id;
+            const createResult = await CreateUpdateCompany.receive(createContext);
+            testIntercomId = createResult.data.id; // Store the Intercom ID
         } catch (error) {
-            console.error('Error creating test contact:', error.response?.data || error.message);
+            console.error('Error creating test company:', error.response?.data || error.message);
             throw error;
         }
     });
 
-    it('should retrieve a contact by id', async function() {
+    it('should retrieve a company by id', async function() {
         context.messages.in.content = {
-            id: testContactId
+            id: testIntercomId
         };
 
         try {
-            const result = await GetContact.receive(context);
+            const result = await GetCompany.receive(context);
 
             assert(result, 'Should return a result');
-            assert(result.data, 'Should return contact data');
-            assert(result.data.id === testContactId, 'Should return correct contact');
+            assert(result.data, 'Should return company data');
+            assert(result.data.company_id === testCompanyId, 'Should return correct company');
         } catch (error) {
-            console.error('Error retrieving contact:', error.response?.data || error.message);
+            console.error('Error retrieving company:', error.response?.data || error.message);
             throw error;
         }
     });
@@ -89,24 +91,24 @@ describe('GetContact Component', function() {
         context.messages.in.content = {};
 
         try {
-            await GetContact.receive(context);
+            await GetCompany.receive(context);
             assert.fail('Should have thrown an error');
         } catch (error) {
             assert(error.name === 'CancelError', 'Should throw CancelError');
-            assert(error.message.includes('Contact ID is required'), 'Should have appropriate error message');
+            assert(error.message.includes('Company ID is required'), 'Should have appropriate error message');
         }
     });
 
-    it('should handle non-existent contact id gracefully', async function() {
+    it('should handle non-existent company id gracefully', async function() {
         context.messages.in.content = {
-            id: 'non-existent-contact-12345'
+            id: 'non-existent-company-12345'
         };
 
         try {
-            await GetContact.receive(context);
-            assert.fail('Should have thrown an error for non-existent contact');
+            await GetCompany.receive(context);
+            assert.fail('Should have thrown an error for non-existent company');
         } catch (error) {
-            assert(error.response && error.response.status === 404, 'Should return 404 for non-existent contact');
+            assert(error.response && error.response.status === 404, 'Should return 404 for non-existent company');
         }
     });
 });

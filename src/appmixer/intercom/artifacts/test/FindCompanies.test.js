@@ -1,14 +1,14 @@
 const assert = require('assert');
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const { createMockContext } = require('../utils');
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
+const { createMockContext } = require('../../../../../test/utils');
 const httpRequest = require('./httpRequest');
-const component = require('../../src/appmixer/intercom/core/FindContacts/FindContacts');
+const component = require('../../core/FindCompanies/FindCompanies');
 
 // Make createMockContext available globally
 global.createMockContext = createMockContext;
 
-describe('Intercom FindContacts Component', function() {
+describe('Intercom FindCompanies Component', function() {
 
     let context;
 
@@ -31,7 +31,7 @@ describe('Intercom FindContacts Component', function() {
         });
     });
 
-    it('should list contacts without query', async () => {
+    it('should list companies without query', async () => {
         context.messages = {
             in: {
                 content: {

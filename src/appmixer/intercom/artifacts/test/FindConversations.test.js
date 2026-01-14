@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('FindConversations Component', function() {
@@ -16,7 +16,7 @@ describe('FindConversations Component', function() {
         }
 
         // Load the component
-        FindConversations = require(path.join(__dirname, '../../src/appmixer/intercom/core/FindConversations/FindConversations.js'));
+        FindConversations = require('../../core/FindConversations/FindConversations.js');
 
         // Mock context
         context = {

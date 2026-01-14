@@ -1,5 +1,5 @@
 const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(__dirname, '../../../../../test/.env') });
 const assert = require('assert');
 
 describe('CreateUpdateCompany Component', function() {
@@ -17,7 +17,7 @@ describe('CreateUpdateCompany Component', function() {
         }
 
         // Load the component
-        CreateUpdateCompany = require(path.join(__dirname, '../../src/appmixer/intercom/core/CreateUpdateCompany/CreateUpdateCompany.js'));
+        CreateUpdateCompany = require('../../core/CreateUpdateCompany/CreateUpdateCompany.js');
 
         // Mock context
         context = {
