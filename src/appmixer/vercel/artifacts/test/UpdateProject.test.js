@@ -4,7 +4,7 @@ describe('UpdateProject', () => {
     let component;
 
     before(() => {
-        component = require('../../src/appmixer/vercel/core/UpdateProject/UpdateProject');
+        component = require('../../core/UpdateProject/UpdateProject');
     });
 
     it('should update project with provided fields', async () => {

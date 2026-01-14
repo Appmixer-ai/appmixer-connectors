@@ -3,7 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../test/.env') });
 
 describe('Vercel Integration Tests', () => {
     let createdProjectId;
@@ -18,7 +18,7 @@ describe('Vercel Integration Tests', () => {
     it('should create a new project', async function() {
         this.timeout(10000); // Increase timeout for API calls
 
-        const CreateProject = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
+        const CreateProject = require('../../core/CreateProject/CreateProject');
         const projectName = `test-project-${Date.now()}`;
 
         const context = {
@@ -78,7 +78,7 @@ describe('Vercel Integration Tests', () => {
             this.skip('No project created to update');
         }
 
-        const UpdateProject = require('../../src/appmixer/vercel/core/UpdateProject/UpdateProject');
+        const UpdateProject = require('../../core/UpdateProject/UpdateProject');
         const timestamp = Date.now();
 
         // Define all the updated values
@@ -133,7 +133,7 @@ describe('Vercel Integration Tests', () => {
         assert(updateResult, 'Should return updated project data');
 
         // Now verify all updates by getting the project
-        const GetProject = require('../../src/appmixer/vercel/core/GetProject/GetProject');
+        const GetProject = require('../../core/GetProject/GetProject');
 
         const getContext = {
             messages: {
@@ -221,7 +221,7 @@ describe('Vercel Integration Tests', () => {
             this.skip('No project created to delete');
         }
 
-        const DeleteProject = require('../../src/appmixer/vercel/core/DeleteProject/DeleteProject');
+        const DeleteProject = require('../../core/DeleteProject/DeleteProject');
 
         const context = {
             messages: {

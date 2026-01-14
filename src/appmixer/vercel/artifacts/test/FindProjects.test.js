@@ -4,7 +4,7 @@ describe('FindProjects', () => {
     let component;
 
     before(() => {
-        component = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
+        component = require('../../core/FindProjects/FindProjects');
     });
 
     it('should find projects and return array output', async () => {

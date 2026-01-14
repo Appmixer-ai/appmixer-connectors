@@ -4,7 +4,7 @@ describe('GetProject', () => {
     let component;
 
     before(() => {
-        component = require('../../src/appmixer/vercel/core/GetProject/GetProject');
+        component = require('../../core/GetProject/GetProject');
     });
 
     it('should get project by ID', async () => {

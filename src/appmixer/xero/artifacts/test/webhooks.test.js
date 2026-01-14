@@ -1,9 +1,9 @@
-const routes = require('../../src/appmixer/xero/routes');
+const routes = require('../../routes');
 const assert = require('assert');
 const sinon = require('sinon');
 const crypto = require('crypto');
-const testUtils = require('../utils.js');
-const XeroClient = require('../../src/appmixer/xero/XeroClient');
+const testUtils = require('../../../../../test/utils.js');
+const XeroClient = require('../../XeroClient');
 
 // Fixtures
 const NOW = new Date().toISOString().slice(0, 19);
@@ -196,7 +196,7 @@ describe('Xero webhooks', function() {
 
 describe('NewContact component', function() {
 
-    const { receive } = require('../../src/appmixer/xero/accounting/NewContact/NewContact');
+    const { receive } = require('../../accounting/NewContact/NewContact');
     let context;
 
     const XERO_CONTACT_A = { ContactID: 'airbus-andy', ContactStatus: 'ACTIVE', Name: 'Andy' };

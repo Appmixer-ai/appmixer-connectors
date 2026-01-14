@@ -3,7 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 // Load environment variables
-dotenv.config({ path: path.join(__dirname, '../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../../../test/.env') });
 
 describe('FindProjects Integration Tests', () => {
     let createdProjectId;
@@ -54,7 +54,7 @@ describe('FindProjects Integration Tests', () => {
     it('should return no results when searching for non-existing project', async function() {
         this.timeout(10000);
 
-        const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
+        const FindProjects = require('../../core/FindProjects/FindProjects');
         const nonExistingProjectName = `non-existing-project-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
         const context = {
@@ -91,7 +91,7 @@ describe('FindProjects Integration Tests', () => {
     it('should create a project for search testing', async function() {
         this.timeout(10000);
 
-        const CreateProject = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
+        const CreateProject = require('../../core/CreateProject/CreateProject');
         createdProjectName = `findprojects-test-${Date.now()}`;
 
         const context = {
@@ -155,7 +155,7 @@ describe('FindProjects Integration Tests', () => {
         console.log('⏳ Waiting 3 seconds for Vercel to index the new project...');
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
+        const FindProjects = require('../../core/FindProjects/FindProjects');
 
         const context = {
             properties: {},
@@ -226,7 +226,7 @@ describe('FindProjects Integration Tests', () => {
             this.skip('No project created to delete');
         }
 
-        const DeleteProject = require('../../src/appmixer/vercel/core/DeleteProject/DeleteProject');
+        const DeleteProject = require('../../core/DeleteProject/DeleteProject');
 
         const context = {
             messages: {
@@ -262,7 +262,7 @@ describe('FindProjects Integration Tests', () => {
             this.skip('Project was not properly deleted in previous test');
         }
 
-        const FindProjects = require('../../src/appmixer/vercel/core/FindProjects/FindProjects');
+        const FindProjects = require('../../core/FindProjects/FindProjects');
 
         // Use the name from the deleted project to ensure it's no longer found
         const deletedProjectName = createdProjectName || `findprojects-test-${Date.now()}`;

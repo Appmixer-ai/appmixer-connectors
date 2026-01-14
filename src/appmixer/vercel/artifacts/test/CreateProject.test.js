@@ -4,7 +4,7 @@ describe('CreateProject', () => {
     let component;
 
     before(() => {
-        component = require('../../src/appmixer/vercel/core/CreateProject/CreateProject');
+        component = require('../../core/CreateProject/CreateProject');
     });
 
     it('should create a project with required name', async () => {
