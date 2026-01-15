@@ -2814,6 +2814,7 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
 1. Count the number of Assert components in the flow
 2. Count the number of Assert connections in AfterAll's `source.in`
 3. These numbers MUST match exactly
+4. If counts don't match, the missing Assert results will not appear in the test report, causing silent test failures.
 
 #### Best Practices for Test Flows
 
