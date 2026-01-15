@@ -1155,7 +1155,7 @@ module.exports = {
 ```
 
 **Critical rules:**
-- Always use `result` for array output field name: `{ result: records, count }`
+- For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
 - Never use `records` or custom field names for consistency
 - lib.js MUST exist in connector root if component has outputType
 - Run `npm run validate-outputtype` to check compliance
