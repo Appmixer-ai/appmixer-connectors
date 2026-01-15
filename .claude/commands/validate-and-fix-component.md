@@ -39,7 +39,7 @@ Arguments provided: $ARGUMENTS
    b. **Validate lib.js has required functions:**
       - Must contain `sendArrayOutput` function
       - Must contain `getOutputPortOptions` function
-      - Output field must use `result` (not `records` or custom names)
+      - For `array` outputType, output field must be named `result` (not `records` or custom names)
       - Reference implementation: `appmixer-cli/src/ai/src/templates/libs/lib.js`
 
    c. **Validate behavior file:**
