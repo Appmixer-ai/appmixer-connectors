@@ -28,7 +28,36 @@ Arguments provided: $ARGUMENTS
    - Read `src/appmixer/<connector>/core/<component>/component.json` to understand required inputs, outputs, and component type
    - Read `src/appmixer/<connector>/core/<component>/<component>.js` to understand the behavior
 
-4. **Determine component type** from the component name and structure:
+4. **Validate outputType helper usage** (for Find/List components):
+
+   If component.json contains `outputType` in inPorts or `generateOutputPortOptions` in outPorts:
+
+   a. **Check lib.js exists:**
+      - Path: `src/appmixer/<connector>/lib.js`
+      - If missing: FAIL - "Connector needs lib.js with outputType helpers"
+
+   b. **Validate lib.js has required functions:**
+      - Must contain `sendArrayOutput` function
+      - Must contain `getOutputPortOptions` function
+      - Output field must use `result` (not `records` or custom names)
+      - Reference implementation: `appmixer-cli/src/ai/src/templates/libs/lib.js`
+
+   c. **Validate behavior file:**
+      - Must import lib.js: `const lib = require('../../lib');`
+      - Must call `lib.sendArrayOutput({ context, outputType, records })`
+      - Must handle generateOutputPortOptions:
+        ```javascript
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Items' });
+        }
+        ```
+
+   d. **Auto-fix if issues found:**
+      - If lib.js missing helpers → Copy canonical functions from template
+      - If behavior missing pattern → Add correct implementation
+      - Report fixes made in validation-results.md
+
+5. **Determine component type** from the component name and structure:
    - **Create**: Creates a new entity (e.g., CreateTask, CreateDocument)
    - **Get**: Retrieves a single entity by ID (e.g., GetTask, GetUser)
    - **List**: Retrieves all entities without filtering (e.g., ListFolders, ListUsers)
@@ -37,17 +66,17 @@ Arguments provided: $ARGUMENTS
    - **Delete**: Removes an entity by ID (e.g., DeleteTask)
    - **Trigger**: Polling (`tick: true`) or webhook-based components
 
-5. **Determine test inputs**:
+6. **Determine test inputs**:
    - Identify required fields from the component.json `inPorts` schema
    - For fields that need dynamic values (like IDs), first fetch them using related List/Get components from the same connector
    - Use realistic test data appropriate for the field type
 
-6. **Run the component test**:
+7. **Run the component test**:
    ```
    appmixer test component ./src/appmixer/<connector>/core/<component> -i '{ "in": { ... } }'
    ```
 
-7. **Test scenarios based on component type**:
+8. **Test scenarios based on component type**:
 
    **For all components:**
    - Test with valid required inputs
@@ -73,7 +102,7 @@ Arguments provided: $ARGUMENTS
    **For components with optional boolean/enum fields:**
    - Test with different values for those fields
 
-8. **Store test results** in the artifacts folder:
+9. **Store test results** in the artifacts folder:
    - Create directory if it doesn't exist: `src/appmixer/<connector>/artifacts/ai-artifacts/<component>/`
    - Save results to: `src/appmixer/<connector>/artifacts/ai-artifacts/<component>/validation-results.md`
    - Include in the file:
@@ -109,17 +138,17 @@ Arguments provided: $ARGUMENTS
      ```
    - The `reusableData` section stores IDs and values that can be used as inputs for subsequent test runs
 
-9. **Report results** to the user with a summary table showing:
+10. **Report results** to the user with a summary table showing:
    - Test scenario
    - Input used
    - Result (success/failure)
    - Execution time
 
-10. **Fix issues and re-validate**:
+11. **Fix issues and re-validate**:
     - If any test fails or reveals an issue in the component code:
       1. Analyze the error to understand the root cause
       2. Fix the issue in the component's JavaScript or component.json file
-      3. Re-run the validation from step 6 (or earlier if needed)
+      3. Re-run the validation from step 7 (or earlier if needed)
       4. Repeat until all tests pass
     - Common issues to fix:
       - Missing required field validation
@@ -127,6 +156,10 @@ Arguments provided: $ARGUMENTS
       - Wrong output port names or schema mismatches
       - Missing error handling
       - Incorrect `outputType` handling in Find/List components
+      - Missing or incorrect outputType helper usage:
+        - lib.js missing `sendArrayOutput` or `getOutputPortOptions` functions
+        - Behavior not calling helpers correctly
+        - Wrong output field naming (`records` instead of `result`)
     - Document all fixes made in the validation-results.md file
 
 ## Example Workflow
