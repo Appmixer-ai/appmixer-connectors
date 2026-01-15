@@ -1,0 +1,202 @@
+{
+    "name": "appmixer.google.ads.CustomerMatchUpload",
+    "description": "Upload Customer Match data to Google Ads audiences. Processes CSV files and uploads hashed emails to Google Ads User Lists.",
+    "author": "Teavaro Team-> David Clavijo Castro <david.castro@teavaro.com>",
+    "version": "2.2.8",
+    "private": false,
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fileId": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {"type": "object"}
+                        ],
+                        "description": "CSV file: Appmixer file ID (string) OR file content from previous component (object)"
+                    },
+                    "clientId": {
+                        "type": "string",
+                        "description": "Google OAuth2 Client ID"
+                    },
+                    "clientSecret": {
+                        "type": "string",
+                        "description": "Google OAuth2 Client Secret"
+                    },
+                    "refreshToken": {
+                        "type": "string",
+                        "description": "Google OAuth2 Refresh Token"
+                    },
+                    "developerToken": {
+                        "type": "string",
+                        "description": "Google Ads API Developer Token"
+                    },
+                    "loginCustomerId": {
+                        "type": "string",
+                        "description": "Google Ads Login Customer ID (manager account)"
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "description": "Google Ads Customer ID (ad account to upload to)"
+                    },
+                    "segmentToUserList": {
+                        "type": "string",
+                        "description": "JSON mapping of segment names to User List IDs"
+                    },
+                    "uploadMode": {
+                        "type": "string",
+                        "description": "Upload mode: REPLACE (clear existing data first) or ADD (append to existing data)"
+                    },
+                    "batchSize": {
+                        "type": "number",
+                        "description": "Batch size for Google Ads API operations (default: 10000, max: 100000). Lower values use less memory."
+                    },
+                    "adPersonalization": {
+                        "type": "string",
+                        "description": "Consent status for ad personalization: GRANTED or DENIED"
+                    },
+                    "adUserData": {
+                        "type": "string",
+                        "description": "Consent status for ad user data: GRANTED or DENIED"
+                    }
+                },
+                "required": ["fileId", "clientId", "clientSecret", "refreshToken", "developerToken", "customerId", "segmentToUserList"]
+            },
+            "inspector": {
+                "inputs": {
+                    "fileId": {
+                        "index": 0,
+                        "type": "filepicker",
+                        "label": "CSV File or Content",
+                        "tooltip": "CSV file from Appmixer storage OR direct file content from Google Drive. Supports large files (1GB+)."
+                    },
+                    "clientId": {
+                        "index": 1,
+                        "type": "text",
+                        "label": "OAuth Client ID",
+                        "tooltip": "Google OAuth2 Client ID from Google Cloud Console"
+                    },
+                    "clientSecret": {
+                        "index": 2,
+                        "type": "text",
+                        "label": "OAuth Client Secret",
+                        "tooltip": "Google OAuth2 Client Secret from Google Cloud Console"
+                    },
+                    "refreshToken": {
+                        "index": 3,
+                        "type": "text",
+                        "label": "OAuth Refresh Token",
+                        "tooltip": "Google OAuth2 Refresh Token with adwords scope"
+                    },
+                    "developerToken": {
+                        "index": 4,
+                        "type": "text",
+                        "label": "Developer Token",
+                        "tooltip": "Google Ads API Developer Token"
+                    },
+                    "loginCustomerId": {
+                        "index": 5,
+                        "type": "text",
+                        "label": "Login Customer ID (Optional)",
+                        "tooltip": "Google Ads Manager Account ID (without dashes). Only required if accessing through a Manager/MCC account. Leave empty for direct access."
+                    },
+                    "customerId": {
+                        "index": 6,
+                        "type": "text",
+                        "label": "Customer ID",
+                        "tooltip": "Google Ads Customer Account ID (without dashes)"
+                    },
+                    "segmentToUserList": {
+                        "index": 7,
+                        "type": "textarea",
+                        "label": "Segment to User List Mapping",
+                        "tooltip": "JSON object mapping segment names to User List IDs, e.g. {\"segment1\": \"123456\", \"segment2\": \"789012\"}. NO trailing commas!"
+                    },
+                    "uploadMode": {
+                        "index": 8,
+                        "type": "select",
+                        "label": "Upload Mode",
+                        "tooltip": "REPLACE: Clear existing audience data before upload. ADD: Append to existing audience data.",
+                        "options": [
+                            {"label": "Replace (Clear First)", "value": "REPLACE"},
+                            {"label": "Add (Append)", "value": "ADD"}
+                        ],
+                        "defaultValue": "REPLACE"
+                    },
+                    "batchSize": {
+                        "index": 9,
+                        "type": "number",
+                        "label": "Batch Size",
+                        "tooltip": "Number of users per Google Ads API batch. Max: 100000. Lower values use less memory. Default: 10000",
+                        "defaultValue": 10000
+                    },
+                    "adPersonalization": {
+                        "index": 10,
+                        "type": "select",
+                        "label": "Ad Personalization Consent (Advanced)",
+                        "tooltip": "REQUIRED by Google Ads API for GDPR compliance. Leave as GRANTED unless you have specific privacy requirements.",
+                        "options": [
+                            {"label": "Granted", "value": "GRANTED"},
+                            {"label": "Denied", "value": "DENIED"}
+                        ],
+                        "defaultValue": "GRANTED"
+                    },
+                    "adUserData": {
+                        "index": 11,
+                        "type": "select",
+                        "label": "Ad User Data Consent (Advanced)",
+                        "tooltip": "REQUIRED by Google Ads API for GDPR compliance. Leave as GRANTED unless you have specific privacy requirements.",
+                        "options": [
+                            {"label": "Granted", "value": "GRANTED"},
+                            {"label": "Denied", "value": "DENIED"}
+                        ],
+                        "defaultValue": "GRANTED"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Total Jobs", "value": "totalJobs" },
+                { "label": "Total Users", "value": "totalUsers" },
+                { "label": "Jobs By Segment", "value": "jobsBySegment" },
+                { "label": "Errors", "value": "errors" },
+                { "label": "Internal Errors", "value": "internalErrors" },
+                { "label": "Success", "value": "success" }
+            ]
+        },
+        {
+            "name": "progress",
+            "options": [
+                { "label": "Segment", "value": "segment" },
+                { "label": "Current Batch", "value": "currentBatch" },
+                { "label": "Total Batches", "value": "totalBatches" },
+                { "label": "Uploaded So Far", "value": "uploadedSoFar" },
+                { "label": "Total Users", "value": "totalUsers" },
+                { "label": "Progress %", "value": "progress" },
+                { "label": "Elapsed Seconds", "value": "elapsedSeconds" },
+                { "label": "ETA Seconds", "value": "etaSeconds" },
+                { "label": "Status", "value": "status" },
+                { "label": "Message", "value": "message" },
+                { "label": "Concurrency Limit", "value": "concurrencyLimit" },
+                { "label": "Concurrency Active", "value": "concurrencyActive" },
+                { "label": "Concurrency Queued", "value": "concurrencyQueued" },
+                { "label": "Retry Attempt", "value": "retryAttempt" },
+                { "label": "Max Retries", "value": "maxRetries" },
+                { "label": "Retry Reason", "value": "retryReason" },
+                { "label": "Retry Message", "value": "retryMessage" },
+                { "label": "Waiting Seconds", "value": "waitingSeconds" }
+            ]
+        }
+    ],
+    "dependencies": {
+        "google-ads-api": "^21.0.1",
+        "csv-parse": "^5.3.10"
+    },
+    "icon": "data:image/svg+xml;base64,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"
+}
