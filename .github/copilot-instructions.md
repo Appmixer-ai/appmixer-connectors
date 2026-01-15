@@ -1131,7 +1131,7 @@ const toCsv = (array) => {
 Components with `outputType` (Find/List) **MUST** use standardized lib.js helpers.
 
 **Required functions in connector's lib.js:**
-- `sendArrayOutput({ context, outputType, records })` - handles all output types
+- `sendArrayOutput({ context, outputPortName = 'out', outputType, records })` - handles all output types
 - `getOutputPortOptions(context, outputType, schema, { label })` - dynamic output schema
 
 **Canonical implementation:** Copy from `appmixer-cli/src/ai/src/templates/libs/lib.js`
