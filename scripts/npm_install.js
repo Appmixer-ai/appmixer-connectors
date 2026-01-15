@@ -6,7 +6,10 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const ROOT = process.cwd();
-const SEARCH_DIR = path.join(ROOT, 'src', 'appmixer');
+const SEARCH_DIRS = [
+    path.join(ROOT, 'src', 'appmixer'),
+    path.join(ROOT, 'src', 'examples')
+];
 const MAX_JOBS = Number(process.env.MAX_JOBS) || 10;
 const NPM_CMD = process.env.NPM_CMD || 'npm';
 const NPM_ARGS = ['install', '--no-package-lock', '--no-audit', '--no-fund'];
@@ -124,13 +127,19 @@ async function runAll(packageFiles) {
 
 async function main() {
     try {
-        const stat = await fs.stat(SEARCH_DIR).catch(() => null);
-        if (!stat || !stat.isDirectory()) {
-            console.log('No package.json files found in src/appmixer/');
+        const packageFiles = [];
+        for (const dir of SEARCH_DIRS) {
+            const stat = await fs.stat(dir).catch(() => null);
+            if (!stat || !stat.isDirectory()) continue;
+            const files = await collectPackageJson(dir);
+            packageFiles.push(...files);
+        }
+
+        if (packageFiles.length === 0) {
+            console.log('No package.json files found in src/appmixer/ or src/examples/');
             process.exit(0);
         }
 
-        const packageFiles = await collectPackageJson(SEARCH_DIR);
         const results = await runAll(packageFiles);
 
         const failed = (results || []).some(r => r.rc !== 0);
