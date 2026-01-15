@@ -2586,9 +2586,9 @@ Assert components validate outputs using expressions:
 
 These rules are **CRITICAL** and must be followed exactly. Failure to follow these rules will cause test flows to fail silently.
 
-**1. Lambda Values MUST Reference Modifiers with `{{{uuid}}}` Pattern**
+**1. Lambda Values MUST Reference Modifiers with `{{{variable-id}}}` Pattern**
 
-When a modifier defines a variable mapping, the lambda value MUST use `{{{uuid}}}` pattern - NEVER use an empty string.
+When a modifier defines a variable mapping, the lambda value MUST use the corresponding `{{{variable-id}}}` pattern (for example, `{{{check-var}}}`) - NEVER use an empty string.
 
 **WRONG:**
 ```json
