@@ -90,7 +90,6 @@ function validateQuery(query) {
 
 async function runQuery({ context, query, stream = false }) {
 
-    validateQuery(query);
     const conn = await createConnection(context);
     const request = new mssql.Request(conn);
     request.stream = stream;
@@ -114,6 +113,7 @@ module.exports = {
             let conn;
             try {
 
+                validateQuery(query);
                 const stream = await runQuery({ context: context.auth, query, stream: true });
                 const concurrency = parseInt(context.config.concurrency, 10) || 100;
 
