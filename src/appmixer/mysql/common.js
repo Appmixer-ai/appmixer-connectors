@@ -95,13 +95,12 @@ async function createConnection(context) {
  */
 function validateQuery(query) {
     if (!/^\s*(select|with)\s/i.test(query)) {
-        throw new Error('Only SELECT queries are allowed');
+        throw new Error('Only SELECT or WITH queries are allowed');
     }
 }
 
 async function runQuery(conn, query, params) {
 
-    validateQuery(query);
     const formattedQuery = SqlString.format(query, params);
     return await conn.query(formattedQuery).stream({ highWaterMark: 10 });
 }
@@ -116,6 +115,7 @@ module.exports = {
 
             let conn;
             try {
+                validateQuery(query);
                 conn = await createConnection(context);
                 const stream = await runQuery(conn, query, params);
                 const concurrency = parseInt(context.config.concurrency, 10) || 100;
