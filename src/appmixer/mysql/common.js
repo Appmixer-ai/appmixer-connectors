@@ -101,8 +101,7 @@ function validateQuery(query) {
 
 async function runQuery(conn, query, params) {
 
-    const formattedQuery = SqlString.format(query, params);
-    return await conn.query(formattedQuery).stream({ highWaterMark: 10 });
+    return await conn.query(query, params).stream({ highWaterMark: 10 });
 }
 
 module.exports = {
