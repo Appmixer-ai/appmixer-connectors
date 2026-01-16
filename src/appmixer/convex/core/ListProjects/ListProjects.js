@@ -3,9 +3,9 @@
 const lib = require('../../lib');
 
 const schema = {
-    'id': { 'type': 'string', 'title': 'ID' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'slug': { 'type': 'string', 'title': 'Slug' },
+    'id': { 'type': 'string', 'title': 'Project ID' },
+    'name': { 'type': 'string', 'title': 'Project Name' },
+    'slug': { 'type': 'string', 'title': 'Project Slug' },
     'teamId': { 'type': 'string', 'title': 'Team ID' },
     'createTime': { 'type': 'number', 'title': 'Create Time' }
 };

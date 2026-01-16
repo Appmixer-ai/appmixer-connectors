@@ -20,7 +20,7 @@ module.exports = {
             const apiKey = context.apiKey;
 
             return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(apiKey.length - 4)
+                key: apiKey.substring(0, 3) + '...' + apiKey.slice(-4)
             };
         },
         accountNameFromProfileInfo: 'key',
