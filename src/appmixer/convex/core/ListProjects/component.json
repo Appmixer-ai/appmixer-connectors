@@ -1,0 +1,82 @@
+{
+  "name": "appmixer.convex.core.ListProjects",
+  "author": "Appmixer <info@appmixer.com>",
+  "description": "List all projects for the authenticated account's team (or specify Team ID). Leave Team ID empty to use the connected account's Team ID.",
+  "version": "1.0.0",
+  "private": false,
+  "auth": {
+    "service": "appmixer:convex"
+  },
+  "quota": {
+    "manager": "appmixer:convex",
+    "resources": "requests"
+  },
+  "inPorts": [
+    {
+      "name": "in",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "teamId": {
+            "type": "string"
+          },
+          "outputType": {
+            "type": "string"
+          }
+        }
+      },
+      "inspector": {
+        "inputs": {
+          "teamId": {
+            "type": "text",
+            "label": "Team ID",
+            "index": 0,
+            "tooltip": "Optional. Leave empty to use the connected account's Team ID."
+          },
+          "outputType": {
+            "type": "select",
+            "label": "Output Type",
+            "index": 1,
+            "defaultValue": "array",
+            "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+            "options": [
+              {
+                "label": "First Item Only",
+                "value": "first"
+              },
+              {
+                "label": "All items at once",
+                "value": "array"
+              },
+              {
+                "label": "One item at a time",
+                "value": "object"
+              },
+              {
+                "label": "Store to CSV file",
+                "value": "file"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outPorts": [
+    {
+      "name": "out",
+      "source": {
+        "url": "/component/appmixer/convex/core/ListProjects?outPort=out",
+        "data": {
+          "properties": {
+            "generateOutputPortOptions": true
+          },
+          "messages": {
+            "in/outputType": "inputs/in/outputType"
+          }
+        }
+      }
+    }
+  ],
+  "icon": "data:image/svg+xml;base64,PD94"
+}
