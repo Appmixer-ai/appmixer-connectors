@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Google Ads Customer Match Upload Component
  *
  * Replicates the Scala google-ads-activator functionality:
@@ -24,42 +24,34 @@ const MAX_CONTINUATION_PERIOD_SECONDS = parseInt(process.env.MAX_CONTINUATION_PE
 
 module.exports = {
     /**
-     * Safely send progress updates without crashing if context is destroyed
-     * This can happen when async operations continue after component has returned
+     * Safely send progress updates without crashing if context is destroyed.
+     * This can happen when async operations continue after component has returned.
      */
     async safeSendProgress(context, data, port = 'progress') {
         try {
             await context.sendJson(data, port);
         } catch (error) {
-            // Context destroyed - component already finished or timed out
-            // Silently ignore - this is expected when async operations complete after main flow
-            // The 10-second delay before returning to 'out' ensures most progress messages complete
+            // Context destroyed - silently ignore (expected when async operations complete after main flow)
         }
     },
 
     /**
-     * Extract human-readable error message from Google Ads API error object
-     * Google Ads errors have structure: { errors: [{message, error_code}], request_id }
-     * Standard JS errors have: { message, stack, code }
+     * Extract human-readable error message from Google Ads API error object.
+     * Handles both Google Ads API nested structure and standard JS errors.
      */
     extractErrorMessage(error) {
-        // Try standard error.message first
         if (error.message) {
             return error.message;
         }
 
-        // Try Google Ads API nested error structure
         if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
             const firstError = error.errors[0];
             let msg = firstError.message || '';
 
-            // Add error code if available
             if (firstError.error_code) {
-                const codeStr = JSON.stringify(firstError.error_code);
-                msg += ` [Code: ${codeStr}]`;
+                msg += ` [Code: ${JSON.stringify(firstError.error_code)}]`;
             }
 
-            // Add request ID if available
             if (error.request_id) {
                 msg += ` [Request ID: ${error.request_id}]`;
             }
@@ -67,7 +59,6 @@ module.exports = {
             return msg;
         }
 
-        // Fallback: try to stringify the error
         try {
             return JSON.stringify(error);
         } catch (e) {
@@ -79,36 +70,28 @@ module.exports = {
         // Check if this is a continuation from a previous timeout
         const isContinuation = !!context.messages.timeout;
 
-        // Error collector to capture all internal errors for debugging
         const internalErrors = [];
-        const originalLogError = context.log.bind(context);
+        const originalLog = context.log.bind(context);
 
-        // Wrap context.log to capture error logs
-        // CRITICAL: Appmixer requires message to be a STRING, not an object
+        // Wrap context.log to capture errors and ensure messages are strings (Appmixer requirement)
         context.log = function(level, message, ...args) {
-            // Ensure message is always a string
             const stringMessage = typeof message === 'string' ? message : JSON.stringify(message);
 
             if (level === 'error') {
                 internalErrors.push(`[${level.toUpperCase()}] ${stringMessage}`);
             }
 
-            // Call original with string message only (no extra args to avoid type errors)
-            return originalLogError(level, stringMessage);
+            return originalLog(level, stringMessage);
         };
 
-        // Extract input parameters from either initial message or continuation message
         let fileId, clientId, clientSecret, refreshToken, developerToken, loginCustomerId, customerId;
         let segmentColumnIndex, emailColumnIndex, segmentToUserList, uploadMode, adPersonalization, adUserData;
         let batchSize, containsHeaders, columnSeparator;
-
-        // State variables for continuation
         let timeStart, processedSegments, segmentGroups, userListJobs, currentSegmentNumber;
         let batchesCompletedOverall, totalBatchesOverall, totalUsersOverall, totalSegments;
         let jobCreationDelayMs, results;
 
         if (isContinuation) {
-            // Resume from timeout - restore all state
             const msg = context.messages.timeout.content;
             fileId = msg.fileId;
             clientId = msg.clientId;
@@ -127,10 +110,9 @@ module.exports = {
             containsHeaders = msg.containsHeaders;
             columnSeparator = msg.columnSeparator;
 
-            // Restore continuation state
             timeStart = new Date(msg.timeStart);
             processedSegments = msg.processedSegments || [];
-            // segmentGroups will be re-parsed from CSV
+            // segmentGroups re-parsed from CSV (not stored to avoid timeout message size limits)
             userListJobs = new Map(msg.userListJobs || []);
             currentSegmentNumber = msg.currentSegmentNumber || 0;
             batchesCompletedOverall = msg.batchesCompletedOverall || 0;
@@ -147,12 +129,8 @@ module.exports = {
                 success: true
             };
 
-            context.log('info', '🔄 CONTINUATION: Resuming from previous timeout');
-            context.log('info', `   Processed segments: ${processedSegments.length}/${totalSegments || 'unknown'}`);
-            context.log('info', `   Batches completed: ${batchesCompletedOverall}/${totalBatchesOverall}`);
-            context.log('info', `   Elapsed time: ${Math.floor((new Date() - timeStart) / 1000)}s`);
+            context.log('info', `Resuming continuation: ${processedSegments.length}/${totalSegments || 'unknown'} segments, ${batchesCompletedOverall}/${totalBatchesOverall} batches`);
         } else {
-            // Initial execution - extract from input message
             const msg = context.messages.in.content;
             fileId = msg.fileId;
             clientId = msg.clientId;
@@ -171,10 +149,9 @@ module.exports = {
             containsHeaders = msg.containsHeaders !== undefined ? msg.containsHeaders : true;
             columnSeparator = msg.columnSeparator || ',';
 
-            // Initialize state for first execution
             timeStart = new Date();
             processedSegments = [];
-            segmentGroups = null; // Will be populated after CSV parsing
+            segmentGroups = null;
             userListJobs = new Map();
             currentSegmentNumber = 0;
             batchesCompletedOverall = 0;
@@ -192,19 +169,16 @@ module.exports = {
             };
         }
 
-        const errors = results.errors; // Reference to results.errors for backward compatibility
+        const errors = results.errors;
 
         try {
-            // Check if we've exceeded the maximum continuation period
             if ((new Date() - timeStart) >= (MAX_CONTINUATION_PERIOD_SECONDS * 1000)) {
                 throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_CONTINUATION_PERIOD_SECONDS / 3600} hours). Please retry with smaller batches or contact support.`);
             }
-            // Validate fileId - can be string (Appmixer ID) or object (Google Drive file)
             if (!fileId) {
                 throw new Error('Missing fileId. Please provide an Appmixer file ID or Google Drive file object.');
             }
 
-            // Validate OAuth2 credentials are present
             if (!clientId || !clientSecret || !refreshToken) {
                 throw new Error('Missing OAuth2 credentials. Please provide clientId, clientSecret, and refreshToken.');
             }
@@ -218,9 +192,7 @@ module.exports = {
             }
 
             context.log('info', `Initializing Google Ads API client for customer ${customerId}`);
-            context.log('info', `Running in SEQUENTIAL mode (no concurrency) for maximum reliability`);
 
-            // Parse segment to user list mapping
             let segmentMapping;
             try {
                 segmentMapping = typeof segmentToUserList === 'string'
@@ -231,13 +203,9 @@ module.exports = {
                 throw new Error(`Invalid segmentToUserList JSON: ${e.message}. Check that keys and values use double quotes, no trailing commas, and valid JSON syntax.`);
             }
 
-            // Normalize segment mapping to support both formats:
-            // Format 1: { "segment": "userListId" }
-            // Format 2: { "segment": ["userListId1", "userListId2"] }
+            // Normalize segment mapping: support both single value and array formats
             const normalizedMapping = {};
             for (const [segment, value] of Object.entries(segmentMapping)) {
-                // Convert single value to array for consistent processing
-                // Filter out null, undefined, empty strings
                 const arrayValue = Array.isArray(value) ? value : [value];
                 const validValues = arrayValue.filter(v => v != null && v !== '');
 
@@ -248,34 +216,22 @@ module.exports = {
                 }
             }
 
-            // Log the parsed segment mapping
-            context.log('info', `Segment mapping: ${JSON.stringify(segmentMapping)}`);
-            context.log('info', `Normalized mapping (segment → User List IDs): ${JSON.stringify(normalizedMapping)}`);
+            context.log('info', `Normalized mapping: ${JSON.stringify(normalizedMapping)}`);
 
-            // Initialize Google Ads API client with OAuth2 credentials from input parameters
             const client = new GoogleAdsApi({
                 client_id: clientId,
                 client_secret: clientSecret,
                 developer_token: developerToken
             });
 
-            // Get customer with refresh token (note: customer_account_id in newer API versions)
             const customer = client.Customer({
                 customer_account_id: customerId,
                 refresh_token: refreshToken,
                 login_customer_id: loginCustomerId || undefined
             });
 
-            // Helper function to schedule continuation when timeout is approaching
             const scheduleContinuation = async (reason) => {
-                context.log('info', '⏸️  SCHEDULING CONTINUATION');
-                context.log('info', `   Reason: ${reason}`);
-                context.log('info', `   Processed segments: ${processedSegments.length}/${segmentGroups ? Object.keys(segmentGroups).length : totalSegments || 'unknown'}`);
-                context.log('info', `   Batches completed: ${batchesCompletedOverall}/${totalBatchesOverall}`);
-                context.log('info', `   Time elapsed: ${Math.floor((new Date() - timeStart) / 1000)}s`);
-                context.log('info', `   Next continuation in ${TIMEOUT_SECONDS}s`);
-
-                // Save all state for continuation
+                context.log('info', `Scheduling continuation (${reason}): ${processedSegments.length}/${totalSegments || 'unknown'} segments, ${batchesCompletedOverall}/${totalBatchesOverall} batches`);
                 return context.setTimeout({
                     fileId,
                     clientId,
@@ -293,7 +249,6 @@ module.exports = {
                     batchSize,
                     containsHeaders,
                     columnSeparator,
-                    // Continuation state
                     timeStart: timeStart.getTime(),
                     processedSegments,
                     userListJobs: Array.from(userListJobs.entries()),
@@ -307,61 +262,54 @@ module.exports = {
                 }, TIMEOUT_SECONDS * 1000);
             };
 
-            let fileStream;
-
-            // Only parse CSV if this is the first execution (not a continuation)
-            if (!isContinuation) {
-                // Handle different file input types
-                if (typeof fileId === 'object' && fileId.fileContent) {
-                    // Direct file content from Google Drive component
-                    context.log('info', 'Processing file content directly from Google Drive');
-                    const { Readable } = require('stream');
-                    fileStream = Readable.from(
-                        typeof fileId.fileContent === 'string'
-                            ? Buffer.from(fileId.fileContent, fileId.encoding || 'utf8')
-                            : fileId.fileContent
-                    );
-                } else if (typeof fileId === 'string') {
-                    // Appmixer file ID
-                    context.log('info', `Reading CSV file with ID: ${fileId}`);
-                    try {
-                        fileStream = await context.getFileReadStream(fileId);
-                    } catch (fileError) {
-                        throw new Error(`Failed to read file '${fileId}': ${fileError.message}. Ensure the file exists in Appmixer storage.`);
-                    }
-                } else {
-                    throw new Error(`Invalid fileId type: ${typeof fileId}. Expected string (Appmixer ID) or object (Google Drive file).`);
-                }
-
-                segmentGroups = await this.parseCSV(
-                    fileStream,
-                    {
-                        segmentColumnIndex,
-                        emailColumnIndex,
-                        containsHeaders,
-                        columnSeparator,
-                        batchSize
-                    },
-                    context
-                );
-
-                context.log('info', `Parsed ${segmentGroups ? Object.keys(segmentGroups).length : 0} segments from CSV`);
-            } else {
-                context.log('info', 'Skipping CSV parsing - using cached segment groups from continuation');
+            // Re-parse CSV on continuation (not stored in state to avoid timeout message size limits)
+            if (isContinuation) {
+                context.log('info', 'Re-parsing CSV for continuation');
             }
 
-            // Calculate overall totals for general progress tracking (only if first execution)
+            let fileStream;
+            if (typeof fileId === 'object' && fileId.fileContent) {
+                context.log('info', 'Processing file content from Google Drive');
+                const { Readable } = require('stream');
+                fileStream = Readable.from(
+                    typeof fileId.fileContent === 'string'
+                        ? Buffer.from(fileId.fileContent, fileId.encoding || 'utf8')
+                        : fileId.fileContent
+                    );
+                } else if (typeof fileId === 'string') {
+                    context.log('info', `Reading CSV file: ${fileId}`);
+                try {
+                    fileStream = await context.getFileReadStream(fileId);
+                } catch (fileError) {
+                    throw new Error(`Failed to read file '${fileId}': ${fileError.message}. Ensure the file exists in Appmixer storage.`);
+                }
+            } else {
+                throw new Error(`Invalid fileId type: ${typeof fileId}. Expected string (Appmixer ID) or object (Google Drive file).`);
+            }
+
+            segmentGroups = await this.parseCSV(
+                fileStream,
+                {
+                    segmentColumnIndex,
+                    emailColumnIndex,
+                    containsHeaders,
+                    columnSeparator,
+                    batchSize
+                },
+                context
+            );
+
+            context.log('info', `Parsed ${segmentGroups ? Object.keys(segmentGroups).length : 0} segments from CSV`);
+
             const segments = segmentGroups ? Object.entries(segmentGroups) : [];
             if (!isContinuation) {
-                totalSegments = 0; // Only count configured segments
+                totalSegments = 0;
                 totalBatchesOverall = 0;
                 totalUsersOverall = 0;
 
-                // Pre-calculate total batches across all CONFIGURED segments only
                 for (const [segment, emails] of segments) {
                     if (normalizedMapping[segment]) {
-                        totalSegments++; // Count only configured segments
-                        // Each segment may map to multiple User Lists
+                        totalSegments++;
                         const userListCount = normalizedMapping[segment].length;
                         const segmentBatches = Math.ceil(emails.length / batchSize) * userListCount;
                         totalBatchesOverall += segmentBatches;
@@ -373,35 +321,28 @@ module.exports = {
             context.log('info', `Overall: ${totalSegments} configured segments (${segments.length} in CSV), ${totalUsersOverall} users, ${totalBatchesOverall} total batches`);
 
             const overallStartTime = Date.now();
-            let lastProgressLogTime = 0; // Throttle progress logs to every 5 seconds
-
-            // Track execution time for this continuation window
             const receiveTimeStart = Date.now();
+            let lastProgressLogTime = 0;
 
-            // Process each segment
             const JOB_MIN_DELAY = 0;
-            const JOB_MAX_DELAY = 10000; // Cap at 10 seconds for job creation
-            const JOB_DELAY_INCREMENT = 500; // Increase by 500ms on rate limit
-            const JOB_DELAY_DECREMENT = 50; // Decrease by 50ms on success
+            const JOB_MAX_DELAY = 10000;
+            const JOB_DELAY_INCREMENT = 500;
+            const JOB_DELAY_DECREMENT = 50;
 
             for (const [segment, emails] of segments) {
-                // Check for timeout BEFORE processing each segment
                 if ((new Date() - receiveTimeStart) >= TIMEOUT_TRIGGER_SECONDS * 1000) {
-                    context.log('info', '⏱️  Timeout approaching - scheduling continuation');
+                    context.log('info', 'Timeout approaching - scheduling continuation');
                     return await scheduleContinuation('timeout_trigger');
                 }
 
-                // Skip already-processed segments (continuation logic)
                 if (processedSegments.includes(segment)) {
-                    context.log('info', `⏭️  Skipping already-processed segment '${segment}'`);
+                    context.log('info', `Skipping already-processed segment '${segment}'`);
                     continue;
                 }
 
-                // Declare userListId OUTSIDE try block so it's accessible in catch block
                 let userListId = null;
 
                 try {
-                    // Check if segment is configured
                     if (!normalizedMapping[segment]) {
                         const error = `Segment '${segment}' not found in configuration. Skipping ${emails.length} users.`;
                         context.log('warn', error);
@@ -410,11 +351,8 @@ module.exports = {
                     }
 
                     currentSegmentNumber++;
-
-                    // Get all User Lists for this segment (may be multiple)
                     const userListIds = normalizedMapping[segment];
 
-                    // Defensive check: ensure userListIds is a valid array
                     if (!userListIds || !Array.isArray(userListIds) || userListIds.length === 0) {
                         const error = `Segment '${segment}' has invalid or empty User List mapping. Expected array of User List IDs, got: ${JSON.stringify(userListIds)}`;
                         context.log('error', error);
@@ -423,30 +361,21 @@ module.exports = {
                     }
 
                     context.log('info', `Processing segment '${segment}': ${emails.length} users → ${userListIds.length} User List(s)`);
-                    context.log('info', `  User Lists: ${userListIds.join(', ')}`);
 
-                    // Process each User List for this segment
                     for (userListId of userListIds) {
                         const userListResourceName = `customers/${customerId}/userLists/${userListId}`;
+                        context.log('info', `Uploading to User List ${userListId}`);
 
-                        context.log('info', `  → Uploading to User List ${userListId}`);
-
-                        // Split into API batches (Google Ads API limit)
                         const batches = this.chunkArray(emails, batchSize);
-                        context.log('info', `Split into ${batches.length} API batch(es) of max ${batchSize} users`);
+                        context.log('info', `Split into ${batches.length} batch(es) of max ${batchSize} users`);
 
-                        // Track timing for ETA calculation
                         const segmentStartTime = Date.now();
-                        let lastSegmentProgressLogTime = 0; // Throttle segment progress logs
-
-                        // Adaptive delay system: starts at 0, increases on rate limits, decreases on success
+                        let lastSegmentProgressLogTime = 0;
                         let adaptiveDelayMs = 0;
                         const MIN_DELAY = 0;
-                        const MAX_DELAY = 5000; // Cap at 5 seconds
-                        const DELAY_INCREMENT = 100; // Increase by 100ms on rate limit
-                        const DELAY_DECREMENT = 10; // Decrease by 10ms on success
-
-                        // Emit initial progress for this segment
+                        const MAX_DELAY = 5000;
+                        const DELAY_INCREMENT = 100;
+                        const DELAY_DECREMENT = 10;
                         await this.safeSendProgress(context, {
                             segment,
                             totalBatches: batches.length,
@@ -460,24 +389,16 @@ module.exports = {
 
                         let jobResourceName = null;
                         let totalUploaded = 0;
-                        let isNewJob = false; // Track if we created a new job or reusing existing
+                        let isNewJob = false;
 
-                        // Check if we already have a job for this User List
                         if (userListJobs.has(userListId)) {
                             const existingJob = userListJobs.get(userListId);
                             jobResourceName = existingJob.jobResourceName;
                             existingJob.segments.push(segment);
-                            context.log('info', `♻️  Reusing existing job for User List ${userListId} (segments: ${existingJob.segments.join(', ')})`);
-                            context.log('info', `   Job: ${jobResourceName}`);
-                            context.log('info', `   This prevents CONCURRENT_MODIFICATION error`);
+                            context.log('info', `Reusing existing job for User List ${userListId} (prevents CONCURRENT_MODIFICATION)`);
                             isNewJob = false;
                         } else {
-                            // Remove adaptive delay to prevent timeouts
-                            // Fast job creation for better performance
-
-                            // Create new job for this User List
-                            context.log('info', `Creating NEW OfflineUserDataJob for segment '${segment}' → User List ${userListId}`);
-                            context.log('info', `🔍 TRACE: About to call createUserDataJob...`);
+                            context.log('info', `Creating new OfflineUserDataJob for segment '${segment}' → User List ${userListId}`);
                             try {
                                 jobResourceName = await this.createUserDataJob(
                                     customer,
@@ -486,27 +407,20 @@ module.exports = {
                                     { adPersonalization, adUserData },
                                     context
                                 );
-                                context.log('info', `🔍 TRACE: createUserDataJob completed successfully`);
 
-                                // Success: decrease job creation delay
                                 if (jobCreationDelayMs > JOB_MIN_DELAY) {
                                     jobCreationDelayMs = Math.max(JOB_MIN_DELAY, jobCreationDelayMs - JOB_DELAY_DECREMENT);
-                                    context.log('info', `✓ Job creation success - decreased delay to ${jobCreationDelayMs}ms`);
                                 }
 
-                                // Track this job for the User List
                                 userListJobs.set(userListId, {
                                     jobResourceName,
                                     segments: [segment]
                                 });
                                 isNewJob = true;
                             } catch (createError) {
-                                // Check if this is a rate limit error during job creation
-                                // Google Ads API errors have structure: error.errors[0].message
                                 const errorMsg = (createError.message || '').toLowerCase();
                                 const errorCode = String(createError.code || '').toLowerCase();
 
-                                // Check nested error structure for Google Ads API
                                 let nestedErrorMsg = '';
                                 let nestedErrorCode = '';
                                 if (createError.errors && Array.isArray(createError.errors) && createError.errors[0]) {
@@ -531,45 +445,32 @@ module.exports = {
                                     nestedErrorCode.includes('quota_error');
 
                                 if (wasRateLimited) {
-                                    // Rate limit detected: increase job creation delay
                                     jobCreationDelayMs = Math.min(JOB_MAX_DELAY, jobCreationDelayMs + JOB_DELAY_INCREMENT);
-                                    context.log('warn', `⚠️  Rate limit detected during job creation - increased delay to ${jobCreationDelayMs}ms`);
+                                    context.log('warn', `Rate limit during job creation - increased delay to ${jobCreationDelayMs}ms`);
                                 }
 
-                                context.log('error', `🚨 OUTER CATCH - createUserDataJob failed!`);
-                                context.log('error', `   Error: ${createError.message}`);
-                                context.log('error', `   Type: ${createError.constructor.name}`);
-                                context.log('error', `   Was rate limited: ${wasRateLimited}`);
+                                context.log('error', `createUserDataJob failed: ${createError.message}`);
 
-                                // FAIL FAST: If rate limited during job creation, stop processing all segments
-                                // No point continuing - we'll just hit the same rate limit on other segments
                                 if (wasRateLimited) {
-                                    const errorMsg = this.extractErrorMessage(createError);
-                                    context.log('error', `🛑 FAIL FAST: Rate limit hit during job creation. Stopping all segment processing.`);
-                                    context.log('error', `   ${errorMsg}`);
+                                    const extractedErrorMsg = this.extractErrorMessage(createError);
+                                    context.log('error', `Rate limit hit during job creation - stopping all segment processing`);
 
-                                    // Send progress update before returning
                                     await this.safeSendProgress(context, {
                                         segment,
                                         status: 'rate_limited',
-                                        message: `Rate limit exceeded during job creation: ${errorMsg}`,
+                                        message: `Rate limit exceeded during job creation: ${extractedErrorMsg}`,
                                         totalSegments,
                                         currentSegment: currentSegmentNumber,
-                                        error: errorMsg
+                                        error: extractedErrorMsg
                                     });
 
-                                    // Return with clear error message
                                     results.success = false;
-                                    results.errors.push(`Rate limit exceeded during job creation: ${errorMsg}. Please wait and retry later.`);
+                                    results.errors.push(`Rate limit exceeded during job creation: ${extractedErrorMsg}. Please wait and retry later.`);
                                     results.internalErrors = internalErrors;
-
-                                    // Remove the 10-second wait that was causing Input Queue timeouts
-                                    context.log('info', '⚡ Fast return - no artificial delays');
-
                                     return context.sendJson(results, 'out');
                                 }
 
-                                throw createError; // Re-throw non-rate-limit errors to segment catch
+                                throw createError;
                             }
                         }
 
@@ -579,21 +480,15 @@ module.exports = {
                             const progress = ((i + 1) / batches.length * 100).toFixed(1);
 
                             if (isFirstBatch) {
-                                // CRITICAL: removeAll logic
-                                // - REPLACE mode + NEW job: removeAll = true (clear existing data)
-                                // - REPLACE mode + REUSED job: removeAll = false (already cleared by first segment)
-                                // - ADD mode: removeAll = false (always append)
+                                // REPLACE mode + NEW job: removeAll = true (clear existing data)
+                                // REPLACE mode + REUSED job: removeAll = false (already cleared)
+                                // ADD mode: removeAll = false (always append)
                                 const removeAllFirst = uploadMode === 'REPLACE' && isNewJob;
 
-                                context.log('info', `[${progress}%] Batch 1/${batches.length}: Adding ${batch.length} users (mode: ${uploadMode}, removeAll: ${removeAllFirst}, newJob: ${isNewJob})`);
-                                context.log('info', `🔍 TRACE: About to call addOperations (batch 1)...`);
+                                context.log('info', `Batch 1/${batches.length}: Adding ${batch.length} users (mode: ${uploadMode}, removeAll: ${removeAllFirst})`);
 
                                 const batchStartTime = Date.now();
-                                let wasSuccessful = false;
-                                let wasRateLimited = false;
-                                let wasConcurrentModification = false;
                                 try {
-                                    // Prepare progress info for retry visibility
                                     const progressInfoForRetry = {
                                         segment,
                                         totalBatches: batches.length,
@@ -609,21 +504,14 @@ module.exports = {
                                         context,
                                         progressInfoForRetry
                                     );
-                                    context.log('info', `🔍 TRACE: addOperations (batch 1) completed successfully`);
-                                    wasSuccessful = true;
 
-                                    // Success: decrease adaptive delay (faster uploads when no rate limits)
                                     if (adaptiveDelayMs > MIN_DELAY) {
                                         adaptiveDelayMs = Math.max(MIN_DELAY, adaptiveDelayMs - DELAY_DECREMENT);
-                                        context.log('info', `✓ Success - decreased adaptive delay to ${adaptiveDelayMs}ms`);
                                     }
                                 } catch (addError) {
-                                    // Check if this is a rate limit error (even after all retries exhausted)
-                                    // Google Ads API errors have structure: error.errors[0].message
                                     const errorMsg = (addError.message || '').toLowerCase();
                                     const errorCode = String(addError.code || '').toLowerCase();
 
-                                    // Check nested error structure for Google Ads API
                                     let nestedErrorMsg = '';
                                     let nestedErrorCode = '';
                                     if (addError.errors && Array.isArray(addError.errors) && addError.errors[0]) {
@@ -633,8 +521,8 @@ module.exports = {
                                         }
                                     }
 
-                                    wasRateLimited = addError.code === 429 ||
-                                        addError.code === 8 || // gRPC RESOURCE_EXHAUSTED
+                                    const wasRateLimited = addError.code === 429 ||
+                                        addError.code === 8 ||
                                         (addError.status && addError.status === 429) ||
                                         errorCode === 'resource_exhausted' ||
                                         errorMsg.includes('rate limit') ||
@@ -648,28 +536,15 @@ module.exports = {
                                         nestedErrorCode.includes('resource_exhausted') ||
                                         nestedErrorCode.includes('quota_error');
 
-                                    wasConcurrentModification = errorMsg.includes('concurrent_modification') ||
-                                        errorMsg.includes('concurrent modification') ||
-                                        nestedErrorMsg.includes('concurrent_modification') ||
-                                        nestedErrorMsg.includes('concurrent modification') ||
-                                        nestedErrorCode.includes('concurrent_modification') ||
-                                        nestedErrorCode.includes('database_error');
-
                                     if (wasRateLimited) {
-                                        // Rate limit detected: increase adaptive delay for next batches
                                         adaptiveDelayMs = Math.min(MAX_DELAY, adaptiveDelayMs + DELAY_INCREMENT);
-                                        context.log('warn', `⚠️  Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms for next batches`);
+                                        context.log('warn', `Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms`);
                                     }
 
-                                    context.log('error', `🚨 OUTER CATCH - addOperations failed (retries exhausted or non-retryable)`);
-                                    context.log('error', `   Error: ${addError.message}`);
-                                    context.log('error', `   Type: ${addError.constructor.name}`);
-                                    context.log('error', `   Was rate limited: ${wasRateLimited}`);
-                                    context.log('error', `   Was concurrent modification: ${wasConcurrentModification}`);
-                                    throw addError; // Re-throw to segment catch
+                                    context.log('error', `addOperations failed: ${addError.message}`);
+                                    throw addError;
                                 }
 
-                                // Calculate timing and ETA for segment
                                 const batchEndTime = Date.now();
                                 const elapsedMs = batchEndTime - batchStartTime;
                                 const elapsedSeconds = Math.floor(elapsedMs / 1000);
@@ -685,27 +560,18 @@ module.exports = {
                                 const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
                                 const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
 
-                                // Build message with general and segment-specific progress
                                 const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${this.formatTime(overallElapsedSeconds)} elapsed, ETA: ${this.formatTime(overallEtaSeconds)}`;
                                 const segmentMessage = `Batch 1/${batches.length} uploaded (${progress}%) - ${this.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + this.formatTime(etaSeconds) : ''}`;
                                 const combinedMessage = `${generalMessage}\n${segmentMessage}`;
 
-                                // Throttle logs: only log every 5 seconds or on first/last batch
                                 const now = Date.now();
                                 const shouldLog = (now - lastSegmentProgressLogTime) >= 5000 || i === 0 || i === batches.length - 1;
                                 if (shouldLog) {
-                                    // Log overall progress
-                                    context.log('info', `📊 GENERAL: ${generalMessage}`);
-
-                                    // Log segment-specific progress
-                                    const segmentProgress = Math.round(((i + 1) / batches.length) * 100);
-                                    context.log('info', `📦 SEGMENT: ${segmentMessage}`);
-                                    context.log('info', `   Progress: ${totalUploaded}/${emails.length} users (${segmentProgress}%)`);
-
+                                    context.log('info', generalMessage);
+                                    context.log('info', segmentMessage);
                                     lastSegmentProgressLogTime = now;
                                 }
 
-                                // Emit progress (throttled to 5-second intervals like logs)
                                 if (shouldLog) {
                                     await this.safeSendProgress(context, {
                                         segment,
@@ -722,16 +588,9 @@ module.exports = {
                                     }, 'progress');
                                 }
                             } else {
-                                // Subsequent batches: always ADD (never removeAll)
+                                context.log('info', `Batch ${i + 1}/${batches.length}: Adding ${batch.length} users`);
 
-                                context.log('info', `[${progress}%] Batch ${i + 1}/${batches.length}: Adding ${batch.length} users (mode: ADD)`);
-                                context.log('info', `🔍 TRACE: About to call addOperations (batch ${i + 1})...`);
-
-                                let wasSuccessful = false;
-                                let wasRateLimited = false;
-                                let wasConcurrentModification = false;
                                 try {
-                                    // Prepare progress info for retry visibility
                                     const progressInfoForRetry = {
                                         segment,
                                         totalBatches: batches.length,
@@ -747,21 +606,14 @@ module.exports = {
                                         context,
                                         progressInfoForRetry
                                     );
-                                    context.log('info', `🔍 TRACE: addOperations (batch ${i + 1}) completed successfully`);
-                                    wasSuccessful = true;
 
-                                    // Success: decrease adaptive delay (faster uploads when no rate limits)
                                     if (adaptiveDelayMs > MIN_DELAY) {
                                         adaptiveDelayMs = Math.max(MIN_DELAY, adaptiveDelayMs - DELAY_DECREMENT);
-                                        context.log('info', `✓ Success - decreased adaptive delay to ${adaptiveDelayMs}ms`);
                                     }
                                 } catch (addError) {
-                                    // Check if this was a rate limit error (even after all retries exhausted)
-                                    // Google Ads API errors have structure: error.errors[0].message
                                     const errorMsg = (addError.message || '').toLowerCase();
                                     const errorCode = String(addError.code || '').toLowerCase();
 
-                                    // Check nested error structure for Google Ads API
                                     let nestedErrorMsg = '';
                                     let nestedErrorCode = '';
                                     if (addError.errors && Array.isArray(addError.errors) && addError.errors[0]) {
@@ -771,7 +623,7 @@ module.exports = {
                                         }
                                     }
 
-                                    wasRateLimited = addError.code === 429 ||
+                                    const wasRateLimited = addError.code === 429 ||
                                         addError.code === 8 ||
                                         errorCode === 'resource_exhausted' ||
                                         errorMsg.includes('rate limit') ||
@@ -785,34 +637,20 @@ module.exports = {
                                         nestedErrorCode.includes('resource_exhausted') ||
                                         nestedErrorCode.includes('quota_error');
 
-                                    wasConcurrentModification = errorMsg.includes('concurrent_modification') ||
-                                        errorMsg.includes('concurrent modification') ||
-                                        nestedErrorMsg.includes('concurrent_modification') ||
-                                        nestedErrorMsg.includes('concurrent modification') ||
-                                        nestedErrorCode.includes('concurrent_modification') ||
-                                        nestedErrorCode.includes('database_error');
-
                                     if (wasRateLimited) {
-                                        // Rate limit detected: increase adaptive delay for next batches
                                         adaptiveDelayMs = Math.min(MAX_DELAY, adaptiveDelayMs + DELAY_INCREMENT);
-                                        context.log('warn', `⚠️  Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms for next batches`);
+                                        context.log('warn', `Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms`);
                                     }
 
-                                    context.log('error', `🚨 OUTER CATCH - addOperations (batch ${i + 1}) failed (retries exhausted or non-retryable)`);
-                                    context.log('error', `   Error: ${addError.message}`);
-                                    context.log('error', `   Type: ${addError.constructor.name}`);
-                                    context.log('error', `   Was rate limited: ${wasRateLimited}`);
-                                    context.log('error', `   Was concurrent modification: ${wasConcurrentModification}`);
-                                    throw addError; // Re-throw to segment catch
+                                    context.log('error', `addOperations failed: ${addError.message}`);
+                                    throw addError;
                                 }
 
-                                // Calculate timing and ETA for segment
                                 const elapsedMs = Date.now() - segmentStartTime;
                                 const elapsedSeconds = Math.floor(elapsedMs / 1000);
                                 const progressDecimal = parseFloat(progress) / 100;
                                 const etaSeconds = progressDecimal > 0 ? Math.floor((elapsedMs / progressDecimal - elapsedMs) / 1000) : null;
 
-                                // Calculate overall progress
                                 batchesCompletedOverall++;
                                 const overallElapsedMs = Date.now() - overallStartTime;
                                 const overallElapsedSeconds = Math.floor(overallElapsedMs / 1000);
@@ -821,21 +659,18 @@ module.exports = {
                                 const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
                                 const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
 
-                                // Build message with general and segment-specific progress
                                 const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${this.formatTime(overallElapsedSeconds)} elapsed, ETA: ${this.formatTime(overallEtaSeconds)}`;
                                 const segmentMessage = `Batch ${i + 1}/${batches.length} uploaded (${progress}%) - ${this.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + this.formatTime(etaSeconds) : ''}`;
                                 const combinedMessage = `${generalMessage}\n${segmentMessage}`;
 
-                                // Throttle logs: only log every 5 seconds or on first/last batch
                                 const now = Date.now();
                                 const shouldLog = (now - lastSegmentProgressLogTime) >= 5000 || i === batches.length - 1;
                                 if (shouldLog) {
-                                    context.log('info', `📊 GENERAL: ${generalMessage}`);
-                                    context.log('info', `📦 SEGMENT: ${segmentMessage}`);
+                                    context.log('info', generalMessage);
+                                    context.log('info', segmentMessage);
                                     lastSegmentProgressLogTime = now;
                                 }
 
-                                // Emit progress (throttled to 5-second intervals like logs)
                                 if (shouldLog) {
                                     await this.safeSendProgress(context, {
                                         segment,
@@ -854,31 +689,22 @@ module.exports = {
                             }
 
                             totalUploaded += batch.length;
-
-                            // Apply adaptive delay between batches (only if delay > 0)
-                            // Remove adaptive delay to prevent timeouts
-                            // Fast batch processing for better performance
-
-                            // Progress is now handled by the throttled logs above
                         }
 
-                        // Calculate final timing
                         const totalElapsedMs = Date.now() - segmentStartTime;
                         const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
 
-                        // Track segment completion (job will be run later, once per User List)
                         results.jobsBySegment[segment] = {
                             jobResourceName,
                             userListId,
                             usersUploaded: totalUploaded,
-                            operationName: null, // Will be set after running job
-                            status: 'PENDING', // Job created but not yet run
+                            operationName: null,
+                            status: 'PENDING',
                             uploadMode
                         };
 
                         results.totalUsers += totalUploaded;
 
-                        // Emit completion progress for this segment
                         await this.safeSendProgress(context, {
                             segment,
                             totalBatches: batches.length,
@@ -894,66 +720,34 @@ module.exports = {
                             operationName: null
                         }, 'progress');
 
-                        context.log('info', `✓ User List ${userListId} complete: ${totalUploaded} users uploaded`);
+                        context.log('info', `User List ${userListId} complete: ${totalUploaded} users uploaded`);
+                    }
 
-                    } // End of User List loop
-
-                    // Mark segment as processed for continuation tracking
                     processedSegments.push(segment);
-                    context.log('info', `✓ Segment '${segment}' complete - uploaded to ${userListIds.length} User List(s)`);
+                    context.log('info', `Segment '${segment}' complete - uploaded to ${userListIds.length} User List(s)`);
 
                 } catch (error) {
-                    // Serialize error properly - Google Ads API errors have special structure
                     let errorDetails = error.message || 'Unknown error';
 
-                    // Log full error structure for debugging
-                    context.log('error', `Error type: ${error.constructor.name}`);
-                    context.log('error', `Error code: ${error.code}`);
-                    context.log('error', `Error status: ${error.status}`);
-                    context.log('error', `Error keys: ${Object.keys(error).join(', ')}`);
-
-                    // Try to extract more details from the error object
                     if (error.errors && Array.isArray(error.errors)) {
                         errorDetails = error.errors.map(e => e.message || JSON.stringify(e)).join('; ');
-                        context.log('error', `Error details array: ${JSON.stringify(error.errors)}`);
                     } else if (typeof error === 'object') {
                         try {
-                            const serialized = JSON.stringify(error, Object.getOwnPropertyNames(error));
-                            errorDetails = serialized;
-                            context.log('error', `Full error object: ${serialized}`);
+                            errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
                         } catch (e) {
                             errorDetails = this.extractErrorMessage(error);
                         }
                     }
 
-                    // Include user list ID in error message for easier debugging
-                    const userListInfo = userListId ? ` (User List ID: ${userListId})` : ' (User List ID: unknown)';
-
-                    // Check if this error message indicates rate limiting
-                    const errDetailsLower = errorDetails.toLowerCase();
-                    const wasRateLimitError = errDetailsLower.includes('429') ||
-                        errDetailsLower.includes('quota') ||
-                        errDetailsLower.includes('resource_exhausted') ||
-                        errDetailsLower.includes('rate limit') ||
-                        errDetailsLower.includes('retry in');
-
-                    // Wrap error to clarify it's from Google Ads API
-                    const errorMsg = `❌ Google Ads API Error - Segment '${segment}'${userListInfo}: ${errorDetails} [Rate limit error: ${wasRateLimitError}]`;
+                    const userListInfo = userListId ? ` (User List ID: ${userListId})` : '';
+                    const errorMsg = `Google Ads API Error - Segment '${segment}'${userListInfo}: ${errorDetails}`;
                     context.log('error', errorMsg);
-                    context.log('error', `💡 This error came from Google Ads API, not from this component`);
                     errors.push(errorMsg);
                     results.success = false;
                 }
-
-                // Add delay between segments to prevent rate limiting (1-2 seconds)
-                // Remove inter-segment delay to prevent timeouts
-                // Fast segment processing for better performance
             }
 
-            // Now run each job ONCE per User List (not per segment)
-            context.log('info', '═══════════════════════════════════════════════════════════');
-            context.log('info', `🚀 Running ${userListJobs.size} job(s) to execute uploads...`);
-            context.log('info', '═══════════════════════════════════════════════════════════');
+            context.log('info', `Running ${userListJobs.size} job(s) to execute uploads...`);
 
             for (const [userListId, jobInfo] of userListJobs) {
                 try {
@@ -962,7 +756,6 @@ module.exports = {
 
                     const operation = await this.runJob(customer, jobInfo.jobResourceName, context);
 
-                    // Update all segments that share this User List
                     for (const segment of jobInfo.segments) {
                         if (results.jobsBySegment[segment]) {
                             results.jobsBySegment[segment].operationName = operation.name || null;
@@ -971,26 +764,19 @@ module.exports = {
                     }
 
                     results.totalJobs++;
-                    context.log('info', `✅ Job submitted for User List ${userListId}`);
+                    context.log('info', `Job submitted for User List ${userListId}`);
 
                 } catch (error) {
-                    // Enhanced error handling for specific Google Ads API errors
                     const errorMsg = this.extractErrorMessage(error);
 
-                    // Check for specific error types
                     if (errorMsg.includes('invalid') || errorMsg.includes('Invalid')) {
-                        context.log('error', `❌ Invalid job or user list for User List ${userListId}`);
-                        context.log('error', `   This may indicate the job is in an incompatible state or the user list ID is incorrect`);
-                        context.log('error', `   Job: ${jobInfo.jobResourceName}`);
-                    } else if (errorMsg.includes('Too many requests') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
-                        context.log('error', `⚠️  Rate limit hit for User List ${userListId} - retry logic should handle this`);
+                        context.log('error', `Invalid job or user list for User List ${userListId}: ${jobInfo.jobResourceName}`);
                     }
 
                     const fullErrorMsg = `Failed to run job for User List ${userListId}: ${errorMsg}`;
                     context.log('error', fullErrorMsg);
                     errors.push(fullErrorMsg);
 
-                    // Mark all segments for this User List as failed
                     for (const segment of jobInfo.segments) {
                         if (results.jobsBySegment[segment]) {
                             results.jobsBySegment[segment].status = 'FAILED';
@@ -1000,39 +786,17 @@ module.exports = {
             }
 
             results.errors = errors;
+            results.internalErrors = internalErrors;
 
-            // Final summary with job status confirmation
             const totalElapsedMs = Date.now() - overallStartTime;
             const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
 
-            context.log('info', '═══════════════════════════════════════════════════════════');
-            context.log('info', `✅ UPLOAD COMPLETE: ${results.totalJobs} jobs, ${results.totalUsers} total users`);
-            context.log('info', `⏱️  Total time: ${this.formatTime(totalElapsedSeconds)}`);
-            context.log('info', '═══════════════════════════════════════════════════════════');
-            context.log('info', '📊 JOB STATUS SUMMARY:');
-
-            // Log each job's status
+            context.log('info', `Upload complete: ${results.totalJobs} jobs, ${results.totalUsers} total users, ${this.formatTime(totalElapsedSeconds)} elapsed`);
+            context.log('info', 'Job status summary:');
             for (const [segment, jobInfo] of Object.entries(results.jobsBySegment)) {
-                context.log('info', `  • Segment '${segment}': ${jobInfo.status} (${jobInfo.usersUploaded} users)`);
-                context.log('info', `    Job: ${jobInfo.jobResourceName}`);
-                if (jobInfo.operationName) {
-                    context.log('info', `    Operation: ${jobInfo.operationName}`);
-                }
+                context.log('info', `  Segment '${segment}': ${jobInfo.status} (${jobInfo.usersUploaded} users)`);
             }
-
-            context.log('info', '═══════════════════════════════════════════════════════════');
-            context.log('info', '🎯 All jobs SUBMITTED for execution (run() API call succeeded)');
-            context.log('info', '📝 Job lifecycle: PENDING → RUNNING → SUCCESS/FAILED');
-            context.log('info', '⏳ Google Ads processes jobs asynchronously (may take minutes/hours)');
-            context.log('info', '🔍 Verify final status in Google Ads UI');
-            context.log('info', '⚠️  Status "SUBMITTED" means run() was accepted, not that job is running yet');
-            context.log('info', '═══════════════════════════════════════════════════════════');
-
-            // Add captured internal errors to results
-            results.internalErrors = internalErrors;
-
-            // Remove small delay to prevent timeouts
-            // Fast completion for better performance
+            context.log('info', 'Note: Status "SUBMITTED" means run() was accepted. Jobs process asynchronously in Google Ads.');
 
             return context.sendJson(results, 'out');
 
@@ -1042,20 +806,14 @@ module.exports = {
             context.log('error', `Full error details: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
             results.success = false;
             results.errors.push(errorMsg);
-
-            // Add captured internal errors to results
             results.internalErrors = internalErrors;
-
-            // Remove 10-second wait that was causing Input Queue timeouts
-            context.log('info', '⚡ Fast error return - no artificial delays');
 
             return context.sendJson(results, 'out');
         }
     },
 
     /**
-     * Parse CSV file and group emails by segment
-     * Replicates Scala ActivatorStream logic
+     * Parse CSV file and group emails by segment.
      */
     async parseCSV(fileStream, options, context) {
         const { segmentColumnIndex, emailColumnIndex, containsHeaders, columnSeparator, batchSize } = options;
@@ -1067,8 +825,7 @@ module.exports = {
                 skip_empty_lines: true,
                 from_line: containsHeaders ? 2 : 1,
                 relax_column_count: true,
-                // Use highWaterMark for memory-efficient streaming of large files
-                highWaterMark: 64 * 1024 // 64KB chunks
+                highWaterMark: 64 * 1024
             });
 
             let rowCount = 0;
@@ -1080,14 +837,12 @@ module.exports = {
                 while ((row = parser.read()) !== null) {
                     rowCount++;
 
-                    // Log progress every 5 seconds to prevent timeout
                     const now = Date.now();
                     if ((now - lastLogTime) > 5000) {
                         context.log('info', `Parsing progress: ${rowCount} rows processed...`);
                         lastLogTime = now;
                     }
 
-                    // Validate row has enough columns
                     const maxIndex = Math.max(segmentColumnIndex, emailColumnIndex);
                     if (row.length <= maxIndex) {
                         skippedCount++;
@@ -1097,13 +852,11 @@ module.exports = {
                     const segment = row[segmentColumnIndex]?.trim();
                     const hashedEmail = row[emailColumnIndex]?.trim();
 
-                    // Filter empty values (like Scala app does)
                     if (!segment || !hashedEmail) {
                         skippedCount++;
                         continue;
                     }
 
-                    // Group by segment
                     if (!segmentGroups[segment]) {
                         segmentGroups[segment] = [];
                     }
@@ -1129,20 +882,12 @@ module.exports = {
     },
 
     /**
-     * Create OfflineUserDataJob with retry logic
-     *
-     * IMPORTANT: This retry logic handles GOOGLE ADS API errors, NOT Appmixer errors.
-     * The errors caught here come directly from Google's servers:
-     * - Rate limiting (429, RESOURCE_EXHAUSTED, quota errors)
-     * - Server errors (5xx, UNAVAILABLE, DEADLINE_EXCEEDED)
-     * - Network issues (timeouts, connection resets)
-     *
-     * Implements exponential backoff with jitter, up to 10 retry attempts.
-     * Max backoff time is capped at 30 seconds per attempt.
+     * Create OfflineUserDataJob with retry logic.
+     * Handles Google Ads API errors (rate limiting, server errors, network issues) with exponential backoff.
      */
     async createUserDataJob(customer, customerId, userListResourceName, consent, context) {
         const maxRetries = 5;
-        const initialDelayMs = 2000; // 2 seconds initial delay
+        const initialDelayMs = 2000;
         let attempt = 0;
         let lastError;
 
@@ -1174,24 +919,10 @@ module.exports = {
                 lastError = error;
                 attempt++;
 
-                // Extract Google Ads API error details from nested structure
                 const extractedMsg = this.extractErrorMessage(error);
-                const nestedError = error.errors?.[0];
-                const nestedCode = nestedError?.error_code ? JSON.stringify(nestedError.error_code) : 'N/A';
-
-                // DIAGNOSTIC: Log full error to identify source
-                context.log('error', `🔍 DIAGNOSTIC - Create Job Error Caught (attempt ${attempt}/${maxRetries})`);
-                context.log('error', `   Error type: ${error.constructor.name}`);
-                context.log('error', `   Error message: ${extractedMsg}`);
-                context.log('error', `   Error code: ${nestedCode}`);
-                context.log('error', `   Full error: ${JSON.stringify(error, Object.getOwnPropertyNames(error)).substring(0, 500)}`);
-
-                // Enhanced error detection for Google Ads API (gRPC-style errors)
-                // Google Ads API errors have structure: error.errors[0].message
                 const errorMsg = extractedMsg.toLowerCase();
                 const errorCode = String(error.code || '').toLowerCase();
 
-                // Check nested error structure for Google Ads API
                 let nestedErrorMsg = '';
                 let nestedErrorCode = '';
                 if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
@@ -1219,11 +950,9 @@ module.exports = {
                     nestedErrorCode.includes('resource_exhausted') ||
                     nestedErrorCode.includes('quota_error');
 
-                // Check if this is a long-term quota exhaustion (>1 hour retry time)
-                // These should fail immediately, not retry
                 const retryMatch = extractedMsg.match(/retry in (\d+) seconds/i);
                 const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 0;
-                const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600; // More than 1 hour
+                const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600;
 
                 const isConcurrentModification = errorMsg.includes('concurrent_modification') ||
                     errorMsg.includes('concurrent modification') ||
@@ -1243,19 +972,13 @@ module.exports = {
                     errorCode.includes('unavailable') ||
                     errorCode.includes('deadline_exceeded');
 
-                // Fail fast on long-term quota exhaustion
                 if (isLongTermQuotaExhaustion) {
-                    context.log('error', `❌ QUOTA EXHAUSTED - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    context.log('error', `   Not retrying - please wait and try again later`);
-                    context.log('error', `   Message: ${extractedMsg}`);
+                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
                     throw error;
                 }
 
                 if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `❌ FINAL FAILURE - Create job (non-retryable or max retries reached)`);
-                    context.log('error', `   Error was ${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}`);
-                    context.log('error', `   Message: ${extractedMsg}`);
-                    context.log('error', `   This error is from: ${error.constructor.name}`);
+                    context.log('error', `Create job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
                 }
 
@@ -1265,11 +988,9 @@ module.exports = {
                 );
 
                 const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE LIMIT' : 'NETWORK ERROR';
-                context.log('warn', `⚠️  RETRY ${attempt}/${maxRetries}: Create job failed (${errorType}): ${extractedMsg}`);
-                context.log('warn', `⏳ Waiting ${Math.ceil(backoffTime/1000)}s before retry...`);
+                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
+                context.log('warn', `Retry ${attempt}/${maxRetries}: Create job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
                 await new Promise(resolve => setTimeout(resolve, backoffTime));
-                context.log('info', `🔄 Retrying create job now (attempt ${attempt + 1}/${maxRetries})...`);
             }
         }
 
@@ -1277,25 +998,15 @@ module.exports = {
     },
 
     /**
-     * Add operations to OfflineUserDataJob with retry logic
-     *
-     * IMPORTANT: This retry logic handles GOOGLE ADS API errors, NOT Appmixer errors.
-     * The errors caught here come directly from Google's servers:
-     * - Rate limiting (429, RESOURCE_EXHAUSTED, quota errors)
-     * - Server errors (5xx, UNAVAILABLE, DEADLINE_EXCEEDED)
-     * - Network issues (timeouts, connection resets)
-     *
-     * Implements exponential backoff with jitter, up to 10 retry attempts.
-     * Max backoff time is capped at 30 seconds per attempt.
-     * Respects Retry-After headers from Google's rate limiting responses.
+     * Add operations to OfflineUserDataJob with retry logic.
+     * Handles Google Ads API errors with exponential backoff and respects Retry-After headers.
      */
     async addOperations(customer, jobResourceName, emails, removeAllFirst, context, progressInfo = null) {
         const maxRetries = 5;
-        const initialDelayMs = 2000; // 2 seconds initial delay
+        const initialDelayMs = 2000;
         let attempt = 0;
         let lastError;
 
-        // Create user data operations
         const operations = emails.map(email => ({
             create: {
                 user_identifiers: [{
@@ -1304,49 +1015,31 @@ module.exports = {
             }
         }));
 
-        // Add removeAll operation at the beginning if needed (REPLACE mode)
         if (removeAllFirst) {
             operations.unshift({ remove_all: true });
-            context.log('info', 'Adding removeAll operation (REPLACE mode)');
         }
 
-        context.log('info', `Sending ${operations.length} operations to API (will retry up to ${maxRetries} times if needed)`);
+        context.log('info', `Sending ${operations.length} operations to API`);
 
         while (attempt < maxRetries) {
             try {
-                context.log('info', `📤 API Call attempt ${attempt + 1}/${maxRetries}...`);
                 await customer.offlineUserDataJobs.addOfflineUserDataJobOperations({
                     resource_name: jobResourceName,
                     enable_partial_failure: true,
                     operations
                 });
 
-                context.log('info', `✅ Successfully added ${emails.length} operations to job`);
-                return; // Success, exit the function
+                context.log('info', `Successfully added ${emails.length} operations to job`);
+                return;
 
             } catch (error) {
                 lastError = error;
                 attempt++;
 
-                // Extract Google Ads API error details from nested structure
                 const extractedMsg = this.extractErrorMessage(error);
-                const nestedError = error.errors?.[0];
-                const nestedCode = nestedError?.error_code ? JSON.stringify(nestedError.error_code) : 'N/A';
-
-                context.log('error', `❌ API Call attempt ${attempt}/${maxRetries} FAILED`);
-
-                // DIAGNOSTIC: Log full error to identify source
-                context.log('error', `🔍 DIAGNOSTIC - Add Operations Error Caught (attempt ${attempt}/${maxRetries})`);
-                context.log('error', `   Error type: ${error.constructor.name}`);
-                context.log('error', `   Error message: ${extractedMsg}`);
-                context.log('error', `   Error code: ${nestedCode}`);
-                context.log('error', `   Full error: ${JSON.stringify(error, Object.getOwnPropertyNames(error)).substring(0, 500)}`);
-
-                // Enhanced error detection for Google Ads API (gRPC-style errors)
                 const errorMsg = extractedMsg.toLowerCase();
                 const errorCode = String(error.code || '').toLowerCase();
 
-                // Check nested error structure for Google Ads API
                 let nestedErrorMsg = '';
                 let nestedErrorCode = '';
                 if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
@@ -1399,22 +1092,13 @@ module.exports = {
                     errorCode.includes('unavailable') ||
                     errorCode.includes('deadline_exceeded');
 
-                // Fail fast on long-term quota exhaustion
                 if (isLongTermQuotaExhaustion) {
-                    context.log('error', `❌ QUOTA EXHAUSTED - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    context.log('error', `   Not retrying - please wait and try again later`);
-                    context.log('error', `   Message: ${extractedMsg}`);
+                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
                     throw error;
                 }
 
-                // If not retryable or we've reached max retries, rethrow the error
                 if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `❌ FINAL FAILURE - Add operations (non-retryable or max retries reached)`);
-                    context.log('error', `   Error was ${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}`);
-                    context.log('error', `   Is rate limit: ${isRateLimit}`);
-                    context.log('error', `   Is concurrent modification: ${isConcurrentModification}`);
-                    context.log('error', `   Message: ${extractedMsg}`);
-                    context.log('error', `   This error is from: ${error.constructor.name}`);
+                    context.log('error', `Add operations failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
                 }
 
@@ -1424,55 +1108,40 @@ module.exports = {
                     30000 // Max 30 seconds
                 );
 
-                // Check for Retry-After header for rate limits
                 let retryAfterMs = backoffTime;
 
-                // Try to parse "Retry in X seconds" from error message
                 if (isRateLimit) {
                     const retryMatch = errorMsg.match(/retry in (\d+) seconds?/);
                     if (retryMatch) {
                         const suggestedDelay = parseInt(retryMatch[1]) * 1000;
-                        retryAfterMs = Math.min(suggestedDelay, 300000); // Cap at 5 minutes
-                        context.log('info', `📨 Google suggests waiting ${retryMatch[1]} seconds`);
+                        retryAfterMs = Math.min(suggestedDelay, 300000);
                     } else if (error.metadata && error.metadata.get) {
                         const retryAfter = error.metadata.get('retry-after') || error.metadata.get('retry-after-ms');
                         if (retryAfter && retryAfter.length > 0) {
                             retryAfterMs = Math.min(parseInt(retryAfter[0]) * 1000, 300000);
-                            context.log('info', `📨 Server header suggests waiting ${retryAfterMs/1000} seconds`);
                         }
                     }
                 }
 
-                // Determine error type for logging
                 const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE LIMIT' : 'NETWORK ERROR';
+                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
 
-                context.log('info', `🔄 RETRY ${attempt}/${maxRetries}: ${errorType} - ${error.message}`);
-                context.log('info', `⏳ Waiting ${Math.ceil(retryAfterMs/1000)}s before retry...`);
+                context.log('warn', `Retry ${attempt}/${maxRetries}: ${errorType} - waiting ${Math.ceil(retryAfterMs/1000)}s`);
 
-                // Send retry info to progress port so user can see it
-                context.log('error', `📊 RETRY DIAGNOSTIC: progressInfo = ${progressInfo ? 'EXISTS' : 'NULL'}`);
                 if (progressInfo) {
-                    context.log('error', `📊 SENDING RETRY PROGRESS: attempt ${attempt}/${maxRetries}`);
                     await this.safeSendProgress(context, {
                         ...progressInfo,
                         status: 'retrying',
                         retryAttempt: attempt,
                         maxRetries: maxRetries,
-                        retryReason: isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                            isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR',
+                        retryReason: errorType,
                         retryMessage: error.message,
                         waitingSeconds: Math.ceil(retryAfterMs/1000),
-                        message: `⚠️ RETRY ${attempt}/${maxRetries}: ${errorType} - Waiting ${Math.ceil(retryAfterMs/1000)}s before retry...`
+                        message: `Retry ${attempt}/${maxRetries}: ${errorType} - waiting ${Math.ceil(retryAfterMs/1000)}s`
                     }, 'progress');
-                    context.log('error', `📊 RETRY PROGRESS SENT`);
-                } else {
-                    context.log('error', `📊 WARNING: progressInfo is NULL, cannot send retry progress!`);
                 }
 
-                // Wait before retrying
                 await new Promise(resolve => setTimeout(resolve, retryAfterMs));
-                context.log('info', `▶️  Retrying now (attempt ${attempt + 1}/${maxRetries})...`);
             }
         }
 
@@ -1509,45 +1178,21 @@ module.exports = {
                     resource_name: jobResourceName
                 });
 
-                // Verify we got a valid response
                 if (!operation) {
                     throw new Error('runOfflineUserDataJob returned null/undefined - API call may have failed');
                 }
 
-                // Log full operation response for debugging
-                context.log('info', `✅ Job execution request accepted by Google Ads API`);
-                context.log('info', `   Operation response: ${JSON.stringify(operation)}`);
-                context.log('info', `   Operation name: ${operation.name || 'N/A'}`);
-                context.log('info', `   Operation done: ${operation.done || false}`);
-
-                // The operation object is a LongRunningOperation promise
-                // It does NOT contain the actual job status (PENDING/RUNNING/SUCCESS/FAILED)
-                // The job will transition from PENDING → RUNNING asynchronously
-                context.log('info', `   Note: This is a LongRunningOperation - actual job status not included in response`);
-
+                context.log('info', `Job execution request accepted by Google Ads API`);
                 return operation;
 
             } catch (error) {
                 lastError = error;
                 attempt++;
 
-                // Extract Google Ads API error details from nested structure
                 const extractedMsg = this.extractErrorMessage(error);
-                const nestedError = error.errors?.[0];
-                const nestedCode = nestedError?.error_code ? JSON.stringify(nestedError.error_code) : 'N/A';
-
-                // DIAGNOSTIC: Log full error to identify source
-                context.log('error', `🔍 DIAGNOSTIC - Run Job Error Caught (attempt ${attempt}/${maxRetries})`);
-                context.log('error', `   Error type: ${error.constructor.name}`);
-                context.log('error', `   Error message: ${extractedMsg}`);
-                context.log('error', `   Error code: ${nestedCode}`);
-                context.log('error', `   Full error: ${JSON.stringify(error, Object.getOwnPropertyNames(error)).substring(0, 500)}`);
-
-                // Enhanced error detection for Google Ads API (gRPC-style errors)
                 const errorMsg = extractedMsg.toLowerCase();
                 const errorCode = String(error.code || '').toLowerCase();
 
-                // Check nested error structure for Google Ads API
                 let nestedErrorMsg = '';
                 let nestedErrorCode = '';
                 if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
@@ -1575,7 +1220,6 @@ module.exports = {
                     nestedErrorCode.includes('resource_exhausted') ||
                     nestedErrorCode.includes('quota_error');
 
-                // Check if this is a long-term quota exhaustion (>1 hour retry time)
                 const retryMatch = extractedMsg.match(/retry in (\d+) seconds/i);
                 const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 0;
                 const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600;
@@ -1598,19 +1242,13 @@ module.exports = {
                     errorCode.includes('unavailable') ||
                     errorCode.includes('deadline_exceeded');
 
-                // Fail fast on long-term quota exhaustion
                 if (isLongTermQuotaExhaustion) {
-                    context.log('error', `❌ QUOTA EXHAUSTED - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    context.log('error', `   Not retrying - please wait and try again later`);
-                    context.log('error', `   Message: ${extractedMsg}`);
+                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
                     throw error;
                 }
 
                 if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `❌ FINAL FAILURE - Run job (non-retryable or max retries reached)`);
-                    context.log('error', `   Error was ${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}`);
-                    context.log('error', `   Message: ${extractedMsg}`);
-                    context.log('error', `   This error is from: ${error.constructor.name}`);
+                    context.log('error', `Run job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
                 }
 
@@ -1620,11 +1258,9 @@ module.exports = {
                 );
 
                 const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE LIMIT' : 'NETWORK ERROR';
-                context.log('warn', `⚠️  RETRY ${attempt}/${maxRetries}: Run job failed (${errorType}): ${extractedMsg}`);
-                context.log('warn', `⏳ Waiting ${Math.ceil(backoffTime/1000)}s before retry...`);
+                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
+                context.log('warn', `Retry ${attempt}/${maxRetries}: Run job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
                 await new Promise(resolve => setTimeout(resolve, backoffTime));
-                context.log('info', `🔄 Retrying run job now (attempt ${attempt + 1}/${maxRetries})...`);
             }
         }
 
