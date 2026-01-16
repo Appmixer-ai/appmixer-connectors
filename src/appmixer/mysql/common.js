@@ -1,7 +1,6 @@
 'use strict';
 
 const mysql = require('mysql');
-const SqlString = require('sqlstring');
 const EventEmitter = require('events');
 
 class StreamProcessor {
