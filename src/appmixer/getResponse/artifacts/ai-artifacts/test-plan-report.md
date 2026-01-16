@@ -288,6 +288,198 @@ context:
 uuid:            2517db28-d578-4eb9-868b-889b36fb3cbc
 </details>
 
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testcontact@example.com","name":"Test Contact","campaignId":"fzuqS","dayOfCycle":0,"ipAddress":"192.168.1.1","note":"Test contact created for validation","scoring":10}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/CreateContact
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/vladimir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+Calling receive method with input message:
+in: 
+  - 
+    properties: 
+      correlationId:     null
+      gridInstanceId:    null
+      contentType:       application/json
+      contentEncoding:   utf8
+      sender:            null
+      destination:       null
+      correlationInPort: null
+      componentHeaders: 
+      signal:            false
+      flowId:            null
+    content: 
+      email:      testcontact@example.com
+      name:       Test Contact
+      campaignId: fzuqS
+      dayOfCycle: 0
+      ipAddress:  192.168.1.1
+      note:       Test contact created for validation
+      scoring:    10
+    scope: 
+
+[ERROR]: Invalid obj param.
+TypeError: Invalid obj param.
+    at assertImpl (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:52127)
+    at assertPredicate (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:52004)
+    at assertImpl.object (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:51896)
+    at n.exports.getByPath (/Users/vladimir/Projects/appmixer-cli/dist/index.js:100:26455)
+    at /Users/vladimir/Projects/appmixer-cli/dist/index.js:92:320824
+    at arrayEach (/Users/vladimir/Projects/appmixer-cli/dist/index.js:14:7351)
+    at lodash.forEach (/Users/vladimir/Projects/appmixer-cli/dist/index.js:14:58122)
+    at MessageLogger.createAnnotatedOutputMsg (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:320668)
+    at DevMessageLogger.logOutput (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:323154)
+    at DevComponent.send (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:284519)
+    at a.send (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:384282)
+    at a.sendJson (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:384455)
+    at Object.receive (/Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/CreateContact/CreateContact.js:78:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testcontact@example.com","name":"Test Contact","campaignId":"fzuqS","dayOfCycle":0,"ipAddress":"192.168.1.1","note":"Test contact created for validation","scoring":10}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Name: undefined,
+  Email: undefined,
+  State: undefined,
+  'Day Of Cycle': undefined,
+  'Campaign ID': undefined,
+  'IP Address': undefined,
+  'Created On': undefined,
+  Origin: undefined,
+  Scoring: undefined,
+  'Custom Field Values': undefined,
+  Tags: undefined
+}
+
+Component's receive method finished in: 694 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testcontact@example.com","name":"Test Contact","campaignId":"fzuqS","dayOfCycle":0,"ipAddress":"192.168.1.1","note":"Test contact created for validation","scoring":10}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Name: undefined,
+  Email: undefined,
+  State: undefined,
+  'Day Of Cycle': undefined,
+  'Campaign ID': undefined,
+  'IP Address': undefined,
+  'Created On': undefined,
+  Origin: undefined,
+  Scoring: undefined,
+  'Custom Field Values': undefined,
+  Tags: undefined
+}
+
+Component's receive method finished in: 623 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testcontact@example.com","name":"Test Contact","campaignId":"fzuqS"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/CreateContact
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/vladimir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+Calling receive method with input message:
+in: 
+  - 
+    properties: 
+      correlationId:     null
+      gridInstanceId:    null
+      contentType:       application/json
+      contentEncoding:   utf8
+      sender:            null
+      destination:       null
+      correlationInPort: null
+      componentHeaders: 
+      signal:            false
+      flowId:            null
+    content: 
+      email:      testcontact@example.com
+      name:       Test Contact
+      campaignId: fzuqS
+    scope: 
+
+[ERROR]: Invalid obj param.
+TypeError: Invalid obj param.
+    at assertImpl (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:52127)
+    at assertPredicate (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:52004)
+    at assertImpl.object (/Users/vladimir/Projects/appmixer-cli/dist/index.js:154:51896)
+    at n.exports.getByPath (/Users/vladimir/Projects/appmixer-cli/dist/index.js:100:26455)
+    at /Users/vladimir/Projects/appmixer-cli/dist/index.js:92:320824
+    at arrayEach (/Users/vladimir/Projects/appmixer-cli/dist/index.js:14:7351)
+    at lodash.forEach (/Users/vladimir/Projects/appmixer-cli/dist/index.js:14:58122)
+    at MessageLogger.createAnnotatedOutputMsg (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:320668)
+    at DevMessageLogger.logOutput (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:323154)
+    at DevComponent.send (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:284519)
+    at a.send (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:384282)
+    at a.sendJson (/Users/vladimir/Projects/appmixer-cli/dist/index.js:92:384455)
+    at Object.receive (/Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/CreateContact/CreateContact.js:78:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testcontact@example.com","name":"Test Contact","campaignId":"fzuqS"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Name: undefined,
+  Email: undefined,
+  State: undefined,
+  'Day Of Cycle': undefined,
+  'Campaign ID': undefined,
+  'IP Address': undefined,
+  'Created On': undefined,
+  Origin: undefined,
+  Scoring: undefined,
+  'Custom Field Values': undefined,
+  Tags: undefined
+}
+
+Component's receive method finished in: 1044 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
 ## 4. GetContact
 ```
 appmixer test component src/appmixer/getresponse/core/GetContact/ -i '{"in":{"contactId":"test-contact-id-12345"}}'
@@ -381,6 +573,118 @@ context:
   (empty array)
 uuid:            7ccf8d73-a9e0-49eb-abae-2a4193d378c7
 </details>
+
+```
+appmixer test component src/appmixer/getResponse/core/GetContact/ -i '{"in":{"contactId":"fzuqS"}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/GetContact
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/vladimir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+Calling receive method with input message:
+in: 
+  - 
+    properties: 
+      correlationId:     null
+      gridInstanceId:    null
+      contentType:       application/json
+      contentEncoding:   utf8
+      sender:            null
+      destination:       null
+      correlationInPort: null
+      componentHeaders: 
+      signal:            false
+      flowId:            null
+    content: 
+      contactId: fzuqS
+    scope: 
+
+[ERROR]: Request failed with status code 404
+httpStatus:      404
+code:            1013
+codeDescription: The requested resource was not found
+message:         Resource of type: contact not found by: fzuqS
+moreInfo:        https://apidocs.getresponse.com/v3/errors#1013
+context: 
+  - fzuqS
+uuid:            3d7338f6-be21-4c88-a81c-aef3342f5fcd
+</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testgetcontact@example.com","name":"Test Get Contact","campaignId":"fzuqS"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'testgetcontact@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 598 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/ListContacts/ -i '{"in":{"outputType":"first"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: notFound
+{}
+
+
+
+Component's receive method finished in: 505 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testgetcontact2@example.com","name":"Test Get Contact 2","campaignId":"fzuqS"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'testgetcontact2@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 921 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"testgetcontact3@example.com","name":"Test Get Contact 3","campaignId":"fzuqS"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'testgetcontact3@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 562 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
 
 ## 5. ListContacts
 ```
@@ -663,6 +967,121 @@ context:
   (empty array)
 uuid:            fcbafb3a-26df-40e4-ab76-9b9df6638cc0
 </details>
+
+```
+appmixer test component src/appmixer/getResponse/core/UpdateContact/ -i '{"in":{"contactId":"fzuqS","name":"Updated Contact Name","note":"Updated note for testing","scoring":25}}'
+```
+<details><summary>❌ output</summary>
+Testing /Users/vladimir/Projects/appmixer-connectors-02/src/appmixer/getResponse/core/UpdateContact
+https://api.appmixer.com
+
+Validating properties.
+{ path: '/Users/vladimir/.config/configstore/appmixer.json' }
+program.url undefined
+
+Creating authentication module.
+
+Test server is listening on 2300
+
+Starting component.
+
+Calling receive method with input message:
+in: 
+  - 
+    properties: 
+      correlationId:     null
+      gridInstanceId:    null
+      contentType:       application/json
+      contentEncoding:   utf8
+      sender:            null
+      destination:       null
+      correlationInPort: null
+      componentHeaders: 
+      signal:            false
+      flowId:            null
+    content: 
+      contactId: fzuqS
+      name:      Updated Contact Name
+      note:      Updated note for testing
+      scoring:   25
+    scope: 
+
+[ERROR]: Request failed with status code 404
+httpStatus:      404
+code:            1013
+codeDescription: The requested resource was not found
+message:         Resource of type: contact not found by: fzuqS
+moreInfo:        https://apidocs.getresponse.com/v3/errors#1013
+context: 
+  - fzuqS
+uuid:            32fd09ea-e893-45ff-b28b-74a22e3a3d68
+</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"updatetest@example.com","campaignId":"fzuqS","name":"Test Contact for Update"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'updatetest@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 548 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/ListContacts/ -i '{"in":{"campaignId":"fzuqS","outputType":"first"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: notFound
+{}
+
+
+
+Component's receive method finished in: 429 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"updatetest2@example.com","campaignId":"fzuqS","name":"Test Contact for Update"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'updatetest2@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 557 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
+
+```
+appmixer test component src/appmixer/getResponse/core/CreateContact/ -i '{"in":{"email":"updatetest3@example.com","campaignId":"fzuqS","name":"Test Contact for Update"}}'
+```
+<details><summary>✅ output</summary>Component has send a message to output port: out
+{
+  'Contact ID': undefined,
+  Email: 'updatetest3@example.com',
+  'Campaign ID': 'fzuqS'
+}
+
+Component's receive method finished in: 643 ms.
+
+Component's state at the end:
+State is empty, component did not store anything into state.
+
+Stopping component.</details>
 
 ## 7. UpdateTag
 ```

@@ -75,6 +75,34 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson(response.data, 'out');
+        // Extract contact ID from location header or response data
+        let contactId;
+        
+        // First, try to get from response data
+        if (response.data && response.data.contactId) {
+            contactId = response.data.contactId;
+        }
+        
+        // If not in data, try location header
+        if (!contactId) {
+            const headers = response.headers || {};
+            const headerKeys = Object.keys(headers);
+            const locationKey = headerKeys.find(key => key.toLowerCase() === 'location');
+            const location = locationKey ? headers[locationKey] : null;
+            
+            if (location) {
+                const locationParts = location.split('/');
+                contactId = locationParts[locationParts.length - 1];
+            }
+        }
+
+        // Build result object with available data
+        const result = {
+            contactId,
+            email,
+            campaignId
+        };
+
+        return context.sendJson(result, 'out');
     }
 };

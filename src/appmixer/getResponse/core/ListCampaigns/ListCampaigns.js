@@ -63,7 +63,6 @@ module.exports = {
             params
         });
 
-
         return lib.sendArrayOutput({ context, records: data || [], outputType });
     }
 };
