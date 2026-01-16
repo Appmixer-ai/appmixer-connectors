@@ -1,89 +1,66 @@
-Perfect! Now I have all the component information. Let me create a comprehensive test plan for the getResponse connector.
+Based on my analysis of the GetResponse connector components, here's the **recommended test plan**:
 
-## **GetResponse Connector - Test Plan**
+## GetResponse Connector - Test Plan
 
-Based on the component analysis, here's the logical test sequence that mimics real user workflows:
+### **Logical Test Sequence:**
 
-### **Recommended Test Sequence:**
+1. **CreateTag** ✓
+   - Creates a tag that will be used in subsequent contact operations
+   - No dependencies
+   - Output: `tagId` (used in steps 3, 5)
 
-```
-1. CreateTag
-   ├─ Creates a tag to be used in contact operations
-   └─ Output: tagId (used in steps 3, 5, 6)
+2. **ListTags** ✓
+   - Verifies the tag created in step 1 exists
+   - Validates listing/filtering functionality
+   - No dependencies on other tests
 
-2. ListTags
-   ├─ Verifies the tag was created
-   └─ Validates tag listing and filtering capabilities
+3. **CreateContact** ✓
+   - Creates a contact with the tag from step 1
+   - Requires: `campaignId` (from test setup), `tagId` (from step 1)
+   - Output: `contactId` (used in steps 4, 5, 6)
 
-3. CreateContact
-   ├─ Creates a contact with the tag from step 1
-   ├─ Requires: campaignId (from user), email, tagId (from step 1)
-   └─ Output: contactId (used in steps 4, 5, 6, 8)
+4. **GetContact** ✓
+   - Retrieves the contact created in step 3
+   - Validates single contact retrieval
+   - Requires: `contactId` (from step 3)
 
-4. GetContact
-   ├─ Retrieves the contact created in step 3
-   ├─ Requires: contactId (from step 3)
-   └─ Validates contact data and tag association
+5. **ListContacts** ✓
+   - Lists contacts, optionally filtering by the contact from step 3
+   - Validates listing/filtering functionality
+   - Can use `contactId` from step 3 for verification
 
-5. UpdateContact
-   ├─ Updates the contact with new information
-   ├─ Requires: contactId (from step 3)
-   └─ Validates modifications (name, scoring, notes, etc.)
+6. **UpdateContact** ✓
+   - Updates the contact created in step 3 (e.g., name, scoring, tag)
+   - Requires: `contactId` (from step 3), optionally `tagId` (from step 1)
+   - Validates update functionality
 
-6. ListContacts
-   ├─ Lists contacts with optional filters
-   ├─ Can filter by email, name, campaignId, state, etc.
-   └─ Verifies the updated contact appears in results
+7. **UpdateTag** ✓
+   - Updates the tag created in step 1 (e.g., rename)
+   - Requires: `tagId` (from step 1)
+   - Validates tag update functionality
 
-7. UpdateTag
-   ├─ Renames or updates the tag from step 1
-   ├─ Requires: tagId (from step 1)
-   └─ Validates tag modification
+8. **DeleteContact** ✓
+   - Deletes the contact created in step 3
+   - Requires: `contactId` (from step 3)
+   - Cleanup operation
 
-8. DeleteContact
-   ├─ Deletes the contact created in step 3
-   ├─ Requires: contactId (from step 3)
-   └─ Validates deletion (irreversible operation)
-
-9. DeleteTag
-   ├─ Deletes the tag created in step 1
-   ├─ Requires: tagId (from step 1)
-   └─ Final cleanup operation
-```
+9. **DeleteTag** ✓
+   - Deletes the tag created in step 1
+   - Requires: `tagId` (from step 1)
+   - Final cleanup operation
 
 ---
 
-### **Key Dependencies & Data Flow:**
+### **Key Dependencies:**
+- **Tag operations** (Create/List/Update/Delete) are independent
+- **Contact operations** depend on having a valid `campaignId` and optionally a `tagId`
+- **Read operations** (Get/List) should follow Create operations to verify data persistence
+- **Update operations** should follow Create operations
+- **Delete operations** should be last (cleanup)
 
-| Step | Component | Requires | Produces | Purpose |
-|------|-----------|----------|----------|---------|
-| 1 | **CreateTag** | tag name | `tagId` | Create test tag |
-| 2 | **ListTags** | (optional filters) | tag list | Verify tag creation |
-| 3 | **CreateContact** | `campaignId`, email, `tagId` | `contactId` | Create test contact |
-| 4 | **GetContact** | `contactId` | contact details | Verify contact creation |
-| 5 | **UpdateContact** | `contactId` | updated contact | Modify contact data |
-| 6 | **ListContacts** | (optional filters) | contact list | Verify updates |
-| 7 | **UpdateTag** | `tagId`, new name | updated tag | Modify tag |
-| 8 | **DeleteContact** | `contactId` | - | Clean up contact |
-| 9 | **DeleteTag** | `tagId` | - | Clean up tag |
+### **Test Data Reuse:**
+- `tagId` from CreateTag → used in CreateContact, UpdateContact, UpdateTag, DeleteTag
+- `contactId` from CreateContact → used in GetContact, ListContacts, UpdateContact, DeleteContact
+- `campaignId` → required for CreateContact (should be obtained from test setup/environment)
 
----
-
-### **Why This Order?**
-
-✅ **Create before Read/Update/Delete** - Tags and contacts must exist before operations on them  
-✅ **Reuse IDs** - Each creation step produces IDs used in subsequent steps  
-✅ **Natural workflow** - Mirrors how users actually manage contacts and tags  
-✅ **Cleanup last** - Deletion operations come at the end to avoid breaking dependent tests  
-✅ **Verification steps** - List and Get operations validate that Create/Update operations worked correctly
-
----
-
-### **Test Data Requirements:**
-
-- **campaignId**: Must be provided (from getResponse account setup)
-- **email**: Valid email address for contact creation
-- **tag name**: Any string for tag creation
-- **contact name**: Optional but recommended for testing
-
-This test plan ensures comprehensive coverage while maintaining logical dependencies and data reusability.
+This sequence mimics real-world usage where users create tags, then create contacts with those tags, manage them, and finally clean up.

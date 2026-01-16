@@ -1,6 +1,6 @@
 const pathModule = require('path');
 
-const DEFAULT_PREFIX = '<SERVICE>-objects-export';
+const DEFAULT_PREFIX = 'getResponse-objects-export';
 
 module.exports = {
 

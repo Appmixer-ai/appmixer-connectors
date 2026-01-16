@@ -21,6 +21,8 @@ module.exports = {
             }
         });
 
+
+        console.log(response.data)
         return context.sendJson(response.data, 'out');
     }
 };

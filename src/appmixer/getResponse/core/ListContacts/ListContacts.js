@@ -33,7 +33,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Items', value: 'contacts' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Contacts', value: 'contacts' });
         }
 
         // Build query parameters
@@ -75,6 +75,10 @@ module.exports = {
         });
 
         const contacts = response.data.contacts || [];
+
+        if (contacts.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: contacts, outputType });
     }

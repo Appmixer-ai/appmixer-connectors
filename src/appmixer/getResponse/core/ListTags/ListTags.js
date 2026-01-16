@@ -3,7 +3,7 @@
 const lib = require('../../lib');
 
 const schema = {
-    'tagId': { 'type': 'string', 'title': 'Tag ID' },
+    'gid': { 'type': 'string', 'title': 'Tag ID' },
     'name': { 'type': 'string', 'title': 'Name' },
     'createdOn': { 'type': 'string', 'title': 'Created On' }
 };
@@ -35,8 +35,6 @@ module.exports = {
             params
         });
 
-        const tags = data.tags || [];
-
-        return lib.sendArrayOutput({ context, records: tags, outputType });
+        return lib.sendArrayOutput({ context, records: data || [], outputType });
     }
 };
