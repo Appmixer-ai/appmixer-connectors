@@ -1,4 +1,5 @@
 'use strict';
+
 const mssql = require('mssql');
 const EventEmitter = require('events');
 
@@ -75,8 +76,21 @@ async function createConnection(context) {
     return await mssql.connect(opt);
 }
 
+/**
+ * Validates that a SQL query starts with SELECT or WITH (for CTEs).
+ * Multiple statements are blocked by MSSQL driver default.
+ * @param {string} query - The SQL query to validate
+ * @throws {Error} If the query doesn't start with SELECT or WITH
+ */
+function validateQuery(query) {
+    if (!/^\s*(select|with)\s/i.test(query)) {
+        throw new Error('Only SELECT or WITH queries are allowed');
+    }
+}
+
 async function runQuery({ context, query, stream = false }) {
 
+    validateQuery(query);
     const conn = await createConnection(context);
     const request = new mssql.Request(conn);
     request.stream = stream;
@@ -151,5 +165,6 @@ module.exports = {
     },
 
     runQuery,
-    createConnection
+    createConnection,
+    validateQuery
 };
