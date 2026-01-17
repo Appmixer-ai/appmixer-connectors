@@ -2,16 +2,16 @@
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 94,
+            "y": 208,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "set-variables": {
             "type": "appmixer.utils.controls.SetVariable",
-            "x": 250,
-            "y": 200,
+            "x": 244,
+            "y": 208,
             "source": {
                 "in": {
                     "on-start": [
@@ -35,12 +35,13 @@
                                             {
                                                 "type": "text",
                                                 "name": "tagName",
-                                                "text": "E2E Test Tag"
+                                                "toggle": false,
+                                                "text": "E2ETestTag"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "updatedTagName",
-                                                "text": "E2E Test Tag Updated"
+                                                "text": "E2ETestTagUpdated"
                                             }
                                         ]
                                     }
@@ -53,8 +54,8 @@
         },
         "before-all": {
             "type": "appmixer.utils.test.BeforeAll",
-            "x": 400,
-            "y": 200,
+            "x": 394,
+            "y": 208,
             "source": {
                 "in": {
                     "set-variables": [
@@ -67,8 +68,8 @@
         },
         "create-tag": {
             "type": "appmixer.getResponse.core.CreateTag",
-            "x": 550,
-            "y": 200,
+            "x": 544,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -84,10 +85,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "name": {}
+                                    "name": {
+                                        "5b67e399-7e91-4af6-9076-f2e15a143b3f": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
-                                    "name": "E2E Test Tag"
+                                    "name": "{{{5b67e399-7e91-4af6-9076-f2e15a143b3f}}}"
                                 }
                             }
                         }
@@ -97,8 +103,8 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 700,
-            "y": 100,
+            "x": 928,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -122,6 +128,10 @@
                                         "tag-name-check": {
                                             "variable": "$.create-tag.out.name",
                                             "functions": []
+                                        },
+                                        "115e1f5c-2fd4-45a0-8b5d-5a1f30a2bd71": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -129,13 +139,13 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{tag-id-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{tag-id-check}}}"
                                             },
                                             {
-                                                "field": "{{{tag-name-check}}}",
                                                 "assertion": "equal",
-                                                "expected": "E2E Test Tag"
+                                                "field": "{{{tag-name-check}}}",
+                                                "expected": "{{{115e1f5c-2fd4-45a0-8b5d-5a1f30a2bd71}}}"
                                             }
                                         ]
                                     }
@@ -148,8 +158,8 @@
         },
         "list-tags": {
             "type": "appmixer.getResponse.core.ListTags",
-            "x": 700,
-            "y": 200,
+            "x": 752,
+            "y": 560,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -180,8 +190,8 @@
         },
         "assert-list": {
             "type": "appmixer.utils.test.Assert",
-            "x": 850,
-            "y": 100,
+            "x": 928,
+            "y": 560,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -201,6 +211,10 @@
                                         "result-check": {
                                             "variable": "$.list-tags.out.result",
                                             "functions": []
+                                        },
+                                        "9947f62e-31ed-48a8-a35e-a54f5a16aea8": {
+                                            "variable": "$.list-tags.out.count",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -208,7 +222,11 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{result-check}}}",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{result-check}}}"
+                                            },
+                                            {
+                                                "field": "{{{9947f62e-31ed-48a8-a35e-a54f5a16aea8}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -222,8 +240,8 @@
         },
         "update-tag": {
             "type": "appmixer.getResponse.core.UpdateTag",
-            "x": 700,
-            "y": 300,
+            "x": 752,
+            "y": 416,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -245,11 +263,16 @@
                                             "functions": []
                                         }
                                     },
-                                    "name": {}
+                                    "name": {
+                                        "3bd5144f-ed83-44a5-a9bd-c48cadb91d80": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
                                     "tagId": "{{{tag-id-var}}}",
-                                    "name": "E2E Test Tag Updated"
+                                    "name": "{{{3bd5144f-ed83-44a5-a9bd-c48cadb91d80}}}"
                                 }
                             }
                         }
@@ -259,8 +282,8 @@
         },
         "assert-update": {
             "type": "appmixer.utils.test.Assert",
-            "x": 850,
-            "y": 300,
+            "x": 928,
+            "y": 416,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -280,6 +303,10 @@
                                         "updated-name-check": {
                                             "variable": "$.update-tag.out.name",
                                             "functions": []
+                                        },
+                                        "08b1fcad-5cb3-4a7f-8d3b-42edd7a5d195": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -287,9 +314,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{updated-name-check}}}",
                                                 "assertion": "equal",
-                                                "expected": "E2E Test Tag Updated"
+                                                "field": "{{{updated-name-check}}}",
+                                                "expected": "{{{08b1fcad-5cb3-4a7f-8d3b-42edd7a5d195}}}"
                                             }
                                         ]
                                     }
@@ -302,8 +329,8 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1000,
-            "y": 200,
+            "x": 1136,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -326,8 +353,8 @@
         },
         "delete-tag": {
             "type": "appmixer.getResponse.core.DeleteTag",
-            "x": 1150,
-            "y": 200,
+            "x": 1270,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -361,8 +388,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
-            "y": 200,
+            "x": 1420,
+            "y": 208,
             "version": "1.0.1",
             "source": {
                 "in": {
