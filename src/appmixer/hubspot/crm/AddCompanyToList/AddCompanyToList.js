@@ -7,7 +7,6 @@ module.exports = {
 
         const {
             listId,
-            companyId,
             companyIds
         } = context.messages.in.content;
 
@@ -15,14 +14,20 @@ module.exports = {
             throw new context.CancelError('List ID is required!');
         }
 
-        // Support both single companyId or array of companyIds
+        if (!companyIds) {
+            throw new context.CancelError('Company IDs are required!');
+        }
+
+        // Parse companyIds - handle both comma-separated string and array
         let recordIds = [];
-        if (companyIds && Array.isArray(companyIds)) {
+        if (Array.isArray(companyIds)) {
             recordIds = companyIds;
-        } else if (companyId) {
-            recordIds = [companyId];
-        } else {
-            throw new context.CancelError('Either companyId or companyIds is required!');
+        } else if (typeof companyIds === 'string') {
+            recordIds = companyIds.split(',').map(id => id.trim()).filter(id => id);
+        }
+
+        if (recordIds.length === 0) {
+            throw new context.CancelError('At least one valid company ID is required!');
         }
 
         const { auth } = context;
