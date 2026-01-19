@@ -1,4 +1,5 @@
 'use strict';
+
 const Hubspot = require('../../Hubspot');
 
 module.exports = {
