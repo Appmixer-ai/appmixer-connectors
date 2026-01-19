@@ -3,11 +3,11 @@
 const assert = require('assert');
 const path = require('path');
 
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../../../../.env') });
 
-const componentPath = '../../../src/appmixer/hubspot/crm/AddCompanyToList/AddCompanyToList';
+const componentPath = '../../crm/AddCompanyToList/AddCompanyToList';
 const component = require(componentPath);
-const { createMockContext } = require('../../utils');
+const { createMockContext } = require('../../../../../test/utils');
 
 describe('HubSpot -> AddCompanyToList', () => {
 
