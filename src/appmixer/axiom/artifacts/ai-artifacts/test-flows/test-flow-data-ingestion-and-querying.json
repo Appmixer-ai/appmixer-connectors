@@ -1,0 +1,220 @@
+{
+    "flow": {
+        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 560,
+            "y": 160,
+            "source": {},
+            "version": "1.0.0"
+        },
+        "e0c5d708-7014-4766-87b3-73dd3d528f5c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1680,
+            "y": 320,
+            "source": {
+                "in": {
+                    "e2051970-21f2-4a3e-9cf5-3afc253a478b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "661a2f77-19b7-4dbd-9f30-7ff556d65c4a": {
+                                            "variable": "$.e2051970-21f2-4a3e-9cf5-3afc253a478b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Axiom - Data Ingestion and Querying",
+                                    "result": "{{{661a2f77-19b7-4dbd-9f30-7ff556d65c4a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 768,
+            "y": 160,
+            "source": {
+                "in": {
+                    "fbb75e69-59ee-4f2e-a7e8-212e903ce201": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1536,
+            "y": 160,
+            "source": {
+                "in": {
+                    "delete-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "create-dataset": {
+            "type": "appmixer.axiom.datasets.CreateDataset",
+            "x": 896,
+            "y": 320,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {},
+                                    "description": {},
+                                    "retentionDays": {}
+                                },
+                                "lambda": {
+                                    "name": "test-e2e-jirka-1",
+                                    "description": "e2e testing, can be removed",
+                                    "retentionDays": 2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "ingest-data": {
+            "type": "appmixer.axiom.datasets.IngestData",
+            "x": 1072,
+            "y": 320,
+            "source": {
+                "in": {
+                    "create-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "data": {},
+                                    "dataFormat": {},
+                                    "datasetName": {}
+                                },
+                                "lambda": {
+                                    "data": "[{\"message\":\"test event 1\",\"level\":\"info\"},{\"message\":\"test event 2\",\"level\":\"warning\"}]",
+                                    "dataFormat": "json",
+                                    "datasetName": "test-e2e-jirka-1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "query-dataset": {
+            "type": "appmixer.axiom.queries.QueryDataset",
+            "x": 1232,
+            "y": 320,
+            "source": {
+                "in": {
+                    "ingest-data": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ingest-data": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "datasetName": {},
+                                    "startTime": {},
+                                    "endTime": {},
+                                    "resolution": {},
+                                    "limit": {}
+                                },
+                                "lambda": {
+                                    "datasetName": "test-e2e-jirka-1",
+                                    "startTime": "now-1h",
+                                    "endTime": "now",
+                                    "resolution": "auto",
+                                    "limit": 2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-dataset": {
+            "type": "appmixer.axiom.datasets.DeleteDataset",
+            "x": 1408,
+            "y": 320,
+            "source": {
+                "in": {
+                    "query-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "query-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "datasetId": {}
+                                },
+                                "lambda": {
+                                    "datasetId": "test-e2e-jirka-1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Axiom - Data Ingestion and Querying",
+    "type": "automation"
+}

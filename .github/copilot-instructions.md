@@ -763,6 +763,51 @@ Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspecto
 - `integer` → `number`
 - `boolean` → `toggle`
 
+### Output Port Schema Definition
+
+Each output port can define its output structure using **either** `schema` or `options`, but **not both**:
+
+- **`schema`**: Use JSON Schema to define the structure of output data. Provides type information and validation.
+- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured.
+
+**IMPORTANT**: You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
+
+```json
+// CORRECT - using schema only
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID" },
+                "name": { "type": "string", "title": "Name" }
+            }
+        }
+    }
+]
+
+// CORRECT - using options only
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id" },
+            { "label": "Name", "value": "name" }
+        ]
+    }
+]
+
+// INCORRECT - both schema and options
+"outPorts": [
+    {
+        "name": "out",
+        "schema": { ... },
+        "options": [ ... ]  // ERROR: Cannot have both
+    }
+]
+```
+
 ---
 
 # Part 6: Component Behavior (JavaScript)
@@ -1080,6 +1125,40 @@ const toCsv = (array) => {
     ].join('\n');
 };
 ```
+
+### outputType Helper Functions (REQUIRED)
+
+Components with `outputType` (Find/List) **MUST** use standardized lib.js helpers.
+
+**Required functions in connector's lib.js:**
+- `sendArrayOutput({ context, outputPortName = 'out', outputType, records })` - handles all output types
+- `getOutputPortOptions(context, outputType, schema, { label })` - dynamic output schema
+
+**Canonical implementation:** Copy from `appmixer-cli/src/ai/src/templates/libs/lib.js`
+
+**Required behavior pattern:**
+```javascript
+const lib = require('../../lib');
+
+module.exports = {
+    async receive(context) {
+        const { outputType } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Items' });
+        }
+
+        const records = await fetchData();
+        return lib.sendArrayOutput({ context, outputType, records });
+    }
+};
+```
+
+**Critical rules:**
+- For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
+- Never use `records` or custom field names for consistency
+- lib.js MUST exist in connector root if component has outputType
+- Run `npm run validate-outputtype` to check compliance
 
 ### List (Items) Components
 
@@ -2502,6 +2581,240 @@ Assert components validate outputs using expressions:
 - `equal`: Exact match comparison (e.g., field equals "expected-value")
 - `notEmpty`: Checks that a field is not empty/null/undefined
 - `regex`: Regular expression pattern match (e.g., field matches pattern "^[0-9]+$")
+
+#### Critical Variable Mapping Rules
+
+These rules are **CRITICAL** and must be followed exactly. Failure to follow these rules will cause test flows to fail silently.
+
+**1. Lambda Values MUST Reference Modifiers with `{{{variable-id}}}` Pattern**
+
+When a modifier defines a variable mapping, the lambda value MUST use the corresponding `{{{variable-id}}}` pattern (for example, `{{{check-var}}}`) - NEVER use an empty string.
+
+**WRONG:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-1": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": ""  // WRONG! This ignores the modifier
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-task-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": "{{{var-task-id}}}"  // CORRECT! References the modifier
+}
+```
+
+**2. Assert `field` Property MUST Use Variable Reference**
+
+The `field` property in Assert expressions must ALWAYS use `{{{uuid}}}` pattern that references a modifier. Never leave it empty.
+
+**WRONG:**
+```json
+"modifiers": {
+    "expression": {
+        "check-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "",  // WRONG! Empty field ignores the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "expression": {
+        "field-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-id}}}",  // CORRECT! References the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**3. Assert `expected` Property for Dynamic Values**
+
+For `equal` assertions comparing dynamic values (from SetVariable or component outputs), BOTH `field` AND `expected` must use variable references.
+
+**CORRECT PATTERN for comparing component output to SetVariable:**
+```json
+"modifiers": {
+    "expression": {
+        "field-content": {
+            "variable": "$.get-task.out.content",
+            "functions": []
+        },
+        "expected-content": {
+            "variable": "$.set-variables.out.taskContent",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-content}}}",
+            "assertion": "equal",
+            "expected": "{{{expected-content}}}"
+        }]
+    }
+}
+```
+
+**4. SetVariable Component Best Practices**
+
+- Place SetVariable component early in flow (immediately after OnStart)
+- Define ALL values that will be used in Assert comparisons
+- Use descriptive variable names (e.g., `taskContent`, `updatedTaskContent`)
+- For unique test data, use `{{{g_timestamp()}}}` or `{{{g_now()}}}` functions
+
+**Example SetVariable Configuration:**
+```json
+"set-variables": {
+    "type": "appmixer.utils.controls.SetVariable",
+    "source": {"in": {"on-start": ["out"]}},
+    "config": {
+        "transform": {
+            "in": {
+                "on-start": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {"variables": {}},
+                        "lambda": {
+                            "variables": {
+                                "ADD": [
+                                    {"type": "text", "name": "taskContent", "text": "E2E Test Task"},
+                                    {"type": "text", "name": "updatedContent", "text": "E2E Test Task Updated"}
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**5. Component Dependencies and Source Connections**
+
+Components that need data from another component MUST have that component in their `source.in`. The source component's output is accessed via `$.component-id.out.fieldName`.
+
+**WRONG - GetTask sources from wrong component:**
+```json
+"get-task": {
+    "source": {"in": {"before-all": ["out"]}},  // WRONG! Can't access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This won't work!
+        }
+    }
+}
+```
+
+**CORRECT - GetTask sources from CreateTask:**
+```json
+"get-task": {
+    "source": {"in": {"create-task": ["out"]}},  // CORRECT! Can access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This works!
+        }
+    }
+}
+```
+
+**6. ProcessE2EResults `result` Field**
+
+The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out`. Never leave it empty.
+
+**CORRECT:**
+```json
+"modifiers": {
+    "result": {
+        "result-var": {
+            "variable": "$.after-all.out",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "recipients": "test@appmixer.ai",
+    "testCase": "E2E Connector - feature",
+    "result": "{{{result-var}}}"
+}
+```
+
+**7. AfterAll Must Receive ALL Assert Outputs - CRITICAL**
+
+**EVERY** Assert component in the flow MUST have its output connected to the AfterAll component's `source.in`. This is **CRITICAL** - missing any Assert connection will cause that assertion's result to be lost and not included in the test report.
+
+**Common Mistake**: Assert components that are in the middle of the flow (not at the end) are often forgotten. Even if an Assert flows to another component first, it MUST ALSO connect to AfterAll.
+
+**WRONG - Missing assert-create connection:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-get": ["out"],
+            "assert-update": ["out"]
+            // WRONG! assert-create is missing - its result will be lost!
+        }
+    }
+}
+```
+
+**CORRECT - All Asserts connected:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-create": ["out"],   // First assert
+            "assert-get": ["out"],      // Second assert
+            "assert-update": ["out"],   // Third assert
+            "assert-list": ["out"]      // Fourth assert - ALL included!
+        }
+    }
+}
+```
+
+**Verification Checklist**: Before finalizing any test flow:
+1. Count the number of Assert components in the flow
+2. Count the number of Assert connections in AfterAll's `source.in`
+3. These numbers MUST match exactly
+4. If counts don't match, the missing Assert results will not appear in the test report, causing silent test failures.
 
 #### Best Practices for Test Flows
 
