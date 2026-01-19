@@ -12,7 +12,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!listId) {
-            throw new Error('List ID is required!');
+            throw new context.CancelError('List ID is required!');
         }
 
         // Support both single companyId or array of companyIds
@@ -22,7 +22,7 @@ module.exports = {
         } else if (companyId) {
             recordIds = [companyId];
         } else {
-            throw new Error('Either companyId or companyIds is required!');
+            throw new context.CancelError('Either companyId or companyIds is required!');
         }
 
         const { auth } = context;

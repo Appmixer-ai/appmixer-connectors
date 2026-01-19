@@ -16,7 +16,7 @@ module.exports = {
 
         // Need either companyId or domain
         if (!companyId && !domain) {
-            throw new Error('Either Company ID or domain is required!');
+            throw new context.CancelError('Either Company ID or domain is required!');
         }
 
         const { auth } = context;

@@ -13,7 +13,7 @@ module.exports = {
         } = context.messages.in.content;
 
         if (!domain) {
-            throw new Error('Company domain is required!');
+            throw new context.CancelError('Company domain is required!');
         }
 
         const { auth } = context;
