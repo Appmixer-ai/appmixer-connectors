@@ -197,7 +197,7 @@ async function buildRequestOptions(context, method, options) {
 
     let json = {
         method,
-        url,
+        url: url || options.url,
         headers,
         ...(method.toLowerCase() === 'get' ? { params: body } : { data: body })
     };
