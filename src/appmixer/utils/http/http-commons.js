@@ -417,8 +417,6 @@ async function sendWithUndici(context, method, options) {
 
         const responseData = await responseBody.json();
 
-        await context.log({ step: 'Undici request successful: ' + method, statusCode });
-
         return {
             statusCode,
             headers: responseHeaders,
