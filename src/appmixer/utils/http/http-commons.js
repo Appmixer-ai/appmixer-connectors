@@ -254,8 +254,7 @@ async function buildHttpsAgentFromFiles(
     }
 
     // Read and validate CA certificate if provided
-    // Skip CA certificate if ignoreSsl is true (contradictory options)
-    if (caCertificateFileId && !ignoreSsl) {
+    if (caCertificateFileId) {
         const caBuffer = await context.getFileReadStream(caCertificateFileId);
         const caChunks = [];
         for await (const chunk of caBuffer) {
@@ -299,6 +298,9 @@ async function buildHttpsAgentFromFiles(
  * @return {boolean}
  */
 function hasSslOptions(content) {
+    if (!content) {
+        return false;
+    }
     const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = content;
     return !!(caCertificateFileId || clientCertificateFileId || clientKeyFileId || ignoreSsl);
 }
