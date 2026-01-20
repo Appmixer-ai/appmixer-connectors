@@ -328,7 +328,7 @@ async function buildUndiciAgent(context, certOptions) {
     }
 
     // Read and validate CA certificate if provided
-    if (caCertificateFileId && !ignoreSsl) {
+    if (caCertificateFileId) {
         const caBuffer = await context.getFileReadStream(caCertificateFileId);
         const caChunks = [];
         for await (const chunk of caBuffer) {
