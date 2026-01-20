@@ -170,7 +170,7 @@ async function buildRequestOptions(context, method, options) {
         errors.push('Message property \'headers\' parse error. ' + error.message);
     }
 
-    let body = options.body;
+    let body = options?.body;
 
     if (options.bodyBase64Encode && body) {
         try {
