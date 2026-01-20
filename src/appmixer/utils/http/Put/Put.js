@@ -48,6 +48,7 @@ module.exports = {
     async receive(context) {
 
         const { url, headers, bodyType, fileId } = context.messages.in.content;
+        const hasSSL = request.hasSslOptions(context.messages.in.content);
 
         if (bodyType === 'binary') {
 
@@ -72,6 +73,12 @@ module.exports = {
             return await sendFormData(context, url, headersParsed);
         }
 
+        // Use undici for JSON requests with SSL options
+        if (hasSSL) {
+            const response = await request.sendWithUndici(context, 'PUT', context.messages.in.content);
+            return context.sendJson(response, 'response');
+        }
+
         return request(context, 'PUT', context.messages.in.content)
             .then(response => {
                 return context.sendJson(response, 'response');
@@ -82,11 +89,53 @@ module.exports = {
 const sendBinaryData = async (context, url, headers, binaryFileId) => {
 
     const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = context.messages.in.content;
+    const hasSSL = request.hasSslOptions(context.messages.in.content);
 
     try {
         const fileStream = await context.getFileReadStream(binaryFileId);
         const fileInfo = await context.getFileInfo(binaryFileId);
 
+        // If SSL options are provided, use undici directly
+        if (hasSSL) {
+            const fileChunks = [];
+            for await (const chunk of fileStream) {
+                fileChunks.push(chunk);
+            }
+            const fileBuffer = Buffer.concat(fileChunks);
+
+            const agent = await request.buildUndiciAgent(context, {
+                caCertificateFileId,
+                clientCertificateFileId,
+                clientKeyFileId,
+                ignoreSsl
+            });
+
+            const { statusCode, headers: responseHeaders, body: responseBody } = await require('undici').request(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Length': fileBuffer.length,
+                    ...headers
+                },
+                body: fileBuffer,
+                dispatcher: agent
+            });
+
+            const responseData = await responseBody.json();
+
+            return await context.sendJson({
+                statusCode,
+                headers: responseHeaders,
+                body: responseData,
+                request: {
+                    uri: url,
+                    method: 'PUT',
+                    headers
+                }
+            }, 'response');
+        }
+
+        // Fallback to axios via context.httpRequest for non-SSL requests
         const requestOptions = {
             method: 'put',
             url,
@@ -98,7 +147,6 @@ const sendBinaryData = async (context, url, headers, binaryFileId) => {
             }
         };
 
-        // Add HTTPS agent if certificates or SSL options are provided
         const httpsAgent = await request.buildHttpsAgentFromFiles(
             context,
             caCertificateFileId,
@@ -125,6 +173,7 @@ const sendFormData = async (context, url, headers) => {
     const {
         bodyFormData, caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl
     } = context.messages.in.content;
+    const hasSSL = request.hasSslOptions(context.messages.in.content);
     const variablesArray = bodyFormData?.ADD || [];
 
     const formData = new FormData();
@@ -152,6 +201,37 @@ const sendFormData = async (context, url, headers) => {
         }
     }
 
+    // If SSL options are provided, use undici directly
+    if (hasSSL) {
+        const agent = await request.buildUndiciAgent(context, {
+            caCertificateFileId,
+            clientCertificateFileId,
+            clientKeyFileId,
+            ignoreSsl
+        });
+
+        const { statusCode, headers: responseHeaders, body: responseBody } = await require('undici').request(url, {
+            method: 'PUT',
+            headers: { ...formData.getHeaders(), ...headers },
+            body: formData,
+            dispatcher: agent
+        });
+
+        const responseData = await responseBody.json();
+
+        return await context.sendJson({
+            statusCode,
+            headers: responseHeaders,
+            body: responseData,
+            request: {
+                uri: url,
+                method: 'PUT',
+                headers
+            }
+        }, 'response');
+    }
+
+    // Fallback to axios via context.httpRequest for non-SSL requests
     const requestOptions = {
         method: 'put',
         url,
@@ -159,7 +239,6 @@ const sendFormData = async (context, url, headers) => {
         headers: { ...formData.getHeaders(), ...headers }
     };
 
-    // Add HTTPS agent if certificates or SSL options are provided
     const httpsAgent = await request.buildHttpsAgentFromFiles(
         context,
         caCertificateFileId,
