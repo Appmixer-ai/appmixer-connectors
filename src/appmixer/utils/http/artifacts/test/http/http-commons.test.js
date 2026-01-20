@@ -2,7 +2,7 @@ const sinon = require('sinon');
 const assert = require('assert');
 const https = require('https');
 
-describe('processResponse', () => {
+describe('http processResponse', () => {
 
     let axiosRequestStub;
 
@@ -49,7 +49,7 @@ describe('processResponse', () => {
     });
 });
 
-describe('buildHttpsAgent', () => {
+describe('http buildHttpsAgent', () => {
 
     before(async function() {
         this.timeout(10000);
