@@ -39,7 +39,7 @@ module.exports = {
         const { outputType, id } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tags', value: 'tags' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Emails', value: 'emails' });
         }
 
         // Validate required fields

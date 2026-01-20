@@ -1,0 +1,332 @@
+{
+    "name": "E2E GoogleDocs - crud",
+    "description": "End-to-end test for GoogleDocs connector - tests CRUD operations (Create, Download, Delete)",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 250,
+            "y": 200,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "documentTitle",
+                                                "text": "E2E Test Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "documentContent",
+                                                "text": "This is test content for the E2E test flow."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 400,
+            "y": 200,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-document": {
+            "type": "appmixer.googleDocs.core.CreateDocument",
+            "x": 550,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "title-var": {
+                                            "variable": "$.set-variables.out.documentTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "content": {
+                                        "content-var": {
+                                            "variable": "$.set-variables.out.documentContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "",
+                                    "content": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-document-created": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "doc-id-check": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "download-document": {
+            "type": "appmixer.googleDocs.core.DownloadDocument",
+            "x": 700,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "doc-id-var": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "mimeType": {}
+                                },
+                                "lambda": {
+                                    "documentId": "",
+                                    "mimeType": "application/pdf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-document-downloaded": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 850,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "download-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "download-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "file-id-check": {
+                                            "variable": "$.download-document.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1000,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-document-downloaded": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-document": {
+            "type": "appmixer.googleDocs.core.DeleteDocument",
+            "x": 1150,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "doc-id-var": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E GoogleDocs - crud",
+                                    "result": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

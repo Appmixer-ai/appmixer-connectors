@@ -12,24 +12,51 @@ module.exports = {
     async registerWebhookSubscription(context, event) {
         const { accessToken, profileInfo: { resource } } = context.auth;
         const url = context.getWebhookUrl();
-        context.log({ step: 'registerWebhookSubscription webhookUrl', url });
 
-        const { data } = await context.httpRequest({
-            method: 'POST',
-            url: 'https://api.calendly.com/webhook_subscriptions',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-            },
-            data: {
-                url: url,
-                events: [event],
-                scope: 'user',
-                user: resource.uri,
-                organization: resource.current_organization
+        try {
+            const { data } = await context.httpRequest({
+                method: 'POST',
+                url: 'https://api.calendly.com/webhook_subscriptions',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                data: {
+                    url,
+                    events: [event],
+                    scope: 'user',
+                    user: resource.uri,
+                    organization: resource.current_organization
+                }
+            });
+            context.log({ step: 'registerWebhookSubscription', data });
+            return data.resource;
+        } catch (error) {
+            if (error.response && error.response.status === 409) {
+                const options = {
+                    method: 'GET',
+                    url: 'https://api.calendly.com/webhook_subscriptions',
+                    headers: { 'Authorization': `Bearer ${accessToken}` },
+                    params: {
+                        organization: resource.current_organization,
+                        scope: 'user',
+                        user: resource.uri
+                    }
+                };
+                const listResponse = await context.httpRequest(options);
+
+                const existing = listResponse.data.collection.find(
+                    sub => sub.callback_url === url && sub.events.includes(event)
+                );
+
+                if (existing) {
+                    context.log({ step: 'registerWebhookSubscription (fetched existing)', data: existing });
+                    return { uri: existing.uri };
+                }
+
+                // If no matching webhook found, throw the original error
+                throw error;
             }
-        });
-        context.log({ step: 'registerWebhookSubscription response', data });
-        return data.resource;
+        }
     },
 
     /**

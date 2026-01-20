@@ -40,28 +40,33 @@ module.exports = {
             throw new context.CancelError('Customer ID is required!');
         }
 
+        const customerIdNumber = parseInt(customerId, 10);
+
         // Build customer object using customer ID
         const customerData = {
-            id: parseInt(customerId)
+            id: customerIdNumber
         };
+
+        // Use threadsType directly from inspector, default to "customer"
+        const hsThreadType = (threadsType && threadsType.trim()) || 'customer';
 
         // Build thread object based on thread type
         const thread = {
-            type: threadsType || 'customer',
+            type: hsThreadType,
             text: threadsText
         };
 
-        // For customer threads, include customer reference
-        if ((threadsType || 'customer') === 'customer') {
-            thread.customer = { id: parseInt(customerId) };
+        // For customer, reply, phone and chat threads, include customer reference
+        if (['customer', 'reply', 'phone', 'chat'].includes(hsThreadType)) {
+            thread.customer = { id: customerIdNumber };
         }
 
         const requestBody = {
-            type: type || 'email',
-            mailboxId: parseInt(mailboxId),
+            type: type || 'email',                 // email, chat, phone
+            mailboxId: parseInt(mailboxId, 10),
             subject,
             status,
-            customer: customerData,
+            customer: customerData,                // top level customer
             threads: [thread]
         };
 
@@ -70,16 +75,20 @@ module.exports = {
             let normalizedTags = [];
 
             if (Array.isArray(tags)) {
-                // Handle array input - convert each item to string
-                normalizedTags = tags.map(tag => {
-                    if (typeof tag === 'object' && tag.value !== undefined) {
-                        return String(tag.value);
-                    }
-                    return String(tag);
-                }).filter(tag => tag && tag !== '');
+                normalizedTags = tags
+                    .map(tag => {
+                        if (typeof tag === 'object' && tag.value !== undefined) {
+                            return String(tag.value);
+                        }
+                        return String(tag);
+                    })
+                    .filter(tag => tag && tag !== '');
             } else {
-                // Handle single value input - convert to string and put in array
-                const tagValue = typeof tags === 'object' && tags.value !== undefined ? tags.value : tags;
+                const tagValue =
+                    typeof tags === 'object' && tags.value !== undefined
+                        ? tags.value
+                        : tags;
+
                 if (tagValue && String(tagValue) !== '') {
                     normalizedTags = [String(tagValue)];
                 }

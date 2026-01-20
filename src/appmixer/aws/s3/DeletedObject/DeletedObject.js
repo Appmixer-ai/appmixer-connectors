@@ -1,6 +1,6 @@
 'use strict';
-const Promise = require('bluebird');
-const commons = require('../../aws-commons');
+
+const lib = require('../lib');
 
 /**
  * Component which triggers whenever an object is deleted.
@@ -18,12 +18,12 @@ module.exports = {
             kmsMasterKeyId,
             trustedAccountIds
         };
-        return commons.registerWebhook(context, payload);
+        return lib.registerWebhook(context, payload);
     },
 
     stop(context) {
 
-        return commons.unregisterWebhook(context);
+        return lib.unregisterWebhook(context);
     },
 
     /**
@@ -37,12 +37,12 @@ module.exports = {
         const payload = JSON.parse(data);
 
         if (headers && headers['x-amz-sns-message-type'] === 'SubscriptionConfirmation') {
-            return commons.confirmSubscription(context, payload);
+            return lib.confirmSubscription(context, payload);
         }
 
         const message = JSON.parse(payload.Message);
         if (Array.isArray(message.Records)) {
-            await Promise.map(message.Records, async record => {
+            const results = await Promise.allSettled(message.Records.map(async record => {
                 const { object } = record.s3;
 
                 if (object) {
@@ -54,7 +54,13 @@ module.exports = {
 
                     return context.sendJson(object, 'deleted');
                 }
-            });
+            }));
+
+            // Check for any errors after all items have been processed
+            const errors = results.filter(result => result.status === 'rejected');
+            if (errors.length > 0) {
+                throw errors[0].reason;
+            }
         }
 
         return context.response();

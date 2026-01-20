@@ -1,5 +1,7 @@
 'use strict';
-const commons = require('../../aws-commons');
+
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * Deletes bucket.
@@ -18,10 +20,15 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
-        const { s3 } = commons.init(context);
-        await s3.deleteObject({ Bucket: bucket, Key: key }).promise();
-
-        return context.sendJson({ Bucket: bucket, Key: key }, 'deleted');
+        const { s3 } = lib.init(context);
+        try {
+            await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+            return context.sendJson({ Bucket: bucket, Key: key }, 'deleted');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

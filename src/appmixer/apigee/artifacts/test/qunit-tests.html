@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>IP Blocking Policy - QUnit Tests</title>
+    <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-2.19.4.css">
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    
+    <script src="https://code.jquery.com/qunit/qunit-2.19.4.js"></script>
+    
+    <script>
+        // Global variables that will be reset before each test
+        var variables = {};
+        var context = {};
+
+        // Setup function to reset context before each test
+        function setupContext() {
+            variables = {};
+            context = {
+                getVariable: function(name) {
+                    return variables[name];
+                },
+                setVariable: function(name, value) {
+                    variables[name] = value;
+                }
+            };
+            
+            // Mock print function
+            window.print = function() {};
+        }
+    </script>
+
+    <script src="../sharedflowbundle/resources/jsc/ip-blocking-policy.js"></script>
+
+
+    <script>
+        QUnit.module('IP Blocking Policy Tests', function(hooks) {
+            hooks.beforeEach(function() {
+                setupContext();
+            });
+
+            QUnit.module('getIpGroup Function', function() {
+                QUnit.test('should return consistent hash for same IP', function(assert) {
+                    var ip = '192.168.1.1';
+                    var group1 = getIpGroup(ip);
+                    var group2 = getIpGroup(ip);
+                    
+                    assert.strictEqual(group1, group2, 'Same IP should always return same group');
+                    assert.ok(group1 >= 0 && group1 < 500, 'Group should be between 0 and 499');
+                });
+
+                QUnit.test('should return different groups for different IPs', function(assert) {
+                    var group1 = getIpGroup('192.168.1.1');
+                    var group2 = getIpGroup('10.0.0.1');
+                    
+                    assert.notEqual(group1, group2, 'Different IPs should likely have different groups');
+                });
+
+                QUnit.test('should handle empty IP string', function(assert) {
+                    var group = getIpGroup('');
+                    assert.strictEqual(group, 0, 'Empty string should return 0');
+                });
+            });
+
+            QUnit.module('entryToList Function', function() {
+                QUnit.test('should parse simple IP list without expiration', function(assert) {
+                    var entry = '192.168.1.1;|10.0.0.1;|';
+                    var result = entryToList(entry);
+                    
+                    assert.ok(result['192.168.1.1'], 'Should contain first IP');
+                    assert.ok(result['10.0.0.1'], 'Should contain second IP');
+                    assert.strictEqual(result['192.168.1.1'].ip, '192.168.1.1', 'IP should be parsed correctly');
+                    assert.strictEqual(result['192.168.1.1'].expiration, null, 'No expiration should be null');
+                });
+
+                QUnit.test('should parse IP list with expiration times', function(assert) {
+                    var futureTime = Date.now() + 3600000; // 1 hour from now
+                    var entry = '192.168.1.1;' + futureTime + '|10.0.0.1;|';
+                    var result = entryToList(entry);
+                    
+                    assert.strictEqual(result['192.168.1.1'].expiration, futureTime, 'Should parse expiration time');
+                    assert.strictEqual(result['10.0.0.1'].expiration, null, 'No expiration should be null');
+                });
+
+                QUnit.test('should handle empty entry', function(assert) {
+                    var result = entryToList('');
+                    assert.deepEqual(result, {}, 'Empty string should return empty object');
+                });
+
+                QUnit.test('should handle null entry', function(assert) {
+                    var result = entryToList(null);
+                    assert.deepEqual(result, {}, 'Null should return empty object');
+                });
+
+                QUnit.test('should skip empty IP entries', function(assert) {
+                    var entry = '192.168.1.1;|;|10.0.0.1;|';
+                    var result = entryToList(entry);
+                    
+                    assert.ok(result['192.168.1.1'], 'Should contain first IP');
+                    assert.ok(result['10.0.0.1'], 'Should contain second IP');
+                    assert.strictEqual(Object.keys(result).length, 2, 'Should have exactly 2 IPs');
+                });
+            });
+
+            QUnit.module('isIPInCIDR Function', function() {
+                QUnit.test('should match IP in /24 CIDR range', function(assert) {
+                    assert.ok(isIPInCIDR('192.168.1.1', '192.168.1.0/24'), 'IP should be in range');
+                    assert.ok(isIPInCIDR('192.168.1.255', '192.168.1.0/24'), 'IP at end of range should match');
+                });
+
+                QUnit.test('should not match IP outside /24 CIDR range', function(assert) {
+                    assert.notOk(isIPInCIDR('192.168.2.1', '192.168.1.0/24'), 'IP should not be in range');
+                });
+
+                QUnit.test('should match IP in /16 CIDR range', function(assert) {
+                    assert.ok(isIPInCIDR('192.168.1.1', '192.168.0.0/16'), 'IP should be in /16 range');
+                    assert.ok(isIPInCIDR('192.168.255.255', '192.168.0.0/16'), 'IP at end should match');
+                });
+
+                QUnit.test('should match IP in /32 CIDR range (single IP)', function(assert) {
+                    assert.ok(isIPInCIDR('192.168.1.1', '192.168.1.1/32'), 'Exact IP should match');
+                    assert.notOk(isIPInCIDR('192.168.1.2', '192.168.1.1/32'), 'Different IP should not match');
+                });
+
+                QUnit.test('should match IP in /8 CIDR range', function(assert) {
+                    assert.ok(isIPInCIDR('10.1.2.3', '10.0.0.0/8'), 'IP should be in /8 range');
+                    assert.notOk(isIPInCIDR('11.1.2.3', '10.0.0.0/8'), 'IP outside range should not match');
+                });
+            });
+
+            QUnit.module('ipToInt Function', function() {
+                QUnit.test('should convert IP to correct integer', function(assert) {
+                    var result = ipToInt('192.168.1.1');
+                    var expected = (192 * 16777216) + (168 * 65536) + (1 * 256) + 1;
+                    assert.strictEqual(result, expected, 'Should convert IP correctly');
+                    assert.strictEqual(result, 3232235777, 'Should equal the correct integer value');
+                });
+
+                QUnit.test('should handle 0.0.0.0', function(assert) {
+                    var result = ipToInt('0.0.0.0');
+                    assert.strictEqual(result, 0, 'Should convert to 0');
+                });
+
+                QUnit.test('should handle 255.255.255.255', function(assert) {
+                    var result = ipToInt('255.255.255.255');
+                    assert.strictEqual(result, 4294967295, 'Should convert to max value (not -1)');
+                });
+
+                QUnit.test('should handle 10.0.0.1', function(assert) {
+                    var result = ipToInt('10.0.0.1');
+                    var expected = (10 * 16777216) + 1;
+                    assert.strictEqual(result, expected, 'Should convert correctly');
+                    assert.strictEqual(result, 167772161, 'Should equal the correct integer value');
+                });
+
+                QUnit.test('should handle 127.0.0.1', function(assert) {
+                    var result = ipToInt('127.0.0.1');
+                    var expected = (127 * 16777216) + 1;
+                    assert.strictEqual(result, expected, 'Should convert correctly');
+                    assert.strictEqual(result, 2130706433, 'Should equal the correct integer value');
+                });
+            });
+
+            QUnit.module('getBlockedIps Function', function() {
+                QUnit.test('should return empty array when no blocked IPs', function(assert) {
+                    var result = getBlockedIps('192.168.1.1');
+                    assert.deepEqual(result, [], 'Should return empty array');
+                });
+
+                QUnit.test('should return list of blocked IPs', function(assert) {
+                    var ip = '192.168.1.1';
+                    var group = getIpGroup(ip);
+                    variables['blocked-ips-' + group] = '10.0.0.1;|20.0.0.1;|';
+                    
+                    var result = getBlockedIps(ip);
+                    assert.strictEqual(result.length, 2, 'Should return 2 IPs');
+                    assert.ok(result.indexOf('10.0.0.1') > -1, 'Should contain first IP');
+                    assert.ok(result.indexOf('20.0.0.1') > -1, 'Should contain second IP');
+                });
+
+                QUnit.test('should filter expired IPs', function(assert) {
+                    var ip = '192.168.1.1';
+                    var group = getIpGroup(ip);
+                    var pastTime = Date.now() - 3600000; // 1 hour ago
+                    var futureTime = Date.now() + 3600000; // 1 hour from now
+                    
+                    variables['blocked-ips-' + group] = 
+                        '10.0.0.1;' + pastTime + '|' +
+                        '20.0.0.1;' + futureTime + '|' +
+                        '30.0.0.1;|';
+                    
+                    var result = getBlockedIps(ip);
+                    assert.strictEqual(result.length, 2, 'Should return 2 non-expired IPs');
+                    assert.ok(result.indexOf('10.0.0.1') === -1, 'Should not contain expired IP');
+                    assert.ok(result.indexOf('20.0.0.1') > -1, 'Should contain non-expired IP');
+                    assert.ok(result.indexOf('30.0.0.1') > -1, 'Should contain permanent IP');
+                });
+
+                QUnit.test('should set context variables', function(assert) {
+                    var ip = '192.168.1.1';
+                    var group = getIpGroup(ip);
+                    variables['blocked-ips-' + group] = '10.0.0.1;|20.0.0.1;|';
+                    
+                    getBlockedIps(ip);
+                    
+                    assert.strictEqual(variables['blocked.ips.count'], '2', 'Should set count');
+                    assert.strictEqual(variables['blocked.ips.loaded'], 'true', 'Should set loaded flag');
+                    assert.ok(variables['blocked.ips.simple'], 'Should set simple list');
+                });
+            });
+
+            QUnit.module('Main Policy Logic - Individual IPs', function() {
+                QUnit.test('should block individual IP', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.1.1';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = clientIP + ';|';
+                    
+                    // Reload the script by evaluating it in the test context
+                    // Since we can't easily reload, we'll test the helper functions
+                    var blockedIPs = getBlockedIps(clientIP);
+                    var isBlocked = blockedIPs.indexOf(clientIP) > -1;
+                    
+                    assert.ok(isBlocked, 'IP should be blocked');
+                });
+
+                QUnit.test('should not block non-listed IP', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.1.1';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = '10.0.0.1;|';
+                    
+                    var blockedIPs = getBlockedIps(clientIP);
+                    var isBlocked = blockedIPs.indexOf(clientIP) > -1;
+                    
+                    assert.notOk(isBlocked, 'IP should not be blocked');
+                });
+            });
+
+            QUnit.module('Main Policy Logic - CIDR Ranges', function() {
+                QUnit.test('should block IP in CIDR range', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.1.100';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = '192.168.1.0/24;|';
+                    
+                    var blockedIPs = getBlockedIps(clientIP);
+                    var individualIPs = [];
+                    var cidrRanges = [];
+                    
+                    blockedIPs.forEach(function(entry) {
+                        if (entry.indexOf('/') > -1) {
+                            cidrRanges.push(entry);
+                        } else {
+                            individualIPs.push(entry);
+                        }
+                    });
+                    
+                    var isBlocked = false;
+                    for (var i = 0; i < cidrRanges.length; i++) {
+                        if (isIPInCIDR(clientIP, cidrRanges[i])) {
+                            isBlocked = true;
+                            break;
+                        }
+                    }
+                    
+                    assert.ok(isBlocked, 'IP should be blocked by CIDR range');
+                });
+
+                QUnit.test('should not block IP outside CIDR range', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.2.1';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = '192.168.1.0/24;|';
+                    
+                    var blockedIPs = getBlockedIps(clientIP);
+                    var cidrRanges = [];
+                    
+                    blockedIPs.forEach(function(entry) {
+                        if (entry.indexOf('/') > -1) {
+                            cidrRanges.push(entry);
+                        }
+                    });
+                    
+                    var isBlocked = false;
+                    for (var i = 0; i < cidrRanges.length; i++) {
+                        if (isIPInCIDR(clientIP, cidrRanges[i])) {
+                            isBlocked = true;
+                            break;
+                        }
+                    }
+                    
+                    assert.notOk(isBlocked, 'IP should not be blocked');
+                });
+            });
+
+            QUnit.module('Integration Tests', function() {
+                QUnit.test('should handle mixed individual IPs and CIDR ranges', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.1.50';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = '10.0.0.1;|192.168.1.0/24;|20.0.0.0/8;|';
+                    
+                    var blockedIPs = getBlockedIps(clientIP);
+                    assert.ok(blockedIPs.length > 0, 'Should have blocked entries');
+                    
+                    var hasIndividual = false;
+                    var hasCIDR = false;
+                    
+                    blockedIPs.forEach(function(entry) {
+                        if (entry.indexOf('/') > -1) {
+                            hasCIDR = true;
+                        } else {
+                            hasIndividual = true;
+                        }
+                    });
+                    
+                    assert.ok(hasIndividual, 'Should have individual IPs');
+                    assert.ok(hasCIDR, 'Should have CIDR ranges');
+                });
+
+                QUnit.test('should handle empty blocked list gracefully', function(assert) {
+                    setupContext();
+                    var clientIP = '192.168.1.1';
+                    var group = getIpGroup(clientIP);
+                    
+                    variables['client.ip'] = clientIP;
+                    variables['blocked-ips-' + group] = '|';
+                    
+                    var blockedIPs = getBlockedIps(clientIP);
+                    assert.strictEqual(blockedIPs.length, 0, 'Should return empty array');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

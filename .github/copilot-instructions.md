@@ -1,9 +1,8 @@
-# Appmixer
+# Appmixer Development & Component Creation Guidelines
 
 ## Overview
 
-Appmixer is a workflow engine with a web user interface that allows end-users to create business processes using a
-drag-and-drop UI without writing code.
+Appmixer is a workflow engine with a web user interface that allows end-users to create business processes using a drag-and-drop UI without writing code. This comprehensive guide covers connector development, authentication, component creation, and best practices for both AI assistance and human developers.
 
 ## Project Structure
 
@@ -16,12 +15,13 @@ test/
 └── [test files]
 ```
 
-# Connectors
+---
+
+# Part 1: Connectors
 
 ## Overview
 
-Connectors are integrations with external services. Each connector contains authentication logic, service metadata, and
-one or more components that perform specific actions.
+Connectors are integrations with external services. Each connector contains authentication logic, service metadata, and one or more components that perform specific actions.
 
 ## Connector Structure
 
@@ -41,7 +41,7 @@ connector_name/
         └── component.json
 ```
 
-documentation: https://docs.appmixer.com/building-connectors/example-component#component-behaviour-sms-sendsms-sendsms.js
+**Documentation**: https://docs.appmixer.com/building-connectors/example-component#component-behaviour-sms-sendsms-sendsms.js
 
 ## Core Configuration Files
 
@@ -53,6 +53,7 @@ Optional file that contains dependencies.
 
 Describes the connector service and its metadata.
 
+**Example**:
 ```json
 {
     "name": "appmixer.connectorname",
@@ -64,8 +65,7 @@ Describes the connector service and its metadata.
 }
 ```
 
-json schema of the service.json file:
-
+**JSON Schema**:
 ```json
 {
     "type": "object",
@@ -103,6 +103,7 @@ json schema of the service.json file:
 
 Contains bundle metadata and version history.
 
+**Example**:
 ```json
 {
     "name": "appmixer.connectorname",
@@ -114,8 +115,8 @@ Contains bundle metadata and version history.
     }
 }
 ```
-json schema of the bundle.json file:
 
+**JSON Schema**:
 ```json
 {
     "type": "object",
@@ -137,10 +138,13 @@ json schema of the bundle.json file:
 }
 ```
 
+**IMPORTANT - Single Version Rule**: For unreleased connectors (new connectors being developed), the bundle.json must have only ONE version entry (typically 1.0.0). Do NOT pre-create multiple version entries (e.g., 1.0.0, 1.1.0, 1.2.0) before the connector is released. New versions should only be added when actual releases occur, not during initial development.
+
 ### quota.js
 
 Defines rate limiting rules to prevent API quota violations.
 
+**Example**:
 ```javascript
 module.exports = {
     rules: [
@@ -163,16 +167,15 @@ module.exports = {
 };
 ```
 
-**rules**: An array of rules that define usage limits. Each rule can have the following properties:
-**limit**: Maximum number of calls in the time window specified by window.
-**window**: The time window in milliseconds.
-**throttling**: The throttling mechanism. Can be either a string 'window-sliding' or an object with type and
-getStartOfNextWindow function.
-**resource**: An identifier of the resource to which the rule applies. The resource is a way for a component to pick
-rules that apply to that specific component. This can be done in the component manifest file in the quota.resources
-section.
+**Rule Properties**:
+- **limit**: Maximum number of calls in the time window specified by window.
+- **window**: The time window in milliseconds.
+- **throttling**: The throttling mechanism. Can be either a string 'window-sliding' or an object with type and getStartOfNextWindow function.
+- **resource**: An identifier of the resource to which the rule applies. This can be referenced in component manifests in the quota.resources section.
 
-# Authentication
+---
+
+# Part 2: Authentication
 
 ## Overview
 
@@ -184,12 +187,13 @@ Appmixer supports multiple authentication methods. The `auth.js` file defines ho
 
 For services that use API keys or tokens.
 
+**Generic Example**:
 ```javascript
 module.exports = {
     type: 'apiKey',
     definition: {
         tokenType: 'authentication-token',
-        
+
         // Authentication fields shown to user
         auth: {
             domain: {
@@ -223,7 +227,7 @@ module.exports = {
         validate: async (context) => {
             const credentials = `${context.apiKey}:X`;
             const encoded = Buffer.from(credentials).toString('base64');
-            
+
             await context.httpRequest({
                 method: 'GET',
                 url: `https://${context.domain}.service.com/api/v1/me`,
@@ -231,8 +235,53 @@ module.exports = {
                     'Authorization': `Basic ${encoded}`
                 }
             });
-            
+
             return true; // If request succeeds, credentials are valid
+        }
+    }
+};
+```
+
+**Real-World Example (Freshdesk)**:
+```javascript
+module.exports = {
+    type: 'apiKey',
+    definition: {
+        tokenType: 'authentication-token',
+        auth: {
+            domain: {
+                type: 'text',
+                name: 'Domain',
+                tooltip: 'Your Freshdesk subdomain - e.g. if the domain is <i>https://example.freshdesk.com</i> just type <b>example</b> inside this field'
+            },
+            apiKey: {
+                type: 'text',
+                name: 'API Key',
+                tooltip: 'Log into your Freshdesk account and find <i>Your API Key</i> in Profile settings page.'
+            }
+        },
+        accountNameFromProfileInfo: 'contact.email',
+        requestProfileInfo: async (context) => {
+            return context.httpRequest({
+                method: 'GET',
+                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
+                auth: {
+                    user: context.apiKey,
+                    password: 'X'
+                }
+            });
+        },
+        validate: async context => {
+            const credentials = `${context.apiKey}:X`;
+            const encoded = (new Buffer(credentials)).toString('base64');
+            await context.httpRequest({
+                method: 'GET',
+                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
+                headers: {
+                    'Authorization': `Basic ${encoded}`
+                }
+            });
+            return true;
         }
     }
 };
@@ -242,6 +291,47 @@ module.exports = {
 
 For services using OAuth 2.0 flow.
 
+#### Simplified URL-Based Format
+
+For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
+
+**Example (ClickUp)**:
+```javascript
+module.exports = {
+    type: 'oauth2',
+
+    definition: () => {
+        return {
+            scope: [],
+
+            authUrl: 'https://app.clickup.com/api',
+
+            requestAccessToken: 'https://api.clickup.com/api/v2/oauth/token',
+
+            requestProfileInfo: 'https://api.clickup.com/api/v2/user',
+
+            accountNameFromProfileInfo: 'user.username',
+
+            validateAccessToken: 'https://api.clickup.com/api/v2/user'
+        };
+    }
+};
+```
+
+**Key Differences from Function-Based Format**:
+- `authUrl`: String URL instead of function - Appmixer handles OAuth parameters automatically
+- `requestAccessToken`: String URL instead of async function - Appmixer handles the token exchange
+- `requestProfileInfo`: String URL instead of async function - Appmixer makes GET request with Bearer token
+- `accountNameFromProfileInfo`: Dot-notation path to extract account name from profile response (e.g., `'user.username'`)
+- `validateAccessToken`: String URL instead of async function - Appmixer makes GET request to validate token
+
+This format is simpler and works when the service follows standard OAuth 2.0 conventions. Use the function-based format (below) when you need custom logic for token handling or non-standard endpoints.
+
+#### Function-Based Format
+
+For services that require custom OAuth logic or have non-standard endpoints:
+
+**Generic Example**:
 ```javascript
 module.exports = {
     type: 'oauth2',
@@ -252,7 +342,6 @@ module.exports = {
 
         // Extract account info from profile
         accountNameFromProfileInfo: (context) => context.profileInfo.email,
-        
         emailFromProfileInfo: (context) => context.profileInfo.email,
 
         // Authorization URL
@@ -333,85 +422,16 @@ module.exports = {
 };
 ```
 
-```js
+**Real-World Example (Google OAuth2)**:
+```javascript
 module.exports = {
-
-    type: 'apiKey',
-
-    definition: {
-
-        tokenType: 'authentication-token',
-
-        auth: {
-            domain: {
-                type: 'text',
-                name: 'Domain',
-                tooltip: 'Your Freshdesk subdomain - e.g. if the domain is <i>https://example.freshdesk.com</i> just type <b>example</b> inside this field'
-            },
-            apiKey: {
-                type: 'text',
-                name: 'API Key',
-                tooltip: 'Log into your Freshdesk account and find <i>Your API Key</i> in Profile settings page.'
-            }
-        },
-
-        accountNameFromProfileInfo: 'contact.email',
-
-        requestProfileInfo: async (context) => {
-
-            // curl https://mydomain.freshdesk.com/api/v2/agents/me \
-            //  -u myApiKey:X'
-            return context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
-                auth: {
-                    user: context.apiKey,
-                    password: 'X'
-                }
-            });
-        },
-
-        validate: async context => {
-
-            // curl https://mydomain.freshdesk.com/api/v2/agents/me \
-            //  -u myApiKey:X'
-            const credentials = `${context.apiKey}:X`;
-            const encoded = (new Buffer(credentials)).toString('base64');
-            await context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
-                headers: {
-                    'Authorization': `Basic ${encoded}`
-                }
-            });
-            // if the request doesn't fail, return true (exception will be captured in caller)
-            return true;
-        }
-    }
-};
-```
-
-type `oauth2` example :
-
-```js
-module.exports = {
-
     type: 'oauth2',
-
     definition: () => {
-
         return {
-
             clientId: initData.clientId,
             clientSecret: initData.clientSecret,
-
             scope: ['profile', 'email'],
 
-            /**
-             * Works exactly the same way as described in the `apiKey` section.
-             * @param context
-             * @returns {*|string}
-             */
             accountNameFromProfileInfo: function(context) {
                 return context.profileInfo.email;
             },
@@ -420,9 +440,6 @@ module.exports = {
                 return context.profileInfo.email;
             },
 
-            /**
-             * Function, object or a string URL returning auth URL. Appmixer will then use this URL to redirect the user to the proper authentication page. The `requestToken` is available in the context. The example shows the authUrl declaration using the token provided by the context.
-             */
             authUrl: function(context) {
                 const params = new URLSearchParams({
                     client_id: initData.clientId,
@@ -437,13 +454,7 @@ module.exports = {
                 return `https://accounts.google.com/o/oauth2/auth?${params}`;
             },
 
-            /**
-             * This function should return a promise with an object which contains `accessToken`, `refreshToken` (optional, some OAuth 2 implementations do not have refresh tokens) and accessTokenExpDate or expires_in (also optional if the implementation does not have tokens that expire). Inside this function, you should call the endpoint which handles the access tokens for the application. The following context properties are available to you in this function: clientId, clientSecret, callbackUrl and authorizationCode.
-             * @param context
-             * @returns {proimise}
-             */
             requestAccessToken: async function(context) {
-
                 const data = {
                     code: context.authorizationCode,
                     client_id: initData.clientId,
@@ -468,10 +479,6 @@ module.exports = {
                 };
             },
 
-            /**
-             * Works exactly the same way as described in the `apiKey` section.
-             * @returns {*}
-             */
             requestProfileInfo: async function(context) {
                 const response = await context.httpRequest({
                     method: 'GET',
@@ -488,13 +495,7 @@ module.exports = {
                 return response.data;
             },
 
-            /**
-             * Part of the OAuth 2 specification is the ability to refresh short-lived access tokens via a refresh token that is issued along with the access token. This function should call the refresh token endpoint on the third-party app and resolve to an object with `accessToken` and `accessTokenExpDate` (and `refreshToken` if needed) properties, as shown in the example.  You have access to context properties `clientId`, `clientSecret`, `callbackUrl` and `refreshToken`.
-             * @param context
-             * @returns {*}
-             */
             refreshAccessToken: async function(context) {
-
                 const data = {
                     client_id: initData.clientId,
                     client_secret: initData.clientSecret,
@@ -517,11 +518,6 @@ module.exports = {
                 };
             },
 
-            /**
-             * This property serves the same purpose as validate property in the API Key mechanism. This is used by Appmixer to test if the access token is valid and accepted by the third-party app. You have access to context.accessToken and context.accessTokenSecret to make authenticated requests. If the token is valid, this function should resolve to any value. Otherwise, throw an error.
-             * @param context
-             * @returns {boolean}
-             */
             validateAccessToken: async function(context) {
                 const response = await context.httpRequest({
                     method: 'GET',
@@ -540,28 +536,31 @@ module.exports = {
         };
     }
 };
-
 ```
 
-# Plugins, Routes and Jobs
-Files: <connector>/jobs.js, <connector>/routes.js, <connector>/plugin.js
+---
 
-> **Limitation:** Plugin code is deployed to pods that only load files from the connector root. Do **not** require helpers from component module folders (e.g. `./tasks/...`, `./core/...`) inside routes or jobs. Keep shared helpers/models alongside the plugin entry point (or re-export them there) so every pod can resolve the require.
+# Part 3: Plugins, Routes and Jobs
 
-## Context
+Files: `<connector>/jobs.js`, `<connector>/routes.js`, `<connector>/plugin.js`
+
+> **Limitation**: Plugin code is deployed to pods that only load files from the connector root. Do **not** require helpers from component module folders (e.g. `./tasks/...`, `./core/...`) inside routes or jobs. Keep shared helpers/models alongside the plugin entry point (or re-export them there) so every pod can resolve the require.
+
+## Context API
+
 `context.log` MUST have this signature:
 ```js
 context.log(level, message, [data]);
 ```
 
+---
 
-# Components
+# Part 4: Components
 
 ## Overview
 
-Components are the building blocks of workflows. Each component performs a specific action like sending an email, creating a task, or fetching data.
-A component is a self-contained unit of functionality that can be used in Appmixer workflows. It can have multiple
-inPorts and outPorts, and it can be used to process data, trigger actions, or perform other tasks.
+Components are the building blocks of workflows. Each component performs a specific action like sending an email, creating a task, or fetching data. A component is a self-contained unit of functionality that can be used in Appmixer workflows. It can have multiple inPorts and outPorts, and it can be used to process data, trigger actions, or perform other tasks.
+
 A component is defined by a `component.json` file and a "behavior" file with the same name as the component folder.
 
 ## Component Structure
@@ -570,9 +569,15 @@ Each component consists of:
 - `component.json` - Configuration and metadata
 - `ComponentName.js` - Behavior and logic
 
-### component.json
+## General Principles
 
-json schema of the component.json
+- For components that require an ID as input, there must be another component that returns the entity from which the ID can be obtained. For example, if a connector has a GetEmail component that takes emailId as input, then there must also be a FindEmails component that returns one or more email entities containing the emailId.
+
+---
+
+# Part 5: Component Configuration (component.json)
+
+### JSON Schema Reference
 
 ```json
 {
@@ -697,16 +702,7 @@ json schema of the component.json
                 },
                 "options": {
                     "type": "array",
-                    "description": "We support full schema definition for each option, so you can specify the structure of the data that is coming out from your component. You can add a schema property to each option, which contains a JSON Schema definition. For example:\n\nCopy\n{\n    \"outPorts\": [\n        {\n            \"name\": \"weather\",\n            \"options\": [\n                { \"label\": \"Temperature\", \"value\": \"main.temp\" },\n                { \"label\": \"Pressure\", \"value\": \"main.pressure\" },\n                { \"label\": \"Humidity\", \"value\": \"main.humidity\" },\n                { \"label\": \"Sunrise time (unix, UTC)\", \"value\": \"sys.sunrise\" },\n                { \"label\": \"Sunset time (unix, UTC)\", \"value\": \"sys.sunset\" },\n                { \"label\": \"City name\", \"value\": \"name\" },\n                { \n                    \"label\": \"Weather data\", \n                    \"value\": \"weather\", \n                    \"schema\": {\n                        \"type\": \"array\",\n                        \"items\": {\n                            \"type\": \"object\",\n                            \"properties\": {\n                                \"description\": { \"type\": \"string\", \"title\": \"Weather description\" },\n                                \"icon\": { \"type\": \"string\", \"title\": \"Weather icon code\" },\n                                \"iconUrl\": { \"type\": \"string\", \"title\": \"Weather icon URL\" }\n                            }    \n                        }\n                    }\n                }\n            ]\n        }\n    ]\n}",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "content": { "type": "string" },
-                            "label": { "type": "string" },
-                            "value": { "type": "string" }
-                        },
-                        "required": ["value"]
-                    }
+                    "description": "We support full schema definition for each option, so you can specify the structure of the data that is coming out from your component. You can add a schema property to each option, which contains a JSON Schema definition."
                 }
             },
             "required": ["name"]
@@ -730,100 +726,23 @@ json schema of the component.json
             },
             "uniqueItems": true
         },
-        "inspectorInput": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "properties": {
-                        "type": { "type": "string" },
-                        "tooltip": { "type": "string" },
-                        "index": { "type": "number" },
-                        "placeholder": { "type": "string" },
-                        "options": { "$ref": "#/definitions/options" },
-                        "source": { "$ref": "#/definitions/source" }
-                    },
-                    "additionalProperties": true,
-                    "required": ["type", "index"]
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "source": { "$ref": "#/definitions/source" }
-                    },
-                    "additionalProperties": false,
-                    "required": ["source"]
-                }
-            ]
-        },
         "inspector": {
-            "description": "Inspector tells the Designer UI how the input fields should be rendered. The format of this definition uses the Rappid Inspector definition format.",
-            "oneOf": [
-                {
-                    "type": "object",
-                    "properties": {
-                        "inputs": {
-                            "patternProperties": {
-                                "^.*$": { "$ref": "#/definitions/inspectorInput" }
-                            }
-                        }
-                    },
-                    "required": ["inputs"]
-                },
-                {
-                    "type": "object",
-                    "description": "Sometimes the structure of the inspector is not known in advance and it cannot be hardcoded in the manifest. Instead, the inspector fields are composed dynamically based on the data received from an API. A good example is the google.spreadsheets.CreateRow component where the inspector renders fields representing columns fetched from the actual worksheet. For this to work, we can define the source property in the manifest that calls a component of our choosing in a so called \"static\" mode. Example: {\n       \"source\": {\n           \"url\": \"/component/appmixer/google/spreadsheets/ListColumns?outPort=out\",\n           \"data\": {\n               \"messages\": {\n                   \"in\": 1\n               },\n               \"properties\": {\n                   \"sheetId\": \"properties/sheetId\",\n                   \"worksheet\": \"properties/worksheet\"\n               },\n               \"transform\": \"./transformers#columnsToInspector\"\n           }\n       }\n}\n",
-                    "properties": {
-                        "source": { "$ref": "#/definitions/source" }
-                    },
-                    "required": ["source"]
-                }
-            ]
-        },
-        "inPort": {
-            "allOf": [
-                { "$ref": "#/definitions/port" },
-                {
-                    "type": "object",
-                    "properties": {
-                        "inspector": { "$ref": "#/definitions/inspector" }
-                    }
-                }
-            ]
+            "description": "Inspector tells the Designer UI how the input fields should be rendered. The format of this definition uses the Rappid Inspector definition format."
         },
         "inPorts": {
-            "description": "The definition of the input ports of the component. It's an array of objects.\n\nEach component can have zero or more input ports. If a component does not have any input ports, we call it a trigger. Input ports allow a component to be connected to other components. Input ports receive data from output ports of other connected components when the flow is running and the data is available. Each input port has a name and configuration that has the exact same structure as the configuration of properties, i.e. it has schema , inspector or source objects. The difference is that the user can use placeholders (variables) in the data fields that will be eventually replaced once the actual data is available. The placeholders (variables) can be entered by the user using the \"variables picker\" in the Designer UI inspector (see below)",
-            "type": "array",
-            "minItems": 0,
-            "items": {
-                "oneOf": [
-                    { "$ref": "#/definitions/inPort" },
-                    { "type": "string" }
-                ]
-            },
-            "uniqueItems": true
+            "description": "The definition of the input ports of the component. It's an array of objects. Each component can have zero or more input ports. If a component does not have any input ports, we call it a trigger.",
+            "type": "array"
         },
         "ports": {
-            "description": "The definition of the output ports of the component. It's an array of objects.\n\nComponents can have zero or more output ports. Each output port has a name and optionally an array options that defines the structure of the message that this output port emits. Without the options object, the user won't be able to see the possible variables they can use in the other connected components. For example, a component connected to the weather output port of our GetCurrentWeather component can see the following variables in the variables picker",
-            "type": "array",
-            "minItems": 0,
-            "items": {
-                "oneOf": [
-                    { "$ref": "#/definitions/port" },
-                    { "type": "string" }
-                ]
-            },
-            "uniqueItems": true
+            "description": "The definition of the output ports of the component. It's an array of objects. Components can have zero or more output ports.",
+            "type": "array"
         }
     }
 }
 ```
 
-Make sure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspector.inputs.<input_name>.type` match the following mapping:
-- string -> text|textarea
-- integer -> number
-- boolean -> toggle
+### Desired Attribute Order in component.json
 
-Desired order of attributes in `component.json`:
 1. `name`
 2. `description`
 3. `author`
@@ -835,22 +754,79 @@ Desired order of attributes in `component.json`:
 9. `outPorts`
 10. `icon`
 
-### Component Behavior (JavaScript)
+### Type Mapping for Input Ports
+
+Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspector.inputs.<input_name>.type` match:
+- `string` → `text` or `textarea`
+- `string` with `format: "date-time"` → `date-time`
+- `string` with `format: "date"` → `date-time` with `config: { enableTime: false }`
+- `integer` → `number`
+- `boolean` → `toggle`
+
+### Output Port Schema Definition
+
+Each output port can define its output structure using **either** `schema` or `options`, but **not both**:
+
+- **`schema`**: Use JSON Schema to define the structure of output data. Provides type information and validation.
+- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured.
+
+**IMPORTANT**: You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
+
+```json
+// CORRECT - using schema only
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID" },
+                "name": { "type": "string", "title": "Name" }
+            }
+        }
+    }
+]
+
+// CORRECT - using options only
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id" },
+            { "label": "Name", "value": "name" }
+        ]
+    }
+]
+
+// INCORRECT - both schema and options
+"outPorts": [
+    {
+        "name": "out",
+        "schema": { ... },
+        "options": [ ... ]  // ERROR: Cannot have both
+    }
+]
+```
+
+---
+
+# Part 6: Component Behavior (JavaScript)
 
 The behavior file contains the component's logic.
 
-#### Basic Structure
+## Basic Structure
 
-##### `receive`
-function is called when the component receives data from the input port.
+### `receive` Method
+
+The `receive` function is called when the component receives data from the input port.
 
 ```javascript
 module.exports = {
     async receive(context) {
-        
+
         // Get input data
         const { message, priority, count } = context.messages.in.content;
-        
+
         // Perform the action
         const response = await context.httpRequest({
             method: 'POST',
@@ -872,18 +848,16 @@ module.exports = {
 };
 ```
 
-#### `context` Object
+## Advanced Features
 
-#### Advanced Features
-
-##### Trigger Components
+### Trigger Components
 
 ```javascript
 module.exports = {
     async tick(context) {
         // Called periodically for polling
         const newItems = await fetchNewItems(context);
-        
+
         for (const item of newItems) {
             await context.sendJson(item, 'out');
         }
@@ -891,19 +865,19 @@ module.exports = {
 };
 ```
 
-##### Webhook Components
+### Webhook Components
 
 ```javascript
 module.exports = {
     async receive(context) {
         const webhookUrl = context.getWebhookUrl();
-        
+
         // Register webhook with external service
         await registerWebhook(context, webhookUrl);
-        
+
         return context.sendJson({ webhookUrl }, 'out');
     },
-    
+
     async webhook(context) {
         // Handle incoming webhook
         const payload = context.messages.webhook;
@@ -912,64 +886,1364 @@ module.exports = {
 };
 ```
 
-# Best Practices (AI Assistance + Humans)
-Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
+---
 
-## Code Style Guidelines
+# Part 7: Component Types and Patterns
+
+## 1. Action Components
+
+Action components perform operations when triggered by input data. They don't run continuously but execute when they receive input.
+
+### Find (Items) Components
+
+**Purpose**: Search for items based on criteria, returns array of matching items.
+
+**Pattern**: `Find{EntityName}` (e.g., `FindTasks`, `FindUsers`, `FindProjects`)
+
+**Key Characteristics**:
+- Returns array of items
+- Includes `outputType` for array vs individual items (outputType is always the last property in inPorts schema with maximum index)
+- Has `notFound` output port for when no items match
+- Limited by query/filter parameters
+- No pagination, no limit. Returns maximum items per one page. Maximum number of items mentioned in description.
+- **IMPORTANT**: Do NOT include `limit` or `offset` fields in component inputs - these are not supported by Appmixer Find components
+
+**Example component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.FindTasks",
+    "label": "Find Tasks",
+    "description": "Search for tasks based on specified criteria. This component will return a maximum of 500 records",
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string" },
+                    "status": { "type": "string" },
+                    "outputType": { "type": "string", "default": "array" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search Query",
+                        "tooltip": "Search term to find tasks"
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Status",
+                        "options": [
+                            { "label": "All", "value": "" },
+                            { "label": "Open", "value": "open" },
+                            { "label": "Completed", "value": "completed" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/service/core/FindTasks?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ]
+}
+```
+
+**Example behavior pattern with lib support**:
+```javascript
+'use strict';
+
+const lib = require('../../lib');
+
+// schema of the single item
+const schema = {
+    'id': { 'type': 'string', 'title': 'Task Id' },
+    'name': { 'type': 'string', 'title': 'Name' },
+    'status': { 'type': 'string', 'title': 'Status' }
+};
+
+module.exports = {
+    async receive(context) {
+        const { searchQuery, outputType } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'tasks' });
+        }
+
+        let url = 'https://api.service.com/tasks';
+        const params = {};
+
+        if (searchQuery) {
+            params.q = searchQuery;
+        }
+
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            },
+            params
+        });
+
+        const tasks = data.tasks || [];
+
+        if (tasks.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
+        return lib.sendArrayOutput({ context, records: tasks, outputType });
+    }
+};
+```
+
+**lib.js helper utilities**:
+```javascript
+const pathModule = require('path');
+
+const DEFAULT_PREFIX = '{{connector_name}}-objects-export';
+
+module.exports = {
+    async sendArrayOutput({
+                              context,
+                              outputPortName = 'out',
+                              outputType = 'array',
+                              records = []
+                          }) {
+        if (outputType === 'first') {
+            if (records.length === 0) {
+                throw new context.CancelError('No records available for first output type');
+            }
+            await context.sendJson(
+                { ...records[0], index: 0, count: records.length },
+                outputPortName
+            );
+        } else if (outputType === 'object') {
+            for (let index = 0; index < records.length; index++) {
+                await context.sendJson(
+                    { ...records[index], index, count: records.length },
+                    outputPortName
+                );
+            }
+        } else if (outputType === 'array') {
+            await context.sendJson({ result: records, count: records.length }, outputPortName);
+        } else if (outputType === 'file') {
+            const csvString = toCsv(records);
+            let buffer = Buffer.from(csvString, 'utf8');
+            const componentName = context.flowDescriptor[context.componentId].label || context.componentId;
+            const fileName = `${context.config.outputFilePrefix || DEFAULT_PREFIX}-${componentName}.csv`;
+            const savedFile = await context.saveFileStream(pathModule.normalize(fileName), buffer);
+            await context.log({ step: 'File was saved', fileName, fileId: savedFile.fileId });
+            await context.sendJson({ fileId: savedFile.fileId }, outputPortName);
+        } else {
+            throw new context.CancelError('Unsupported outputType ' + outputType);
+        }
+    },
+
+    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+        if (outputType === 'object' || outputType === 'first') {
+            const options = Object.keys(itemSchema)
+                .reduce((res, field) => {
+                    const schema = itemSchema[field];
+                    const { title: label, ...schemaWithoutTitle } = schema;
+                    res.push({ label, value: field, schema: schemaWithoutTitle });
+                    return res;
+                }, [{
+                    label: 'Current Item Index',
+                    value: 'index',
+                    schema: { type: 'integer' }
+                }, {
+                    label: 'Items Count',
+                    value: 'count',
+                    schema: { type: 'integer' }
+                }]);
+            return context.sendJson(options, 'out');
+        }
+
+        if (outputType === 'array') {
+            return context.sendJson([{
+                label,
+                value,
+                schema: {
+                    type: 'array',
+                    items: { type: 'object', properties: itemSchema }
+                }
+            }], 'out');
+        }
+
+        if (outputType === 'file') {
+            return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
+        }
+    }
+};
+
+const toCsv = (array) => {
+    const headers = Object.keys(array[0]);
+    return [
+        headers.join(','),
+        ...array.map(items => {
+            return Object.values(items).map(property => {
+                if (typeof property === 'object') {
+                    return JSON.stringify(property);
+                }
+                return property;
+            }).join(',');
+        })
+    ].join('\n');
+};
+```
+
+### outputType Helper Functions (REQUIRED)
+
+Components with `outputType` (Find/List) **MUST** use standardized lib.js helpers.
+
+**Required functions in connector's lib.js:**
+- `sendArrayOutput({ context, outputPortName = 'out', outputType, records })` - handles all output types
+- `getOutputPortOptions(context, outputType, schema, { label })` - dynamic output schema
+
+**Canonical implementation:** Copy from `appmixer-cli/src/ai/src/templates/libs/lib.js`
+
+**Required behavior pattern:**
+```javascript
+const lib = require('../../lib');
+
+module.exports = {
+    async receive(context) {
+        const { outputType } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Items' });
+        }
+
+        const records = await fetchData();
+        return lib.sendArrayOutput({ context, outputType, records });
+    }
+};
+```
+
+**Critical rules:**
+- For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
+- Never use `records` or custom field names for consistency
+- lib.js MUST exist in connector root if component has outputType
+- Run `npm run validate-outputtype` to check compliance
+
+### List (Items) Components
+
+**Purpose**: Retrieve all items of a specific type. Use when the service doesn't provide filter/search options.
+
+**Pattern**: `List{EntityName}` (e.g., `ListTasks`, `ListUsers`, `ListProjects`)
+
+**Key Characteristics**:
+- Returns array of items by default
+- Includes `outputType` for array vs individual items
+- IMPORTANT: Ignore pagination or limits—use the maximum available page size
+- Mention maximum page size count in description
+- **IMPORTANT**: Do NOT include `limit` or `offset` fields in component inputs - these are not supported by Appmixer List components
+
+**Example component.json structure**:
+```json
+{
+    "name": "appmixer.googleForms.core.ListForms",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Fetches a list of Google Forms.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:googleForms",
+        "scope": [
+            "https://www.googleapis.com/auth/drive.readonly"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:googleForms",
+        "resources": "forms.api",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/googleForms/core/ListForms?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ]
+}
+```
+
+### Get (Item) Components
+
+**Purpose**: Retrieve a single item by its unique identifier.
+
+**Pattern**: `Get{EntityName}` (e.g., `GetTask`, `GetUser`, `GetProject`)
+
+**Key Characteristics**:
+- Returns single item
+- Requires unique identifier (ID)
+- Throws error if item not found
+
+**Example component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.GetTask",
+    "label": "Get Task",
+    "description": "Retrieve a specific task by ID.",
+    "inPorts": [
+        {
+            "name": "in",
+            "inspector": {
+                "inputs": {
+                    "taskId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Task ID",
+                        "tooltip": "The unique identifier of the task"
+                    }
+                }
+            },
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "taskId": { "type": "string" }
+                },
+                "required": ["taskId"]
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Task ID", "value": "id" },
+                { "label": "Title", "value": "title" },
+                { "label": "Description", "value": "description" },
+                { "label": "Status", "value": "status" },
+                { "label": "Created Date", "value": "created_at" }
+            ]
+        }
+    ]
+}
+```
+
+**Example behavior pattern**:
+```javascript
+module.exports = {
+    async receive(context) {
+        const { taskId } = context.messages.in.content;
+
+        if (!taskId) {
+            throw new context.CancelError('Task ID is required!');
+        }
+
+        const response = await context.httpRequest({
+            method: 'GET',
+            url: `https://api.service.com/tasks/${taskId}`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            }
+        });
+
+        return context.sendJson(response.data, 'out');
+    }
+};
+```
+
+### Create (Item) Components
+
+**Purpose**: Create a new item in the external service.
+
+**Pattern**: `Create{EntityName}` (e.g., `CreateTask`, `CreateUser`, `CreateProject`)
+
+**Key Characteristics**:
+- Creates new item
+- Returns created item data
+- Requires fields specific to the entity type
+
+**Example component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.CreateTask",
+    "label": "Create Task",
+    "description": "Create a new task in the service",
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "title": { "type": "string" },
+                    "description": { "type": "string" },
+                    "priority": { "type": "string" },
+                    "dueDate": { "type": "string", "format": "date" }
+                },
+                "required": ["title"]
+            },
+            "inspector": {
+                "inputs": {
+                    "title": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Title",
+                        "tooltip": "Task title"
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Description",
+                        "tooltip": "Task description"
+                    },
+                    "priority": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Priority",
+                        "options": [
+                            { "label": "Low", "value": "low" },
+                            { "label": "Medium", "value": "medium" },
+                            { "label": "High", "value": "high" }
+                        ]
+                    },
+                    "dueDate": {
+                        "type": "date",
+                        "index": 4,
+                        "label": "Due Date",
+                        "tooltip": "When the task should be completed"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Task ID", "value": "id" },
+                { "label": "Title", "value": "title" },
+                { "label": "Status", "value": "status" },
+                { "label": "Created Date", "value": "created_at" }
+            ]
+        }
+    ]
+}
+```
+
+### Delete (Item) Components
+
+**Purpose**: Delete an item by its unique identifier.
+
+**Pattern**: `Delete{EntityName}` (e.g., `DeleteTask`, `DeleteUser`, `DeleteProject`)
+
+**Key Characteristics**:
+- Deletes item by ID
+- Returns empty object on success
+- Irreversible action
+- Must have `outPorts: ['out']`
+- Must have at least one required input (the ID)
+
+**Example behavior pattern**:
+```javascript
+module.exports = {
+    async receive(context) {
+        const { taskId } = context.messages.in.content;
+
+        if (!taskId) {
+            throw new context.CancelError('Task ID is required!');
+        }
+
+        await context.httpRequest({
+            method: 'DELETE',
+            url: `https://api.service.com/tasks/${taskId}`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            }
+        });
+
+        return context.sendJson({}, 'out');
+    }
+};
+```
+
+### Update (Item) Components
+
+**Purpose**: Update an existing item with new data.
+
+**Pattern**: `Update{EntityName}` (e.g., `UpdateTask`, `UpdateUser`, `UpdateProject`)
+
+**Key Characteristics**:
+- Updates item by ID
+- Returns empty object on success
+- Requires at least ID to identify the item
+- Must have at least one required input (the ID)
+
+**Example behavior pattern**:
+```javascript
+module.exports = {
+    async receive(context) {
+        const { taskId, name, price } = context.messages.in.content;
+
+        if (!taskId) {
+            throw new context.CancelError('Task ID is required!');
+        }
+
+        await context.httpRequest({
+            method: 'PATCH',
+            url: `https://api.service.com/tasks/${taskId}`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            },
+            data: {
+                name, price
+            }
+        });
+
+        return context.sendJson({}, 'out');
+    }
+};
+```
+
+## 2. Trigger Components
+
+Trigger components monitor for events and start workflows when conditions are met. They use polling or webhooks.
+
+### Common Trigger Patterns
+
+**Key Characteristics**:
+- Set `"trigger": true` in component.json
+- Use `tick()` method for polling triggers
+- Use `webhook()` method for webhook triggers
+- Store state to track changes
+
+### New/Created (Item) Triggers
+
+**Purpose**: Trigger when new items are created.
+
+**Pattern**: `New{EntityName}` or `{EntityName}Created` (e.g., `NewTask`, `TaskCreated`)
+
+**Example component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.NewTask",
+    "label": "New Task",
+    "description": "Triggers when a new task is created",
+    "trigger": true,
+    "tick": true,
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Task ID", "value": "id" },
+                { "label": "Title", "value": "title" },
+                { "label": "Created Date", "value": "created_at" }
+            ]
+        }
+    ]
+}
+```
+
+**Behavior file pattern**:
+```javascript
+'use strict';
+
+module.exports = {
+
+    async tick(context) {
+
+        const { projectId } = context.properties;
+
+        // Fetch items from API
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `https://api.service.com/projects/${projectId}/tasks`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            }
+        });
+
+        // Load previously known items from state
+        const state = await context.loadState();
+        const known = state.known ? new Set(state.known) : null;
+
+        // Find new items by comparing with known items
+        const tasks = data.tasks || [];
+        const newItems = [];
+        const actual = [];
+
+        for (const task of tasks) {
+            actual.push(task.id);
+            if (known && !known.has(task.id)) {
+                newItems.push(task);
+            }
+        }
+
+        // Send new items to output port
+        for (const item of newItems) {
+            await context.sendJson(item, 'out');
+        }
+
+        // Save current state for next tick
+        await context.saveState({ known: actual });
+    }
+};
+```
+
+**State Management Pattern using lib.js helper**:
+```javascript
+'use strict';
+const lib = require('../../lib');
+
+module.exports = {
+
+    async tick(context) {
+
+        const { projectId } = context.properties;
+
+        const { data } = await context.httpRequest({
+            method: 'GET',
+            url: `https://api.service.com/projects/${projectId}/tasks`,
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            }
+        });
+
+        // Use lib helper for state comparison
+        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
+        const { diff, actual } = lib.getNewItems(known, data.tasks, 'id');
+
+        if (diff.length) {
+            await Promise.all(diff.map(task => context.sendJson(task, 'out')));
+        }
+
+        await context.saveState({ known: actual });
+    }
+};
+```
+
+#### 2. Webhook Triggers (`webhook: true`)
+
+Webhook triggers receive HTTP callbacks from external services. They require lifecycle methods to register/unregister webhooks.
+
+**component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.UpdatedContact",
+    "label": "Updated Contact",
+    "description": "Triggers when a contact is updated.",
+    "author": "Appmixer <info@appmixer.com>",
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:service"
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "listId": { "type": "string" }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "listId": {
+                    "type": "select",
+                    "label": "List",
+                    "index": 1,
+                    "source": {
+                        "url": "/component/appmixer/service/core/ListLists?outPort=out",
+                        "data": {
+                            "transform": "./transformers#listsToSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Contact ID", "value": "id" },
+                { "label": "Email", "value": "email" },
+                { "label": "Updated Date", "value": "updated_at" }
+            ]
+        }
+    ]
+}
+```
+
+**Behavior file pattern**:
+```javascript
+'use strict';
+
+module.exports = {
+
+    async start(context) {
+
+        // Register webhook with external service when flow starts
+        const webhookUrl = context.getWebhookUrl();
+        const { listId } = context.properties;
+
+        const { data } = await context.httpRequest({
+            method: 'POST',
+            url: 'https://api.service.com/webhooks',
+            headers: {
+                'Authorization': `Bearer ${context.auth.accessToken}`
+            },
+            data: {
+                url: webhookUrl,
+                events: ['contact.updated'],
+                listId: listId
+            }
+        });
+
+        // Save webhook ID for cleanup
+        return context.saveState({ webhookId: data.id });
+    },
+
+    async receive(context) {
+
+        // Handle incoming webhook payload
+        if (context.messages.webhook) {
+            const payload = context.messages.webhook.content.data;
+
+            // Optionally fetch additional data from API
+            const { data } = await context.httpRequest({
+                method: 'GET',
+                url: `https://api.service.com/contacts/${payload.contactId}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+
+            await context.sendJson(data, 'out');
+
+            // IMPORTANT: Always return context.response() to acknowledge webhook
+            return context.response();
+        }
+    },
+
+    async stop(context) {
+
+        // Clean up: unregister webhook when flow stops
+        const { webhookId } = await context.loadState();
+
+        if (webhookId) {
+            await context.httpRequest({
+                method: 'DELETE',
+                url: `https://api.service.com/webhooks/${webhookId}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+        }
+    }
+};
+```
+
+#### 3. Hybrid Triggers (`webhook: true` + `tick: true`)
+
+Some triggers use both webhook and tick - webhooks for real-time events and tick for maintenance (e.g., refreshing webhook registration before expiry).
+
+**component.json structure**:
+```json
+{
+    "name": "appmixer.service.core.NewRecord",
+    "webhook": true,
+    "tick": true,
+    "auth": { "service": "appmixer:service" },
+    "properties": { ... },
+    "outPorts": [ ... ]
+}
+```
+
+**Behavior file pattern**:
+```javascript
+'use strict';
+
+module.exports = {
+
+    async start(context) {
+
+        const { id, expirationTime } = await registerWebhook(context);
+
+        return context.saveState({
+            webhookId: id,
+            expirationTime: Date.parse(expirationTime)
+        });
+    },
+
+    async receive(context) {
+
+        if (context.messages.webhook) {
+            const payload = context.messages.webhook.content.data;
+            await context.sendJson(payload, 'out');
+            return context.response();
+        }
+    },
+
+    async tick(context) {
+
+        // Use tick to refresh webhook before expiration
+        let lock;
+        try {
+            lock = await context.lock(context.componentId);
+            const state = await context.loadState();
+            const { webhookId, expirationTime } = state;
+
+            if (!webhookId) return;
+
+            // Refresh 3 days before expiration
+            const renewDate = expirationTime - (3 * 24 * 60 * 60 * 1000);
+            const now = Date.now();
+
+            if (now >= renewDate) {
+                const { data } = await context.httpRequest({
+                    method: 'POST',
+                    url: `https://api.service.com/webhooks/${webhookId}/refresh`,
+                    headers: {
+                        'Authorization': `Bearer ${context.auth.accessToken}`
+                    }
+                });
+                state.expirationTime = Date.parse(data.expirationTime);
+                await context.saveState(state);
+            }
+        } finally {
+            if (lock) await lock.unlock();
+        }
+    },
+
+    async stop(context) {
+
+        const { webhookId } = await context.loadState();
+        if (webhookId) {
+            await context.httpRequest({
+                method: 'DELETE',
+                url: `https://api.service.com/webhooks/${webhookId}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.accessToken}`
+                }
+            });
+        }
+    }
+};
+```
+
+### Trigger Naming Conventions
+
+| Pattern | Usage | Examples |
+|---------|-------|----------|
+| `New{Entity}` | New item created | `NewTask`, `NewContact`, `NewEmail` |
+| `{Entity}Created` | Alternative for new items | `TaskCreated`, `ContactCreated` |
+| `Updated{Entity}` | Item modified | `UpdatedContact`, `UpdatedDeal` |
+| `{Entity}Updated` | Alternative for updates | `ContactUpdated`, `DealUpdated` |
+| `Deleted{Entity}` | Item removed | `DeletedTask`, `DeletedUser` |
+| `New{Entity}Webhook` | Webhook-based new item | `NewRecordWebhook`, `NewUserWebhook` |
+
+### Trigger component.json Requirements
+
+1. **NO `inPorts`**: Triggers must NOT have input ports
+2. **Use `properties`**: Configuration is defined in `properties`, not `inPorts`
+3. **Set appropriate flags**:
+    - `"tick": true` for polling triggers
+    - `"webhook": true` for webhook triggers
+    - Both for hybrid triggers
+4. **Include `auth`**: Most triggers need authentication
+5. **Define `outPorts`**: Specify the output schema
+
+### Trigger Behavior Requirements
+
+1. **Polling triggers (`tick: true`)**:
+    - MUST implement `tick(context)` method
+    - MUST use `loadState()`/`saveState()` to track known items
+    - MUST compare new items against known items to avoid duplicates
+    - Access user configuration via `context.properties` (NOT `context.messages.in.content`)
+
+2. **Webhook triggers (`webhook: true`)**:
+    - MUST implement `start(context)` to register webhook
+    - MUST implement `stop(context)` to unregister webhook
+    - MUST implement `receive(context)` to handle webhook payloads
+    - MUST call `context.getWebhookUrl()` to get the callback URL
+    - MUST return `context.response()` after processing webhook
+    - SHOULD save `webhookId` in state for cleanup
+
+3. **Deduplication**:
+    - Use `context.staticCache` for short-term deduplication
+    - Use `context.lock()` to prevent race conditions
+    - Compare item IDs against known set from state
+
+### Common Trigger Patterns
+
+#### Deduplication with Cache and Lock
+```javascript
+async receive(context) {
+
+    if (context.messages.webhook) {
+        const events = context.messages.webhook.content.data;
+        let lock;
+
+        try {
+            lock = await context.lock(context.componentId, {
+                ttl: 1000 * 10,
+                retryDelay: 500,
+                maxRetryCount: 3
+            });
+
+            const ids = [];
+            for (const event of events) {
+                const cacheKey = `trigger-event-${event.id}`;
+                const cached = await context.staticCache.get(cacheKey);
+                if (cached) continue;
+
+                await context.staticCache.set(cacheKey, event.id, 5000); // 5s TTL
+                ids.push(event.id);
+            }
+
+            // Process non-duplicate events
+            for (const id of ids) {
+                await context.sendJson({ id }, 'out');
+            }
+        } finally {
+            await lock?.unlock();
+        }
+
+        return context.response();
+    }
+}
+```
+
+#### Dynamic Output Port Schema
+
+When using `source` to dynamically populate field options or output port schemas, the `data` object can contain either `messages` or `properties` depending on the target component's input type:
+
+- **Use `messages`**: When the target component has `inPorts` (action components)
+- **Use `properties`**: When the target component uses `properties` instead of `inPorts` (trigger components)
+
+**IMPORTANT**: All **required** fields of the target component MUST be defined. You can use dummy data for fields that aren't needed for the specific call, but every required field must have a value.
+
+**Example with `messages`** (target component has `inPorts`):
+```json
+{
+    "inspector": {
+        "inputs": {
+            "folderId": {
+                "type": "text",
+                "label": "Folder ID",
+                "source": {
+                    "url": "/component/appmixer/clickup/core/ListFolders?outPort=out",
+                    "data": {
+                        "messages": {
+                            "in/spaceId": "inputs/in/spaceId"
+                        },
+                        "transform": "./ListFolders#toSelectArray"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Example with `properties`** (target component uses `properties`):
+```json
+{
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/service/core/GetFields?outPort=out",
+                "data": {
+                    "properties": {
+                        "entityType": "contact"
+                    },
+                    "transform": "./transformers#fieldsToSelectArray"
+                }
+            }
+        }
+    ]
+}
+```
+
+**Using `variableFetch` for Error Handling in Dynamic Sources**
+
+When a component is used as a dynamic data source (via `source` URL), it may fail due to permissions, invalid configuration, or API errors. In the UI context (populating dropdown options), these errors should be gracefully handled by returning an empty response rather than throwing an exception that would break the UI.
+
+The `variableFetch` property signals to the component that it's being called as a dynamic data source, not as a regular flow component. When `variableFetch: true`:
+- **Ignore errors** and return an empty response (e.g., `{ items: [] }`)
+- This prevents UI breakage when the dynamic source call fails
+
+When the same component is used directly in a flow (without `variableFetch`):
+- **Throw errors** normally so the user is aware of failures
+
+**component.json example** (setting `variableFetch` in source):
+```json
+{
+    "driveId": {
+        "type": "text",
+        "label": "Drive ID",
+        "source": {
+            "url": "/component/appmixer/microsoft/onedrive/ListDrives?outPort=out",
+            "data": {
+                "properties": {
+                    "variableFetch": true
+                },
+                "transform": "./ListDrives#sitesToSelectArray"
+            }
+        }
+    }
+}
+```
+
+**JavaScript implementation example** (handling `variableFetch`):
+```javascript
+module.exports = {
+    async receive(context) {
+        try {
+            const drives = await listItems(context, 'me/drives?');
+            return context.sendJson({ drives }, 'out');
+        } catch (err) {
+            // When used as dynamic source, return empty response instead of error
+            if (context.properties.variableFetch) {
+                return context.sendJson({ drives: [] }, 'out');
+            }
+            // When used in flow, throw error normally
+            context.log({ stage: 'Error', err });
+            throw new Error(err);
+        }
+    },
+
+    sitesToSelectArray({ drives }) {
+        return drives.map((drive) => ({
+            label: `${drive.name || drive.driveType} / ${drive.webUrl || drive.id}`,
+            value: drive.id
+        }));
+    }
+};
+```
+
+---
+
+# Part 8: Best Practices
+
+## Code Style Guidelines (For All)
+
 - Use 4 spaces for indentation
 - Add one empty line after function definitions
 - Add one empty line after the `receive` function definition
-- Use camelCase for variable and function names. Snake case is allowed for connectors that rely on external APIs that use snake case.
+- Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
+- Remove all unused variables and imports
+- Property names in component.json must use underscore `_` or camelCase as separator (NOT pipe `|`, e.g., `lock_type` or `lockType`, not `lock|type`)
+- Property names in component.json must exactly match those used in `context.messages.in.content`
 
-## Development Guidelines
+## Development Guidelines (For All)
+
+### auth.js Requirements
 
 `auth.js` file with type `apiKey` MUST follow these rules:
 - `requestProfileInfo` MUST return either:
-    - an object with just the obfuscated apiKey (if a profile info is not available via API) or
-    - an object with the profile info
+    - An object with just the obfuscated apiKey (if profile info is not available via API) or
+    - An object with the profile info
+
+### Component Behavior (JavaScript) Requirements
 
 Behavior JS file MUST follow these rules:
-- every required input in the component.json must be also asserted in the behavior file. If missing, throw exception with `throw new context.CancelError('<human_readable_input_name> is required!')`.
-- delete component must return an empty object, eg `return context.sendJson({}, 'out');` at the end of the function.
+- Every required input in the component.json must be also asserted in the behavior file
+- If a required input is missing, throw exception: `throw new context.CancelError('<human_readable_input_name> is required!')`
+- Delete components must return an empty object, e.g., `return context.sendJson({}, 'out');` at the end of the function
+
+### component.json Requirements
 
 `component.json` file MUST follow these rules:
-- delete component must have `outPorts: ['out']`.
-- update or delete component must have at least one required input, which is the ID of the entity being updated or deleted.
+- Delete components must have `outPorts: ['out']`
+- Update or delete components must have at least one required input, which is the ID of the entity being updated or deleted
+- **IMPORTANT**: Find and List components must NOT include `limit` or `offset` fields in their input schema - these pagination controls are not supported by Appmixer and should be handled internally using the maximum available page size from the API
 
-# Best Practices (Humans)
+## Best Practices (AI Assistance)
 
-## Code Style Guidelines
+Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
-- Follow consistent formatting patterns
+### Critical Restrictions for AI Code Generation
 
-## Development Guidelines
+- **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
+
+- **Property Name Consistency**: Property names in `component.json` (both schema and inspector) MUST exactly match the property names used in the behavior file's `context.messages.in.content`. Use underscore `_` or camelCase as separator, NOT pipe `|`. For example:
+
+  ```
+  // component.json - WRONG
+  "properties": {
+    "lock|type": { "type": "string" },      // WRONG - uses pipe |
+    "lock|expires_at": { "type": "string" } // WRONG - uses pipe |
+  }
+  
+  // component.json - CORRECT (option 1: snake_case)
+  "properties": {
+    "lock_type": { "type": "string" },      
+    "lock_expires_at": { "type": "string" }
+  }
+  
+  // component.json - CORRECT (option 2: camelCase)
+  "properties": {
+    "lockType": { "type": "string" },      
+    "lockExpiresAt": { "type": "string" }
+  }
+  
+  // Behavior file - use camelCase variables
+  // If component.json uses snake_case, destructure with aliases:
+  const { 
+    lock_type: lockType,
+    lock_expires_at: lockExpiresAt
+  } = context.messages.in.content;
+  
+  // If component.json uses camelCase, destructure directly:
+  const { lockType, lockExpiresAt } = context.messages.in.content;
+  ```
+
+- **Unused Variables**: Remove all unused variables and imports. Every declared variable must be used in the code. If a property is not needed in the behavior logic, do not include it in component.json.
+
+- **Unnecessary Input Fields**: Do not create select fields with only one option. If a value is constant, hardcode it in the behavior file instead of making it a user input.
+
+- **Date/Time Input Types**: When a field accepts date or datetime values, use the appropriate inspector type:
+    - For datetime fields: Use inspector type `"date-time"`
+    - Schema: `"type": "string", "format": "date-time"`
+    - Inspector: `"type": "date-time"`
+    - For date-only fields: Use inspector type `"date-time"` with config `{ "enableTime": false }`
+    - Do NOT use `"type": "text"` for date/datetime fields in the inspector
+
+  Example:
+  ```json
+  {
+    "schema": {
+      "properties": {
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "inspector": {
+      "inputs": {
+        "expires_at": {
+          "type": "date-time",
+          "label": "Expires At"
+        }
+      }
+    }
+  }
+  ```
+
+## Best Practices (Humans)
+
+### Development Guidelines
 
 - **Authentication**: Store sensitive data in auth configuration, not component code
 - **Rate Limiting**: Use quota.js to prevent API abuse
 - **Documentation**: Provide clear descriptions and tooltips for all fields
 
-## Performance Considerations
+### Performance Considerations
 
 - **Caching**: Cache frequently accessed data (e.g., user lists, configuration)
 - **Pagination**: Handle large datasets with proper pagination
 - **Locking**: Use locking mechanisms for shared resources
 - **Batching**: Batch API calls when possible to reduce requests
 
-## Common Patterns
+#### Cache TTL using staticCache
 
-### When editing existing or creating new component
+When caching data (e.g., folder structures, user lists, property definitions), use `context.staticCache` with a TTL (Time-To-Live) to ensure the cache is refreshed periodically:
 
-IMPORTANT! refer [./prompts/instructions.componentStandards.md](./prompts/instructions.componentStandards.md) for comprehensive guidelines on creating or editing components in Appmixer.
+```javascript
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
-### When adding new field to component.json
+async tick(context) {
+    const cacheKey = `myconnector_data_${context.componentId}`;
+    let cachedData = await context.staticCache.get(cacheKey);
+
+    if (!cachedData) {
+        // Cache miss - fetch fresh data
+        cachedData = await fetchData(context);
+        // staticCache handles expiration automatically
+        await context.staticCache.set(cacheKey, cachedData, CACHE_TTL_MS);
+    }
+
+    // ... rest of tick logic using cachedData
+}
+```
+
+**Best practices for staticCache**:
+- Use descriptive cache keys with connector name prefix (e.g., `hubspot_properties_contacts`)
+- Include relevant identifiers in the key (e.g., user ID, folder ID) to avoid cache collisions
+- Use TTL between 10-60 minutes depending on how frequently the data changes
+- Combine with `context.lock()` when the fetch operation is expensive (see locking section below)
+
+**Example with lock** (from hubspot/commons.js):
+```javascript
+async getObjectProperties(context, objectType) {
+    const cacheKey = `hubspot_properties_${objectType}`;
+    let lock;
+    try {
+        lock = await context.lock(cacheKey);
+        const cached = await context.staticCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Fetch data from API
+        const { data } = await context.httpRequest({ /* ... */ });
+
+        // Cache with 1 minute TTL
+        await context.staticCache.set(cacheKey, data, 60 * 1000);
+        return data;
+    } finally {
+        await lock?.unlock();
+    }
+}
+```
+
+**Why staticCache is preferred over state-based caching**: `staticCache` provides built-in TTL support, handles expiration automatically, and is shared across component instances. State-based caching requires manual timestamp tracking and persists in the database unnecessarily.
+
+#### Locking for Long-Running Tick Operations
+
+When a `tick()` function may take a long time to execute (e.g., fetching nested folder structures), use a lock to prevent concurrent execution:
+
+```javascript
+async tick(context) {
+    let lock;
+    try {
+        lock = await context.lock(context.componentId, {
+            ttl: 5 * 60 * 1000, // 5 minute lock TTL
+            maxRetryCount: 0    // Don't wait, skip if already running
+        });
+    } catch (e) {
+        // Another tick is already running, skip this one
+        return;
+    }
+
+    try {
+        // ... long-running tick logic
+    } finally {
+        lock?.unlock();
+    }
+}
+```
+
+**Why locking is important**: The Appmixer engine calls `tick()` at regular intervals (default: 60 seconds). If a tick operation takes longer than the interval, multiple concurrent tick executions can overwhelm external APIs and cause race conditions.
+
+#### Batching Recursive API Calls
+
+When fetching hierarchical data (e.g., recursive folder structures), use batched concurrent requests instead of sequential recursive calls:
+
+```javascript
+// ❌ BAD: Sequential recursive calls - slow and can timeout
+async function getSubfoldersRecursive(context, folderId, result = []) {
+    const { data } = await context.httpRequest({ /* ... */ });
+    for (const folder of data.files) {
+        result.push(folder.id);
+        await getSubfoldersRecursive(context, folder.id, result); // Sequential!
+    }
+    return result;
+}
+
+// ✅ GOOD: Batched breadth-first traversal - faster and more reliable
+async function getSubfolders(context, rootFolderId) {
+    const allFolderIds = [];
+    let foldersToProcess = [rootFolderId];
+
+    while (foldersToProcess.length > 0) {
+        // Process in batches of 10 to avoid overwhelming the API
+        const batch = foldersToProcess.splice(0, 10);
+
+        const batchResults = await Promise.all(
+            batch.map(parentId => context.httpRequest({ /* ... */ }))
+        );
+
+        for (const { data } of batchResults) {
+            for (const folder of (data.files || [])) {
+                allFolderIds.push(folder.id);
+                foldersToProcess.push(folder.id);
+            }
+        }
+    }
+
+    return allFolderIds;
+}
+```
+
+**Why batching is important**: Deep recursive folder structures with hundreds of subfolders can take minutes to traverse sequentially. Batched concurrent requests significantly reduce total execution time and are less likely to timeout.
+    
+### Common Patterns
+
+#### When Adding New Field to component.json
 
 > Use-case: "I want to add a new number field `itemCount` to the `MyAwesomeComponent` component."
 
-- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow json schema format.
+- Add the field to both `schema` and `inspector` sections in the `inPorts` array. Follow JSON schema format.
 - Add the fields to behavior JS file, especially in `context.httpRequest` call.
 
-
-### Dynamic Field Options
+#### Dynamic Field Options
 
 Use `source` property to populate field options dynamically:
 
@@ -991,9 +2265,9 @@ Use `source` property to populate field options dynamically:
 }
 ```
 
-### File Handling
+#### File Handling
 
-For file input components:
+##### file input components
 
 ```json
 {
@@ -1017,8 +2291,29 @@ For file input components:
 }
 ```
 
-## Testing Guidelines
+##### file output components
+- use `context.saveFileStream()` in behavior JS
+- must return `fileId` in output message
+- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+
+Examples:
+
+```javascript
+const filename = `generated-image-${(new Date).toISOString()}.png`;
+const file = await context.saveFileStream(filename, readStream);
+return context.sendJson({ fileId: file.fileId, prompt, size }, 'out');
+```
+```javascript
+const outFilename = filename || `${Date.now()}_elevenlabs_soundeffect`;
+const file = await context.saveFileStream(outFilename, data);
+
+return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
+```
+
+# Testing Guidelines
+
 ### Unit Tests
+
 - Use `mocha` for unit tests
 - Place tests in `test/unit` directory
 - Use `assert` from Node.js for assertions
@@ -1028,3 +2323,849 @@ When working on a single connector, you can run tests with:
 ```bash
 npm run test-unit -- test/<connector_name>
 ```
+
+### End-to-End (E2E) Test Flows
+
+E2E test flows are automated workflow tests stored as `test-flow*.json` files in the connector's root directory (`src/appmixer/<connector_name>/`). These flows test the complete integration by executing components in a realistic sequence.
+
+**Important**: Connectors should have **multiple smaller test flows** rather than one large flow. Each flow should test a specific feature or workflow (e.g., `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`). This approach makes tests easier to maintain, debug, and understand.
+
+**Full Coverage Requirement**: All components in a connector MUST be tested. Verify that every component in the connector appears in at least one test flow.
+
+#### Test Flow Structure
+
+Test flows are JSON files that define a workflow using the Appmixer flow format. Each flow consists of:
+
+1. **Metadata**: Flow name and description
+2. **Components**: Dictionary of component instances with unique IDs
+3. **Connections**: Data flow between components via source/target ports
+4. **Configuration**: Input values and transformations
+
+**Naming Convention**:
+- Test flow names MUST follow the format: `"E2E Connector Name - test type"`
+- Examples: `"E2E Google Docs - images"`, `"E2E Slack - messages"`, `"E2E GitHub - pull requests"`
+- The testCase field in ProcessE2EResults should match this format
+
+**Basic Structure**:
+```json
+{
+    "name": "E2E Connector Name - feature",
+    "description": "End-to-end test for Connector Name - tests specific feature",
+    "flow": {
+        "component-id-1": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "component-id-2": {
+            "type": "appmixer.connector.core.ComponentName",
+            "x": 300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "component-id-1": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "component-id-1": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fieldName": {}
+                                },
+                                "lambda": {
+                                    "fieldName": "value"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Required Components
+
+Every E2E test flow MUST include these components in sequence:
+
+1. **OnStart** (`appmixer.utils.controls.OnStart`)
+    - Triggers the flow execution
+    - First component in the flow
+    - No configuration needed
+
+2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - Optional
+    - Setup operations before tests run
+    - Connects to OnStart output
+
+3. **Your Components Under Test**
+    - The actual connector components being tested
+    - Should test main CRUD operations (Create, Read, Update, Delete)
+    - Chain components to test realistic workflows
+
+4. **Assert Components** (`appmixer.utils.test.Assert`)
+    - Validate component outputs
+    - Supported assertions: `equal`, `notEmpty`, `regex`
+    - Multiple assertions can be used throughout the flow
+
+5. **AfterAll** (`appmixer.utils.test.AfterAll`)
+    - Cleanup operations after all tests complete
+    - Receives input from all assertion components
+    - Should include timeout property (e.g., 30 seconds)
+
+6. **ProcessE2EResults** (`appmixer.utils.test.ProcessE2EResults`)
+    - Final component that processes test results
+    - REQUIRED for all E2E test flows
+    - Must be connected after cleanup operations
+    - Reports success/failure to test infrastructure
+
+#### ProcessE2EResults Component Configuration
+
+The ProcessE2EResults component is REQUIRED and must be configured with:
+
+**Required Properties**:
+```json
+{
+    "type": "appmixer.utils.test.ProcessE2EResults",
+    "source": {
+        "in": {
+            "cleanup-component": ["out"]
+        }
+    },
+    "config": {
+        "properties": {
+            "successStoreId": "64f6f1f9193228000754082f",
+            "failedStoreId": "64f6f1f0193228000754082e"
+        },
+        "transform": {
+            "in": {
+                "cleanup-component": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {
+                            "recipients": {},
+                            "testCase": {},
+                            "result": {
+                                "result-var": {
+                                    "variable": "$.after-all.out",
+                                    "functions": []
+                                }
+                            }
+                        },
+                        "lambda": {
+                            "recipients": "jirka@client.io",
+                            "testCase": "E2E Connector Name - feature",
+                            "result": "{{{result-var}}}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Key Fields**:
+- `successStoreId`: Store ID for successful test results (use standard value)
+- `failedStoreId`: Store ID for failed test results (use standard value)
+- `recipients`: Email address for test result notifications
+- `testCase`: Human-readable test name (e.g., "Google Docs E2E")
+- `result`: Variable reference to AfterAll component output
+
+#### Component Configuration Pattern
+
+**Setting Static Values**:
+```json
+{
+    "config": {
+        "transform": {
+            "in": {
+                "source-component": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {
+                            "fieldName": {}
+                        },
+                        "lambda": {
+                            "fieldName": "static-value"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Passing Data from Previous Component**:
+```json
+{
+    "config": {
+        "transform": {
+            "in": {
+                "source-component": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {
+                            "fieldName": {
+                                "variable-id": {
+                                    "variable": "$.source-component.out.fieldName",
+                                    "functions": []
+                                }
+                            }
+                        },
+                        "lambda": {
+                            "fieldName": "{{{variable-id}}}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Assert Component Configuration
+
+Assert components validate outputs using expressions:
+
+```json
+{
+    "type": "appmixer.utils.test.Assert",
+    "source": {
+        "in": {
+            "component-to-test": ["out"]
+        }
+    },
+    "config": {
+        "transform": {
+            "in": {
+                "component-to-test": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {
+                            "expression": {
+                                "check-var": {
+                                    "variable": "$.component-to-test.out.fieldName",
+                                    "functions": []
+                                }
+                            }
+                        },
+                        "lambda": {
+                            "expression": {
+                                "AND": [
+                                    {
+                                        "field": "{{{check-var}}}",
+                                        "assertion": "equal",
+                                        "expected": "expected-value"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Supported Assertion Types**:
+- `equal`: Exact match comparison (e.g., field equals "expected-value")
+- `notEmpty`: Checks that a field is not empty/null/undefined
+- `regex`: Regular expression pattern match (e.g., field matches pattern "^[0-9]+$")
+
+#### Critical Variable Mapping Rules
+
+These rules are **CRITICAL** and must be followed exactly. Failure to follow these rules will cause test flows to fail silently.
+
+**1. Lambda Values MUST Reference Modifiers with `{{{variable-id}}}` Pattern**
+
+When a modifier defines a variable mapping, the lambda value MUST use the corresponding `{{{variable-id}}}` pattern (for example, `{{{check-var}}}`) - NEVER use an empty string.
+
+**WRONG:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-1": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": ""  // WRONG! This ignores the modifier
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-task-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": "{{{var-task-id}}}"  // CORRECT! References the modifier
+}
+```
+
+**2. Assert `field` Property MUST Use Variable Reference**
+
+The `field` property in Assert expressions must ALWAYS use `{{{uuid}}}` pattern that references a modifier. Never leave it empty.
+
+**WRONG:**
+```json
+"modifiers": {
+    "expression": {
+        "check-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "",  // WRONG! Empty field ignores the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "expression": {
+        "field-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-id}}}",  // CORRECT! References the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**3. Assert `expected` Property for Dynamic Values**
+
+For `equal` assertions comparing dynamic values (from SetVariable or component outputs), BOTH `field` AND `expected` must use variable references.
+
+**CORRECT PATTERN for comparing component output to SetVariable:**
+```json
+"modifiers": {
+    "expression": {
+        "field-content": {
+            "variable": "$.get-task.out.content",
+            "functions": []
+        },
+        "expected-content": {
+            "variable": "$.set-variables.out.taskContent",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-content}}}",
+            "assertion": "equal",
+            "expected": "{{{expected-content}}}"
+        }]
+    }
+}
+```
+
+**4. SetVariable Component Best Practices**
+
+- Place SetVariable component early in flow (immediately after OnStart)
+- Define ALL values that will be used in Assert comparisons
+- Use descriptive variable names (e.g., `taskContent`, `updatedTaskContent`)
+- For unique test data, use `{{{g_timestamp()}}}` or `{{{g_now()}}}` functions
+
+**Example SetVariable Configuration:**
+```json
+"set-variables": {
+    "type": "appmixer.utils.controls.SetVariable",
+    "source": {"in": {"on-start": ["out"]}},
+    "config": {
+        "transform": {
+            "in": {
+                "on-start": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {"variables": {}},
+                        "lambda": {
+                            "variables": {
+                                "ADD": [
+                                    {"type": "text", "name": "taskContent", "text": "E2E Test Task"},
+                                    {"type": "text", "name": "updatedContent", "text": "E2E Test Task Updated"}
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**5. Component Dependencies and Source Connections**
+
+Components that need data from another component MUST have that component in their `source.in`. The source component's output is accessed via `$.component-id.out.fieldName`.
+
+**WRONG - GetTask sources from wrong component:**
+```json
+"get-task": {
+    "source": {"in": {"before-all": ["out"]}},  // WRONG! Can't access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This won't work!
+        }
+    }
+}
+```
+
+**CORRECT - GetTask sources from CreateTask:**
+```json
+"get-task": {
+    "source": {"in": {"create-task": ["out"]}},  // CORRECT! Can access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This works!
+        }
+    }
+}
+```
+
+**6. ProcessE2EResults `result` Field**
+
+The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out`. Never leave it empty.
+
+**CORRECT:**
+```json
+"modifiers": {
+    "result": {
+        "result-var": {
+            "variable": "$.after-all.out",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "recipients": "test@appmixer.ai",
+    "testCase": "E2E Connector - feature",
+    "result": "{{{result-var}}}"
+}
+```
+
+**7. AfterAll Must Receive ALL Assert Outputs - CRITICAL**
+
+**EVERY** Assert component in the flow MUST have its output connected to the AfterAll component's `source.in`. This is **CRITICAL** - missing any Assert connection will cause that assertion's result to be lost and not included in the test report.
+
+**Common Mistake**: Assert components that are in the middle of the flow (not at the end) are often forgotten. Even if an Assert flows to another component first, it MUST ALSO connect to AfterAll.
+
+**WRONG - Missing assert-create connection:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-get": ["out"],
+            "assert-update": ["out"]
+            // WRONG! assert-create is missing - its result will be lost!
+        }
+    }
+}
+```
+
+**CORRECT - All Asserts connected:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-create": ["out"],   // First assert
+            "assert-get": ["out"],      // Second assert
+            "assert-update": ["out"],   // Third assert
+            "assert-list": ["out"]      // Fourth assert - ALL included!
+        }
+    }
+}
+```
+
+**Verification Checklist**: Before finalizing any test flow:
+1. Count the number of Assert components in the flow
+2. Count the number of Assert connections in AfterAll's `source.in`
+3. These numbers MUST match exactly
+4. If counts don't match, the missing Assert results will not appear in the test report, causing silent test failures.
+
+#### Best Practices for Test Flows
+
+1. **Multiple Smaller Flows**
+    - Create multiple focused test flows per connector instead of one large flow
+    - Each flow should test a specific feature or workflow
+    - Examples: `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`
+    - Smaller flows are easier to debug, maintain, and understand
+
+2. **Ensure Full Coverage**
+    - **CRITICAL**: Every component in the connector MUST be tested
+    - Verify that each component appears in at least one test flow
+    - Use a checklist to track which components are covered
+    - Include both actions and triggers in test coverage
+
+3. **Test Realistic Workflows**
+    - Create → Modify → Read → Delete sequence
+    - Test main user journeys
+    - Include error cases where appropriate
+
+4. **Multiple Assert Components - Separate Branches**
+    - **CRITICAL**: If a flow has more than one Assert component, they MUST be in separate branches
+    - Each Assert should test a different aspect or operation
+    - Branches should have different y-coordinates for visual separation
+    - All Assert components feed into the AfterAll component to merge results
+    - Example structure:
+      ```
+      Component A (y=100)
+        ├─> Assert 1 (y=100) ─┐
+        └─> Component B (y=300) ─> Assert 2 (y=300) ─┘
+                                                      └─> AfterAll
+      ```
+    - See `test-flow-images.json` for reference implementation
+
+5. **Field Name Accuracy**
+    - Use EXACT field names from component.json
+    - Match required vs optional fields
+    - Example: `paragraphText` not `text`, `oldText` not `searchText`
+
+6. **Variable References**
+    - Reference outputs using `$.component-id.out.fieldName`
+    - Use consistent variable IDs in modifiers
+    - Pass data between components via variables
+
+7. **Cleanup Operations**
+    - Always delete created test data
+    - Use AfterAll to ensure cleanup runs after all assertions
+    - Connect cleanup components properly
+
+8. **Component Coordinates**
+    - Use x/y coordinates for visual layout
+    - Space components horizontally (200-300px apart)
+    - Arrange vertically for parallel branches (especially for multiple Assert components)
+
+9. **Naming Conventions**
+    - Use descriptive component IDs: `create-document`, `assert-content-exists`
+    - Name test flows: `test-flow-<feature>.json` (e.g., `test-flow-crud.json`, `test-flow-list.json`)
+    - Use clear, descriptive names that indicate what the flow tests
+
+#### Example Test Flow Pattern
+
+```json
+{
+    "name": "E2E Service - crud",
+    "description": "End-to-end test for Service connector - tests CRUD operations",
+    "flow": {
+        "start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-item": {
+            "type": "appmixer.service.core.CreateItem",
+            "x": 300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "name": "E2E Test Item"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-item": {
+            "type": "appmixer.service.core.GetItem",
+            "x": 500,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-item": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "itemId": {
+                                        "var-1": {
+                                            "variable": "$.create-item.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "itemId": "{{{var-1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-item": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-item": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-check": {
+                                            "variable": "$.get-item.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Item"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 900,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-item": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-item": {
+            "type": "appmixer.service.core.DeleteItem",
+            "x": 1100,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "itemId": {
+                                        "var-1": {
+                                            "variable": "$.create-item.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "itemId": "{{{var-1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-item": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Service - crud",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Creating a Test Flow: Step-by-Step
+
+1. **Plan Test Coverage**
+    - List ALL components in the connector (actions and triggers)
+    - Decide how many test flows you need (prefer multiple smaller flows)
+    - Group related components into logical test scenarios
+    - Example groupings:
+        - `test-flow-crud.json`: Create, Update, Get, Delete components
+        - `test-flow-list.json`: List and Find components
+        - `test-flow-advanced.json`: Complex operations like ReplaceText, InsertParagraph
+    - Ensure every component appears in at least one flow
+
+2. **Identify Test Scenario**
+    - Determine which components to test in this specific flow
+    - Plan the workflow sequence
+    - Identify what to assert
+
+3. **Create JSON File**
+    - Name: `src/appmixer/<connector>/test-flow-<feature>.json`
+    - Use descriptive feature names: `crud`, `search`, `webhooks`, `list`, etc.
+
+4. **Add Required Components**
+    - Start with OnStart
+    - Add your connector components
+    - Include Assert components
+    - End with AfterAll → Cleanup → ProcessE2EResults
+
+5. **Configure Each Component**
+    - Set correct field names from component.json
+    - Pass data via variable references
+    - Set static test values
+
+6. **Verify Field Names**
+    - Read each component's component.json
+    - Check `inPorts[0].schema.properties` for required fields
+    - Match EXACT field names in test flow config
+
+7. **Test Locally**
+    - Ensure authentication is configured
+    - Run individual components with `appmixer test component`
+    - Verify outputs before building full flow
+
+8. **Verify Coverage**
+    - Check that all components are covered across all test flows
+    - Create additional flows if needed for untested components
+
+#### Common Mistakes to Avoid
+
+1. **Incorrect Field Names**
+    - ❌ Using `text` instead of `paragraphText`
+    - ❌ Using `searchText` instead of `oldText`
+    - ✅ Always check component.json for exact names
+
+2. **Missing Required Fields**
+    - ❌ Omitting required inputs
+    - ✅ Verify all `required` fields from schema are populated
+
+3. **Wrong Variable References**
+    - ❌ `$.component.out` (missing field name)
+    - ✅ `$.component-id.out.fieldName`
+
+4. **Forgetting ProcessE2EResults**
+    - ❌ Ending flow without ProcessE2EResults
+    - ✅ Always include as final component
+
+5. **Skipping Cleanup**
+    - ❌ Leaving test data in the service
+    - ✅ Delete all created test data in cleanup phase
+
+6. **Incomplete Component Coverage**
+    - ❌ Creating one large test flow that doesn't test all components
+    - ❌ Forgetting to test some components
+    - ✅ Verify every component appears in at least one test flow
+    - ✅ Create multiple smaller flows to cover all components
+
+#### Reference Test Flows
+
+Good examples to reference:
+- `src/appmixer/googleDocs/test-flow.json` - Document CRUD operations
+- `src/appmixer/monday/test-flow.json` - Board management
+- `src/appmixer/jira/test-flow.json` - Issue tracking
+- `src/appmixer/hubspot/test-flow-create-deal.json` - CRM operations
+
+---

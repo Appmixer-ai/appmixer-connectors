@@ -13,7 +13,9 @@ const aggregator = new PagingAggregator(
         return accumulator.concat(chunk.boards);
     },
     (accumulator, chunk, page, pageSize) => {
-        const isDone = !chunk.boards.length || chunk.boards.length < pageSize;
+        // Limiting number of API calls in source mode to avoid long runs of fetching flow variables.
+        const pageCountLimitReached = page >= 10;
+        const isDone = !chunk.boards.length || chunk.boards.length < pageSize || pageCountLimitReached;
         return isDone ? -1 : page + 1;
     }
 );

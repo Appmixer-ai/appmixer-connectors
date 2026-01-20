@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 'use strict';
 
-const { getBasicAuth } = require('../../lib');
+const { getAuthHeaders } = require('../../lib');
 
 module.exports = {
 
@@ -13,12 +13,13 @@ module.exports = {
             sysparm_query_no_domain
         } = context.messages.in.content;
 
+        const authHeaders = getAuthHeaders(context);
         const options = {
             method: 'DELETE',
             url: `https://${context.auth.instance}.service-now.com/api/now/table/${tableName}/${sys_id}`,
             headers: {
                 'User-Agent': 'Appmixer (info@appmixer.com)',
-                'Authorization': ('Basic ' + getBasicAuth(context.auth.username, context.auth.password))
+                ...authHeaders
             },
             params: {
                 sysparm_query_no_domain

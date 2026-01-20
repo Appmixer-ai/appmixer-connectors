@@ -14,5 +14,12 @@ archive.on('error', (err) => {
 });
 
 archive.pipe(output);
-archive.directory('artifacts', false);
+archive.directory('artifacts', false, (entry) => {
+
+    // Ignore test folder
+    if (entry.name.includes('test')) {
+        return false;
+    }
+    return entry;
+});
 archive.finalize();

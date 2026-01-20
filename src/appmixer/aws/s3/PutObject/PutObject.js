@@ -1,6 +1,6 @@
 'use strict';
-const s3Stream = require('s3-upload-stream');
-const commons = require('../../aws-commons');
+const { Upload } = require('@aws-sdk/lib-storage');
+const lib = require('../lib');
 
 /**
  * Uploads an object.
@@ -20,6 +20,7 @@ module.exports = {
             maxPartSize,
             concurrentParts
         } = context.messages.in.content;
+
         if (!bucket) {
             throw new context.CancelError('Bucket is required');
         }
@@ -32,48 +33,56 @@ module.exports = {
             throw new context.CancelError('File ID is required');
         }
 
-        if (!acl) {
-            throw new context.CancelError('Access Control is required');
-        }
+        const { s3 } = lib.init(context);
 
+        // Get file stream from Appmixer storage
+        const readStream = await context.getFileReadStream(fileId);
 
-        const { s3 } = commons.init(context);
-
-        const uploadFn = () => {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const stream = s3Stream(s3);
-                    const pipe = stream.upload({
-                        Bucket: bucket,
-                        Key: key,
-                        ACL: acl,
-                        ContentType: contentType,
-                        Expires: expiryDate
-                    }).on('error', error => {
-                        reject(error);
-                    }).on('uploaded', details => {
-                        resolve(details);
-                    });
-
-                    let sizeInBytes = 20971520; // 20 MB
-                    if (maxPartSize) {
-                        sizeInBytes = maxPartSize * 1048576;
-                    }
-                    pipe.maxPartSize(sizeInBytes);
-                    pipe.concurrentParts(concurrentParts || 1);
-
-                    const readStream = await context.getFileReadStream(fileId);
-                    readStream.pipe(pipe);
-                } catch (err) {
-                    reject(err);
-                }
-            });
+        // Build upload parameters
+        const uploadParams = {
+            Bucket: bucket,
+            Key: key,
+            Body: readStream,
+            ContentType: contentType,
+            Expires: expiryDate ? new Date(expiryDate) : undefined
         };
 
-        return context.sendJson(Object.assign({
-            Bucket: bucket,
-            ContentType: contentType,
-            Expires: expiryDate
-        }, await uploadFn()), 'object');
+        // Only add ACL if provided (optional for buckets with ACLs disabled)
+        if (acl) {
+            uploadParams.ACL = acl;
+        }
+
+        // Configure multipart upload options
+        const uploadOptions = {
+            client: s3,
+            params: uploadParams
+        };
+        if (maxPartSize) {
+            uploadOptions.partSize = maxPartSize * 1048576; // Convert MB to bytes
+        }
+        if (concurrentParts) {
+            uploadOptions.queueSize = concurrentParts;
+        }
+
+        // Use @aws-sdk/lib-storage Upload class (handles multipart automatically)
+        try {
+            const upload = new Upload(uploadOptions);
+            const result = await upload.done();
+
+            // Return consistent output format
+            return context.sendJson({
+                Bucket: bucket,
+                Key: result.Key,
+                ETag: result.ETag,
+                Location: result.Location,
+                ContentType: contentType,
+                Expires: expiryDate
+            }, 'object');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message || error);
+        }
     }
 };

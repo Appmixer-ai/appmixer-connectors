@@ -2,6 +2,8 @@
 
 const lib = require('../../lib.generated');
 
+const NUM_OF_IP_GROUPS = 500;
+
 module.exports = {
     async receive(context) {
 
@@ -10,28 +12,59 @@ module.exports = {
             throw new context.CancelError('IPs is required');
         }
 
-
-        const ipsList = lib.parseIPs(ips);
-
         const expiration = ttl && ttl > 0 ? new Date(Date.now() + ttl * 1000).valueOf() : null;
 
-        const keyName = context?.config.kvmBlockedIPsKeyName || 'blocked-ips';
+        const groupsList = getIpGroups(lib.parseIPs(ips));
 
-        const entry = await getOrCreateList(context, keyName);
+        for (const { keyName, ips } of groupsList) {
 
-        const parsedList = removeExpiredIPs(entryToList(entry));
+            const entry = await getOrCreateList(context, keyName);
+            const parsedList = removeExpiredIPs(entryToList(entry));
+            ips.forEach(ip => {
+                parsedList[ip] = { ip, expiration };
+            });
 
-        ipsList.forEach(ip => {
-            parsedList[ip] = {
-                ip,
-                expiration
-            };
-        });
+            await setList(context, keyName, listToEntry(parsedList));
+        }
 
-        await setList(context, keyName, listToEntry(parsedList));
         return context.sendJson({}, 'out');
     }
 };
+
+function getIpGroup(ip) {
+
+    let hash = 0;
+    let chr;
+
+    if (ip.length === 0) {
+        return 0;
+    }
+
+    for (let i = 0; i < ip.length; i++) {
+        chr = ip.charCodeAt(i);
+        hash = ((hash << 5) - hash) + chr;
+        hash = hash >>> 0; // Convert to 32bit unsigned integer
+    }
+
+    return hash % NUM_OF_IP_GROUPS;
+}
+
+/*
+ * Group IPs into groups of 500 to avoid hitting the KVM size limit
+ */
+function getIpGroups(ipsList) {
+    const groups = {};
+    ipsList.forEach(ip => {
+
+        const keyName = `blocked-ips-${getIpGroup(ip)}`;
+        groups[keyName] = groups[keyName] || [];
+        groups[keyName].push(ip);
+    });
+
+    return Object.keys(groups).map(keyName => {
+        return { keyName, ips: groups[keyName] };
+    });
+}
 
 const setList = (context, name, value) => {
 

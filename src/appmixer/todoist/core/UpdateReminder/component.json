@@ -1,0 +1,105 @@
+{
+    "name": "appmixer.todoist.core.UpdateReminder",
+    "label": "Update Reminder",
+    "description": "Update an existing reminder by setting its type and due date or minute offset.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:todoist"
+    },
+    "quota": {
+        "manager": "appmixer:todoist",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reminderId": {
+                        "type": "string",
+                        "title": "Reminder ID"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "dueString": {
+                        "type": "string",
+                        "title": "Due String"
+                    },
+                    "dueDatetime": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Due Datetime"
+                    },
+                    "minuteOffset": {
+                        "type": "number",
+                        "title": "Minute Offset"
+                    }
+                },
+                "required": [
+                    "reminderId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "reminderId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Reminder ID",
+                        "tooltip": "The unique identifier of the reminder to update."
+                    },
+                    "type": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Type",
+                        "tooltip": "The type of reminder: relative (before task due time) or absolute (specific date/time).",
+                        "options": [
+                            {
+                                "label": "Relative",
+                                "value": "relative"
+                            },
+                            {
+                                "label": "Absolute",
+                                "value": "absolute"
+                            }
+                        ]
+                    },
+                    "dueString": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Due String",
+                        "tooltip": "Human-readable due date for absolute reminders (e.g., 'tomorrow at 10:00', 'Dec 25')."
+                    },
+                    "dueDatetime": {
+                        "type": "date-time",
+                        "index": 4,
+                        "label": "Due Datetime",
+                        "tooltip": "Specific date and time for absolute reminders (ISO 8601 format)."
+                    },
+                    "minuteOffset": {
+                        "type": "number",
+                        "index": 5,
+                        "label": "Minute Offset",
+                        "tooltip": "Number of minutes before the task's due time for relative reminders."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGcgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI0U0NDMzMiIgZD0iTTUyLjUgMGgtNDVBNy41MiA3LjUyIDAgMCAwIDAgNy41djQ1QzAgNTYuNjI1IDMuMzc0IDYwIDcuNSA2MGg0NWM0LjEyNiAwIDcuNS0zLjM3NSA3LjUtNy41di00NUM2MCAzLjM3NSA1Ni42MjYgMCA1Mi41IDAiLz48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIuMTIxIDI5LjU4MmMxLS42NzMgMjIuNDY5LTE1LjA1NSAyMi45Ni0xNS4zODguNDktLjMyOS41MTgtMS4zNDEtLjAzNi0xLjcwNy0uNTUtLjM2NS0xLjU5My0xLjA1Ni0xLjk4LTEuMzIxYTEuNTkgMS41OSAwIDAgMC0xLjc3MS4wMjVBMjYzOTEgMjYzOTEgMCAwIDEgMTIuMDYyIDI0LjA2Yy0uNzM3LjQ4Ni0xLjY0Mi40OTQtMi4zNzMgMEwwIDE3LjUwN3Y1LjU3YzIuMzU2IDEuNjAxIDguMjIyIDUuNTc2IDkuNjQyIDYuNTEyLjg0OC41NTUgMS42Ni41NDMgMi40ODEtLjAwNyIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMi4xMjEgMzkuMTI4YzEtLjY3MyAyMi40NjktMTUuMDU1IDIyLjk2LTE1LjM4OS40OS0uMzI5LjUxOC0xLjM0LS4wMzYtMS43MDdhMjM0IDIzNCAwIDAgMS0xLjk4LTEuMzIgMS41OSAxLjU5IDAgMCAwLTEuNzcxLjAyNGMtLjI3NS4xODUtMTguNjIgMTIuNDY3LTE5LjIzMiAxMi44Ny0uNzM3LjQ4Ni0xLjY0Mi40OTQtMi4zNzMgMEwwIDI3LjA1MnY1LjU3YzIuMzU2IDEuNjAyIDguMjIyIDUuNTc2IDkuNjQyIDYuNTEyLjg0OC41NTYgMS42Ni41NDMgMi40ODEtLjAwNiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMi4xMjEgNDguNjc0YzEtLjY3MyAyMi40NjktMTUuMDU2IDIyLjk2LTE1LjM5LjQ5LS4zMjguNTE4LTEuMzQtLjAzNi0xLjcwNy0uNTUtLjM2My0xLjU5My0xLjA1NS0xLjk4LTEuMzJhMS41OSAxLjU5IDAgMCAwLTEuNzcxLjAyNGMtLjI3NS4xODUtMTguNjIgMTIuNDY3LTE5LjIzMiAxMi44Ny0uNzM3LjQ4Ni0xLjY0Mi40OTUtMi4zNzMgMEwwIDM2LjU5OHY1LjU3MWMyLjM1NiAxLjYwMSA4LjIyMiA1LjU3NiA5LjY0MiA2LjUxMi44NDguNTU1IDEuNjYuNTQzIDIuNDgxLS4wMDYiLz48L2c+PC9zdmc+"
+}

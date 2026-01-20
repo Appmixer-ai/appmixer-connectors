@@ -34,7 +34,7 @@ module.exports = {
             await this.scheduleDrain(context);
             const entries = await context.stateGet('documents') || [];
             if (entries.length > 0) {
-                await this.processAllDocuments(context, { threshold });
+                await this.processAllDocuments(context, { threshold, timeoutTrigger: true });
             }
         } else {
             const { document, filename, integrationId } = context.messages.in.content;
@@ -46,7 +46,7 @@ module.exports = {
             await context.stateAddToSet('documents', { id: uuid(), data: document });
             const entries = await context.stateGet('documents') || [];
 
-            context.log({ step: 'receive', entries: entries.length });
+            await context.log({ step: 'receive', entries: entries.length });
 
             if (!scheduleValue || (threshold && entries.length >= threshold)) {
                 await this.processAllDocuments(context, { threshold });
@@ -54,27 +54,32 @@ module.exports = {
         }
     },
 
-    async processAllDocuments(context, { threshold } = {}) {
-        const documents = await this.prepareForSend(context, { threshold });
+    async processAllDocuments(context, { threshold, timeoutTrigger = false } = {}) {
+        const documents = await this.prepareForSend(context, { threshold, timeoutTrigger });
         await this.processSend(context, { documents });
         const entries = await context.stateGet('documents') || [];
-        if (threshold && entries.length >= threshold) {
-            await this.processAllDocuments(context, { threshold });
+        if (threshold && entries.length >= threshold || timeoutTrigger && entries.length) {
+            await this.processAllDocuments(context, { threshold, timeoutTrigger });
         }
     },
 
-    async prepareForSend(context, { threshold }) {
+    async prepareForSend(context, { threshold, timeoutTrigger = false }) {
 
         const entriesToUpload = await context.stateGet('documents-upload-batch');
         if (entriesToUpload) {
-            await context.log({
-                step: 'pre-upload: skipping, upload already in progress',
-                message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
-            });
-            return [];
+            if (entriesToUpload.length > 0) {
+                await context.log({
+                    step: 'pre-upload: skipping, upload already in progress',
+                    message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
+                });
+                return [];
+            } else {
+                // Empty batch from previous interrupted run, clean it up
+                await context.stateUnset('documents-upload-batch');
+            }
         }
 
-        if (threshold && (await context.stateGet('documents') || []).length < threshold) {
+        if (threshold && !timeoutTrigger && (await context.stateGet('documents') || []).length < threshold) {
             await context.log({ step: 'pre-upload: skipping, not enough documents' });
             return [];
         }
@@ -92,19 +97,23 @@ module.exports = {
                 documents = entriesToUpload.map(entry => entry.data);
                 await context.log({
                     step: 'documents-upload-batch docs',
-                    message: `Prepared ${documents.length} documents for upload.`,
-                    lock: prepareDocumentsLock
+                    message: `Prepared ${documents.length} documents for upload.`
                 });
 
             } else {
                 let entries = (await context.stateGet('documents') || []);
 
-                if (threshold && entries.length > threshold) {
-                    await context.stateSet('documents', entries.slice(0, -threshold)); // keep all but the last `threshold` entries
-                    await context.stateSet('documents-upload-batch', entries.slice(-threshold)); // take the last `threshold` entries
-                    entries = entries.slice(-threshold);
+                if (!timeoutTrigger && threshold && entries.length >= threshold) {
+                    // Split: keep extras, process last `threshold` entries
+                    const batchEntries = entries.slice(-threshold);
+                    await context.stateSet('documents', entries.slice(0, -threshold));
+                    await context.stateSet('documents-upload-batch', batchEntries);
+                    entries = batchEntries;
                 } else {
-                    await context.stateSet('documents-upload-batch', entries);
+                    // Process all entries (timeout drain or at/below threshold)
+                    if (entries.length > 0) {
+                        await context.stateSet('documents-upload-batch', entries);
+                    }
                     await context.stateUnset('documents');
                 }
                 await context.log({
@@ -132,20 +141,10 @@ module.exports = {
 
         try {
 
-            const { integrationId, filename } = await context.stateGet('metadata') || {};
-            if (!integrationId || !filename) {
-                throw new context.CancelError('No metadata found in state. Cannot send documents.');
-            }
-
             lock = await context.lock('upload_lock_' + context.componentId, getLockConfiguration(context));
-            await this.sendDocuments(context, {
-                documents,
-                filename,
-                integrationId
-            });
-            await context.stateUnset('documents-upload-batch');
-
+            await this.sendDocuments(context, { documents });
         } finally {
+            await context.stateUnset('documents-upload-batch');
             lock?.unlock();
         }
     },
@@ -156,21 +155,39 @@ module.exports = {
         const now = moment();
         const referenceDate = moment();
 
+        const timeoutId = await context.stateGet('timeoutId');
+
+        if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
+            // Handle the case when a timeout was scheduled but the system crashed before the
+            // corresponding timeoutId was saved into the state. The original timeout then fired
+            // again, state was 'JsonSent', and a new timeout was scheduled for the second time.
+            // At this point, there can be two timeouts persisted in the DB. We must process only
+            // the timeout whose ID matches the value stored in the state and ignore the others.
+            return;
+        }
+
         if (!['minutes', 'hours', 'days'].includes(scheduleType)) {
             throw new context.CancelError(`Invalid scheduleType: ${scheduleType}`);
         }
 
         const nextDate = referenceDate.add(scheduleValue, scheduleType);
-        await context.log({ step: 'schedule', nextDate: nextDate.toISOString() });
         const diff = nextDate.diff(now);
         if (diff <= 0) {
             throw new context.CancelError(`Computed timeout is non‑positive (${diff} ms). Check schedule parameters.`);
         }
 
-        await context.setTimeout({}, diff);
+        const newTimeoutId = await context.setTimeout({}, diff);
+        await context.stateSet('timeoutId', newTimeoutId);
+        await context.log({ step: 'schedule', nextDate: nextDate.toISOString(), timeoutId: newTimeoutId });
     },
 
-    async sendDocuments(context, { documents, filename, integrationId }) {
+    async sendDocuments(context, { documents }) {
+
+        const { integrationId, filename } = await context.stateGet('metadata') || {};
+
+        if (!integrationId || !filename) {
+            throw new context.CancelError('No metadata found in state. Cannot send documents.');
+        }
 
         const { url, systemActivityId } = await lib.requestUpload(context, { filename });
 
