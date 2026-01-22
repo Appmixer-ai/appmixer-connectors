@@ -1,16 +1,16 @@
 'use strict';
 
+const lib = require('../../lib');
+
 module.exports = {
 
     async start(context) {
 
-        const { channels, parseJSON = false, onlyMessage = false } = context.properties;
+        const { channels, parse_json: parseJSON = false, only_message: onlyMessage = false } = context.properties;
 
         if (!channels) {
             throw new context.CancelError('Channels is required!');
         }
-
-        const lib = require('../../lib');
 
         // Parse channel patterns (comma-separated)
         const channelPatterns = channels.split(',').map(c => c.trim()).filter(c => c);
@@ -19,36 +19,61 @@ module.exports = {
             throw new context.CancelError('At least one channel pattern is required!');
         }
 
-        // Create a dedicated client for subscription
-        const client = await lib.createRedisClient(context.auth);
+        try {
+            // Create a dedicated client for subscription
+            const client = await lib.createRedisClient(context.auth);
 
-        // Set up message handler
-        const messageHandler = (message, channel) => {
-            let messageContent = message;
+            // Set up message handler for pattern subscriptions
+            const messageHandler = async (message, channel) => {
+                let messageContent = message;
 
-            // Try to parse JSON if requested
-            if (parseJSON) {
-                try {
-                    messageContent = JSON.parse(message);
-                } catch (e) {
-                    // Keep as string if parsing fails
+                // Try to parse JSON if requested
+                if (parseJSON) {
+                    try {
+                        messageContent = JSON.parse(message);
+                    } catch (e) {
+                        // Keep as string if parsing fails
+                    }
                 }
-            }
 
-            // Send output
-            if (onlyMessage) {
-                context.sendJson({ message: messageContent }, 'out');
-            } else {
-                context.sendJson({ channel, message: messageContent }, 'out');
-            }
-        };
+                // Prepare output
+                const output = onlyMessage
+                    ? { message: messageContent }
+                    : { channel, message: messageContent };
 
-        // Subscribe to pattern-based channels
-        await client.pSubscribe(channelPatterns, messageHandler);
+                await context.sendJson(output, 'out');
+            };
 
-        // Store client reference for cleanup
-        await context.saveState({ subscribed: true });
-        context.redisClient = client;
+            // Subscribe to pattern-based channels
+            await client.pSubscribe(channelPatterns, messageHandler);
+
+            // Store client reference and configuration for cleanup
+            await context.saveState({
+                subscribed: true,
+                channels: channelPatterns
+            });
+
+            // Store client in context for webhook and stop methods
+            context.redisClient = client;
+        } catch (err) {
+            context.log({ stage: 'Error starting OnMessage trigger', error: err.message });
+            throw new context.CancelError(`Failed to subscribe to channels: ${err.message}`);
+        }
+    },
+
+    async receive(context) {
+
+        // Handle webhook messages if needed
+        if (context.messages.webhook) {
+            // Process webhook payload
+            const payload = context.messages.webhook.content.data;
+            const message = payload.message || payload;
+
+            await context.sendJson(message, 'out');
+
+            // Acknowledge webhook
+            return context.response();
+        }
     },
 
     async stop(context) {
@@ -59,14 +84,11 @@ module.exports = {
             try {
                 // Unsubscribe from all patterns
                 await client.pUnsubscribe();
-                await client.quit();
             } catch (e) {
-                try {
-                    await client.disconnect();
-                } catch (disconnectError) {
-                    // Ignore disconnect errors
-                }
+                context.log({ stage: 'Error unsubscribing', error: e.message });
             }
+
+                await client?.disconnect();
         }
 
         await context.saveState({});

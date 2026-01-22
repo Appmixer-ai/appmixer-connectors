@@ -10,7 +10,7 @@ module.exports = {
             throw new context.CancelError('Key is required!');
         }
 
-        if (value === undefined || value === null) {
+        if (!value) {
             throw new context.CancelError('Value is required!');
         }
 
@@ -31,13 +31,7 @@ module.exports = {
             return context.sendJson({ key, length }, 'out');
 
         } finally {
-            if (client) {
-                try {
-                    await client.quit();
-                } catch (e) {
-                    await client.disconnect();
-                }
-            }
+            await client?.disconnect();
         }
     }
 };

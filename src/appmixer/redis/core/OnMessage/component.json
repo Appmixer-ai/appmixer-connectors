@@ -2,29 +2,56 @@
     "name": "appmixer.redis.core.OnMessage",
     "author": "Appmixer <info@appmixer.com>",
     "description": "Triggers when a message is received on subscribed Redis pub/sub channels. Supports pattern matching with wildcards.",
+    "version": "1.0.0",
     "auth": {
         "service": "appmixer:redis"
     },
-    "private": false,
-    "quota": {},
     "trigger": true,
+    "webhook": true,
     "properties": {
-        "channels": {
-            "type": "text",
-            "label": "Channels",
-            "tooltip": "Comma-separated list of channel patterns to subscribe to. Use '*' as wildcard (e.g., 'notifications:*', 'events:user:*')."
+        "schema": {
+            "type": "object",
+            "properties": {
+                "channels": {
+                    "type": "string",
+                    "title": "Channels"
+                },
+                "parse_json": {
+                    "type": "boolean",
+                    "title": "Parse JSON Body",
+                    "default": false
+                },
+                "only_message": {
+                    "type": "boolean",
+                    "title": "Only Message",
+                    "default": false
+                }
+            },
+            "required": [
+                "channels"
+            ]
         },
-        "parseJSON": {
-            "type": "toggle",
-            "label": "Parse JSON Body",
-            "tooltip": "Attempt to parse the message body as JSON.",
-            "defaultValue": false
-        },
-        "onlyMessage": {
-            "type": "toggle",
-            "label": "Only Message",
-            "tooltip": "Return only the message content, excluding channel metadata.",
-            "defaultValue": false
+        "inspector": {
+            "inputs": {
+                "channels": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Channels",
+                    "tooltip": "Comma-separated list of channel patterns to subscribe to. Use '*' as wildcard (e.g., 'notifications:*', 'events:user:*')."
+                },
+                "parse_json": {
+                    "type": "toggle",
+                    "index": 2,
+                    "label": "Parse JSON Body",
+                    "tooltip": "Attempt to parse the message body as JSON."
+                },
+                "only_message": {
+                    "type": "toggle",
+                    "index": 3,
+                    "label": "Only Message",
+                    "tooltip": "Return only the message content, excluding channel metadata."
+                }
+            }
         }
     },
     "outPorts": [
