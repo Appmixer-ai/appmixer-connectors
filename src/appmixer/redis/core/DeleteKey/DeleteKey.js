@@ -22,13 +22,7 @@ module.exports = {
             return context.sendJson({}, 'out');
 
         } finally {
-            if (client) {
-                try {
-                    await client.quit();
-                } catch (e) {
-                    await client.disconnect();
-                }
-            }
+            await client?.disconnect();
         }
     }
 };

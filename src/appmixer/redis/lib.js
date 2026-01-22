@@ -20,8 +20,7 @@ async function createRedisClient(auth, isTest = false) {
         socket: {
             host: auth.host,
             port: auth.port
-        },
-        database: auth.database
+        }
     };
 
     // Add authentication if provided
@@ -33,12 +32,7 @@ async function createRedisClient(auth, isTest = false) {
     }
 
     // Configure SSL/TLS
-    if (auth.ssl) {
-        clientOptions.socket.tls = true;
-        if (auth.disableTlsVerification) {
-            clientOptions.socket.rejectUnauthorized = false;
-        }
-    }
+    // clientOptions.socket.tls = true;
 
     // Configure reconnection strategy
     if (!isTest) {
@@ -62,47 +56,6 @@ async function createRedisClient(auth, isTest = false) {
     await client.connect();
 
     return client;
-}
-
-/**
- * Parses Redis INFO command output into a structured object.
- * @param {string} stringData - Raw INFO command output
- * @returns {Object} Parsed data structure
- */
-function convertInfoToObject(stringData) {
-    const result = {};
-    const lines = stringData.split('\n');
-
-    for (const line of lines) {
-        const trimmedLine = line.trim();
-
-        // Skip comments and empty lines
-        if (trimmedLine.startsWith('#') || trimmedLine === '') {
-            continue;
-        }
-
-        const [key, value] = trimmedLine.split(':');
-        if (!key || value === undefined) {
-            continue;
-        }
-
-        // Handle comma-separated key=value pairs
-        if (value.includes('=')) {
-            const nestedObj = {};
-            const pairs = value.split(',');
-            for (const pair of pairs) {
-                const [nestedKey, nestedValue] = pair.split('=');
-                if (nestedKey && nestedValue !== undefined) {
-                    nestedObj[nestedKey.trim()] = getParsedValue(nestedValue.trim());
-                }
-            }
-            result[key.trim()] = nestedObj;
-        } else {
-            result[key.trim()] = getParsedValue(value.trim());
-        }
-    }
-
-    return result;
 }
 
 /**
@@ -224,7 +177,6 @@ async function setValue(client, keyName, value, expire = false, ttl = 60, type =
 
 module.exports = {
     createRedisClient,
-    convertInfoToObject,
     getParsedValue,
     getValue,
     setValue

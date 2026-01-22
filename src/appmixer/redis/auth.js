@@ -9,51 +9,27 @@ module.exports = {
     definition: {
 
         auth: {
-            host: {
+            url: {
                 type: 'text',
-                name: 'Host',
-                tooltip: 'The hostname or IP address of your Redis server.',
-                required: true
-            },
-            port: {
-                type: 'number',
-                name: 'Port',
-                tooltip: 'The port number of your Redis server (default: 6379).',
-                defaultValue: 6379
-            },
-            database: {
-                type: 'number',
-                name: 'Database',
-                tooltip: 'The Redis database number to connect to (default: 0).',
-                defaultValue: 0
-            },
-            username: {
-                type: 'text',
-                name: 'Username',
-                tooltip: 'Username for Redis authentication (optional, for Redis 6+ ACL).',
-                required: true
-            },
-            password: {
-                type: 'text',
-                name: 'Password',
-                tooltip: 'Password for Redis authentication.',
+                name: 'Redis URL',
+                tooltip: 'The Redis connection URL (e.g., rediss://default:password@host:port)',
                 required: true
             }
         },
 
-
-        // Specify which key to use as account name for Appmixer
-        accountNameFromProfileInfo: 'host',
+        // Extract host from URL for account name
+        accountNameFromProfileInfo: (context) => {
+            try {
+                const urlObj = new URL(context.url);
+                return urlObj.username + '@' + urlObj.hostname;
+            } catch {
+                return context.url;
+            }
+        },
 
         validate: async (context) => {
             const client = createClient({
-                username: context.username,
-                password: context.password,
-                socket: {
-                    host: context.host,
-                    port: context.port ? Number.parseInt(context.port, 10) : 6379
-                },
-                database: context.database ? Number.parseInt(context.database, 10) : 0
+                url: context.url
             });
 
             await client.connect();
@@ -63,7 +39,7 @@ module.exports = {
             } catch (err) {
                 throw err;
             } finally {
-                await client.disconnect();
+                await client?.disconnect();
             }
         }
     }
