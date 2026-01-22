@@ -17,9 +17,9 @@ module.exports = {
             client = await lib.createRedisClient(context.auth);
 
             // Delete the key(s)
-            const deletedCount = await client.del(key);
+            await client.del(key);
 
-            return context.sendJson({ deletedCount }, 'out');
+            return context.sendJson({}, 'out');
 
         } finally {
             if (client) {
