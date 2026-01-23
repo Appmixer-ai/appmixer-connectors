@@ -1,0 +1,307 @@
+{
+    "flow": {
+        "start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 300,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "find-files": {
+            "type": "appmixer.dropbox.files.FindFiles",
+            "x": 300,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {},
+                                    "maxResults": {},
+                                    "mode": {}
+                                },
+                                "lambda": {
+                                    "name": "test",
+                                    "maxResults": 10,
+                                    "mode": "filename"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-files-found": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-files": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-files": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "matches-check": {
+                                            "variable": "$.find-files.out.matches",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{matches-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-folders": {
+            "type": "appmixer.dropbox.files.FindFolders",
+            "x": 300,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {},
+                                    "maxResults": {},
+                                    "mode": {}
+                                },
+                                "lambda": {
+                                    "name": "Documents",
+                                    "maxResults": 10,
+                                    "mode": "filename"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-folders-found": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-folders": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-folders": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "matches-check": {
+                                            "variable": "$.find-folders.out.matches",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{matches-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-files": {
+            "type": "appmixer.dropbox.files.ListFiles",
+            "x": 300,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "path": {},
+                                    "recursive": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "path": "",
+                                    "recursive": false,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-returned": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-files": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-files": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "array-check": {
+                                            "variable": "$.list-files.out.array",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{array-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 700,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-files-found": [
+                        "out"
+                    ],
+                    "assert-folders-found": [
+                        "out"
+                    ],
+                    "assert-list-returned": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 900,
+            "y": 300,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Dropbox - search",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Dropbox - search",
+    "type": "automation",
+    "notes": {}
+}
