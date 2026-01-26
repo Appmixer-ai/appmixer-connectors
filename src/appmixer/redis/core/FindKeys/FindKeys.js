@@ -12,7 +12,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { pattern, getValues = false, outputType } = context.messages.in.content;
+        const { pattern, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Keys', value: 'result' });
@@ -27,25 +27,24 @@ module.exports = {
         try {
             client = await lib.createRedisClient(context.auth);
 
-            // Find keys matching the pattern
-            const keyNames = await client.keys(pattern);
+            // Use SCAN to safely iterate through keys without blocking the server
+            const keys = [];
+            let cursor = 0;
+            const maxKeys = 1000; // Hard limit for safety
 
-            // Optionally get values for each key
-            let keys = [];
-            if (getValues && keyNames.length > 0) {
+            do {
+                const result = await client.scan(cursor, { MATCH: pattern });
+                const keyNames = result.keys || [];
+                cursor = parseInt(result.cursor);
+
+                // Return just key names as strings
                 for (const keyName of keyNames) {
-                    const value = await lib.getValue(client, keyName, 'automatic');
-                    const type = await client.type(keyName);
-                    keys.push({
-                        key: keyName,
-                        value: JSON.stringify(value),
-                        type
-                    });
+                    keys.push(keyName);
+                    if (keys.length >= maxKeys) break;
                 }
-            } else {
-                // Return just key names
-                keys = keyNames.map(key => ({ key, value: null, type: null }));
-            }
+
+                if (keys.length >= maxKeys) break;
+            } while (cursor !== 0);
 
             return lib.sendArrayOutput({ context, records: keys, outputType });
 
