@@ -41,7 +41,7 @@ async function createRedisClient(auth, isTest = false) {
         clientOptions.socket.reconnectStrategy = false;
     }
 
-    const client = redis.createClient({ url: auth.url });
+    const client = redis.createClient({ url: auth.url, ...clientOptions });
 
     // Connect to Redis
     await client.connect();
