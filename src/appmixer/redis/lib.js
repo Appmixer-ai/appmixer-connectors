@@ -8,13 +8,7 @@ const DEFAULT_PREFIX = 'redis-objects-export';
 /**
  * Creates and connects a Redis client with the provided credentials.
  * @param {Object} auth - Authentication credentials
- * @param {string} auth.host - Redis server host
- * @param {number} auth.port - Redis server port
- * @param {number} auth.database - Database number
- * @param {string} [auth.user] - Username (optional)
- * @param {string} [auth.password] - Password (optional)
- * @param {boolean} [auth.ssl] - Enable SSL/TLS
- * @param {boolean} [auth.disableTlsVerification] - Disable TLS verification
+ * @param {string} auth.url - Redis connection URL
  * @param {boolean} [isTest=false] - Whether this is a test connection
  * @returns {Promise<Object>} Connected Redis client
  */
