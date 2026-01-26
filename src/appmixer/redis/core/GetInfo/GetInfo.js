@@ -72,7 +72,19 @@ module.exports = {
             // Convert info string to structured object
             const info = convertInfoToObject(infoString);
 
-            return context.sendJson({ info }, 'out');
+            return context.sendJson({
+                info,
+                redis_version: info.redis_version,
+                redis_mode: info.redis_mode,
+                os: info.os,
+                used_memory_human: info.used_memory_human,
+                maxmemory_policy: info.maxmemory_policy,
+                connected_clients: info.connected_clients,
+                total_commands_processed: info.total_commands_processed,
+                uptime_in_seconds: info.uptime_in_seconds,
+                role: info.role,
+                cluster_enabled: info.cluster_enabled
+            }, 'out');
         } finally {
             await client?.disconnect();
         }

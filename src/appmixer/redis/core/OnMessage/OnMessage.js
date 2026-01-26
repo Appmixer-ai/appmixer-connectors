@@ -88,7 +88,7 @@ module.exports = {
                 context.log({ stage: 'Error unsubscribing', error: e.message });
             }
 
-                await client?.disconnect();
+            await client?.disconnect();
         }
 
         await context.saveState({});
