@@ -3,9 +3,7 @@
 const lib = require('../../lib');
 
 const schema = {
-    'key': { 'type': 'string', 'title': 'Key' },
-    'value': { 'type': 'string', 'title': 'Value' },
-    'type': { 'type': 'string', 'title': 'Type' }
+    'key': { 'type': 'string', 'title': 'Key' }
 };
 
 module.exports = {
@@ -37,9 +35,9 @@ module.exports = {
                 const keyNames = result.keys || [];
                 cursor = parseInt(result.cursor);
 
-                // Return just key names as strings
+                // Convert key names to objects with 'key' property
                 for (const keyName of keyNames) {
-                    keys.push(keyName);
+                    keys.push({ key: keyName });
                     if (keys.length >= maxKeys) break;
                 }
 

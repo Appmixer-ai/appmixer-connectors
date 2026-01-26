@@ -1,0 +1,411 @@
+{
+    "name": "E2E Redis - list-operations",
+    "description": "End-to-end test for Redis connector - tests list operations (push, get length, pop)",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 250,
+            "y": 200,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "listKey",
+                                                "text": "e2e-test-list"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "firstValue",
+                                                "text": "E2E Test Item 1"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "secondValue",
+                                                "text": "E2E Test Item 2"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "push-first-item": {
+            "type": "appmixer.redis.core.PushToList",
+            "x": 400,
+            "y": 100,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key": {
+                                            "variable": "$.set-variables.out.listKey",
+                                            "functions": []
+                                        }
+                                    },
+                                    "value": {
+                                        "var-value": {
+                                            "variable": "$.set-variables.out.firstValue",
+                                            "functions": []
+                                        }
+                                    },
+                                    "side": {}
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key}}}",
+                                    "value": "{{{var-value}}}",
+                                    "side": "left"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "push-second-item": {
+            "type": "appmixer.redis.core.PushToList",
+            "x": 400,
+            "y": 250,
+            "source": {
+                "in": {
+                    "push-first-item": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "push-first-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key": {
+                                            "variable": "$.set-variables.out.listKey",
+                                            "functions": []
+                                        }
+                                    },
+                                    "value": {
+                                        "var-value": {
+                                            "variable": "$.set-variables.out.secondValue",
+                                            "functions": []
+                                        }
+                                    },
+                                    "side": {}
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key}}}",
+                                    "value": "{{{var-value}}}",
+                                    "side": "right"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-list-length": {
+            "type": "appmixer.redis.core.GetListLength",
+            "x": 550,
+            "y": 175,
+            "source": {
+                "in": {
+                    "push-second-item": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "push-second-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key": {
+                                            "variable": "$.set-variables.out.listKey",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-length-is-two": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 100,
+            "source": {
+                "in": {
+                    "get-list-length": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-list-length": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "length-check": {
+                                            "variable": "$.get-list-length.out.length",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{length-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "2"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "pop-from-list": {
+            "type": "appmixer.redis.core.PopFromList",
+            "x": 550,
+            "y": 300,
+            "source": {
+                "in": {
+                    "push-second-item": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "push-second-item": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key": {
+                                            "variable": "$.set-variables.out.listKey",
+                                            "functions": []
+                                        }
+                                    },
+                                    "side": {}
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key}}}",
+                                    "side": "right"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-pop-value": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 300,
+            "source": {
+                "in": {
+                    "pop-from-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "pop-from-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "pop-value-check": {
+                                            "variable": "$.pop-from-list.out.value",
+                                            "functions": []
+                                        },
+                                        "expected-value": {
+                                            "variable": "$.set-variables.out.secondValue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{pop-value-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-value}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 850,
+            "y": 200,
+            "source": {
+                "in": {
+                    "assert-length-is-two": [
+                        "out"
+                    ],
+                    "assert-pop-value": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "cleanup-list": {
+            "type": "appmixer.redis.core.DeleteKey",
+            "x": 1000,
+            "y": 200,
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key": {
+                                            "variable": "$.set-variables.out.listKey",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1150,
+            "y": 200,
+            "source": {
+                "in": {
+                    "cleanup-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "cleanup-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Redis - list-operations",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

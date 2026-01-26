@@ -46,7 +46,7 @@ async function createRedisClient(auth, isTest = false) {
     // Connect to Redis
     await client.connect();
 
-    return client.keys();
+    return client;
 }
 
 /**
