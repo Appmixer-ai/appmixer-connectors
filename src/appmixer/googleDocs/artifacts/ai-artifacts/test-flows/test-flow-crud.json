@@ -2,16 +2,16 @@
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 48,
+            "y": 112,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "set-variables": {
             "type": "appmixer.utils.controls.SetVariable",
-            "x": 250,
-            "y": 200,
+            "x": 224,
+            "y": 112,
             "source": {
                 "in": {
                     "on-start": [
@@ -53,8 +53,8 @@
         },
         "before-all": {
             "type": "appmixer.utils.test.BeforeAll",
-            "x": 400,
-            "y": 200,
+            "x": 432,
+            "y": 112,
             "source": {
                 "in": {
                     "set-variables": [
@@ -67,8 +67,8 @@
         },
         "create-document": {
             "type": "appmixer.googleDocs.core.CreateDocument",
-            "x": 550,
-            "y": 200,
+            "x": 608,
+            "y": 112,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -85,7 +85,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "title": {
-                                        "title-var": {
+                                        "05eb8423-e8bc-44ad-ada3-e36c3b2fa751": {
                                             "variable": "$.set-variables.out.documentTitle",
                                             "functions": []
                                         }
@@ -98,8 +98,8 @@
                                     }
                                 },
                                 "lambda": {
-                                    "title": "",
-                                    "content": ""
+                                    "title": "{{{05eb8423-e8bc-44ad-ada3-e36c3b2fa751}}}",
+                                    "content": "test content "
                                 }
                             }
                         }
@@ -109,8 +109,8 @@
         },
         "assert-document-created": {
             "type": "appmixer.utils.test.Assert",
-            "x": 700,
-            "y": 100,
+            "x": 992,
+            "y": 112,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -130,6 +130,18 @@
                                         "doc-id-check": {
                                             "variable": "$.create-document.out.documentId",
                                             "functions": []
+                                        },
+                                        "76c30446-7f69-444a-8559-c1fc02e1928c": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        },
+                                        "850d4e46-9097-4070-8cda-b17286717ab7": {
+                                            "variable": "$.create-document.out.title",
+                                            "functions": []
+                                        },
+                                        "960be2fe-1f81-46fe-a936-7b2010c1f544": {
+                                            "variable": "$.set-variables.out.documentTitle",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -137,9 +149,13 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "",
                                                 "assertion": "notEmpty",
-                                                "expected": ""
+                                                "field": "{{{76c30446-7f69-444a-8559-c1fc02e1928c}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{850d4e46-9097-4070-8cda-b17286717ab7}}}",
+                                                "expected": "{{{960be2fe-1f81-46fe-a936-7b2010c1f544}}}"
                                             }
                                         ]
                                     }
@@ -152,8 +168,8 @@
         },
         "download-document": {
             "type": "appmixer.googleDocs.core.DownloadDocument",
-            "x": 700,
-            "y": 200,
+            "x": 800,
+            "y": 336,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -170,7 +186,7 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "documentId": {
-                                        "doc-id-var": {
+                                        "1b13ac90-85f3-480f-b5fe-5d333af47cc4": {
                                             "variable": "$.create-document.out.documentId",
                                             "functions": []
                                         }
@@ -178,7 +194,7 @@
                                     "mimeType": {}
                                 },
                                 "lambda": {
-                                    "documentId": "",
+                                    "documentId": "{{{1b13ac90-85f3-480f-b5fe-5d333af47cc4}}}",
                                     "mimeType": "application/pdf"
                                 }
                             }
@@ -189,8 +205,8 @@
         },
         "assert-document-downloaded": {
             "type": "appmixer.utils.test.Assert",
-            "x": 850,
-            "y": 200,
+            "x": 992,
+            "y": 336,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -210,6 +226,10 @@
                                         "file-id-check": {
                                             "variable": "$.download-document.out.fileId",
                                             "functions": []
+                                        },
+                                        "2a3ab83e-2a59-4bcb-9017-f105d76fe27d": {
+                                            "variable": "$.download-document.out.fileId",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -217,9 +237,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "",
                                                 "assertion": "notEmpty",
-                                                "expected": ""
+                                                "field": "{{{2a3ab83e-2a59-4bcb-9017-f105d76fe27d}}}"
                                             }
                                         ]
                                     }
@@ -232,12 +251,15 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1000,
-            "y": 200,
+            "x": 1200,
+            "y": 112,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "assert-document-downloaded": [
+                        "out"
+                    ],
+                    "assert-document-created": [
                         "out"
                     ]
                 }
@@ -250,8 +272,8 @@
         },
         "delete-document": {
             "type": "appmixer.googleDocs.core.DeleteDocument",
-            "x": 1150,
-            "y": 200,
+            "x": 1376,
+            "y": 112,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -268,14 +290,14 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "documentId": {
-                                        "doc-id-var": {
+                                        "bc83e64e-94dd-4887-8292-b51d74dbe20b": {
                                             "variable": "$.create-document.out.documentId",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "documentId": ""
+                                    "documentId": "{{{bc83e64e-94dd-4887-8292-b51d74dbe20b}}}"
                                 }
                             }
                         }
@@ -285,8 +307,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
-            "y": 200,
+            "x": 1536,
+            "y": 112,
             "version": "1.0.1",
             "source": {
                 "in": {
@@ -306,7 +328,7 @@
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "result-var": {
+                                        "2bad77be-bae1-4497-ae79-409fe765a35e": {
                                             "variable": "$.after-all.out",
                                             "functions": []
                                         }
@@ -315,7 +337,7 @@
                                 "lambda": {
                                     "recipients": "test@appmixer.ai",
                                     "testCase": "E2E GoogleDocs - crud",
-                                    "result": ""
+                                    "result": "{{{2bad77be-bae1-4497-ae79-409fe765a35e}}}"
                                 }
                             }
                         }
