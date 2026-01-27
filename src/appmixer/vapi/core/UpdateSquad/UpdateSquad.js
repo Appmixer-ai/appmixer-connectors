@@ -15,10 +15,11 @@ module.exports = {
         }
 
         if (members) {
-            payload.members = typeof members === 'string' ? JSON.parse(members) : members;
-        } else {
-            // If members is not provided, send an empty array
-            payload.members = [];
+            try {
+                payload.members = typeof members === 'string' ? JSON.parse(members) : members;
+            } catch (error) {
+                throw new context.CancelError('Members must be a valid JSON array!');
+            }
         }
 
         await context.httpRequest({

@@ -11,7 +11,11 @@ module.exports = {
         const payload = { name };
 
         if (members) {
-            payload.members = typeof members === 'string' ? JSON.parse(members) : members;
+            try {
+                payload.members = typeof members === 'string' ? JSON.parse(members) : members;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format for members');
+            }
         }
 
         const { data } = await context.httpRequest({

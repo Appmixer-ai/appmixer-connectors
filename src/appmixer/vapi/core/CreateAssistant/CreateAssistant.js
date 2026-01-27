@@ -15,11 +15,19 @@ module.exports = {
         }
 
         if (model) {
-            payload.model = typeof model === 'string' ? JSON.parse(model) : model;
+            try {
+                payload.model = typeof model === 'string' ? JSON.parse(model) : model;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format for model');
+            }
         }
 
         if (voice) {
-            payload.voice = typeof voice === 'string' ? JSON.parse(voice) : voice;
+            try {
+                payload.voice = typeof voice === 'string' ? JSON.parse(voice) : voice;
+            } catch (error) {
+                throw new context.CancelError('Invalid JSON format for voice');
+            }
         }
 
         const { data } = await context.httpRequest({
