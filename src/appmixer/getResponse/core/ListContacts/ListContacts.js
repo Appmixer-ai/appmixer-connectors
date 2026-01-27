@@ -74,7 +74,8 @@ module.exports = {
             params
         });
 
-        const contacts = response.data.contacts || [];
+        // GetResponse API returns contacts directly as an array
+        const contacts = Array.isArray(response.data) ? response.data : [];
 
         if (contacts.length === 0) {
             return context.sendJson({}, 'notFound');

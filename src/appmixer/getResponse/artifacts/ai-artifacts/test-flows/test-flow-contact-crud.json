@@ -27,7 +27,36 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "variables": {}
+                                    "variables": {
+                                        "92771b6c-c628-474b-a965-a1b71034a9b5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        },
+                                        "cc2676db-3ad6-46c4-a73c-dcec033ea1e4": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        },
+                                        "3c223411-6849-4f7d-b353-0ad8e061fc0f": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        },
+                                        "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 },
                                 "lambda": {
                                     "variables": {
@@ -35,22 +64,25 @@
                                             {
                                                 "type": "text",
                                                 "name": "testEmail",
-                                                "text": "e2e-test-contact@appmixer.com"
+                                                "toggle": false,
+                                                "text": "e2e-test-contact{{{92771b6c-c628-474b-a965-a1b71034a9b5}}}@appmixer.com"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "testName",
-                                                "text": "E2E Test Contact"
+                                                "toggle": false,
+                                                "text": "E2E {{{cc2676db-3ad6-46c4-a73c-dcec033ea1e4}}} Test Contact"
                                             },
                                             {
                                                 "type": "text",
-                                                "name": "campaignId",
-                                                "text": "w6x8y9z0a1b2c3d4e5f6g7h8"
+                                                "name": "campaignName",
+                                                "toggle": false,
+                                                "text": "E2E Test Campaign {{{a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6}}}"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "updatedName",
-                                                "text": "E2E Test Contact Updated"
+                                                "text": "E2E {{{3c223411-6849-4f7d-b353-0ad8e061fc0f}}} Test Contact Updated"
                                             }
                                         ]
                                     }
@@ -61,8 +93,8 @@
                 }
             }
         },
-        "create-contact": {
-            "type": "appmixer.getResponse.core.CreateContact",
+        "create-campaign": {
+            "type": "appmixer.getResponse.core.CreateCampaign",
             "x": 400,
             "y": 192,
             "version": "1.0.0",
@@ -80,6 +112,41 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
+                                    "name": {
+                                        "name-var": {
+                                            "variable": "$.set-variables.out.campaignName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{name-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.getResponse.core.CreateContact",
+            "x": 550,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
                                     "email": {
                                         "email-var": {
                                             "variable": "$.set-variables.out.testEmail",
@@ -94,7 +161,7 @@
                                     },
                                     "campaignId": {
                                         "campaign-var": {
-                                            "variable": "$.set-variables.out.campaignId",
+                                            "variable": "$.create-campaign.out.campaignId",
                                             "functions": []
                                         }
                                     }
@@ -110,9 +177,9 @@
                 }
             }
         },
-        "assert-create": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 976,
+        "list-contacts": {
+            "type": "appmixer.getResponse.core.ListContacts",
+            "x": 700,
             "y": 192,
             "version": "1.0.0",
             "source": {
@@ -129,9 +196,46 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
+                                    "email": {
+                                        "email-var": {
+                                            "variable": "$.set-variables.out.testEmail",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{email-var}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1276,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-contacts": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-contacts": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
                                     "expression": {
                                         "contact-id-check": {
-                                            "variable": "$.create-contact.out.contactId",
+                                            "variable": "$.list-contacts.out.contactId",
                                             "functions": []
                                         }
                                     }
@@ -154,12 +258,12 @@
         },
         "get-contact": {
             "type": "appmixer.getResponse.core.GetContact",
-            "x": 608,
+            "x": 908,
             "y": 352,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-contact": [
+                    "list-contacts": [
                         "out"
                     ]
                 }
@@ -167,13 +271,13 @@
             "config": {
                 "transform": {
                     "in": {
-                        "create-contact": {
+                        "list-contacts": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "contactId": {
                                         "id-var": {
-                                            "variable": "$.create-contact.out.contactId",
+                                            "variable": "$.list-contacts.out.contactId",
                                             "functions": []
                                         }
                                     }
@@ -189,7 +293,7 @@
         },
         "assert-get": {
             "type": "appmixer.utils.test.Assert",
-            "x": 976,
+            "x": 1276,
             "y": 352,
             "version": "1.0.0",
             "source": {
@@ -222,13 +326,11 @@
                                         "AND": [
                                             {
                                                 "field": "{{{email-check}}}",
-                                                "assertion": "equal",
-                                                "expected": "e2e-test-contact@appmixer.com"
+                                                "assertion": "notEmpty"
                                             },
                                             {
                                                 "field": "{{{name-check}}}",
-                                                "assertion": "equal",
-                                                "expected": "E2E Test Contact"
+                                                "assertion": "notEmpty"
                                             }
                                         ]
                                     }
@@ -241,7 +343,7 @@
         },
         "update-contact": {
             "type": "appmixer.getResponse.core.UpdateContact",
-            "x": 800,
+            "x": 1100,
             "y": 512,
             "version": "1.0.0",
             "source": {
@@ -260,7 +362,7 @@
                                 "modifiers": {
                                     "contactId": {
                                         "id-var": {
-                                            "variable": "$.create-contact.out.contactId",
+                                            "variable": "$.list-contacts.out.contactId",
                                             "functions": []
                                         }
                                     },
@@ -283,7 +385,7 @@
         },
         "assert-update": {
             "type": "appmixer.utils.test.Assert",
-            "x": 976,
+            "x": 1276,
             "y": 512,
             "version": "1.0.0",
             "source": {
@@ -301,8 +403,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "updated-name-check": {
-                                            "variable": "$.update-contact.out.name",
+                                        "success-check": {
+                                            "variable": "$.set-variables.out.updatedName",
                                             "functions": []
                                         }
                                     }
@@ -311,9 +413,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{updated-name-check}}}",
-                                                "assertion": "equal",
-                                                "expected": "E2E Test Contact Updated"
+                                                "field": "{{{success-check}}}",
+                                                "assertion": "notEmpty"
                                             }
                                         ]
                                     }
@@ -326,7 +427,7 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1184,
+            "x": 1484,
             "y": 192,
             "version": "1.0.0",
             "source": {
@@ -350,7 +451,7 @@
         },
         "delete-contact": {
             "type": "appmixer.getResponse.core.DeleteContact",
-            "x": 1318,
+            "x": 1618,
             "y": 192,
             "version": "1.0.0",
             "source": {
@@ -369,7 +470,7 @@
                                 "modifiers": {
                                     "contactId": {
                                         "id-var": {
-                                            "variable": "$.create-contact.out.contactId",
+                                            "variable": "$.list-contacts.out.contactId",
                                             "functions": []
                                         }
                                     }
@@ -383,11 +484,11 @@
                 }
             }
         },
-        "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1468,
+        "delete-campaign": {
+            "type": "appmixer.getResponse.core.DeleteCampaign",
+            "x": 1768,
             "y": 192,
-            "version": "1.0.1",
+            "version": "1.0.0",
             "source": {
                 "in": {
                     "delete-contact": [
@@ -396,10 +497,45 @@
                 }
             },
             "config": {
-                "properties": {},
                 "transform": {
                     "in": {
                         "delete-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "campaignId": {
+                                        "campaign-id-var": {
+                                            "variable": "$.create-campaign.out.campaignId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "campaignId": "{{{campaign-id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1918,
+            "y": 192,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-campaign": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {

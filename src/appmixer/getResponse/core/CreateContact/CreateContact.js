@@ -64,7 +64,8 @@ module.exports = {
         }
 
         // https://apireference.getresponse.com/#contacts
-        const response = await context.httpRequest({
+        // Note: The API returns 202 Accepted with no body, only a Location header
+        await context.httpRequest({
             method: 'POST',
             url: 'https://api.getresponse.com/v3/contacts',
             headers: {
@@ -75,31 +76,12 @@ module.exports = {
             data: body
         });
 
-        // Extract contact ID from location header or response data
-        let contactId;
-        
-        // First, try to get from response data
-        if (response.data && response.data.contactId) {
-            contactId = response.data.contactId;
-        }
-        
-        // If not in data, try location header
-        if (!contactId) {
-            const headers = response.headers || {};
-            const headerKeys = Object.keys(headers);
-            const locationKey = headerKeys.find(key => key.toLowerCase() === 'location');
-            const location = locationKey ? headers[locationKey] : null;
-            
-            if (location) {
-                const locationParts = location.split('/');
-                contactId = locationParts[locationParts.length - 1];
-            }
-        }
-
-        // Build result object with available data
+        // The API returns 202 Accepted with no body.
+        // Echo back the input values for reference.
+        // To get the contactId, use ListContacts with email filter after this component.
         const result = {
-            contactId,
             email,
+            name: name || null,
             campaignId
         };
 

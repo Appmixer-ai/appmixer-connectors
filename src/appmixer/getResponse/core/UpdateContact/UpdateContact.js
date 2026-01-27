@@ -61,7 +61,7 @@ module.exports = {
         }
 
         // https://apireference.getresponse.com/#operation/updateContact
-        const response = await context.httpRequest({
+        await context.httpRequest({
             method: 'POST',
             url: `https://api.getresponse.com/v3/contacts/${contactId}`,
             headers: {
@@ -72,6 +72,6 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson({}, 'out');
     }
 };
