@@ -60,7 +60,7 @@ module.exports = {
             }
         }
 
-        await context.httpRequest({
+        const response = await context.httpRequest({
             method: 'POST',
             url: `https://api.getresponse.com/v3/campaigns/${campaignId}`,
             headers: {

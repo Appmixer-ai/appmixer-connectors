@@ -19,6 +19,7 @@ module.exports = {
         if (!email) {
             throw new context.CancelError('Email is required!');
         }
+
         if (!campaignId) {
             throw new context.CancelError('Campaign ID is required!');
         }
@@ -35,18 +36,23 @@ module.exports = {
         if (name) {
             body.name = name;
         }
+
         if (dayOfCycle !== undefined && dayOfCycle !== null) {
             body.dayOfCycle = dayOfCycle;
         }
+
         if (ipAddress) {
             body.ipAddress = ipAddress;
         }
+
         if (note) {
             body.note = note;
         }
+
         if (scoring !== undefined && scoring !== null) {
             body.scoring = scoring;
         }
+
         if (customFieldId && customFieldValue) {
             body.customFieldValues = [
                 {
@@ -55,6 +61,7 @@ module.exports = {
                 }
             ];
         }
+
         if (tagId) {
             body.tags = [
                 {

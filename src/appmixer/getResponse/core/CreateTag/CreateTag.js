@@ -21,8 +21,13 @@ module.exports = {
             }
         });
 
+        const tag = response.data;
 
-        console.log(response.data)
-        return context.sendJson(response.data, 'out');
+        return context.sendJson({
+            tagId: tag.id,
+            name: tag.name,
+            href: tag.href,
+            createdAt: tag.createdAt
+        }, 'out');
     }
 };

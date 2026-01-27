@@ -33,7 +33,6 @@ module.exports = {
         if (confirmationSubject || confirmationFromName || confirmationFromEmail) {
             body.confirmation = {
                 fromField: {},
-                subscriptionConfirmationBodyId: null,
                 subscriptionConfirmationSubject: confirmationSubject || 'Please confirm your subscription'
             };
 

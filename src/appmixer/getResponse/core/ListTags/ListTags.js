@@ -9,6 +9,7 @@ const schema = {
 };
 
 module.exports = {
+
     async receive(context) {
 
         const { queryName, outputType } = context.messages.in.content;

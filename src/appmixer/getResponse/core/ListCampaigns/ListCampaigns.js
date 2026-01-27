@@ -3,11 +3,11 @@
 const lib = require('../../lib');
 
 const schema = {
-    'campaignId': { 'type': 'string', 'title': 'Campaign Id' },
+    'id': { 'type': 'string', 'title': 'Campaign ID' },
     'name': { 'type': 'string', 'title': 'Name' },
     'status': { 'type': 'string', 'title': 'Status' },
-    'createdOn': { 'type': 'string', 'title': 'Created On' },
-    'updatedOn': { 'type': 'string', 'title': 'Updated On' },
+    'createdOn': { 'type': 'string', 'format': 'date-time', 'title': 'Created On' },
+    'updatedOn': { 'type': 'string', 'format': 'date-time', 'title': 'Updated On' },
     'description': { 'type': 'string', 'title': 'Description' },
     'defaultFrom': {
         'type': 'object',
@@ -38,7 +38,7 @@ module.exports = {
         const { status, sort, outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns', value: 'campaigns' });
+            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Campaigns' });
         }
 
         const params = {};
@@ -63,6 +63,8 @@ module.exports = {
             params
         });
 
-        return lib.sendArrayOutput({ context, records: data || [], outputType });
+        const campaigns = data.campaigns || [];
+
+        return lib.sendArrayOutput({ context, records: campaigns, outputType });
     }
 };
