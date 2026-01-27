@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { squadId, name, assistantId } = context.messages.in.content;
+        const { squadId, name, members } = context.messages.in.content;
 
         if (!squadId) {
             throw new context.CancelError('Squad ID is required!');
@@ -14,12 +14,12 @@ module.exports = {
             payload.name = name;
         }
 
-        if (assistantId) {
-            payload.members = [
-                {
-                    assistantId: assistantId
-                }
-            ];
+        if (members) {
+            try {
+                payload.members = JSON.parse(members);
+            } catch (error) {
+                throw new context.CancelError(`Invalid members JSON: ${error.message}`);
+            }
         }
 
         await context.httpRequest({
