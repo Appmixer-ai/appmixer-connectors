@@ -36,6 +36,12 @@ module.exports = {
             params
         });
 
-        return lib.sendArrayOutput({ context, records: data || [], outputType });
+        const tags = data || [];
+
+        if (tags.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
+        return lib.sendArrayOutput({ context, records: tags, outputType });
     }
 };

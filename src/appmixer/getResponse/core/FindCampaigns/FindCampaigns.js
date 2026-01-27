@@ -63,7 +63,11 @@ module.exports = {
             params
         });
 
-        const campaigns = data.campaigns || [];
+        const campaigns = Array.isArray(data) ? data : [];
+
+        if (campaigns.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
 
         return lib.sendArrayOutput({ context, records: campaigns, outputType });
     }
