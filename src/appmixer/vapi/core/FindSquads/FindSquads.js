@@ -3,26 +3,12 @@
 const lib = require('../../lib');
 
 const schema = {
-    'id': { 'type': 'string', 'title': 'Id' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'description': { 'type': 'string', 'title': 'Description' },
-    'members': {
-        'type': 'array',
-        'items': {
-            'type': 'object',
-            'properties': {
-                'id': { 'type': 'string', 'title': 'Members.Id' },
-                'name': { 'type': 'string', 'title': 'Members.Name' },
-                'email': { 'type': 'string', 'title': 'Members.Email' },
-                'role': { 'type': 'string', 'title': 'Members.Role' }
-            },
-            'required': ['id', 'name', 'email', 'role']
-        },
-        'title': 'Members'
-    },
+    'id': { 'type': 'string', 'title': 'Squad ID' },
+    'orgId': { 'type': 'string', 'title': 'Organization ID' },
+    'name': { 'type': 'string', 'title': 'Squad Name' },
     'createdAt': { 'type': 'string', 'title': 'Created At' },
     'updatedAt': { 'type': 'string', 'title': 'Updated At' },
-    'status': { 'type': 'string', 'title': 'Status' }
+    'members': { 'type': 'array', 'title': 'Members' }
 };
 
 module.exports = {
