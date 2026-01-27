@@ -4,7 +4,7 @@ This connector provides integration with the Vapi platform (https://docs.vapi.ai
 
 ## Overview
 
-Vapi is a platform for building voice AI assistants. This connector allows you to create, manage, and interact with voice assistants, phone calls, phone numbers, and squads within your Appmixer workflows.
+Vapi is a platform for building voice AI assistants. This connector allows you to create, manage, and interact with voice assistants and squads within your Appmixer workflows.
 
 ## Authentication
 
@@ -27,20 +27,7 @@ Assistants are AI-powered voice agents that can interact with users.
 - **UpdateAssistant** - Update an existing assistant
 - **DeleteAssistant** - Delete an assistant
 
-### Calls
 
-Manage phone calls initiated through Vapi.
-
-- **ListCalls** - List all calls in your account (max 100)
-- **GetCall** - Retrieve details of a specific call
-- **CreatePhoneCall** - Initiate a new phone call with an assistant
-
-### Phone Numbers
-
-Manage phone numbers associated with your Vapi account.
-
-- **ListPhoneNumbers** - List all phone numbers (max 100)
-- **GetPhoneNumber** - Retrieve details of a specific phone number
 
 ### Squads
 
@@ -54,7 +41,7 @@ Squads allow you to organize multiple assistants together.
 
 ## Output Types
 
-List components (ListAssistants, ListCalls, ListPhoneNumbers, ListSquads) support multiple output types:
+List components (ListAssistants, ListSquads) support multiple output types:
 
 - **First Item Only** - Returns only the first item from the list
 - **All items at once** - Returns all items as an array
@@ -86,14 +73,6 @@ The connector implements rate limiting to prevent API quota violations:
    - Voice Configuration: JSON object with voice settings
 3. The component returns the newly created assistant details including its ID
 
-### Example 3: Initiate a Phone Call
-
-1. Add the **CreatePhoneCall** component
-2. Configure:
-   - Phone Number ID: ID from ListPhoneNumbers
-   - Assistant ID: ID from CreateAssistant or ListAssistants
-   - Customer ID: Target customer identifier
-3. The call will be initiated and details returned
 
 ## Component Details
 
@@ -128,8 +107,6 @@ npm test -- test/vapi
 ### 1.0.0
 - Initial release
 - Added Assistants components (List, Get, Create, Update, Delete)
-- Added Calls components (List, Get, CreatePhoneCall)
-- Added Phone Numbers components (List, Get)
 - Added Squads components (List, Get, Create, Update, Delete)
 
 ## Resources
