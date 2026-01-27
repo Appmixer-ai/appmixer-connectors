@@ -103,15 +103,39 @@ const schema = {
 module.exports = {
     async receive(context) {
 
-        const { outputType, orgId } = context.messages.in.content;
+        const {
+            outputType,
+            orgId,
+            createdAtGt,
+            createdAtLt,
+            updatedAtGt,
+            updatedAtLt
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Assistants', value: 'assistants' });
         }
 
         const params = {};
+
         if (orgId) {
             params.orgId = orgId;
+        }
+
+        if (createdAtGt) {
+            params.createdAtGt = createdAtGt;
+        }
+
+        if (createdAtLt) {
+            params.createdAtLt = createdAtLt;
+        }
+
+        if (updatedAtGt) {
+            params.updatedAtGt = updatedAtGt;
+        }
+
+        if (updatedAtLt) {
+            params.updatedAtLt = updatedAtLt;
         }
 
         // https://docs.vapi.ai/api-reference/assistants/list
