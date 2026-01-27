@@ -1,0 +1,508 @@
+{
+    "name": "E2E Vapi - Squad CRUD Operations",
+    "flow": {
+        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 336,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0"
+        },
+        "27fe7676-6028-43d0-b16f-368cc2d8d0d6": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 496,
+            "y": 320,
+            "source": {
+                "in": {
+                    "fbb75e69-59ee-4f2e-a7e8-212e903ce201": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "squadName",
+                                                "text": "E2E Test Squad"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedSquadName",
+                                                "text": "E2E Test Squad Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 656,
+            "y": 320,
+            "source": {
+                "in": {
+                    "27fe7676-6028-43d0-b16f-368cc2d8d0d6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "create-squad": {
+            "type": "appmixer.vapi.core.CreateSquad",
+            "x": 816,
+            "y": 320,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {},
+                                    "members": {}
+                                },
+                                "lambda": {
+                                    "name": "{{variables.squadName}}",
+                                    "members": "[]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 976,
+            "y": 192,
+            "source": {
+                "in": {
+                    "create-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "{{create-squad.out.id}} && {{create-squad.out.name}} === '{{variables.squadName}}'",
+                                    "message": "CreateSquad should return squad with ID and correct name"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-squad": {
+            "type": "appmixer.vapi.core.GetSquad",
+            "x": 976,
+            "y": 320,
+            "source": {
+                "in": {
+                    "create-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {}
+                                },
+                                "lambda": {
+                                    "squadId": "{{create-squad.out.id}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 192,
+            "source": {
+                "in": {
+                    "get-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "{{get-squad.out.id}} === '{{create-squad.out.id}}' && {{get-squad.out.name}} === '{{variables.squadName}}'",
+                                    "message": "GetSquad should return the same squad with matching ID and name"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-squads": {
+            "type": "appmixer.vapi.core.ListSquads",
+            "x": 1136,
+            "y": 320,
+            "source": {
+                "in": {
+                    "get-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-squads": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 192,
+            "source": {
+                "in": {
+                    "list-squads": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-squads": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "{{list-squads.out.result}} && Array.isArray({{list-squads.out.result}}) && {{list-squads.out.result}}.length > 0",
+                                    "message": "ListSquads should return an array with at least one squad"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-squad": {
+            "type": "appmixer.vapi.core.UpdateSquad",
+            "x": 1296,
+            "y": 320,
+            "source": {
+                "in": {
+                    "list-squads": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-squads": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {},
+                                    "name": {},
+                                    "members": {}
+                                },
+                                "lambda": {
+                                    "squadId": "{{create-squad.out.id}}",
+                                    "name": "{{variables.updatedSquadName}}",
+                                    "members": "[]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1456,
+            "y": 192,
+            "source": {
+                "in": {
+                    "update-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "true",
+                                    "message": "UpdateSquad should complete successfully"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-updated-squad": {
+            "type": "appmixer.vapi.core.GetSquad",
+            "x": 1456,
+            "y": 320,
+            "source": {
+                "in": {
+                    "update-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {}
+                                },
+                                "lambda": {
+                                    "squadId": "{{create-squad.out.id}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-updated-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1616,
+            "y": 192,
+            "source": {
+                "in": {
+                    "get-updated-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-updated-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "{{get-updated-squad.out.name}} === '{{variables.updatedSquadName}}'",
+                                    "message": "GetSquad after update should return the updated squad name"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-squad": {
+            "type": "appmixer.vapi.core.DeleteSquad",
+            "x": 1616,
+            "y": 320,
+            "source": {
+                "in": {
+                    "get-updated-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-updated-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {}
+                                },
+                                "lambda": {
+                                    "squadId": "{{create-squad.out.id}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-delete-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1776,
+            "y": 192,
+            "source": {
+                "in": {
+                    "delete-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assertion": {},
+                                    "message": {}
+                                },
+                                "lambda": {
+                                    "assertion": "true",
+                                    "message": "DeleteSquad should complete successfully"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1920,
+            "y": 336,
+            "source": {
+                "in": {
+                    "assert-delete-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "e0c5d708-7014-4766-87b3-73dd3d528f5c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2096,
+            "y": 336,
+            "source": {
+                "in": {
+                    "e2051970-21f2-4a3e-9cf5-3afc253a478b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "661a2f77-19b7-4dbd-9f30-7ff556d65c4a": {
+                                            "variable": "$.e2051970-21f2-4a3e-9cf5-3afc253a478b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Vapi - Squad CRUD Operations",
+                                    "result": "{{{661a2f77-19b7-4dbd-9f30-7ff556d65c4a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "thumbnail": "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22100%25%22%20height%3D%22100%25%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20joint-selector%3D%22svg%22%20id%3D%22v-4764%22%20viewBox%3D%22326%20182%201877.54345703125%20367.79998779296875%22%3E%3Cstyle%20id%3D%22v-4765%22%20type%3D%22text%2Fcss%22%3E%3C!%5BCDATA%5Bfont-family%3A%20sans-serif%3B%20font-display%3A%20auto%3B%20font-style%3A%20normal%3B%20font-size%3A%20100%25%5D%5D%3E%3C%2Fstyle%3E%3Cdefs%20joint-selector%3D%22defs%22%3E%3Cmarker%20id%3D%22v-4-152085504%22%20orient%3D%22auto%22%20overflow%3D%22visible%22%20markerUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20id%3D%22v-349%22%20stroke%3D%22%23A6A6A6%22%20fill%3D%22%23A6A6A6%22%20transform%3D%22rotate(180)%22%20display%3D%22none%22%2F%3E%3C%2Fmarker%3E%3C%2Fdefs%3E%3Cg%20joint-selector%3D%22layers%22%20class%3D%22joint-layers%22%3E%3Cg%20class%3D%22joint-back-layer%22%2F%3E%3Cg%20class%3D%22joint-cells-layer%20joint-viewport%22%3E%3C%2Fg%3E%3Cg%20class%3D%22joint-labels-layer%20joint-viewport%22%2F%3E%3Cg%20class%3D%22joint-front-layer%22%2F%3E%3Cg%20class%3D%22joint-tools-layer%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E"
+}

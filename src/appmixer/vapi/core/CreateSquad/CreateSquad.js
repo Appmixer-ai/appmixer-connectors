@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { name, members } = context.messages.in.content;
+        const { name, assistantId } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required!');
@@ -10,12 +10,13 @@ module.exports = {
 
         const payload = { name };
 
-        if (members) {
-            try {
-                payload.members = typeof members === 'string' ? JSON.parse(members) : members;
-            } catch (error) {
-                throw new context.CancelError('Invalid JSON format for members');
-            }
+        // Add members array with assistantId if provided
+        if (assistantId) {
+            payload.members = [
+                {
+                    assistantId: assistantId
+                }
+            ];
         }
 
         const { data } = await context.httpRequest({

@@ -1,17 +1,15 @@
 {
-    "name": "appmixer.vapi.core.ListSquads",
+    "name": "appmixer.vapi.core.FindAssistants",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "List all squads in your Vapi account. Returns a maximum of 100 squads.",
+    "description": "Search for assistants in your Vapi account. Returns a list of assistants matching the specified criteria. This component will return a maximum of 100 records per request.",
     "version": "1.0.0",
+    "private": false,
     "auth": {
         "service": "appmixer:vapi"
     },
     "quota": {
         "manager": "appmixer:vapi",
-        "resources": "vapi.api",
-        "scope": {
-            "userId": "{{userId}}"
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -21,6 +19,9 @@
                 "properties": {
                     "outputType": {
                         "type": "string"
+                    },
+                    "orgId": {
+                        "type": "string"
                     }
                 }
             },
@@ -29,15 +30,33 @@
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 1,
+                        "index": 2,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [
-                            { "label": "First Item Only", "value": "first" },
-                            { "label": "All items at once", "value": "array" },
-                            { "label": "One item at a time", "value": "object" },
-                            { "label": "Store to CSV file", "value": "file" }
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
                         ]
+                    },
+                    "orgId": {
+                        "type": "text",
+                        "tooltip": "Filter assistants by organization ID. Optional.",
+                        "label": "Org Id",
+                        "index": 1
                     }
                 }
             }
@@ -47,7 +66,7 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/vapi/core/ListSquads?outPort=out",
+                "url": "/component/appmixer/vapi/core/FindAssistants?outPort=out",
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true
