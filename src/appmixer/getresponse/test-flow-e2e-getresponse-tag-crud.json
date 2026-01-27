@@ -1,0 +1,433 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 94,
+            "y": 208,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 244,
+            "y": 208,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "toggle": false,
+                                                "text": "E2ETestTag"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedTagName",
+                                                "text": "E2ETestTagUpdated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 394,
+            "y": 208,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-tag": {
+            "type": "appmixer.getResponse.core.CreateTag",
+            "x": 544,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "5b67e399-7e91-4af6-9076-f2e15a143b3f": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{5b67e399-7e91-4af6-9076-f2e15a143b3f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 928,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "tag-id-check": {
+                                            "variable": "$.create-tag.out.tagId",
+                                            "functions": []
+                                        },
+                                        "tag-name-check": {
+                                            "variable": "$.create-tag.out.name",
+                                            "functions": []
+                                        },
+                                        "115e1f5c-2fd4-45a0-8b5d-5a1f30a2bd71": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{tag-id-check}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{tag-name-check}}}",
+                                                "expected": "{{{115e1f5c-2fd4-45a0-8b5d-5a1f30a2bd71}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-tags": {
+            "type": "appmixer.getResponse.core.ListTags",
+            "x": 752,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "queryName": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "queryName": "E2E Test Tag",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 928,
+            "y": 560,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-tags": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-tags": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "result-check": {
+                                            "variable": "$.list-tags.out.result",
+                                            "functions": []
+                                        },
+                                        "9947f62e-31ed-48a8-a35e-a54f5a16aea8": {
+                                            "variable": "$.list-tags.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{result-check}}}"
+                                            },
+                                            {
+                                                "field": "{{{9947f62e-31ed-48a8-a35e-a54f5a16aea8}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-tag": {
+            "type": "appmixer.getResponse.core.UpdateTag",
+            "x": 752,
+            "y": 416,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "tagId": {
+                                        "tag-id-var": {
+                                            "variable": "$.create-tag.out.tagId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "3bd5144f-ed83-44a5-a9bd-c48cadb91d80": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "tagId": "{{{tag-id-var}}}",
+                                    "name": "{{{3bd5144f-ed83-44a5-a9bd-c48cadb91d80}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 928,
+            "y": 416,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-name-check": {
+                                            "variable": "$.update-tag.out.name",
+                                            "functions": []
+                                        },
+                                        "08b1fcad-5cb3-4a7f-8d3b-42edd7a5d195": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{updated-name-check}}}",
+                                                "expected": "{{{08b1fcad-5cb3-4a7f-8d3b-42edd7a5d195}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1136,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-list": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-tag": {
+            "type": "appmixer.getResponse.core.DeleteTag",
+            "x": 1270,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "tagId": {
+                                        "tag-id-var": {
+                                            "variable": "$.create-tag.out.tagId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "tagId": "{{{tag-id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1420,
+            "y": 208,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E GetResponse - tag-crud",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E GetResponse - tag-crud",
+    "type": "automation",
+    "notes": {}
+}
