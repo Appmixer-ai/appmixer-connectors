@@ -171,7 +171,7 @@
             }
         },
         "list-campaigns": {
-            "type": "appmixer.getResponse.core.ListCampaigns",
+            "type": "appmixer.getResponse.core.FindCampaigns",
             "x": 736,
             "y": 528,
             "version": "1.0.0",
@@ -189,10 +189,12 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "outputType": {}
+                                    "outputType": {},
+                                    "status": {}
                                 },
                                 "lambda": {
-                                    "outputType": "array"
+                                    "outputType": "first",
+                                    "status": "active"
                                 }
                             }
                         }
@@ -203,15 +205,8 @@
         "assert-list": {
             "type": "appmixer.utils.test.Assert",
             "x": 944,
-            "y": 528,
+            "y": 512,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-campaigns": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
@@ -223,6 +218,10 @@
                                         "campaigns-count-check": {
                                             "variable": "$.list-campaigns.out.count",
                                             "functions": []
+                                        },
+                                        "b4aed32f-e63f-4812-9d3d-1aca33a1d27b": {
+                                            "variable": "$.create-campaign.out.campaignId",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -230,7 +229,11 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{campaigns-count-check}}}",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{campaigns-count-check}}}"
+                                            },
+                                            {
+                                                "field": "{{{b4aed32f-e63f-4812-9d3d-1aca33a1d27b}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -239,6 +242,13 @@
                             }
                         }
                     }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-campaigns": [
+                        "out"
+                    ]
                 }
             }
         },
@@ -427,5 +437,7 @@
         }
     },
     "name": "E2E GetResponse - campaign-crud",
-    "type": "automation"
+    "type": "automation",
+    "err": "{\"stack\":\"Error: Cannot start flow, already started.\\n    at CoordinatorHandler.startFlow (/usr/src/appmixer/engine/src/CoordinatorHandler.js:139:27)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async module.exports.start (/usr/src/appmixer/engine/src/flows.js:261:5)\\n    at async handler (/usr/src/appmixer/gridd/routes/flow.js:331:29)\",\"message\":\"Cannot start flow, already started.\"}",
+    "notes": {}
 }
