@@ -28,20 +28,6 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "variables": {
-                                        "92771b6c-c628-474b-a965-a1b71034a9b5": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "cc2676db-3ad6-46c4-a73c-dcec033ea1e4": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
                                         "3c223411-6849-4f7d-b353-0ad8e061fc0f": {
                                             "functions": [
                                                 {
@@ -65,13 +51,12 @@
                                                 "type": "text",
                                                 "name": "testEmail",
                                                 "toggle": false,
-                                                "text": "e2e-test-contact{{{92771b6c-c628-474b-a965-a1b71034a9b5}}}@appmixer.com"
+                                                "text": "test-findcontacts@example.com"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "testName",
-                                                "toggle": false,
-                                                "text": "E2E {{{cc2676db-3ad6-46c4-a73c-dcec033ea1e4}}} Test Contact"
+                                                "text": "Test FindContacts"
                                             },
                                             {
                                                 "type": "text",
@@ -82,6 +67,7 @@
                                             {
                                                 "type": "text",
                                                 "name": "updatedName",
+                                                "toggle": false,
                                                 "text": "E2E {{{3c223411-6849-4f7d-b353-0ad8e061fc0f}}} Test Contact Updated"
                                             }
                                         ]
@@ -178,7 +164,7 @@
             }
         },
         "list-contacts": {
-            "type": "appmixer.getResponse.core.ListContacts",
+            "type": "appmixer.getResponse.core.FindContacts",
             "x": 700,
             "y": 192,
             "version": "1.0.0",
@@ -194,7 +180,10 @@
                     "in": {
                         "create-contact": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "email": "{{{email-var}}}",
+                                    "outputType": "first"
+                                },
                                 "modifiers": {
                                     "email": {
                                         "email-var": {
@@ -203,10 +192,6 @@
                                         }
                                     },
                                     "outputType": {}
-                                },
-                                "lambda": {
-                                    "email": "{{{email-var}}}",
-                                    "outputType": "first"
                                 }
                             }
                         }
@@ -219,41 +204,8 @@
             "x": 1276,
             "y": 192,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-contacts": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
-                "transform": {
-                    "in": {
-                        "list-contacts": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "contact-id-check": {
-                                            "variable": "$.list-contacts.out.contactId",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{contact-id-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                "transform": {}
             }
         },
         "get-contact": {
@@ -261,19 +213,14 @@
             "x": 908,
             "y": 352,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-contacts": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
                         "list-contacts": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "contactId": "{{{id-var}}}"
+                                },
                                 "modifiers": {
                                     "contactId": {
                                         "id-var": {
@@ -281,13 +228,17 @@
                                             "functions": []
                                         }
                                     }
-                                },
-                                "lambda": {
-                                    "contactId": "{{{id-var}}}"
                                 }
                             }
                         }
                     }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-contacts": [
+                        "out"
+                    ]
                 }
             }
         },
@@ -562,6 +513,13 @@
     },
     "name": "E2E GetResponse - contact-crud",
     "type": "automation",
-    "err": "{\"stack\":\"Error: Cannot start flow, already started.\\n    at CoordinatorHandler.startFlow (/usr/src/appmixer/engine/src/CoordinatorHandler.js:139:27)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async module.exports.start (/usr/src/appmixer/engine/src/flows.js:261:5)\\n    at async handler (/usr/src/appmixer/gridd/routes/flow.js:331:29)\",\"message\":\"Cannot start flow, already started.\"}",
-    "notes": {}
+    "notes": {
+        "37d69a71-d851-4c2b-bed4-a6b896c05cde": {
+            "x": 560,
+            "y": -48,
+            "width": 240,
+            "height": 194,
+            "content": "Create Contact - API is delayed - when you create a new contact, it won't be listed straight away"
+        }
+    }
 }
