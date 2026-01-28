@@ -1,5 +1,7 @@
 ---
-mode: agent
+agent: agent
+argument-hint: One or more Appmixer connector names (e.g., "github", "notion", "microsoft").
+description: This prompt guides you through creating a MakeApiCall component for an Appmixer connector, including research, implementation, and validation steps.
 ---
 
 # Task: Create MakeApiCall Component for Appmixer Connector
@@ -220,6 +222,51 @@ module.exports = {
 };
 ```
 
+**Pattern 4: Hardcoded Base URL with Relative Paths**
+
+Use this when all components in the connector use the same hardcoded base URL (e.g., Vercel, Stripe). Users provide relative paths instead of full URLs, ensuring consistency with other components.
+
+```javascript
+'use strict';
+
+module.exports = {
+
+    async receive(context) {
+
+        const { url, method, body } = context.messages.in.content;
+
+        if (!url) {
+            throw new context.CancelError('API Endpoint URL is required!');
+        }
+
+        if (!method) {
+            throw new context.CancelError('HTTP Method is required!');
+        }
+
+        const requestOptions = {
+            method: method,
+            url: `https://api.{service}.com${url}`,  // Hardcoded base URL from existing components
+            headers: {
+                'Authorization': `Bearer ${context.auth.apiToken}`,  // or apiKey, accessToken, etc.
+                'Content-Type': 'application/json'
+            }
+        };
+
+        if (body) {
+            requestOptions.data = JSON.parse(body);
+        }
+
+        const response = await context.httpRequest(requestOptions);
+
+        return context.sendJson({
+            status: response.status,
+            headers: response.headers,
+            body: response.data
+        }, 'out');
+    }
+};
+```
+
 **Pattern 2: Full URL with API Version Header**
 
 Use this when the API requires a version header (e.g., GitHub, Notion).
@@ -321,7 +368,7 @@ module.exports = {
 };
 ```
 
-**Pattern 4: API Key Authentication**
+**Pattern 5: API Key Authentication**
 
 Use this for services using API Key authentication (check auth.js for `type: 'apiKey'`).
 
@@ -389,11 +436,23 @@ Common API-specific headers to check for:
 
 ### 3. Base URL Handling
 
-| Scenario | Implementation |
-|----------|---------------|
-| Full URLs expected | Use `url` directly |
-| Relative URLs with dynamic base | Use `context.auth.resource + url` |
-| Relative URLs with static base | Use hardcoded base URL + `url` |
+**CRITICAL STEP**: Before implementing URL handling, examine 2-3 existing components in the connector to identify the common base URL pattern used:
+
+1. Open existing components (e.g., `GetProject/`, `CreateDeployment/`)
+2. Check their JavaScript files to see how they construct URLs
+3. Identify the common base URL that all components share
+4. Use that same base URL pattern in MakeApiCall
+
+| Scenario | Implementation | Example |
+|----------|---------------|---------|
+| **All components use same hardcoded base URL** | Hardcode base + prepend to user-provided path | Vercel: `https://api.vercel.com${url}` where users provide `/v9/projects` |
+| Full URLs expected | Use `url` directly | GitHub, Notion: users provide full URL |
+| Relative URLs with dynamic base | Use `context.auth.resource + url` | Microsoft Dynamics: tenant-specific base |
+| Relative URLs with static base | Use hardcoded base URL + `url` | Same as "hardcoded base URL" pattern |
+
+**Tooltip Guidance**: When using hardcoded base URL, update the tooltip to specify the path format expected:
+- ❌ "Enter the full API endpoint URL" (suggests full URLs)
+- ✅ "Enter the API endpoint path relative to https://api.{service}.com/" (clarifies it's a path, not full URL)
 
 ### 4. Error Handling
 
@@ -433,14 +492,15 @@ Before completing, verify:
 
 After creating both files:
 
-1. **Update bundle.json**: Increment the minor version and add changelog entry:
+1. **Update bundle.json**: Increment the minor version and add changelog entry <important>at the end</important> of the `changelog` object:
    ```json
    "changelog": {
-       "x.y.z": ["Added MakeApiCall component."]
+        "1.1.9": [ ... ],  // existing entries
+        "1.2.0": ["Added MakeApiCall component for arbitrary API calls."]
    }
    ```
 
-2. **Verify no errors**: Run `npm run test-lint` or check for TypeScript/ESLint errors
+2. **Verify no errors**: Run `npm run lint` on the connector to ensure no linting errors.
 
 3. **Provide summary** with:
    - API research findings (base URL, auth method, required headers)
