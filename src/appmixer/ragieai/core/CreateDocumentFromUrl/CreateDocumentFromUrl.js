@@ -28,7 +28,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: 'https://api.ragie.ai/documents',
+            url: 'https://api.ragie.ai/documents/url',
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
                 'Content-Type': 'application/json',
