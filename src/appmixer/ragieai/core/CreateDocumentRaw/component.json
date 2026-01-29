@@ -1,0 +1,133 @@
+{
+    "name": "appmixer.ragieai.core.CreateDocumentRaw",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Ingest a document as raw text. The document goes through processing steps (pending → partitioning → partitioned → refined → chunked → indexed → summary_indexed → keyword_indexed → ready → failed). The document is available for retrieval once it reaches the ready state. The summary index step can take a few seconds. You can optionally use the document for retrieval once it is in indexed state, but the summary will only be available once the state has changed to summary_indexed or ready.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:ragieai"
+    },
+    "quota": {
+        "manager": "appmixer:ragieai",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "externalId": {
+                        "type": "string"
+                    },
+                    "partition": {
+                        "type": "string"
+                    },
+                    "metadata": {
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "data"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "data": {
+                        "type": "textarea",
+                        "tooltip": "Document data in a text or JSON format.",
+                        "label": "Data",
+                        "index": 0
+                    },
+                    "name": {
+                        "type": "text",
+                        "tooltip": "An optional name for the document. If not set, the document will default to the current timestamp.",
+                        "label": "Name",
+                        "index": 1
+                    },
+                    "externalId": {
+                        "type": "text",
+                        "tooltip": "An optional identifier for the document. A common value might be an id in an external system or the URL where the source file may be found.",
+                        "label": "External ID",
+                        "index": 2
+                    },
+                    "partition": {
+                        "type": "text",
+                        "tooltip": "An optional partition identifier. Documents can be scoped to a partition. Partitions must be lowercase alphanumeric and may only include the special characters _ and -. A partition is created any time a document is created.",
+                        "label": "Partition",
+                        "index": 3
+                    },
+                    "metadata": {
+                        "type": "textarea",
+                        "tooltip": "Metadata for the document (JSON format). Keys must be strings. Values may be strings, numbers, booleans, or lists of strings. Numbers may be integers or floating point and will be converted to 64 bit floating point. 1000 total values are allowed. Each item in an array counts towards the total. Reserved keys for internal use: document_id, document_type, document_source, document_name, document_uploaded_at, start_time, end_time, chunk_content_type.",
+                        "label": "Metadata",
+                        "index": 4
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "created_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Updated At",
+                    "value": "updated_at",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Name",
+                    "value": "name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Metadata",
+                    "value": "metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Partition",
+                    "value": "partition",
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNCAxNmwtMiAyIDQgNGMxLjEgMS4xIDIuOSAxLjEgNCAwczEuMS0yLjkgMC00bC00LTQtMiAyeiIvPjxwYXRoIGQ9Ik0xMCA4bC0yIDJMNCw2Yy0xLjEtMS4xLTEuMS0yLjkgMC00czIuOS0xLjEgNCAwbDQgNCAyLTJ6Ii8+PGxpbmUgeDE9IjE0IiB5MT0iMTAiIHgyPSIxMCIgeTI9IjE0Ii8+PC9zdmc+"
+}
