@@ -5,7 +5,7 @@ module.exports = {
         const { document_id: documentId, data } = context.messages.in.content;
 
         if (!documentId) {
-            throw new context.CancelError('Document Id is required!');
+            throw new context.CancelError('Document ID is required!');
         }
 
         if (!data) {

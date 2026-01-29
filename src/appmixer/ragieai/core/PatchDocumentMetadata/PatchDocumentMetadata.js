@@ -6,7 +6,7 @@ module.exports = {
         const { documentId, metadata, async } = context.messages.in.content;
 
         if (!documentId) {
-            throw new context.CancelError('Document Id is required!');
+            throw new context.CancelError('Document ID is required!');
         }
 
         let metadataObj = metadata;
