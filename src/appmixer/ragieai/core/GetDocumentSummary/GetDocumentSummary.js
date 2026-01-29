@@ -3,15 +3,15 @@
 module.exports = {
     async receive(context) {
 
-        const { document_id } = context.messages.in.content;
+        const { documentId } = context.messages.in.content;
 
-        if (!document_id) {
+        if (!documentId) {
             throw new context.CancelError('Document Id is required!');
         }
 
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://api.ragie.ai/documents/${document_id}/summary`,
+            url: `https://api.ragie.ai/documents/${documentId}/summary`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             }
@@ -19,7 +19,7 @@ module.exports = {
 
         // Transform the API response to match the declared schema
         const transformedData = {
-            document_id: data['Document Id'] || document_id,
+            documentId: data['Document Id'] || documentId,
             summary: data.Summary || ''
         };
 

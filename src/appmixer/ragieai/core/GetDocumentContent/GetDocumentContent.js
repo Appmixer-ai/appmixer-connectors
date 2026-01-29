@@ -3,23 +3,23 @@
 module.exports = {
     async receive(context) {
 
-        const { document_id, media_type, download } = context.messages.in.content;
+        const { documentId, mediaType, download } = context.messages.in.content;
 
-        if (!document_id) {
+        if (!documentId) {
             throw new context.CancelError('Document Id is required!');
         }
 
         const requestOptions = {
             method: 'GET',
-            url: `https://api.ragie.ai/documents/${document_id}/content`,
+            url: `https://api.ragie.ai/documents/${documentId}/content`,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`
             },
             params: {}
         };
 
-        if (media_type) {
-            requestOptions.headers['Accept'] = media_type;
+        if (mediaType) {
+            requestOptions.headers['Accept'] = mediaType;
         }
 
         if (download) {
