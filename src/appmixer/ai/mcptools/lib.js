@@ -21,7 +21,7 @@ module.exports = {
         const options = {};
         if (connection.useSSL) {
             options.tls = {
-                ca: connection.caPath ? await fs.readFile(connection.caPath) : undefined
+                ca: connection.caPath ? await fs.promises.readFile(connection.caPath) : undefined
             };
         }
 

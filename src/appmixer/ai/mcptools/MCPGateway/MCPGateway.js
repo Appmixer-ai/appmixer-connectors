@@ -262,7 +262,7 @@ module.exports = {
             const args = typeof req.data.function.arguments === 'string' ? JSON.parse(req.data.function.arguments) : req.data.function.arguments;
             if (!uuid.validate(componentId)) {
                 // Short version of the UUID.
-                // Get back the original compoennt UUID back from the short version.
+                // Get back the original component UUID back from the short version.
                 componentId = shortuuid().toUUID(componentId);
             }
             if (this.isMCPserver(context, componentId)) {

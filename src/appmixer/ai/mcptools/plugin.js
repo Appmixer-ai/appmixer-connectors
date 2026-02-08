@@ -7,7 +7,7 @@ module.exports = async context => {
     context.log('info', '[AI.MCPTOOLS] Initializing plugin.');
 
     // Keep a connection to Redis for publish/subscribe that we use to deliver
-    // new chat messages to clients in real-time.
+    // MCP gateway events to clients in real-time.
     if (!process.CONNECTOR_STREAM_PUB_CLIENT) {
         context.log('info', '[AI.MCPTOOLS] Connecting Redis Publisher client.');
         process.CONNECTOR_STREAM_PUB_CLIENT = await lib.connectRedis();

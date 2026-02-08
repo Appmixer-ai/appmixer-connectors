@@ -128,7 +128,7 @@ module.exports = (context) => {
                 response.header('Connection', 'keep-alive');
                 // Force raw, uncompressed output.
                 // This is necessary to avoid the ERR_INCOMPLETE_CHUNKED_ENCODING error.
-                // It essentially disables response compression which interfers with
+                // It essentially disables response compression which interferes with
                 // streaming behaviour.
                 response.header('Content-Encoding', 'identity');
                 stream.write(': init\n\n'); // Send SSE comment to kickstart stream.
@@ -150,8 +150,13 @@ module.exports = (context) => {
                 // Cleanup on disconnect.
                 request.raw.req.on('close', async () => {
                     clearInterval(heartbeat);
-                    sseClients.get(userId).delete(stream);
-                    if (sseClients.get(userId).size === 0) sseClients.delete(userId);
+                    const userStreams = sseClients.get(userId);
+                    if (userStreams) {
+                        userStreams.delete(stream);
+                        if (userStreams.size === 0) {
+                            sseClients.delete(userId);
+                        }
+                    }
                     stream.end();
                     await context.log('info', `[AI.MCPTOOLS] SSE connection for user ${userId} closed. ${JSON.stringify(Array.from(sseClients.entries()))}`);
                 });
