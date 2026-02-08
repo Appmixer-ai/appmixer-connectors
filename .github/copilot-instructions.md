@@ -2319,14 +2319,17 @@ return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.lengt
 ### Unit Tests
 
 - Use `mocha` for unit tests
-- Place tests in `test/unit` directory
+- Place tests in `src/appmixer/<connector_name>/artifacts/test/` directory (colocated with connector source)
 - Use `assert` from Node.js for assertions
+- Name test files with `.test.js` extension (e.g., `AIAgent.test.js`)
 
 When working on a single connector, you can run tests with:
 
 ```bash
-npm run test-unit -- test/<connector_name>
+npm run test-unit -- src/appmixer/<connector_name>/artifacts/test/*.test.js
 ```
+
+The test suite automatically discovers and runs all test files in the `artifacts/test/` directories across all connectors.
 
 ### End-to-End (E2E) Test Flows
 
@@ -3173,3 +3176,28 @@ Good examples to reference:
 - `src/appmixer/hubspot/test-flow-create-deal.json` - CRM operations
 
 ---
+
+# Development instructions for Agents
+## Updating copilot-instructions.md with New Learnings
+
+As you work on the codebase, you will discover important information, edge cases, and best practices that aren't yet documented:
+
+1. **Capture insights**: When you encounter something non-obvious (e.g., a gotcha, a useful tip, an undocumented behavior), note it
+2. **Update this file**: Add the information to the appropriate section in copilot-instructions.md
+3. **Be concise**: Keep additions brief and actionable
+4. **Include context**: Explain *why* the information matters, not just *what* it is
+
+### Example Additions
+
+Instead of:
+> "The email quota endpoint sometimes times out"
+
+Write:
+> "The email quota endpoint can timeout if the database is under heavy load. If you see timeout errors in tests, increase the Prisma query timeout in `.env` or check for long-running queries in `npx prisma studio`"
+
+Commit these updates as documentation improvements:
+```
+docs(agents): add note about email quota endpoint timeouts
+
+Updates copilot-instructions.md with debugging guidance for common timeout issues.
+```

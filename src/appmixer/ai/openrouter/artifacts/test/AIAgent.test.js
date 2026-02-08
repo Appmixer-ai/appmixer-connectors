@@ -2,9 +2,9 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const { createMockContext } = require('../../utils');
+const { createMockContext } = require('../../../../../../test/utils');
 
-const lib = require('../../../src/appmixer/ai/openrouter/lib');
+const lib = require('../../lib');
 
 describe('OpenRouter AIAgent - mcpCallTool with correlationId', () => {
 

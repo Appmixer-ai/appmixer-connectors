@@ -2,9 +2,9 @@
 
 const assert = require('assert');
 const sinon = require('sinon');
-const { createMockContext } = require('../../utils');
+const { createMockContext } = require('../../../../../../test/utils');
 
-const AIAgent = require('../../../src/appmixer/ai/openai/AIAgent/AIAgent');
+const AIAgent = require('../../AIAgent/AIAgent');
 
 describe('AIAgent - mcpCallTool', () => {
 
