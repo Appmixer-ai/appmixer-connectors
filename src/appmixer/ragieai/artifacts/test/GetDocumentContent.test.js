@@ -1,6 +1,5 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const path = require('path');
 
 const GetDocumentContent = require('../../core/GetDocumentContent/GetDocumentContent');
 

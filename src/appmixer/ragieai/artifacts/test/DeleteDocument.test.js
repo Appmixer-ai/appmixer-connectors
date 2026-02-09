@@ -326,7 +326,7 @@ describe('DeleteDocument Component', function() {
 
             context.httpRequest.resolves({ data: {} });
 
-            const result = await DeleteDocument.receive(context);
+            await DeleteDocument.receive(context);
 
             // Verify httpRequest was called correctly
             assert.strictEqual(context.httpRequest.callCount, 1);

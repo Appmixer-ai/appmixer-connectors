@@ -257,7 +257,7 @@ describe('GetDocumentSummary Component', function() {
 
             context.httpRequest.resolves({ data: mockResponse });
 
-            const result = await GetDocumentSummary.receive(context);
+            await GetDocumentSummary.receive(context);
 
             // Verify httpRequest was called correctly
             assert.strictEqual(context.httpRequest.callCount, 1);
