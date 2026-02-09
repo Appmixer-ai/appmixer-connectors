@@ -25,7 +25,15 @@ module.exports = {
         }
 
         if (metadata) {
-            requestData.metadata = typeof metadata === 'string' ? JSON.parse(metadata) : metadata;
+            if (typeof metadata === 'string') {
+                try {
+                    requestData.metadata = JSON.parse(metadata);
+                } catch (err) {
+                    throw new context.CancelError('Invalid metadata JSON. Please provide a valid JSON string in the "metadata" field.');
+                }
+            } else {
+                requestData.metadata = metadata;
+            }
         }
 
         const response = await context.httpRequest({

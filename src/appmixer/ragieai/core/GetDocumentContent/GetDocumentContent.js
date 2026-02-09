@@ -9,6 +9,7 @@ module.exports = {
             throw new context.CancelError('Document Id is required!');
         }
 
+        // https://docs.ragie.ai/reference/getdocumentcontent
         const requestOptions = {
             method: 'GET',
             url: `https://api.ragie.ai/documents/${documentId}/content`,
@@ -24,6 +25,17 @@ module.exports = {
 
         if (download) {
             requestOptions.params.download = 'true';
+        }
+
+        // Determine if we're requesting binary/stream content
+        const isBinaryRequest = download || (mediaType && mediaType !== 'application/json');
+
+        if (isBinaryRequest) {
+            requestOptions.encoding = 'binary';
+            const { data } = await context.httpRequest(requestOptions);
+            const filename = `document-${documentId}-content`;
+            const file = await context.saveFileStream(filename, data);
+            return context.sendJson({ fileId: file.fileId }, 'out');
         }
 
         const { data } = await context.httpRequest(requestOptions);
