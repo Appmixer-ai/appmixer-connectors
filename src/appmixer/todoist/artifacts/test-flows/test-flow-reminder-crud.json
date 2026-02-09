@@ -48,8 +48,8 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1088,
-            "y": 208,
+            "x": 1024,
+            "y": 336,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -91,8 +91,8 @@
         },
         "list-reminders": {
             "type": "appmixer.todoist.core.ListReminders",
-            "x": 672,
-            "y": 368,
+            "x": 688,
+            "y": 480,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -121,8 +121,8 @@
         },
         "assert-list": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1088,
-            "y": 368,
+            "x": 1024,
+            "y": 480,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -176,8 +176,8 @@
         },
         "update-reminder": {
             "type": "appmixer.todoist.core.UpdateReminder",
-            "x": 864,
-            "y": 512,
+            "x": 896,
+            "y": 624,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -213,55 +213,23 @@
                 }
             }
         },
-        "delete-reminder": {
-            "type": "appmixer.todoist.core.DeleteReminder",
-            "x": 1088,
-            "y": 512,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "update-reminder": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "update-reminder": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "reminderId": {
-                                        "83c46acf-e236-4807-a7c7-9a9319380940": {
-                                            "variable": "$.f9be0e06-314a-4300-8727-238464932ea5.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "reminderId": "{{{83c46acf-e236-4807-a7c7-9a9319380940}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1344,
-            "y": 368,
+            "x": 1312,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "delete-reminder": [
-                        "out"
-                    ],
                     "assert-list": [
                         "out"
                     ],
                     "assert-create": [
+                        "out"
+                    ],
+                    "e611459a-b7eb-4f53-a28c-5b9a102a304b": [
+                        "out"
+                    ],
+                    "245b8398-478e-4d39-a873-44bd4564cecd": [
                         "out"
                     ]
                 }
@@ -274,23 +242,21 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1520,
-            "y": 368,
+            "x": 1680,
+            "y": 208,
             "version": "1.0.1",
-            "source": {
-                "in": {
-                    "after-all": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "properties": {},
                 "transform": {
                     "in": {
+                        "delete-reminder": {},
                         "after-all": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Todoist - reminder-crud",
+                                    "result": "{{{result-var}}}"
+                                },
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
@@ -300,22 +266,24 @@
                                             "functions": []
                                         }
                                     }
-                                },
-                                "lambda": {
-                                    "recipients": "test@appmixer.ai",
-                                    "testCase": "E2E Todoist - reminder-crud",
-                                    "result": "{{{result-var}}}"
                                 }
                             }
                         }
                     }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
                 }
             }
         },
         "25a8e198-c52f-4054-bb4b-fba04c048d5f": {
             "type": "appmixer.todoist.core.CreateTask",
             "x": 304,
-            "y": 208,
+            "y": 192,
             "source": {
                 "in": {
                     "set-variables": [
@@ -360,22 +328,19 @@
         },
         "f9be0e06-314a-4300-8727-238464932ea5": {
             "type": "appmixer.todoist.core.CreateReminder",
-            "x": 464,
-            "y": 208,
-            "source": {
-                "in": {
-                    "25a8e198-c52f-4054-bb4b-fba04c048d5f": [
-                        "out"
-                    ]
-                }
-            },
+            "x": 496,
+            "y": 336,
             "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
                         "25a8e198-c52f-4054-bb4b-fba04c048d5f": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "type": "absolute",
+                                    "taskId": "{{{120f9218-2f27-4677-95c2-6571cba0f363}}}",
+                                    "dueDatetime": "2026-01-16T23:00:00.000Z"
+                                },
                                 "modifiers": {
                                     "type": {},
                                     "taskId": {
@@ -385,11 +350,96 @@
                                         }
                                     },
                                     "dueDatetime": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "25a8e198-c52f-4054-bb4b-fba04c048d5f": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "e611459a-b7eb-4f53-a28c-5b9a102a304b": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "update-reminder": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1024,
+            "y": 624,
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-reminder": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b53c9387-3f90-40d8-85da-1bfab79258f1": {
+                                            "variable": "$.update-reminder.out",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
-                                    "type": "absolute",
-                                    "taskId": "{{{120f9218-2f27-4677-95c2-6571cba0f363}}}",
-                                    "dueDatetime": "2026-01-16T23:00:00.000Z"
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "object",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{b53c9387-3f90-40d8-85da-1bfab79258f1}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "245b8398-478e-4d39-a873-44bd4564cecd": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "25a8e198-c52f-4054-bb4b-fba04c048d5f": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1024,
+            "y": 208,
+            "config": {
+                "transform": {
+                    "in": {
+                        "25a8e198-c52f-4054-bb4b-fba04c048d5f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2b0d6647-66f7-4853-a115-572c20ef0298": {
+                                            "variable": "$.25a8e198-c52f-4054-bb4b-fba04c048d5f.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2b0d6647-66f7-4853-a115-572c20ef0298}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
