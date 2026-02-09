@@ -17,12 +17,6 @@ module.exports = {
             }
         });
 
-        // Transform the API response to match the declared schema
-        const transformedData = {
-            documentId: data['Document Id'] || documentId,
-            summary: data.Summary || ''
-        };
-
-        return context.sendJson(transformedData, 'out');
+        return context.sendJson(data, 'out');
     }
 };

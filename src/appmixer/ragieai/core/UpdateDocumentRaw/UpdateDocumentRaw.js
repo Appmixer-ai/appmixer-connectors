@@ -2,7 +2,7 @@
 
 module.exports = {
     async receive(context) {
-        const { document_id: documentId, data } = context.messages.in.content;
+        const { documentId, data } = context.messages.in.content;
 
         if (!documentId) {
             throw new context.CancelError('Document ID is required!');
