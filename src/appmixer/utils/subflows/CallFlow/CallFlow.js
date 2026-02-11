@@ -116,16 +116,13 @@ module.exports = {
 
         try {
 
-            await context.log({ 'step': 'fff', flowId });
             if (flowId) {
                 const flowData = await context.callAppmixer({
                     endPoint: `/flows/${flowId}?projection=flow`,
                     method: 'GET'
                 });
 
-                await context.log({ 'step': 'flow', flowData });
-
-                const items = Object.keys(flowData?.flow || {}).reduce((res, key) => {
+                return Object.keys(flowData?.flow || {}).reduce((res, key) => {
                     const value = flowData?.flow[key];
                     if (value.type === 'appmixer.utils.subflows.OnFlowCall') {
                         res.push({
@@ -135,15 +132,11 @@ module.exports = {
                     }
                     return res;
                 }, []);
-
-                await context.log({ 'step': 'items', items });
-                return items;
             }
 
             return [];
 
         } catch (e) {
-            await context.log({ 'step': 'err', message: e.message });
             return [];
         }
 
