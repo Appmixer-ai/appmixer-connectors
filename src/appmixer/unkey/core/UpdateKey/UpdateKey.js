@@ -20,7 +20,7 @@ module.exports = {
 
         if (name !== undefined && name !== null) body.name = name;
         if (externalId !== undefined && externalId !== null) body.externalId = externalId;
-        if (expires !== undefined && expires !== null) body.expires = expires;
+        if (expires !== undefined && expires !== null) body.expires = new Date(expires).getTime();
         if (typeof enabled === 'boolean') body.enabled = enabled;
 
         await context.httpRequest({

@@ -66,7 +66,7 @@ module.exports = {
             }
         }
 
-        if (expires) body.expires = expires;
+        if (expires) body.expires = new Date(expires).getTime();
 
         // Parse and validate ratelimits array
         if (ratelimits) {
