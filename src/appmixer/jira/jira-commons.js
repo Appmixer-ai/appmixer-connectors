@@ -119,7 +119,7 @@ module.exports = {
         };
 
         Object.keys(fields).forEach((key, index) => {
-            if (excludeFields.includes(key) || key.includes('customfield_')) {
+            if (excludeFields.includes(key)) {
                 return;
             }
 
@@ -154,7 +154,7 @@ module.exports = {
                 inspector.inputs[key].type = 'multiselect';
             }
 
-            if (schema.type === 'date') {
+            if (schema.type === 'date' || schema.type === 'datetime') {
                 inspector.inputs[key].type = 'date-time';
             }
 
@@ -170,6 +170,37 @@ module.exports = {
         });
 
         return inspector;
+    },
+
+    formatCustomFields(issueInfo, fieldMeta) {
+
+        Object.keys(issueInfo).forEach(key => {
+            if (!key.startsWith('customfield_')) return;
+
+            const value = issueInfo[key];
+            if (value === undefined || value === null || value === '') {
+                delete issueInfo[key];
+                return;
+            }
+
+            const meta = fieldMeta[key];
+            if (!meta || !meta.schema) return;
+
+            const { schema } = meta;
+            if (schema.type === 'option') {
+                issueInfo[key] = { id: value };
+            } else if (schema.type === 'array') {
+                if (Array.isArray(value)) {
+                    if (schema.items === 'option') {
+                        issueInfo[key] = value.map(v => ({ id: v }));
+                    }
+                }
+            } else if (schema.type === 'user') {
+                issueInfo[key] = { id: value };
+            } else if (schema.type === 'number') {
+                issueInfo[key] = Number(value);
+            }
+        });
     },
 
     async executeWebhookRequest(context, options) {

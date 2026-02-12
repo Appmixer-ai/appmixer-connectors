@@ -82,6 +82,25 @@ module.exports = {
         issue.project = project;
         issue.issuetype = issueType;
 
+        const hasCustomFields = Object.keys(issue).some(key => key.startsWith('customfield_'));
+        if (hasCustomFields) {
+            try {
+                const { fields } = await commons.get(
+                    `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
+                    auth
+                );
+                if (fields) {
+                    const fieldMeta = fields.reduce((acc, field) => {
+                        acc[field.fieldId] = field;
+                        return acc;
+                    }, {});
+                    commons.formatCustomFields(issue, fieldMeta);
+                }
+            } catch (e) {
+                // If metadata fetch fails, custom fields will be passed as-is
+            }
+        }
+
         const result = await commons.post(`${apiUrl}issue`, auth, buildIssue(issue));
         return context.sendJson(result, 'out');
     }
