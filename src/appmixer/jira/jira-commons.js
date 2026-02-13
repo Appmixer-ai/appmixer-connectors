@@ -140,7 +140,10 @@ module.exports = {
 
             if (Array.isArray(allowedValues)) {
                 inspector.inputs[key].type = 'select';
-                inspector.inputs[key].options = allowedValues.map(value => ({ content: value.name, value: value.id }));
+                inspector.inputs[key].options = allowedValues.map(v => ({
+                    content: v.name || v.value || v.id,
+                    value: v.id
+                }));
             }
 
             if (schema.type === 'array') {
@@ -187,15 +190,15 @@ module.exports = {
             if (!meta || !meta.schema) return;
 
             const { schema } = meta;
-            if (schema.type === 'option') {
-                issueInfo[key] = { id: value };
-            } else if (schema.type === 'array') {
+            const hasAllowedValues = Array.isArray(meta.allowedValues) && meta.allowedValues.length > 0;
+
+            if (schema.type === 'array') {
                 if (Array.isArray(value)) {
-                    if (schema.items === 'option') {
+                    if (schema.items === 'option' || (hasAllowedValues && schema.items !== 'string')) {
                         issueInfo[key] = value.map(v => ({ id: v }));
                     }
                 }
-            } else if (schema.type === 'user') {
+            } else if (schema.type === 'option' || schema.type === 'user' || hasAllowedValues) {
                 issueInfo[key] = { id: value };
             } else if (schema.type === 'number') {
                 issueInfo[key] = Number(value);
