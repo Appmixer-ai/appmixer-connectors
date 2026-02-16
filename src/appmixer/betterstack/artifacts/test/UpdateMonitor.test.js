@@ -13,7 +13,7 @@ describe('UpdateMonitor', () => {
                 in: {
                     content: {
                         monitorId: 'm_1',
-                        pronounceableName: 'Homepage Updated',
+                        monitorName: 'Homepage Updated',
                         paused: true
                     }
                 }

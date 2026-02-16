@@ -12,7 +12,7 @@ describe('CreateMonitor', () => {
             messages: {
                 in: {
                     content: {
-                        pronounceableName: 'Homepage',
+                        monitorName: 'Homepage',
                         url: 'https://example.com'
                     }
                 }

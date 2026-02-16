@@ -4,7 +4,7 @@ const BASE_URL = 'https://uptime.betterstack.com/api/v2';
 
 module.exports = {
     async receive(context) {
-        const { monitorId, pronounceableName, url, monitorType, checkFrequency, paused } = context.messages.in.content;
+        const { monitorId, monitorName, url, monitorType, checkFrequency, paused } = context.messages.in.content;
 
         if (!monitorId) {
             throw new context.CancelError('Monitor ID is required!');
@@ -12,8 +12,8 @@ module.exports = {
 
         const attributes = {};
 
-        if (pronounceableName) {
-            attributes.pronounceable_name = pronounceableName;
+        if (monitorName) {
+            attributes.pronounceable_name = monitorName;
         }
         if (url) {
             attributes.url = url;
