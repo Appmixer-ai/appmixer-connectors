@@ -2871,10 +2871,31 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - Use AfterAll to ensure cleanup runs after all assertions
     - Connect cleanup components properly
 
-8. **Component Coordinates**
-    - Use x/y coordinates for visual layout
-    - Space components horizontally (200-300px apart)
-    - Arrange vertically for parallel branches (especially for multiple Assert components)
+8. **Component Coordinates and Layout**
+    - **Horizontal spacing**: Use **192px** between sequentially connected components on the x-axis
+    - **Vertical spacing**: Use **128px** between parallel rows/branches on the y-axis
+    - **Starting position**: OnStart at `x: 64, y: 16`
+    - **Diagonal staircase pattern**: When operations branch off sequentially (Create → Get → Update → ...), each subsequent action moves **+192px right** and **+128px down**, forming a diagonal:
+      ```
+      on-start (64,16) → set-variables (272,16) → create (464,16)
+                                                       ↓
+                                                   get (656,144)
+                                                       ↓
+                                                   update (848,272)
+                                                       ↓
+                                                   get-content (1040,400)
+      ```
+    - **Assert column**: All Assert components are **right-aligned at a fixed x position** (e.g., `x: 1200`), each at the **same y as its corresponding action**:
+      ```
+      create (464,16)          →  assert-create (1200,16)
+      get (656,144)            →  assert-get (1200,144)
+      update (848,272)         →  assert-update (1200,272)
+      get-content (1040,400)   →  assert-get-content (1200,400)
+      ```
+    - **Tail chain (AfterAll → Cleanup → ProcessResults)**: Place on a **horizontal line** at approximately the vertical center of the flow (e.g., `y: 144`), spaced ~192px apart after the assert column:
+      ```
+      after-all (1392,144) → delete (1616,144) → process-results (1792,144)
+      ```
 
 9. **Naming Conventions**
     - Use descriptive component IDs: `create-document`, `assert-content-exists`
@@ -2890,16 +2911,16 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     "flow": {
         "start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 64,
+            "y": 16,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "create-item": {
             "type": "appmixer.service.core.CreateItem",
-            "x": 300,
-            "y": 200,
+            "x": 256,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2926,8 +2947,8 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
         },
         "get-item": {
             "type": "appmixer.service.core.GetItem",
-            "x": 500,
-            "y": 200,
+            "x": 448,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2959,8 +2980,8 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
         },
         "assert-item": {
             "type": "appmixer.utils.test.Assert",
-            "x": 700,
-            "y": 200,
+            "x": 832,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -3000,8 +3021,8 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 900,
-            "y": 200,
+            "x": 1024,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -3016,8 +3037,8 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
         },
         "delete-item": {
             "type": "appmixer.service.core.DeleteItem",
-            "x": 1100,
-            "y": 200,
+            "x": 1216,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -3049,8 +3070,8 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
-            "y": 200,
+            "x": 1408,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
