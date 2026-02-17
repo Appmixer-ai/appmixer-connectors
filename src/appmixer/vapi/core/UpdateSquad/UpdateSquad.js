@@ -1,5 +1,7 @@
 'use strict';
 
+const { normalizeMultiselectInput } = require('../../lib');
+
 module.exports = {
     async receive(context) {
         const { squadId, name, members } = context.messages.in.content;
@@ -8,18 +10,16 @@ module.exports = {
             throw new context.CancelError('Squad ID is required!');
         }
 
-        const payload = {};
+        if (!members) {
+            throw new context.CancelError('Members is required!');
+        }
+
+        const payload = {
+            members: normalizeMultiselectInput(members, context, 'Members').map(assistantId => ({ assistantId }))
+        };
 
         if (name) {
             payload.name = name;
-        }
-
-        if (members) {
-            try {
-                payload.members = JSON.parse(members);
-            } catch (error) {
-                throw new context.CancelError(`Invalid members JSON: ${error.message}`);
-            }
         }
 
         await context.httpRequest({

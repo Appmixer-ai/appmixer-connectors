@@ -6,11 +6,11 @@ const DEFAULT_PREFIX = 'vapi-objects-export';
 
 module.exports = {
     async sendArrayOutput({
-        context,
-        outputPortName = 'out',
-        outputType = 'array',
-        records = []
-    }) {
+                              context,
+                              outputPortName = 'out',
+                              outputType = 'array',
+                              records = []
+                          }) {
         if (outputType === 'first') {
             if (records.length === 0) {
                 throw new context.CancelError('No records available for first output type');
@@ -79,7 +79,36 @@ module.exports = {
         if (outputType === 'file') {
             return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
         }
+    },
+
+    /**
+     * Normalize multiselect input (array or string) to array format for Airtable API.
+     * @param {string|string[]} input
+     * @param {number} maxItems
+     * @param {object} context
+     * @param {string} fieldName
+     * @returns {string[]}
+     */
+    normalizeMultiselectInput(input, context, fieldName, maxItems) {
+
+        let normalizedInput;
+
+        if (Array.isArray(input)) {
+            normalizedInput = input;
+        } else if (typeof input === 'string') {
+            // Handle comma-separated string
+            normalizedInput = input.split(',').map(item => item.trim()).filter(item => item.length > 0);
+        } else {
+            throw new context.CancelError(`${fieldName} must be a string or an array`);
+        }
+
+        if (maxItems !== Infinity && normalizedInput.length > maxItems) {
+            throw new context.CancelError(`Cannot have more than ${maxItems} fields selected in ${fieldName}.`);
+        }
+
+        return normalizedInput;
     }
+
 };
 
 const toCsv = (array) => {
