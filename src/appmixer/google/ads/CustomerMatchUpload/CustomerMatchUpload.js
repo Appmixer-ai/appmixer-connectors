@@ -13,58 +13,39 @@
 'use strict';
 
 const { GoogleAdsApi, enums } = require('google-ads-api');
-const { parse } = require('csv-parse');
+const lib = require('../lib');
+const retry = require('../retry');
+const csvParser = require('../csvParser');
 
 
-// Continuation pattern constants (inspired by Facebook Business component)
-// These prevent Appmixer's 25-minute timeout by breaking long uploads into continuation windows
-const TIMEOUT_TRIGGER_SECONDS = parseInt(process.env.TIMEOUT_TRIGGER_SECONDS) || (60 * 4); // 4 minutes - jump out before Appmixer's limit
-const TIMEOUT_SECONDS = parseInt(process.env.TIMEOUT_SECONDS) || 60; // 1 minute - minimum Appmixer timeout
-const MAX_CONTINUATION_PERIOD_SECONDS = parseInt(process.env.MAX_CONTINUATION_PERIOD_SECONDS) || (60 * 60 * 48); // 48 hours max
+/**
+ * CONTINUATION PATTERN DOCUMENTATION
+ * 
+ * This component uses Appmixer's context.setTimeout() to handle large uploads that exceed
+ * the platform's 25-minute execution limit. This pattern was implemented to solve a specific
+ * issue where the Appmixer context would be destroyed during long-running Google Ads API operations.
+ * 
+ * How it works:
+ * 1. Component monitors execution time during CSV processing
+ * 2. Before reaching 20-minute limit, schedules a continuation with minimal state
+ * 3. CSV is re-parsed on each continuation (unavoidable due to message size limits)
+ * 4. Progress is tracked via processedSegments array to avoid duplicate work
+ * 5. Maximum 1-hour total runtime prevents runaway processes
+ * 
+ * Trade-offs:
+ * - CSV re-parsing adds overhead but prevents memory issues with large files
+ * - File deletion between continuations will cause failure (acceptable risk)
+ * - State management is simplified to essential data only
+ * 
+ * This pattern is necessary for handling 10M+ user uploads that can take 30+ minutes
+ * to complete due to Google Ads API rate limits and batch processing requirements.
+ */
+const TIMEOUT_TRIGGER_SECONDS = 20 * 60; // 20 minutes - schedule continuation well before Appmixer's limit
+const TIMEOUT_DELAY_SECONDS = 60; // 1 minute delay before resuming
+const MAX_UPLOAD_TIME_HOURS = 1; // 1 hour maximum upload time - reasonable for most use cases
 
 module.exports = {
-    /**
-     * Safely send progress updates without crashing if context is destroyed.
-     * This can happen when async operations continue after component has returned.
-     */
-    async safeSendProgress(context, data, port = 'progress') {
-        try {
-            await context.sendJson(data, port);
-        } catch (error) {
-            // Context destroyed - silently ignore (expected when async operations complete after main flow)
-        }
-    },
 
-    /**
-     * Extract human-readable error message from Google Ads API error object.
-     * Handles both Google Ads API nested structure and standard JS errors.
-     */
-    extractErrorMessage(error) {
-        if (error.message) {
-            return error.message;
-        }
-
-        if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
-            const firstError = error.errors[0];
-            let msg = firstError.message || '';
-
-            if (firstError.error_code) {
-                msg += ` [Code: ${JSON.stringify(firstError.error_code)}]`;
-            }
-
-            if (error.request_id) {
-                msg += ` [Request ID: ${error.request_id}]`;
-            }
-
-            return msg;
-        }
-
-        try {
-            return JSON.stringify(error);
-        } catch (e) {
-            return String(error);
-        }
-    },
 
     async receive(context) {
         // Check if this is a continuation from a previous timeout
@@ -84,58 +65,42 @@ module.exports = {
             return originalLog(level, stringMessage);
         };
 
-        let fileId, clientId, clientSecret, refreshToken, developerToken, loginCustomerId, customerId;
+        let fileId, developerToken, loginCustomerId, customerId;
         let segmentColumnIndex, emailColumnIndex, segmentToUserList, uploadMode, adPersonalization, adUserData;
         let batchSize, containsHeaders, columnSeparator;
-        let timeStart, processedSegments, segmentGroups, userListJobs, currentSegmentNumber;
-        let batchesCompletedOverall, totalBatchesOverall, totalUsersOverall, totalSegments;
-        let jobCreationDelayMs, results;
+        let timeStart, processedSegments, segmentGroups, currentSegmentNumber, results;
 
         if (isContinuation) {
             const msg = context.messages.timeout.content;
+            
+            // Restore essential parameters
             fileId = msg.fileId;
-            clientId = msg.clientId;
-            clientSecret = msg.clientSecret;
-            refreshToken = msg.refreshToken;
             developerToken = msg.developerToken;
             loginCustomerId = msg.loginCustomerId;
             customerId = msg.customerId;
-            segmentColumnIndex = msg.segmentColumnIndex;
-            emailColumnIndex = msg.emailColumnIndex;
             segmentToUserList = msg.segmentToUserList;
             uploadMode = msg.uploadMode;
-            adPersonalization = msg.adPersonalization;
-            adUserData = msg.adUserData;
             batchSize = msg.batchSize;
-            containsHeaders = msg.containsHeaders;
-            columnSeparator = msg.columnSeparator;
-
+            
+            // Restore progress state
             timeStart = new Date(msg.timeStart);
             processedSegments = msg.processedSegments || [];
-            // segmentGroups re-parsed from CSV (not stored to avoid timeout message size limits)
-            userListJobs = new Map(msg.userListJobs || []);
             currentSegmentNumber = msg.currentSegmentNumber || 0;
-            batchesCompletedOverall = msg.batchesCompletedOverall || 0;
-            totalBatchesOverall = msg.totalBatchesOverall || 0;
-            totalUsersOverall = msg.totalUsersOverall || 0;
-            totalSegments = msg.totalSegments || 0;
-            jobCreationDelayMs = msg.jobCreationDelayMs || 0;
-            results = msg.results || {
-                totalJobs: 0,
-                totalUsers: 0,
+            
+            // Restore results summary
+            results = {
+                totalJobs: msg.totalJobs || 0,
+                totalUsers: msg.totalUsers || 0,
                 jobsBySegment: {},
-                errors: [],
+                errors: msg.errors || [],
                 internalErrors: [],
                 success: true
             };
 
-            context.log('info', `Resuming continuation: ${processedSegments.length}/${totalSegments || 'unknown'} segments, ${batchesCompletedOverall}/${totalBatchesOverall} batches`);
+            context.log('info', `Resuming continuation: ${processedSegments.length} segments processed`);
         } else {
             const msg = context.messages.in.content;
             fileId = msg.fileId;
-            clientId = msg.clientId;
-            clientSecret = msg.clientSecret;
-            refreshToken = msg.refreshToken;
             developerToken = msg.developerToken;
             loginCustomerId = msg.loginCustomerId;
             customerId = msg.customerId;
@@ -152,13 +117,7 @@ module.exports = {
             timeStart = new Date();
             processedSegments = [];
             segmentGroups = null;
-            userListJobs = new Map();
             currentSegmentNumber = 0;
-            batchesCompletedOverall = 0;
-            totalBatchesOverall = 0;
-            totalUsersOverall = 0;
-            totalSegments = 0;
-            jobCreationDelayMs = 0;
             results = {
                 totalJobs: 0,
                 totalUsers: 0,
@@ -172,23 +131,43 @@ module.exports = {
         const errors = results.errors;
 
         try {
-            if ((new Date() - timeStart) >= (MAX_CONTINUATION_PERIOD_SECONDS * 1000)) {
-                throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_CONTINUATION_PERIOD_SECONDS / 3600} hours). Please retry with smaller batches or contact support.`);
+            if ((new Date() - timeStart) >= (MAX_UPLOAD_TIME_HOURS * 60 * 60 * 1000)) {
+                throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_UPLOAD_TIME_HOURS} hour). Please retry with smaller batches.`);
             }
             if (!fileId) {
-                throw new Error('Missing fileId. Please provide an Appmixer file ID or Google Drive file object.');
+                throw new context.CancelError('Missing fileId. Please provide an Appmixer file ID or Google Drive file object.');
             }
 
-            if (!clientId || !clientSecret || !refreshToken) {
-                throw new Error('Missing OAuth2 credentials. Please provide clientId, clientSecret, and refreshToken.');
+            if (!context.auth || !context.auth.accessToken) {
+                throw new context.CancelError('Missing OAuth2 authentication. Please connect your Google account.');
             }
 
             if (!developerToken) {
-                throw new Error('Missing Developer Token. Please provide a valid Google Ads API Developer Token.');
+                throw new context.CancelError('Missing Developer Token. Please provide a valid Google Ads API Developer Token.');
             }
 
             if (!customerId) {
-                throw new Error('Missing Customer ID. Please provide the Google Ads Customer Account ID.');
+                throw new context.CancelError('Missing Customer ID. Please provide the Google Ads Customer Account ID.');
+            }
+
+            // Enhanced validation for batchSize
+            if (batchSize !== undefined) {
+                if (typeof batchSize !== 'number' || batchSize < 1 || batchSize > 100000) {
+                    throw new context.CancelError('Invalid batchSize. Must be a number between 1 and 100000. Lower values use less memory.');
+                }
+            }
+
+            // Enhanced validation for CSV column indices
+            if (segmentColumnIndex !== undefined) {
+                if (typeof segmentColumnIndex !== 'number' || segmentColumnIndex < 0 || segmentColumnIndex > 50) {
+                    throw new context.CancelError('Invalid segmentColumnIndex. Must be a number between 0 and 50.');
+                }
+            }
+            
+            if (emailColumnIndex !== undefined) {
+                if (typeof emailColumnIndex !== 'number' || emailColumnIndex < 0 || emailColumnIndex > 50) {
+                    throw new context.CancelError('Invalid emailColumnIndex. Must be a number between 0 and 50.');
+                }
             }
 
             context.log('info', `Initializing Google Ads API client for customer ${customerId}`);
@@ -200,7 +179,45 @@ module.exports = {
                     : segmentToUserList;
             } catch (e) {
                 context.log('error', `Failed to parse segmentToUserList. Input value: ${JSON.stringify(segmentToUserList)}`);
-                throw new Error(`Invalid segmentToUserList JSON: ${e.message}. Check that keys and values use double quotes, no trailing commas, and valid JSON syntax.`);
+                throw new context.CancelError(`Invalid segmentToUserList JSON: ${e.message}. Check that keys and values use double quotes, no trailing commas, and valid JSON syntax.`);
+            }
+
+            // Enhanced validation for segmentToUserList JSON structure
+            if (!segmentMapping || typeof segmentMapping !== 'object' || Array.isArray(segmentMapping)) {
+                throw new context.CancelError('segmentToUserList must be a JSON object with segment names as keys and user list IDs as values.');
+            }
+
+            const segmentKeys = Object.keys(segmentMapping);
+            if (segmentKeys.length === 0) {
+                throw new context.CancelError('segmentToUserList cannot be empty. Please provide at least one segment mapping.');
+            }
+
+            if (segmentKeys.length > 100) {
+                throw new context.CancelError('segmentToUserList cannot have more than 100 segments. Please reduce the number of segments.');
+            }
+
+            // Validate each segment mapping
+            for (const [segment, userListIds] of Object.entries(segmentMapping)) {
+                if (!segment || typeof segment !== 'string' || segment.trim().length === 0) {
+                    throw new context.CancelError(`Invalid segment name: '${segment}'. Segment names must be non-empty strings.`);
+                }
+
+                if (segment.length > 100) {
+                    throw new context.CancelError(`Segment name '${segment}' is too long. Maximum length is 100 characters.`);
+                }
+
+                // Validate user list IDs
+                const userListArray = Array.isArray(userListIds) ? userListIds : [userListIds];
+                for (const userListId of userListArray) {
+                    if (!userListId || (typeof userListId !== 'string' && typeof userListId !== 'number')) {
+                        throw new context.CancelError(`Invalid user list ID '${userListId}' for segment '${segment}'. User list IDs must be non-empty strings or numbers.`);
+                    }
+
+                    const userListIdStr = String(userListId).trim();
+                    if (!/^\d+$/.test(userListIdStr)) {
+                        throw new context.CancelError(`Invalid user list ID '${userListId}' for segment '${segment}'. User list IDs must be numeric.`);
+                    }
+                }
             }
 
             // Normalize segment mapping: support both single value and array formats
@@ -219,47 +236,43 @@ module.exports = {
             context.log('info', `Normalized mapping: ${JSON.stringify(normalizedMapping)}`);
 
             const client = new GoogleAdsApi({
-                client_id: clientId,
-                client_secret: clientSecret,
+                client_id: context.auth.clientId,
+                client_secret: context.auth.clientSecret,
                 developer_token: developerToken
             });
 
             const customer = client.Customer({
                 customer_account_id: customerId,
-                refresh_token: refreshToken,
+                refresh_token: context.auth.refreshToken,
                 login_customer_id: loginCustomerId || undefined
             });
 
             const scheduleContinuation = async (reason) => {
-                context.log('info', `Scheduling continuation (${reason}): ${processedSegments.length}/${totalSegments || 'unknown'} segments, ${batchesCompletedOverall}/${totalBatchesOverall} batches`);
-                return context.setTimeout({
+                context.log('info', `Scheduling continuation (${reason}): ${processedSegments.length}/${totalSegments || 'unknown'} segments processed`);
+                
+                // Store minimal state for continuation - only essential data
+                const continuationState = {
+                    // Original input parameters
                     fileId,
-                    clientId,
-                    clientSecret,
-                    refreshToken,
                     developerToken,
                     loginCustomerId,
                     customerId,
-                    segmentColumnIndex,
-                    emailColumnIndex,
                     segmentToUserList,
                     uploadMode,
-                    adPersonalization,
-                    adUserData,
                     batchSize,
-                    containsHeaders,
-                    columnSeparator,
+                    
+                    // Progress tracking
                     timeStart: timeStart.getTime(),
                     processedSegments,
-                    userListJobs: Array.from(userListJobs.entries()),
                     currentSegmentNumber,
-                    batchesCompletedOverall,
-                    totalBatchesOverall,
-                    totalUsersOverall,
-                    totalSegments,
-                    jobCreationDelayMs,
-                    results
-                }, TIMEOUT_SECONDS * 1000);
+                    
+                    // Results summary
+                    totalJobs: results.totalJobs,
+                    totalUsers: results.totalUsers,
+                    errors: results.errors
+                };
+                
+                return context.setTimeout(continuationState, TIMEOUT_DELAY_SECONDS * 1000);
             };
 
             // Re-parse CSV on continuation (not stored in state to avoid timeout message size limits)
@@ -275,29 +288,30 @@ module.exports = {
                     typeof fileId.fileContent === 'string'
                         ? Buffer.from(fileId.fileContent, fileId.encoding || 'utf8')
                         : fileId.fileContent
-                    );
-                } else if (typeof fileId === 'string') {
-                    context.log('info', `Reading CSV file: ${fileId}`);
-                try {
-                    fileStream = await context.getFileReadStream(fileId);
-                } catch (fileError) {
-                    throw new Error(`Failed to read file '${fileId}': ${fileError.message}. Ensure the file exists in Appmixer storage.`);
-                }
+                );
+            } else if (typeof fileId === 'string') {
+                context.log('info', `Processing Appmixer file: ${fileId}`);
+                fileStream = await context.getFileReadStream(fileId);
             } else {
-                throw new Error(`Invalid fileId type: ${typeof fileId}. Expected string (Appmixer ID) or object (Google Drive file).`);
+                throw new context.CancelError('Invalid fileId format. Expected string (Appmixer file ID) or object (file content).');
             }
 
-            segmentGroups = await this.parseCSV(
-                fileStream,
-                {
-                    segmentColumnIndex,
-                    emailColumnIndex,
-                    containsHeaders,
-                    columnSeparator,
-                    batchSize
-                },
-                context
-            );
+            // Validate CSV parsing options
+            csvParser.validateParsingOptions({
+                segmentColumnIndex,
+                emailColumnIndex,
+                containsHeaders,
+                columnSeparator,
+                batchSize
+            }, context);
+
+            segmentGroups = await csvParser.parseCSV(fileStream, {
+                segmentColumnIndex,
+                emailColumnIndex,
+                containsHeaders,
+                columnSeparator,
+                batchSize
+            }, context);
 
             context.log('info', `Parsed ${segmentGroups ? Object.keys(segmentGroups).length : 0} segments from CSV`);
 
@@ -328,6 +342,8 @@ module.exports = {
             const JOB_MAX_DELAY = 10000;
             const JOB_DELAY_INCREMENT = 500;
             const JOB_DELAY_DECREMENT = 50;
+
+            const userListJobs = new Map();
 
             for (const [segment, emails] of segments) {
                 if ((new Date() - receiveTimeStart) >= TIMEOUT_TRIGGER_SECONDS * 1000) {
@@ -366,7 +382,7 @@ module.exports = {
                         const userListResourceName = `customers/${customerId}/userLists/${userListId}`;
                         context.log('info', `Uploading to User List ${userListId}`);
 
-                        const batches = this.chunkArray(emails, batchSize);
+                        const batches = lib.chunkArray(emails, batchSize);
                         context.log('info', `Split into ${batches.length} batch(es) of max ${batchSize} users`);
 
                         const segmentStartTime = Date.now();
@@ -376,7 +392,7 @@ module.exports = {
                         const MAX_DELAY = 5000;
                         const DELAY_INCREMENT = 100;
                         const DELAY_DECREMENT = 10;
-                        await this.safeSendProgress(context, {
+                        lib.safeSendProgress(context, {
                             segment,
                             totalBatches: batches.length,
                             totalUsers: emails.length,
@@ -400,13 +416,7 @@ module.exports = {
                         } else {
                             context.log('info', `Creating new OfflineUserDataJob for segment '${segment}' → User List ${userListId}`);
                             try {
-                                jobResourceName = await this.createUserDataJob(
-                                    customer,
-                                    customerId,
-                                    userListResourceName,
-                                    { adPersonalization, adUserData },
-                                    context
-                                );
+                                jobResourceName = await lib.createUserDataJob(context, customer, customerId, userListId);
 
                                 if (jobCreationDelayMs > JOB_MIN_DELAY) {
                                     jobCreationDelayMs = Math.max(JOB_MIN_DELAY, jobCreationDelayMs - JOB_DELAY_DECREMENT);
@@ -452,10 +462,10 @@ module.exports = {
                                 context.log('error', `createUserDataJob failed: ${createError.message}`);
 
                                 if (wasRateLimited) {
-                                    const extractedErrorMsg = this.extractErrorMessage(createError);
+                                    const extractedErrorMsg = lib.extractErrorMessage(createError);
                                     context.log('error', `Rate limit hit during job creation - stopping all segment processing`);
 
-                                    await this.safeSendProgress(context, {
+                                    lib.safeSendProgress(context, {
                                         segment,
                                         status: 'rate_limited',
                                         message: `Rate limit exceeded during job creation: ${extractedErrorMsg}`,
@@ -496,13 +506,12 @@ module.exports = {
                                         batchSize: batch.length
                                     };
 
-                                    await this.addOperations(
-                                        customer,
-                                        jobResourceName,
-                                        batch,
-                                        removeAllFirst,
+                                    await lib.addOperations(
                                         context,
-                                        progressInfoForRetry
+                                        customer,
+                                        customerId,
+                                        jobResourceName,
+                                        batch
                                     );
 
                                     if (adaptiveDelayMs > MIN_DELAY) {
@@ -560,8 +569,8 @@ module.exports = {
                                 const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
                                 const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
 
-                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${this.formatTime(overallElapsedSeconds)} elapsed, ETA: ${this.formatTime(overallEtaSeconds)}`;
-                                const segmentMessage = `Batch 1/${batches.length} uploaded (${progress}%) - ${this.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + this.formatTime(etaSeconds) : ''}`;
+                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${lib.formatTime(overallElapsedSeconds)} elapsed, ETA: ${lib.formatTime(overallEtaSeconds)}`;
+                                const segmentMessage = `Batch 1/${batches.length} uploaded (${progress}%) - ${lib.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + lib.formatTime(etaSeconds) : ''}`;
                                 const combinedMessage = `${generalMessage}\n${segmentMessage}`;
 
                                 const now = Date.now();
@@ -573,7 +582,7 @@ module.exports = {
                                 }
 
                                 if (shouldLog) {
-                                    await this.safeSendProgress(context, {
+                                    lib.safeSendProgress(context, {
                                         segment,
                                         totalBatches: batches.length,
                                         currentBatch: 1,
@@ -598,13 +607,12 @@ module.exports = {
                                         batchSize: batch.length
                                     };
 
-                                    await this.addOperations(
-                                        customer,
-                                        jobResourceName,
-                                        batch,
-                                        false,
+                                    await lib.addOperations(
                                         context,
-                                        progressInfoForRetry
+                                        customer,
+                                        customerId,
+                                        jobResourceName,
+                                        batch
                                     );
 
                                     if (adaptiveDelayMs > MIN_DELAY) {
@@ -659,8 +667,8 @@ module.exports = {
                                 const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
                                 const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
 
-                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${this.formatTime(overallElapsedSeconds)} elapsed, ETA: ${this.formatTime(overallEtaSeconds)}`;
-                                const segmentMessage = `Batch ${i + 1}/${batches.length} uploaded (${progress}%) - ${this.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + this.formatTime(etaSeconds) : ''}`;
+                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${lib.formatTime(overallElapsedSeconds)} elapsed, ETA: ${lib.formatTime(overallEtaSeconds)}`;
+                                const segmentMessage = `Batch ${i + 1}/${batches.length} uploaded (${progress}%) - ${lib.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + lib.formatTime(etaSeconds) : ''}`;
                                 const combinedMessage = `${generalMessage}\n${segmentMessage}`;
 
                                 const now = Date.now();
@@ -672,7 +680,7 @@ module.exports = {
                                 }
 
                                 if (shouldLog) {
-                                    await this.safeSendProgress(context, {
+                                    lib.safeSendProgress(context, {
                                         segment,
                                         totalBatches: batches.length,
                                         currentBatch: i + 1,
@@ -705,7 +713,7 @@ module.exports = {
 
                         results.totalUsers += totalUploaded;
 
-                        await this.safeSendProgress(context, {
+                        lib.safeSendProgress(context, {
                             segment,
                             totalBatches: batches.length,
                             currentBatch: batches.length,
@@ -715,7 +723,7 @@ module.exports = {
                             elapsedSeconds: totalElapsedSeconds,
                             etaSeconds: 0,
                             status: 'uploaded',
-                            message: `Segment '${segment}' complete: ${totalUploaded} users uploaded in ${this.formatTime(totalElapsedSeconds)}`,
+                            message: `Segment '${segment}' complete: ${totalUploaded} users uploaded in ${lib.formatTime(totalElapsedSeconds)}`,
                             jobResourceName,
                             operationName: null
                         }, 'progress');
@@ -735,7 +743,7 @@ module.exports = {
                         try {
                             errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
                         } catch (e) {
-                            errorDetails = this.extractErrorMessage(error);
+                            errorDetails = lib.extractErrorMessage(error);
                         }
                     }
 
@@ -754,7 +762,7 @@ module.exports = {
                     context.log('info', `Running job for User List ${userListId} (segments: ${jobInfo.segments.join(', ')})`);
                     context.log('info', `   Job: ${jobInfo.jobResourceName}`);
 
-                    const operation = await this.runJob(customer, jobInfo.jobResourceName, context);
+                    const operation = await lib.runJob(context, customer, customerId, jobInfo.jobResourceName);
 
                     for (const segment of jobInfo.segments) {
                         if (results.jobsBySegment[segment]) {
@@ -767,7 +775,7 @@ module.exports = {
                     context.log('info', `Job submitted for User List ${userListId}`);
 
                 } catch (error) {
-                    const errorMsg = this.extractErrorMessage(error);
+                    const errorMsg = lib.extractErrorMessage(error);
 
                     if (errorMsg.includes('invalid') || errorMsg.includes('Invalid')) {
                         context.log('error', `Invalid job or user list for User List ${userListId}: ${jobInfo.jobResourceName}`);
@@ -791,7 +799,7 @@ module.exports = {
             const totalElapsedMs = Date.now() - overallStartTime;
             const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
 
-            context.log('info', `Upload complete: ${results.totalJobs} jobs, ${results.totalUsers} total users, ${this.formatTime(totalElapsedSeconds)} elapsed`);
+            context.log('info', `Upload complete: ${results.totalJobs} jobs, ${results.totalUsers} total users, ${lib.formatTime(totalElapsedSeconds)} elapsed`);
             context.log('info', 'Job status summary:');
             for (const [segment, jobInfo] of Object.entries(results.jobsBySegment)) {
                 context.log('info', `  Segment '${segment}': ${jobInfo.status} (${jobInfo.usersUploaded} users)`);
@@ -801,7 +809,7 @@ module.exports = {
             return context.sendJson(results, 'out');
 
         } catch (error) {
-            const errorMsg = this.extractErrorMessage(error);
+            const errorMsg = lib.extractErrorMessage(error);
             context.log('error', `Fatal error: ${errorMsg}`);
             context.log('error', `Full error details: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
             results.success = false;
@@ -812,487 +820,5 @@ module.exports = {
         }
     },
 
-    /**
-     * Parse CSV file and group emails by segment.
-     */
-    async parseCSV(fileStream, options, context) {
-        const { segmentColumnIndex, emailColumnIndex, containsHeaders, columnSeparator, batchSize } = options;
-        const segmentGroups = {};
 
-        return new Promise((resolve, reject) => {
-            const parser = parse({
-                delimiter: columnSeparator,
-                skip_empty_lines: true,
-                from_line: containsHeaders ? 2 : 1,
-                relax_column_count: true,
-                highWaterMark: 64 * 1024
-            });
-
-            let rowCount = 0;
-            let skippedCount = 0;
-            let lastLogTime = Date.now();
-
-            parser.on('readable', function() {
-                let row;
-                while ((row = parser.read()) !== null) {
-                    rowCount++;
-
-                    const now = Date.now();
-                    if ((now - lastLogTime) > 5000) {
-                        context.log('info', `Parsing progress: ${rowCount} rows processed...`);
-                        lastLogTime = now;
-                    }
-
-                    const maxIndex = Math.max(segmentColumnIndex, emailColumnIndex);
-                    if (row.length <= maxIndex) {
-                        skippedCount++;
-                        continue;
-                    }
-
-                    const segment = row[segmentColumnIndex]?.trim();
-                    const hashedEmail = row[emailColumnIndex]?.trim();
-
-                    if (!segment || !hashedEmail) {
-                        skippedCount++;
-                        continue;
-                    }
-
-                    if (!segmentGroups[segment]) {
-                        segmentGroups[segment] = [];
-                    }
-
-                    segmentGroups[segment].push(hashedEmail);
-                }
-            });
-
-            parser.on('error', (error) => {
-                context.log('error', `CSV parsing error: ${error.message}`);
-                reject(error);
-            });
-
-            parser.on('end', () => {
-                context.log('info', `CSV parsing complete: ${rowCount} rows processed, ${skippedCount} skipped`);
-                const totalUsers = Object.values(segmentGroups).reduce((sum, arr) => sum + arr.length, 0);
-                context.log('info', `Total valid users: ${totalUsers} across ${Object.keys(segmentGroups).length} segments`);
-                resolve(segmentGroups);
-            });
-
-            fileStream.pipe(parser);
-        });
-    },
-
-    /**
-     * Create OfflineUserDataJob with retry logic.
-     * Handles Google Ads API errors (rate limiting, server errors, network issues) with exponential backoff.
-     */
-    async createUserDataJob(customer, customerId, userListResourceName, consent, context) {
-        const maxRetries = 5;
-        const initialDelayMs = 2000;
-        let attempt = 0;
-        let lastError;
-
-        const job = {
-            type: enums.OfflineUserDataJobType.CUSTOMER_MATCH_USER_LIST,
-            customer_match_user_list_metadata: {
-                user_list: userListResourceName,
-                consent: {
-                    ad_user_data: enums.ConsentStatus[consent.adUserData],
-                    ad_personalization: enums.ConsentStatus[consent.adPersonalization]
-                }
-            }
-        };
-
-        context.log('info', `Creating job for user list: ${userListResourceName}`);
-        context.log('info', `Job config: ${JSON.stringify(job)}`);
-
-        while (attempt < maxRetries) {
-            try {
-                const response = await customer.offlineUserDataJobs.createOfflineUserDataJob({
-                    customer_id: customerId,
-                    job
-                });
-
-                context.log('info', `Job created successfully: ${response.resource_name}`);
-                return response.resource_name;
-
-            } catch (error) {
-                lastError = error;
-                attempt++;
-
-                const extractedMsg = this.extractErrorMessage(error);
-                const errorMsg = extractedMsg.toLowerCase();
-                const errorCode = String(error.code || '').toLowerCase();
-
-                let nestedErrorMsg = '';
-                let nestedErrorCode = '';
-                if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
-                    nestedErrorMsg = (error.errors[0].message || '').toLowerCase();
-                    if (error.errors[0].error_code) {
-                        nestedErrorCode = JSON.stringify(error.errors[0].error_code).toLowerCase();
-                    }
-                }
-
-                const isRateLimit = error.code === 429 ||
-                    error.code === 8 || // gRPC RESOURCE_EXHAUSTED
-                    (error.status && error.status === 429) ||
-                    errorCode === 'resource_exhausted' ||
-                    errorMsg.includes('429') ||
-                    errorMsg.includes('rate limit') ||
-                    errorMsg.includes('too many requests') ||
-                    errorMsg.includes('retry in') ||
-                    errorMsg.includes('quota exceeded') ||
-                    errorMsg.includes('resource_exhausted') ||
-                    errorMsg.includes('quota_error') ||
-                    nestedErrorMsg.includes('rate limit') ||
-                    nestedErrorMsg.includes('too many requests') ||
-                    nestedErrorMsg.includes('quota exceeded') ||
-                    nestedErrorMsg.includes('retry in') ||
-                    nestedErrorCode.includes('resource_exhausted') ||
-                    nestedErrorCode.includes('quota_error');
-
-                const retryMatch = extractedMsg.match(/retry in (\d+) seconds/i);
-                const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 0;
-                const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600;
-
-                const isConcurrentModification = errorMsg.includes('concurrent_modification') ||
-                    errorMsg.includes('concurrent modification') ||
-                    nestedErrorMsg.includes('concurrent_modification') ||
-                    nestedErrorMsg.includes('concurrent modification') ||
-                    nestedErrorCode.includes('concurrent_modification') ||
-                    nestedErrorCode.includes('database_error');
-
-                const isRetryableError = (isRateLimit && !isLongTermQuotaExhaustion) ||
-                    isConcurrentModification ||
-                    (error.code && typeof error.code === 'number' && error.code >= 500) ||
-                    (error.status && error.status >= 500) ||
-                    error.name === 'AbortError' ||
-                    error.code === 'ETIMEDOUT' ||
-                    error.code === 'ECONNRESET' ||
-                    error.code === 'ECONNREFUSED' ||
-                    errorCode.includes('unavailable') ||
-                    errorCode.includes('deadline_exceeded');
-
-                if (isLongTermQuotaExhaustion) {
-                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    throw error;
-                }
-
-                if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `Create job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
-                    throw error;
-                }
-
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000
-                );
-
-                const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-                context.log('warn', `Retry ${attempt}/${maxRetries}: Create job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
-                await new Promise(resolve => setTimeout(resolve, backoffTime));
-            }
-        }
-
-        throw lastError || new Error('Failed to create job after multiple attempts');
-    },
-
-    /**
-     * Add operations to OfflineUserDataJob with retry logic.
-     * Handles Google Ads API errors with exponential backoff and respects Retry-After headers.
-     */
-    async addOperations(customer, jobResourceName, emails, removeAllFirst, context, progressInfo = null) {
-        const maxRetries = 5;
-        const initialDelayMs = 2000;
-        let attempt = 0;
-        let lastError;
-
-        const operations = emails.map(email => ({
-            create: {
-                user_identifiers: [{
-                    hashed_email: email
-                }]
-            }
-        }));
-
-        if (removeAllFirst) {
-            operations.unshift({ remove_all: true });
-        }
-
-        context.log('info', `Sending ${operations.length} operations to API`);
-
-        while (attempt < maxRetries) {
-            try {
-                await customer.offlineUserDataJobs.addOfflineUserDataJobOperations({
-                    resource_name: jobResourceName,
-                    enable_partial_failure: true,
-                    operations
-                });
-
-                context.log('info', `Successfully added ${emails.length} operations to job`);
-                return;
-
-            } catch (error) {
-                lastError = error;
-                attempt++;
-
-                const extractedMsg = this.extractErrorMessage(error);
-                const errorMsg = extractedMsg.toLowerCase();
-                const errorCode = String(error.code || '').toLowerCase();
-
-                let nestedErrorMsg = '';
-                let nestedErrorCode = '';
-                if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
-                    nestedErrorMsg = (error.errors[0].message || '').toLowerCase();
-                    if (error.errors[0].error_code) {
-                        nestedErrorCode = JSON.stringify(error.errors[0].error_code).toLowerCase();
-                    }
-                }
-
-                const isRateLimit = error.code === 429 ||
-                    error.code === 8 || // gRPC RESOURCE_EXHAUSTED
-                    (error.status && error.status === 429) ||
-                    errorCode === 'resource_exhausted' ||
-                    errorMsg.includes('429') ||
-                    errorMsg.includes('rate limit') ||
-                    errorMsg.includes('too many requests') ||
-                    errorMsg.includes('retry in') ||
-                    errorMsg.includes('quota exceeded') ||
-                    errorMsg.includes('resource_exhausted') ||
-                    errorMsg.includes('quota_error') ||
-                    nestedErrorMsg.includes('rate limit') ||
-                    nestedErrorMsg.includes('too many requests') ||
-                    nestedErrorMsg.includes('quota exceeded') ||
-                    nestedErrorMsg.includes('retry in') ||
-                    nestedErrorCode.includes('resource_exhausted') ||
-                    nestedErrorCode.includes('quota_error');
-
-                // Check if this is a long-term quota exhaustion (>1 hour retry time)
-                const retryMatch = extractedMsg.match(/retry in (\d+) seconds/i);
-                const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 0;
-                const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600;
-
-                // Check for CONCURRENT_MODIFICATION - this is retryable but needs aggressive backoff
-                const isConcurrentModification = errorMsg.includes('concurrent_modification') ||
-                    errorMsg.includes('concurrent modification') ||
-                    nestedErrorMsg.includes('concurrent_modification') ||
-                    nestedErrorMsg.includes('concurrent modification') ||
-                    nestedErrorCode.includes('concurrent_modification') ||
-                    nestedErrorCode.includes('database_error');
-
-                // Check for other retryable errors (5xx, network issues, etc.)
-                const isRetryableError = (isRateLimit && !isLongTermQuotaExhaustion) ||
-                    isConcurrentModification ||
-                    (error.code && typeof error.code === 'number' && error.code >= 500) ||
-                    (error.status && error.status >= 500) ||
-                    error.name === 'AbortError' ||
-                    error.code === 'ETIMEDOUT' ||
-                    error.code === 'ECONNRESET' ||
-                    error.code === 'ECONNREFUSED' ||
-                    errorCode.includes('unavailable') ||
-                    errorCode.includes('deadline_exceeded');
-
-                if (isLongTermQuotaExhaustion) {
-                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    throw error;
-                }
-
-                if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `Add operations failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
-                    throw error;
-                }
-
-                // Calculate delay with exponential backoff and jitter
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000 // Max 30 seconds
-                );
-
-                let retryAfterMs = backoffTime;
-
-                if (isRateLimit) {
-                    const retryMatch = errorMsg.match(/retry in (\d+) seconds?/);
-                    if (retryMatch) {
-                        const suggestedDelay = parseInt(retryMatch[1]) * 1000;
-                        retryAfterMs = Math.min(suggestedDelay, 300000);
-                    } else if (error.metadata && error.metadata.get) {
-                        const retryAfter = error.metadata.get('retry-after') || error.metadata.get('retry-after-ms');
-                        if (retryAfter && retryAfter.length > 0) {
-                            retryAfterMs = Math.min(parseInt(retryAfter[0]) * 1000, 300000);
-                        }
-                    }
-                }
-
-                const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-
-                context.log('warn', `Retry ${attempt}/${maxRetries}: ${errorType} - waiting ${Math.ceil(retryAfterMs/1000)}s`);
-
-                if (progressInfo) {
-                    await this.safeSendProgress(context, {
-                        ...progressInfo,
-                        status: 'retrying',
-                        retryAttempt: attempt,
-                        maxRetries: maxRetries,
-                        retryReason: errorType,
-                        retryMessage: error.message,
-                        waitingSeconds: Math.ceil(retryAfterMs/1000),
-                        message: `Retry ${attempt}/${maxRetries}: ${errorType} - waiting ${Math.ceil(retryAfterMs/1000)}s`
-                    }, 'progress');
-                }
-
-                await new Promise(resolve => setTimeout(resolve, retryAfterMs));
-            }
-        }
-
-        // If we've exhausted all retries, throw the last error
-        throw lastError || new Error('Failed to add operations after multiple attempts');
-    },
-
-    /**
-     * Run OfflineUserDataJob with retry logic
-     *
-     * IMPORTANT: This retry logic handles GOOGLE ADS API errors, NOT Appmixer errors.
-     * The errors caught here come directly from Google's servers:
-     * - Rate limiting (429, RESOURCE_EXHAUSTED, quota errors)
-     * - Server errors (5xx, UNAVAILABLE, DEADLINE_EXCEEDED)
-     * - Network issues (timeouts, connection resets)
-     *
-     * This method executes the job, transitioning it from PENDING to RUNNING status.
-     * After this call succeeds, Google Ads will process the job asynchronously.
-     *
-     * Implements exponential backoff with jitter, up to 10 retry attempts.
-     * Max backoff time is capped at 30 seconds per attempt.
-     */
-    async runJob(customer, jobResourceName, context) {
-        const maxRetries = 5;
-        const initialDelayMs = 2000; // 2 seconds initial delay
-        let attempt = 0;
-        let lastError;
-
-        context.log('info', `Running job: ${jobResourceName}`);
-
-        while (attempt < maxRetries) {
-            try {
-                const operation = await customer.offlineUserDataJobs.runOfflineUserDataJob({
-                    resource_name: jobResourceName
-                });
-
-                if (!operation) {
-                    throw new Error('runOfflineUserDataJob returned null/undefined - API call may have failed');
-                }
-
-                context.log('info', `Job execution request accepted by Google Ads API`);
-                return operation;
-
-            } catch (error) {
-                lastError = error;
-                attempt++;
-
-                const extractedMsg = this.extractErrorMessage(error);
-                const errorMsg = extractedMsg.toLowerCase();
-                const errorCode = String(error.code || '').toLowerCase();
-
-                let nestedErrorMsg = '';
-                let nestedErrorCode = '';
-                if (error.errors && Array.isArray(error.errors) && error.errors[0]) {
-                    nestedErrorMsg = (error.errors[0].message || '').toLowerCase();
-                    if (error.errors[0].error_code) {
-                        nestedErrorCode = JSON.stringify(error.errors[0].error_code).toLowerCase();
-                    }
-                }
-
-                const isRateLimit = error.code === 429 ||
-                    error.code === 8 || // gRPC RESOURCE_EXHAUSTED
-                    (error.status && error.status === 429) ||
-                    errorCode === 'resource_exhausted' ||
-                    errorMsg.includes('429') ||
-                    errorMsg.includes('rate limit') ||
-                    errorMsg.includes('too many requests') ||
-                    errorMsg.includes('retry in') ||
-                    errorMsg.includes('quota exceeded') ||
-                    errorMsg.includes('resource_exhausted') ||
-                    errorMsg.includes('quota_error') ||
-                    nestedErrorMsg.includes('rate limit') ||
-                    nestedErrorMsg.includes('too many requests') ||
-                    nestedErrorMsg.includes('quota exceeded') ||
-                    nestedErrorMsg.includes('retry in') ||
-                    nestedErrorCode.includes('resource_exhausted') ||
-                    nestedErrorCode.includes('quota_error');
-
-                const retryMatch = extractedMsg.match(/retry in (\d+) seconds/i);
-                const retrySeconds = retryMatch ? parseInt(retryMatch[1]) : 0;
-                const isLongTermQuotaExhaustion = isRateLimit && retrySeconds > 3600;
-
-                const isConcurrentModification = errorMsg.includes('concurrent_modification') ||
-                    errorMsg.includes('concurrent modification') ||
-                    nestedErrorMsg.includes('concurrent_modification') ||
-                    nestedErrorMsg.includes('concurrent modification') ||
-                    nestedErrorCode.includes('concurrent_modification') ||
-                    nestedErrorCode.includes('database_error');
-
-                const isRetryableError = (isRateLimit && !isLongTermQuotaExhaustion) ||
-                    isConcurrentModification ||
-                    (error.code && typeof error.code === 'number' && error.code >= 500) ||
-                    (error.status && error.status >= 500) ||
-                    error.name === 'AbortError' ||
-                    error.code === 'ETIMEDOUT' ||
-                    error.code === 'ECONNRESET' ||
-                    error.code === 'ECONNREFUSED' ||
-                    errorCode.includes('unavailable') ||
-                    errorCode.includes('deadline_exceeded');
-
-                if (isLongTermQuotaExhaustion) {
-                    context.log('error', `Quota exhausted - Google Ads requires waiting ${Math.floor(retrySeconds/3600)} hours`);
-                    throw error;
-                }
-
-                if (!isRetryableError || attempt >= maxRetries) {
-                    context.log('error', `Run job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
-                    throw error;
-                }
-
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000
-                );
-
-                const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-                context.log('warn', `Retry ${attempt}/${maxRetries}: Run job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
-                await new Promise(resolve => setTimeout(resolve, backoffTime));
-            }
-        }
-
-        throw lastError || new Error('Failed to run job after multiple attempts');
-    },
-
-    /**
-     * Split array into chunks
-     * Helper for batching large datasets
-     */
-    chunkArray(array, chunkSize) {
-        const chunks = [];
-        for (let i = 0; i < array.length; i += chunkSize) {
-            chunks.push(array.slice(i, i + chunkSize));
-        }
-        return chunks;
-    },
-
-    /**
-     * Format seconds into human-readable time (e.g., "2m 30s", "1h 15m")
-     */
-    formatTime(seconds) {
-        if (seconds < 60) {
-            return `${seconds}s`;
-        } else if (seconds < 3600) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
-        } else {
-            const hours = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-        }
-    }
 };

@@ -1,0 +1,115 @@
+{
+    "name": "Google Ads Customer Match Upload E2E Test",
+    "description": "End-to-end test for Google Ads Customer Match Upload component",
+    "flow": [
+        {
+            "id": "onstart",
+            "component": "appmixer.utils.controls.OnStart",
+            "data": {
+                "in": {}
+            }
+        },
+        {
+            "id": "create-test-csv",
+            "component": "appmixer.utils.text.CreateFile",
+            "data": {
+                "in": {
+                    "filename": "test-customer-match.csv",
+                    "content": "email,segment\nhashed1@example.com,test_segment_1\nhashed2@example.com,test_segment_1\nhashed3@example.com,test_segment_2",
+                    "contentType": "text/csv"
+                }
+            },
+            "dependencies": ["onstart"]
+        },
+        {
+            "id": "customer-match-upload",
+            "component": "appmixer.teavaro.googleads.CustomerMatchUpload",
+            "data": {
+                "in": {
+                    "fileId": "@create-test-csv.fileId",
+                    "developerToken": "test-developer-token",
+                    "customerId": "1234567890",
+                    "segmentToUserList": "{\"test_segment_1\": \"111111\", \"test_segment_2\": \"222222\"}",
+                    "uploadMode": "ADD",
+                    "batchSize": 1000,
+                    "segmentColumnIndex": 1,
+                    "emailColumnIndex": 0,
+                    "containsHeaders": true,
+                    "columnSeparator": ",",
+                    "adPersonalization": "GRANTED",
+                    "adUserData": "GRANTED"
+                }
+            },
+            "dependencies": ["create-test-csv"]
+        },
+        {
+            "id": "assert-success",
+            "component": "appmixer.utils.controls.Assert",
+            "data": {
+                "in": {
+                    "condition": "@customer-match-upload.success",
+                    "message": "Customer Match Upload should complete successfully"
+                }
+            },
+            "dependencies": ["customer-match-upload"]
+        },
+        {
+            "id": "assert-total-jobs",
+            "component": "appmixer.utils.controls.Assert",
+            "data": {
+                "in": {
+                    "condition": "@customer-match-upload.totalJobs > 0",
+                    "message": "Should create at least one upload job"
+                }
+            },
+            "dependencies": ["customer-match-upload"]
+        },
+        {
+            "id": "assert-total-users",
+            "component": "appmixer.utils.controls.Assert",
+            "data": {
+                "in": {
+                    "condition": "@customer-match-upload.totalUsers >= 3",
+                    "message": "Should process at least 3 users from test CSV"
+                }
+            },
+            "dependencies": ["customer-match-upload"]
+        },
+        {
+            "id": "assert-no-errors",
+            "component": "appmixer.utils.controls.Assert",
+            "data": {
+                "in": {
+                    "condition": "@customer-match-upload.errors.length == 0",
+                    "message": "Should have no errors during upload"
+                }
+            },
+            "dependencies": ["customer-match-upload"]
+        },
+        {
+            "id": "cleanup-file",
+            "component": "appmixer.utils.storage.DeleteFile",
+            "data": {
+                "in": {
+                    "fileId": "@create-test-csv.fileId"
+                }
+            },
+            "dependencies": ["assert-success", "assert-total-jobs", "assert-total-users", "assert-no-errors"]
+        },
+        {
+            "id": "afterall",
+            "component": "appmixer.utils.controls.AfterAll",
+            "data": {
+                "in": {
+                    "message": "Google Ads Customer Match Upload E2E test completed"
+                }
+            },
+            "dependencies": ["cleanup-file"]
+        }
+    ],
+    "variables": {},
+    "settings": {
+        "timeout": 300000,
+        "retries": 1
+    }
+}
