@@ -123,19 +123,19 @@ module.exports = {
         }
 
         if (createdAtGt) {
-            params.createdAtGt = createdAtGt;
+            params.createdAtGt = new Date(createdAtGt).toISOString();
         }
 
         if (createdAtLt) {
-            params.createdAtLt = createdAtLt;
+            params.createdAtLt = new Date(createdAtLt).toISOString();
         }
 
         if (updatedAtGt) {
-            params.updatedAtGt = updatedAtGt;
+            params.updatedAtGt = new Date(updatedAtGt).toISOString();
         }
 
         if (updatedAtLt) {
-            params.updatedAtLt = updatedAtLt;
+            params.updatedAtLt = new Date(updatedAtLt).toISOString();
         }
 
         // https://docs.vapi.ai/api-reference/assistants/list

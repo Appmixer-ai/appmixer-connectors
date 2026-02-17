@@ -2,22 +2,20 @@
 
 module.exports = {
     async receive(context) {
-        const { name, assistantId } = context.messages.in.content;
+        const { name, members } = context.messages.in.content;
 
         if (!name) {
             throw new context.CancelError('Name is required!');
         }
 
-        const payload = { name };
-
-        // Add members array with assistantId if provided
-        if (assistantId) {
-            payload.members = [
-                {
-                    assistantId: assistantId
-                }
-            ];
+        if (!members || !Array.isArray(members) || members.length === 0) {
+            throw new context.CancelError('Members is required!');
         }
+
+        const payload = {
+            name,
+            members: members.map(assistantId => ({ assistantId }))
+        };
 
         const { data } = await context.httpRequest({
             method: 'POST',

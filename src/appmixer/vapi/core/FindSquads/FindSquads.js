@@ -24,16 +24,16 @@ module.exports = {
         const params = {};
 
         if (createdAtGt) {
-            params.createdAtGt = createdAtGt;
+            params.createdAtGt = new Date(createdAtGt).toISOString();
         }
         if (createdAtLt) {
-            params.createdAtLt = createdAtLt;
+            params.createdAtLt = new Date(createdAtLt).toISOString();
         }
         if (updatedAtGt) {
-            params.updatedAtGt = updatedAtGt;
+            params.updatedAtGt = new Date(updatedAtGt).toISOString();
         }
         if (updatedAtLt) {
-            params.updatedAtLt = updatedAtLt;
+            params.updatedAtLt = new Date(updatedAtLt).toISOString();
         }
 
         const { data } = await context.httpRequest({
