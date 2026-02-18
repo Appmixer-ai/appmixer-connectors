@@ -1,6 +1,4 @@
 {
-    "name": "E2E Redis - key-management",
-    "description": "End-to-end test for Redis connector - tests key management operations including set, find, get info, and delete",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -103,7 +101,7 @@
         },
         "assert-set-value": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1024,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -131,8 +129,9 @@
                                     "expression": {
                                         "AND": [
                                             {
+                                                "assertion": "notEmpty",
                                                 "field": "{{{key-check}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -177,7 +176,7 @@
         },
         "assert-find-keys": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1024,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -205,8 +204,9 @@
                                     "expression": {
                                         "AND": [
                                             {
+                                                "assertion": "notEmpty",
                                                 "field": "{{{result-check}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "array"
                                             }
                                         ]
                                     }
@@ -245,7 +245,7 @@
         },
         "assert-get-info": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1024,
             "y": 272,
             "version": "1.0.0",
             "source": {
@@ -266,6 +266,10 @@
                                         "version-check": {
                                             "variable": "$.get-info.out.redis_version",
                                             "functions": []
+                                        },
+                                        "27d9f30f-2e4f-4ce5-98ee-addd149e2dc0": {
+                                            "variable": "$.get-info.out.info",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -273,7 +277,11 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{version-check}}}",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{version-check}}}"
+                                            },
+                                            {
+                                                "field": "{{{27d9f30f-2e4f-4ce5-98ee-addd149e2dc0}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -287,22 +295,17 @@
         },
         "delete-key": {
             "type": "appmixer.redis.core.DeleteKey",
-            "x": 1040,
-            "y": 400,
+            "x": 1408,
+            "y": 160,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-info": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "get-info": {
+                        "after-all": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "key": "{{{var-key}}}"
+                                },
                                 "modifiers": {
                                     "key": {
                                         "var-key": {
@@ -310,58 +313,24 @@
                                             "functions": []
                                         }
                                     }
-                                },
-                                "lambda": {
-                                    "key": "{{{var-key}}}"
                                 }
                             }
                         }
                     }
-                }
-            }
-        },
-        "assert-delete-key": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 400,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "delete-key": [
-                        "out"
-                    ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "delete-key": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {}
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "true",
-                                                "assertion": "equal",
-                                                "expected": "true"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
                 }
             }
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 144,
+            "x": 1248,
+            "y": 160,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -372,9 +341,6 @@
                         "out"
                     ],
                     "assert-get-info": [
-                        "out"
-                    ],
-                    "assert-delete-key": [
                         "out"
                     ]
                 }
@@ -388,25 +354,19 @@
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1616,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "after-all": [
-                        "out"
-                    ]
-                }
-            },
+            "y": 160,
+            "version": "1.0.1",
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "delete-key": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Redis - key-management",
+                                    "result": "{{{result-var}}}"
+                                },
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
@@ -416,17 +376,22 @@
                                             "functions": []
                                         }
                                     }
-                                },
-                                "lambda": {
-                                    "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Redis - key-management",
-                                    "result": "{{{result-var}}}"
                                 }
                             }
                         }
                     }
                 }
+            },
+            "source": {
+                "in": {
+                    "delete-key": [
+                        "out"
+                    ]
+                }
             }
         }
-    }
+    },
+    "name": "E2E Redis - key-management",
+    "type": "automation",
+    "notes": {}
 }
