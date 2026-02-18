@@ -45,7 +45,9 @@ module.exports = {
         if (typeof verifySSL === 'boolean') body.verify_ssl = verifySSL;
         if (requiredKeyword) body.required_keyword = requiredKeyword;
         if (recoveryPeriod !== undefined && recoveryPeriod !== null) body.recovery_period = recoveryPeriod;
-        if (confirmationPeriod !== undefined && confirmationPeriod !== null) body.confirmation_period = confirmationPeriod;
+        if (confirmationPeriod !== undefined && confirmationPeriod !== null) {
+            body.confirmation_period = confirmationPeriod;
+        }
         if (requestTimeout) body.request_timeout = requestTimeout;
         if (httpMethod) body.http_method = httpMethod;
         if (typeof followRedirects === 'boolean') body.follow_redirects = followRedirects;
