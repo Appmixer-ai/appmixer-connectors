@@ -28,7 +28,7 @@ module.exports = {
         }
 
         // Determine if we're requesting binary/stream content
-        const isBinaryRequest = download || (mediaType && mediaType !== 'application/json');
+        const isBinaryRequest = mediaType && mediaType !== 'application/json';
 
         if (isBinaryRequest) {
             requestOptions.encoding = 'binary';

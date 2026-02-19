@@ -127,33 +127,34 @@ describe('GetDocumentContent Component', function() {
     });
 
     describe('Binary/Stream Content Request - Download Flag', () => {
-        it('should handle download=true with binary encoding and save to file', async () => {
+        it('should include download parameter and return JSON when mediaType is not specified', async () => {
             context.messages.in.content = {
                 documentId: 'doc-123',
                 download: true
             };
 
-            const mockBinaryData = Buffer.from('binary content');
-            context.httpRequest.resolves({ data: mockBinaryData });
+            const mockResponse = {
+                status: 'ready',
+                id: 'doc-123',
+                content: 'Document content here'
+            };
+            context.httpRequest.resolves({ data: mockResponse });
 
             await GetDocumentContent.receive(context);
 
-            // Verify httpRequest was called with binary encoding
+            // Verify httpRequest was called and download param was passed
             const callArgs = context.httpRequest.firstCall.args[0];
             assert.strictEqual(callArgs.method, 'GET');
             assert.strictEqual(callArgs.url, 'https://api.ragie.ai/documents/doc-123/content');
-            assert.strictEqual(callArgs.encoding, 'binary');
             assert.strictEqual(callArgs.params.download, 'true');
+            assert(!callArgs.encoding); // download no longer forces binary
 
-            // Verify saveFileStream was called
-            assert(context.saveFileStream.called);
-            const fileCallArgs = context.saveFileStream.firstCall.args;
-            assert.strictEqual(fileCallArgs[0], 'document-doc-123-content');
-            assert.strictEqual(fileCallArgs[1], mockBinaryData);
+            // Verify saveFileStream was not called (JSON path)
+            assert(!context.saveFileStream.called);
 
-            // Verify sendJson was called with fileId (not raw response)
+            // Verify sendJson was called with the JSON response
             assert(context.sendJson.called);
-            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { fileId: 'file-123' });
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], mockResponse);
             assert.strictEqual(context.sendJson.firstCall.args[1], 'out');
         });
 
@@ -333,34 +334,40 @@ describe('GetDocumentContent Component', function() {
     });
 
     describe('Edge Cases', () => {
-        it('should handle mediaType when download is also true (download takes precedence)', async () => {
+        it('should respect mediaType when download is also true (mediaType determines binary vs JSON)', async () => {
             context.messages.in.content = {
                 documentId: 'doc-123',
                 mediaType: 'application/json',
                 download: true
             };
 
-            const mockBinaryData = Buffer.from('binary');
-            context.httpRequest.resolves({ data: mockBinaryData });
+            const mockResponse = {
+                status: 'ready',
+                id: 'doc-123',
+                metadata: { key: 'value' }
+            };
+            context.httpRequest.resolves({ data: mockResponse });
 
             await GetDocumentContent.receive(context);
 
-            // Binary path should be taken since download=true
+            // JSON path should be taken because mediaType === 'application/json'
             const callArgs = context.httpRequest.firstCall.args[0];
-            assert.strictEqual(callArgs.encoding, 'binary');
+            assert(!callArgs.encoding);
+            assert.strictEqual(callArgs.params.download, 'true');
 
-            assert(context.saveFileStream.called);
+            assert(!context.saveFileStream.called);
             assert(context.sendJson.called);
-            assert.strictEqual(context.sendJson.firstCall.args[0].fileId, 'file-123');
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], mockResponse);
         });
 
-        it('should handle saveFileStream with document ID in filename', async () => {
+        it('should handle saveFileStream with document ID in filename when mediaType is binary', async () => {
             context.messages.in.content = {
                 documentId: 'unique-doc-id-xyz',
-                download: true
+                mediaType: 'video/mp4'
             };
 
-            context.httpRequest.resolves({ data: Buffer.from('test') });
+            const mockBinaryData = Buffer.from([0x00, 0x00, 0x00]);
+            context.httpRequest.resolves({ data: mockBinaryData });
 
             await GetDocumentContent.receive(context);
 
