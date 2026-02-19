@@ -1,6 +1,4 @@
 {
-    "name": "E2E Vapi - squad-crud",
-    "description": "End-to-end test for Vapi connector - tests squad CRUD operations (Create, Get, Update, Delete)",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -77,10 +75,15 @@
                                             "variable": "$.set-variables.out.squadName",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "members": {}
                                 },
                                 "lambda": {
-                                    "name": "{{{var-squad-name}}}"
+                                    "name": "{{{var-squad-name}}}",
+                                    "members": [
+                                        "eca8d673-2278-4c82-a4fd-1f2d48497eec",
+                                        "722fbece-c573-4dae-a575-f54e04e34c8b"
+                                    ]
                                 }
                             }
                         }
@@ -90,7 +93,7 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1264,
             "y": 16,
             "source": {
                 "in": {
@@ -126,13 +129,15 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{squad-id-check}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{squad-id-check}}}"
                                             },
                                             {
-                                                "field": "{{{squad-name-check}}}",
+                                                "expected": "{{{expected-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-name}}}"
+                                                "field": "{{{squad-name-check}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -146,7 +151,7 @@
         "get-squad": {
             "type": "appmixer.vapi.core.GetSquad",
             "x": 656,
-            "y": 144,
+            "y": 160,
             "source": {
                 "in": {
                     "create-squad": [
@@ -180,8 +185,8 @@
         },
         "assert-get": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 144,
+            "x": 1264,
+            "y": 160,
             "source": {
                 "in": {
                     "get-squad": [
@@ -220,14 +225,16 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{retrieved-id}}}",
+                                                "type": "string",
+                                                "expected": "{{{created-id}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{created-id}}}"
+                                                "field": "{{{retrieved-id}}}"
                                             },
                                             {
-                                                "field": "{{{retrieved-name}}}",
+                                                "expected": "{{{expected-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-name}}}"
+                                                "field": "{{{retrieved-name}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -241,7 +248,7 @@
         "update-squad": {
             "type": "appmixer.vapi.core.UpdateSquad",
             "x": 848,
-            "y": 272,
+            "y": 320,
             "source": {
                 "in": {
                     "get-squad": [
@@ -268,11 +275,15 @@
                                             "variable": "$.set-variables.out.updatedSquadName",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "members": {}
                                 },
                                 "lambda": {
                                     "squadId": "{{{var-squad-id}}}",
-                                    "name": "{{{var-updated-name}}}"
+                                    "name": "{{{var-updated-name}}}",
+                                    "members": [
+                                        "eca8d673-2278-4c82-a4fd-1f2d48497eec"
+                                    ]
                                 }
                             }
                         }
@@ -282,8 +293,8 @@
         },
         "get-updated-squad": {
             "type": "appmixer.vapi.core.GetSquad",
-            "x": 1040,
-            "y": 400,
+            "x": 1056,
+            "y": 320,
             "source": {
                 "in": {
                     "update-squad": [
@@ -317,8 +328,8 @@
         },
         "assert-update": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 272,
+            "x": 1264,
+            "y": 320,
             "source": {
                 "in": {
                     "get-updated-squad": [
@@ -349,9 +360,10 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{updated-name}}}",
+                                                "expected": "{{{expected-updated-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-updated-name}}}"
+                                                "field": "{{{updated-name}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -364,8 +376,8 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 144,
+            "x": 1488,
+            "y": 160,
             "source": {
                 "in": {
                     "assert-create": [
@@ -388,8 +400,8 @@
         },
         "delete-squad": {
             "type": "appmixer.vapi.core.DeleteSquad",
-            "x": 1616,
-            "y": 144,
+            "x": 1696,
+            "y": 160,
             "source": {
                 "in": {
                     "after-all": [
@@ -423,8 +435,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1792,
-            "y": 144,
+            "x": 1904,
+            "y": 160,
             "source": {
                 "in": {
                     "delete-squad": [
@@ -432,12 +444,9 @@
                     ]
                 }
             },
-            "version": "1.0.0",
+            "version": "1.0.1",
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
                         "delete-squad": {
@@ -445,18 +454,26 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
-                                    "testCase": {},
                                     "result": {
                                         "result-var": {
                                             "variable": "$.after-all.out",
                                             "functions": []
                                         }
+                                    },
+                                    "testCase": {
+                                        "5c08bf74-de48-412d-8748-d663064ce824": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Vapi - squad-crud",
-                                    "result": "{{{result-var}}}"
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{5c08bf74-de48-412d-8748-d663064ce824}}}"
                                 }
                             }
                         }
@@ -464,5 +481,8 @@
                 }
             }
         }
-    }
+    },
+    "name": "E2E Vapi - squad-crud",
+    "type": "automation",
+    "notes": {}
 }
