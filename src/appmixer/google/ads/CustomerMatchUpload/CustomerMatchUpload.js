@@ -1,824 +1,574 @@
 /**
  * Google Ads Customer Match Upload Component
  *
- * Replicates the Scala google-ads-activator functionality:
- * - Reads CSV file with customer data
- * - Groups users by segment
- * - Maps segments to Google Ads User List IDs
- * - Creates OfflineUserDataJobs
- * - Uploads user data with consent metadata
- * - Supports REPLACE (clear first) and ADD (append) modes
+ * Reads CSV in chunks (batchSize * chunkMultiplier rows), groups by segment,
+ * uploads batches with per-batch progress, then checks timeout.
+ * Continuation: finish current chunk work, save lastProcessedRow, schedule next receive().
+ * stop() hook cancels pending timeouts so stopped flows don't trigger errors.
  */
 
 'use strict';
 
-const { GoogleAdsApi, enums } = require('google-ads-api');
+const { GoogleAdsApi } = require('google-ads-api');
 const lib = require('../lib');
-const retry = require('../retry');
 const csvParser = require('../csvParser');
 
-
-/**
- * CONTINUATION PATTERN DOCUMENTATION
- * 
- * This component uses Appmixer's context.setTimeout() to handle large uploads that exceed
- * the platform's 25-minute execution limit. This pattern was implemented to solve a specific
- * issue where the Appmixer context would be destroyed during long-running Google Ads API operations.
- * 
- * How it works:
- * 1. Component monitors execution time during CSV processing
- * 2. Before reaching 20-minute limit, schedules a continuation with minimal state
- * 3. CSV is re-parsed on each continuation (unavoidable due to message size limits)
- * 4. Progress is tracked via processedSegments array to avoid duplicate work
- * 5. Maximum 1-hour total runtime prevents runaway processes
- * 
- * Trade-offs:
- * - CSV re-parsing adds overhead but prevents memory issues with large files
- * - File deletion between continuations will cause failure (acceptable risk)
- * - State management is simplified to essential data only
- * 
- * This pattern is necessary for handling 10M+ user uploads that can take 30+ minutes
- * to complete due to Google Ads API rate limits and batch processing requirements.
- */
-const TIMEOUT_TRIGGER_SECONDS = 20 * 60; // 20 minutes - schedule continuation well before Appmixer's limit
-const TIMEOUT_DELAY_SECONDS = 60; // 1 minute delay before resuming
-const MAX_UPLOAD_TIME_HOURS = 1; // 1 hour maximum upload time - reasonable for most use cases
+const TIMEOUT_TRIGGER_SECONDS = 10 * 60; // check continuation after each chunk if 10 min elapsed
+const TIMEOUT_DELAY_SECONDS = 60;        // pause between continuations
+const RATE_LIMIT_CHECK_SECONDS = 5 * 60; // check rate limit cooldown every 5 minutes
+const PROGRESS_INTERVAL_MS = 5000;       // throttle progress messages to every 5 seconds
+const MAX_UPLOAD_TIME_HOURS = 48;
+const STATE_KEY_TIMEOUT_ID = 'pendingTimeoutId';
 
 module.exports = {
 
+    /**
+     * Cancel any pending continuation when the flow is stopped.
+     */
+    async stop(context) {
+        try {
+            const timeoutId = await context.stateGet(STATE_KEY_TIMEOUT_ID);
+            if (timeoutId) {
+                await context.clearTimeout(timeoutId);
+                await context.stateUnset(STATE_KEY_TIMEOUT_ID);
+                lib.safeLog(context, 'info', 'Cleared pending continuation timeout on flow stop');
+            }
+        } catch (err) {
+            lib.safeLog(context, 'warn', `stop() cleanup: ${err.message}`);
+        }
+    },
 
     async receive(context) {
-        // Check if this is a continuation from a previous timeout
+
         const isContinuation = !!context.messages.timeout;
 
-        const internalErrors = [];
-        const originalLog = context.log.bind(context);
-
-        // Wrap context.log to capture errors and ensure messages are strings (Appmixer requirement)
-        context.log = function(level, message, ...args) {
-            const stringMessage = typeof message === 'string' ? message : JSON.stringify(message);
-
-            if (level === 'error') {
-                internalErrors.push(`[${level.toUpperCase()}] ${stringMessage}`);
-            }
-
-            return originalLog(level, stringMessage);
-        };
-
-        let fileId, developerToken, loginCustomerId, customerId;
-        let segmentColumnIndex, emailColumnIndex, segmentToUserList, uploadMode, adPersonalization, adUserData;
-        let batchSize, containsHeaders, columnSeparator;
-        let timeStart, processedSegments, segmentGroups, currentSegmentNumber, results;
+        // ── Restore or initialize state ──────────────────────────────────────
+        let fileId, clientId, clientSecret, refreshToken, developerToken, loginCustomerId, customerId;
+        let segmentToUserList, uploadMode, batchSize, columnSeparator;
+        let timeStart, lastProcessedRow, segmentProgress, errors, totalUsersUploaded;
+        let jobsAlreadyRun;
+        let rateLimitUntil;
+        let totalRows;
 
         if (isContinuation) {
-            const msg = context.messages.timeout.content;
-            
-            // Restore essential parameters
-            fileId = msg.fileId;
-            developerToken = msg.developerToken;
-            loginCustomerId = msg.loginCustomerId;
-            customerId = msg.customerId;
-            segmentToUserList = msg.segmentToUserList;
-            uploadMode = msg.uploadMode;
-            batchSize = msg.batchSize;
-            
-            // Restore progress state
-            timeStart = new Date(msg.timeStart);
-            processedSegments = msg.processedSegments || [];
-            currentSegmentNumber = msg.currentSegmentNumber || 0;
-            
-            // Restore results summary
-            results = {
-                totalJobs: msg.totalJobs || 0,
-                totalUsers: msg.totalUsers || 0,
-                jobsBySegment: {},
-                errors: msg.errors || [],
-                internalErrors: [],
-                success: true
-            };
+            const s = context.messages.timeout.content;
 
-            context.log('info', `Resuming continuation: ${processedSegments.length} segments processed`);
+            // Guard against stale continuations from older component versions
+            if (!s || !s.fileId || !s.customerId) {
+                lib.safeLog(context, 'warn', 'Ignoring stale/invalid continuation payload (missing critical fields). Likely from an older component version.');
+                return;
+            }
+
+            fileId = s.fileId;
+            clientId = s.clientId;
+            clientSecret = s.clientSecret;
+            refreshToken = s.refreshToken;
+            developerToken = s.developerToken;
+            loginCustomerId = s.loginCustomerId;
+            customerId = s.customerId;
+            segmentToUserList = s.segmentToUserList;
+            uploadMode = s.uploadMode || 'REPLACE';
+            batchSize = s.batchSize || 10000;
+            columnSeparator = s.columnSeparator || ',';
+            timeStart = new Date(s.timeStart);
+            lastProcessedRow = s.lastProcessedRow || 0;
+            segmentProgress = s.segmentProgress || {};
+            errors = s.errors || [];
+            totalUsersUploaded = s.totalUsersUploaded || 0;
+            jobsAlreadyRun = s.jobsAlreadyRun || [];
+            rateLimitUntil = s.rateLimitUntil || 0;
+            totalRows = s.totalRows || 0;
+
+            lib.safeLog(context, 'info', `Continuation: row ${lastProcessedRow}/${totalRows}, ${totalUsersUploaded} uploaded`);
         } else {
             const msg = context.messages.in.content;
             fileId = msg.fileId;
+            clientId = msg.clientId;
+            clientSecret = msg.clientSecret;
+            refreshToken = msg.refreshToken;
             developerToken = msg.developerToken;
             loginCustomerId = msg.loginCustomerId;
             customerId = msg.customerId;
-            segmentColumnIndex = msg.segmentColumnIndex !== undefined ? msg.segmentColumnIndex : 1;
-            emailColumnIndex = msg.emailColumnIndex !== undefined ? msg.emailColumnIndex : 0;
             segmentToUserList = msg.segmentToUserList;
             uploadMode = msg.uploadMode || 'REPLACE';
-            adPersonalization = msg.adPersonalization || 'GRANTED';
-            adUserData = msg.adUserData || 'GRANTED';
             batchSize = msg.batchSize || 10000;
-            containsHeaders = msg.containsHeaders !== undefined ? msg.containsHeaders : true;
             columnSeparator = msg.columnSeparator || ',';
-
             timeStart = new Date();
-            processedSegments = [];
-            segmentGroups = null;
-            currentSegmentNumber = 0;
-            results = {
-                totalJobs: 0,
-                totalUsers: 0,
-                jobsBySegment: {},
-                errors: [],
-                internalErrors: [],
-                success: true
-            };
+            lastProcessedRow = 0;
+            segmentProgress = {};
+            errors = [];
+            totalUsersUploaded = 0;
+            jobsAlreadyRun = [];
+            rateLimitUntil = 0;
+            totalRows = 0;
         }
 
-        const errors = results.errors;
+        // ── Validation ───────────────────────────────────────────────────────
+        if ((Date.now() - timeStart) >= (MAX_UPLOAD_TIME_HOURS * 3600 * 1000)) {
+            throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_UPLOAD_TIME_HOURS}h). Check your data and retry.`);
+        }
+        if (!fileId) throw new context.CancelError('Missing fileId.');
+        if (!clientId || !clientSecret || !refreshToken) throw new context.CancelError('Missing OAuth2 credentials.');
+        if (!developerToken) throw new context.CancelError('Missing Developer Token.');
+        if (!customerId) throw new context.CancelError('Missing Customer ID.');
 
+        let segmentMapping;
         try {
-            if ((new Date() - timeStart) >= (MAX_UPLOAD_TIME_HOURS * 60 * 60 * 1000)) {
-                throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_UPLOAD_TIME_HOURS} hour). Please retry with smaller batches.`);
+            segmentMapping = typeof segmentToUserList === 'string' ? JSON.parse(segmentToUserList) : segmentToUserList;
+        } catch (e) {
+            throw new context.CancelError(`Invalid segmentToUserList JSON: ${e.message}`);
+        }
+        if (!segmentMapping || typeof segmentMapping !== 'object' || Array.isArray(segmentMapping)) {
+            throw new context.CancelError('segmentToUserList must be a JSON object.');
+        }
+
+        const normalizedMapping = {};
+        for (const [seg, val] of Object.entries(segmentMapping)) {
+            const arr = Array.isArray(val) ? val : [val];
+            const valid = arr.filter(v => v != null && v !== '' && /^\d+$/.test(String(v).trim()));
+            if (valid.length > 0) normalizedMapping[seg] = valid;
+        }
+
+        // ── Google Ads API client ────────────────────────────────────────────
+        const client = new GoogleAdsApi({
+            client_id: clientId,
+            client_secret: clientSecret,
+            developer_token: developerToken
+        });
+        const customer = client.Customer({
+            customer_account_id: customerId,
+            refresh_token: refreshToken,
+            login_customer_id: loginCustomerId || undefined
+        });
+
+        // ── Rate limit cooldown check ────────────────────────────────────────
+        if (rateLimitUntil && Date.now() < rateLimitUntil) {
+            const remainingMs = rateLimitUntil - Date.now();
+            const remainingStr = lib.formatTime(Math.ceil(remainingMs / 1000));
+            // Calculate ETA: rate limit wait + estimated remaining processing time
+            let etaStr = remainingStr;
+            if (lastProcessedRow > 0 && totalRows > 0) {
+                const elapsed = Math.floor((Date.now() - timeStart) / 1000);
+                const rowsRemaining = totalRows - lastProcessedRow;
+                const rate = lastProcessedRow / elapsed;
+                const processingEta = Math.ceil(rowsRemaining / rate);
+                const totalEta = Math.ceil(remainingMs / 1000) + processingEta;
+                etaStr = lib.formatTime(totalEta);
             }
-            if (!fileId) {
-                throw new context.CancelError('Missing fileId. Please provide an Appmixer file ID or Google Drive file object.');
-            }
-
-            if (!context.auth || !context.auth.accessToken) {
-                throw new context.CancelError('Missing OAuth2 authentication. Please connect your Google account.');
-            }
-
-            if (!developerToken) {
-                throw new context.CancelError('Missing Developer Token. Please provide a valid Google Ads API Developer Token.');
-            }
-
-            if (!customerId) {
-                throw new context.CancelError('Missing Customer ID. Please provide the Google Ads Customer Account ID.');
-            }
-
-            // Enhanced validation for batchSize
-            if (batchSize !== undefined) {
-                if (typeof batchSize !== 'number' || batchSize < 1 || batchSize > 100000) {
-                    throw new context.CancelError('Invalid batchSize. Must be a number between 1 and 100000. Lower values use less memory.');
-                }
-            }
-
-            // Enhanced validation for CSV column indices
-            if (segmentColumnIndex !== undefined) {
-                if (typeof segmentColumnIndex !== 'number' || segmentColumnIndex < 0 || segmentColumnIndex > 50) {
-                    throw new context.CancelError('Invalid segmentColumnIndex. Must be a number between 0 and 50.');
-                }
-            }
-            
-            if (emailColumnIndex !== undefined) {
-                if (typeof emailColumnIndex !== 'number' || emailColumnIndex < 0 || emailColumnIndex > 50) {
-                    throw new context.CancelError('Invalid emailColumnIndex. Must be a number between 0 and 50.');
-                }
-            }
-
-            context.log('info', `Initializing Google Ads API client for customer ${customerId}`);
-
-            let segmentMapping;
-            try {
-                segmentMapping = typeof segmentToUserList === 'string'
-                    ? JSON.parse(segmentToUserList)
-                    : segmentToUserList;
-            } catch (e) {
-                context.log('error', `Failed to parse segmentToUserList. Input value: ${JSON.stringify(segmentToUserList)}`);
-                throw new context.CancelError(`Invalid segmentToUserList JSON: ${e.message}. Check that keys and values use double quotes, no trailing commas, and valid JSON syntax.`);
-            }
-
-            // Enhanced validation for segmentToUserList JSON structure
-            if (!segmentMapping || typeof segmentMapping !== 'object' || Array.isArray(segmentMapping)) {
-                throw new context.CancelError('segmentToUserList must be a JSON object with segment names as keys and user list IDs as values.');
-            }
-
-            const segmentKeys = Object.keys(segmentMapping);
-            if (segmentKeys.length === 0) {
-                throw new context.CancelError('segmentToUserList cannot be empty. Please provide at least one segment mapping.');
-            }
-
-            if (segmentKeys.length > 100) {
-                throw new context.CancelError('segmentToUserList cannot have more than 100 segments. Please reduce the number of segments.');
-            }
-
-            // Validate each segment mapping
-            for (const [segment, userListIds] of Object.entries(segmentMapping)) {
-                if (!segment || typeof segment !== 'string' || segment.trim().length === 0) {
-                    throw new context.CancelError(`Invalid segment name: '${segment}'. Segment names must be non-empty strings.`);
-                }
-
-                if (segment.length > 100) {
-                    throw new context.CancelError(`Segment name '${segment}' is too long. Maximum length is 100 characters.`);
-                }
-
-                // Validate user list IDs
-                const userListArray = Array.isArray(userListIds) ? userListIds : [userListIds];
-                for (const userListId of userListArray) {
-                    if (!userListId || (typeof userListId !== 'string' && typeof userListId !== 'number')) {
-                        throw new context.CancelError(`Invalid user list ID '${userListId}' for segment '${segment}'. User list IDs must be non-empty strings or numbers.`);
-                    }
-
-                    const userListIdStr = String(userListId).trim();
-                    if (!/^\d+$/.test(userListIdStr)) {
-                        throw new context.CancelError(`Invalid user list ID '${userListId}' for segment '${segment}'. User list IDs must be numeric.`);
-                    }
-                }
-            }
-
-            // Normalize segment mapping: support both single value and array formats
-            const normalizedMapping = {};
-            for (const [segment, value] of Object.entries(segmentMapping)) {
-                const arrayValue = Array.isArray(value) ? value : [value];
-                const validValues = arrayValue.filter(v => v != null && v !== '');
-
-                if (validValues.length > 0) {
-                    normalizedMapping[segment] = validValues;
-                } else {
-                    context.log('warn', `Segment '${segment}' has no valid User List IDs, skipping`);
-                }
-            }
-
-            context.log('info', `Normalized mapping: ${JSON.stringify(normalizedMapping)}`);
-
-            const client = new GoogleAdsApi({
-                client_id: context.auth.clientId,
-                client_secret: context.auth.clientSecret,
-                developer_token: developerToken
-            });
-
-            const customer = client.Customer({
-                customer_account_id: customerId,
-                refresh_token: context.auth.refreshToken,
-                login_customer_id: loginCustomerId || undefined
-            });
-
-            const scheduleContinuation = async (reason) => {
-                context.log('info', `Scheduling continuation (${reason}): ${processedSegments.length}/${totalSegments || 'unknown'} segments processed`);
-                
-                // Store minimal state for continuation - only essential data
-                const continuationState = {
-                    // Original input parameters
-                    fileId,
-                    developerToken,
-                    loginCustomerId,
-                    customerId,
-                    segmentToUserList,
-                    uploadMode,
-                    batchSize,
-                    
-                    // Progress tracking
-                    timeStart: timeStart.getTime(),
-                    processedSegments,
-                    currentSegmentNumber,
-                    
-                    // Results summary
-                    totalJobs: results.totalJobs,
-                    totalUsers: results.totalUsers,
-                    errors: results.errors
-                };
-                
-                return context.setTimeout(continuationState, TIMEOUT_DELAY_SECONDS * 1000);
+            lib.safeSendProgress(context, {
+                message: `Rate limited. ${remainingStr} cooldown remaining. Row ${lastProcessedRow}/${totalRows} | ETA: ${etaStr}`,
+                status: 'rate_limited',
+                rateLimitUntil,
+                totalUsersUploaded,
+                totalRows,
+                lastProcessedRow
+            }, 'progress');
+            // Reschedule to check again in RATE_LIMIT_CHECK_SECONDS
+            const delay = Math.min(remainingMs + 5000, RATE_LIMIT_CHECK_SECONDS * 1000);
+            const trimmedErrors = errors.length > 100 ? errors.slice(-100) : errors;
+            const payload = {
+                fileId, clientId, clientSecret, refreshToken, developerToken,
+                loginCustomerId, customerId, segmentToUserList, uploadMode,
+                batchSize, columnSeparator,
+                timeStart: timeStart.getTime(),
+                lastProcessedRow, segmentProgress,
+                errors: trimmedErrors, totalUsersUploaded, jobsAlreadyRun,
+                rateLimitUntil, totalRows
             };
-
-            // Re-parse CSV on continuation (not stored in state to avoid timeout message size limits)
-            if (isContinuation) {
-                context.log('info', 'Re-parsing CSV for continuation');
+            try {
+                const timeoutId = await context.setTimeout(payload, delay);
+                await context.stateSet(STATE_KEY_TIMEOUT_ID, timeoutId);
+                return;
+            } catch (err) {
+                lib.safeLog(context, 'error', `Rate limit reschedule failed: ${err.message}`);
+                throw err;
             }
+        }
+        // Clear rateLimitUntil once cooldown has passed
+        rateLimitUntil = 0;
 
-            let fileStream;
+        // ── Rate limit coordination ──────────────────────────────────────────
+        let globalRateLimitUntil = 0;
+        const checkGlobalRateLimit = async () => {
+            const wait = globalRateLimitUntil - Date.now();
+            if (wait > 0) {
+                lib.safeLog(context, 'warn', `Global rate limit - waiting ${Math.ceil(wait / 1000)}s`);
+                await new Promise(r => setTimeout(r, wait));
+            }
+        };
+        const setGlobalRateLimit = (delay) => {
+            globalRateLimitUntil = Date.now() + (delay || 3000);
+        };
+
+        // ── Count total rows once on first run ────────────────────────────────
+        if (!totalRows) {
+            let countStream;
             if (typeof fileId === 'object' && fileId.fileContent) {
-                context.log('info', 'Processing file content from Google Drive');
                 const { Readable } = require('stream');
-                fileStream = Readable.from(
+                countStream = Readable.from(
                     typeof fileId.fileContent === 'string'
                         ? Buffer.from(fileId.fileContent, fileId.encoding || 'utf8')
                         : fileId.fileContent
                 );
             } else if (typeof fileId === 'string') {
-                context.log('info', `Processing Appmixer file: ${fileId}`);
-                fileStream = await context.getFileReadStream(fileId);
-            } else {
-                throw new context.CancelError('Invalid fileId format. Expected string (Appmixer file ID) or object (file content).');
+                countStream = await context.getFileReadStream(fileId);
+            }
+            if (countStream) {
+                totalRows = await csvParser.countRows(countStream, { columnSeparator, segmentKeys: Object.keys(normalizedMapping) }, context);
+                lib.safeLog(context, 'info', `CSV total data rows: ${totalRows}`);
+            }
+        }
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+        const receiveTimeStart = Date.now();
+        const shouldContinue = () => (Date.now() - receiveTimeStart) >= (TIMEOUT_TRIGGER_SECONDS * 1000);
+
+        // Throttled progress: send at most one progress message every PROGRESS_INTERVAL_MS
+        let lastProgressTime = 0;
+        const sendThrottledProgress = (force = false) => {
+            const now = Date.now();
+            if (!force && (now - lastProgressTime) < PROGRESS_INTERVAL_MS) return;
+            lastProgressTime = now;
+
+            const elapsed = Math.floor((now - timeStart) / 1000);
+            const pct = totalRows > 0 ? Math.round((lastProcessedRow / totalRows) * 100) : 0;
+
+            // ETA: based on processing rate so far
+            let etaStr = 'calculating...';
+            if (lastProcessedRow > 0 && totalRows > 0) {
+                const rowsRemaining = totalRows - lastProcessedRow;
+                const rate = lastProcessedRow / elapsed; // rows per second
+                const etaSeconds = Math.ceil(rowsRemaining / rate);
+                etaStr = lib.formatTime(etaSeconds);
             }
 
-            // Validate CSV parsing options
-            csvParser.validateParsingOptions({
-                segmentColumnIndex,
-                emailColumnIndex,
-                containsHeaders,
-                columnSeparator,
-                batchSize
-            }, context);
+            // Per-segment summary
+            const segSummary = {};
+            for (const sp of Object.values(segmentProgress)) {
+                if (!segSummary[sp.segment]) segSummary[sp.segment] = { uploaded: 0, failed: 0 };
+                segSummary[sp.segment].uploaded += sp.uploaded;
+                segSummary[sp.segment].failed += sp.failed;
+            }
+            const segStr = Object.entries(segSummary)
+                .map(([s, v]) => `${s}:${v.uploaded}${v.failed ? `(${v.failed} failed)` : ''}`)
+                .join(', ');
 
-            segmentGroups = await csvParser.parseCSV(fileStream, {
-                segmentColumnIndex,
-                emailColumnIndex,
-                containsHeaders,
-                columnSeparator,
-                batchSize
-            }, context);
+            lib.safeSendProgress(context, {
+                message: `${pct}% | Row ${lastProcessedRow}/${totalRows} | ${totalUsersUploaded} uploaded [${segStr}] | ${lib.formatTime(elapsed)} elapsed | ETA: ${etaStr}`,
+                status: 'uploading',
+                totalRows,
+                lastProcessedRow,
+                totalUsersUploaded,
+                percentage: pct,
+                elapsedSeconds: elapsed,
+                eta: etaStr,
+                segments: segSummary
+            }, 'progress');
+        };
 
-            context.log('info', `Parsed ${segmentGroups ? Object.keys(segmentGroups).length : 0} segments from CSV`);
+        const scheduleContinuation = async (reason) => {
+            lib.safeLog(context, 'info', `Scheduling continuation (${reason}): row=${lastProcessedRow}, ${totalUsersUploaded} users uploaded`);
 
-            const segments = segmentGroups ? Object.entries(segmentGroups) : [];
-            if (!isContinuation) {
-                totalSegments = 0;
-                totalBatchesOverall = 0;
-                totalUsersOverall = 0;
+            const trimmedErrors = errors.length > 100 ? errors.slice(-100) : errors;
+            const payload = {
+                fileId, clientId, clientSecret, refreshToken, developerToken,
+                loginCustomerId, customerId, segmentToUserList, uploadMode,
+                batchSize, columnSeparator,
+                timeStart: timeStart.getTime(),
+                lastProcessedRow,
+                segmentProgress,
+                errors: trimmedErrors,
+                totalUsersUploaded,
+                jobsAlreadyRun,
+                rateLimitUntil,
+                totalRows
+            };
 
-                for (const [segment, emails] of segments) {
-                    if (normalizedMapping[segment]) {
-                        totalSegments++;
-                        const userListCount = normalizedMapping[segment].length;
-                        const segmentBatches = Math.ceil(emails.length / batchSize) * userListCount;
-                        totalBatchesOverall += segmentBatches;
-                        totalUsersOverall += emails.length * userListCount;
+            try {
+                const timeoutId = await context.setTimeout(payload, TIMEOUT_DELAY_SECONDS * 1000);
+                // Persist timeoutId so stop() can cancel it
+                await context.stateSet(STATE_KEY_TIMEOUT_ID, timeoutId);
+                return;
+            } catch (err) {
+                lib.safeLog(context, 'error', `context.setTimeout FAILED: ${err.message}. Payload ~${JSON.stringify(payload).length} bytes`);
+                return context.sendJson({
+                    totalJobs: 0,
+                    totalUsers: totalUsersUploaded,
+                    jobsBySegment: {},
+                    errors: [...trimmedErrors, `Continuation failed: ${err.message}`],
+                    internalErrors: [],
+                    success: false
+                }, 'out');
+            }
+        };
+
+        /**
+         * Upload a batch of emails to a segment's user list.
+         * Creates the OfflineUserDataJob on first call per user list.
+         */
+        const uploadBatch = async (segment, emailBatch, isFinal) => {
+            const userListIds = normalizedMapping[segment];
+            if (!userListIds) return;
+
+            for (const userListId of userListIds) {
+                const progressKey = `${segment}__${userListId}`;
+
+                if (!segmentProgress[progressKey]) {
+                    segmentProgress[progressKey] = {
+                        segment, userListId,
+                        jobResourceName: null,
+                        uploaded: 0, failed: 0
+                    };
+                }
+                const sp = segmentProgress[progressKey];
+
+                // Create job on first batch for this user list
+                if (!sp.jobResourceName) {
+                    await checkGlobalRateLimit();
+                    try {
+                        sp.jobResourceName = await lib.createUserDataJob(context, customer, customerId, userListId);
+                        lib.safeLog(context, 'info', `Created job: segment '${segment}' UL ${userListId}: ${sp.jobResourceName}`);
+                    } catch (err) {
+                        // Let RateLimitError bubble up to chunk loop for freeze handling
+                        if (err.name === 'RateLimitError') throw err;
+                        const errMsg = lib.extractErrorMessage(err);
+                        lib.safeLog(context, 'error', `Job creation failed: segment '${segment}' UL ${userListId}: ${errMsg}`);
+                        errors.push(`Job creation failed: segment '${segment}' UL ${userListId}: ${errMsg}`);
+                        return;
                     }
                 }
-            }
 
-            context.log('info', `Overall: ${totalSegments} configured segments (${segments.length} in CSV), ${totalUsersOverall} users, ${totalBatchesOverall} total batches`);
+                // Upload
+                await checkGlobalRateLimit();
+                const result = await lib.addOperations(
+                    context, customer, customerId, sp.jobResourceName,
+                    emailBatch, 5, 1000, setGlobalRateLimit
+                );
 
-            const overallStartTime = Date.now();
-            const receiveTimeStart = Date.now();
-            let lastProgressLogTime = 0;
+                sp.uploaded += result.succeeded;
+                sp.failed += result.failed.length;
+                totalUsersUploaded += result.succeeded;
 
-            const JOB_MIN_DELAY = 0;
-            const JOB_MAX_DELAY = 10000;
-            const JOB_DELAY_INCREMENT = 500;
-            const JOB_DELAY_DECREMENT = 50;
-
-            const userListJobs = new Map();
-
-            for (const [segment, emails] of segments) {
-                if ((new Date() - receiveTimeStart) >= TIMEOUT_TRIGGER_SECONDS * 1000) {
-                    context.log('info', 'Timeout approaching - scheduling continuation');
-                    return await scheduleContinuation('timeout_trigger');
+                if (result.failed.length > 0) {
+                    for (const fail of result.failed) {
+                        errors.push(`Segment '${segment}' UL ${userListId}: [${fail.email}] ${fail.error}`);
+                    }
                 }
 
-                if (processedSegments.includes(segment)) {
-                    context.log('info', `Skipping already-processed segment '${segment}'`);
+                // Throttled progress (at most every 5s)
+                sendThrottledProgress();
+            }
+        };
+
+        // ── Main chunk loop ─────────────────────────────────────────────────
+        const segmentKeys = Object.keys(normalizedMapping);
+        const chunkSize = batchSize * 5;
+
+        try {
+            csvParser.validateParsingOptions({ columnSeparator }, context);
+
+            let csvDone = false;
+
+            while (!csvDone) {
+                // Open a fresh file stream for each chunk
+                let fileStream;
+                if (typeof fileId === 'object' && fileId.fileContent) {
+                    const { Readable } = require('stream');
+                    fileStream = Readable.from(
+                        typeof fileId.fileContent === 'string'
+                            ? Buffer.from(fileId.fileContent, fileId.encoding || 'utf8')
+                            : fileId.fileContent
+                    );
+                } else if (typeof fileId === 'string') {
+                    fileStream = await context.getFileReadStream(fileId);
+                } else {
+                    throw new context.CancelError('Invalid fileId format.');
+                }
+
+                // readChunk: skip startRow rows, collect chunkSize rows, destroy stream
+                const { rows, rowsRead } = await csvParser.readChunk(fileStream, {
+                    startRow: lastProcessedRow,
+                    rowCount: chunkSize,
+                    columnSeparator,
+                    segmentKeys
+                }, context);
+
+                if (rowsRead === 0) {
+                    csvDone = true;
+                    lib.safeLog(context, 'info', `CSV fully read at row ${lastProcessedRow}. No more data.`);
+                    break;
+                }
+
+                // Group chunk rows by segment
+                const segmentGroups = {};
+                let unmappedCount = 0;
+                for (const { segment, email } of rows) {
+                    if (!normalizedMapping[segment]) { unmappedCount++; continue; }
+                    if (!segmentGroups[segment]) segmentGroups[segment] = [];
+                    segmentGroups[segment].push(email);
+                }
+
+                // Process ALL segments and ALL batches in this chunk
+                // Track jobs created in this chunk so we can reset them on rate limit
+                const chunkJobKeys = [];
+                try {
+                    const segmentEntries = Object.entries(segmentGroups);
+                    for (let si = 0; si < segmentEntries.length; si++) {
+                        const [segment, emails] = segmentEntries[si];
+
+                        // Track which progress keys are touched in this chunk
+                        const userListIds = normalizedMapping[segment] || [];
+                        for (const ulId of userListIds) {
+                            chunkJobKeys.push(`${segment}__${ulId}`);
+                        }
+
+                        for (let i = 0; i < emails.length; i += batchSize) {
+                            const batch = emails.slice(i, i + batchSize);
+                            const isFinal = (i + batchSize >= emails.length);
+                            await uploadBatch(segment, batch, isFinal);
+                        }
+                    }
+                } catch (chunkErr) {
+                    if (chunkErr.name === 'RateLimitError') {
+                        // FREEZE: don't advance lastProcessedRow
+                        rateLimitUntil = chunkErr.rateLimitUntil;
+                        const waitStr = lib.formatTime(Math.ceil(chunkErr.retryAfterMs / 1000));
+                        lib.safeLog(context, 'warn', `Rate limited during chunk at row ${lastProcessedRow}. Google says wait ${waitStr}. Freezing chunk.`);
+
+                        // Reset segmentProgress for jobs created in this chunk — they're stale
+                        for (const key of chunkJobKeys) {
+                            if (segmentProgress[key]) {
+                                // Undo uploaded counts from this chunk's work
+                                totalUsersUploaded -= (segmentProgress[key].uploaded || 0);
+                                delete segmentProgress[key];
+                            }
+                        }
+
+                        lib.safeSendProgress(context, {
+                            message: `Google Ads rate limit hit. Waiting ${waitStr} before retrying chunk at row ${lastProcessedRow}.`,
+                            status: 'rate_limited',
+                            rateLimitUntil,
+                            totalUsersUploaded
+                        }, 'progress');
+
+                        return await scheduleContinuation('rate_limit_freeze');
+                    }
+                    // Non-rate-limit errors bubble up to the outer catch
+                    throw chunkErr;
+                }
+
+                // Advance row pointer — chunk fully processed (all segments succeeded)
+                lastProcessedRow += rowsRead;
+                // Force a progress message after each chunk completes
+                sendThrottledProgress(true);
+
+                // Check timeout AFTER all chunk work is done
+                if (shouldContinue()) {
+                    return await scheduleContinuation('chunk_timeout');
+                }
+            }
+
+            // ── All data uploaded — run jobs ─────────────────────────────────
+            lib.safeLog(context, 'info', 'All CSV data uploaded. Running jobs...');
+
+            const results = {
+                totalJobs: 0,
+                totalUsers: totalUsersUploaded,
+                jobsBySegment: {},
+                errors,
+                internalErrors: [],
+                success: errors.length === 0
+            };
+
+            const alreadyRunSet = new Set(jobsAlreadyRun);
+            const jobsToRun = new Map();
+            for (const [progressKey, sp] of Object.entries(segmentProgress)) {
+                if (!sp.jobResourceName) continue;
+
+                results.jobsBySegment[progressKey] = {
+                    segment: sp.segment,
+                    jobResourceName: sp.jobResourceName,
+                    userListId: sp.userListId,
+                    usersUploaded: sp.uploaded,
+                    failedUsers: sp.failed,
+                    operationName: null,
+                    status: 'PENDING',
+                    uploadMode
+                };
+
+                if (alreadyRunSet.has(sp.jobResourceName)) {
+                    results.jobsBySegment[progressKey].status = 'SUBMITTED';
                     continue;
                 }
 
-                let userListId = null;
-
-                try {
-                    if (!normalizedMapping[segment]) {
-                        const error = `Segment '${segment}' not found in configuration. Skipping ${emails.length} users.`;
-                        context.log('warn', error);
-                        errors.push(error);
-                        continue;
-                    }
-
-                    currentSegmentNumber++;
-                    const userListIds = normalizedMapping[segment];
-
-                    if (!userListIds || !Array.isArray(userListIds) || userListIds.length === 0) {
-                        const error = `Segment '${segment}' has invalid or empty User List mapping. Expected array of User List IDs, got: ${JSON.stringify(userListIds)}`;
-                        context.log('error', error);
-                        errors.push(error);
-                        continue;
-                    }
-
-                    context.log('info', `Processing segment '${segment}': ${emails.length} users → ${userListIds.length} User List(s)`);
-
-                    for (userListId of userListIds) {
-                        const userListResourceName = `customers/${customerId}/userLists/${userListId}`;
-                        context.log('info', `Uploading to User List ${userListId}`);
-
-                        const batches = lib.chunkArray(emails, batchSize);
-                        context.log('info', `Split into ${batches.length} batch(es) of max ${batchSize} users`);
-
-                        const segmentStartTime = Date.now();
-                        let lastSegmentProgressLogTime = 0;
-                        let adaptiveDelayMs = 0;
-                        const MIN_DELAY = 0;
-                        const MAX_DELAY = 5000;
-                        const DELAY_INCREMENT = 100;
-                        const DELAY_DECREMENT = 10;
-                        lib.safeSendProgress(context, {
-                            segment,
-                            totalBatches: batches.length,
-                            totalUsers: emails.length,
-                            currentBatch: 0,
-                            status: 'starting',
-                            elapsedSeconds: 0,
-                            etaSeconds: null,
-                            message: `Starting upload for segment '${segment}': ${emails.length} users in ${batches.length} batches`
-                        }, 'progress');
-
-                        let jobResourceName = null;
-                        let totalUploaded = 0;
-                        let isNewJob = false;
-
-                        if (userListJobs.has(userListId)) {
-                            const existingJob = userListJobs.get(userListId);
-                            jobResourceName = existingJob.jobResourceName;
-                            existingJob.segments.push(segment);
-                            context.log('info', `Reusing existing job for User List ${userListId} (prevents CONCURRENT_MODIFICATION)`);
-                            isNewJob = false;
-                        } else {
-                            context.log('info', `Creating new OfflineUserDataJob for segment '${segment}' → User List ${userListId}`);
-                            try {
-                                jobResourceName = await lib.createUserDataJob(context, customer, customerId, userListId);
-
-                                if (jobCreationDelayMs > JOB_MIN_DELAY) {
-                                    jobCreationDelayMs = Math.max(JOB_MIN_DELAY, jobCreationDelayMs - JOB_DELAY_DECREMENT);
-                                }
-
-                                userListJobs.set(userListId, {
-                                    jobResourceName,
-                                    segments: [segment]
-                                });
-                                isNewJob = true;
-                            } catch (createError) {
-                                const errorMsg = (createError.message || '').toLowerCase();
-                                const errorCode = String(createError.code || '').toLowerCase();
-
-                                let nestedErrorMsg = '';
-                                let nestedErrorCode = '';
-                                if (createError.errors && Array.isArray(createError.errors) && createError.errors[0]) {
-                                    nestedErrorMsg = (createError.errors[0].message || '').toLowerCase();
-                                    if (createError.errors[0].error_code) {
-                                        nestedErrorCode = JSON.stringify(createError.errors[0].error_code).toLowerCase();
-                                    }
-                                }
-
-                                const wasRateLimited = createError.code === 429 ||
-                                    createError.code === 8 ||
-                                    errorCode === 'resource_exhausted' ||
-                                    errorMsg.includes('rate limit') ||
-                                    errorMsg.includes('too many requests') ||
-                                    errorMsg.includes('quota exceeded') ||
-                                    errorMsg.includes('retry in') ||
-                                    nestedErrorMsg.includes('rate limit') ||
-                                    nestedErrorMsg.includes('too many requests') ||
-                                    nestedErrorMsg.includes('quota exceeded') ||
-                                    nestedErrorMsg.includes('retry in') ||
-                                    nestedErrorCode.includes('resource_exhausted') ||
-                                    nestedErrorCode.includes('quota_error');
-
-                                if (wasRateLimited) {
-                                    jobCreationDelayMs = Math.min(JOB_MAX_DELAY, jobCreationDelayMs + JOB_DELAY_INCREMENT);
-                                    context.log('warn', `Rate limit during job creation - increased delay to ${jobCreationDelayMs}ms`);
-                                }
-
-                                context.log('error', `createUserDataJob failed: ${createError.message}`);
-
-                                if (wasRateLimited) {
-                                    const extractedErrorMsg = lib.extractErrorMessage(createError);
-                                    context.log('error', `Rate limit hit during job creation - stopping all segment processing`);
-
-                                    lib.safeSendProgress(context, {
-                                        segment,
-                                        status: 'rate_limited',
-                                        message: `Rate limit exceeded during job creation: ${extractedErrorMsg}`,
-                                        totalSegments,
-                                        currentSegment: currentSegmentNumber,
-                                        error: extractedErrorMsg
-                                    });
-
-                                    results.success = false;
-                                    results.errors.push(`Rate limit exceeded during job creation: ${extractedErrorMsg}. Please wait and retry later.`);
-                                    results.internalErrors = internalErrors;
-                                    return context.sendJson(results, 'out');
-                                }
-
-                                throw createError;
-                            }
-                        }
-
-                        for (let i = 0; i < batches.length; i++) {
-                            const batch = batches[i];
-                            const isFirstBatch = i === 0;
-                            const progress = ((i + 1) / batches.length * 100).toFixed(1);
-
-                            if (isFirstBatch) {
-                                // REPLACE mode + NEW job: removeAll = true (clear existing data)
-                                // REPLACE mode + REUSED job: removeAll = false (already cleared)
-                                // ADD mode: removeAll = false (always append)
-                                const removeAllFirst = uploadMode === 'REPLACE' && isNewJob;
-
-                                context.log('info', `Batch 1/${batches.length}: Adding ${batch.length} users (mode: ${uploadMode}, removeAll: ${removeAllFirst})`);
-
-                                const batchStartTime = Date.now();
-                                try {
-                                    const progressInfoForRetry = {
-                                        segment,
-                                        totalBatches: batches.length,
-                                        currentBatch: 1,
-                                        batchSize: batch.length
-                                    };
-
-                                    await lib.addOperations(
-                                        context,
-                                        customer,
-                                        customerId,
-                                        jobResourceName,
-                                        batch
-                                    );
-
-                                    if (adaptiveDelayMs > MIN_DELAY) {
-                                        adaptiveDelayMs = Math.max(MIN_DELAY, adaptiveDelayMs - DELAY_DECREMENT);
-                                    }
-                                } catch (addError) {
-                                    const errorMsg = (addError.message || '').toLowerCase();
-                                    const errorCode = String(addError.code || '').toLowerCase();
-
-                                    let nestedErrorMsg = '';
-                                    let nestedErrorCode = '';
-                                    if (addError.errors && Array.isArray(addError.errors) && addError.errors[0]) {
-                                        nestedErrorMsg = (addError.errors[0].message || '').toLowerCase();
-                                        if (addError.errors[0].error_code) {
-                                            nestedErrorCode = JSON.stringify(addError.errors[0].error_code).toLowerCase();
-                                        }
-                                    }
-
-                                    const wasRateLimited = addError.code === 429 ||
-                                        addError.code === 8 ||
-                                        (addError.status && addError.status === 429) ||
-                                        errorCode === 'resource_exhausted' ||
-                                        errorMsg.includes('rate limit') ||
-                                        errorMsg.includes('too many requests') ||
-                                        errorMsg.includes('quota exceeded') ||
-                                        errorMsg.includes('retry in') ||
-                                        nestedErrorMsg.includes('rate limit') ||
-                                        nestedErrorMsg.includes('too many requests') ||
-                                        nestedErrorMsg.includes('quota exceeded') ||
-                                        nestedErrorMsg.includes('retry in') ||
-                                        nestedErrorCode.includes('resource_exhausted') ||
-                                        nestedErrorCode.includes('quota_error');
-
-                                    if (wasRateLimited) {
-                                        adaptiveDelayMs = Math.min(MAX_DELAY, adaptiveDelayMs + DELAY_INCREMENT);
-                                        context.log('warn', `Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms`);
-                                    }
-
-                                    context.log('error', `addOperations failed: ${addError.message}`);
-                                    throw addError;
-                                }
-
-                                const batchEndTime = Date.now();
-                                const elapsedMs = batchEndTime - batchStartTime;
-                                const elapsedSeconds = Math.floor(elapsedMs / 1000);
-                                const segmentAvgTimePerBatch = elapsedMs;
-                                const segmentRemainingBatches = batches.length - 1;
-                                const etaSeconds = segmentRemainingBatches > 0 ? Math.floor((segmentAvgTimePerBatch * segmentRemainingBatches) / 1000) : 0;
-
-                                batchesCompletedOverall++;
-                                const overallElapsedMs = Date.now() - overallStartTime;
-                                const overallElapsedSeconds = Math.floor(overallElapsedMs / 1000);
-                                const overallProgress = ((batchesCompletedOverall / totalBatchesOverall) * 100).toFixed(1);
-                                const avgTimePerBatch = overallElapsedMs / batchesCompletedOverall;
-                                const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
-                                const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
-
-                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${lib.formatTime(overallElapsedSeconds)} elapsed, ETA: ${lib.formatTime(overallEtaSeconds)}`;
-                                const segmentMessage = `Batch 1/${batches.length} uploaded (${progress}%) - ${lib.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + lib.formatTime(etaSeconds) : ''}`;
-                                const combinedMessage = `${generalMessage}\n${segmentMessage}`;
-
-                                const now = Date.now();
-                                const shouldLog = (now - lastSegmentProgressLogTime) >= 5000 || i === 0 || i === batches.length - 1;
-                                if (shouldLog) {
-                                    context.log('info', generalMessage);
-                                    context.log('info', segmentMessage);
-                                    lastSegmentProgressLogTime = now;
-                                }
-
-                                if (shouldLog) {
-                                    lib.safeSendProgress(context, {
-                                        segment,
-                                        totalBatches: batches.length,
-                                        currentBatch: 1,
-                                        batchSize: batch.length,
-                                        uploadedSoFar: batch.length,
-                                        totalUsers: emails.length,
-                                        progress: parseFloat(progress),
-                                        elapsedSeconds,
-                                        etaSeconds,
-                                        status: 'uploading',
-                                        message: combinedMessage
-                                    }, 'progress');
-                                }
-                            } else {
-                                context.log('info', `Batch ${i + 1}/${batches.length}: Adding ${batch.length} users`);
-
-                                try {
-                                    const progressInfoForRetry = {
-                                        segment,
-                                        totalBatches: batches.length,
-                                        currentBatch: i + 1,
-                                        batchSize: batch.length
-                                    };
-
-                                    await lib.addOperations(
-                                        context,
-                                        customer,
-                                        customerId,
-                                        jobResourceName,
-                                        batch
-                                    );
-
-                                    if (adaptiveDelayMs > MIN_DELAY) {
-                                        adaptiveDelayMs = Math.max(MIN_DELAY, adaptiveDelayMs - DELAY_DECREMENT);
-                                    }
-                                } catch (addError) {
-                                    const errorMsg = (addError.message || '').toLowerCase();
-                                    const errorCode = String(addError.code || '').toLowerCase();
-
-                                    let nestedErrorMsg = '';
-                                    let nestedErrorCode = '';
-                                    if (addError.errors && Array.isArray(addError.errors) && addError.errors[0]) {
-                                        nestedErrorMsg = (addError.errors[0].message || '').toLowerCase();
-                                        if (addError.errors[0].error_code) {
-                                            nestedErrorCode = JSON.stringify(addError.errors[0].error_code).toLowerCase();
-                                        }
-                                    }
-
-                                    const wasRateLimited = addError.code === 429 ||
-                                        addError.code === 8 ||
-                                        errorCode === 'resource_exhausted' ||
-                                        errorMsg.includes('rate limit') ||
-                                        errorMsg.includes('too many requests') ||
-                                        errorMsg.includes('quota exceeded') ||
-                                        errorMsg.includes('retry in') ||
-                                        nestedErrorMsg.includes('rate limit') ||
-                                        nestedErrorMsg.includes('too many requests') ||
-                                        nestedErrorMsg.includes('quota exceeded') ||
-                                        nestedErrorMsg.includes('retry in') ||
-                                        nestedErrorCode.includes('resource_exhausted') ||
-                                        nestedErrorCode.includes('quota_error');
-
-                                    if (wasRateLimited) {
-                                        adaptiveDelayMs = Math.min(MAX_DELAY, adaptiveDelayMs + DELAY_INCREMENT);
-                                        context.log('warn', `Rate limit detected - increased adaptive delay to ${adaptiveDelayMs}ms`);
-                                    }
-
-                                    context.log('error', `addOperations failed: ${addError.message}`);
-                                    throw addError;
-                                }
-
-                                const elapsedMs = Date.now() - segmentStartTime;
-                                const elapsedSeconds = Math.floor(elapsedMs / 1000);
-                                const progressDecimal = parseFloat(progress) / 100;
-                                const etaSeconds = progressDecimal > 0 ? Math.floor((elapsedMs / progressDecimal - elapsedMs) / 1000) : null;
-
-                                batchesCompletedOverall++;
-                                const overallElapsedMs = Date.now() - overallStartTime;
-                                const overallElapsedSeconds = Math.floor(overallElapsedMs / 1000);
-                                const overallProgress = ((batchesCompletedOverall / totalBatchesOverall) * 100).toFixed(1);
-                                const avgTimePerBatch = overallElapsedMs / batchesCompletedOverall;
-                                const remainingBatches = totalBatchesOverall - batchesCompletedOverall;
-                                const overallEtaSeconds = Math.floor((avgTimePerBatch * remainingBatches) / 1000);
-
-                                const generalMessage = `Segment ${currentSegmentNumber}/${totalSegments}, Batch ${batchesCompletedOverall}/${totalBatchesOverall} (${overallProgress}%) - ${lib.formatTime(overallElapsedSeconds)} elapsed, ETA: ${lib.formatTime(overallEtaSeconds)}`;
-                                const segmentMessage = `Batch ${i + 1}/${batches.length} uploaded (${progress}%) - ${lib.formatTime(elapsedSeconds)} elapsed${etaSeconds ? ', ETA: ' + lib.formatTime(etaSeconds) : ''}`;
-                                const combinedMessage = `${generalMessage}\n${segmentMessage}`;
-
-                                const now = Date.now();
-                                const shouldLog = (now - lastSegmentProgressLogTime) >= 5000 || i === batches.length - 1;
-                                if (shouldLog) {
-                                    context.log('info', generalMessage);
-                                    context.log('info', segmentMessage);
-                                    lastSegmentProgressLogTime = now;
-                                }
-
-                                if (shouldLog) {
-                                    lib.safeSendProgress(context, {
-                                        segment,
-                                        totalBatches: batches.length,
-                                        currentBatch: i + 1,
-                                        batchSize: batch.length,
-                                        uploadedSoFar: totalUploaded + batch.length,
-                                        totalUsers: emails.length,
-                                        progress: parseFloat(progress),
-                                        elapsedSeconds,
-                                        etaSeconds,
-                                        status: 'uploading',
-                                        message: combinedMessage
-                                    }, 'progress');
-                                }
-                            }
-
-                            totalUploaded += batch.length;
-                        }
-
-                        const totalElapsedMs = Date.now() - segmentStartTime;
-                        const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
-
-                        results.jobsBySegment[segment] = {
-                            jobResourceName,
-                            userListId,
-                            usersUploaded: totalUploaded,
-                            operationName: null,
-                            status: 'PENDING',
-                            uploadMode
-                        };
-
-                        results.totalUsers += totalUploaded;
-
-                        lib.safeSendProgress(context, {
-                            segment,
-                            totalBatches: batches.length,
-                            currentBatch: batches.length,
-                            uploadedSoFar: totalUploaded,
-                            totalUsers: emails.length,
-                            progress: 100,
-                            elapsedSeconds: totalElapsedSeconds,
-                            etaSeconds: 0,
-                            status: 'uploaded',
-                            message: `Segment '${segment}' complete: ${totalUploaded} users uploaded in ${lib.formatTime(totalElapsedSeconds)}`,
-                            jobResourceName,
-                            operationName: null
-                        }, 'progress');
-
-                        context.log('info', `User List ${userListId} complete: ${totalUploaded} users uploaded`);
-                    }
-
-                    processedSegments.push(segment);
-                    context.log('info', `Segment '${segment}' complete - uploaded to ${userListIds.length} User List(s)`);
-
-                } catch (error) {
-                    let errorDetails = error.message || 'Unknown error';
-
-                    if (error.errors && Array.isArray(error.errors)) {
-                        errorDetails = error.errors.map(e => e.message || JSON.stringify(e)).join('; ');
-                    } else if (typeof error === 'object') {
-                        try {
-                            errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
-                        } catch (e) {
-                            errorDetails = lib.extractErrorMessage(error);
-                        }
-                    }
-
-                    const userListInfo = userListId ? ` (User List ID: ${userListId})` : '';
-                    const errorMsg = `Google Ads API Error - Segment '${segment}'${userListInfo}: ${errorDetails}`;
-                    context.log('error', errorMsg);
-                    errors.push(errorMsg);
-                    results.success = false;
+                if (!jobsToRun.has(sp.jobResourceName)) {
+                    jobsToRun.set(sp.jobResourceName, { userListId: sp.userListId, progressKeys: [] });
                 }
+                jobsToRun.get(sp.jobResourceName).progressKeys.push(progressKey);
             }
 
-            context.log('info', `Running ${userListJobs.size} job(s) to execute uploads...`);
+            for (const [jobResourceName, jobInfo] of jobsToRun) {
+                if (shouldContinue()) {
+                    return await scheduleContinuation('timeout_during_job_run');
+                }
 
-            for (const [userListId, jobInfo] of userListJobs) {
                 try {
-                    context.log('info', `Running job for User List ${userListId} (segments: ${jobInfo.segments.join(', ')})`);
-                    context.log('info', `   Job: ${jobInfo.jobResourceName}`);
+                    lib.safeLog(context, 'info', `Running job: ${jobResourceName} (UL ${jobInfo.userListId})`);
+                    const operation = await lib.runJob(context, customer, customerId, jobResourceName);
 
-                    const operation = await lib.runJob(context, customer, customerId, jobInfo.jobResourceName);
-
-                    for (const segment of jobInfo.segments) {
-                        if (results.jobsBySegment[segment]) {
-                            results.jobsBySegment[segment].operationName = operation.name || null;
-                            results.jobsBySegment[segment].status = 'SUBMITTED';
+                    for (const pk of jobInfo.progressKeys) {
+                        if (results.jobsBySegment[pk]) {
+                            results.jobsBySegment[pk].operationName = (operation && operation.name) ? operation.name : null;
+                            results.jobsBySegment[pk].status = 'SUBMITTED';
                         }
                     }
-
                     results.totalJobs++;
-                    context.log('info', `Job submitted for User List ${userListId}`);
-
-                } catch (error) {
-                    const errorMsg = lib.extractErrorMessage(error);
-
-                    if (errorMsg.includes('invalid') || errorMsg.includes('Invalid')) {
-                        context.log('error', `Invalid job or user list for User List ${userListId}: ${jobInfo.jobResourceName}`);
+                    jobsAlreadyRun.push(jobResourceName);
+                } catch (err) {
+                    // Rate limit during job run — freeze and schedule continuation
+                    if (err.name === 'RateLimitError') {
+                        rateLimitUntil = err.rateLimitUntil;
+                        const waitStr = lib.formatTime(Math.ceil(err.retryAfterMs / 1000));
+                        lib.safeLog(context, 'warn', `Rate limited during job run. Google says wait ${waitStr}. Scheduling continuation.`);
+                        lib.safeSendProgress(context, {
+                            message: `Google Ads rate limit hit during job execution. Waiting ${waitStr} before retrying.`,
+                            status: 'rate_limited',
+                            rateLimitUntil,
+                            totalUsersUploaded
+                        }, 'progress');
+                        return await scheduleContinuation('rate_limit_job_run');
                     }
-
-                    const fullErrorMsg = `Failed to run job for User List ${userListId}: ${errorMsg}`;
-                    context.log('error', fullErrorMsg);
-                    errors.push(fullErrorMsg);
-
-                    for (const segment of jobInfo.segments) {
-                        if (results.jobsBySegment[segment]) {
-                            results.jobsBySegment[segment].status = 'FAILED';
+                    const errMsg = lib.extractErrorMessage(err);
+                    lib.safeLog(context, 'error', `Failed to run job ${jobResourceName}: ${errMsg}`);
+                    errors.push(`Failed to run job UL ${jobInfo.userListId}: ${errMsg}`);
+                    for (const pk of jobInfo.progressKeys) {
+                        if (results.jobsBySegment[pk]) {
+                            results.jobsBySegment[pk].status = 'FAILED';
                         }
                     }
                 }
             }
 
-            results.errors = errors;
-            results.internalErrors = internalErrors;
+            // Clear timeout state on successful completion
+            await context.stateUnset(STATE_KEY_TIMEOUT_ID);
 
-            const totalElapsedMs = Date.now() - overallStartTime;
-            const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
-
-            context.log('info', `Upload complete: ${results.totalJobs} jobs, ${results.totalUsers} total users, ${lib.formatTime(totalElapsedSeconds)} elapsed`);
-            context.log('info', 'Job status summary:');
-            for (const [segment, jobInfo] of Object.entries(results.jobsBySegment)) {
-                context.log('info', `  Segment '${segment}': ${jobInfo.status} (${jobInfo.usersUploaded} users)`);
-            }
-            context.log('info', 'Note: Status "SUBMITTED" means run() was accepted. Jobs process asynchronously in Google Ads.');
+            const totalElapsed = Math.floor((Date.now() - timeStart) / 1000);
+            lib.safeLog(context, 'info', `Upload complete: ${results.totalJobs} jobs, ${results.totalUsers} users, ${lib.formatTime(totalElapsed)} elapsed`);
 
             return context.sendJson(results, 'out');
 
         } catch (error) {
             const errorMsg = lib.extractErrorMessage(error);
-            context.log('error', `Fatal error: ${errorMsg}`);
-            context.log('error', `Full error details: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`);
-            results.success = false;
-            results.errors.push(errorMsg);
-            results.internalErrors = internalErrors;
+            lib.safeLog(context, 'error', `Fatal error: ${errorMsg}`);
 
-            return context.sendJson(results, 'out');
+            return context.sendJson({
+                totalJobs: 0,
+                totalUsers: totalUsersUploaded,
+                jobsBySegment: {},
+                errors: [...errors, errorMsg],
+                internalErrors: [],
+                success: false
+            }, 'out');
         }
-    },
-
-
+    }
 };

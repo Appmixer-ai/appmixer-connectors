@@ -2,7 +2,40 @@ const { GoogleAdsApi } = require('google-ads-api');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 
+// Threshold: if Google says retry in more than this, throw RateLimitError for the component to handle via continuation
+const RATE_LIMIT_CONTINUATION_THRESHOLD_MS = 60 * 1000;
+
+/**
+ * Thrown when Google Ads API rate limit requires a wait longer than we can handle in-process.
+ * The component should freeze the chunk, store rateLimitUntil, and schedule continuation.
+ */
+class RateLimitError extends Error {
+    constructor(retryAfterMs, originalMessage) {
+        super(`Rate limited by Google Ads API. Retry after ${Math.ceil(retryAfterMs / 1000)}s. Original: ${originalMessage}`);
+        this.name = 'RateLimitError';
+        this.retryAfterMs = retryAfterMs;
+        this.rateLimitUntil = Date.now() + retryAfterMs;
+    }
+}
+
 module.exports = {
+
+    RateLimitError,
+
+    /**
+     * Safe wrapper for context.log.
+     * Appmixer's context.log validates the second arg with check-types assertImpl.object,
+     * so it MUST be an object like { message: '...' }, not a raw string.
+     */
+    safeLog(context, level, msg) {
+        try {
+            const safeMsg = typeof msg === 'string' ? msg : String(msg);
+            context.log(level, { message: safeMsg });
+        } catch (_) {
+            // Fallback to console if context.log throws synchronously
+            try { console.error(`[GoogleAds][${level}] ${msg}`); } catch (_2) { /* noop */ }
+        }
+    },
 
     /**
      * Normalize multiselect input (array or string) to array format.
@@ -34,7 +67,7 @@ module.exports = {
         } catch (error) {
             // Log error for debugging, but don't throw to avoid breaking long operations
             if (context && context.log) {
-                context.log('warn', `Failed to send progress update: ${error.message}`);
+                this.safeLog(context, 'warn', `Failed to send progress update: ${error.message}`);
             }
             // Context might be destroyed during long operations - this is expected behavior
         }
@@ -106,7 +139,7 @@ module.exports = {
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (!email || !emailRegex.test(email)) {
                         invalidRows++;
-                        context.log('debug', `Invalid email format: ${email || 'empty'}`);
+                        this.safeLog(context, 'debug', `Invalid email format: ${email || 'empty'}`);
                         return;
                     }
 
@@ -117,11 +150,11 @@ module.exports = {
                     segmentGroups[segment].push(email);
                 })
                 .on('end', () => {
-                    context.log('info', `CSV parsing completed: ${totalRows} total, ${validRows} valid, ${invalidRows} invalid`);
+                    this.safeLog(context, 'info', `CSV parsing completed: ${totalRows} total, ${validRows} valid, ${invalidRows} invalid`);
                     resolve(segmentGroups);
                 })
                 .on('error', (error) => {
-                    context.log('error', `CSV parsing failed: ${this.extractErrorMessage(error)}`);
+                    this.safeLog(context, 'error', `CSV parsing failed: ${this.extractErrorMessage(error)}`);
                     reject(error);
                 });
         });
@@ -148,36 +181,32 @@ module.exports = {
                 });
 
                 const resourceName = response.resource_name;
-                context.log('info', `Created OfflineUserDataJob: ${resourceName}`);
+                this.safeLog(context, 'info', `Created OfflineUserDataJob: ${resourceName}`);
                 return resourceName;
 
             } catch (error) {
                 lastError = error;
                 const extractedMsg = this.extractErrorMessage(error);
+                const classification = this.classifyError(error, extractedMsg);
 
-                // Check for retryable errors
-                const isRateLimit = extractedMsg.toLowerCase().includes('rate limit') ||
-                    extractedMsg.toLowerCase().includes('quota') ||
-                    error.code === 8; // RESOURCE_EXHAUSTED
+                // If rate limited with a large delay, throw RateLimitError for component-level handling
+                if (classification.isRateLimit) {
+                    const apiDelay = this.parseRetryDelay(extractedMsg);
+                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
+                        this.safeLog(context, 'warn', `Create job rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component for continuation`);
+                        throw new RateLimitError(apiDelay, extractedMsg);
+                    }
+                }
 
-                const isNetworkError = extractedMsg.toLowerCase().includes('network') ||
-                    extractedMsg.toLowerCase().includes('timeout') ||
-                    error.code === 14; // UNAVAILABLE
-
-                const isRetryableError = isRateLimit || isNetworkError;
-
-                if (attempt === maxRetries || !isRetryableError) {
-                    context.log('error', `Create job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
+                if (attempt === maxRetries || !classification.isRetryable) {
+                    this.safeLog(context, 'error', `Create job failed (attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
                 }
 
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000
-                );
-
-                const errorType = isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-                context.log('warn', `Retry ${attempt}/${maxRetries}: Create job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
+                // Short delay — retry in-process
+                const exponentialBackoff = initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+                const backoffTime = Math.min(exponentialBackoff, 30000);
+                this.safeLog(context, 'warn', `Retry ${attempt}/${maxRetries}: Create job failed — waiting ${Math.ceil(backoffTime / 1000)}s`);
                 await new Promise(resolve => setTimeout(resolve, backoffTime));
             }
         }
@@ -186,61 +215,138 @@ module.exports = {
     },
 
     /**
-     * Add user data operations to OfflineUserDataJob with retry logic
-     * Handles rate limits, network errors, and concurrent modifications
+     * Classify error type from Google Ads API error
+     * Returns { isRateLimit, isNetworkError, isConcurrentModification, isRetryable }
      */
-    async addOperations(context, customer, customerId, jobResourceName, operations, maxRetries = 3, initialDelayMs = 1000) {
-        let lastError;
+    classifyError(error, extractedMsg) {
+        const msg = extractedMsg.toLowerCase();
+        const isRateLimit = msg.includes('rate limit') ||
+            msg.includes('quota') ||
+            msg.includes('too many requests') ||
+            error.code === 8; // RESOURCE_EXHAUSTED
 
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const isNetworkError = msg.includes('network') ||
+            msg.includes('timeout') ||
+            error.code === 14; // UNAVAILABLE
+
+        const isConcurrentModification = msg.includes('concurrent') ||
+            msg.includes('modified') ||
+            error.code === 10; // ABORTED
+
+        return {
+            isRateLimit,
+            isNetworkError,
+            isConcurrentModification,
+            isRetryable: isRateLimit || isNetworkError || isConcurrentModification
+        };
+    },
+
+    /**
+     * Wait with smart backoff: uses API suggested delay as minimum + exponential backoff
+     */
+    async smartBackoff(context, extractedMsg, attempt, initialDelayMs, label) {
+        const apiSuggestedDelay = this.parseRetryDelay(extractedMsg);
+        const exponentialBackoff = initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+        const backoffTime = Math.min(
+            Math.max(apiSuggestedDelay || 0, exponentialBackoff),
+            30000
+        );
+        const delaySource = apiSuggestedDelay ? `API suggested ${apiSuggestedDelay / 1000}s + backoff` : 'exponential backoff';
+        this.safeLog(context, 'warn', `${label} - waiting ${Math.ceil(backoffTime / 1000)}s (${delaySource})`);
+        await new Promise(resolve => setTimeout(resolve, backoffTime));
+        return apiSuggestedDelay;
+    },
+
+    /**
+     * Add user data operations with smart retry and recursive split on failure.
+     * - Rate limit / network / concurrent errors → wait + retry same batch
+     * - Non-retryable errors → split batch in half, retry each half recursively
+     * - Single-item failure → log ERROR and return as failed item (no throw)
+     * Returns { succeeded: number, failed: Array<{ email, error }> }
+     */
+    async addOperations(context, customer, customerId, jobResourceName, emailArray, maxRetries = 5, initialDelayMs = 1000, globalRateLimitCallback = null) {
+        const result = { succeeded: 0, failed: [] };
+
+        const sendBatch = async (batch, depth = 0, retryCount = 0) => {
             try {
-                // Use correct google-ads-api npm package method
+                const operations = batch.map(hashedEmail => ({
+                    create: {
+                        user_identifiers: [{
+                            hashed_email: hashedEmail
+                        }]
+                    }
+                }));
+
                 await customer.offlineUserDataJobs.addOfflineUserDataJobOperations({
                     resource_name: jobResourceName,
                     operations: operations,
                     enable_partial_failure: true
                 });
 
-                context.log('info', `Added ${operations.length} operations to job`);
+                result.succeeded += batch.length;
+                if (depth > 0) {
+                    this.safeLog(context, 'info', `Split-retry succeeded: ${batch.length} operations at depth ${depth}`);
+                }
                 return;
 
             } catch (error) {
-                lastError = error;
                 const extractedMsg = this.extractErrorMessage(error);
+                const classification = this.classifyError(error, extractedMsg);
 
-                // Check for retryable errors
-                const isRateLimit = extractedMsg.toLowerCase().includes('rate limit') ||
-                    extractedMsg.toLowerCase().includes('quota') ||
-                    error.code === 8; // RESOURCE_EXHAUSTED
-
-                const isNetworkError = extractedMsg.toLowerCase().includes('network') ||
-                    extractedMsg.toLowerCase().includes('timeout') ||
-                    error.code === 14; // UNAVAILABLE
-
-                const isConcurrentModification = extractedMsg.toLowerCase().includes('concurrent') ||
-                    extractedMsg.toLowerCase().includes('modified') ||
-                    error.code === 10; // ABORTED
-
-                const isRetryableError = isRateLimit || isNetworkError || isConcurrentModification;
-
-                if (attempt === maxRetries || !isRetryableError) {
-                    context.log('error', `Add operations failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
-                    throw error;
+                // If rate limited with a large delay, escalate to component for continuation
+                if (classification.isRateLimit) {
+                    const apiDelay = this.parseRetryDelay(extractedMsg);
+                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
+                        this.safeLog(context, 'warn', `Upload rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component`);
+                        throw new RateLimitError(apiDelay, extractedMsg);
+                    }
                 }
 
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000
-                );
+                // Rate limit / network / concurrent with short delay → wait and retry same batch
+                if (classification.isRetryable) {
+                    if (classification.isRateLimit && globalRateLimitCallback) {
+                        globalRateLimitCallback(this.parseRetryDelay(extractedMsg));
+                    }
 
-                const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-                context.log('warn', `Retry ${attempt}/${maxRetries}: Add operations failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
-                await new Promise(resolve => setTimeout(resolve, backoffTime));
+                    if (retryCount < maxRetries) {
+                        const errorType = classification.isRateLimit ? 'RATE_LIMIT' :
+                            classification.isConcurrentModification ? 'CONCURRENT_MODIFICATION' : 'NETWORK_ERROR';
+                        await this.smartBackoff(context, extractedMsg, retryCount + 1, initialDelayMs,
+                            `Retry ${retryCount + 1}/${maxRetries} (${errorType}, batch size ${batch.length}, depth ${depth})`);
+                        return sendBatch(batch, depth, retryCount + 1);
+                    }
+
+                    // Exhausted retries on retryable error — fall through to split logic
+                    this.safeLog(context, 'warn', `Exhausted ${maxRetries} retries on retryable error (batch size ${batch.length}), attempting split`);
+                }
+
+                // Non-retryable error or exhausted retries: split or log failure
+                if (batch.length === 1) {
+                    // Base case: single item failed with non-retryable error
+                    const failedEmail = batch[0];
+                    this.safeLog(context, 'error', `ERROR: Failed to upload user [${failedEmail}]: ${extractedMsg}`);
+                    result.failed.push({ email: failedEmail, error: extractedMsg });
+                    return;
+                }
+
+                // Split batch in half and retry each part independently
+                const mid = Math.ceil(batch.length / 2);
+                const leftHalf = batch.slice(0, mid);
+                const rightHalf = batch.slice(mid);
+                this.safeLog(context, 'warn', `Splitting failed batch (size ${batch.length}) into ${leftHalf.length} + ${rightHalf.length} at depth ${depth + 1}`);
+
+                await sendBatch(leftHalf, depth + 1, 0);
+                await sendBatch(rightHalf, depth + 1, 0);
             }
+        };
+
+        await sendBatch(emailArray, 0, 0);
+
+        if (result.failed.length > 0) {
+            this.safeLog(context, 'warn', `Batch complete: ${result.succeeded} succeeded, ${result.failed.length} failed`);
         }
 
-        throw lastError || new Error('Failed to add operations after multiple attempts');
+        return result;
     },
 
     /**
@@ -253,50 +359,56 @@ module.exports = {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 // Use correct google-ads-api npm package method
-                await customer.offlineUserDataJobs.runOfflineUserDataJob({
+                const response = await customer.offlineUserDataJobs.runOfflineUserDataJob({
                     resource_name: jobResourceName
                 });
 
-                context.log('info', `Started job execution: ${jobResourceName}`);
-                return;
+                this.safeLog(context, 'info', `Started job execution: ${jobResourceName}`);
+                return response;
 
             } catch (error) {
                 lastError = error;
                 const extractedMsg = this.extractErrorMessage(error);
+                const classification = this.classifyError(error, extractedMsg);
 
-                // Check for retryable errors
-                const isRateLimit = extractedMsg.toLowerCase().includes('rate limit') ||
-                    extractedMsg.toLowerCase().includes('quota') ||
-                    error.code === 8; // RESOURCE_EXHAUSTED
+                // If rate limited with a large delay, escalate to component for continuation
+                if (classification.isRateLimit) {
+                    const apiDelay = this.parseRetryDelay(extractedMsg);
+                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
+                        this.safeLog(context, 'warn', `Run job rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component`);
+                        throw new RateLimitError(apiDelay, extractedMsg);
+                    }
+                }
 
-                const isNetworkError = extractedMsg.toLowerCase().includes('network') ||
-                    extractedMsg.toLowerCase().includes('timeout') ||
-                    error.code === 14; // UNAVAILABLE
-
-                const isConcurrentModification = extractedMsg.toLowerCase().includes('concurrent') ||
-                    extractedMsg.toLowerCase().includes('modified') ||
-                    error.code === 10; // ABORTED
-
-                const isRetryableError = isRateLimit || isNetworkError || isConcurrentModification;
-
-                if (attempt === maxRetries || !isRetryableError) {
-                    context.log('error', `Run job failed (${isRetryableError ? 'retryable' : 'non-retryable'}, attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
+                if (attempt === maxRetries || !classification.isRetryable) {
+                    this.safeLog(context, 'error', `Run job failed (attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
                 }
 
-                const backoffTime = Math.min(
-                    initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000,
-                    30000
-                );
-
-                const errorType = isConcurrentModification ? 'CONCURRENT_MODIFICATION' :
-                    isRateLimit ? 'RATE_LIMIT' : 'NETWORK_ERROR';
-                context.log('warn', `Retry ${attempt}/${maxRetries}: Run job failed (${errorType}) - waiting ${Math.ceil(backoffTime/1000)}s`);
+                // Short delay — retry in-process
+                const exponentialBackoff = initialDelayMs * Math.pow(2, attempt - 1) + Math.random() * 1000;
+                const backoffTime = Math.min(exponentialBackoff, 30000);
+                this.safeLog(context, 'warn', `Retry ${attempt}/${maxRetries}: Run job failed — waiting ${Math.ceil(backoffTime / 1000)}s`);
                 await new Promise(resolve => setTimeout(resolve, backoffTime));
             }
         }
 
         throw lastError || new Error('Failed to run job after multiple attempts');
+    },
+
+    /**
+     * Parse retry delay from Google Ads API error messages
+     * Examples: "Too many requests. Retry in 3 seconds." -> 3000ms
+     */
+    parseRetryDelay(errorMessage) {
+        if (!errorMessage) return null;
+        
+        const retryMatch = errorMessage.match(/retry in (\d+) seconds?/i);
+        if (retryMatch) {
+            return parseInt(retryMatch[1]) * 1000; // Convert to milliseconds
+        }
+        
+        return null;
     },
 
     /**
