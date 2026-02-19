@@ -1,6 +1,4 @@
 {
-    "name": "E2E Vapi - assistant-crud",
-    "description": "End-to-end test for Vapi connector - tests CRUD operations for assistants",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -88,11 +86,15 @@
                                             "variable": "$.set-variables.out.firstMessage",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "model": {},
+                                    "voice": {}
                                 },
                                 "lambda": {
                                     "name": "{{{var-name}}}",
-                                    "firstMessage": "{{{var-first-msg}}}"
+                                    "firstMessage": "{{{var-first-msg}}}",
+                                    "model": "{\n    \"provider\": \"openai\",\n    \"model\": \"gpt-4o-mini\",\n    \"temperature\": 0.7,\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a helpful customer support assistant. Answer politely and clearly.\"\n      }\n    ]\n  }",
+                                    "voice": "{\n    \"provider\": \"11labs\",\n    \"voiceId\": \"t0jbNlBVZ17f02VDIeMI\"\n  }"
                                 }
                             }
                         }
@@ -102,7 +104,7 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1216,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -138,13 +140,15 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{check-id}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-id}}}"
                                             },
                                             {
-                                                "field": "{{{check-name}}}",
+                                                "expected": "{{{expected-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-name}}}"
+                                                "field": "{{{check-name}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -192,7 +196,7 @@
         },
         "assert-get": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
+            "x": 1216,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -228,13 +232,15 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{check-retrieved-id}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-retrieved-id}}}"
                                             },
                                             {
-                                                "field": "{{{check-retrieved-name}}}",
+                                                "expected": "{{{expected-retrieved-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-retrieved-name}}}"
+                                                "field": "{{{check-retrieved-name}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -290,7 +296,7 @@
         "get-updated-assistant": {
             "type": "appmixer.vapi.core.GetAssistant",
             "x": 1040,
-            "y": 400,
+            "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -324,8 +330,8 @@
         },
         "assert-update": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 400,
+            "x": 1216,
+            "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -356,9 +362,10 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{check-updated-name}}}",
+                                                "expected": "{{{expected-updated-name}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-updated-name}}}"
+                                                "field": "{{{check-updated-name}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -371,7 +378,7 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
+            "x": 1424,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -432,7 +439,7 @@
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1792,
             "y": 144,
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "in": {
                     "delete-assistant": [
@@ -441,10 +448,7 @@
                 }
             },
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
                         "delete-assistant": {
@@ -461,7 +465,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "test@appmixer.com",
+                                    "recipients": "test@appmixer.ai",
                                     "testCase": "E2E Vapi - assistant-crud",
                                     "result": "{{{result-var}}}"
                                 }
@@ -471,5 +475,8 @@
                 }
             }
         }
-    }
+    },
+    "name": "E2E Vapi - assistant-crud",
+    "type": "automation",
+    "notes": {}
 }
