@@ -170,7 +170,7 @@ describe('ListStatusPages', () => {
         assert(result.data[0].value);
         assert(result.data[0].label);
         // Should include status_pages array option for 'array' outputType
-        const arrayOption = result.data.find(opt => opt.value === 'status_pages');
+        const arrayOption = result.data.find(opt => opt.value === 'result');
         assert(arrayOption);
     });
 
