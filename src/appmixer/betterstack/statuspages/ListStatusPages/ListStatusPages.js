@@ -41,7 +41,7 @@ module.exports = {
         const { outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Status Pages', value: 'status_pages' });
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Status Pages', value: 'result' });
         }
 
         let url = 'https://uptime.betterstack.com/api/v2/status-pages';
