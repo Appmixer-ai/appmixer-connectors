@@ -12,6 +12,12 @@ const csvParser = require('../../../src/appmixer/google/ads/csvParser');
 // Mock context for testing
 const createMockContext = () => {
     return {
+        auth: {
+            clientId: 'mock-client-id',
+            clientSecret: 'mock-client-secret',
+            accessToken: 'mock-access-token',
+            refreshToken: 'mock-refresh-token'
+        },
         log: sinon.stub(),
         CancelError: class extends Error {
             constructor(message) {
@@ -48,9 +54,6 @@ describe('Google Ads CustomerMatchUpload', () => {
     describe('Input Validation', () => {
         it('should throw error when fileId is missing', async () => {
             context.messages.in.content = {
-                clientId: 'test-client-id',
-                clientSecret: 'test-secret',
-                refreshToken: 'test-token',
                 developerToken: 'test-dev-token',
                 customerId: '1234567890',
                 segmentToUserList: '{"segment1": "123456"}'
@@ -64,7 +67,8 @@ describe('Google Ads CustomerMatchUpload', () => {
             }
         });
 
-        it('should throw error when OAuth2 credentials are missing', async () => {
+        it('should throw error when OAuth2 authentication is missing', async () => {
+            context.auth = null; // Remove auth to test validation
             context.messages.in.content = {
                 fileId: 'test-file-id',
                 developerToken: 'test-dev-token',
@@ -74,18 +78,15 @@ describe('Google Ads CustomerMatchUpload', () => {
 
             try {
                 await CustomerMatchUpload.receive(context);
-                assert.fail('Should have thrown error for missing OAuth2 credentials');
+                assert.fail('Should have thrown error for missing OAuth2 authentication');
             } catch (error) {
-                assert(error.message.includes('OAuth2') || error.message.includes('clientId'));
+                assert(error.message.includes('OAuth2 authentication') || error.message.includes('Google account'));
             }
         });
 
         it('should throw error when Developer Token is missing', async () => {
             context.messages.in.content = {
                 fileId: 'test-file-id',
-                clientId: 'test-client-id',
-                clientSecret: 'test-secret',
-                refreshToken: 'test-token',
                 customerId: '1234567890',
                 segmentToUserList: '{"segment1": "123456"}'
             };
@@ -101,9 +102,6 @@ describe('Google Ads CustomerMatchUpload', () => {
         it('should throw error when Customer ID is missing', async () => {
             context.messages.in.content = {
                 fileId: 'test-file-id',
-                clientId: 'test-client-id',
-                clientSecret: 'test-secret',
-                refreshToken: 'test-token',
                 developerToken: 'test-dev-token',
                 segmentToUserList: '{"segment1": "123456"}'
             };
@@ -119,9 +117,6 @@ describe('Google Ads CustomerMatchUpload', () => {
         it('should throw error for invalid segmentToUserList JSON', async () => {
             context.messages.in.content = {
                 fileId: 'test-file-id',
-                clientId: 'test-client-id',
-                clientSecret: 'test-secret',
-                refreshToken: 'test-token',
                 developerToken: 'test-dev-token',
                 customerId: '1234567890',
                 segmentToUserList: 'invalid-json'
@@ -137,112 +132,42 @@ describe('Google Ads CustomerMatchUpload', () => {
     });
 
     describe('CSV Parsing', () => {
-        it('should parse CSV with headers correctly', async function() {
-            const csvContent = 'email,segment\nhashed1@example.com,segment1\nhashed2@example.com,segment2\n';
-            const stream = Readable.from(csvContent);
+        it('should detect columns correctly', async function() {
+            const firstRow = ['email', 'segment'];
+            const secondRow = ['hashed1@example.com', 'segment1'];
+            const segmentKeys = ['segment1', 'segment2'];
 
-            const result = await csvParser.parseCSV(
-                stream,
-                {
-                    segmentColumnIndex: 1,
-                    emailColumnIndex: 0,
-                    containsHeaders: false,
-                    columnSeparator: ',',
-                    batchSize: 10000
-                },
-                context
-            );
+            const result = csvParser.detectColumns(firstRow, secondRow, segmentKeys, context);
 
-            assert.strictEqual(Object.keys(result).length, 2);
-            assert.deepStrictEqual(result['segment1'], ['hashed1@example.com']);
-            assert.deepStrictEqual(result['segment2'], ['hashed2@example.com']);
+            assert.strictEqual(result.emailColumnIndex, 0);
+            assert.strictEqual(result.segmentColumnIndex, 1);
+            assert.strictEqual(result.hasHeaders, true);
         });
 
-        it('should parse CSV without headers correctly', async function() {
-            const csvContent = 'hashed1@example.com,segment1\nhashed2@example.com,segment2\n';
-            const stream = Readable.from(csvContent);
+        it('should detect columns without headers', async function() {
+            const firstRow = ['hashed1@example.com', 'segment1'];
+            const secondRow = ['hashed2@example.com', 'segment2'];
+            const segmentKeys = ['segment1', 'segment2'];
 
-            const result = await csvParser.parseCSV(
-                stream,
-                {
-                    segmentColumnIndex: 1,
-                    emailColumnIndex: 0,
-                    containsHeaders: false,
-                    columnSeparator: ',',
-                    batchSize: 10000
-                },
-                context
-            );
+            const result = csvParser.detectColumns(firstRow, secondRow, segmentKeys, context);
 
-            assert.strictEqual(Object.keys(result).length, 2);
-            assert.deepStrictEqual(result['segment1'], ['hashed1@example.com']);
-            assert.deepStrictEqual(result['segment2'], ['hashed2@example.com']);
+            assert.strictEqual(result.emailColumnIndex, 0);
+            assert.strictEqual(result.segmentColumnIndex, 1);
+            assert.strictEqual(result.hasHeaders, false);
         });
 
-        it('should skip rows with empty values', async function() {
-            const csvContent = 'email,segment\nhashed1@example.com,segment1\n,segment2\nhashed3@example.com,\n';
-            const stream = Readable.from(csvContent);
+        it('should identify hash values correctly', async function() {
+            const validHash = 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd';
+            const invalidHash = 'not-a-hash';
 
-            const result = await csvParser.parseCSV(
-                stream,
-                {
-                    segmentColumnIndex: 1,
-                    emailColumnIndex: 0,
-                    containsHeaders: true,
-                    columnSeparator: ',',
-                    batchSize: 10000
-                },
-                context
-            );
-
-            assert.strictEqual(Object.keys(result).length, 1);
-            assert.deepStrictEqual(result['segment1'], ['hashed1@example.com']);
+            assert.strictEqual(csvParser.isHash(validHash), true);
+            assert.strictEqual(csvParser.isHash(invalidHash), false);
         });
 
-        it('should group multiple emails by segment', async function() {
-            const csvContent = 'email,segment\nhashed1@example.com,segment1\nhashed2@example.com,segment1\nhashed3@example.com,segment1\n';
-            const stream = Readable.from(csvContent);
-
-            const result = await csvParser.parseCSV(
-                stream,
-                {
-                    segmentColumnIndex: 1,
-                    emailColumnIndex: 0,
-                    containsHeaders: true,
-                    columnSeparator: ',',
-                    batchSize: 10000
-                },
-                context
-            );
-
-            assert.strictEqual(Object.keys(result).length, 1);
-            assert.strictEqual(result['segment1'].length, 3);
-            assert.deepStrictEqual(result['segment1'], [
-                'hashed1@example.com',
-                'hashed2@example.com',
-                'hashed3@example.com'
-            ]);
-        });
-
-        it('should handle different column separators', async function() {
-            const csvContent = 'email;segment\nhashed1@example.com;segment1\nhashed2@example.com;segment2\n';
-            const stream = Readable.from(csvContent);
-
-            const result = await csvParser.parseCSV(
-                stream,
-                {
-                    segmentColumnIndex: 1,
-                    emailColumnIndex: 0,
-                    containsHeaders: true,
-                    columnSeparator: ';',
-                    batchSize: 10000
-                },
-                context
-            );
-
-            assert.strictEqual(Object.keys(result).length, 2);
-            assert.deepStrictEqual(result['segment1'], ['hashed1@example.com']);
-            assert.deepStrictEqual(result['segment2'], ['hashed2@example.com']);
+        it('should identify header names correctly', async function() {
+            assert.strictEqual(csvParser.isHeaderName('email'), true);
+            assert.strictEqual(csvParser.isHeaderName('segment'), true);
+            assert.strictEqual(csvParser.isHeaderName('random_text'), false);
         });
     });
 

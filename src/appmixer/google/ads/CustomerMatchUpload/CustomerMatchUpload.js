@@ -43,7 +43,7 @@ module.exports = {
         const isContinuation = !!context.messages.timeout;
 
         // ── Restore or initialize state ──────────────────────────────────────
-        let fileId, clientId, clientSecret, refreshToken, developerToken, loginCustomerId, customerId;
+        let fileId, developerToken, loginCustomerId, customerId;
         let segmentToUserList, uploadMode, batchSize, columnSeparator;
         let timeStart, lastProcessedRow, segmentProgress, errors, totalUsersUploaded;
         let jobsAlreadyRun;
@@ -60,9 +60,6 @@ module.exports = {
             }
 
             fileId = s.fileId;
-            clientId = s.clientId;
-            clientSecret = s.clientSecret;
-            refreshToken = s.refreshToken;
             developerToken = s.developerToken;
             loginCustomerId = s.loginCustomerId;
             customerId = s.customerId;
@@ -83,9 +80,6 @@ module.exports = {
         } else {
             const msg = context.messages.in.content;
             fileId = msg.fileId;
-            clientId = msg.clientId;
-            clientSecret = msg.clientSecret;
-            refreshToken = msg.refreshToken;
             developerToken = msg.developerToken;
             loginCustomerId = msg.loginCustomerId;
             customerId = msg.customerId;
@@ -108,7 +102,7 @@ module.exports = {
             throw new context.CancelError(`Upload exceeded maximum time limit (${MAX_UPLOAD_TIME_HOURS}h). Check your data and retry.`);
         }
         if (!fileId) throw new context.CancelError('Missing fileId.');
-        if (!clientId || !clientSecret || !refreshToken) throw new context.CancelError('Missing OAuth2 credentials.');
+        if (!context.auth || !context.auth.accessToken) throw new context.CancelError('Missing OAuth2 authentication. Please connect your Google account.');
         if (!developerToken) throw new context.CancelError('Missing Developer Token.');
         if (!customerId) throw new context.CancelError('Missing Customer ID.');
 
@@ -131,13 +125,13 @@ module.exports = {
 
         // ── Google Ads API client ────────────────────────────────────────────
         const client = new GoogleAdsApi({
-            client_id: clientId,
-            client_secret: clientSecret,
+            client_id: context.auth.clientId,
+            client_secret: context.auth.clientSecret,
             developer_token: developerToken
         });
         const customer = client.Customer({
             customer_account_id: customerId,
-            refresh_token: refreshToken,
+            refresh_token: context.auth.refreshToken,
             login_customer_id: loginCustomerId || undefined
         });
 
@@ -167,7 +161,7 @@ module.exports = {
             const delay = Math.min(remainingMs + 5000, RATE_LIMIT_CHECK_SECONDS * 1000);
             const trimmedErrors = errors.length > 100 ? errors.slice(-100) : errors;
             const payload = {
-                fileId, clientId, clientSecret, refreshToken, developerToken,
+                fileId, developerToken,
                 loginCustomerId, customerId, segmentToUserList, uploadMode,
                 batchSize, columnSeparator,
                 timeStart: timeStart.getTime(),
@@ -271,7 +265,7 @@ module.exports = {
 
             const trimmedErrors = errors.length > 100 ? errors.slice(-100) : errors;
             const payload = {
-                fileId, clientId, clientSecret, refreshToken, developerToken,
+                fileId, developerToken,
                 loginCustomerId, customerId, segmentToUserList, uploadMode,
                 batchSize, columnSeparator,
                 timeStart: timeStart.getTime(),
