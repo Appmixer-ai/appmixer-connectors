@@ -1,11 +1,11 @@
 {
-    "name": "E2E Better Stack - status pages crud",
-    "description": "End-to-end test for Better Stack - tests status pages CRUD operations",
+    "name": "E2E BetterStack - status pages",
+    "description": "End-to-end test for BetterStack connector - tests CRUD and list operations on status pages",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 100,
-            "y": 200,
+            "y": 300,
             "source": {},
             "version": "1.0.0",
             "config": {}
@@ -13,7 +13,7 @@
         "set-variables": {
             "type": "appmixer.utils.controls.SetVariable",
             "x": 300,
-            "y": 200,
+            "y": 300,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -59,7 +59,7 @@
         "create-status-page": {
             "type": "appmixer.betterstack.statuspages.CreateStatusPage",
             "x": 500,
-            "y": 200,
+            "y": 300,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -304,16 +304,164 @@
                 }
             }
         },
+        "list-status-pages-first": {
+            "type": "appmixer.betterstack.statuspages.ListStatusPages",
+            "x": 700,
+            "y": 800,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-first": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 800,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-status-pages-first": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-status-pages-first": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id-check": {
+                                            "variable": "$.list-status-pages-first.out.id",
+                                            "functions": []
+                                        },
+                                        "index-check": {
+                                            "variable": "$.list-status-pages-first.out.index",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{index-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-status-pages-array": {
+            "type": "appmixer.betterstack.statuspages.ListStatusPages",
+            "x": 700,
+            "y": 1000,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-array": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 1000,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-status-pages-array": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-status-pages-array": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "count-check": {
+                                            "variable": "$.list-status-pages-array.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{count-check}}}",
+                                                "assertion": "regex",
+                                                "expected": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 900,
-            "y": 500,
+            "x": 1100,
+            "y": 600,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "assert-create": ["out"],
                     "assert-get": ["out"],
-                    "assert-update": ["out"]
+                    "assert-update": ["out"],
+                    "assert-list-first": ["out"],
+                    "assert-list-array": ["out"]
                 }
             },
             "config": {
@@ -324,8 +472,8 @@
         },
         "delete-status-page": {
             "type": "appmixer.betterstack.statuspages.DeleteStatusPage",
-            "x": 1100,
-            "y": 500,
+            "x": 1300,
+            "y": 600,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -357,8 +505,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
-            "y": 500,
+            "x": 1500,
+            "y": 600,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -387,7 +535,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "jirka@client.io",
-                                    "testCase": "E2E Better Stack - status pages crud",
+                                    "testCase": "E2E BetterStack - status pages",
                                     "result": "{{{result-var}}}"
                                 }
                             }

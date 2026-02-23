@@ -1,6 +1,6 @@
 {
-    "name": "E2E BetterStack - crud",
-    "description": "End-to-end test for BetterStack connector - tests CRUD operations on Uptime monitors",
+    "name": "E2E BetterStack - monitors",
+    "description": "End-to-end test for BetterStack connector - tests CRUD and list operations on Uptime monitors",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -316,16 +316,93 @@
                 }
             }
         },
+        "list-monitors": {
+            "type": "appmixer.betterstack.uptime.ListMonitors",
+            "x": 700,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-monitors": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-monitors": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-result": {
+                                            "variable": "$.list-monitors.out.result",
+                                            "functions": []
+                                        },
+                                        "field-count": {
+                                            "variable": "$.list-monitors.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-result}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-count}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 1500,
-            "y": 200,
+            "y": 300,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "assert-create": ["out"],
                     "assert-get": ["out"],
-                    "assert-update": ["out"]
+                    "assert-update": ["out"],
+                    "assert-list": ["out"]
                 }
             },
             "config": {
@@ -337,7 +414,7 @@
         "delete-monitor": {
             "type": "appmixer.betterstack.uptime.DeleteMonitor",
             "x": 1700,
-            "y": 200,
+            "y": 300,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -370,7 +447,7 @@
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1900,
-            "y": 200,
+            "y": 300,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -399,7 +476,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "jirka@client.io",
-                                    "testCase": "E2E BetterStack - crud",
+                                    "testCase": "E2E BetterStack - monitors",
                                     "result": "{{{result-var}}}"
                                 }
                             }
