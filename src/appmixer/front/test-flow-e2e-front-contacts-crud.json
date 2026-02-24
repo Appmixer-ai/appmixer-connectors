@@ -1,0 +1,652 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": -304,
+            "y": 288,
+            "source": {},
+            "version": "1.0.0"
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 64,
+            "y": 288,
+            "source": {
+                "in": {
+                    "561f77b1-eb0c-476b-ba6f-d34789d07ecc": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "create-contact": {
+            "type": "appmixer.front.contacts.CreateContact",
+            "x": 240,
+            "y": 288,
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "handles": {},
+                                    "name": {
+                                        "2e4dc7c8-8996-4faa-b437-c824bcb4fed4": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.contactName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "c89516ce-a977-48af-8077-fe9146d92d66": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.contactDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "handles": {
+                                        "ADD": [
+                                            {
+                                                "handle": "qa2@test.com",
+                                                "source": "email"
+                                            }
+                                        ]
+                                    },
+                                    "name": "{{{2e4dc7c8-8996-4faa-b437-c824bcb4fed4}}}",
+                                    "description": "{{{c89516ce-a977-48af-8077-fe9146d92d66}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 496,
+            "y": 288,
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "contact-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        },
+                                        "contact-name": {
+                                            "variable": "$.create-contact.out.name",
+                                            "functions": []
+                                        },
+                                        "a3de6620-c5e0-433e-a5e8-7dec005500ad": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.contactName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{contact-id}}}"
+                                            },
+                                            {
+                                                "expected": "{{{a3de6620-c5e0-433e-a5e8-7dec005500ad}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{contact-name}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-contact": {
+            "type": "appmixer.front.contacts.GetContact",
+            "x": 432,
+            "y": 432,
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 432,
+            "source": {
+                "in": {
+                    "get-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "retrieved-name": {
+                                            "variable": "$.get-contact.out.name",
+                                            "functions": []
+                                        },
+                                        "981b131f-38a1-452e-902b-62b7b9a876a8": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.contactName",
+                                            "functions": []
+                                        },
+                                        "4d38d8d1-2e58-4066-bbd8-11e4f70b8d07": {
+                                            "variable": "$.get-contact.out.description",
+                                            "functions": []
+                                        },
+                                        "ba6ae9a8-a61e-4ac4-b17f-b2aa358e8155": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.contactDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{981b131f-38a1-452e-902b-62b7b9a876a8}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{retrieved-name}}}"
+                                            },
+                                            {
+                                                "expected": "{{{ba6ae9a8-a61e-4ac4-b17f-b2aa358e8155}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{4d38d8d1-2e58-4066-bbd8-11e4f70b8d07}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-contact": {
+            "type": "appmixer.front.contacts.UpdateContact",
+            "x": 640,
+            "y": 560,
+            "source": {
+                "in": {
+                    "get-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "6a60cc46-ed37-4e70-861e-4f78cb637da7": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "9dd2a5b3-d9ed-49f9-b065-86950ed613d7": {
+                                            "variable": "$.create-contact.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-id}}}",
+                                    "description": "{{{6a60cc46-ed37-4e70-861e-4f78cb637da7}}}",
+                                    "name": "updated_{{{9dd2a5b3-d9ed-49f9-b065-86950ed613d7}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 560,
+            "source": {
+                "in": {
+                    "update-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "update-result": {
+                                            "variable": "$.update-contact.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{update-result}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-contact-notes": {
+            "type": "appmixer.front.contacts.ListContactNotes",
+            "x": 864,
+            "y": 896,
+            "source": {
+                "in": {
+                    "update-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-contact": {
+                            "out": {
+                                "lambda": {
+                                    "contactId": "{{{var-contact-id}}}",
+                                    "outputType": "array"
+                                },
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-contact-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-notes": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 896,
+            "source": {
+                "in": {
+                    "list-contact-notes": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-contact-notes": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "notes-result": {
+                                            "variable": "$.list-contact-notes.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{notes-result}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact-note": {
+            "type": "appmixer.front.contacts.CreateContactNote",
+            "x": 864,
+            "y": 704,
+            "source": {
+                "in": {
+                    "update-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "body": {
+                                        "dd8fc0fd-34a4-423f-944d-e006e60e200f": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.noteBody",
+                                            "functions": []
+                                        }
+                                    },
+                                    "contactId": {
+                                        "219b8ad6-f026-4e55-b559-49d8078a2b8a": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "authorId": {}
+                                },
+                                "lambda": {
+                                    "body": "{{{dd8fc0fd-34a4-423f-944d-e006e60e200f}}}",
+                                    "contactId": "{{{219b8ad6-f026-4e55-b559-49d8078a2b8a}}}",
+                                    "authorId": "tea_lucps"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-note": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 704,
+            "source": {
+                "in": {
+                    "create-contact-note": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact-note": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "note-body": {
+                                            "variable": "$.create-contact-note.out.body",
+                                            "functions": []
+                                        },
+                                        "09f36893-74e0-4dc4-bb18-4d7b1fadc769": {
+                                            "variable": "$.561f77b1-eb0c-476b-ba6f-d34789d07ecc.out.noteBody",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{note-body}}}",
+                                                "expected": "{{{09f36893-74e0-4dc4-bb18-4d7b1fadc769}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1536,
+            "y": 288,
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ],
+                    "assert-list-notes": [
+                        "out"
+                    ],
+                    "assert-create-note": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            }
+        },
+        "delete-contact": {
+            "type": "appmixer.front.contacts.DeleteContact",
+            "x": 1728,
+            "y": 288,
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-contact-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-contact-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1920,
+            "y": 288,
+            "source": {
+                "in": {
+                    "delete-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Front - contacts",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "561f77b1-eb0c-476b-ba6f-d34789d07ecc": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": -128,
+            "y": 288,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "contactName",
+                                                "toggle": false,
+                                                "text": "E2E Test Contact"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "contactDescription",
+                                                "toggle": false,
+                                                "text": "Test contact for E2E testing"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedDescription",
+                                                "toggle": false,
+                                                "text": "Updated test contact description"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "text": "E2E Test Note",
+                                                "name": "noteBody"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            }
+        }
+    },
+    "name": "E2E Front - contacts- crud",
+    "type": "automation",
+    "err": "{\"stack\":\"Error: Cannot start flow, already started.\\n    at CoordinatorHandler.startFlow (/usr/src/appmixer/engine/src/CoordinatorHandler.js:140:27)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async module.exports.start (/usr/src/appmixer/engine/src/flows.js:330:5)\\n    at async handler (/usr/src/appmixer/gridd/routes/flow.js:451:29)\",\"message\":\"Cannot start flow, already started.\"}",
+    "notes": {}
+}

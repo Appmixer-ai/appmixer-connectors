@@ -12,7 +12,7 @@ module.exports = {
         }
 
         const requestBody = {
-            title: title
+            title: title.trim()
         };
 
         // https://developers.google.com/docs/api/reference/rest/v1/documents/create

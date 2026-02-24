@@ -1,5 +1,3 @@
-'use strict';
-
 module.exports = {
 
     async receive(context) {
@@ -16,8 +14,9 @@ module.exports = {
             });
 
             return this.generateOutputPortOptions(context, output);
+        }
 
-        } else if (context.properties.generateInspector) {
+        if (context.properties.generateInspector) {
 
             const {
                 flowId: calleeFlowId,
@@ -30,8 +29,19 @@ module.exports = {
             });
 
             return context.sendJson(input, 'out');
+        }
 
-        } else if (context.messages.webhook) {
+        if (context.properties.listFlows) {
+
+            return context.sendJson(await this.listFlows(context), 'out');
+        }
+
+        if (context.properties.listComponents) {
+
+            return context.sendJson(await this.listComponents(context, context.messages.in.content.flowId), 'out');
+        }
+
+        if (context.messages.webhook) {
 
             // Callee flow finished, i.e. it reached the FlowCallOutput component.
             // Continue the flow. Note that the continuation of the flow is guaranteed
@@ -66,6 +76,72 @@ module.exports = {
         });
     },
 
+    async listFlows(context) {
+
+        try {
+
+            const flowIds = await context.callAppmixer({
+
+                endPoint: `/stats/component-usage?componentType=appmixer.utils.subflows.OnFlowCall&userId=${context.userId}&limit=30`,
+                method: 'GET'
+            });
+
+            const filter = (flowIds || []).map(item => `filter=flowId:${item.flowId}`).join('&');
+
+            if (filter) {
+                const flows = await context.callAppmixer({
+
+                    endPoint: `/flows?${filter}&projection=name,flowId`,
+                    method: 'GET'
+                });
+
+                return flows.map(item => {
+                    let name = item.name;
+                    return {
+                        label: `${name.length > 20 ? name.substring(0, 20) + '...' : name} (${item.flowId.substring(0, 6)}...)`,
+                        value: item.flowId
+                    };
+                });
+            }
+
+            return [];
+
+        } catch (e) {
+            return [];
+        }
+
+    },
+
+    async listComponents(context, flowId) {
+
+        try {
+
+            if (flowId) {
+                const flowData = await context.callAppmixer({
+                    endPoint: `/flows/${flowId}?projection=flow`,
+                    method: 'GET'
+                });
+
+                return Object.keys(flowData?.flow || {}).reduce((res, key) => {
+                    const value = flowData?.flow[key];
+                    if (value.type === 'appmixer.utils.subflows.OnFlowCall') {
+                        res.push({
+                            label: value?.label || `OnFlowCall (${key.substring(0, 10)}...)`,
+                            value: key
+                        });
+                    }
+                    return res;
+                }, []);
+            }
+
+            return [];
+
+        } catch (e) {
+            return [];
+        }
+
+    },
+
     generateOutputPortOptions(context, output) {
 
         const options = [];
@@ -88,13 +164,32 @@ module.exports = {
                     type: 'text',
                     label: 'Flow ID',
                     index: 1,
-                    tooltip: 'Provide the flow ID to trigger the "On Flow Call" component inside it.'
+                    tooltip: 'Provide the flow ID to trigger the "On Flow Call" component inside it.',
+                    source: {
+                        url: '/component/appmixer/utils/subflows/CallFlow?outPort=out',
+                        data: {
+                            properties: {
+                                listFlows: true
+                            }
+                        }
+                    }
                 },
                 componentId: {
                     type: 'text',
                     label: '"On Flow Call" Component ID',
                     index: 2,
-                    tooltip: 'Provide the component ID of the "On Flow Call" component inside the flow that you intend to call.'
+                    tooltip: 'Provide the component ID of the "On Flow Call" component inside the flow that you intend to call.',
+                    source: {
+                        url: '/component/appmixer/utils/subflows/CallFlow?outPort=out',
+                        data: {
+                            properties: {
+                                listComponents: true
+                            },
+                            messages: {
+                                'in/flowId': 'inputs/in/flowId'
+                            }
+                        }
+                    }
                 }
             },
             groups: {

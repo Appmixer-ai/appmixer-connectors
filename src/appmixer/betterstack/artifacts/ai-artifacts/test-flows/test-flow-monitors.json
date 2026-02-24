@@ -1,0 +1,489 @@
+{
+    "name": "E2E BetterStack - monitors",
+    "description": "End-to-end test for BetterStack connector - tests CRUD and list operations on Uptime monitors",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "monitorName",
+                                                "text": "E2E Test Monitor"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedMonitorName",
+                                                "text": "E2E Test Monitor Updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "monitorUrl",
+                                                "text": "https://example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-monitor": {
+            "type": "appmixer.betterstack.uptime.CreateMonitor",
+            "x": 500,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "monitorName": {
+                                        "var-monitor-name": {
+                                            "variable": "$.set-variables.out.monitorName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "url": {
+                                        "var-monitor-url": {
+                                            "variable": "$.set-variables.out.monitorUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "monitorType": {},
+                                    "checkFrequency": {}
+                                },
+                                "lambda": {
+                                    "monitorName": "{{{var-monitor-name}}}",
+                                    "url": "{{{var-monitor-url}}}",
+                                    "monitorType": "status",
+                                    "checkFrequency": 180
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "variable": "$.create-monitor.out.id",
+                                            "functions": []
+                                        },
+                                        "field-name": {
+                                            "variable": "$.create-monitor.out.pronounceable_name",
+                                            "functions": []
+                                        },
+                                        "field-url": {
+                                            "variable": "$.create-monitor.out.url",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Monitor"
+                                            },
+                                            {
+                                                "field": "{{{field-url}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-monitor": {
+            "type": "appmixer.betterstack.uptime.GetMonitor",
+            "x": 700,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "monitorId": {
+                                        "var-created-id": {
+                                            "variable": "$.create-monitor.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "monitorId": "{{{var-created-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-id": {
+                                            "variable": "$.get-monitor.out.id",
+                                            "functions": []
+                                        },
+                                        "field-get-name": {
+                                            "variable": "$.get-monitor.out.pronounceable_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-get-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-get-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Monitor"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-monitor": {
+            "type": "appmixer.betterstack.uptime.UpdateMonitor",
+            "x": 1100,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "monitorId": {
+                                        "var-get-id": {
+                                            "variable": "$.get-monitor.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "monitorName": {}
+                                },
+                                "lambda": {
+                                    "monitorId": "{{{var-get-id}}}",
+                                    "monitorName": "E2E Test Monitor Updated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1300,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-updated-name": {
+                                            "variable": "$.update-monitor.out.pronounceable_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-updated-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Monitor Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-monitors": {
+            "type": "appmixer.betterstack.uptime.ListMonitors",
+            "x": 700,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-monitor": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-monitors": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-monitors": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-result": {
+                                            "variable": "$.list-monitors.out.result",
+                                            "functions": []
+                                        },
+                                        "field-count": {
+                                            "variable": "$.list-monitors.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-result}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-count}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1500,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": ["out"],
+                    "assert-get": ["out"],
+                    "assert-update": ["out"],
+                    "assert-list": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-monitor": {
+            "type": "appmixer.betterstack.uptime.DeleteMonitor",
+            "x": 1700,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "monitorId": {
+                                        "var-delete-id": {
+                                            "variable": "$.create-monitor.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "monitorId": "{{{var-delete-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1900,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-monitor": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-monitor": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E BetterStack - monitors",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,249 @@
+{
+    "name": "appmixer.betterstack.statuspages.CreateStatusPage",
+    "description": "Create a new status page in Better Stack Uptime. Requires company name, company URL, subdomain, and timezone.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:betterstack"
+    },
+    "quota": {
+        "manager": "appmixer:betterstack",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "companyName": { "type": "string" },
+                    "companyUrl": { "type": "string" },
+                    "subdomain": { "type": "string" },
+                    "timezone": { "type": "string" },
+                    "contactUrl": { "type": "string" },
+                    "logoUrl": { "type": "string" },
+                    "history": { "type": "integer" },
+                    "minIncidentLength": { "type": "integer" },
+                    "subscribable": { "type": "boolean" },
+                    "hideFromSearchEngines": { "type": "boolean" },
+                    "customCss": { "type": "string" },
+                    "customJavascript": { "type": "string" },
+                    "design": { "type": "string" },
+                    "theme": { "type": "string" },
+                    "layout": { "type": "string" },
+                    "googleAnalyticsId": { "type": "string" },
+                    "announcement": { "type": "string" },
+                    "announcementEmbedVisible": { "type": "boolean" },
+                    "announcementEmbedLink": { "type": "string" },
+                    "announcementEmbedCss": { "type": "string" },
+                    "automaticReports": { "type": "boolean" },
+                    "passwordEnabled": { "type": "boolean" },
+                    "password": { "type": "string" },
+                    "ipAllowlist": { "type": "array" },
+                    "statusPageGroupId": { "type": "integer" }
+                },
+                "required": ["companyName", "companyUrl", "subdomain", "timezone"]
+            },
+            "inspector": {
+                "inputs": {
+                    "companyName": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Company Name",
+                        "tooltip": "Name of your company"
+                    },
+                    "companyUrl": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Company URL",
+                        "tooltip": "URL of your company's website"
+                    },
+                    "subdomain": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Subdomain",
+                        "tooltip": "Unique subdomain for your status page"
+                    },
+                    "timezone": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Timezone",
+                        "tooltip": "Timezone for your status page (e.g., Tokyo, UTC, America/New_York)"
+                    },
+                    "contactUrl": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Contact URL",
+                        "tooltip": "URL for contacting you in case of emergency"
+                    },
+                    "logoUrl": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "Logo URL",
+                        "tooltip": "Direct link to your company's logo (under 20MB)"
+                    },
+                    "history": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "History Days",
+                        "tooltip": "Number of days to display on status page (7-365)"
+                    },
+                    "minIncidentLength": {
+                        "type": "number",
+                        "index": 8,
+                        "label": "Min Incident Length",
+                        "tooltip": "Minimum incident duration in seconds to display"
+                    },
+                    "subscribable": {
+                        "type": "toggle",
+                        "index": 9,
+                        "label": "Subscribable",
+                        "tooltip": "Allow users to subscribe to status page changes"
+                    },
+                    "hideFromSearchEngines": {
+                        "type": "toggle",
+                        "index": 10,
+                        "label": "Hide from Search Engines",
+                        "tooltip": "Hide your status page from search engines"
+                    },
+                    "customCss": {
+                        "type": "textarea",
+                        "index": 11,
+                        "label": "Custom CSS",
+                        "tooltip": "Custom CSS to modify status page design"
+                    },
+                    "customJavascript": {
+                        "type": "textarea",
+                        "index": 12,
+                        "label": "Custom JavaScript",
+                        "tooltip": "Custom JavaScript for analytics or interactive features"
+                    },
+                    "design": {
+                        "type": "select",
+                        "index": 13,
+                        "label": "Design",
+                        "tooltip": "Status page design version",
+                        "options": [
+                            { "label": "Classic (v1)", "value": "v1" },
+                            { "label": "Modern (v2)", "value": "v2" }
+                        ]
+                    },
+                    "theme": {
+                        "type": "select",
+                        "index": 14,
+                        "label": "Theme",
+                        "tooltip": "Color theme (v2 design only)",
+                        "options": [
+                            { "label": "Light", "value": "light" },
+                            { "label": "Dark", "value": "dark" },
+                            { "label": "System", "value": "system" }
+                        ]
+                    },
+                    "layout": {
+                        "type": "select",
+                        "index": 15,
+                        "label": "Layout",
+                        "tooltip": "Header layout (v2 design only)",
+                        "options": [
+                            { "label": "Vertical", "value": "vertical" },
+                            { "label": "Horizontal", "value": "horizontal" }
+                        ]
+                    },
+                    "googleAnalyticsId": {
+                        "type": "text",
+                        "index": 16,
+                        "label": "Google Analytics ID",
+                        "tooltip": "Your Google Analytics ID"
+                    },
+                    "announcement": {
+                        "type": "textarea",
+                        "index": 17,
+                        "label": "Announcement",
+                        "tooltip": "Announcement to display on status page"
+                    },
+                    "announcementEmbedVisible": {
+                        "type": "toggle",
+                        "index": 18,
+                        "label": "Announcement Embed Visible",
+                        "tooltip": "Show announcement in embed"
+                    },
+                    "announcementEmbedLink": {
+                        "type": "text",
+                        "index": 19,
+                        "label": "Announcement Embed Link",
+                        "tooltip": "URL to link embedded announcement to"
+                    },
+                    "announcementEmbedCss": {
+                        "type": "textarea",
+                        "index": 20,
+                        "label": "Announcement Embed CSS",
+                        "tooltip": "Custom CSS for announcement embed"
+                    },
+                    "automaticReports": {
+                        "type": "toggle",
+                        "index": 21,
+                        "label": "Automatic Reports",
+                        "tooltip": "Auto-create updates for new incidents"
+                    },
+                    "passwordEnabled": {
+                        "type": "toggle",
+                        "index": 22,
+                        "label": "Password Enabled",
+                        "tooltip": "Enable password protection"
+                    },
+                    "password": {
+                        "type": "text",
+                        "index": 23,
+                        "label": "Password",
+                        "tooltip": "Password for protected status page"
+                    },
+                    "statusPageGroupId": {
+                        "type": "number",
+                        "index": 24,
+                        "label": "Status Page Group ID",
+                        "tooltip": "ID of the status page group to belong to"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status Page ID", "value": "id" },
+                { "label": "Company Name", "value": "company_name" },
+                { "label": "Company URL", "value": "company_url" },
+                { "label": "Contact URL", "value": "contact_url" },
+                { "label": "Logo URL", "value": "logo_url" },
+                { "label": "Timezone", "value": "timezone" },
+                { "label": "Subdomain", "value": "subdomain" },
+                { "label": "Custom Domain", "value": "custom_domain" },
+                { "label": "Custom CSS", "value": "custom_css" },
+                { "label": "Custom JavaScript", "value": "custom_javascript" },
+                { "label": "Google Analytics ID", "value": "google_analytics_id" },
+                { "label": "Min Incident Length", "value": "min_incident_length" },
+                { "label": "Announcement", "value": "announcement" },
+                { "label": "Announcement Embed Visible", "value": "announcement_embed_visible" },
+                { "label": "Announcement Embed CSS", "value": "announcement_embed_css" },
+                { "label": "Announcement Embed Link", "value": "announcement_embed_link" },
+                { "label": "Automatic Reports", "value": "automatic_reports" },
+                { "label": "Status Page Group ID", "value": "status_page_group_id" },
+                { "label": "Subscribable", "value": "subscribable" },
+                { "label": "Hide from Search Engines", "value": "hide_from_search_engines" },
+                { "label": "Password Enabled", "value": "password_enabled" },
+                { "label": "History Days", "value": "history" },
+                { "label": "Aggregate State", "value": "aggregate_state" },
+                { "label": "Design", "value": "design" },
+                { "label": "Theme", "value": "theme" },
+                { "label": "Layout", "value": "layout" },
+                { "label": "Created At", "value": "created_at" },
+                { "label": "Updated At", "value": "updated_at" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIGhlaWdodD0iMzkiIHZpZXdCb3g9IjAgMCA0OSAzOSIgd2lkdGg9IjQ5Ij4KPHBhdGggZD0iTTQ4LjE4ODkgMzIuMzExTDMxLjk5NTggMS45NDYxQzMwLjU4MzEgLTAuNzAyNzYxIDI2Ljc3MjEgLTAuNjMyNzQ3IDI1LjQ1NjkgMi4wNjU0NUwyMS40NzQ3IDEwLjA4MDRDMjAuOTkzNiAxMS4wNjczIDIxLjIxNjYgMTEuNDE5NSAyMS42MTY3IDExLjk5MjNDMjEuOTM3NyAxMi40NTE4IDIyLjY4MjYgMTIuNDg4MSAyMi45ODU4IDEyLjAxNjdDMjMuMjg0IDExLjU1MzIgMjMuOTc0NyAxMS41OTYgMjQuMjEzNSAxMi4wOTI2TDM0LjYyNDUgMzMuNzQ3NUMzNS40MDkxIDM1LjUxMjEgMzcuMDUyNSAzNi43NDE2IDM4Ljk2NCAzNi45OTNMNDQuNDcyMSAzNy42OTczQzQ3LjQzNiAzOC4wODcyIDQ5LjU5ODQgMzQuOTU0IDQ4LjE4ODkgMzIuMzExWiIgZmlsbD0iIzBCMEMxNCIvPgo8cGF0aCBkPSJNMjYuNjUwNSAzNC40MDQ0TDE3LjQ4NjQgNy45OTk0NUMxNi40Njg2IDUuMDY3MDcgMTIuMjAxNCA1LjE5NDA3IDExLjM2NjMgOC4xODEzOUw4LjU3ODM0IDE4LjE1NzhDOC4yNjIxMiAxOS4yOTA0IDguMTQwNDkgMTkuOTQ1NCA4LjU3OTE5IDIxLjAzNzZIOS42Mzc4MkwxMy40ODY0IDMzLjMzNkMxNC4wODI0IDM0LjgyMDEgMTUuMzEzNSAzNS45NzE5IDE2Ljg1MjQgMzYuNDg0NUwyMi41ODk4IDM4LjM5NjNDMjUuMTA1OCAzOS4yMzQ1IDI3LjUwNzMgMzYuODczOCAyNi42NTA1IDM0LjQwNDRaIiBmaWxsPSIjMEIwQzE0Ii8+CjxwYXRoIGQ9Ik0xLjU3ODggMTYuNzQ1N0wwLjAyODAxODQgMzAuMTk3MUMtMC4xMzEyOTcgMzEuNTc4NCAwLjM5NTQ2NCAzMi45NTAxIDEuNDM4MjYgMzMuODY5M0w1LjI4MTE1IDM3LjI1NzFDNi41OTY5OCAzOC40MTczIDguNjQwNzMgMzcuMjg2NiA4LjM1ODAzIDM1LjU1NDlMNS4yNzYzMiAxNi42NTg4QzQuOTI3MTEgMTQuNTE5MiAxLjgyNzE2IDE0LjU5MjIgMS41Nzg4IDE2Ljc0NTdaIiBmaWxsPSIjMEIwQzE0Ii8+Cjwvc3ZnPg=="
+}

@@ -88,7 +88,8 @@ module.exports = {
             method: 'POST',
             data: {
                 name: toolName,
-                arguments: args
+                arguments: args,
+                correlationId: context.messages?.in?.correlationId
             }
         });
 

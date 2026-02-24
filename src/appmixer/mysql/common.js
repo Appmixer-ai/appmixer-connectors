@@ -1,4 +1,5 @@
 'use strict';
+
 const mysql = require('mysql');
 const EventEmitter = require('events');
 
@@ -85,6 +86,18 @@ async function createConnection(context) {
     return conn;
 }
 
+/**
+ * Validates that a SQL query starts with SELECT or WITH (for CTEs).
+ * Multiple statements are blocked by MySQL driver default (multipleStatements: false).
+ * @param {string} query - The SQL query to validate
+ * @throws {Error} If the query doesn't start with SELECT or WITH
+ */
+function validateQuery(query) {
+    if (!/^\s*(select|with)\s/i.test(query)) {
+        throw new Error('Only SELECT or WITH queries are allowed');
+    }
+}
+
 async function runQuery(conn, query, params) {
 
     return await conn.query(query, params).stream({ highWaterMark: 10 });
@@ -100,6 +113,7 @@ module.exports = {
 
             let conn;
             try {
+                validateQuery(query);
                 conn = await createConnection(context);
                 const stream = await runQuery(conn, query, params);
                 const concurrency = parseInt(context.config.concurrency, 10) || 100;
@@ -151,5 +165,6 @@ module.exports = {
         return returnStoreId;
     },
 
-    runQuery
+    runQuery,
+    validateQuery
 };

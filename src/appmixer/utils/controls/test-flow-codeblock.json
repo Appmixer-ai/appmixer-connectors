@@ -1,0 +1,305 @@
+{
+    "flow": {
+        "start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 300,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "test-basic-code": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 300,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {}
+                                },
+                                "lambda": {
+                                    "code": "5 + 10"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-basic-result": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "test-basic-code": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "test-basic-code": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "result-check": {
+                                            "variable": "$.test-basic-code.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{result-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "15"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "test-with-variables": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 300,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "code": "$data.firstName + ' ' + $data.lastName",
+                                    "variables": {
+                                        "firstName": "John",
+                                        "lastName": "Doe"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-variables-result": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "test-with-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "test-with-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "result-check": {
+                                            "variable": "$.test-with-variables.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{result-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "John Doe"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "test-json-output": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 300,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "code": "JSON.stringify({ status: 'success', value: 42, isValid: true })",
+                                    "variables": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-json-output": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 500,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "test-json-output": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "test-json-output": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "result-check": {
+                                            "variable": "$.test-json-output.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{result-check}}}",
+                                                "assertion": "regex",
+                                                "expected": ".*success.*"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 700,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-basic-result": [
+                        "out"
+                    ],
+                    "assert-variables-result": [
+                        "out"
+                    ],
+                    "assert-json-output": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 900,
+            "y": 300,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Utils Controls - CodeBlock",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Utils/Controls - CodeBlock",
+    "notes": {},
+    "type": "automation"
+}

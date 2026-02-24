@@ -119,7 +119,7 @@ module.exports = {
         };
 
         Object.keys(fields).forEach((key, index) => {
-            if (excludeFields.includes(key) || key.includes('customfield_')) {
+            if (excludeFields.includes(key)) {
                 return;
             }
 
@@ -140,7 +140,10 @@ module.exports = {
 
             if (Array.isArray(allowedValues)) {
                 inspector.inputs[key].type = 'select';
-                inspector.inputs[key].options = allowedValues.map(value => ({ content: value.name, value: value.id }));
+                inspector.inputs[key].options = allowedValues.map(v => ({
+                    content: v.name || v.value || v.id,
+                    value: v.id
+                }));
             }
 
             if (schema.type === 'array') {
@@ -154,7 +157,7 @@ module.exports = {
                 inspector.inputs[key].type = 'multiselect';
             }
 
-            if (schema.type === 'date') {
+            if (schema.type === 'date' || schema.type === 'datetime') {
                 inspector.inputs[key].type = 'date-time';
             }
 
@@ -170,6 +173,37 @@ module.exports = {
         });
 
         return inspector;
+    },
+
+    formatCustomFields(issueInfo, fieldMeta) {
+
+        Object.keys(issueInfo).forEach(key => {
+            if (!key.startsWith('customfield_')) return;
+
+            const value = issueInfo[key];
+            if (value === undefined || value === null || value === '') {
+                delete issueInfo[key];
+                return;
+            }
+
+            const meta = fieldMeta[key];
+            if (!meta || !meta.schema) return;
+
+            const { schema } = meta;
+            const hasAllowedValues = Array.isArray(meta.allowedValues) && meta.allowedValues.length > 0;
+
+            if (schema.type === 'array') {
+                if (Array.isArray(value)) {
+                    if (schema.items === 'option' || (hasAllowedValues && schema.items !== 'string')) {
+                        issueInfo[key] = value.map(v => ({ id: v }));
+                    }
+                }
+            } else if (schema.type === 'option' || schema.type === 'user' || hasAllowedValues) {
+                issueInfo[key] = { id: value };
+            } else if (schema.type === 'number') {
+                issueInfo[key] = Number(value);
+            }
+        });
     },
 
     async executeWebhookRequest(context, options) {
