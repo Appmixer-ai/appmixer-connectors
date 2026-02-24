@@ -3,6 +3,110 @@ const contentTypeUtil = require('content-type');
 const urlUtil = require('url');
 const qs = require('qs');
 const axios = require('axios');
+const https = require('https');
+const { request: undiciRequest, Agent } = require('undici');
+
+/**
+ * Validates PEM certificate format.
+ * @param {string} cert - Certificate string to validate
+ * @param {string} certType - Type of certificate ('CA Certificate', 'Client Certificate', 'Client Key')
+ * @throws {Error} If certificate format is invalid
+ */
+function validatePemCertificate(cert, certType) {
+
+    if (!cert || typeof cert !== 'string') {
+        throw new Error(`${certType} must be a non-empty string.`);
+    }
+
+    const trimmedCert = cert.trim();
+
+    // Check for PEM format markers
+    const pemPatterns = [
+        { begin: '-----BEGIN CERTIFICATE-----', end: '-----END CERTIFICATE-----' },
+        { begin: '-----BEGIN RSA PRIVATE KEY-----', end: '-----END RSA PRIVATE KEY-----' },
+        { begin: '-----BEGIN PRIVATE KEY-----', end: '-----END PRIVATE KEY-----' },
+        { begin: '-----BEGIN EC PRIVATE KEY-----', end: '-----END EC PRIVATE KEY-----' }
+    ];
+
+    const isValidPem = pemPatterns.some(pattern => {
+        return trimmedCert.includes(pattern.begin) && trimmedCert.includes(pattern.end);
+    });
+
+    if (!isValidPem) {
+        throw new Error(
+            `${certType} is not in valid PEM format. ` +
+            'Expected certificate to start with "-----BEGIN CERTIFICATE-----" or ' +
+            '"-----BEGIN PRIVATE KEY-----" and end with corresponding END marker.'
+        );
+    }
+}
+
+/**
+ * Builds HTTPS agent with custom certificates.
+ * @param {Object} context - Component context for file operations
+ * @param {Object} certOptions - Certificate options
+ * @param {string} [certOptions.caCertificateFileId] - CA certificate file ID
+ * @param {string} [certOptions.clientCertificateFileId] - Client certificate file ID
+ * @param {string} [certOptions.clientKeyFileId] - Client private key file ID
+ * @param {boolean} [certOptions.ignoreSsl] - Whether to ignore SSL certificate validation
+ * @return {Promise<https.Agent|null>} HTTPS agent or null if no options provided
+ */
+async function buildHttpsAgent(context, certOptions) {
+
+    const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = certOptions || {};
+
+    // If no certificates or SSL options provided, return null
+    if (!caCertificateFileId && !clientCertificateFileId && !clientKeyFileId && !ignoreSsl) {
+        return null;
+    }
+
+    // Build agent options
+    const agentOptions = {};
+
+    // Handle ignore SSL
+    if (ignoreSsl) {
+        agentOptions.rejectUnauthorized = false;
+    }
+
+    // Read and validate CA certificate if provided
+    // Skip CA certificate if ignoreSsl is true (contradictory options)
+    if (caCertificateFileId && !ignoreSsl) {
+        const caBuffer = await context.getFileReadStream(caCertificateFileId);
+        const caChunks = [];
+        for await (const chunk of caBuffer) {
+            caChunks.push(chunk);
+        }
+        const caCertificate = Buffer.concat(caChunks).toString('utf8');
+        validatePemCertificate(caCertificate, 'CA Certificate');
+        agentOptions.ca = caCertificate;
+    }
+
+    // Read and validate client certificate if provided
+    if (clientCertificateFileId) {
+        const certBuffer = await context.getFileReadStream(clientCertificateFileId);
+        const certChunks = [];
+        for await (const chunk of certBuffer) {
+            certChunks.push(chunk);
+        }
+        const clientCertificate = Buffer.concat(certChunks).toString('utf8');
+        validatePemCertificate(clientCertificate, 'Client Certificate');
+        agentOptions.cert = clientCertificate;
+    }
+
+    // Read and validate client key if provided
+    if (clientKeyFileId) {
+        const keyBuffer = await context.getFileReadStream(clientKeyFileId);
+        const keyChunks = [];
+        for await (const chunk of keyBuffer) {
+            keyChunks.push(chunk);
+        }
+        const clientKey = Buffer.concat(keyChunks).toString('utf8');
+        validatePemCertificate(clientKey, 'Client Key');
+        agentOptions.key = clientKey;
+    }
+
+    return new https.Agent(agentOptions);
+}
 
 /**
  * Converts header property 'content-type' value to more readable json.
@@ -43,11 +147,12 @@ function processResponse(response) {
 
 /**
  * Builds options for request
+ * @param {Object} context - Component context for file operations
  * @param {string} method
  * @param  {Object} options
- * @return {{ options: Object, errors: Array.<Error> }}
+ * @return {Promise<{ options: Object, errors: Array.<Error> }>}
  */
-function  buildRequestOptions(method, options) {
+async function buildRequestOptions(context, method, options) {
 
     let errors = [];
     let url;
@@ -101,24 +206,261 @@ function  buildRequestOptions(method, options) {
         json.responseEncoding = encoding;
     }
 
+    // Add HTTPS agent if certificates or SSL options are provided
+    try {
+        const httpsAgent = await buildHttpsAgent(context, {
+            caCertificateFileId: options.caCertificateFileId,
+            clientCertificateFileId: options.clientCertificateFileId,
+            clientKeyFileId: options.clientKeyFileId,
+            ignoreSsl: options.ignoreSsl
+        });
+
+        if (httpsAgent) {
+            json.httpsAgent = httpsAgent;
+        }
+    } catch (error) {
+        errors.push('Certificate configuration error. ' + error.message);
+    }
+
     return { options: json, errors };
 }
 
 /**
+ * Builds HTTPS agent from certificate file IDs (simplified version for direct use in components).
+ * @param {Object} context - Component context for file operations
+ * @param {string} [caCertificateFileId] - CA certificate file ID
+ * @param {string} [clientCertificateFileId] - Client certificate file ID
+ * @param {string} [clientKeyFileId] - Client private key file ID
+ * @param {boolean} [ignoreSsl] - Whether to ignore SSL certificate validation
+ * @return {Promise<https.Agent|null>} HTTPS agent or null if no options provided
+ */
+async function buildHttpsAgentFromFiles(
+    context,
+    caCertificateFileId,
+    clientCertificateFileId,
+    clientKeyFileId,
+    ignoreSsl
+) {
+
+    // If no certificates or SSL options provided, return null
+    if (!caCertificateFileId && !clientCertificateFileId && !clientKeyFileId && !ignoreSsl) {
+        return null;
+    }
+
+    const agentOptions = {};
+
+    if (ignoreSsl) {
+        agentOptions.rejectUnauthorized = false;
+    }
+
+    // Read and validate CA certificate if provided
+    if (caCertificateFileId) {
+        const caBuffer = await context.getFileReadStream(caCertificateFileId);
+        const caChunks = [];
+        for await (const chunk of caBuffer) {
+            caChunks.push(chunk);
+        }
+        const caCert = Buffer.concat(caChunks).toString('utf8');
+        validatePemCertificate(caCert, 'CA Certificate');
+        agentOptions.ca = caCert;
+    }
+
+    // Read and validate client certificate if provided
+    if (clientCertificateFileId) {
+        const certBuffer = await context.getFileReadStream(clientCertificateFileId);
+        const certChunks = [];
+        for await (const chunk of certBuffer) {
+            certChunks.push(chunk);
+        }
+        const clientCert = Buffer.concat(certChunks).toString('utf8');
+        validatePemCertificate(clientCert, 'Client Certificate');
+        agentOptions.cert = clientCert;
+    }
+
+    // Read and validate client key if provided
+    if (clientKeyFileId) {
+        const keyBuffer = await context.getFileReadStream(clientKeyFileId);
+        const keyChunks = [];
+        for await (const chunk of keyBuffer) {
+            keyChunks.push(chunk);
+        }
+        const clientKey = Buffer.concat(keyChunks).toString('utf8');
+        validatePemCertificate(clientKey, 'Client Key');
+        agentOptions.key = clientKey;
+    }
+
+    return new https.Agent(agentOptions);
+}
+
+/**
+ * Helper to determine if SSL options are provided
+ * @param {Object} content - Message content
+ * @return {boolean}
+ */
+function hasSslOptions(content) {
+    if (!content) {
+        return false;
+    }
+    const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = content;
+    return !!(caCertificateFileId || clientCertificateFileId || clientKeyFileId || ignoreSsl);
+}
+
+/**
+ * Builds undici agent with SSL/TLS options
+ * @param {Object} context - Component context for file operations
+ * @param {Object} certOptions - Certificate options
+ * @param {string} [certOptions.caCertificateFileId] - CA certificate file ID
+ * @param {string} [certOptions.clientCertificateFileId] - Client certificate file ID
+ * @param {string} [certOptions.clientKeyFileId] - Client private key file ID
+ * @param {boolean} [certOptions.ignoreSsl] - Whether to ignore SSL certificate validation
+ * @return {Promise<Agent>} Undici Agent with TLS options
+ */
+async function buildUndiciAgent(context, certOptions) {
+
+    const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = certOptions || {};
+
+    const agentOptions = {
+        connect: {}
+    };
+
+    if (ignoreSsl) {
+        agentOptions.connect.rejectUnauthorized = false;
+    }
+
+    // Read and validate CA certificate if provided
+    if (caCertificateFileId) {
+        const caBuffer = await context.getFileReadStream(caCertificateFileId);
+        const caChunks = [];
+        for await (const chunk of caBuffer) {
+            caChunks.push(chunk);
+        }
+        const caCert = Buffer.concat(caChunks).toString('utf8');
+        validatePemCertificate(caCert, 'CA Certificate');
+        agentOptions.connect.ca = caCert;
+    }
+
+    // Read and validate client certificate if provided
+    if (clientCertificateFileId) {
+        const certBuffer = await context.getFileReadStream(clientCertificateFileId);
+        const certChunks = [];
+        for await (const chunk of certBuffer) {
+            certChunks.push(chunk);
+        }
+        const clientCert = Buffer.concat(certChunks).toString('utf8');
+        validatePemCertificate(clientCert, 'Client Certificate');
+        agentOptions.connect.cert = clientCert;
+    }
+
+    // Read and validate client key if provided
+    if (clientKeyFileId) {
+        const keyBuffer = await context.getFileReadStream(clientKeyFileId);
+        const keyChunks = [];
+        for await (const chunk of keyBuffer) {
+            keyChunks.push(chunk);
+        }
+        const clientKey = Buffer.concat(keyChunks).toString('utf8');
+        validatePemCertificate(clientKey, 'Client Key');
+        agentOptions.connect.key = clientKey;
+    }
+
+    return new Agent(agentOptions);
+}
+
+/**
+ * Send HTTP request using undici with SSL options
+ * @param {Object} context - Component context for file operations
+ * @param {string} method - HTTP method
+ * @param {Object} options - Request options
+ * @return {Promise<Object>} Response object
+ */
+async function sendWithUndici(context, method, options) {
+
+    const { url, headers: headersProp, body: bodyProp } = options;
+    const { caCertificateFileId, clientCertificateFileId, clientKeyFileId, ignoreSsl } = options;
+
+    // Parse headers
+    let headers;
+    try {
+        headers = typeof headersProp === 'string' ? JSON.parse(headersProp) : headersProp;
+    } catch (error) {
+        throw new Error('Message property "headers" parse error. ' + error.message);
+    }
+
+    // Parse body
+    let body = bodyProp;
+    if (body && typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch {
+            // Keep as string if not JSON
+        }
+    }
+
+    // Convert body to string if it's an object
+    if (body && typeof body === 'object') {
+        body = JSON.stringify(body);
+    }
+
+    // Build undici agent with SSL options
+    const agent = await buildUndiciAgent(context, {
+        caCertificateFileId,
+        clientCertificateFileId,
+        clientKeyFileId,
+        ignoreSsl
+    });
+
+    try {
+        const { statusCode, body: responseBody, headers: responseHeaders } = await undiciRequest(url, {
+            method: method.toUpperCase(),
+            headers,
+            body,
+            dispatcher: agent
+        });
+
+        const responseData = await responseBody.json();
+
+        return {
+            statusCode,
+            headers: responseHeaders,
+            body: responseData,
+            status: statusCode,
+            data: responseData,
+            config: {
+                url,
+                method: method.toUpperCase(),
+                headers
+            }
+        };
+    } catch (error) {
+        throw new Error(`Failed to send request with undici: ${error.message}`);
+    }
+}
+
+/**
  * Promisified http request.
+ * @param  {Object} context - Component context for file operations
  * @param  {string} method - POST, DELETE, PUT, GET
  * @param  {{
  *   url: String,
  *   body: String,
  *   bodyBase64Encode: Boolean,
  *   headers: String,
- *   responseEncoding: String
+ *   responseEncoding: String,
+ *   caCertificateFileId: String,
+ *   clientCertificateFileId: String,
+ *   clientKeyFileId: String,
+ *   ignoreSsl: Boolean
  * }} json options
  * @return {Promise}
  */
-module.exports = async function(method, json) {
+module.exports = async function(context, method, json) {
 
-    let { options, errors } = buildRequestOptions(method, json);
+    // Use undici if SSL options are provided, otherwise use axios
+    if (hasSslOptions(json)) {
+        return await sendWithUndici(context, method, json);
+    }
+
+    let { options, errors } = await buildRequestOptions(context, method, json);
     if (errors.length > 0) {
         // log all errors
         throw new Error(errors.join('. '));
@@ -136,3 +478,9 @@ module.exports = async function(method, json) {
         throw error;
     }
 };
+
+module.exports.buildHttpsAgentFromFiles = buildHttpsAgentFromFiles;
+module.exports.buildHttpsAgent = buildHttpsAgent;
+module.exports.buildUndiciAgent = buildUndiciAgent;
+module.exports.sendWithUndici = sendWithUndici;
+module.exports.hasSslOptions = hasSslOptions;

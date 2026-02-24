@@ -42,13 +42,18 @@ describe('dynamicsAuth', function() {
                 }
             });
 
+            const nowMs = Date.now();
             const result = await dynamicsAuth.definition.requestAccessToken(context);
-            assert.deepStrictEqual(result, {
-                accessToken: 'testAccessToken',
-                refreshToken: 'testRefreshToken',
-                resource: 'testResource',
-                accessTokenExpDate: new Date(Date.now() + 3600000)
-            });
+
+            // Check the result properties individually to avoid timestamp flakiness
+            assert.strictEqual(result.accessToken, 'testAccessToken');
+            assert.strictEqual(result.refreshToken, 'testRefreshToken');
+            assert.strictEqual(result.resource, 'testResource');
+
+            // Allow 1 second tolerance for the expiration date (accounts for test execution time)
+            const expectedExpDate = new Date(nowMs + 3600000);
+            const timeDiff = Math.abs(result.accessTokenExpDate.getTime() - expectedExpDate.getTime());
+            assert.ok(timeDiff < 1000, `Expiration date is within 1 second of expected time. Diff: ${timeDiff}ms`);
         });
     });
 

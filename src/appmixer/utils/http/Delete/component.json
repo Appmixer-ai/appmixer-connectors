@@ -33,7 +33,7 @@
                         "tooltip": "JSON object containing request headers."
                     },
                     "body": {
-                        "type": "textare",
+                        "type": "textarea",
                         "index": 3,
                         "label" : "Request body",
                         "group": "transformation",
@@ -63,6 +63,35 @@
                             { "value": null, "content": "no encoding" }
                         ],
                         "tooltip": "Set the encoding for response. Use <b>null</b> for binary. <br/>Note: Today's browsers follow the WHATWG spec which aliases both 'latin1' and ISO-8859-1 to win-1252. This means that while doing something like http.get(), if the returned charset is one of those listed in the WHATWG spec it's possible that the server actually returned win-1252-encoded data, and using 'latin1' encoding may incorrectly decode the characters."
+                    },
+                    "ignoreSsl": {
+                        "type": "toggle",
+                        "defaultValue": false,
+                        "index": 6,
+                        "label": "Ignore SSL Certificate Issues",
+                        "group": "ssl",
+                        "tooltip": "Enable this to ignore SSL certificate validation errors. Warning: This should only be used for testing or with trusted servers as it disables certificate verification."
+                    },
+                    "caCertificateFileId": {
+                        "type": "filepicker",
+                        "index": 7,
+                        "label": "CA Certificate File",
+                        "group": "ssl",
+                        "tooltip": "Optional. Upload custom CA certificate file (.crt, .pem) for servers with self-signed certificates."
+                    },
+                    "clientCertificateFileId": {
+                        "type": "filepicker",
+                        "index": 8,
+                        "label": "Client Certificate File",
+                        "group": "ssl",
+                        "tooltip": "Optional. Upload client certificate file (.crt, .pem) for mutual TLS authentication."
+                    },
+                    "clientKeyFileId": {
+                        "type": "filepicker",
+                        "index": 9,
+                        "label": "Client Private Key File",
+                        "group": "ssl",
+                        "tooltip": "Optional. Upload client private key file (.key, .pem) for mutual TLS authentication."
                     }
                 },
                 "groups": {
@@ -74,6 +103,11 @@
                         "label": "Advanced",
                         "closed": true,
                         "index": 2
+                    },
+                    "ssl": {
+                        "label": "SSL/TLS Certificates",
+                        "closed": true,
+                        "index": 3
                     }
                 }
             },
@@ -109,7 +143,11 @@
                             "hex",
                             null
                         ]
-                    }
+                    },
+                    "ignoreSsl": { "type": "boolean" },
+                    "caCertificateFileId": { "type": "string" },
+                    "clientCertificateFileId": { "type": "string" },
+                    "clientKeyFileId": { "type": "string" }
                 },
                 "required": [ "url" ]
             }

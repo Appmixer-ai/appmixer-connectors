@@ -1,0 +1,166 @@
+{
+    "flow": {
+        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 300,
+            "y": 200,
+            "source": {
+                "in": {
+                    "fbb75e69-59ee-4f2e-a7e8-212e903ce201": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "find-custom-modules": {
+            "type": "appmixer.zoho.crm.FindCustomModules",
+            "x": 500,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "searchQuery": {},
+                                    "sortBy": {},
+                                    "sortOrder": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "searchQuery": "",
+                                    "sortBy": "created_time",
+                                    "sortOrder": "desc",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-modules-found": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-custom-modules": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-custom-modules": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "result-check": {
+                                            "variable": "$.find-custom-modules.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 900,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-modules-found": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1100,
+            "y": 200,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Zoho - findcustommodules",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Zoho - findcustommodules",
+    "type": "automation",
+    "notes": {}
+}

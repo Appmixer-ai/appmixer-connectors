@@ -1,0 +1,510 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "documentData",
+                                                "text": "E2E Test Document: This is a sample document for testing raw document operations in RagieAI."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "documentName",
+                                                "text": "E2E Test Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedData",
+                                                "text": "E2E Test Document Updated: This is the updated content for testing document updates."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-document": {
+            "type": "appmixer.ragieai.core.CreateDocumentRaw",
+            "x": 464,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "data": {
+                                        "var-data": {
+                                            "variable": "$.set-variables.out.documentData",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-name": {
+                                            "variable": "$.set-variables.out.documentName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "data": "{{{var-data}}}",
+                                    "name": "{{{var-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.create-document.out.id",
+                                            "functions": []
+                                        },
+                                        "check-status": {
+                                            "variable": "$.create-document.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{check-status}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-document": {
+            "type": "appmixer.ragieai.core.GetDocument",
+            "x": 656,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.create-document.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-name": {
+                                            "variable": "$.get-document.out.name",
+                                            "functions": []
+                                        },
+                                        "check-status": {
+                                            "variable": "$.get-document.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Document"
+                                            },
+                                            {
+                                                "field": "{{{check-status}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-document": {
+            "type": "appmixer.ragieai.core.UpdateDocumentRaw",
+            "x": 848,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.create-document.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "data": {
+                                        "var-updated-data": {
+                                            "variable": "$.set-variables.out.updatedData",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}",
+                                    "data": "{{{var-updated-data}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-status": {
+                                            "variable": "$.update-document.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-status}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-document-content": {
+            "type": "appmixer.ragieai.core.GetDocumentContent",
+            "x": 1040,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.create-document.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-content": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-document-content": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-document-content": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.get-document-content.out.id",
+                                            "functions": []
+                                        },
+                                        "check-content": {
+                                            "variable": "$.get-document-content.out.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{check-content}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-document": {
+            "type": "appmixer.ragieai.core.DeleteDocument",
+            "x": 1616,
+            "y": 144,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}"
+                                },
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.create-document.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ],
+                    "assert-get-content": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1792,
+            "y": 144,
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-document": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Ragieai - raw document operations",
+                                    "result": "{{{result-var}}}"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-document": [
+                        "out"
+                    ]
+                }
+            }
+        }
+    },
+    "name": "E2E Ragieai - raw document operations",
+    "type": "automation",
+    "notes": {}
+}

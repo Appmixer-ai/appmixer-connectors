@@ -1,0 +1,482 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "assistantName",
+                                                "text": "E2E Test Assistant"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "firstMessage",
+                                                "text": "Hello, I am your E2E test assistant"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedName",
+                                                "text": "E2E Test Assistant Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-assistant": {
+            "type": "appmixer.vapi.core.CreateAssistant",
+            "x": 464,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-name": {
+                                            "variable": "$.set-variables.out.assistantName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "firstMessage": {
+                                        "var-first-msg": {
+                                            "variable": "$.set-variables.out.firstMessage",
+                                            "functions": []
+                                        }
+                                    },
+                                    "model": {},
+                                    "voice": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{var-name}}}",
+                                    "firstMessage": "{{{var-first-msg}}}",
+                                    "model": "{\n    \"provider\": \"openai\",\n    \"model\": \"gpt-4o-mini\",\n    \"temperature\": 0.7,\n    \"messages\": [\n      {\n        \"role\": \"system\",\n        \"content\": \"You are a helpful customer support assistant. Answer politely and clearly.\"\n      }\n    ]\n  }",
+                                    "voice": "{\n    \"provider\": \"11labs\",\n    \"voiceId\": \"t0jbNlBVZ17f02VDIeMI\"\n  }"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.create-assistant.out.id",
+                                            "functions": []
+                                        },
+                                        "check-name": {
+                                            "variable": "$.create-assistant.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-name": {
+                                            "variable": "$.set-variables.out.assistantName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-id}}}"
+                                            },
+                                            {
+                                                "expected": "{{{expected-name}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{check-name}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-assistant": {
+            "type": "appmixer.vapi.core.GetAssistant",
+            "x": 656,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "var-id": {
+                                            "variable": "$.create-assistant.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-retrieved-id": {
+                                            "variable": "$.get-assistant.out.id",
+                                            "functions": []
+                                        },
+                                        "check-retrieved-name": {
+                                            "variable": "$.get-assistant.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-retrieved-name": {
+                                            "variable": "$.set-variables.out.assistantName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-retrieved-id}}}"
+                                            },
+                                            {
+                                                "expected": "{{{expected-retrieved-name}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{check-retrieved-name}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-assistant": {
+            "type": "appmixer.vapi.core.UpdateAssistant",
+            "x": 848,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "var-id": {
+                                            "variable": "$.create-assistant.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-updated-name": {
+                                            "variable": "$.set-variables.out.updatedName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{var-id}}}",
+                                    "name": "{{{var-updated-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-updated-assistant": {
+            "type": "appmixer.vapi.core.GetAssistant",
+            "x": 1040,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "var-id": {
+                                            "variable": "$.create-assistant.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-updated-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-updated-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-updated-name": {
+                                            "variable": "$.get-updated-assistant.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-updated-name": {
+                                            "variable": "$.set-variables.out.updatedName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "{{{expected-updated-name}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{check-updated-name}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1424,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-assistant": {
+            "type": "appmixer.vapi.core.DeleteAssistant",
+            "x": 1616,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "var-id": {
+                                            "variable": "$.create-assistant.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1792,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-assistant": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-assistant": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Vapi - assistant-crud",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Vapi - assistant-crud",
+    "type": "automation",
+    "notes": {}
+}

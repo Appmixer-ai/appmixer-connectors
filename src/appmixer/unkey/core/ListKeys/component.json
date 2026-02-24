@@ -1,0 +1,97 @@
+{
+    "name": "appmixer.unkey.core.ListKeys",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "List API keys for a specific API. Fetches up to 1000 keys with automatic pagination.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:unkey"
+    },
+    "quota": {
+        "manager": "appmixer:unkey",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "apiId": {
+                        "type": "string"
+                    },
+                    "ownerId": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
+                    }
+                },
+                "required": [
+                    "apiId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "apiId": {
+                        "type": "text",
+                        "label": "API ID",
+                        "index": 1,
+                        "tooltip": "The ID of the API to list keys for"
+                    },
+                    "ownerId": {
+                        "type": "text",
+                        "label": "Owner ID",
+                        "index": 2,
+                        "tooltip": "Optional filter by owner ID"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, or one item at a time.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/unkey/core/ListKeys?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/apiId": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMiIgZmlsbD0iIzAwMDAwMCIvPgogIDxwYXRoIGQ9Ik0yMCAzMkgzMk00NCAzMkg1Mk0zMiAyMFYzMk0zMiAzMlY0NCIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjYiIGZpbGw9IiNGRkZGRkYiLz4KPC9zdmc+"
+}

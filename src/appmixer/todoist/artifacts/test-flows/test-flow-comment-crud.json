@@ -1,0 +1,520 @@
+{
+    "flow": {
+        "start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": -320,
+            "y": 128,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": -96,
+            "y": 128,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "commentContent",
+                                                "text": "E2E Test Comment"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedContent",
+                                                "text": "E2E Test Comment Updated"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 96,
+            "y": 128,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-comment": {
+            "type": "appmixer.todoist.core.CreateComment",
+            "x": 288,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {},
+                                    "content": {
+                                        "25ed7b3b-1080-4ebe-85a6-e0df4d9fc1dd": {
+                                            "variable": "$.set-variables.out.commentContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "2365437921",
+                                    "content": "{{{25ed7b3b-1080-4ebe-85a6-e0df4d9fc1dd}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        },
+                                        "8c7cec83-93de-44a1-89a1-463da175e949": {
+                                            "variable": "$.set-variables.out.commentContent",
+                                            "functions": []
+                                        },
+                                        "3c58d827-d838-4960-bebc-f61775d5adb1": {
+                                            "variable": "$.set-variables.out.commentContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "{{{3c58d827-d838-4960-bebc-f61775d5adb1}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{8c7cec83-93de-44a1-89a1-463da175e949}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-comment": {
+            "type": "appmixer.todoist.core.GetComment",
+            "x": 608,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "commentId": {
+                                        "bff7238c-64d0-4938-996e-2e2fc8707eec": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentId": "{{{bff7238c-64d0-4938-996e-2e2fc8707eec}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-content": {
+                                            "variable": "$.get-comment.out.content",
+                                            "functions": []
+                                        },
+                                        "560d3073-7ffb-4c6a-b299-3749441d27db": {
+                                            "variable": "$.get-comment.out.content",
+                                            "functions": []
+                                        },
+                                        "ed1e4dda-8b72-49f1-934d-8a87691e726b": {
+                                            "variable": "$.set-variables.out.commentContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "{{{ed1e4dda-8b72-49f1-934d-8a87691e726b}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{560d3073-7ffb-4c6a-b299-3749441d27db}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-comments": {
+            "type": "appmixer.todoist.core.ListComments",
+            "x": 608,
+            "y": 464,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {},
+                                    "projectId": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first",
+                                    "projectId": "2365437921"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-comment": {
+            "type": "appmixer.todoist.core.UpdateComment",
+            "x": 608,
+            "y": 624,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "commentId": {
+                                        "cf7d86ea-a170-4a4b-92f4-bcb851a1cb5d": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "content": {
+                                        "25120067-fbb5-4ba3-84c1-262180453a8b": {
+                                            "variable": "$.set-variables.out.updatedContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentId": "{{{cf7d86ea-a170-4a4b-92f4-bcb851a1cb5d}}}",
+                                    "content": "{{{25120067-fbb5-4ba3-84c1-262180453a8b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 624,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-updated-content": {
+                                            "variable": "$.update-comment.out.content",
+                                            "functions": []
+                                        },
+                                        "ed498772-9d0a-4957-a686-4ad4202ba587": {
+                                            "variable": "$.set-variables.out.updatedContent",
+                                            "functions": []
+                                        },
+                                        "82146772-64a6-4e6e-aab0-2326db621ab1": {
+                                            "variable": "$.update-comment.out.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "{{{ed498772-9d0a-4957-a686-4ad4202ba587}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{82146772-64a6-4e6e-aab0-2326db621ab1}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1264,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ],
+                    "25b9329c-df89-4fb3-b81f-3f1fb746b8b4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1644,
+            "y": 128,
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-comment": {},
+                        "aa03d040-73f4-4f60-b1ef-fc5e699c7f56": {},
+                        "after-all": {},
+                        "2f7fa03f-8181-4dd4-99d2-7f5407f9e653": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Todoist - comment-crud",
+                                    "result": "{{{da8addbe-8bf5-4a21-a66a-2e4f7b90d863}}}"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "da8addbe-8bf5-4a21-a66a-2e4f7b90d863": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "2f7fa03f-8181-4dd4-99d2-7f5407f9e653": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "25b9329c-df89-4fb3-b81f-3f1fb746b8b4": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 464,
+            "source": {
+                "in": {
+                    "list-comments": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-comments": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "26082275-fbb5-49f3-ab29-95190bd72f1b": {
+                                            "variable": "$.list-comments.out.content",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{26082275-fbb5-49f3-ab29-95190bd72f1b}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "2f7fa03f-8181-4dd4-99d2-7f5407f9e653": {
+            "type": "appmixer.todoist.core.DeleteComment",
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1456,
+            "y": 128,
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "commentId": {
+                                        "bb524436-e017-4444-9aef-6353ac8810d0": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentId": "{{{bb524436-e017-4444-9aef-6353ac8810d0}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Todoist - comment-crud",
+    "type": "automation",
+    "notes": {}
+}

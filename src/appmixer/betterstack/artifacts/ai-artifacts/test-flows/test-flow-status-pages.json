@@ -1,0 +1,548 @@
+{
+    "name": "E2E BetterStack - status pages",
+    "description": "End-to-end test for BetterStack connector - tests CRUD and list operations on status pages",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 300,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 300,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "companyName",
+                                                "text": "E2E Test Status Page"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "companyUrl",
+                                                "text": "https://e2e-test.com"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedName",
+                                                "text": "E2E Test SP Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-status-page": {
+            "type": "appmixer.betterstack.statuspages.CreateStatusPage",
+            "x": 500,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "companyName": {
+                                        "var-name": {
+                                            "variable": "$.set-variables.out.companyName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "companyUrl": {
+                                        "var-url": {
+                                            "variable": "$.set-variables.out.companyUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "subdomain": {},
+                                    "timezone": {}
+                                },
+                                "lambda": {
+                                    "companyName": "{{{var-name}}}",
+                                    "companyUrl": "{{{var-url}}}",
+                                    "subdomain": "e2e-sp-{{{g_timestamp()}}}",
+                                    "timezone": "UTC"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id-check": {
+                                            "variable": "$.create-status-page.out.id",
+                                            "functions": []
+                                        },
+                                        "name-check": {
+                                            "variable": "$.create-status-page.out.company_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Status Page"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-status-page": {
+            "type": "appmixer.betterstack.statuspages.GetStatusPage",
+            "x": 700,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "statusPageId": {
+                                        "var-id": {
+                                            "variable": "$.create-status-page.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "statusPageId": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-check": {
+                                            "variable": "$.get-status-page.out.company_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Status Page"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-status-page": {
+            "type": "appmixer.betterstack.statuspages.UpdateStatusPage",
+            "x": 500,
+            "y": 600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "statusPageId": {
+                                        "var-id": {
+                                            "variable": "$.create-status-page.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "companyName": {
+                                        "var-name": {
+                                            "variable": "$.set-variables.out.updatedName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "statusPageId": "{{{var-id}}}",
+                                    "companyName": "{{{var-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-check": {
+                                            "variable": "$.update-status-page.out.company_name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test SP Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-status-pages-first": {
+            "type": "appmixer.betterstack.statuspages.ListStatusPages",
+            "x": 700,
+            "y": 800,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-first": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 800,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-status-pages-first": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-status-pages-first": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id-check": {
+                                            "variable": "$.list-status-pages-first.out.id",
+                                            "functions": []
+                                        },
+                                        "index-check": {
+                                            "variable": "$.list-status-pages-first.out.index",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{index-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-status-pages-array": {
+            "type": "appmixer.betterstack.statuspages.ListStatusPages",
+            "x": 700,
+            "y": 1000,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-status-page": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-array": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 1000,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-status-pages-array": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-status-pages-array": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "count-check": {
+                                            "variable": "$.list-status-pages-array.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{count-check}}}",
+                                                "assertion": "regex",
+                                                "expected": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1100,
+            "y": 600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": ["out"],
+                    "assert-get": ["out"],
+                    "assert-update": ["out"],
+                    "assert-list-first": ["out"],
+                    "assert-list-array": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-status-page": {
+            "type": "appmixer.betterstack.statuspages.DeleteStatusPage",
+            "x": 1300,
+            "y": 600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "statusPageId": {
+                                        "var-id": {
+                                            "variable": "$.create-status-page.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "statusPageId": "{{{var-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1500,
+            "y": 600,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-status-page": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-status-page": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E BetterStack - status pages",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

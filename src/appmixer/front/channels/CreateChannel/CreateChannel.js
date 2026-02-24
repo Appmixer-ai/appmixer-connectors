@@ -13,7 +13,10 @@ module.exports = {
             throw new context.CancelError('Channel name is required.');
         }
 
-        const requestData = { type: 'custom' };
+        const requestData = {
+            type: 'custom',
+            name
+        };
 
         // Build settings object with the new properties
         const channelSettings = {};
