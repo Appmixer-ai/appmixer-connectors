@@ -2,25 +2,7 @@ const { GoogleAdsApi } = require('google-ads-api');
 const csv = require('csv-parser');
 const { Readable } = require('stream');
 
-// Threshold: if Google says retry in more than this, throw RateLimitError for the component to handle via continuation
-const RATE_LIMIT_CONTINUATION_THRESHOLD_MS = 60 * 1000;
-
-/**
- * Thrown when Google Ads API rate limit requires a wait longer than we can handle in-process.
- * The component should freeze the chunk, store rateLimitUntil, and schedule continuation.
- */
-class RateLimitError extends Error {
-    constructor(retryAfterMs, originalMessage) {
-        super(`Rate limited by Google Ads API. Retry after ${Math.ceil(retryAfterMs / 1000)}s. Original: ${originalMessage}`);
-        this.name = 'RateLimitError';
-        this.retryAfterMs = retryAfterMs;
-        this.rateLimitUntil = Date.now() + retryAfterMs;
-    }
-}
-
 module.exports = {
-
-    RateLimitError,
 
     /**
      * Safe wrapper for context.log.
@@ -189,15 +171,6 @@ module.exports = {
                 const extractedMsg = this.extractErrorMessage(error);
                 const classification = this.classifyError(error, extractedMsg);
 
-                // If rate limited with a large delay, throw RateLimitError for component-level handling
-                if (classification.isRateLimit) {
-                    const apiDelay = this.parseRetryDelay(extractedMsg);
-                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
-                        this.safeLog(context, 'warn', `Create job rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component for continuation`);
-                        throw new RateLimitError(apiDelay, extractedMsg);
-                    }
-                }
-
                 if (attempt === maxRetries || !classification.isRetryable) {
                     this.safeLog(context, 'error', `Create job failed (attempt ${attempt}/${maxRetries}): ${extractedMsg}`);
                     throw error;
@@ -293,16 +266,7 @@ module.exports = {
                 const extractedMsg = this.extractErrorMessage(error);
                 const classification = this.classifyError(error, extractedMsg);
 
-                // If rate limited with a large delay, escalate to component for continuation
-                if (classification.isRateLimit) {
-                    const apiDelay = this.parseRetryDelay(extractedMsg);
-                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
-                        this.safeLog(context, 'warn', `Upload rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component`);
-                        throw new RateLimitError(apiDelay, extractedMsg);
-                    }
-                }
-
-                // Rate limit / network / concurrent with short delay → wait and retry same batch
+                // Rate limit / network / concurrent → wait and retry same batch
                 if (classification.isRetryable) {
                     if (classification.isRateLimit && globalRateLimitCallback) {
                         globalRateLimitCallback(this.parseRetryDelay(extractedMsg));
@@ -370,15 +334,6 @@ module.exports = {
                 lastError = error;
                 const extractedMsg = this.extractErrorMessage(error);
                 const classification = this.classifyError(error, extractedMsg);
-
-                // If rate limited with a large delay, escalate to component for continuation
-                if (classification.isRateLimit) {
-                    const apiDelay = this.parseRetryDelay(extractedMsg);
-                    if (apiDelay && apiDelay > RATE_LIMIT_CONTINUATION_THRESHOLD_MS) {
-                        this.safeLog(context, 'warn', `Run job rate limited: retry in ${Math.ceil(apiDelay / 1000)}s — escalating to component`);
-                        throw new RateLimitError(apiDelay, extractedMsg);
-                    }
-                }
 
                 if (attempt === maxRetries || !classification.isRetryable) {
                     this.safeLog(context, 'error', `Run job failed (attempt ${attempt}/${maxRetries}): ${extractedMsg}`);

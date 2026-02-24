@@ -30,10 +30,10 @@ module.exports = {
                     scope: context.scope.join(' '),
                     state: context.ticket,
                     access_type: 'offline',
-                    approval_prompt: 'force'
+                    prompt: 'consent'
                 });
 
-                return `https://accounts.google.com/o/oauth2/auth?${params}`;
+                return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
             },
 
             requestProfileInfo: async function(context) {

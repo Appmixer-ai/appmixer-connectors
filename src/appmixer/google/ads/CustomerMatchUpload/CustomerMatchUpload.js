@@ -4,6 +4,7 @@
  * Reads CSV in chunks (batchSize * chunkMultiplier rows), groups by segment,
  * uploads batches with per-batch progress, then checks timeout.
  * Continuation: finish current chunk work, save lastProcessedRow, schedule next receive().
+ * Rate limits: retried up to 5 times with backoff, then stops with error output.
  * stop() hook cancels pending timeouts so stopped flows don't trigger errors.
  */
 
@@ -15,7 +16,6 @@ const csvParser = require('../csvParser');
 
 const TIMEOUT_TRIGGER_SECONDS = 10 * 60; // check continuation after each chunk if 10 min elapsed
 const TIMEOUT_DELAY_SECONDS = 60;        // pause between continuations
-const RATE_LIMIT_CHECK_SECONDS = 5 * 60; // check rate limit cooldown every 5 minutes
 const PROGRESS_INTERVAL_MS = 5000;       // throttle progress messages to every 5 seconds
 const MAX_UPLOAD_TIME_HOURS = 48;
 const STATE_KEY_TIMEOUT_ID = 'pendingTimeoutId';
@@ -47,7 +47,6 @@ module.exports = {
         let segmentToUserList, uploadMode, batchSize, columnSeparator;
         let timeStart, lastProcessedRow, segmentProgress, errors, totalUsersUploaded;
         let jobsAlreadyRun;
-        let rateLimitUntil;
         let totalRows;
 
         if (isContinuation) {
@@ -73,7 +72,6 @@ module.exports = {
             errors = s.errors || [];
             totalUsersUploaded = s.totalUsersUploaded || 0;
             jobsAlreadyRun = s.jobsAlreadyRun || [];
-            rateLimitUntil = s.rateLimitUntil || 0;
             totalRows = s.totalRows || 0;
 
             lib.safeLog(context, 'info', `Continuation: row ${lastProcessedRow}/${totalRows}, ${totalUsersUploaded} uploaded`);
@@ -93,7 +91,6 @@ module.exports = {
             errors = [];
             totalUsersUploaded = 0;
             jobsAlreadyRun = [];
-            rateLimitUntil = 0;
             totalRows = 0;
         }
 
@@ -103,6 +100,11 @@ module.exports = {
         }
         if (!fileId) throw new context.CancelError('Missing fileId.');
         if (!context.auth || !context.auth.accessToken) throw new context.CancelError('Missing OAuth2 authentication. Please connect your Google account.');
+        // Debug: log which auth fields are present (not their values)
+        lib.safeLog(context, 'info', `Auth fields: clientId=${!!context.auth.clientId}, clientSecret=${!!context.auth.clientSecret}, accessToken=${!!context.auth.accessToken}, refreshToken=${!!context.auth.refreshToken}`);
+        if (!context.auth.refreshToken) {
+            throw new context.CancelError('Missing refresh token. Please disconnect and reconnect your Google account to re-authorize with offline access.');
+        }
         if (!developerToken) throw new context.CancelError('Missing Developer Token.');
         if (!customerId) throw new context.CancelError('Missing Customer ID.');
 
@@ -134,52 +136,6 @@ module.exports = {
             refresh_token: context.auth.refreshToken,
             login_customer_id: loginCustomerId || undefined
         });
-
-        // ── Rate limit cooldown check ────────────────────────────────────────
-        if (rateLimitUntil && Date.now() < rateLimitUntil) {
-            const remainingMs = rateLimitUntil - Date.now();
-            const remainingStr = lib.formatTime(Math.ceil(remainingMs / 1000));
-            // Calculate ETA: rate limit wait + estimated remaining processing time
-            let etaStr = remainingStr;
-            if (lastProcessedRow > 0 && totalRows > 0) {
-                const elapsed = Math.floor((Date.now() - timeStart) / 1000);
-                const rowsRemaining = totalRows - lastProcessedRow;
-                const rate = lastProcessedRow / elapsed;
-                const processingEta = Math.ceil(rowsRemaining / rate);
-                const totalEta = Math.ceil(remainingMs / 1000) + processingEta;
-                etaStr = lib.formatTime(totalEta);
-            }
-            lib.safeSendProgress(context, {
-                message: `Rate limited. ${remainingStr} cooldown remaining. Row ${lastProcessedRow}/${totalRows} | ETA: ${etaStr}`,
-                status: 'rate_limited',
-                rateLimitUntil,
-                totalUsersUploaded,
-                totalRows,
-                lastProcessedRow
-            }, 'progress');
-            // Reschedule to check again in RATE_LIMIT_CHECK_SECONDS
-            const delay = Math.min(remainingMs + 5000, RATE_LIMIT_CHECK_SECONDS * 1000);
-            const trimmedErrors = errors.length > 100 ? errors.slice(-100) : errors;
-            const payload = {
-                fileId, developerToken,
-                loginCustomerId, customerId, segmentToUserList, uploadMode,
-                batchSize, columnSeparator,
-                timeStart: timeStart.getTime(),
-                lastProcessedRow, segmentProgress,
-                errors: trimmedErrors, totalUsersUploaded, jobsAlreadyRun,
-                rateLimitUntil, totalRows
-            };
-            try {
-                const timeoutId = await context.setTimeout(payload, delay);
-                await context.stateSet(STATE_KEY_TIMEOUT_ID, timeoutId);
-                return;
-            } catch (err) {
-                lib.safeLog(context, 'error', `Rate limit reschedule failed: ${err.message}`);
-                throw err;
-            }
-        }
-        // Clear rateLimitUntil once cooldown has passed
-        rateLimitUntil = 0;
 
         // ── Rate limit coordination ──────────────────────────────────────────
         let globalRateLimitUntil = 0;
@@ -274,7 +230,6 @@ module.exports = {
                 errors: trimmedErrors,
                 totalUsersUploaded,
                 jobsAlreadyRun,
-                rateLimitUntil,
                 totalRows
             };
 
@@ -323,9 +278,7 @@ module.exports = {
                         sp.jobResourceName = await lib.createUserDataJob(context, customer, customerId, userListId);
                         lib.safeLog(context, 'info', `Created job: segment '${segment}' UL ${userListId}: ${sp.jobResourceName}`);
                     } catch (err) {
-                        // Let RateLimitError bubble up to chunk loop for freeze handling
-                        if (err.name === 'RateLimitError') throw err;
-                        const errMsg = lib.extractErrorMessage(err);
+                            const errMsg = lib.extractErrorMessage(err);
                         lib.safeLog(context, 'error', `Job creation failed: segment '${segment}' UL ${userListId}: ${errMsg}`);
                         errors.push(`Job creation failed: segment '${segment}' UL ${userListId}: ${errMsg}`);
                         return;
@@ -403,52 +356,15 @@ module.exports = {
                 }
 
                 // Process ALL segments and ALL batches in this chunk
-                // Track jobs created in this chunk so we can reset them on rate limit
-                const chunkJobKeys = [];
-                try {
-                    const segmentEntries = Object.entries(segmentGroups);
-                    for (let si = 0; si < segmentEntries.length; si++) {
-                        const [segment, emails] = segmentEntries[si];
+                const segmentEntries = Object.entries(segmentGroups);
+                for (let si = 0; si < segmentEntries.length; si++) {
+                    const [segment, emails] = segmentEntries[si];
 
-                        // Track which progress keys are touched in this chunk
-                        const userListIds = normalizedMapping[segment] || [];
-                        for (const ulId of userListIds) {
-                            chunkJobKeys.push(`${segment}__${ulId}`);
-                        }
-
-                        for (let i = 0; i < emails.length; i += batchSize) {
-                            const batch = emails.slice(i, i + batchSize);
-                            const isFinal = (i + batchSize >= emails.length);
-                            await uploadBatch(segment, batch, isFinal);
-                        }
+                    for (let i = 0; i < emails.length; i += batchSize) {
+                        const batch = emails.slice(i, i + batchSize);
+                        const isFinal = (i + batchSize >= emails.length);
+                        await uploadBatch(segment, batch, isFinal);
                     }
-                } catch (chunkErr) {
-                    if (chunkErr.name === 'RateLimitError') {
-                        // FREEZE: don't advance lastProcessedRow
-                        rateLimitUntil = chunkErr.rateLimitUntil;
-                        const waitStr = lib.formatTime(Math.ceil(chunkErr.retryAfterMs / 1000));
-                        lib.safeLog(context, 'warn', `Rate limited during chunk at row ${lastProcessedRow}. Google says wait ${waitStr}. Freezing chunk.`);
-
-                        // Reset segmentProgress for jobs created in this chunk — they're stale
-                        for (const key of chunkJobKeys) {
-                            if (segmentProgress[key]) {
-                                // Undo uploaded counts from this chunk's work
-                                totalUsersUploaded -= (segmentProgress[key].uploaded || 0);
-                                delete segmentProgress[key];
-                            }
-                        }
-
-                        lib.safeSendProgress(context, {
-                            message: `Google Ads rate limit hit. Waiting ${waitStr} before retrying chunk at row ${lastProcessedRow}.`,
-                            status: 'rate_limited',
-                            rateLimitUntil,
-                            totalUsersUploaded
-                        }, 'progress');
-
-                        return await scheduleContinuation('rate_limit_freeze');
-                    }
-                    // Non-rate-limit errors bubble up to the outer catch
-                    throw chunkErr;
                 }
 
                 // Advance row pointer — chunk fully processed (all segments succeeded)
@@ -519,19 +435,6 @@ module.exports = {
                     results.totalJobs++;
                     jobsAlreadyRun.push(jobResourceName);
                 } catch (err) {
-                    // Rate limit during job run — freeze and schedule continuation
-                    if (err.name === 'RateLimitError') {
-                        rateLimitUntil = err.rateLimitUntil;
-                        const waitStr = lib.formatTime(Math.ceil(err.retryAfterMs / 1000));
-                        lib.safeLog(context, 'warn', `Rate limited during job run. Google says wait ${waitStr}. Scheduling continuation.`);
-                        lib.safeSendProgress(context, {
-                            message: `Google Ads rate limit hit during job execution. Waiting ${waitStr} before retrying.`,
-                            status: 'rate_limited',
-                            rateLimitUntil,
-                            totalUsersUploaded
-                        }, 'progress');
-                        return await scheduleContinuation('rate_limit_job_run');
-                    }
                     const errMsg = lib.extractErrorMessage(err);
                     lib.safeLog(context, 'error', `Failed to run job ${jobResourceName}: ${errMsg}`);
                     errors.push(`Failed to run job UL ${jobInfo.userListId}: ${errMsg}`);
@@ -561,7 +464,9 @@ module.exports = {
                 jobsBySegment: {},
                 errors: [...errors, errorMsg],
                 internalErrors: [],
-                success: false
+                success: false,
+                lastProcessedRow: lastProcessedRow || 0,
+                totalRows: totalRows || 0
             }, 'out');
         }
     }
