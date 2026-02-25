@@ -50,8 +50,8 @@ module.exports = {
             const name = 'field_' + index;
             const isCheckbox = field.type === 'checkbox';
             const inputAttrs = isCheckbox
-                ? `type="checkbox" ${field.defaultValue ? 'checked' : ''}`
-                : `type="${field.type}" value="${field.defaultValue || ''}"`;
+                ? `type="checkbox" ${!!field.defaultValue ? 'checked' : ''}`
+                : `type="${field.type}`;
             fieldsHTML += `
                 <div class="pure-control-group">
                 <label for="${field.label}">${field.label}</label>
