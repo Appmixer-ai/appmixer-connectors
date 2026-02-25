@@ -41,7 +41,15 @@ module.exports = {
                 return context.response(formPage, 200, { 'Content-Type': 'text/html' });
             } else if (context.messages.webhook.content.method === 'POST') {
                 // Form submission. Send entry to the entry output port.
-                await context.sendJson(context.messages.webhook.content.data, 'entry');
+                const data = Object.assign({}, context.messages.webhook.content.data);
+                const fields = (context.properties.fields && context.properties.fields.ADD) || [];
+                fields.forEach((field, index) => {
+                    if (field.type === 'checkbox') {
+                        const name = 'field_' + index;
+                        data[name] = data[name] === 'on';
+                    }
+                });
+                await context.sendJson(data, 'entry');
                 const successPage = lib.generateWebFormSuccessPage(context.properties);
                 return context.response(successPage, 200, { 'Content-Type': 'text/html' });
             }

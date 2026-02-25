@@ -48,10 +48,14 @@ module.exports = {
 
         fields.forEach((field, index) => {
             const name = 'field_' + index;
+            const isCheckbox = field.type === 'checkbox';
+            const inputAttrs = isCheckbox
+                ? `type="checkbox" ${field.defaultValue ? 'checked' : ''}`
+                : `type="${field.type}" value="${field.defaultValue || ''}"`;
             fieldsHTML += `
                 <div class="pure-control-group">
                 <label for="${field.label}">${field.label}</label>
-                <input id="${field.label}" name="${name}" type="${field.type}" value="${field.defaultValue || ''}" />
+                <input id="${field.label}" name="${name}" ${inputAttrs} />
                 <span class="pure-form-message">${field.description || ''}</span>
                 </div>
                 `;
