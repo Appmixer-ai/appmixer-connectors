@@ -24,9 +24,7 @@ module.exports = {
             '  offline_user_data_job.id,',
             '  offline_user_data_job.type,',
             '  offline_user_data_job.status,',
-            '  offline_user_data_job.failure_reason,',
-            '  offline_user_data_job.num_operations,',
-            '  offline_user_data_job.num_user_identifiers',
+            '  offline_user_data_job.failure_reason',
             'FROM offline_user_data_job',
             `WHERE offline_user_data_job.id = ${String(offlineUserDataJobId).replace(/[^0-9]/g, '')}`,
             'LIMIT 1'
@@ -45,6 +43,10 @@ module.exports = {
             throw new context.CancelError('Offline User Data Job not found!');
         }
 
-        return context.sendJson(job, 'out');
+        return context.sendJson({
+            ...job,
+            numOperations: job.numOperations ?? null,
+            numUserIdentifiers: job.numUserIdentifiers ?? null
+        }, 'out');
     }
 };

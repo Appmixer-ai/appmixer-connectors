@@ -11,6 +11,7 @@ module.exports = {
             customerId,
             developerToken,
             loginCustomerId,
+            userListId,
             userListResourceName,
             adUserDataConsent,
             adPersonalizationConsent
@@ -18,12 +19,23 @@ module.exports = {
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
         lib.ensureRequired(developerToken, 'Developer Token is required!', context);
-        lib.ensureRequired(userListResourceName, 'User List Resource Name is required!', context);
+
+        const resolvedUserListResourceName = userListResourceName
+            ? String(userListResourceName)
+            : (userListId
+                ? `customers/${commons.normalizeCustomerId(customerId)}/userLists/${String(userListId).replace(/[^0-9]/g, '')}`
+                : null);
+
+        lib.ensureRequired(
+            resolvedUserListResourceName,
+            'User List ID or User List Resource Name is required!',
+            context
+        );
 
         const create = {
             type: 'CUSTOMER_MATCH_USER_LIST',
             customerMatchUserListMetadata: {
-                userList: userListResourceName
+                userList: resolvedUserListResourceName
             }
         };
 
@@ -39,16 +51,14 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs:mutate`,
+            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs:create`,
             headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
-                operations: [
-                    { create }
-                ]
+                job: create
             }
         });
 
-        const resourceName = data.results?.[0]?.resourceName || null;
+        const resourceName = data.resourceName || null;
 
         return context.sendJson({
             resourceName,

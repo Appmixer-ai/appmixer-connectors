@@ -11,14 +11,14 @@ describe('CreateOfflineUserDataJob', () => {
         context.messages = { in: { content: {} } };
     });
 
-    it('throws when userListResourceName is missing', async () => {
+    it('throws when neither userListResourceName nor userListId is provided', async () => {
         context.messages.in.content = {
             customerId: '123',
             developerToken: 'dev-token'
         };
 
         await assert.rejects(() => CreateOfflineUserDataJob.receive(context), {
-            message: 'User List Resource Name is required!'
+            message: 'User List ID or User List Resource Name is required!'
         });
     });
 
@@ -30,9 +30,7 @@ describe('CreateOfflineUserDataJob', () => {
         };
         context.httpRequest.resolves({
             data: {
-                results: [
-                    { resourceName: 'customers/123/offlineUserDataJobs/987654321' }
-                ]
+                resourceName: 'customers/123/offlineUserDataJobs/987654321'
             }
         });
 
@@ -40,5 +38,14 @@ describe('CreateOfflineUserDataJob', () => {
 
         assert.strictEqual(context.sendJson.callCount, 1);
         assert.strictEqual(context.sendJson.getCall(0).args[0].offlineUserDataJobId, '987654321');
+        assert.strictEqual(context.httpRequest.getCall(0).args[0].url, 'https://googleads.googleapis.com/v23/customers/123/offlineUserDataJobs:create');
+        assert.deepStrictEqual(context.httpRequest.getCall(0).args[0].data, {
+            job: {
+                type: 'CUSTOMER_MATCH_USER_LIST',
+                customerMatchUserListMetadata: {
+                    userList: 'customers/123/userLists/456'
+                }
+            }
+        });
     });
 });

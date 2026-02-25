@@ -21,6 +21,7 @@ module.exports = {
             customerId,
             developerToken,
             loginCustomerId,
+            offlineUserDataJobId,
             offlineUserDataJobResourceName,
             emails,
             adUserDataConsent,
@@ -29,8 +30,27 @@ module.exports = {
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
         lib.ensureRequired(developerToken, 'Developer Token is required!', context);
-        lib.ensureRequired(offlineUserDataJobResourceName, 'Offline User Data Job Resource Name is required!', context);
         lib.ensureRequired(emails, 'Emails are required!', context);
+
+        const normalizedJobId = String(offlineUserDataJobId || '').replace(/[^0-9]/g, '');
+        const resolvedOfflineUserDataJobResourceName = offlineUserDataJobResourceName
+            ? String(offlineUserDataJobResourceName)
+            : (normalizedJobId
+                ? `customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs/${normalizedJobId}`
+                : null);
+        const resolvedOfflineUserDataJobId = normalizedJobId
+            || commons.getOfflineUserDataJobIdFromResourceName(resolvedOfflineUserDataJobResourceName);
+
+        lib.ensureRequired(
+            resolvedOfflineUserDataJobResourceName,
+            'Offline User Data Job ID or Resource Name is required!',
+            context
+        );
+        lib.ensureRequired(
+            resolvedOfflineUserDataJobId,
+            'Unable to resolve Offline User Data Job ID!',
+            context
+        );
 
         const normalizedEmails = parseEmails(emails);
 
@@ -62,10 +82,9 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs:addOperations`,
+            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs/${resolvedOfflineUserDataJobId}:addOperations`,
             headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
-                resourceName: offlineUserDataJobResourceName,
                 enablePartialFailure: true,
                 operations
             }
