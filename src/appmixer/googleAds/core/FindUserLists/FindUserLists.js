@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 const DEFAULT_QUERY = [
@@ -32,7 +31,7 @@ module.exports = {
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
         lib.ensureRequired(developerToken, 'Developer Token is required!', context);
 
-        const rows = await commons.searchStream(context, {
+        const rows = await lib.searchStream(context, {
             customerId,
             developerToken,
             loginCustomerId,

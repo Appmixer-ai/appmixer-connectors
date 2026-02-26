@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 module.exports = {
@@ -21,15 +20,15 @@ module.exports = {
         // Resolve resource name from either userListId or userListResourceName
         let resourceName = userListResourceName;
         if (!resourceName && userListId) {
-            resourceName = `customers/${commons.normalizeCustomerId(customerId)}/userLists/${userListId}`;
+            resourceName = `customers/${lib.normalizeCustomerId(customerId)}/userLists/${userListId}`;
         }
 
         lib.ensureRequired(resourceName, 'User List ID or Resource Name is required!', context);
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/userLists:mutate`,
-            headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
+            url: `${lib.API_BASE_URL}/customers/${lib.normalizeCustomerId(customerId)}/userLists:mutate`,
+            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
                 operations: [
                     { remove: resourceName }

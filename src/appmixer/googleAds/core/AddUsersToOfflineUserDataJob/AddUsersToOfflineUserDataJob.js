@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 function parseEmails(value) {
@@ -36,10 +35,10 @@ module.exports = {
         const resolvedOfflineUserDataJobResourceName = offlineUserDataJobResourceName
             ? String(offlineUserDataJobResourceName)
             : (normalizedJobId
-                ? `customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs/${normalizedJobId}`
+                ? `customers/${lib.normalizeCustomerId(customerId)}/offlineUserDataJobs/${normalizedJobId}`
                 : null);
         const resolvedOfflineUserDataJobId = normalizedJobId
-            || commons.getOfflineUserDataJobIdFromResourceName(resolvedOfflineUserDataJobResourceName);
+            || lib.getOfflineUserDataJobIdFromResourceName(resolvedOfflineUserDataJobResourceName);
 
         lib.ensureRequired(
             resolvedOfflineUserDataJobResourceName,
@@ -62,7 +61,7 @@ module.exports = {
             const create = {
                 userIdentifiers: [
                     {
-                        hashedEmail: commons.hashSha256(email)
+                        hashedEmail: lib.hashSha256(email)
                     }
                 ]
             };
@@ -82,8 +81,8 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs/${resolvedOfflineUserDataJobId}:addOperations`,
-            headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
+            url: `${lib.API_BASE_URL}/customers/${lib.normalizeCustomerId(customerId)}/offlineUserDataJobs/${resolvedOfflineUserDataJobId}:addOperations`,
+            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
                 enablePartialFailure: true,
                 operations

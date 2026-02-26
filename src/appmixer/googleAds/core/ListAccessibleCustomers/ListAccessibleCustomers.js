@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 module.exports = {
@@ -13,8 +12,8 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${commons.API_BASE_URL}/customers:listAccessibleCustomers`,
-            headers: commons.buildHeaders(context, { developerToken, loginCustomerId })
+            url: `${lib.API_BASE_URL}/customers:listAccessibleCustomers`,
+            headers: lib.buildHeaders(context, { developerToken, loginCustomerId })
         });
 
         const resourceNames = data.resourceNames || [];

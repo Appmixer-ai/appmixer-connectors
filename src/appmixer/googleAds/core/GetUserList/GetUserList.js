@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 module.exports = {
@@ -33,7 +32,7 @@ module.exports = {
             'LIMIT 1'
         ].join(' ');
 
-        const rows = await commons.searchStream(context, {
+        const rows = await lib.searchStream(context, {
             customerId,
             developerToken,
             loginCustomerId,

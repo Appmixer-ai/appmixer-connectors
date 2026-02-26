@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 module.exports = {
@@ -23,7 +22,7 @@ module.exports = {
         const resolvedUserListResourceName = userListResourceName
             ? String(userListResourceName)
             : (userListId
-                ? `customers/${commons.normalizeCustomerId(customerId)}/userLists/${String(userListId).replace(/[^0-9]/g, '')}`
+                ? `customers/${lib.normalizeCustomerId(customerId)}/userLists/${String(userListId).replace(/[^0-9]/g, '')}`
                 : null);
 
         lib.ensureRequired(
@@ -51,8 +50,8 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/offlineUserDataJobs:create`,
-            headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
+            url: `${lib.API_BASE_URL}/customers/${lib.normalizeCustomerId(customerId)}/offlineUserDataJobs:create`,
+            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
                 job: create
             }
@@ -62,7 +61,7 @@ module.exports = {
 
         return context.sendJson({
             resourceName,
-            offlineUserDataJobId: commons.getOfflineUserDataJobIdFromResourceName(resourceName)
+            offlineUserDataJobId: lib.getOfflineUserDataJobIdFromResourceName(resourceName)
         }, 'out');
     }
 };

@@ -1,6 +1,5 @@
 'use strict';
 
-const commons = require('../../commons');
 const lib = require('../../lib');
 
 module.exports = {
@@ -37,8 +36,8 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'POST',
-            url: `${commons.API_BASE_URL}/customers/${commons.normalizeCustomerId(customerId)}/userLists:mutate`,
-            headers: commons.buildHeaders(context, { developerToken, loginCustomerId }),
+            url: `${lib.API_BASE_URL}/customers/${lib.normalizeCustomerId(customerId)}/userLists:mutate`,
+            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
             data: {
                 operations: [
                     { create }
