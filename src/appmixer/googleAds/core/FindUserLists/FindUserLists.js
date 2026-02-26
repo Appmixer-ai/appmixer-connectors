@@ -17,6 +17,17 @@ const DEFAULT_QUERY = [
     'LIMIT 200'
 ].join(' ');
 
+const USER_LIST_SCHEMA = {
+    'resourceName': { 'type': 'string', 'title': 'Resource Name' },
+    'id': { 'type': 'string', 'title': 'ID' },
+    'name': { 'type': 'string', 'title': 'Name' },
+    'description': { 'type': 'string', 'title': 'Description' },
+    'membershipStatus': { 'type': 'string', 'title': 'Membership Status' },
+    'sizeForDisplay': { 'type': 'integer', 'title': 'Size For Display' },
+    'sizeForSearch': { 'type': 'integer', 'title': 'Size For Search' },
+    'type': { 'type': 'string', 'title': 'Type' }
+};
+
 module.exports = {
 
     async receive(context) {
@@ -25,8 +36,16 @@ module.exports = {
             customerId,
             developerToken,
             loginCustomerId,
-            searchQuery
+            searchQuery,
+            outputType = 'array'
         } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, USER_LIST_SCHEMA, {
+                label: 'User Lists',
+                value: 'result'
+            });
+        }
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
         lib.ensureRequired(developerToken, 'Developer Token is required!', context);
@@ -46,9 +65,6 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        return context.sendJson({
-            result: userLists,
-            count: userLists.length
-        }, 'out');
+        return lib.sendArrayOutput({ context, outputType, records: userLists });
     }
 };

@@ -1,60 +1,281 @@
+'use strict';
+
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const FindUserLists = require('../../core/FindUserLists/FindUserLists');
 
 describe('FindUserLists', () => {
 
-    let context;
+    describe('Required inputs validation', () => {
 
-    beforeEach(() => {
-        context = testUtils.createMockContext();
-        context.messages = { in: { content: {} } };
-    });
+        let context;
 
-    it('throws when customerId is missing', async () => {
-        context.messages.in.content = { developerToken: 'dev-token' };
+        beforeEach(() => {
+            context = testUtils.createMockContext();
+            context.messages = { in: { content: {} } };
+        });
 
-        await assert.rejects(() => FindUserLists.receive(context), {
-            message: 'Customer ID is required!'
+        it('throws when customerId is missing', async () => {
+            context.messages.in.content = { developerToken: 'dev-token' };
+
+            await assert.rejects(() => FindUserLists.receive(context), {
+                message: 'Customer ID is required!'
+            });
+        });
+
+        it('throws when developerToken is missing', async () => {
+            context.messages.in.content = { customerId: '123-456-7890' };
+
+            await assert.rejects(() => FindUserLists.receive(context), {
+                message: 'Developer Token is required!'
+            });
         });
     });
 
-    it('returns notFound when empty rows', async () => {
-        context.messages.in.content = {
-            customerId: '123-456-7890',
-            developerToken: 'dev-token'
-        };
-        context.httpRequest.resolves({ data: [{ results: [] }] });
+    describe('Output type handling', () => {
 
-        await FindUserLists.receive(context);
+        let context;
 
-        assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[1], 'notFound');
-    });
+        beforeEach(() => {
+            context = testUtils.createMockContext();
+            context.messages = { in: { content: {} } };
+        });
 
-    it('returns result with count', async () => {
-        context.messages.in.content = {
-            customerId: '123-456-7890',
-            developerToken: 'dev-token'
-        };
-        context.httpRequest.resolves({
-            data: [{
-                results: [
-                    {
-                        userList: {
-                            resourceName: 'customers/1234567890/userLists/111',
-                            id: '111',
-                            name: 'Audience 1'
+        it('returns notFound when no user lists match (outputType=array)', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                outputType: 'array'
+            };
+            context.httpRequest.resolves({ data: [{ results: [] }] });
+
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            assert.strictEqual(context.sendJson.getCall(0).args[1], 'notFound');
+        });
+
+        it('returns all items at once with outputType=array', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                outputType: 'array'
+            };
+            context.httpRequest.resolves({
+                data: [{
+                    results: [
+                        {
+                            userList: {
+                                resourceName: 'customers/1234567890/userLists/111',
+                                id: '111',
+                                name: 'Audience 1',
+                                description: 'Test 1',
+                                type: 'CRM_BASED',
+                                membershipStatus: 'OPEN',
+                                sizeForDisplay: '100',
+                                sizeForSearch: '95'
+                            }
+                        },
+                        {
+                            userList: {
+                                resourceName: 'customers/1234567890/userLists/222',
+                                id: '222',
+                                name: 'Audience 2',
+                                description: 'Test 2',
+                                type: 'CRM_BASED',
+                                membershipStatus: 'OPEN',
+                                sizeForDisplay: '50',
+                                sizeForSearch: '45'
+                            }
                         }
-                    }
-                ]
-            }]
+                    ]
+                }]
+            });
+
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            assert.strictEqual(context.sendJson.getCall(0).args[1], 'out');
+            const result = context.sendJson.getCall(0).args[0];
+            assert.strictEqual(result.count, 2);
+            assert.strictEqual(result.result.length, 2);
+            assert.strictEqual(result.result[0].name, 'Audience 1');
+            assert.strictEqual(result.result[1].name, 'Audience 2');
         });
 
-        await FindUserLists.receive(context);
+        it('returns first item only with outputType=first', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                outputType: 'first'
+            };
+            context.httpRequest.resolves({
+                data: [{
+                    results: [
+                        {
+                            userList: {
+                                id: '111',
+                                name: 'Audience 1',
+                                type: 'CRM_BASED'
+                            }
+                        },
+                        {
+                            userList: {
+                                id: '222',
+                                name: 'Audience 2',
+                                type: 'CRM_BASED'
+                            }
+                        }
+                    ]
+                }]
+            });
 
-        assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[1], 'out');
-        assert.strictEqual(context.sendJson.getCall(0).args[0].count, 1);
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const result = context.sendJson.getCall(0).args[0];
+            assert.strictEqual(result.name, 'Audience 1');
+            assert.strictEqual(result.index, 0);
+            assert.strictEqual(result.count, 2);
+        });
+
+        it('returns one item at a time with outputType=object', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                outputType: 'object'
+            };
+            context.httpRequest.resolves({
+                data: [{
+                    results: [
+                        {
+                            userList: {
+                                id: '111',
+                                name: 'Audience 1',
+                                type: 'CRM_BASED'
+                            }
+                        },
+                        {
+                            userList: {
+                                id: '222',
+                                name: 'Audience 2',
+                                type: 'CRM_BASED'
+                            }
+                        }
+                    ]
+                }]
+            });
+
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 2);
+            const result1 = context.sendJson.getCall(0).args[0];
+            const result2 = context.sendJson.getCall(1).args[0];
+            assert.strictEqual(result1.name, 'Audience 1');
+            assert.strictEqual(result1.index, 0);
+            assert.strictEqual(result1.count, 2);
+            assert.strictEqual(result2.name, 'Audience 2');
+            assert.strictEqual(result2.index, 1);
+            assert.strictEqual(result2.count, 2);
+        });
+    });
+
+    describe('Query and filtering', () => {
+
+        let context;
+
+        beforeEach(() => {
+            context = testUtils.createMockContext();
+            context.messages = { in: { content: {} } };
+        });
+
+        it('uses default query when searchQuery is empty', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                outputType: 'array'
+            };
+            context.httpRequest.resolves({ data: [{ results: [] }] });
+
+            await FindUserLists.receive(context);
+
+            assert(context.httpRequest.calledOnce);
+        });
+
+        it('supports custom GAQL query with WHERE clause', async () => {
+            const customQuery = "SELECT user_list.id, user_list.name FROM user_list WHERE user_list.name = 'My Audience'";
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                searchQuery: customQuery,
+                outputType: 'array'
+            };
+            context.httpRequest.resolves({
+                data: [{
+                    results: [
+                        {
+                            userList: {
+                                id: '111',
+                                name: 'My Audience',
+                                type: 'CRM_BASED'
+                            }
+                        }
+                    ]
+                }]
+            });
+
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const result = context.sendJson.getCall(0).args[0];
+            assert.strictEqual(result.result[0].name, 'My Audience');
+        });
+
+        it('supports loginCustomerId for cross-account access', async () => {
+            context.messages.in.content = {
+                customerId: '123-456-7890',
+                developerToken: 'dev-token',
+                loginCustomerId: '9999999999',
+                outputType: 'array'
+            };
+            context.httpRequest.resolves({
+                data: [{
+                    results: [
+                        {
+                            userList: {
+                                id: '111',
+                                name: 'Cross-Account Audience',
+                                type: 'CRM_BASED'
+                            }
+                        }
+                    ]
+                }]
+            });
+
+            await FindUserLists.receive(context);
+
+            assert(context.httpRequest.calledOnce);
+        });
+    });
+
+    describe('Output port schema generation', () => {
+
+        let context;
+
+        beforeEach(() => {
+            context = testUtils.createMockContext();
+            context.messages = { in: { content: { outputType: 'array' } } };
+            context.properties = { generateOutputPortOptions: true };
+        });
+
+        it('generates output port options', async () => {
+            await FindUserLists.receive(context);
+
+            assert.strictEqual(context.sendJson.callCount, 1);
+            const options = context.sendJson.getCall(0).args[0];
+            assert(Array.isArray(options));
+            assert.strictEqual(options.length, 1);
+            assert.strictEqual(options[0].value, 'result');
+        });
     });
 });

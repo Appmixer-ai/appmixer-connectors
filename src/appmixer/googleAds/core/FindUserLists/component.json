@@ -1,6 +1,6 @@
 {
     "name": "appmixer.googleAds.core.FindUserLists",
-    "description": "Finds up to 200 Google Ads user lists for a customer account.",
+    "description": "Finds up to 200 Google Ads user lists for a customer account with optional filtering.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -30,6 +30,10 @@
                     },
                     "searchQuery": {
                         "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string",
+                        "default": "array"
                     }
                 },
                 "required": [
@@ -60,8 +64,21 @@
                     "searchQuery": {
                         "type": "textarea",
                         "label": "GAQL Query",
-                        "tooltip": "Optional GAQL query override. Leave empty to use the default user list query.",
+                        "tooltip": "Optional GAQL query override. Leave empty to use the default user list query. Example: WHERE user_list.name = 'My Audience'",
                         "index": 4
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
                     }
                 }
             }
@@ -70,25 +87,17 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Result",
-                    "value": "result",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
-                    }
-                },
-                {
-                    "label": "Count",
-                    "value": "count",
-                    "schema": {
-                        "type": "integer"
+            "source": {
+                "url": "/component/appmixer/googleAds/core/FindUserLists?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
                     }
                 }
-            ]
+            }
         },
         {
             "name": "notFound"
