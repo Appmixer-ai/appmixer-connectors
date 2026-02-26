@@ -1,0 +1,220 @@
+{
+    "name": "appmixer.googleAds.core.AddUserToUserList",
+    "description": "Adds or removes a single user from a Customer Match user list via UserDataService.UploadUserData. Best for sporadic, real-time updates (e.g. CRM webhook). Limit: 1 user per call. Note: updates do not appear in the Google Ads UI upload history.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:googleAds",
+        "scope": [
+            "https://www.googleapis.com/auth/adwords"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:googleAds",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "developerToken": {
+                        "type": "string"
+                    },
+                    "loginCustomerId": {
+                        "type": "string"
+                    },
+                    "userListId": {
+                        "type": "string"
+                    },
+                    "userListResourceName": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "phoneNumber": {
+                        "type": "string"
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "countryCode": {
+                        "type": "string"
+                    },
+                    "postalCode": {
+                        "type": "string"
+                    },
+                    "mobileId": {
+                        "type": "string"
+                    },
+                    "thirdPartyUserId": {
+                        "type": "string"
+                    },
+                    "operation": {
+                        "type": "string"
+                    },
+                    "adUserDataConsent": {
+                        "type": "string"
+                    },
+                    "adPersonalizationConsent": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "customerId",
+                    "developerToken"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1
+                    },
+                    "developerToken": {
+                        "type": "text",
+                        "label": "Developer Token",
+                        "index": 2
+                    },
+                    "loginCustomerId": {
+                        "type": "text",
+                        "label": "Login Customer ID",
+                        "tooltip": "Required when authenticating via a manager (MCC) account.",
+                        "index": 3
+                    },
+                    "userListId": {
+                        "type": "text",
+                        "label": "User List ID",
+                        "tooltip": "Numeric ID of the Customer Match user list. Use either User List ID or User List Resource Name.",
+                        "index": 4
+                    },
+                    "userListResourceName": {
+                        "type": "text",
+                        "label": "User List Resource Name",
+                        "tooltip": "Full resource name, e.g. customers/123/userLists/456. Use either this or User List ID.",
+                        "index": 5
+                    },
+                    "email": {
+                        "type": "text",
+                        "label": "Email",
+                        "tooltip": "Email address of the user. Provide either email OR phone OR (firstName + lastName + countryCode) OR mobileId OR thirdPartyUserId.",
+                        "index": 6
+                    },
+                    "phoneNumber": {
+                        "type": "text",
+                        "label": "Phone Number",
+                        "tooltip": "Phone number in E.164 format (e.g., +1234567890). Provide either email OR phone OR (firstName + lastName + countryCode) OR mobileId OR thirdPartyUserId.",
+                        "index": 7
+                    },
+                    "firstName": {
+                        "type": "text",
+                        "label": "First Name",
+                        "tooltip": "First name. Use with lastName and countryCode for address-based matching.",
+                        "index": 8
+                    },
+                    "lastName": {
+                        "type": "text",
+                        "label": "Last Name",
+                        "tooltip": "Last name. Use with firstName and countryCode for address-based matching.",
+                        "index": 9
+                    },
+                    "countryCode": {
+                        "type": "text",
+                        "label": "Country Code",
+                        "tooltip": "2-letter ISO-3166-1 alpha-2 country code (e.g., US, CA, GB). Use with firstName and lastName for address-based matching.",
+                        "index": 10
+                    },
+                    "postalCode": {
+                        "type": "text",
+                        "label": "Postal Code",
+                        "tooltip": "Postal/ZIP code. Optional with address-based matching.",
+                        "index": 11
+                    },
+                    "mobileId": {
+                        "type": "text",
+                        "label": "Mobile Device ID",
+                        "tooltip": "Mobile device ID (IDFA for iOS or Google Advertising ID for Android). Provide either email OR phone OR (firstName + lastName + countryCode) OR mobileId OR thirdPartyUserId.",
+                        "index": 12
+                    },
+                    "thirdPartyUserId": {
+                        "type": "text",
+                        "label": "Third Party User ID",
+                        "tooltip": "Advertiser-assigned user ID. Provide either email OR phone OR (firstName + lastName + countryCode) OR mobileId OR thirdPartyUserId.",
+                        "index": 13
+                    },
+                    "operation": {
+                        "type": "select",
+                        "label": "Operation",
+                        "tooltip": "Whether to add (create) or remove the user from the list.",
+                        "index": 14,
+                        "defaultValue": "create",
+                        "options": [
+                            { "label": "Add (create)", "value": "create" },
+                            { "label": "Remove", "value": "remove" }
+                        ]
+                    },
+                    "adUserDataConsent": {
+                        "type": "select",
+                        "label": "Ad User Data Consent",
+                        "tooltip": "Consent status for use of user data for ads. Required for 'Add' operations.",
+                        "index": 15,
+                        "options": [
+                            { "label": "Unspecified", "value": "UNSPECIFIED" },
+                            { "label": "Unknown", "value": "UNKNOWN" },
+                            { "label": "Granted", "value": "GRANTED" },
+                            { "label": "Denied", "value": "DENIED" }
+                        ]
+                    },
+                    "adPersonalizationConsent": {
+                        "type": "select",
+                        "label": "Ad Personalization Consent",
+                        "tooltip": "Consent status for ad personalization. Required for 'Add' operations.",
+                        "index": 16,
+                        "options": [
+                            { "label": "Unspecified", "value": "UNSPECIFIED" },
+                            { "label": "Unknown", "value": "UNKNOWN" },
+                            { "label": "Granted", "value": "GRANTED" },
+                            { "label": "Denied", "value": "DENIED" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Received Operations Count",
+                    "value": "receivedOperationsCount",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Upload Date Time",
+                    "value": "uploadDateTime",
+                    "schema": { "type": "string" }
+                },
+                {
+                    "label": "User List Resource Name",
+                    "value": "userListResourceName",
+                    "schema": { "type": "string" }
+                },
+                {
+                    "label": "Operation",
+                    "value": "operation",
+                    "schema": { "type": "string" }
+                }
+            ]
+        }
+    ]
+}
