@@ -74,9 +74,19 @@ class UpdatedDeal extends BaseSubscriptionComponent {
             properties: propertiesToReturn
         });
 
+        const { pipeline: filterPipeline, dealstage: filterStage } = context.properties;
+
         const results = [];
         data.results.forEach((deal) => {
             if (deal.updatedAt !== deal.createdAt) {
+                // Filter by pipeline if configured
+                if (filterPipeline && deal.properties?.pipeline !== filterPipeline) {
+                    return;
+                }
+                // Filter by deal stage if configured
+                if (filterStage && deal.properties?.dealstage !== filterStage) {
+                    return;
+                }
                 results.push(deal);
             }
         });

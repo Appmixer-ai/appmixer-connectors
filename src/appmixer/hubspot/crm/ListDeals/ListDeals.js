@@ -45,19 +45,46 @@ module.exports = {
         const {
             allAtOnce,
             limit = 100,
-            search
+            search,
+            pipeline,
+            dealstage
         } = context.messages.in.content;
 
         const { auth } = context;
         const hs = new Hubspot(auth.accessToken, context.config);
 
+        // Use search API when filtering by pipeline/stage or searching
+        const useSearch = search || pipeline || dealstage;
+
         let params = {};
-        if (search) {
-            params.query = search;
+        if (useSearch) {
+            if (search) {
+                params.query = search;
+            }
+
+            const filters = [];
+            if (pipeline) {
+                filters.push({
+                    propertyName: 'pipeline',
+                    operator: 'EQ',
+                    value: pipeline
+                });
+            }
+            if (dealstage) {
+                filters.push({
+                    propertyName: 'dealstage',
+                    operator: 'EQ',
+                    value: dealstage
+                });
+            }
+
+            if (filters.length > 0) {
+                params.filterGroups = [{ filters }];
+            }
         }
 
-        const method = params.query ? 'post' : 'get';
-        const url = params.query ? 'crm/v3/objects/deals/search' : 'crm/v3/objects/deals';
+        const method = useSearch ? 'post' : 'get';
+        const url = useSearch ? 'crm/v3/objects/deals/search' : 'crm/v3/objects/deals';
         const deals = await hs.paginatedCall(method, url, params, limit);
 
         if (allAtOnce) {

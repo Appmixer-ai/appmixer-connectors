@@ -68,7 +68,14 @@ class NewDeal extends BaseSubscriptionComponent {
             properties: propertiesToReturn
         });
 
-        await context.sendArray(data.results, 'deal');
+        const { pipeline: filterPipeline } = context.properties;
+
+        let results = data.results;
+        if (filterPipeline) {
+            results = results.filter(deal => deal.properties?.pipeline === filterPipeline);
+        }
+
+        await context.sendArray(results, 'deal');
 
         return context.response();
     }

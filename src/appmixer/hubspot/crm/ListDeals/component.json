@@ -29,6 +29,8 @@
                 "properties": {
                     "limit": { "type": "string" },
                     "search": { "type": "string" },
+                    "pipeline": { "type": "string" },
+                    "dealstage": { "type": "string" },
                     "allAtOnce": { "type": "boolean" }
                 }
             },
@@ -47,12 +49,43 @@
                         "tooltip": "Search deals that match the given value in the title, contact names or organization.",
                         "index": 2
                     },
+                    "pipeline": {
+                        "type": "select",
+                        "label": "Pipeline",
+                        "tooltip": "Optional. Filter deals by pipeline.",
+                        "source": {
+                            "url": "/component/appmixer/hubspot/crm/ListPipelines?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/objectType": "deals"
+                                },
+                                "transform": "./ListPipelines#toSelectArray"
+                            }
+                        },
+                        "index": 3
+                    },
+                    "dealstage": {
+                        "type": "select",
+                        "label": "Deal Stage",
+                        "tooltip": "Optional. Filter deals by stage. Requires a pipeline to be selected.",
+                        "source": {
+                            "url": "/component/appmixer/hubspot/crm/ListPipelineStages?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/pipelineId": "inputs/in/pipeline",
+                                    "in/isSource": true
+                                },
+                                "transform": "./ListPipelineStages#toSelectArray"
+                            }
+                        },
+                        "index": 4
+                    },
                     "allAtOnce": {
                         "type": "toggle",
                         "label": "Send all deals at once",
                         "tooltip": "Set it to true to send all deals in one message. If false, it will send one message per each deal. Order of the deals is not guaranteed.",
                         "defaultValue": false,
-                        "index": 3
+                        "index": 5
                     }
                 }
             }

@@ -11,6 +11,12 @@
     "properties": {
         "schema": {
             "properties": {
+                "pipeline": {
+                    "type": "string"
+                },
+                "dealstage": {
+                    "type": "string"
+                },
                 "properties": {
                     "type": "string"
                 }
@@ -19,6 +25,37 @@
         },
         "inspector": {
             "inputs": {
+                "pipeline": {
+                    "type": "select",
+                    "label": "Pipeline",
+                    "tooltip": "Optional. Only trigger for deals in this pipeline. Leave empty to trigger for all pipelines.",
+                    "source": {
+                        "url": "/component/appmixer/hubspot/crm/ListPipelines?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/objectType": "deals"
+                            },
+                            "transform": "./ListPipelines#toSelectArray"
+                        }
+                    },
+                    "index": 1
+                },
+                "dealstage": {
+                    "type": "select",
+                    "label": "Deal Stage",
+                    "tooltip": "Optional. Only trigger for deals in this stage. Leave empty to trigger for all stages. Requires a pipeline to be selected.",
+                    "source": {
+                        "url": "/component/appmixer/hubspot/crm/ListPipelineStages?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/pipelineId": "properties/pipeline",
+                                "in/isSource": true
+                            },
+                            "transform": "./ListPipelineStages#toSelectArray"
+                        }
+                    },
+                    "index": 2
+                },
                 "properties": {
                     "type": "text",
                     "label": "Properties",
@@ -29,7 +66,7 @@
                             "transform": "./GetDealsProperties#dealToLabelNameArray"
                         }
                     },
-                    "index": 1
+                    "index": 3
                 }
             }
         }

@@ -11,6 +11,9 @@
     "properties": {
         "schema": {
             "properties": {
+                "pipeline": {
+                    "type": "string"
+                },
                 "properties": {
                     "type": "string"
                 }
@@ -19,6 +22,21 @@
         },
         "inspector": {
             "inputs": {
+                "pipeline": {
+                    "type": "select",
+                    "label": "Pipeline",
+                    "tooltip": "Optional. Only trigger for new deals in this pipeline. Leave empty to trigger for all pipelines.",
+                    "source": {
+                        "url": "/component/appmixer/hubspot/crm/ListPipelines?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/objectType": "deals"
+                            },
+                            "transform": "./ListPipelines#toSelectArray"
+                        }
+                    },
+                    "index": 1
+                },
                 "properties": {
                     "type": "text",
                     "label": "Properties",
@@ -29,7 +47,7 @@
                             "transform": "./GetDealsProperties#dealToLabelNameArray"
                         }
                     },
-                    "index": 1
+                    "index": 2
                 }
             }
         }
