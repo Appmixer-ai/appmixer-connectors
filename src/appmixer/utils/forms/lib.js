@@ -27,6 +27,20 @@ const formPage = (opt, content, type) => {
         `;
 };
 
+const parseBoolean = function(value) {
+    if (value === null || value === undefined) return false;
+
+    const normalized = String(value).trim().toLowerCase();
+
+    return ![
+        'false',
+        '0',
+        'null',
+        'undefined',
+        ''
+    ].includes(normalized);
+};
+
 module.exports = {
 
     generateWebFormPage: function(opt = {}, url) {
@@ -50,7 +64,7 @@ module.exports = {
             const name = 'field_' + index;
             const isCheckbox = field.type === 'checkbox';
             const inputAttrs = isCheckbox
-                ? `type="checkbox" ${!!field.defaultValue ? 'checked' : ''}`
+                ? `type="checkbox" ${parseBoolean(field.defaultValue) ? 'checked' : ''}`
                 : `type="${field.type}`;
             fieldsHTML += `
                 <div class="pure-control-group">
