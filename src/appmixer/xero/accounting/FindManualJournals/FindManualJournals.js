@@ -26,6 +26,10 @@ module.exports = {
             params
         });
 
+        if (!records || records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return sendArrayOutput({
             context,
             outputPortName,
