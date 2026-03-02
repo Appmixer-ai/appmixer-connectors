@@ -14,7 +14,8 @@ module.exports = {
             bcc: rawBcc,
             reply_to: rawReplyTo,
             headers,
-            idempotency_key
+            idempotency_key,
+            scheduled_at
         } = context.messages.in.content;
 
         // Helper to normalize address fields
@@ -66,6 +67,10 @@ module.exports = {
             } catch (error) {
                 throw new context.CancelError('Invalid headers format. Must be valid JSON.');
             }
+        }
+
+        if (scheduled_at) {
+            data.scheduled_at = new Date(scheduled_at).toISOString();
         }
 
         const requestHeaders = { 'Authorization': `Bearer ${context.auth.apiKey}` };
