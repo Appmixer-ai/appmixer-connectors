@@ -1,0 +1,241 @@
+{
+    "name": "appmixer.xero.accounting.UpdateManualJournal",
+    "description": "Update a manual journal.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:xero",
+        "scope": [
+            "accounting.transactions"
+        ]
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "tenantId": {
+                        "type": "string"
+                    },
+                    "ManualJournalID": {
+                        "type": "string"
+                    },
+                    "Narration": {
+                        "type": "string"
+                    },
+                    "Date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "Status": {
+                        "type": "string"
+                    },
+                    "LineAmountTypes": {
+                        "type": "string"
+                    },
+                    "Url": {
+                        "type": "string"
+                    },
+                    "ShowOnCashBasisReports": {
+                        "type": "boolean"
+                    },
+                    "JournalLines": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "tenantId",
+                    "ManualJournalID",
+                    "Narration",
+                    "JournalLines"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "tenantId": {
+                        "type": "select",
+                        "label": "Tenant ID",
+                        "tooltip": "Select the Xero organisation (tenant) containing the manual journal.",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/xero/accounting/ListTenants?outPort=tenants",
+                            "data": {
+                                "transform": "./transformers#tenantsToSelectArray"
+                            }
+                        }
+                    },
+                    "ManualJournalID": {
+                        "type": "text",
+                        "label": "Manual Journal ID",
+                        "tooltip": "The Xero identifier for the manual journal to update.",
+                        "index": 2
+                    },
+                    "Narration": {
+                        "type": "text",
+                        "label": "Narration",
+                        "tooltip": "Description of the journal being posted.",
+                        "index": 3
+                    },
+                    "JournalLines": {
+                        "type": "textarea",
+                        "label": "Journal Lines",
+                        "tooltip": "JSON array of journal lines. Each line must have LineAmount and AccountCode. Debits are positive, credits are negative. Total debits must equal total credits. Example: [{\"LineAmount\":100,\"AccountCode\":\"400\",\"Description\":\"Debit\"},{\"LineAmount\":-100,\"AccountCode\":\"200\",\"Description\":\"Credit\"}]",
+                        "index": 4
+                    },
+                    "Date": {
+                        "type": "date-time",
+                        "config": {
+                            "enableTime": false
+                        },
+                        "label": "Date",
+                        "tooltip": "Date journal was posted – YYYY-MM-DD.",
+                        "index": 5
+                    },
+                    "Status": {
+                        "type": "select",
+                        "label": "Status",
+                        "tooltip": "Manual journal status.",
+                        "index": 6,
+                        "options": [
+                            {
+                                "clearItem": true,
+                                "label": "-- No change --"
+                            },
+                            {
+                                "label": "Draft",
+                                "value": "DRAFT"
+                            },
+                            {
+                                "label": "Posted",
+                                "value": "POSTED"
+                            },
+                            {
+                                "label": "Deleted",
+                                "value": "DELETED"
+                            },
+                            {
+                                "label": "Voided",
+                                "value": "VOIDED"
+                            },
+                            {
+                                "label": "Archived",
+                                "value": "ARCHIVED"
+                            }
+                        ]
+                    },
+                    "LineAmountTypes": {
+                        "type": "select",
+                        "label": "Line Amount Types",
+                        "tooltip": "Line amounts are exclusive of tax by default.",
+                        "index": 7,
+                        "options": [
+                            {
+                                "clearItem": true,
+                                "label": "-- No change --"
+                            },
+                            {
+                                "label": "Exclusive",
+                                "value": "Exclusive"
+                            },
+                            {
+                                "label": "Inclusive",
+                                "value": "Inclusive"
+                            },
+                            {
+                                "label": "No Tax",
+                                "value": "NoTax"
+                            }
+                        ]
+                    },
+                    "Url": {
+                        "type": "text",
+                        "label": "URL",
+                        "tooltip": "URL link to a source document.",
+                        "index": 8
+                    },
+                    "ShowOnCashBasisReports": {
+                        "type": "toggle",
+                        "label": "Show On Cash Basis Reports",
+                        "tooltip": "Defaults to true if not specified.",
+                        "index": 9
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Manual Journal ID",
+                    "value": "ManualJournalID"
+                },
+                {
+                    "label": "Narration",
+                    "value": "Narration"
+                },
+                {
+                    "label": "Date",
+                    "value": "Date"
+                },
+                {
+                    "label": "Status",
+                    "value": "Status"
+                },
+                {
+                    "label": "Line Amount Types",
+                    "value": "LineAmountTypes"
+                },
+                {
+                    "label": "Journal Lines",
+                    "value": "JournalLines",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "LineAmount": {
+                                    "type": "number"
+                                },
+                                "AccountCode": {
+                                    "type": "string"
+                                },
+                                "AccountID": {
+                                    "type": "string"
+                                },
+                                "Description": {
+                                    "type": "string"
+                                },
+                                "TaxType": {
+                                    "type": "string"
+                                },
+                                "TaxAmount": {
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "label": "URL",
+                    "value": "Url"
+                },
+                {
+                    "label": "Show On Cash Basis Reports",
+                    "value": "ShowOnCashBasisReports"
+                },
+                {
+                    "label": "Has Attachments",
+                    "value": "HasAttachments"
+                },
+                {
+                    "label": "Updated Date UTC",
+                    "value": "UpdatedDateUTC"
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3ODYuODIiIGhlaWdodD0iNzg2LjgyIiB2aWV3Qm94PSIwIDAgMjA4LjE3OSAyMDguMTc5IiB2ZXJzaW9uPSIxLjEiPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC01Ljg4NyAtMjcxLjY5NikiPjxnIHRyYW5zZm9ybT0ibWF0cml4KC4zNTI3OCAwIDAgLS4zNTI3OCAtMzkuOTMgNTI1LjYzOCkiPjxnPjxnPjxwYXRoIGQ9Ik00MjQuOTMzIDEzMC44NDNjMTYyLjMzNSAwIDI5My45MzIgMTMxLjU5NyAyOTMuOTMyIDI5My45MzMgMCAxNjIuMzM0LTEzMS41OTcgMjkzLjkzMi0yOTMuOTMyIDI5My45MzJTMTMxIDU4Ny4xMSAxMzEgNDI0Ljc3NmMwLTE2Mi4zMzYgMTMxLjU5OC0yOTMuOTMzIDI5My45MzMtMjkzLjkzMyIgc3R5bGU9ImZpbGw6IzFhYjRkNyIvPjxwYXRoIGQ9Im0yNzEuNzAxIDQyNS42MjUgNTAuMTYyIDUwLjI4NmE4Ljk4MiA4Ljk4MiAwIDAgMSAyLjU5MSA2LjMxOWMwIDQuOTYtNC4wMzIgOC45ODgtOC45OTIgOC45ODhhOC45MSA4LjkxIDAgMCAxLTYuMzg5LTIuNjc2Yy0uMDA1LS4wMS01MC4xMTctNTAuMDkzLTUwLjExNy01MC4wOTNsLTUwLjM0MSA1MC4xNjhhOC45ODYgOC45ODYgMCAwIDEtNi4zNDUgMi42MDFjLTQuOTU0IDAtOC45ODctNC4wMjYtOC45ODctOC45ODEgMC0yLjQxNy45NjUtNC42ODUgMi42OTctNi4zOTRsNTAuMTU1LTUwLjE0OC01MC4xMjktNTAuMjIzYy0xLjc2Mi0xLjczNS0yLjcyMy00LjAwOC0yLjcyMy02LjQzNiAwLTQuOTU5IDQuMDMzLTguOTgyIDguOTg3LTguOTgyIDIuMzk0IDAgNC42NS45MjkgNi4zNDUgMi42MjVsNTAuMjYzIDUwLjE5NSA1MC4wNzItNTAuMDEyYzEuNzc2LTEuODM2IDQuMDY3LTIuODE0IDYuNTEyLTIuODE0IDQuOTU1IDAgOC45ODcgNC4wMjkgOC45ODcgOC45ODhhOC45MiA4LjkyIDAgMCAxLTIuNjE0IDYuMzM2eiIgc3R5bGU9ImZpbGw6I2ZmZiIvPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4="
+}

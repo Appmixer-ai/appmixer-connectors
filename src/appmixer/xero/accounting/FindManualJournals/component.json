@@ -1,0 +1,95 @@
+{
+    "name": "appmixer.xero.accounting.FindManualJournals",
+    "description": "Find manual journals. Optionally filter by status.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:xero",
+        "scope": [
+            "accounting.transactions.read"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:xero:accounting",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "tenantId": { "type": "string" },
+                    "Status": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["tenantId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "tenantId": {
+                        "type": "select",
+                        "label": "Tenant ID",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/xero/accounting/ListTenants?outPort=tenants",
+                            "data": {
+                                "transform": "./transformers#tenantsToSelectArray"
+                            }
+                        }
+                    },
+                    "Status": {
+                        "type": "select",
+                        "label": "Status",
+                        "tooltip": "Filter by manual journal status.",
+                        "index": 2,
+                        "options": [
+                            { "clearItem": true, "content": "-- All --" },
+                            { "label": "Draft", "value": "DRAFT" },
+                            { "label": "Posted", "value": "POSTED" },
+                            { "label": "Deleted", "value": "DELETED" },
+                            { "label": "Voided", "value": "VOIDED" },
+                            { "label": "Archived", "value": "ARCHIVED" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "items",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "All at once", "value": "items" },
+                            { "label": "One at a time", "value": "item" },
+                            { "label": "File", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/xero/accounting/FindManualJournals?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/tenantId": "inputs/in/tenantId"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94"
+}
