@@ -27,7 +27,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "variables": {}
+                                    "variables": {
+                                        "e4a0a1d2-0797-40e4-b7ae-1c3dd2cd9e2a": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 },
                                 "lambda": {
                                     "variables": {
@@ -35,16 +43,18 @@
                                             {
                                                 "type": "text",
                                                 "name": "datasetName",
-                                                "text": "e2e-test-dataset-{{{g_timestamp()}}}"
+                                                "text": "e2e-test-dataset-{{{e4a0a1d2-0797-40e4-b7ae-1c3dd2cd9e2a}}}"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "datasetDescription",
+                                                "toggle": false,
                                                 "text": "E2E Test Dataset Description"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "updatedDescription",
+                                                "toggle": false,
                                                 "text": "E2E Test Dataset Description Updated"
                                             }
                                         ]
@@ -86,12 +96,17 @@
                                             "variable": "$.set-variables.out.datasetDescription",
                                             "functions": []
                                         }
-                                    }
+                                    },
+                                    "kind": {},
+                                    "retentionDays": {},
+                                    "useRetentionPeriod": {}
                                 },
                                 "lambda": {
                                     "name": "{{{var-dataset-name}}}",
                                     "description": "{{{var-dataset-description}}}",
-                                    "kind": "axiom:events:v1"
+                                    "kind": "axiom:events:v1",
+                                    "retentionDays": 10,
+                                    "useRetentionPeriod": true
                                 }
                             }
                         }
@@ -101,7 +116,7 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1056,
+            "x": 1152,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -122,6 +137,14 @@
                                         "field-create-id": {
                                             "variable": "$.create-dataset.out.id",
                                             "functions": []
+                                        },
+                                        "b9d4309e-5b8e-4f2a-b5fc-877db8b47b9b": {
+                                            "variable": "$.create-dataset.out.name",
+                                            "functions": []
+                                        },
+                                        "7e24c41a-ecde-4382-8fc0-f575ca2bdbba": {
+                                            "variable": "$.set-variables.out.datasetName",
+                                            "functions": []
                                         }
                                     }
                                 },
@@ -129,8 +152,15 @@
                                     "expression": {
                                         "AND": [
                                             {
+                                                "assertion": "notEmpty",
                                                 "field": "{{{field-create-id}}}",
-                                                "assertion": "notEmpty"
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{7e24c41a-ecde-4382-8fc0-f575ca2bdbba}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{b9d4309e-5b8e-4f2a-b5fc-877db8b47b9b}}}"
                                             }
                                         ]
                                     }
@@ -143,22 +173,17 @@
         },
         "get-dataset": {
             "type": "appmixer.axiom.datasets.GetDataset",
-            "x": 704,
-            "y": 144,
+            "x": 944,
+            "y": 272,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-dataset": [
-                        "out"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-dataset": {
+                        "update-dataset": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "datasetId": "{{{var-dataset-id}}}"
+                                },
                                 "modifiers": {
                                     "datasetId": {
                                         "var-dataset-id": {
@@ -166,20 +191,24 @@
                                             "functions": []
                                         }
                                     }
-                                },
-                                "lambda": {
-                                    "datasetId": "{{{var-dataset-id}}}"
                                 }
                             }
                         }
                     }
                 }
+            },
+            "source": {
+                "in": {
+                    "update-dataset": [
+                        "out"
+                    ]
+                }
             }
         },
         "assert-get": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1056,
-            "y": 144,
+            "x": 1152,
+            "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -200,8 +229,16 @@
                                             "variable": "$.get-dataset.out.description",
                                             "functions": []
                                         },
-                                        "expected-get-description": {
-                                            "variable": "$.set-variables.out.datasetDescription",
+                                        "fd3bdfc2-a4b7-4311-802a-b41d1aa06607": {
+                                            "variable": "$.set-variables.out.updatedDescription",
+                                            "functions": []
+                                        },
+                                        "69f37609-4a30-4293-9b34-c82d2c1b9c7c": {
+                                            "variable": "$.get-dataset.out.name",
+                                            "functions": []
+                                        },
+                                        "c75fa963-b68e-410a-9ee2-8b29d92fe1fb": {
+                                            "variable": "$.set-variables.out.datasetName",
                                             "functions": []
                                         }
                                     }
@@ -210,9 +247,16 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{field-get-description}}}",
+                                                "type": "string",
+                                                "expected": "{{{fd3bdfc2-a4b7-4311-802a-b41d1aa06607}}}",
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-get-description}}}"
+                                                "field": "{{{field-get-description}}}"
+                                            },
+                                            {
+                                                "expected": "{{{c75fa963-b68e-410a-9ee2-8b29d92fe1fb}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{69f37609-4a30-4293-9b34-c82d2c1b9c7c}}}",
+                                                "type": "string"
                                             }
                                         ]
                                     }
@@ -225,8 +269,8 @@
         },
         "update-dataset": {
             "type": "appmixer.axiom.datasets.UpdateDataset",
-            "x": 704,
-            "y": 288,
+            "x": 736,
+            "y": 160,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -236,49 +280,28 @@
                 }
             },
             "config": {
-                "transform": {}
-            }
-        },
-        "assert-update": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1056,
-            "y": 288,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "update-dataset": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
                 "transform": {
                     "in": {
-                        "update-dataset": {
+                        "create-dataset": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "expression": {
-                                        "field-update-description": {
-                                            "variable": "$.update-dataset.out.description",
+                                    "datasetId": {
+                                        "25d61200-f000-4a93-9611-03ce07cdfc60": {
+                                            "variable": "$.create-dataset.out.id",
                                             "functions": []
-                                        },
-                                        "expected-updated-description": {
+                                        }
+                                    },
+                                    "description": {
+                                        "26707df2-f58e-4dc7-9e4d-72119a9965eb": {
                                             "variable": "$.set-variables.out.updatedDescription",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{field-update-description}}}",
-                                                "assertion": "equal",
-                                                "expected": "{{{expected-updated-description}}}"
-                                            }
-                                        ]
-                                    }
+                                    "datasetId": "{{{25d61200-f000-4a93-9611-03ce07cdfc60}}}",
+                                    "description": "{{{26707df2-f58e-4dc7-9e4d-72119a9965eb}}}"
                                 }
                             }
                         }
@@ -288,8 +311,8 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 192,
+            "x": 1360,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -297,9 +320,6 @@
                         "out"
                     ],
                     "assert-get": [
-                        "out"
-                    ],
-                    "assert-update": [
                         "out"
                     ]
                 }
@@ -312,8 +332,8 @@
         },
         "delete-dataset": {
             "type": "appmixer.axiom.datasets.DeleteDataset",
-            "x": 1632,
-            "y": 192,
+            "x": 1568,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -347,8 +367,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1840,
-            "y": 192,
+            "x": 1808,
+            "y": 16,
             "version": "1.0.1",
             "source": {
                 "in": {
@@ -366,18 +386,26 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
-                                    "testCase": {},
                                     "result": {
                                         "result-var": {
                                             "variable": "$.after-all.out",
                                             "functions": []
                                         }
+                                    },
+                                    "testCase": {
+                                        "9631051e-75dc-4a82-a5c5-c1e7ff88e082": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "lades@client.io",
-                                    "testCase": "E2E Axiom - Dataset Lifecycle",
-                                    "result": "{{{result-var}}}"
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{9631051e-75dc-4a82-a5c5-c1e7ff88e082}}}"
                                 }
                             }
                         }
@@ -387,6 +415,6 @@
         }
     },
     "name": "E2E Axiom - Dataset Lifecycle",
-    "type": "automation",
-    "notes": {}
+    "notes": {},
+    "type": "automation"
 }
