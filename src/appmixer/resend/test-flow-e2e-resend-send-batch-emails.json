@@ -1,0 +1,333 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "emailFrom",
+                                                "text": "E2E Test <onboarding@resend.dev>"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "emailTo",
+                                                "text": "delivered@resend.dev"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "emailSubject",
+                                                "text": "E2E Batch Test Email"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "emailText",
+                                                "text": "This is an automated E2E test email sent via Resend batch API."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-batch-emails": {
+            "type": "appmixer.resend.email.SendBatchEmails",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "emails": {
+                                        "var-from": {
+                                            "variable": "$.set-variables.out.emailFrom",
+                                            "functions": []
+                                        },
+                                        "var-to": {
+                                            "variable": "$.set-variables.out.emailTo",
+                                            "functions": []
+                                        },
+                                        "var-subject": {
+                                            "variable": "$.set-variables.out.emailSubject",
+                                            "functions": []
+                                        },
+                                        "var-text": {
+                                            "variable": "$.set-variables.out.emailText",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "emails": {
+                                        "ADD": [
+                                            {
+                                                "from": "{{{var-from}}}",
+                                                "to": "{{{var-to}}}",
+                                                "subject": "{{{var-subject}}}",
+                                                "text": "{{{var-text}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-batch-count": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-batch-emails": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-batch-emails": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-count": {
+                                            "variable": "$.send-batch-emails.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-count}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-email": {
+            "type": "appmixer.resend.email.GetEmail",
+            "x": 640,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-batch-emails": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-batch-emails": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "6aff3904-5aa0-40af-996d-a113a4aff911": {
+                                            "variable": "$.send-batch-emails.out.data",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.[0].id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{6aff3904-5aa0-40af-996d-a113a4aff911}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-email": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-email": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-email": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "variable": "$.get-email.out.id",
+                                            "functions": []
+                                        },
+                                        "field-subject": {
+                                            "variable": "$.get-email.out.subject",
+                                            "functions": []
+                                        },
+                                        "expected-subject": {
+                                            "variable": "$.set-variables.out.emailSubject",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-subject}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-subject}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1136,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-batch-count": [
+                        "out"
+                    ],
+                    "assert-get-email": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 16,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    },
+                                    "testCase": {
+                                        "43413def-5689-4577-adf7-82d7cdae1a90": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{43413def-5689-4577-adf7-82d7cdae1a90}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Resend - Send Batch Emails",
+    "type": "automation"
+}
