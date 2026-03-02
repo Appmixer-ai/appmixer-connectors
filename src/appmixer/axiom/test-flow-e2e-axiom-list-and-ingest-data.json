@@ -27,7 +27,15 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "variables": {}
+                                    "variables": {
+                                        "27c83a05-d5bd-4145-8f52-32eba26804be": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 },
                                 "lambda": {
                                     "variables": {
@@ -35,7 +43,7 @@
                                             {
                                                 "type": "text",
                                                 "name": "datasetName",
-                                                "text": "e2e-test-{{{g_timestamp()}}}"
+                                                "text": "e2e-test-{{{27c83a05-d5bd-4145-8f52-32eba26804be}}}"
                                             }
                                         ]
                                     }
@@ -71,11 +79,13 @@
                                             "functions": []
                                         }
                                     },
-                                    "description": {}
+                                    "description": {},
+                                    "kind": {}
                                 },
                                 "lambda": {
                                     "name": "{{{var-dataset-name}}}",
-                                    "description": "E2E test dataset"
+                                    "description": "E2E test dataset",
+                                    "kind": "axiom:events:v1"
                                 }
                             }
                         }
@@ -85,7 +95,7 @@
         },
         "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 960,
+            "x": 1008,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -141,7 +151,7 @@
         "list-datasets": {
             "type": "appmixer.axiom.datasets.ListDatasets",
             "x": 704,
-            "y": 112,
+            "y": 160,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -170,8 +180,8 @@
         },
         "assert-list": {
             "type": "appmixer.utils.test.Assert",
-            "x": 960,
-            "y": 112,
+            "x": 1008,
+            "y": 160,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -191,6 +201,23 @@
                                         "field-result": {
                                             "variable": "$.list-datasets.out",
                                             "functions": []
+                                        },
+                                        "97b7ceb0-e1b2-4763-8f81-76231d23474f": {
+                                            "variable": "$.set-variables.out.datasetName",
+                                            "functions": []
+                                        },
+                                        "10a6a851-7ea5-4036-a9d3-b25bf7c1d265": {
+                                            "variable": "$.list-datasets.out",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.[0].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -198,8 +225,14 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{field-result}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-result}}}"
+                                            },
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{97b7ceb0-e1b2-4763-8f81-76231d23474f}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{10a6a851-7ea5-4036-a9d3-b25bf7c1d265}}}"
                                             }
                                         ]
                                     }
@@ -213,7 +246,7 @@
         "ingest-data": {
             "type": "appmixer.axiom.datasets.IngestData",
             "x": 704,
-            "y": 416,
+            "y": 304,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -236,12 +269,16 @@
                                         }
                                     },
                                     "data": {},
-                                    "dataFormat": {}
+                                    "dataFormat": {},
+                                    "csvDelimiter": {},
+                                    "eventLabels": {}
                                 },
                                 "lambda": {
                                     "datasetName": "{{{var-ingest-name}}}",
                                     "data": "[{\"message\":\"E2E test event 1\",\"level\":\"info\"},{\"message\":\"E2E test event 2\",\"level\":\"warning\"}]",
-                                    "dataFormat": "json"
+                                    "dataFormat": "json",
+                                    "csvDelimiter": ",",
+                                    "eventLabels": "{\"environment\": \"production\"}"
                                 }
                             }
                         }
@@ -251,8 +288,8 @@
         },
         "assert-ingest": {
             "type": "appmixer.utils.test.Assert",
-            "x": 960,
-            "y": 416,
+            "x": 1008,
+            "y": 304,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -302,8 +339,8 @@
         },
         "vacuum-dataset": {
             "type": "appmixer.axiom.datasets.VacuumDataset",
-            "x": 704,
-            "y": 272,
+            "x": 1024,
+            "y": -192,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -337,8 +374,8 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1408,
-            "y": 272,
+            "x": 1248,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -364,8 +401,8 @@
         },
         "delete-dataset": {
             "type": "appmixer.axiom.datasets.DeleteDataset",
-            "x": 1616,
-            "y": 272,
+            "x": 1440,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -399,8 +436,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1824,
-            "y": 272,
+            "x": 1664,
+            "y": 16,
             "version": "1.0.1",
             "source": {
                 "in": {
@@ -418,18 +455,26 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
-                                    "testCase": {},
                                     "result": {
                                         "result-var": {
                                             "variable": "$.after-all.out",
                                             "functions": []
                                         }
+                                    },
+                                    "testCase": {
+                                        "1b3b4ee6-e1c0-4feb-9cbe-98894939bf67": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "cccccc@client.io",
-                                    "testCase": "E2E Axiom - List and Ingest Data",
-                                    "result": "{{{result-var}}}"
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{1b3b4ee6-e1c0-4feb-9cbe-98894939bf67}}}"
                                 }
                             }
                         }
@@ -439,6 +484,6 @@
         }
     },
     "name": "E2E Axiom - List and Ingest Data",
-    "type": "automation",
-    "notes": {}
+    "notes": {},
+    "type": "automation"
 }
