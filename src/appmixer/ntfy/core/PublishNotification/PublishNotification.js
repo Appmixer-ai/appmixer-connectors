@@ -78,27 +78,18 @@ module.exports = {
                 data: message
             });
         } catch (err) {
-            throw new context.Error(
-                `Failed to publish ntfy notification: ${err.message}`,
-                'REQUEST_FAILED'
-            );
+            throw new Error(`Failed to publish ntfy notification: ${err.message}`);
         }
 
-        if (response.statusCode === 401 || response.statusCode === 403) {
-            throw new context.Error(
-                'Authentication failed. Check your access token and topic permissions.',
-                'AUTH_FAILED'
-            );
+        if (response.data && (response.data.code === 'unauthorized' || response.data.code === 'forbidden')) {
+            throw new Error('Authentication failed. Check your access token and topic permissions.');
         }
 
-        if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (!response.data || !response.data.id) {
             const body = typeof response.data === 'string'
                 ? response.data
                 : JSON.stringify(response.data);
-            throw new context.Error(
-                `ntfy API returned HTTP ${response.statusCode}: ${body}`,
-                'API_ERROR'
-            );
+            throw new Error(`ntfy API returned an unexpected response: ${body}`);
         }
 
         // ntfy responds with a JSON object describing the published message.

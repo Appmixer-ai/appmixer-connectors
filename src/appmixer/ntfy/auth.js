@@ -24,9 +24,8 @@ module.exports = {
 
             const serverUrl = (context.serverUrl || 'https://ntfy.sh').replace(/\/$/, '');
 
-            // If a token is provided, validate it by calling the account endpoint.
-            // ntfy.sh returns 401 for invalid tokens and 200 for valid ones.
             if (context.accessToken) {
+                // Validate the token by calling the account endpoint.
                 const response = await context.httpRequest({
                     method: 'GET',
                     url: `${serverUrl}/v1/account`,
@@ -35,21 +34,18 @@ module.exports = {
                     }
                 });
 
-                if (response.statusCode === 401 || response.statusCode === 403) {
-                    throw new context.Error('Invalid access token. Please check your token and try again.', 'INVALID_CREDENTIALS');
-                }
-                if (response.statusCode !== 200) {
-                    throw new context.Error(`Could not reach ntfy server at ${serverUrl} (HTTP ${response.statusCode}).`, 'SERVER_ERROR');
+                if (!response.data || response.data.code === 'unauthorized' || response.data.code === 'forbidden') {
+                    throw new Error('Invalid access token. Please check your token and try again.');
                 }
             } else {
-                // No token: just check that the server is reachable.
+                // No token: verify the server is reachable via its health endpoint.
                 const response = await context.httpRequest({
                     method: 'GET',
                     url: `${serverUrl}/v1/health`
                 });
 
-                if (response.statusCode !== 200) {
-                    throw new context.Error(`Could not reach ntfy server at ${serverUrl}. Please verify the Server URL.`, 'SERVER_UNREACHABLE');
+                if (!response.data || !response.data.healthy) {
+                    throw new Error(`Could not reach ntfy server at ${serverUrl}. Please verify the Server URL.`);
                 }
             }
         }
