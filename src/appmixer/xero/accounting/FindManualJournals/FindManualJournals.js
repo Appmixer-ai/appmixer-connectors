@@ -15,10 +15,6 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
-        if (!tenantId) {
-            throw new context.CancelError('Tenant ID is required!');
-        }
-
         const params = {};
         if (Status) {
             params.where = `Status=="${Status}"`;
@@ -29,10 +25,6 @@ module.exports = {
             dataKey: 'ManualJournals',
             params
         });
-
-        if (!records || records.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
 
         return sendArrayOutput({
             context,
@@ -51,9 +43,7 @@ module.exports = {
             { label: 'Status', value: 'Status' },
             { label: 'Line Amount Types', value: 'LineAmountTypes' },
             {
-                label: 'Journal Lines',
-                value: 'JournalLines',
-                schema: {
+                label: 'Journal Lines', value: 'JournalLines', schema: {
                     type: 'array',
                     items: {
                         type: 'object',
@@ -79,45 +69,43 @@ module.exports = {
             return context.sendJson(itemSchema, outputPortName);
         } else if (outputType === 'items') {
             return context.sendJson(
-                [
-                    {
-                        label: 'Manual Journals',
-                        value: 'items',
-                        schema: {
-                            type: 'array',
-                            items: {
-                                type: 'object',
-                                properties: {
-                                    ManualJournalID: { type: 'string', title: 'ManualJournalID' },
-                                    Narration: { type: 'string', title: 'Narration' },
-                                    Date: { type: 'string', title: 'Date' },
-                                    Status: { type: 'string', title: 'Status' },
-                                    LineAmountTypes: { type: 'string', title: 'LineAmountTypes' },
-                                    JournalLines: {
-                                        title: 'JournalLines',
-                                        type: 'array',
-                                        items: {
-                                            type: 'object',
-                                            properties: {
-                                                LineAmount: { type: 'number', title: 'LineAmount' },
-                                                AccountCode: { type: 'string', title: 'AccountCode' },
-                                                AccountID: { type: 'string', title: 'AccountID' },
-                                                Description: { type: 'string', title: 'Description' },
-                                                TaxType: { type: 'string', title: 'TaxType' },
-                                                TaxAmount: { type: 'number', title: 'TaxAmount' },
-                                                IsBlank: { type: 'boolean', title: 'IsBlank' }
-                                            }
+                [{
+                    label: 'Manual Journals',
+                    value: 'items',
+                    schema: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                ManualJournalID: { type: 'string', title: 'ManualJournalID' },
+                                Narration: { type: 'string', title: 'Narration' },
+                                Date: { type: 'string', title: 'Date' },
+                                Status: { type: 'string', title: 'Status' },
+                                LineAmountTypes: { type: 'string', title: 'LineAmountTypes' },
+                                JournalLines: {
+                                    title: 'JournalLines',
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            LineAmount: { type: 'number', title: 'LineAmount' },
+                                            AccountCode: { type: 'string', title: 'AccountCode' },
+                                            AccountID: { type: 'string', title: 'AccountID' },
+                                            Description: { type: 'string', title: 'Description' },
+                                            TaxType: { type: 'string', title: 'TaxType' },
+                                            TaxAmount: { type: 'number', title: 'TaxAmount' },
+                                            IsBlank: { type: 'boolean', title: 'IsBlank' }
                                         }
-                                    },
-                                    Url: { type: 'string', title: 'Url' },
-                                    ShowOnCashBasisReports: { type: 'boolean', title: 'ShowOnCashBasisReports' },
-                                    HasAttachments: { type: 'boolean', title: 'HasAttachments' },
-                                    UpdatedDateUTC: { type: 'string', title: 'UpdatedDateUTC' }
-                                }
+                                    }
+                                },
+                                Url: { type: 'string', title: 'Url' },
+                                ShowOnCashBasisReports: { type: 'boolean', title: 'ShowOnCashBasisReports' },
+                                HasAttachments: { type: 'boolean', title: 'HasAttachments' },
+                                UpdatedDateUTC: { type: 'string', title: 'UpdatedDateUTC' }
                             }
                         }
                     }
-                ],
+                }],
                 outputPortName
             );
         } else {

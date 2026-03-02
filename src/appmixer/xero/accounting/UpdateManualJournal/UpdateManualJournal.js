@@ -17,6 +17,22 @@ module.exports = {
             JournalLines
         } = context.messages.in.content;
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required!');
+        }
+
+        if (!ManualJournalID) {
+            throw new context.CancelError('Manual Journal ID is required!');
+        }
+
+        if (!Narration) {
+            throw new context.CancelError('Narration is required!');
+        }
+
+        if (!JournalLines) {
+            throw new context.CancelError('Journal Lines is required!');
+        }
+
         let journalLines;
         try {
             journalLines = JSON.parse(JournalLines);
