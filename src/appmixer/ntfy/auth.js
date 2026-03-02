@@ -20,12 +20,31 @@ module.exports = {
             }
         },
 
+        accountNameFromProfileInfo: async context => {
+
+            const serverUrl = (context.serverUrl || 'https://ntfy.sh').replace(/\/$/, '');
+
+            if (context.accessToken) {
+                const response = await context.httpRequest({
+                    method: 'GET',
+                    url: `${serverUrl}/v1/account`,
+                    headers: {
+                        'Authorization': `Bearer ${context.accessToken}`
+                    }
+                });
+                if (response.data && response.data.username) {
+                    return `${response.data.username} (${serverUrl})`;
+                }
+            }
+
+            return serverUrl;
+        },
+
         validate: async context => {
 
             const serverUrl = (context.serverUrl || 'https://ntfy.sh').replace(/\/$/, '');
 
             if (context.accessToken) {
-                // Validate the token by calling the account endpoint.
                 const response = await context.httpRequest({
                     method: 'GET',
                     url: `${serverUrl}/v1/account`,
@@ -38,7 +57,6 @@ module.exports = {
                     throw new Error('Invalid access token. Please check your token and try again.');
                 }
             } else {
-                // No token: verify the server is reachable via its health endpoint.
                 const response = await context.httpRequest({
                     method: 'GET',
                     url: `${serverUrl}/v1/health`
