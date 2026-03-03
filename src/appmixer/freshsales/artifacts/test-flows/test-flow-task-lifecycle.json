@@ -1,0 +1,460 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "taskTitle",
+                                                "text": "E2E Test Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskDescription",
+                                                "text": "E2E Test Task Description"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedTitle",
+                                                "text": "E2E Test Task Updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedDescription",
+                                                "text": "E2E Test Task Description Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task": {
+            "type": "appmixer.freshsales.core.CreateTask",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-task-title": {
+                                            "variable": "$.set-variables.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-task-desc": {
+                                            "variable": "$.set-variables.out.taskDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "{{{var-task-title}}}",
+                                    "description": "{{{var-task-desc}}}",
+                                    "task_type": "Follow-up",
+                                    "priority": "Medium",
+                                    "status": "Open"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        },
+                                        "field-create-title": {
+                                            "variable": "$.create-task.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-title": {
+                                            "variable": "$.set-variables.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-create-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-create-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-task": {
+            "type": "appmixer.freshsales.core.GetTask",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-id": {
+                                            "variable": "$.get-task.out.id",
+                                            "functions": []
+                                        },
+                                        "field-get-title": {
+                                            "variable": "$.get-task.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-get-title": {
+                                            "variable": "$.set-variables.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-get-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-get-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-get-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-task": {
+            "type": "appmixer.freshsales.core.UpdateTask",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-update-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {
+                                        "var-updated-title": {
+                                            "variable": "$.set-variables.out.updatedTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-updated-desc": {
+                                            "variable": "$.set-variables.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-update-id}}}",
+                                    "title": "{{{var-updated-title}}}",
+                                    "description": "{{{var-updated-desc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-update-id": {
+                                            "variable": "$.update-task.out.id",
+                                            "functions": []
+                                        },
+                                        "field-updated-title": {
+                                            "variable": "$.update-task.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-updated-title": {
+                                            "variable": "$.set-variables.out.updatedTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-update-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-updated-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-updated-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-task": {
+            "type": "appmixer.freshsales.core.DeleteTask",
+            "x": 1584,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-delete-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-delete-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshsales - Task Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Freshsales - Task Lifecycle",
+    "type": "automation"
+}
