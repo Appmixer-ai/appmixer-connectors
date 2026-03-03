@@ -1,0 +1,761 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "dealName",
+                                                "text": "E2E Find Records Test Deal"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "appointmentTitle",
+                                                "text": "E2E Find Records Test Appointment"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskTitle",
+                                                "text": "E2E Find Records Test Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "fromDate",
+                                                "text": "2026-06-01T10:00:00Z"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "endDate",
+                                                "text": "2026-06-01T11:00:00Z"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-deal": {
+            "type": "appmixer.freshsales.core.CreateDeal",
+            "x": 480,
+            "y": -64,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "deal_name": {
+                                        "var-deal-name": {
+                                            "variable": "$.set-variables.out.dealName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "deal_amount": {}
+                                },
+                                "lambda": {
+                                    "deal_name": "{{{var-deal-name}}}",
+                                    "deal_amount": 1000
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-appointment": {
+            "type": "appmixer.freshsales.core.CreateAppointment",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-appt-title": {
+                                            "variable": "$.set-variables.out.appointmentTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "from_date": {
+                                        "var-from-date": {
+                                            "variable": "$.set-variables.out.fromDate",
+                                            "functions": []
+                                        }
+                                    },
+                                    "end_date": {
+                                        "var-end-date": {
+                                            "variable": "$.set-variables.out.endDate",
+                                            "functions": []
+                                        }
+                                    },
+                                    "time_zone": {}
+                                },
+                                "lambda": {
+                                    "title": "{{{var-appt-title}}}",
+                                    "from_date": "{{{var-from-date}}}",
+                                    "end_date": "{{{var-end-date}}}",
+                                    "time_zone": "UTC"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task": {
+            "type": "appmixer.freshsales.core.CreateTask",
+            "x": 448,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-task-title": {
+                                            "variable": "$.set-variables.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "task_type": {},
+                                    "priority": {},
+                                    "status": {},
+                                    "due_date": {}
+                                },
+                                "lambda": {
+                                    "title": "{{{var-task-title}}}",
+                                    "task_type": "Follow-up",
+                                    "priority": "Medium",
+                                    "status": "Open",
+                                    "due_date": "2026-02-27T23:00:00.000Z"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-deals": {
+            "type": "appmixer.freshsales.core.FindDeals",
+            "x": 768,
+            "y": -256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-deal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-deal": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "view_id": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "view_id": 1,
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-appointments": {
+            "type": "appmixer.freshsales.core.FindAppointments",
+            "x": 736,
+            "y": 48,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-appointment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-appointment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filter": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "filter": "upcoming",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-tasks": {
+            "type": "appmixer.freshsales.core.FindTasks",
+            "x": 736,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "filter": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "filter": "open",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-deal": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": -80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-deal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-deal": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-deal-id": {
+                                            "variable": "$.create-deal.out.id",
+                                            "functions": []
+                                        },
+                                        "field-deal-name": {
+                                            "variable": "$.create-deal.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-deal-name": {
+                                            "variable": "$.set-variables.out.dealName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-deal-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-deal-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-deal-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-appointment": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-appointment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-appointment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-appt-id": {
+                                            "variable": "$.create-appointment.out.appointment.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-appt-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-task": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 736,
+            "y": 496,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        },
+                                        "field-task-title": {
+                                            "variable": "$.create-task.out.title",
+                                            "functions": []
+                                        },
+                                        "expected-task-title": {
+                                            "variable": "$.set-variables.out.taskTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-task-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-task-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-task-title}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find-deals": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": -272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-deals": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-deals": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-deals-result": {
+                                            "variable": "$.find-deals.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-deals-result}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find-appointments": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": 32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-appointments": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-appointments": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-appts-result": {
+                                            "variable": "$.find-appointments.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-appts-result}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find-tasks": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": 256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-tasks": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-tasks": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e3ecfa2d-a5f4-4dc3-b52f-8f4e3166adce": {
+                                            "variable": "$.find-tasks.out.result",
+                                            "functions": []
+                                        },
+                                        "53796d5d-b524-4f88-b6b1-06c944154a2c": {
+                                            "variable": "$.find-tasks.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{e3ecfa2d-a5f4-4dc3-b52f-8f4e3166adce}}}"
+                                            },
+                                            {
+                                                "field": "{{{53796d5d-b524-4f88-b6b1-06c944154a2c}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 480,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-deal": [
+                        "out"
+                    ],
+                    "assert-create-appointment": [
+                        "out"
+                    ],
+                    "assert-create-task": [
+                        "out"
+                    ],
+                    "assert-find-deals": [
+                        "out"
+                    ],
+                    "assert-find-appointments": [
+                        "out"
+                    ],
+                    "assert-find-tasks": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-deal": {
+            "type": "appmixer.freshsales.core.DeleteDeal",
+            "x": 1952,
+            "y": 480,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-appointment": {
+                            "out": {
+                                "lambda": {
+                                    "id": "{{{var-del-deal-id}}}"
+                                },
+                                "modifiers": {
+                                    "id": {
+                                        "var-del-deal-id": {
+                                            "variable": "$.create-deal.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-appointment": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "delete-appointment": {
+            "type": "appmixer.freshsales.core.DeleteAppointment",
+            "x": 1760,
+            "y": 480,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "fb42ea78-df6b-49f1-a544-32fdaab44122": {
+                                            "variable": "$.create-appointment.out.appointment.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{fb42ea78-df6b-49f1-a544-32fdaab44122}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-task": {
+            "type": "appmixer.freshsales.core.DeleteTask",
+            "x": 1584,
+            "y": 480,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-del-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-del-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2160,
+            "y": 480,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-deal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-deal": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Freshsales - Find Records",
+                                    "result": "{{{result-var}}}"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Freshsales - Find Records",
+    "type": "automation"
+}
