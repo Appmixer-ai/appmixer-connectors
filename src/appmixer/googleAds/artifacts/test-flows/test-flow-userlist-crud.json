@@ -1,0 +1,613 @@
+{
+    "name": "E2E Google Ads - User List CRUD",
+    "description": "End-to-end test for Google Ads connector - creates a user list, finds it, gets it, adds a user, then deletes it.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "4923f55b-3b3a-4007-95bc-f91cf4030e82": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "customerId",
+                                                "toggle": false,
+                                                "text": "TODO"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "developerToken",
+                                                "toggle": false,
+                                                "text": "TODO"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "userListName",
+                                                "text": "E2E Test Audience - {{{4923f55b-3b3a-4007-95bc-f91cf4030e82}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "testEmail",
+                                                "toggle": false,
+                                                "text": "e2e-test-user@example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-user-list": {
+            "type": "appmixer.googleAds.core.CreateUserList",
+            "x": 448,
+            "y": 16,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "developerToken": {
+                                        "var-developer-token": {
+                                            "variable": "$.set-variables.out.developerToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-user-list-name": {
+                                            "variable": "$.set-variables.out.userListName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {},
+                                    "membershipLifeSpan": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "developerToken": "{{{var-developer-token}}}",
+                                    "name": "{{{var-user-list-name}}}",
+                                    "description": "E2E test user list - safe to delete",
+                                    "membershipLifeSpan": 30
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "create-resource-name": {
+                                            "variable": "$.create-user-list.out.resourceName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{create-resource-name}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-user-lists": {
+            "type": "appmixer.googleAds.core.FindUserLists",
+            "x": 640,
+            "y": 144,
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-find": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "developerToken": {
+                                        "var-developer-token-find": {
+                                            "variable": "$.set-variables.out.developerToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "searchQuery": {
+                                        "a8e06f05-08ee-4e59-8796-60bdd45ea9ad": {
+                                            "variable": "$.set-variables.out.userListName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-find}}}",
+                                    "developerToken": "{{{var-developer-token-find}}}",
+                                    "searchQuery": "SELECT user_list.id, user_list.name, user_list.resource_name FROM user_list WHERE user_list.name = '{{{a8e06f05-08ee-4e59-8796-60bdd45ea9ad}}}'",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "source": {
+                "in": {
+                    "find-user-lists": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-user-lists": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "find-name": {
+                                            "variable": "$.find-user-lists.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{find-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Audience"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-user-list": {
+            "type": "appmixer.googleAds.core.GetUserList",
+            "x": 832,
+            "y": 272,
+            "source": {
+                "in": {
+                    "find-user-lists": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-user-lists": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-get": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "developerToken": {
+                                        "var-developer-token-get": {
+                                            "variable": "$.set-variables.out.developerToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-user-list-id-get": {
+                                            "variable": "$.find-user-lists.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-get}}}",
+                                    "developerToken": "{{{var-developer-token-get}}}",
+                                    "userListId": "{{{var-user-list-id-get}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "source": {
+                "in": {
+                    "get-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "get-name": {
+                                            "variable": "$.get-user-list.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{get-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Audience"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "add-user": {
+            "type": "appmixer.googleAds.core.AddUserToUserList",
+            "x": 1024,
+            "y": 400,
+            "source": {
+                "in": {
+                    "get-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-add": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "developerToken": {
+                                        "var-developer-token-add": {
+                                            "variable": "$.set-variables.out.developerToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-user-list-id-add": {
+                                            "variable": "$.find-user-lists.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "email": {
+                                        "var-test-email": {
+                                            "variable": "$.set-variables.out.testEmail",
+                                            "functions": []
+                                        }
+                                    },
+                                    "operation": {},
+                                    "adUserDataConsent": {},
+                                    "adPersonalizationConsent": {}
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-add}}}",
+                                    "developerToken": "{{{var-developer-token-add}}}",
+                                    "userListId": "{{{var-user-list-id-add}}}",
+                                    "email": "{{{var-test-email}}}",
+                                    "operation": "create",
+                                    "adUserDataConsent": "GRANTED",
+                                    "adPersonalizationConsent": "GRANTED"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-add-user": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400,
+            "source": {
+                "in": {
+                    "add-user": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-user": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "add-resource-name": {
+                                            "variable": "$.add-user.out.userListResourceName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{add-resource-name}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 208,
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-add-user": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-user-list": {
+            "type": "appmixer.googleAds.core.DeleteUserList",
+            "x": 1584,
+            "y": 208,
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-del": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "developerToken": {
+                                        "var-developer-token-del": {
+                                            "variable": "$.set-variables.out.developerToken",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-user-list-id-del": {
+                                            "variable": "$.find-user-lists.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-del}}}",
+                                    "developerToken": "{{{var-developer-token-del}}}",
+                                    "userListId": "{{{var-user-list-id-del}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 208,
+            "source": {
+                "in": {
+                    "delete-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "properties": {
+                    "failedStoreId": "6964e1ea98fd4bc3eba41961",
+                    "successStoreId": "6964e1f7ca7f0d7073c72bc0"
+                },
+                "transform": {
+                    "in": {
+                        "delete-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmier.ai",
+                                    "testCase": "E2E Google Ads - User List CRUD",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "mtime": "2026-03-03T13:22:29.647Z",
+    "stage": "running",
+    "type": "automation",
+    "userId": "691454d9b0c0c36d76ca4007",
+    "stageChangeInfo": {
+        "action": "started-by-user",
+        "userId": "691454d9b0c0c36d76ca4007",
+        "timestamp": "2026-03-03T13:22:29.647Z"
+    },
+    "started": "2026-03-03T13:22:29.312Z",
+    "stopped": "2026-03-03T13:22:00.403Z",
+    "user": {
+        "id": "691454d9b0c0c36d76ca4007",
+        "email": "jirka@client.io",
+        "username": "jirka@client.io",
+        "phoneNumber": null,
+        "title": null,
+        "isActive": false,
+        "scope": [
+            "user",
+            "admin"
+        ],
+        "plan": {
+            "plan": "free"
+        },
+        "created": "2025-11-12T09:35:21.914Z",
+        "vendor": [],
+        "metadata": {},
+        "sso": null,
+        "allowedPrivateComponents": []
+    }
+}
