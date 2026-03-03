@@ -43,6 +43,23 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson(response.data, 'out');
+        const data = response.data.appointment || response.data;
+
+        // Map fields with correct API field names
+        const out = {
+            id: data.id,
+            title: data.title,
+            calendarId: data.calendarId,
+            locationId: data.locationId,
+            contactId: data.contactId,
+            startTime: data.startTime || data.start || data.startTimeUtc || data.startDatetime,
+            endTime: data.endTime || data.end || data.endTimeUtc || data.endDatetime,
+            appointmentStatus: data.appointmentStatus || data.status,
+            assignedUserId: data.assignedUserId || data.userId,
+            address: data.address,
+            dateAdded: data.dateAdded || data.createdAt || data.dateCreated || data.created_at
+        };
+
+        return context.sendJson(out, 'out');
     }
 };

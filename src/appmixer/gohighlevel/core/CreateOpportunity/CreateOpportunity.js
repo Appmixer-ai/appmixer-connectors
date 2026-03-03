@@ -7,19 +7,40 @@ module.exports = {
 
     async receive(context) {
 
-        const { locationId } = context.messages.in.content;
+        const {
+            pipelineId,
+            locationId,
+            name,
+            pipelineStageId,
+            status,
+            contactId,
+            monetaryValue,
+            assignedTo
+        } = context.messages.in.content;
 
-        // Temporary: fetch pipelines to discover real IDs
+        const body = {
+            pipelineId,
+            locationId,
+            name,
+            pipelineStageId,
+            status,
+            contactId
+        };
+
+        if (monetaryValue !== undefined) body.monetaryValue = monetaryValue;
+        if (assignedTo !== undefined) body.assignedTo = assignedTo;
+
         const response = await context.httpRequest({
-            method: 'GET',
-            url: `${BASE_URL}/opportunities/pipelines`,
+            method: 'POST',
+            url: `${BASE_URL}/opportunities/`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
+                'Content-Type': 'application/json',
                 'Version': API_VERSION
             },
-            params: { locationId }
+            data: body
         });
 
-        return context.sendJson(response.data, 'out');
+        return context.sendJson(response.data.opportunity, 'out');
     }
 };
