@@ -1,0 +1,116 @@
+{
+    "name": "appmixer.gohighlevel.core.FindOpportunities",
+    "label": "Find Opportunities",
+    "description": "Search for opportunities in a GoHighLevel pipeline. Returns a maximum of 100 opportunities.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gohighlevel"
+    },
+    "quota": {
+        "manager": "appmixer:gohighlevel",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "locationId": { "type": "string" },
+                    "pipelineId": { "type": "string" },
+                    "pipelineStageId": { "type": "string" },
+                    "status": { "type": "string" },
+                    "assignedTo": { "type": "string" },
+                    "query": { "type": "string" },
+                    "outputType": { "type": "string", "default": "array" }
+                },
+                "required": ["locationId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "locationId": {
+                        "type": "text",
+                        "label": "Location ID",
+                        "index": 1,
+                        "tooltip": "The ID of the GoHighLevel location (sub-account) to search opportunities in."
+                    },
+                    "pipelineId": {
+                        "type": "text",
+                        "label": "Pipeline ID",
+                        "index": 2,
+                        "tooltip": "Filter by pipeline ID."
+                    },
+                    "pipelineStageId": {
+                        "type": "text",
+                        "label": "Pipeline Stage ID",
+                        "index": 3,
+                        "tooltip": "Filter by pipeline stage ID."
+                    },
+                    "status": {
+                        "type": "select",
+                        "label": "Status",
+                        "index": 4,
+                        "tooltip": "Filter by opportunity status.",
+                        "options": [
+                            { "label": "All", "value": "" },
+                            { "label": "Open", "value": "open" },
+                            { "label": "Won", "value": "won" },
+                            { "label": "Lost", "value": "lost" },
+                            { "label": "Abandoned", "value": "abandoned" }
+                        ]
+                    },
+                    "assignedTo": {
+                        "type": "text",
+                        "label": "Assigned To (User ID)",
+                        "index": 5,
+                        "tooltip": "Filter opportunities assigned to a specific user ID."
+                    },
+                    "query": {
+                        "type": "text",
+                        "label": "Search Query",
+                        "index": 6,
+                        "tooltip": "Search term to filter opportunities."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 7,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/gohighlevel/core/FindOpportunities?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/locationId": "inputs/in/locationId"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MCA1MCI+PHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiByeD0iMTAiIGZpbGw9IiMwMGI3NTkiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjZmZmIj5HTDwvdGV4dD48L3N2Zz4="
+}
