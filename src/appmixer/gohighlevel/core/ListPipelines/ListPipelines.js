@@ -9,7 +9,6 @@ module.exports = {
 
         const { locationId } = context.messages.in.content;
 
-        // Temporary: fetch pipelines to discover real IDs
         const response = await context.httpRequest({
             method: 'GET',
             url: `${BASE_URL}/opportunities/pipelines`,
@@ -20,6 +19,11 @@ module.exports = {
             params: { locationId }
         });
 
-        return context.sendJson(response.data, 'out');
+        const pipelines = response.data?.pipelines || [];
+        return context.sendJson({ pipelines }, 'out');
+    },
+
+    toSelectArray({ pipelines }) {
+        return (pipelines || []).map(p => ({ label: p.name, value: p.id }));
     }
 };

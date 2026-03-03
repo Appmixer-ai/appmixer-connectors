@@ -9,10 +9,9 @@ module.exports = {
 
         const { locationId } = context.messages.in.content;
 
-        // Temporary: fetch pipelines to discover real IDs
         const response = await context.httpRequest({
             method: 'GET',
-            url: `${BASE_URL}/opportunities/pipelines`,
+            url: `${BASE_URL}/calendars/`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Version': API_VERSION
@@ -20,6 +19,11 @@ module.exports = {
             params: { locationId }
         });
 
-        return context.sendJson(response.data, 'out');
+        const calendars = response.data?.calendars || [];
+        return context.sendJson({ calendars }, 'out');
+    },
+
+    toSelectArray({ calendars }) {
+        return (calendars || []).map(c => ({ label: c.name, value: c.id }));
     }
 };

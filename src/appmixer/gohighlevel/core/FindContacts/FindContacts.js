@@ -22,7 +22,21 @@ const CONTACT_SCHEMA = {
     source: { type: 'string', title: 'Source' },
     locationId: { type: 'string', title: 'Location ID' },
     dateAdded: { type: 'string', title: 'Date Added' },
-    dateUpdated: { type: 'string', title: 'Date Updated' }
+    dateUpdated: { type: 'string', title: 'Date Updated' },
+    type: { type: 'string', title: 'Type' },
+    assignedTo: { type: 'string', title: 'Assigned To' },
+    dateOfBirth: { type: 'string', title: 'Date of Birth' },
+    timezone: { type: 'string', title: 'Timezone' },
+    profilePhoto: { type: 'string', title: 'Profile Photo' },
+    businessId: { type: 'string', title: 'Business ID' },
+    firstNameRaw: { type: 'string', title: 'First Name (Raw)' },
+    lastNameRaw: { type: 'string', title: 'Last Name (Raw)' },
+    dnd: { type: 'boolean', title: 'Do Not Disturb' },
+    dndSettings: { type: 'object', title: 'DND Settings' },
+    tags: { type: 'array', title: 'Tags', items: { type: 'string' } },
+    followers: { type: 'array', title: 'Followers', items: { type: 'string' } },
+    additionalEmails: { type: 'array', title: 'Additional Emails', items: { type: 'string' } },
+    customFields: { type: 'array', title: 'Custom Fields', items: { type: 'object' } }
 };
 
 module.exports = {

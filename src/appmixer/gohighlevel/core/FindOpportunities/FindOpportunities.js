@@ -37,16 +37,12 @@ module.exports = {
             throw new context.CancelError('Location ID is required!');
         }
 
-        const params = {
-            location_id: locationId,
-            limit: 100
-        };
-
+        const params = { location_id: locationId, limit: 20 };
         if (pipelineId) params.pipeline_id = pipelineId;
         if (pipelineStageId) params.pipeline_stage_id = pipelineStageId;
         if (status) params.status = status;
         if (assignedTo) params.assigned_to = assignedTo;
-        if (query) params.query = query;
+        if (query) params.q = query;
 
         const response = await context.httpRequest({
             method: 'GET',
@@ -60,10 +56,22 @@ module.exports = {
 
         const opportunities = response.data?.opportunities || [];
 
-        if (opportunities.length === 0) {
+        if (outputType === 'array') {
+            return context.sendJson({ result: opportunities }, 'out');
+        }
+
+        if (!opportunities.length) {
             return context.sendJson({}, 'notFound');
         }
 
-        return lib.sendArrayOutput({ context, outputType, records: opportunities });
+        // outputType === 'first' or default
+        for (let i = 0; i < opportunities.length; i++) {
+            const opp = opportunities[i];
+            await context.sendJson({
+                ...opp,
+                index: i,
+                count: opportunities.length
+            }, 'out');
+        }
     }
 };
