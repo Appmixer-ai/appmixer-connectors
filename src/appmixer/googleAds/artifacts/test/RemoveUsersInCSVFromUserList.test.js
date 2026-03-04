@@ -549,7 +549,7 @@ describe('RemoveUsersInCSVFromUserList', () => {
             const csv = emailCsv([{ email: 'alice@example.com' }]);
             context.messages.in.content = {
                 fileId: 'file-abc',
-                customerId: '710-713-3715',
+                customerId: '712-213-3715',
                 developerToken: 'dev-token',
                 userListId: '9329730810'
             };
