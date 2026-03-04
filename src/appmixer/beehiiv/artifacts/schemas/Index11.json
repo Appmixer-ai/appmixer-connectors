@@ -1,0 +1,216 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "expand": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "stats",
+                        "stat_active_subscriptions",
+                        "stat_active_premium_subscriptions",
+                        "stat_active_free_subscriptions",
+                        "stat_average_open_rate",
+                        "stat_average_click_rate",
+                        "stat_total_sent",
+                        "stat_total_unique_opened",
+                        "stat_total_clicked"
+                    ]
+                },
+                "description": "Optionally expand the results by adding additional information like subscription counts and engagement stats."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+            },
+            "direction": {
+                "type": "string",
+                "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "default": "asc"
+            },
+            "order_by": {
+                "type": "string",
+                "enum": [
+                    "created",
+                    "name"
+                ],
+                "default": "created",
+                "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the publication was first created.<br> `name` - The name of the publication."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        }
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data",
+            "limit",
+            "page",
+            "total_results",
+            "total_pages"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "id",
+                        "name",
+                        "organization_name",
+                        "referral_program_enabled",
+                        "created"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the publication."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the publication"
+                        },
+                        "organization_name": {
+                            "type": "string",
+                            "description": "The name of the organization"
+                        },
+                        "referral_program_enabled": {
+                            "type": "boolean",
+                            "description": "A boolean field indicating whether the referral program is active for this publication."
+                        },
+                        "created": {
+                            "type": "number",
+                            "description": "The time that the publication was created. Measured in seconds since the Unix epoch",
+                            "format": "double"
+                        },
+                        "stats": {
+                            "type": "object",
+                            "description": "Optional list of stats for a publication. Retrievable by including an `expand` array in the publication request body. Add `\"stats\"` to the array to retrieve all, or add individual stats (prefaced with `stat_`) to only retrieve specific ones.\n\nExamples:\n{\n  \"expand\": [\"stats\"]\n}\n\n{\n  \"expand\": [\"stat_active_subscriptions\", \"stat_average_click_rate\"]\n}",
+                            "properties": {
+                                "active_subscriptions": {
+                                    "description": "Total number of active free and premium subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "active_premium_subscriptions": {
+                                    "description": "Total number of active premium/paid subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "active_free_subscriptions": {
+                                    "description": "Total number of active free subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "average_open_rate": {
+                                    "description": "The publications historical average open rate",
+                                    "oneOf": [
+                                        {
+                                            "type": "number",
+                                            "format": "double"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "average_click_rate": {
+                                    "description": "The publications historical average click through rate",
+                                    "oneOf": [
+                                        {
+                                            "type": "number",
+                                            "format": "double"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_sent": {
+                                    "description": "Total number of emails sent",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_unique_opened": {
+                                    "description": "Total number of uniquely opened emails. Only counts the first open for each subscriber.",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_clicked": {
+                                    "description": "The total number of links clicked from emails.",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "limit": {
+                "type": "integer",
+                "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                "default": 1
+            },
+            "total_results": {
+                "type": "integer",
+                "description": "The total number of results from all pages."
+            },
+            "total_pages": {
+                "type": "integer",
+                "description": "The total number of pages."
+            }
+        }
+    }
+}

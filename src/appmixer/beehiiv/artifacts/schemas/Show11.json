@@ -1,0 +1,88 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "endpointId": {
+                "type": "string",
+                "description": "The prefixed ID of the webhook object"
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId",
+            "endpointId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "url",
+                    "created",
+                    "updated",
+                    "event_types",
+                    "description"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The prefixed ID of the endpoint."
+                    },
+                    "url": {
+                        "type": "string",
+                        "description": "The webhook URL to send events to.",
+                        "format": "uri"
+                    },
+                    "created": {
+                        "type": "integer",
+                        "description": "The date the webhook was created. Measured in seconds since the Unix epoch."
+                    },
+                    "updated": {
+                        "type": "integer",
+                        "description": "The date the webhook was last updated. Measured in seconds since the Unix epoch."
+                    },
+                    "event_types": {
+                        "type": "array",
+                        "description": "The types of events the webhook will receive.",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "post.sent",
+                                "post.updated",
+                                "subscription.confirmed",
+                                "subscription.created",
+                                "subscription.downgraded",
+                                "subscription.paused",
+                                "subscription.resumed",
+                                "subscription.tier.paused",
+                                "subscription.tier.resumed",
+                                "subscription.upgraded",
+                                "subscription.tier.created",
+                                "subscription.tier.deleted",
+                                "subscription.deleted",
+                                "survey.response_submitted"
+                            ]
+                        }
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "The user-defined description for the webhook."
+                    }
+                }
+            }
+        }
+    }
+}

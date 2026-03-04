@@ -1,0 +1,89 @@
+{
+    "name": "appmixer.beehiiv.core.SubscriptionDowngraded",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Fires when a subscriber downgrades from premium to free.",
+    "version": "1.0.0",
+    "private": false,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:beehiiv"
+    },
+    "quota": {
+        "manager": "appmixer:beehiiv",
+        "resources": "requests"
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "publicationId": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "publicationId"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "publicationId": {
+                    "type": "text",
+                    "label": "Publication ID",
+                    "tooltip": "The prefixed ID of the publication.",
+                    "index": 0,
+                    "source": {
+                        "url": "/component/appmixer/beehiiv/core/ListPublications?outPort=out",
+                        "data": {
+                            "message": {
+                                "in/outputType": "array"
+                            },
+                            "transform": "./ListPublications#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Subscription ID",
+                    "value": "data.id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Email",
+                    "value": "data.email",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Status",
+                    "value": "data.status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Tier",
+                    "value": "data.subscription_tier",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created",
+                    "value": "data.created",
+                    "schema": {
+                        "type": "integer"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": ""
+}

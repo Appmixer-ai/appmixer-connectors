@@ -1,0 +1,68 @@
+{
+    "name": "appmixer.beehiiv.core.SurveyResponseSubmitted",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Fires when a survey response is submitted.",
+    "version": "1.0.0",
+    "private": false,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:beehiiv"
+    },
+    "quota": {
+        "manager": "appmixer:beehiiv",
+        "resources": "requests"
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "publicationId": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "publicationId"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "publicationId": {
+                    "type": "text",
+                    "label": "Publication ID",
+                    "tooltip": "The prefixed ID of the publication.",
+                    "index": 0,
+                    "source": {
+                        "url": "/component/appmixer/beehiiv/core/ListPublications?outPort=out",
+                        "data": {
+                            "message": {
+                                "in/outputType": "array"
+                            },
+                            "transform": "./ListPublications#toSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Survey ID",
+                    "value": "data.survey_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Response",
+                    "value": "data",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": ""
+}
