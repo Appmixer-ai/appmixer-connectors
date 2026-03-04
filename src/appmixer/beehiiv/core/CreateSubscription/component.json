@@ -1,0 +1,136 @@
+{
+    "name": "appmixer.beehiiv.core.CreateSubscription",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new subscription (subscriber) for a publication.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:beehiiv"
+    },
+    "quota": {
+        "manager": "appmixer:beehiiv",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "publicationId": { "type": "string" },
+                    "email": { "type": "string" },
+                    "reactivate_existing": { "type": "boolean" },
+                    "send_welcome_email": { "type": "boolean" },
+                    "utm_source": { "type": "string" },
+                    "utm_medium": { "type": "string" },
+                    "utm_campaign": { "type": "string" },
+                    "referring_site": { "type": "string" },
+                    "referral_code": { "type": "string" },
+                    "tier": { "type": "string" },
+                    "double_opt_override": { "type": "string" }
+                },
+                "required": ["publicationId", "email"]
+            },
+            "inspector": {
+                "inputs": {
+                    "publicationId": {
+                        "type": "text",
+                        "label": "Publication ID",
+                        "tooltip": "The prefixed ID of the publication.",
+                        "index": 0,
+                        "source": {
+                            "url": "/component/appmixer/beehiiv/core/ListPublications?outPort=out",
+                            "data": {
+                                "message": { "in/outputType": "array" },
+                                "transform": "./ListPublications#toSelectArray"
+                            }
+                        }
+                    },
+                    "email": {
+                        "type": "text",
+                        "label": "Email",
+                        "tooltip": "The email address of the subscriber.",
+                        "index": 1
+                    },
+                    "reactivate_existing": {
+                        "type": "toggle",
+                        "label": "Reactivate Existing",
+                        "tooltip": "Reactivate the subscription if they have already unsubscribed.",
+                        "index": 2
+                    },
+                    "send_welcome_email": {
+                        "type": "toggle",
+                        "label": "Send Welcome Email",
+                        "tooltip": "Send the publication's welcome email to the subscriber.",
+                        "index": 3
+                    },
+                    "utm_source": {
+                        "type": "text",
+                        "label": "UTM Source",
+                        "tooltip": "The source of the subscription.",
+                        "index": 4
+                    },
+                    "utm_medium": {
+                        "type": "text",
+                        "label": "UTM Medium",
+                        "tooltip": "The medium of the subscription.",
+                        "index": 5
+                    },
+                    "utm_campaign": {
+                        "type": "text",
+                        "label": "UTM Campaign",
+                        "tooltip": "The acquisition campaign.",
+                        "index": 6
+                    },
+                    "referring_site": {
+                        "type": "text",
+                        "label": "Referring Site",
+                        "tooltip": "The website the subscriber was referred from.",
+                        "index": 7
+                    },
+                    "referral_code": {
+                        "type": "text",
+                        "label": "Referral Code",
+                        "tooltip": "Referral code to give credit for this subscription.",
+                        "index": 8
+                    },
+                    "tier": {
+                        "type": "select",
+                        "label": "Tier",
+                        "tooltip": "The tier for this subscription.",
+                        "index": 9,
+                        "options": [
+                            { "label": "Free", "value": "free" },
+                            { "label": "Premium", "value": "premium" }
+                        ]
+                    },
+                    "double_opt_override": {
+                        "type": "select",
+                        "label": "Double Opt-in Override",
+                        "tooltip": "Override publication double opt-in settings.",
+                        "index": 10,
+                        "options": [
+                            { "label": "Default (use publication setting)", "value": "" },
+                            { "label": "On", "value": "on" },
+                            { "label": "Off", "value": "off" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Subscription ID", "value": "data.id", "schema": { "type": "string" } },
+                { "label": "Email", "value": "data.email", "schema": { "type": "string" } },
+                { "label": "Status", "value": "data.status", "schema": { "type": "string" } },
+                { "label": "Tier", "value": "data.subscription_tier", "schema": { "type": "string" } },
+                { "label": "Created", "value": "data.created", "schema": { "type": "integer" } },
+                { "label": "Referral Code", "value": "data.referral_code", "schema": { "type": "string" } }
+            ]
+        }
+    ],
+    "icon": ""
+}

@@ -1,0 +1,179 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "segmentId": {
+                "type": "string",
+                "description": "The prefixed ID of the segment object"
+            },
+            "expand[]": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "stats"
+                    ]
+                },
+                "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId",
+            "segmentId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "object",
+                "description": "The segment object. To expand results, see the results endpoint.",
+                "required": [
+                    "id",
+                    "name",
+                    "type",
+                    "total_results",
+                    "status",
+                    "active"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The prefixed ID of the segment."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the segment."
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "The type of segment.<br>`dynamic` - The segment is recalculated at set intervals.<br>`static` - The segment is calculated once at creation.<br>`manual` - The segment is not calculated at all. The results are created via CSV.",
+                        "enum": [
+                            "dynamic",
+                            "static",
+                            "manual",
+                            "all"
+                        ],
+                        "default": "all"
+                    },
+                    "last_calculated": {
+                        "type": "integer",
+                        "description": "The time the Segment was last calculated. Measured in seconds since the Unix epoch"
+                    },
+                    "total_results": {
+                        "type": "integer",
+                        "description": "The total number of subscriptions that belong in the segment from the last calculation."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "The status of the segment's most recent calculation.<br>`pending` - The segment has not been calculated yet.<br>`processing` - The calculation is in progress, and has not completed.<br>`completed` - The calculation was successful.<br>`failed` - Something went wrong during the calculation.",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "completed",
+                            "failed"
+                        ]
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "description": "Dynamic segments are marked inactive if they haven't been used in a specific period of time. Inactive segments will not automatically be recalculated."
+                    },
+                    "stats": {
+                        "type": "object",
+                        "required": [
+                            "open_rate",
+                            "total_sent",
+                            "percentage_premium_subscribers",
+                            "percentage_subscribers_with_referrals",
+                            "unique_emails_clicked",
+                            "total_delivered",
+                            "total_referrals",
+                            "unsubscribed_rate",
+                            "total_subscribers",
+                            "clickthrough_rate",
+                            "unsubscribed_count",
+                            "unique_emails_opened",
+                            "premium_subscribers",
+                            "average_referrals_per_subscriber"
+                        ],
+                        "properties": {
+                            "open_rate": {
+                                "type": "number",
+                                "description": "The average open rate of the subscribers in the segment.",
+                                "format": "double"
+                            },
+                            "total_sent": {
+                                "type": "integer",
+                                "description": "The total number of emails sent to the subscribers in the segment."
+                            },
+                            "percentage_premium_subscribers": {
+                                "type": "number",
+                                "description": "The percentage of subscribers in this segment who are premium in any tier.",
+                                "format": "double"
+                            },
+                            "percentage_subscribers_with_referrals": {
+                                "type": "number",
+                                "description": "The percentage of subscribers in this segment who have referred at least one other subscriber.",
+                                "format": "double"
+                            },
+                            "unique_emails_clicked": {
+                                "type": "integer",
+                                "description": "The total number of unique emails clicked by subscribers in the segment."
+                            },
+                            "total_delivered": {
+                                "type": "integer",
+                                "description": "The total number of emails delivered to subscribers in the segment."
+                            },
+                            "total_referrals": {
+                                "type": "integer",
+                                "description": "The total number of referrals from subscribers in the segment."
+                            },
+                            "unsubscribed_rate": {
+                                "type": "number",
+                                "description": "The percentage of subscribers in this segment who have unsubscribed.",
+                                "format": "double"
+                            },
+                            "total_subscribers": {
+                                "type": "integer",
+                                "description": "The total number of subscribers in the segment."
+                            },
+                            "clickthrough_rate": {
+                                "type": "number",
+                                "description": "The average clickthrough rate of the subscribers in the segment.",
+                                "format": "double"
+                            },
+                            "unsubscribed_count": {
+                                "type": "integer",
+                                "description": "The total number of subscribers in the segment who are unsubscribed."
+                            },
+                            "unique_emails_opened": {
+                                "type": "integer",
+                                "description": "The total number of unique emails opened by subscribers in the segment."
+                            },
+                            "premium_subscribers": {
+                                "type": "integer",
+                                "description": "The total number of premium subscribers in the segment."
+                            },
+                            "average_referrals_per_subscriber": {
+                                "type": "number",
+                                "description": "The average number of referrals per subscriber in the segment.",
+                                "format": "double"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
