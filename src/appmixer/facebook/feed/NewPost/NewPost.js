@@ -1,49 +1,37 @@
 'use strict';
-const graph = require('fbgraph');
-const Promise = require('bluebird');
-const CursorPaging = require('../../lib').CursorPaging;
+
+const { FacebookClient } = require('../../lib');
 
 /**
- * Process posts to find newly added.
- * @param {Set} knownPosts
- * @param {Set} actualPosts
- * @param {Set} newPosts
- * @param {Object} post
- */
-function processPosts(knownPosts, actualPosts, newPosts, post) {
-
-    if (knownPosts && !knownPosts.has(post['id'])) {
-        newPosts.add(post);
-    }
-    actualPosts.add(post['id']);
-}
-
-/**
- * Component which triggers whenever new post is added
- * @extends {Component}
+ * Component which triggers whenever new post is created on the user's feed.
  */
 module.exports = {
 
     async tick(context) {
 
-        let since = parseInt((new Date().getTime() / 1000).toFixed(0));
+        const client = new FacebookClient(context);
+        const since = Math.floor(Date.now() / 1000);
 
-        graph.setVersion('3.2');
-        let client = graph.setAccessToken(context.auth.accessToken);
-        let paging = new CursorPaging(Promise.promisify(client.get, { context: client }));
-        let posts = await paging.fetch(`/me/feed?since=${context.state.since || since}`);
+        const posts = await client.fetchAll('/me/feed', {
+            since: context.state.since || since,
+            fields: 'id,message,story,created_time'
+        });
 
-        let known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
-        let actual = new Set();
-        let diff = new Set();
+        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
+        const actual = new Set();
+        const diff = [];
 
-        posts.forEach(processPosts.bind(null, known, actual, diff));
-
-        if (diff.size) {
-            await Promise.map(diff, post => {
-                return context.sendJson(post, 'post');
-            });
+        for (const post of posts) {
+            if (known && !known.has(post.id)) {
+                diff.push(post);
+            }
+            actual.add(post.id);
         }
+
+        for (const post of diff) {
+            await context.sendJson(post, 'post');
+        }
+
         await context.saveState({ known: Array.from(actual), since });
     }
 };

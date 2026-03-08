@@ -1,62 +1,44 @@
 'use strict';
-const graph = require('fbgraph');
-const Promise = require('bluebird');
-const CursorPaging = require('../../lib').CursorPaging;
+
+const { FacebookClient } = require('../../lib');
 
 /**
- * Process posts to find newly added.
- * @param {Set} knownPosts
- * @param {Set} actualPosts
- * @param {Set} newPosts
- * @param {Object} post
- */
-function processPosts(knownPosts, actualPosts, newPosts, post) {
-
-    if (knownPosts && !knownPosts.has(post['id'])) {
-        newPosts.add(post);
-    }
-    actualPosts.add(post['id']);
-}
-
-/**
- * Component which triggers whenever new post is added
- * @extends {Component}
+ * Trigger that fires whenever a new post is created on a page.
  */
 module.exports = {
 
     async tick(context) {
 
-        let since = parseInt((new Date().getTime() / 1000).toFixed(0));
+        const client = new FacebookClient(context);
+        const { pageId } = context.properties;
+        const since = Math.floor(Date.now() / 1000);
 
-        graph.setVersion('3.2');
-        let client = graph.setAccessToken(context.auth.accessToken);
-        let { pageId } = context.properties;
-        let get = Promise.promisify(client.get, { context: client });
+        // Get page access token and name
+        const pageDetails = await client.get(`/${pageId}`, { fields: 'access_token,name' });
+        client.setAccessToken(pageDetails.access_token);
 
-        let pageDetails = await get(`/${pageId}`, { fields: 'access_token, name' });
+        const posts = await client.fetchAll(`/${pageId}/feed`, {
+            since: context.state.since || since,
+            fields: 'id,message,created_time'
+        });
 
-        client.setAccessToken(pageDetails['access_token']);
+        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
+        const actual = new Set();
+        const diff = [];
 
-        let paging = new CursorPaging(get);
-        let posts = await paging.fetch(`/${pageId}/feed?since=${context.state.since || since}`);
+        for (const post of posts) {
+            if (known && !known.has(post.id)) {
+                diff.push(post);
+            }
+            actual.add(post.id);
+        }
 
-        let known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
-        let actual = new Set();
-        let diff = new Set();
-
-        posts.forEach(processPosts.bind(null, known, actual, diff));
-
-        if (diff.size) {
-            await Promise.map(diff, post => {
-                return context.sendJson(
-                    Object.assign(
-                        post,
-                        {
-                            pageName: pageDetails['name'],
-                            pageId: pageId
-                        }),
-                    'post');
-            });
+        for (const post of diff) {
+            await context.sendJson({
+                ...post,
+                pageName: pageDetails.name,
+                pageId
+            }, 'post');
         }
 
         await context.saveState({ known: Array.from(actual), since });

@@ -1,33 +1,23 @@
 'use strict';
-const graph = require('fbgraph');
-const Promise = require('bluebird');
-const CursorPaging = require('../../lib').CursorPaging;
+
+const { FacebookClient } = require('../../lib');
 
 module.exports = {
 
     async receive(context) {
 
-        graph.setVersion('3.2');
-        let client = graph.setAccessToken(context.auth.accessToken);
-        let get = Promise.promisify(client.get, { context: client });
-        let paging = new CursorPaging(get);
-        return context.sendJson(await paging.fetch('/me/accounts'), 'pages');
+        const client = new FacebookClient(context);
+        const pages = await client.fetchAll('/me/accounts', { fields: 'id,name,access_token' });
+        return context.sendJson(pages, 'pages');
     },
 
     toSelectArray(pages) {
 
-        let transformed = [];
+        if (!Array.isArray(pages)) return [];
 
-        if (Array.isArray(pages)) {
-            pages.forEach(page => {
-
-                transformed.push({
-                    label: page['name'],
-                    value: page['id']
-                });
-            });
-        }
-
-        return transformed;
+        return pages.map(page => ({
+            label: page.name,
+            value: page.id
+        }));
     }
 };
