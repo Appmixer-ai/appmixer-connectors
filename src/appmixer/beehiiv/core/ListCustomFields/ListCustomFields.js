@@ -6,6 +6,9 @@ module.exports = {
     async receive(context) {
         const { publicationId } = context.messages.in.content;
         const result = await api.Index6.execute(context, { publicationId });
-        return context.sendJson(result, 'out');
+        const customFields = result.data || [];
+        for (const field of customFields) {
+            await context.sendJson(field, 'out');
+        }
     }
 };

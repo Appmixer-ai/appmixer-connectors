@@ -21,7 +21,7 @@ module.exports = {
                 }
             });
             if (data?.data?.length) {
-                return { name: data.data[0].name || 'beehiiv' };
+                return { id: data.data[0].id, name: data.data[0].name || 'beehiiv' };
             }
             throw new Error('Could not retrieve beehiiv account info.');
         },

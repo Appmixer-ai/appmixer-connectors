@@ -10,7 +10,7 @@ const Index = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/advertisement_opportunities`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -27,7 +27,7 @@ const Index2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations/${automationId}/journeys`,
             params: { status, limit, page, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -44,7 +44,7 @@ const Create = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations/${automationId}/journeys`,
             data: { email, subscription_id, double_opt_override, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -61,7 +61,7 @@ const Show = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations/${automationId}/journeys/${automationJourneyId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -78,7 +78,7 @@ const Index3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations`,
             params: { limit, page, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -95,7 +95,7 @@ const Show2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations/${automationId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -112,7 +112,7 @@ const Create2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/bulk_subscriptions`,
             data: { subscriptions, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -129,7 +129,7 @@ const Index4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/bulk_subscription_updates`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -146,7 +146,7 @@ const Show3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/bulk_subscription_updates/${id}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -163,7 +163,7 @@ const Put = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/bulk_actions`,
             data: { subscriptions, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -180,7 +180,7 @@ const Patch = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/bulk_actions`,
             data: { subscriptions, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -197,7 +197,7 @@ const Index5 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
             params: { status, tier, limit, cursor, page, email, order_by, direction, creation_date, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -214,7 +214,7 @@ const Create3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
             data: { email, reactivate_existing, send_welcome_email, utm_source, utm_medium, utm_campaign, utm_term, utm_content, referring_site, referral_code, custom_fields, double_opt_override, tier, premium_tiers, premium_tier_ids, stripe_customer_id, automation_ids, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -231,7 +231,7 @@ const PutStatus = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
             data: { subscription_ids, new_status, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -248,7 +248,7 @@ const PatchStatus = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
             data: { subscription_ids, new_status, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -265,7 +265,7 @@ const Index6 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -282,7 +282,7 @@ const Create4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields`,
             data: { kind, display, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -299,7 +299,7 @@ const Show4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields/${id}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -316,7 +316,7 @@ const Put2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields/${id}`,
             data: { display, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -333,7 +333,7 @@ const Patch2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields/${id}`,
             data: { display, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -350,7 +350,7 @@ const Delete = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/custom_fields/${id}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -367,7 +367,7 @@ const Index7 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/engagements`,
             params: { start_date, number_of_days, granularity, email_type, direction, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -384,7 +384,7 @@ const Index8 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/polls`,
             params: { limit, cursor, page, order_by, direction, post_id, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -401,7 +401,7 @@ const Show5 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/polls/${pollId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -418,7 +418,7 @@ const ListResponses = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/polls/${pollId}/responses`,
             params: { limit, cursor, page, order_by, direction, post_id, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -435,7 +435,7 @@ const Index9 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts`,
             params: { expand, audience, platform, status, premium_tiers, limit, page, order_by, direction, hidden_from_feed, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -452,7 +452,7 @@ const Create5 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts`,
             data: { body_content, blocks, title, subtitle, post_template_id, status, scheduled_at, custom_link_tracking_enabled, email_capture_type_override, override_scheduled_at, social_share, thumbnail_image_url, recipients, email_settings, web_settings, seo_settings, content_tags, headers, custom_fields, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -469,7 +469,7 @@ const AggregateStats = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts/aggregate_stats`,
             params: { audience, platform, status, hidden_from_feed, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -486,7 +486,7 @@ const Show6 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts/${postId}`,
             params: { expand, premium_tiers, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -503,7 +503,7 @@ const Delete2 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts/${postId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -520,7 +520,7 @@ const Index10 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/post_templates`,
             params: { limit, page, order, order_by, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -537,7 +537,7 @@ const Index11 = {
             url: 'https://api.beehiiv.com/v2/publications',
             params: { expand, limit, page, direction, order_by, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -554,7 +554,7 @@ const Show7 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}`,
             params: { expand, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -571,7 +571,7 @@ const Show8 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/referral_program`,
             params: { limit, page, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -588,7 +588,7 @@ const Index12 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments`,
             params: { type, status, limit, page, order_by, direction, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -605,7 +605,7 @@ const Show9 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments/${segmentId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -622,7 +622,7 @@ const Delete3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments/${segmentId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -639,7 +639,7 @@ const Recalculate = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments/${segmentId}/recalculate`,
             data: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -656,7 +656,7 @@ const ListMembers = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments/${segmentId}/members`,
             params: { limit, page, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -673,7 +673,7 @@ const ExpandResults = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments/${segmentId}/results`,
             params: { limit, page, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -690,7 +690,7 @@ const GetByEmail = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/by_email/${email}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -707,7 +707,7 @@ const UpdateByEmail = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/by_email/${email}`,
             data: { email, tier, premium_tier_ids, premium_tiers, stripe_customer_id, unsubscribe, custom_fields, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -724,7 +724,7 @@ const GetById = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -741,7 +741,7 @@ const Put3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
             data: { tier, premium_tier_ids, premium_tiers, email, stripe_customer_id, unsubscribe, custom_fields, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -758,7 +758,7 @@ const Patch3 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
             data: { email, tier, premium_tier_ids, premium_tiers, stripe_customer_id, unsubscribe, custom_fields, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -775,7 +775,7 @@ const Delete4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -792,7 +792,7 @@ const Create6 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}/tags`,
             data: { tags, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -809,7 +809,7 @@ const Index13 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers`,
             params: { limit, page, direction, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -826,7 +826,7 @@ const Create7 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers`,
             data: { name, description, prices_attributes, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -843,7 +843,7 @@ const Show10 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers/${tierId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -860,7 +860,7 @@ const Put4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers/${tierId}`,
             data: { name, description, prices_attributes, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -877,7 +877,7 @@ const Patch4 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers/${tierId}`,
             data: { name, description, prices_attributes, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -894,7 +894,7 @@ const Index14 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks`,
             params: { limit, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -911,7 +911,7 @@ const Create8 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks`,
             data: { url, event_types, description, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -928,7 +928,7 @@ const Show11 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks/${endpointId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -945,7 +945,7 @@ const Update = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks/${endpointId}`,
             data: { event_types, description, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -962,7 +962,7 @@ const Delete5 = {
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks/${endpointId}`,
             params: { ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -978,7 +978,7 @@ const Identify = {
             method: 'GET',
             url: 'https://api.beehiiv.com/v2/workspaces/identify',
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
@@ -995,7 +995,7 @@ const PublicationsBySubscriptionEmail = {
             url: `https://api.beehiiv.com/v2/workspaces/publications/by_subscription_email/${email}`,
             params: { expand, ...rest },
             headers: {
-                Authorization: `Bearer ${context.auth.accessToken}`
+                Authorization: `Bearer ${context.auth.apiKey}`
             }
         });
         return response.data;
