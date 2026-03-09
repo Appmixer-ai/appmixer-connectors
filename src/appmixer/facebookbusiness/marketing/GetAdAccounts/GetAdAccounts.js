@@ -9,7 +9,7 @@ module.exports = {
         }
 
         const accessToken = context.auth.accessToken;
-        const url = `https://graph.facebook.com/v22.0/me/adaccounts?access_token=${accessToken}&fields=id,account_id,name,account_status`;
+        const url = `https://graph.facebook.com/v25.0/me/adaccounts?access_token=${accessToken}&fields=id,account_id,name,account_status`;
         const { data } = await context.httpRequest.get(url);
         return context.sendJson({ accounts: data.data }, 'out');
     },

@@ -21,7 +21,7 @@ module.exports = {
             }
         });
 
-        const url = `https://graph.facebook.com/v22.0/act_${accountId}/customaudiences?access_token=${accessToken}`;
+        const url = `https://graph.facebook.com/v25.0/act_${accountId}/customaudiences?access_token=${accessToken}`;
 
         const { data } = await context.httpRequest.post(url, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }

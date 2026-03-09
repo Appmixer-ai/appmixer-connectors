@@ -44,7 +44,7 @@ module.exports = {
             access_token: accessToken
         };
 
-        const url = `https://graph.facebook.com/v22.0/${audienceId}/users`;
+        const url = `https://graph.facebook.com/v25.0/${audienceId}/users`;
         const response = await context.httpRequest.delete(url, { data: body });
 
         if (!response || !response.data || response.data.num_received !== 1) {
