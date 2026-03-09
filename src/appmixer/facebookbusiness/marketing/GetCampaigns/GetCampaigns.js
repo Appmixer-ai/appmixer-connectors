@@ -13,7 +13,7 @@ module.exports = {
         const fields = Object.keys(this.fields);
         const { data } = await context.httpRequest({
             headers: { 'Content-Type': 'application/json' },
-            url: `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?access_token=${accessToken}&fields=${fields.join(',')}`
+            url: `https://graph.facebook.com/v22.0/act_${accountId}/campaigns?access_token=${accessToken}&fields=${fields.join(',')}`
         });
 
         if (outputType === 'first') {

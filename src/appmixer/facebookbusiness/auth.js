@@ -16,7 +16,7 @@ module.exports = {
                 'scope': context.scope.join(', '),
                 'state': context.ticket
             };
-            return 'https://www.facebook.com/v20.0/dialog/oauth?' + new URLSearchParams(params).toString();
+            return 'https://www.facebook.com/v22.0/dialog/oauth?' + new URLSearchParams(params).toString();
         },
 
         requestAccessToken: async context => {
@@ -28,7 +28,7 @@ module.exports = {
                 'code': context.authorizationCode
             };
 
-            const url = 'https://graph.facebook.com/v20.0/oauth/access_token';
+            const url = 'https://graph.facebook.com/v22.0/oauth/access_token';
 
             const response = await context.httpRequest.get(url + '?' + new URLSearchParams(params).toString());
             let newDate = new Date();
@@ -46,7 +46,7 @@ module.exports = {
 
         requestProfileInfo: async context => {
 
-            const url = `https://graph.facebook.com/v20.0/me?access_token=${context.accessToken}`;
+            const url = `https://graph.facebook.com/v22.0/me?access_token=${context.accessToken}`;
             const response = await context.httpRequest.get(url);
             return response.data;
         },
@@ -61,7 +61,7 @@ module.exports = {
                 'grant_type': 'fb_exchange_token'
             };
 
-            const url = 'https://graph.facebook.com/v20.0/oauth/access_token';
+            const url = 'https://graph.facebook.com/v22.0/oauth/access_token';
 
             const response = await context.httpRequest.get(url + '?' + new URLSearchParams(params).toString());
             let newDate = new Date();
@@ -75,7 +75,8 @@ module.exports = {
         validateAccessToken: async context => {
 
             try {
-                await this.requestProfileInfo(context);
+                const url = `https://graph.facebook.com/v22.0/me?access_token=${context.accessToken}`;
+                await context.httpRequest.get(url);
                 return true;
             } catch (err) {
                 return false;
