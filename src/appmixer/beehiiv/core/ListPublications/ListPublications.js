@@ -1,11 +1,19 @@
 'use strict';
 
-const api = require('../../api');
-
 module.exports = {
     async receive(context) {
-        const result = await api.Index11.execute(context, {});
-        return context.sendJson(result, 'out');
+        const response = await context.httpRequest({
+            method: 'GET',
+            url: 'https://api.beehiiv.com/v2/publications',
+            headers: {
+                Authorization: `Bearer ${context.auth.apiKey}`
+            }
+        });
+
+        const publications = response.data.data || [];
+        for (const pub of publications) {
+            await context.sendJson(pub, 'out');
+        }
     },
 
     toSelectArray(msg) {
