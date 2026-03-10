@@ -1,0 +1,252 @@
+{
+    "name": "E2E Beehiiv - Reference Data",
+    "description": "End-to-end test for Beehiiv connector - tests reference data listing components: ListAutomations, ListCustomFields, and ListSegments. All three run in parallel from OnStart. ListCustomFields is asserted (live data confirmed). ListAutomations and ListSegments are smoke-tested; they return empty arrays in the test account and are excluded from assertions to avoid flow deadlock.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "list-custom-fields": {
+            "type": "appmixer.beehiiv.core.ListCustomFields",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-automations": {
+            "type": "appmixer.beehiiv.core.ListAutomations",
+            "x": 256,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-segments": {
+            "type": "appmixer.beehiiv.core.ListSegments",
+            "x": 256,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-custom-fields-id": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-custom-fields": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-custom-fields": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "variable": "$.list-custom-fields.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-custom-fields-kind": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-custom-fields": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-custom-fields": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-kind": {
+                                            "variable": "$.list-custom-fields.out.kind",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-kind}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 640,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-custom-fields-id": [
+                        "out"
+                    ],
+                    "assert-custom-fields-kind": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 832,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Beehiiv - Reference Data",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

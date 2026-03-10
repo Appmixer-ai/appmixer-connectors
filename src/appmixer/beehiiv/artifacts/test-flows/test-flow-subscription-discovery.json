@@ -1,0 +1,312 @@
+{
+    "name": "E2E Beehiiv - Subscription Discovery",
+    "description": "End-to-end test for Beehiiv connector - tests subscription discovery operations: ListSubscriptions and FindSubscription. Seeds a known subscriber, verifies listing and lookup by email, then cleans up.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-subscription": {
+            "type": "appmixer.beehiiv.core.CreateSubscription",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "email": {},
+                                    "reactivate_existing": {},
+                                    "send_welcome_email": {},
+                                    "tier": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "email": "e2e.discovery.test@appmixer.com",
+                                    "reactivate_existing": true,
+                                    "send_welcome_email": false,
+                                    "tier": "free"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-subscriptions": {
+            "type": "appmixer.beehiiv.core.ListSubscriptions",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-subscription": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-subscription": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "limit": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "limit": 10,
+                                    "outputType": "item"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-subscription": {
+            "type": "appmixer.beehiiv.core.FindSubscription",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-subscription": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-subscription": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "email": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "email": "e2e.discovery.test@appmixer.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-subscriptions": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-subscriptions": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "list-sub-id": {
+                                            "variable": "$.list-subscriptions.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{list-sub-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-subscription": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-subscription": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "found-email": {
+                                            "variable": "$.find-subscription.out.data.email",
+                                            "functions": []
+                                        },
+                                        "found-sub-id": {
+                                            "variable": "$.find-subscription.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{found-sub-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{found-email}}}",
+                                                "assertion": "equal",
+                                                "expected": "e2e.discovery.test@appmixer.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-list": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-subscription": {
+            "type": "appmixer.beehiiv.core.DeleteSubscription",
+            "x": 1024,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "subscriptionId": {
+                                        "var-del-sub-id": {
+                                            "variable": "$.create-subscription.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "subscriptionId": "{{{var-del-sub-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-subscription": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-subscription": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Beehiiv - Subscription Discovery",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
