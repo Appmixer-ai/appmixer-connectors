@@ -763,10 +763,10 @@ const GetById = {
     method: 'GET',
     path: '/publications/{publicationId}/subscriptions/{subscriptionId}',
     docsUrl: 'https://developers.beehiiv.com/openapi.json?api=b8f1ff54-4a50-481f-8374-498a9601c3a6#operation/get-by-id',
-    async execute(context, { publicationId, subscriptionId, ...rest }) {
+    async execute(context, { publicationId, subscriberId, ...rest }) {
         const response = await context.httpRequest({
             method: 'GET',
-            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
+            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
             params: { ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -781,12 +781,12 @@ const Put3 = {
     path: '/publications/{publicationId}/subscriptions/{subscriptionId}',
     docsUrl: 'https://developers.beehiiv.com/openapi.json?api=b8f1ff54-4a50-481f-8374-498a9601c3a6#operation/put',
     async execute(context, {
-        publicationId, subscriptionId, tier, premium_tier_ids: premiumTierIds, premium_tiers: premiumTiers,
+        publicationId, subscriberId, tier, premium_tier_ids: premiumTierIds, premium_tiers: premiumTiers,
         email, stripe_customer_id: stripeCustomerId, unsubscribe, custom_fields: customFields, ...rest
     }) {
         const response = await context.httpRequest({
             method: 'PUT',
-            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
+            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
             data: { tier, premiumTierIds, premiumTiers, email, stripeCustomerId, unsubscribe, customFields, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -801,13 +801,13 @@ const Patch3 = {
     path: '/publications/{publicationId}/subscriptions/{subscriptionId}',
     docsUrl: 'https://developers.beehiiv.com/openapi.json?api=b8f1ff54-4a50-481f-8374-498a9601c3a6#operation/patch',
     async execute(context, {
-        publicationId, subscriptionId, email, tier, premium_tier_ids: premiumTierIds,
+        publicationId, subscriberId, email, tier, premium_tier_ids: premiumTierIds,
         premium_tiers: premiumTiers, stripe_customer_id: stripeCustomerId, unsubscribe,
         custom_fields: customFields, ...rest
     }) {
         const response = await context.httpRequest({
             method: 'PATCH',
-            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
+            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
             data: { email, tier, premiumTierIds, premiumTiers, stripeCustomerId, unsubscribe, customFields, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -821,10 +821,10 @@ const Delete4 = {
     method: 'DELETE',
     path: '/publications/{publicationId}/subscriptions/{subscriptionId}',
     docsUrl: 'https://developers.beehiiv.com/openapi.json?api=b8f1ff54-4a50-481f-8374-498a9601c3a6#operation/delete',
-    async execute(context, { publicationId, subscriptionId, ...rest }) {
+    async execute(context, { publicationId, subscriberId, ...rest }) {
         const response = await context.httpRequest({
             method: 'DELETE',
-            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}`,
+            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
             params: { ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -838,10 +838,10 @@ const Create6 = {
     method: 'POST',
     path: '/publications/{publicationId}/subscriptions/{subscriptionId}/tags',
     docsUrl: 'https://developers.beehiiv.com/openapi.json?api=b8f1ff54-4a50-481f-8374-498a9601c3a6#operation/create',
-    async execute(context, { publicationId, subscriptionId, tags, ...rest }) {
+    async execute(context, { publicationId, subscriberId, tags, ...rest }) {
         const response = await context.httpRequest({
             method: 'POST',
-            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriptionId}/tags`,
+            url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}/tags`,
             data: { tags, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`

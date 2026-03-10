@@ -1,6 +1,6 @@
 {
-    "name": "E2E Beehiiv - Subscription Discovery",
-    "description": "End-to-end test for Beehiiv connector - tests subscription discovery operations: ListSubscriptions and FindSubscription. Seeds a known subscriber, verifies listing and lookup by email, then cleans up.",
+    "name": "E2E Beehiiv - Subscriber Lifecycle",
+    "description": "End-to-end test for Beehiiv connector - tests subscriber CRUD lifecycle: Create, Get, Update, and Delete operations.",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -10,8 +10,8 @@
             "version": "1.0.0",
             "config": {}
         },
-        "create-subscription": {
-            "type": "appmixer.beehiiv.core.CreateSubscription",
+        "create-subscriber": {
+            "type": "appmixer.beehiiv.core.CreateSubscriber",
             "x": 256,
             "y": 16,
             "version": "1.0.0",
@@ -37,7 +37,7 @@
                                 },
                                 "lambda": {
                                     "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
-                                    "email": "e2e.discovery.test@appmixer.com",
+                                    "email": "e2e.lifecycle.test@appmixer.com",
                                     "reactivate_existing": true,
                                     "send_welcome_email": false,
                                     "tier": "free"
@@ -48,80 +48,14 @@
                 }
             }
         },
-        "list-subscriptions": {
-            "type": "appmixer.beehiiv.core.ListSubscriptions",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-subscription": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-subscription": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "publicationId": {},
-                                    "limit": {},
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
-                                    "limit": 10,
-                                    "outputType": "item"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "find-subscription": {
-            "type": "appmixer.beehiiv.core.FindSubscription",
-            "x": 448,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-subscription": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-subscription": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "publicationId": {},
-                                    "email": {}
-                                },
-                                "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
-                                    "email": "e2e.discovery.test@appmixer.com"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-list": {
+        "assert-create": {
             "type": "appmixer.utils.test.Assert",
-            "x": 640,
+            "x": 1000,
             "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "list-subscriptions": [
+                    "create-subscriber": [
                         "out"
                     ]
                 }
@@ -129,13 +63,13 @@
             "config": {
                 "transform": {
                     "in": {
-                        "list-subscriptions": {
+                        "create-subscriber": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "list-sub-id": {
-                                            "variable": "$.list-subscriptions.out.data.id",
+                                        "created-sub-id": {
+                                            "variable": "$.create-subscriber.out.data.id",
                                             "functions": []
                                         }
                                     }
@@ -144,7 +78,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{list-sub-id}}}",
+                                                "field": "{{{created-sub-id}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -156,14 +90,14 @@
                 }
             }
         },
-        "assert-find": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 640,
+        "get-subscriber": {
+            "type": "appmixer.beehiiv.core.GetSubscriber",
+            "x": 448,
             "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "find-subscription": [
+                    "create-subscriber": [
                         "out"
                     ]
                 }
@@ -171,17 +105,50 @@
             "config": {
                 "transform": {
                     "in": {
-                        "find-subscription": {
+                        "create-subscriber": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "subscriberId": {
+                                        "var-get-sub-id": {
+                                            "variable": "$.create-subscriber.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "subscriberId": "{{{var-get-sub-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1000,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-subscriber": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "found-email": {
-                                            "variable": "$.find-subscription.out.data.email",
-                                            "functions": []
-                                        },
-                                        "found-sub-id": {
-                                            "variable": "$.find-subscription.out.data.id",
+                                        "fetched-email": {
+                                            "variable": "$.get-subscriber.out.data.email",
                                             "functions": []
                                         }
                                     }
@@ -190,13 +157,91 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{found-sub-id}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{found-email}}}",
+                                                "field": "{{{fetched-email}}}",
                                                 "assertion": "equal",
-                                                "expected": "e2e.discovery.test@appmixer.com"
+                                                "expected": "e2e.lifecycle.test@appmixer.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-subscriber": {
+            "type": "appmixer.beehiiv.core.UpdateSubscriber",
+            "x": 640,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-subscriber": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "subscriberId": {
+                                        "var-upd-sub-id": {
+                                            "variable": "$.get-subscriber.out.data.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tier": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "subscriberId": "{{{var-upd-sub-id}}}",
+                                    "tier": "premium"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1000,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-subscriber": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-tier": {
+                                            "variable": "$.update-subscriber.out.data.subscription_tier",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{updated-tier}}}",
+                                                "assertion": "equal",
+                                                "expected": "premium"
                                             }
                                         ]
                                     }
@@ -209,15 +254,18 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 832,
-            "y": 80,
+            "x": 1192,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-list": [
+                    "assert-create": [
                         "out"
                     ],
-                    "assert-find": [
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
                         "out"
                     ]
                 }
@@ -228,10 +276,10 @@
                 }
             }
         },
-        "delete-subscription": {
-            "type": "appmixer.beehiiv.core.DeleteSubscription",
-            "x": 1024,
-            "y": 80,
+        "delete-subscriber": {
+            "type": "appmixer.beehiiv.core.DeleteSubscriber",
+            "x": 1384,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -248,16 +296,16 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "publicationId": {},
-                                    "subscriptionId": {
+                                    "subscriberId": {
                                         "var-del-sub-id": {
-                                            "variable": "$.create-subscription.out.data.id",
+                                            "variable": "$.create-subscriber.out.data.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
-                                    "subscriptionId": "{{{var-del-sub-id}}}"
+                                    "subscriberId": "{{{var-del-sub-id}}}"
                                 }
                             }
                         }
@@ -267,12 +315,12 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1216,
-            "y": 80,
+            "x": 1576,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "delete-subscription": [
+                    "delete-subscriber": [
                         "out"
                     ]
                 }
@@ -284,7 +332,7 @@
                 },
                 "transform": {
                     "in": {
-                        "delete-subscription": {
+                        "delete-subscriber": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -299,7 +347,7 @@
                                 },
                                 "lambda": {
                                     "recipients": "jirka@client.io",
-                                    "testCase": "E2E Beehiiv - Subscription Discovery",
+                                    "testCase": "E2E Beehiiv - Subscriber Lifecycle",
                                     "result": "{{{result-var}}}"
                                 }
                             }
