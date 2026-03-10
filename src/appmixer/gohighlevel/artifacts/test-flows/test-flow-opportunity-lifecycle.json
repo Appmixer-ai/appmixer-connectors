@@ -1,0 +1,496 @@
+{
+    "name": "E2E Gohighlevel - Opportunity Lifecycle",
+    "description": "End-to-end test for Gohighlevel connector - tests Opportunity Lifecycle (ListPipelines, CreateOpportunity, FindOpportunities, UpdateOpportunity).",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "opportunityName",
+                                                "text": "E2E Test Opportunity"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedOpportunityName",
+                                                "text": "E2E Test Opportunity Updated"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "pipelineId",
+                                                "text": "<YOUR_PIPELINE_ID>"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "pipelineStageId",
+                                                "text": "<YOUR_STAGE_ID>"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "contactId",
+                                                "text": "<YOUR_CONTACT_ID>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-pipelines": {
+            "type": "appmixer.gohighlevel.core.ListPipelines",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "assert-list-pipelines": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-pipelines": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-pipelines": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-pipelines": {
+                                            "variable": "$.list-pipelines.out.pipelines",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-pipelines}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-opportunity": {
+            "type": "appmixer.gohighlevel.core.CreateOpportunity",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-pipelines": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-pipelines": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "pipelineId": {
+                                        "var-pipeline-id": {
+                                            "variable": "$.set-variables.out.pipelineId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-opp-name": {
+                                            "variable": "$.set-variables.out.opportunityName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "pipelineStageId": {
+                                        "var-stage-id": {
+                                            "variable": "$.set-variables.out.pipelineStageId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "contactId": {
+                                        "var-contact-id": {
+                                            "variable": "$.set-variables.out.contactId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {}
+                                },
+                                "lambda": {
+                                    "pipelineId": "{{{var-pipeline-id}}}",
+                                    "name": "{{{var-opp-name}}}",
+                                    "pipelineStageId": "{{{var-stage-id}}}",
+                                    "contactId": "{{{var-contact-id}}}",
+                                    "status": "open"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-opportunity": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-opportunity": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.create-opportunity.out.id",
+                                            "functions": []
+                                        },
+                                        "field-create-name": {
+                                            "variable": "$.create-opportunity.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-opp-name": {
+                                            "variable": "$.set-variables.out.opportunityName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-create-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-create-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-opp-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-opportunities": {
+            "type": "appmixer.gohighlevel.core.FindOpportunities",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-opportunity": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-opportunity": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "pipelineId": {
+                                        "var-find-pipeline-id": {
+                                            "variable": "$.set-variables.out.pipelineId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "query": {
+                                        "var-find-query": {
+                                            "variable": "$.set-variables.out.opportunityName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "pipelineId": "{{{var-find-pipeline-id}}}",
+                                    "query": "{{{var-find-query}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-opportunities": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-opportunities": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-find-id": {
+                                            "variable": "$.find-opportunities.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-find-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-opportunity": {
+            "type": "appmixer.gohighlevel.core.UpdateOpportunity",
+            "x": 1024,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-opportunities": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-opportunities": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "opportunityId": {
+                                        "var-update-opp-id": {
+                                            "variable": "$.create-opportunity.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-updated-name": {
+                                            "variable": "$.set-variables.out.updatedOpportunityName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "status": {}
+                                },
+                                "lambda": {
+                                    "opportunityId": "{{{var-update-opp-id}}}",
+                                    "name": "{{{var-updated-name}}}",
+                                    "status": "won"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-opportunity": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-opportunity": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-update-id": {
+                                            "variable": "$.update-opportunity.out.id",
+                                            "functions": []
+                                        },
+                                        "field-update-name": {
+                                            "variable": "$.update-opportunity.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-updated-name": {
+                                            "variable": "$.set-variables.out.updatedOpportunityName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-update-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-update-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-updated-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-list-pipelines": [
+                        "out"
+                    ],
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1584,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Gohighlevel - Opportunity Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
