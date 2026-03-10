@@ -8,6 +8,7 @@ module.exports = {
     async receive(context) {
 
         const { locationId } = context.messages.in.content;
+        const resolvedLocationId = locationId || context.auth.locationId;
 
         const response = await context.httpRequest({
             method: 'GET',
@@ -16,7 +17,7 @@ module.exports = {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Version': API_VERSION
             },
-            params: { locationId }
+            params: { locationId: resolvedLocationId }
         });
 
         const pipelines = response.data?.pipelines || [];

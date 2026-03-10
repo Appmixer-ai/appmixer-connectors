@@ -24,7 +24,8 @@ module.exports = {
             tags
         } = context.messages.in.content;
 
-        if (!locationId) {
+        const resolvedLocationId = locationId || context.auth.locationId;
+        if (!resolvedLocationId) {
             throw new context.CancelError('Location ID is required!');
         }
 
@@ -33,7 +34,7 @@ module.exports = {
         }
 
         const body = {
-            locationId,
+            locationId: resolvedLocationId,
             email
         };
 

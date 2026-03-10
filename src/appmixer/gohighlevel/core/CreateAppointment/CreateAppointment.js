@@ -18,10 +18,11 @@ module.exports = {
             assignedUserId,
             address
         } = context.messages.in.content;
+        const resolvedLocationId = locationId || context.auth.locationId;
 
         const body = {
             calendarId,
-            locationId,
+            locationId: resolvedLocationId,
             contactId,
             startTime,
             endTime

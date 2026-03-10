@@ -24,7 +24,10 @@ module.exports = {
 
     async receive(context) {
 
-        const { locationId, pipelineId, pipelineStageId, status, assignedTo, query, outputType } = context.messages.in.content;
+        const {
+            locationId, pipelineId, pipelineStageId,
+            status, assignedTo, query, outputType
+        } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, OPPORTUNITY_SCHEMA, {
@@ -33,11 +36,12 @@ module.exports = {
             });
         }
 
-        if (!locationId) {
+        const resolvedLocationId = locationId || context.auth.locationId;
+        if (!resolvedLocationId) {
             throw new context.CancelError('Location ID is required!');
         }
 
-        const params = { location_id: locationId, limit: 20 };
+        const params = { location_id: resolvedLocationId, limit: 20 };
         if (pipelineId) params.pipeline_id = pipelineId;
         if (pipelineStageId) params.pipeline_stage_id = pipelineStageId;
         if (status) params.status = status;

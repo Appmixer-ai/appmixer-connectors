@@ -17,10 +17,11 @@ module.exports = {
             monetaryValue,
             assignedTo
         } = context.messages.in.content;
+        const resolvedLocationId = locationId || context.auth.locationId;
 
         const body = {
             pipelineId,
-            locationId,
+            locationId: resolvedLocationId,
             name,
             pipelineStageId,
             status,

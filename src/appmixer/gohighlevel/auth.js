@@ -24,9 +24,9 @@ module.exports = {
         accountNameFromProfileInfo: 'name',
 
         requestProfileInfo: async (context) => {
-            const response = await context.httpRequest({
+            await context.httpRequest({
                 method: 'GET',
-                url: `https://services.leadconnectorhq.com/contacts/`,
+                url: 'https://services.leadconnectorhq.com/contacts/',
                 headers: {
                     'Authorization': `Bearer ${context.accessToken}`,
                     'Version': '2021-07-28'
@@ -46,7 +46,7 @@ module.exports = {
         validate: async (context) => {
             const response = await context.httpRequest({
                 method: 'GET',
-                url: `https://services.leadconnectorhq.com/contacts/`,
+                url: 'https://services.leadconnectorhq.com/contacts/',
                 headers: {
                     'Authorization': `Bearer ${context.accessToken}`,
                     'Version': '2021-07-28'

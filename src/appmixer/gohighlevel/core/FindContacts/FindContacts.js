@@ -52,12 +52,13 @@ module.exports = {
             });
         }
 
-        if (!locationId) {
+        const resolvedLocationId = locationId || context.auth.locationId;
+        if (!resolvedLocationId) {
             throw new context.CancelError('Location ID is required!');
         }
 
         const params = {
-            locationId,
+            locationId: resolvedLocationId,
             limit: 100
         };
 
