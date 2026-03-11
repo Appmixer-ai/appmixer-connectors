@@ -8,7 +8,7 @@ module.exports = {
         const result = await api.Create8.execute(context, {
             publicationId,
             url: context.getWebhookUrl(),
-            event_types: ['post.sent']
+            event_types: ['subscription.confirmed']
         });
         await context.saveState({ webhookId: result.data.id });
     },
