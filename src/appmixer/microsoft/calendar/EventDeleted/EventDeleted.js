@@ -92,7 +92,8 @@ module.exports = {
                         }, 'out');
                     } catch (err) {
                         // Event may no longer exist (e.g. deleted). Log and continue.
-                        await context.log({ error: err.message, notificationResourceId: notification.resourceData?.id });
+                        const resId = notification.resourceData?.id;
+                        await context.log({ error: err.message, resId });
                     }
                 }
             }
