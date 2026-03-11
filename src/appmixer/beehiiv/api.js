@@ -45,7 +45,7 @@ const Create = {
         const response = await context.httpRequest({
             method: 'POST',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/automations/${automationId}/journeys`,
-            data: { email, subscriptionId, doubleOptOverride, ...rest },
+            data: { email, 'subscription_id': subscriptionId, 'double_opt_override': doubleOptOverride, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -201,7 +201,7 @@ const Index5 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
-            params: { status, tier, limit, cursor, page, email, orderBy, direction, creationDate, ...rest },
+            params: { status, tier, limit, cursor, page, email, 'order_by': orderBy, direction, 'creation_date': creationDate, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -226,9 +226,9 @@ const Create3 = {
             method: 'POST',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
             data: {
-                email, reactivateExisting, sendWelcomeEmail, utmSource, utmMedium, utmCampaign, utmTerm,
-                utmContent, referringSite, referralCode, customFields, doubleOptOverride, tier, premiumTiers,
-                premiumTierIds, stripeCustomerId, automationIds, ...rest
+                email, 'reactivate_existing': reactivateExisting, 'send_welcome_email': sendWelcomeEmail, 'utm_source': utmSource, 'utm_medium': utmMedium, 'utm_campaign': utmCampaign, 'utm_term': utmTerm,
+                'utm_content': utmContent, 'referring_site': referringSite, 'referral_code': referralCode, 'custom_fields': customFields, 'double_opt_override': doubleOptOverride, tier, 'premium_tiers': premiumTiers,
+                'premium_tier_ids': premiumTierIds, 'stripe_customer_id': stripeCustomerId, 'automation_ids': automationIds, ...rest
             },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -246,7 +246,7 @@ const PutStatus = {
         const response = await context.httpRequest({
             method: 'PUT',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
-            data: { subscriptionIds, newStatus, ...rest },
+            data: { 'subscription_ids': subscriptionIds, 'new_status': newStatus, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -263,7 +263,7 @@ const PatchStatus = {
         const response = await context.httpRequest({
             method: 'PATCH',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions`,
-            data: { subscriptionIds, newStatus, ...rest },
+            data: { 'subscription_ids': subscriptionIds, 'new_status': newStatus, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -385,7 +385,7 @@ const Index7 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/engagements`,
-            params: { startDate, numberOfDays, granularity, emailType, direction, ...rest },
+            params: { 'start_date': startDate, 'number_of_days': numberOfDays, granularity, 'email_type': emailType, direction, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -404,7 +404,7 @@ const Index8 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/polls`,
-            params: { limit, cursor, page, orderBy, direction, postId, ...rest },
+            params: { limit, cursor, page, 'order_by': orderBy, direction, 'post_id': postId, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -440,7 +440,7 @@ const ListResponses = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/polls/${pollId}/responses`,
-            params: { limit, cursor, page, orderBy, direction, postId, ...rest },
+            params: { limit, cursor, page, 'order_by': orderBy, direction, 'post_id': postId, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -461,8 +461,8 @@ const Index9 = {
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts`,
             params: {
-                expand, audience, platform, status, premiumTiers, limit, page, orderBy, direction,
-                hiddenFromFeed, ...rest
+                expand, audience, platform, status, 'premium_tiers': premiumTiers, limit, page, 'order_by': orderBy, direction,
+                'hidden_from_feed': hiddenFromFeed, ...rest
             },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -488,10 +488,10 @@ const Create5 = {
             method: 'POST',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts`,
             data: {
-                bodyContent, blocks, title, subtitle, postTemplateId, status, scheduledAt,
-                customLinkTrackingEnabled, emailCaptureTypeOverride, overrideScheduledAt, socialShare,
-                thumbnailImageUrl, recipients, emailSettings, webSettings, seoSettings, contentTags, headers,
-                customFields, ...rest
+                'body_content': bodyContent, blocks, title, subtitle, 'post_template_id': postTemplateId, status, 'scheduled_at': scheduledAt,
+                'custom_link_tracking_enabled': customLinkTrackingEnabled, 'email_capture_type_override': emailCaptureTypeOverride, 'override_scheduled_at': overrideScheduledAt, 'social_share': socialShare,
+                'thumbnail_image_url': thumbnailImageUrl, recipients, 'email_settings': emailSettings, 'web_settings': webSettings, 'seo_settings': seoSettings, 'content_tags': contentTags, headers,
+                'custom_fields': customFields, ...rest
             },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
@@ -509,7 +509,7 @@ const AggregateStats = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts/aggregate_stats`,
-            params: { audience, platform, status, hiddenFromFeed, ...rest },
+            params: { audience, platform, status, 'hidden_from_feed': hiddenFromFeed, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -526,7 +526,7 @@ const Show6 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/posts/${postId}`,
-            params: { expand, premiumTiers, ...rest },
+            params: { expand, 'premium_tiers': premiumTiers, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -560,7 +560,7 @@ const Index10 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/post_templates`,
-            params: { limit, page, order, orderBy, ...rest },
+            params: { limit, page, order, 'order_by': orderBy, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -577,7 +577,7 @@ const Index11 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: 'https://api.beehiiv.com/v2/publications',
-            params: { expand, limit, page, direction, orderBy, ...rest },
+            params: { expand, limit, page, direction, 'order_by': orderBy, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -628,7 +628,7 @@ const Index12 = {
         const response = await context.httpRequest({
             method: 'GET',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/segments`,
-            params: { type, status, limit, page, orderBy, direction, ...rest },
+            params: { type, status, limit, page, 'order_by': orderBy, direction, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -750,7 +750,7 @@ const UpdateByEmail = {
         const response = await context.httpRequest({
             method: 'PUT',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/by_email/${email}`,
-            data: { email, tier, premiumTierIds, premiumTiers, stripeCustomerId, unsubscribe, customFields, ...rest },
+            data: { email, tier, 'premium_tier_ids': premiumTierIds, 'premium_tiers': premiumTiers, 'stripe_customer_id': stripeCustomerId, unsubscribe, 'custom_fields': customFields, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -787,7 +787,7 @@ const Put3 = {
         const response = await context.httpRequest({
             method: 'PUT',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
-            data: { tier, premiumTierIds, premiumTiers, email, stripeCustomerId, unsubscribe, customFields, ...rest },
+            data: { tier, 'premium_tier_ids': premiumTierIds, 'premium_tiers': premiumTiers, email, 'stripe_customer_id': stripeCustomerId, unsubscribe, 'custom_fields': customFields, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -808,7 +808,7 @@ const Patch3 = {
         const response = await context.httpRequest({
             method: 'PATCH',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/subscriptions/${subscriberId}`,
-            data: { email, tier, premiumTierIds, premiumTiers, stripeCustomerId, unsubscribe, customFields, ...rest },
+            data: { email, tier, 'premium_tier_ids': premiumTierIds, 'premium_tiers': premiumTiers, 'stripe_customer_id': stripeCustomerId, unsubscribe, 'custom_fields': customFields, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -876,7 +876,7 @@ const Create7 = {
         const response = await context.httpRequest({
             method: 'POST',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers`,
-            data: { name, description, pricesAttributes, ...rest },
+            data: { name, description, 'prices_attributes': pricesAttributes, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -910,7 +910,7 @@ const Put4 = {
         const response = await context.httpRequest({
             method: 'PUT',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers/${tierId}`,
-            data: { name, description, pricesAttributes, ...rest },
+            data: { name, description, 'prices_attributes': pricesAttributes, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -927,7 +927,7 @@ const Patch4 = {
         const response = await context.httpRequest({
             method: 'PATCH',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/tiers/${tierId}`,
-            data: { name, description, pricesAttributes, ...rest },
+            data: { name, description, 'prices_attributes': pricesAttributes, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -961,7 +961,7 @@ const Create8 = {
         const response = await context.httpRequest({
             method: 'POST',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks`,
-            data: { url, eventTypes, description, ...rest },
+            data: { url, 'event_types': eventTypes, description, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
@@ -995,7 +995,7 @@ const Update = {
         const response = await context.httpRequest({
             method: 'PATCH',
             url: `https://api.beehiiv.com/v2/publications/${publicationId}/webhooks/${endpointId}`,
-            data: { eventTypes, description, ...rest },
+            data: { 'event_types': eventTypes, description, ...rest },
             headers: {
                 Authorization: `Bearer ${context.auth.apiKey}`
             }
