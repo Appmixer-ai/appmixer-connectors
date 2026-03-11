@@ -41,7 +41,7 @@ module.exports = {
             commentPropName,
             format,
             ignoreAttributes,
-            indentBy,
+            indentBy: format ? (indentBy != null ? ' '.repeat(indentBy) : '  ') : undefined,
             preserveOrder,
             processEntities,
             stopNodes: (stopNodes || '').split(',').map(path => path.trim()),
