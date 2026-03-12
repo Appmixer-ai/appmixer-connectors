@@ -1,7 +1,26 @@
 'use strict';
 
+const lib = require('../../lib');
+
+const SCHEMA = {
+    id: { type: 'string', title: 'Publication ID' },
+    name: { type: 'string', title: 'Name' },
+    description: { type: 'string', title: 'Description' },
+    organization_name: { type: 'string', title: 'Organization Name' },
+    referral_program_enabled: { type: 'boolean', title: 'Referral Program Enabled' },
+    created: { type: 'integer', title: 'Created' }
+};
+
 module.exports = {
+
     async receive(context) {
+
+        const { outputType } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Publications', value: 'result' });
+        }
+
         const response = await context.httpRequest({
             method: 'GET',
             url: 'https://api.beehiiv.com/v2/publications',
@@ -11,11 +30,12 @@ module.exports = {
         });
 
         const publications = response.data.data || [];
-        console.log(publications)
-        return context.sendArray({ publications,  } , 'out');
+
+        return lib.sendArrayOutput({ context, outputType, records: publications });
     },
 
     toSelectArray(msg) {
-        return (Array.isArray(msg) ? msg : []).map(pub => ({ label: pub.name, value: pub.id }));
+        const items = msg.result || (Array.isArray(msg) ? msg : []);
+        return items.map(pub => ({ label: pub.name, value: pub.id }));
     }
 };

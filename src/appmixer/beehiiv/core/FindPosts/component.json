@@ -17,25 +17,13 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "publicationId": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string"
-                    },
-                    "audience": {
-                        "type": "string"
-                    },
-                    "limit": {
-                        "type": "number"
-                    },
-                    "outputType": {
-                        "type": "string"
-                    }
+                    "publicationId": { "type": "string" },
+                    "status": { "type": "string" },
+                    "audience": { "type": "string" },
+                    "limit": { "type": "number" },
+                    "outputType": { "type": "string" }
                 },
-                "required": [
-                    "publicationId"
-                ]
+                "required": ["publicationId"]
             },
             "inspector": {
                 "inputs": {
@@ -48,7 +36,7 @@
                     "status": {
                         "type": "select",
                         "label": "Status",
-                        "tooltip": "Filter by status.",
+                        "tooltip": "Filter by post status.",
                         "index": 1,
                         "options": [
                             { "label": "All", "value": "all" },
@@ -71,19 +59,21 @@
                     "limit": {
                         "type": "number",
                         "label": "Limit",
-                        "tooltip": "Max results.",
+                        "tooltip": "Max results (default 10).",
                         "index": 3,
                         "defaultValue": 10
                     },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "tooltip": "Choose output format. \"All at once\" sends an array, \"One by one\" sends each post as a separate message.",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "index": 4,
                         "defaultValue": "array",
                         "options": [
-                            { "label": "All at once", "value": "array" },
-                            { "label": "One by one", "value": "item" }
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
                         ]
                     }
                 },
@@ -105,50 +95,18 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Posts",
-                    "value": "posts",
-                    "schema": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": { "type": "string" },
-                                "title": { "type": "string" },
-                                "status": { "type": "string" },
-                                "web_url": { "type": "string" },
-                                "created": { "type": "integer" }
-                            }
-                        }
+            "source": {
+                "url": "/component/appmixer/beehiiv/core/FindPosts?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/publicationId": "inputs/in/publicationId"
                     }
-                },
-                {
-                    "label": "Post ID",
-                    "value": "data.id",
-                    "schema": { "type": "string" }
-                },
-                {
-                    "label": "Title",
-                    "value": "data.title",
-                    "schema": { "type": "string" }
-                },
-                {
-                    "label": "Status",
-                    "value": "data.status",
-                    "schema": { "type": "string" }
-                },
-                {
-                    "label": "Web URL",
-                    "value": "data.web_url",
-                    "schema": { "type": "string" }
-                },
-                {
-                    "label": "Created",
-                    "value": "data.created",
-                    "schema": { "type": "integer" }
                 }
-            ]
+            }
         },
         {
             "name": "notFound"
