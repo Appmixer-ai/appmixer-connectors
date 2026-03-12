@@ -11,12 +11,10 @@ module.exports = {
         });
 
         const publications = response.data.data || [];
-        for (const pub of publications) {
-            await context.sendJson(pub, 'out');
-        }
+        await context.sendJson({ publications }, 'out');
     },
 
     toSelectArray(msg) {
-        return (msg.data || []).map(pub => ({ label: pub.name, value: pub.id }));
+        return (msg.publications || []).map(pub => ({ label: pub.name, value: pub.id }));
     }
 };
