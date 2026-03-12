@@ -7,8 +7,6 @@ module.exports = {
         const { publicationId } = context.messages.in.content;
         const result = await api.Index12.execute(context, { publicationId });
         const segments = result.data || [];
-        for (const segment of segments) {
-            await context.sendJson(segment, 'out');
-        }
+        return context.sendJson({ segments }, 'out');
     }
 };
