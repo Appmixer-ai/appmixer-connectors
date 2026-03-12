@@ -1,3 +1,5 @@
+<!-- DO NOT EDIT — generated from .github/instructions/* by scripts/build-instructions.js -->
+
 # Appmixer Development & Component Creation Guidelines
 
 ## Overview
