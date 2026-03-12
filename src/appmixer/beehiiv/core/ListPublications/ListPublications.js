@@ -12,7 +12,7 @@ module.exports = {
 
         const publications = response.data.data || [];
         console.log(publications)
-        return context.sendArray(publications, 'out');
+        return context.sendArray({ publications,  } , 'out');
     },
 
     toSelectArray(msg) {

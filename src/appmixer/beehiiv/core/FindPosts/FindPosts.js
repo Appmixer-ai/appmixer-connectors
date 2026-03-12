@@ -4,13 +4,13 @@ const api = require('../../api');
 
 module.exports = {
     async receive(context) {
-        const { publicationId, status, tier, limit, outputType } = context.messages.in.content;
+        const { publicationId, status, audience, limit, outputType } = context.messages.in.content;
 
         const params = { publicationId, limit };
         if (status && status !== 'all') params.status = status;
-        if (tier && tier !== 'all') params.tier = tier;
+        if (audience && audience !== 'all') params.audience = audience;
 
-        const result = await api.Index5.execute(context, params);
+        const result = await api.Index9.execute(context, params);
         const items = result.data || [];
 
         if (items.length === 0) {
@@ -22,7 +22,7 @@ module.exports = {
                 await context.sendJson({ data: item }, 'out');
             }
         } else {
-            return context.sendJson({ subscribers: items }, 'out');
+            return context.sendJson({ posts: items }, 'out');
         }
     }
 };
