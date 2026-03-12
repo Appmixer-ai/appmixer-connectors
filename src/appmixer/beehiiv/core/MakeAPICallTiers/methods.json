@@ -1,0 +1,596 @@
+{
+  "Index13": {
+    "method": "GET",
+    "path": "/publications/{publicationId}/tiers",
+    "inputParams": [
+      "publicationId",
+      "expand[]",
+      "limit",
+      "page",
+      "direction"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data",
+        "limit",
+        "page",
+        "total_results",
+        "total_pages"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "The subscription tier object.",
+            "required": [
+              "id",
+              "name",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The prefixed ID of the tier."
+              },
+              "name": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "description": "Returns whether or not the tier has any active prices.",
+                "enum": [
+                  "active",
+                  "archived"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "default": "Super engaged readers"
+              },
+              "stats": {
+                "type": "object",
+                "description": "Optional list of stats for a tier. Retrievable by including `expand: [stats]` in the tier request body.",
+                "required": [
+                  "active_subscriptions"
+                ],
+                "properties": {
+                  "active_subscriptions": {
+                    "type": "integer",
+                    "description": "Total number of active subscriptions belonging to this tier."
+                  }
+                }
+              },
+              "prices": {
+                "type": "array",
+                "description": "Optional list of prices for a tier. Retrievable by including `expand: [prices]` in the tier request body.",
+                "items": {
+                  "type": "object",
+                  "description": "Price belonging to a Tier",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The prefixed ID of the price."
+                    },
+                    "currency": {
+                      "type": "string",
+                      "enum": [
+                        "usd",
+                        "aud",
+                        "cad",
+                        "eur",
+                        "inr",
+                        "brl"
+                      ]
+                    },
+                    "amount_cents": {
+                      "type": "integer"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "interval": {
+                      "type": "string",
+                      "enum": [
+                        "month",
+                        "quarter",
+                        "year",
+                        "one_time",
+                        "donation"
+                      ]
+                    },
+                    "denominator": {
+                      "type": "string"
+                    },
+                    "cta": {
+                      "type": "string",
+                      "description": "When using the external Stripe checkout, this text will be displayed on the button"
+                    },
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+          "default": 1
+        },
+        "total_results": {
+          "type": "integer",
+          "description": "The total number of results from all pages."
+        },
+        "total_pages": {
+          "type": "integer",
+          "description": "The total number of pages."
+        }
+      }
+    }
+  },
+  "Create7": {
+    "method": "POST",
+    "path": "/publications/{publicationId}/tiers",
+    "inputParams": [
+      "publicationId",
+      "name",
+      "description",
+      "prices_attributes"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "description": "The subscription tier object.",
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the tier."
+            },
+            "name": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "description": "Returns whether or not the tier has any active prices.",
+              "enum": [
+                "active",
+                "archived"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "default": "Super engaged readers"
+            },
+            "stats": {
+              "type": "object",
+              "description": "Optional list of stats for a tier. Retrievable by including `expand: [stats]` in the tier request body.",
+              "required": [
+                "active_subscriptions"
+              ],
+              "properties": {
+                "active_subscriptions": {
+                  "type": "integer",
+                  "description": "Total number of active subscriptions belonging to this tier."
+                }
+              }
+            },
+            "prices": {
+              "type": "array",
+              "description": "Optional list of prices for a tier. Retrievable by including `expand: [prices]` in the tier request body.",
+              "items": {
+                "type": "object",
+                "description": "Price belonging to a Tier",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the price."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "usd",
+                      "aud",
+                      "cad",
+                      "eur",
+                      "inr",
+                      "brl"
+                    ]
+                  },
+                  "amount_cents": {
+                    "type": "integer"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "interval": {
+                    "type": "string",
+                    "enum": [
+                      "month",
+                      "quarter",
+                      "year",
+                      "one_time",
+                      "donation"
+                    ]
+                  },
+                  "denominator": {
+                    "type": "string"
+                  },
+                  "cta": {
+                    "type": "string",
+                    "description": "When using the external Stripe checkout, this text will be displayed on the button"
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Show10": {
+    "method": "GET",
+    "path": "/publications/{publicationId}/tiers/{tierId}",
+    "inputParams": [
+      "publicationId",
+      "tierId",
+      "expand[]"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "description": "The subscription tier object.",
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the tier."
+            },
+            "name": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "description": "Returns whether or not the tier has any active prices.",
+              "enum": [
+                "active",
+                "archived"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "default": "Super engaged readers"
+            },
+            "stats": {
+              "type": "object",
+              "description": "Optional list of stats for a tier. Retrievable by including `expand: [stats]` in the tier request body.",
+              "required": [
+                "active_subscriptions"
+              ],
+              "properties": {
+                "active_subscriptions": {
+                  "type": "integer",
+                  "description": "Total number of active subscriptions belonging to this tier."
+                }
+              }
+            },
+            "prices": {
+              "type": "array",
+              "description": "Optional list of prices for a tier. Retrievable by including `expand: [prices]` in the tier request body.",
+              "items": {
+                "type": "object",
+                "description": "Price belonging to a Tier",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the price."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "usd",
+                      "aud",
+                      "cad",
+                      "eur",
+                      "inr",
+                      "brl"
+                    ]
+                  },
+                  "amount_cents": {
+                    "type": "integer"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "interval": {
+                    "type": "string",
+                    "enum": [
+                      "month",
+                      "quarter",
+                      "year",
+                      "one_time",
+                      "donation"
+                    ]
+                  },
+                  "denominator": {
+                    "type": "string"
+                  },
+                  "cta": {
+                    "type": "string",
+                    "description": "When using the external Stripe checkout, this text will be displayed on the button"
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Put4": {
+    "method": "PUT",
+    "path": "/publications/{publicationId}/tiers/{tierId}",
+    "inputParams": [
+      "publicationId",
+      "tierId",
+      "name",
+      "description",
+      "prices_attributes"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "description": "The subscription tier object.",
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the tier."
+            },
+            "name": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "description": "Returns whether or not the tier has any active prices.",
+              "enum": [
+                "active",
+                "archived"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "default": "Super engaged readers"
+            },
+            "stats": {
+              "type": "object",
+              "description": "Optional list of stats for a tier. Retrievable by including `expand: [stats]` in the tier request body.",
+              "required": [
+                "active_subscriptions"
+              ],
+              "properties": {
+                "active_subscriptions": {
+                  "type": "integer",
+                  "description": "Total number of active subscriptions belonging to this tier."
+                }
+              }
+            },
+            "prices": {
+              "type": "array",
+              "description": "Optional list of prices for a tier. Retrievable by including `expand: [prices]` in the tier request body.",
+              "items": {
+                "type": "object",
+                "description": "Price belonging to a Tier",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the price."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "usd",
+                      "aud",
+                      "cad",
+                      "eur",
+                      "inr",
+                      "brl"
+                    ]
+                  },
+                  "amount_cents": {
+                    "type": "integer"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "interval": {
+                    "type": "string",
+                    "enum": [
+                      "month",
+                      "quarter",
+                      "year",
+                      "one_time",
+                      "donation"
+                    ]
+                  },
+                  "denominator": {
+                    "type": "string"
+                  },
+                  "cta": {
+                    "type": "string",
+                    "description": "When using the external Stripe checkout, this text will be displayed on the button"
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Patch4": {
+    "method": "PATCH",
+    "path": "/publications/{publicationId}/tiers/{tierId}",
+    "inputParams": [
+      "publicationId",
+      "tierId",
+      "name",
+      "description",
+      "prices_attributes"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "object",
+          "description": "The subscription tier object.",
+          "required": [
+            "id",
+            "name",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the tier."
+            },
+            "name": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "description": "Returns whether or not the tier has any active prices.",
+              "enum": [
+                "active",
+                "archived"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "default": "Super engaged readers"
+            },
+            "stats": {
+              "type": "object",
+              "description": "Optional list of stats for a tier. Retrievable by including `expand: [stats]` in the tier request body.",
+              "required": [
+                "active_subscriptions"
+              ],
+              "properties": {
+                "active_subscriptions": {
+                  "type": "integer",
+                  "description": "Total number of active subscriptions belonging to this tier."
+                }
+              }
+            },
+            "prices": {
+              "type": "array",
+              "description": "Optional list of prices for a tier. Retrievable by including `expand: [prices]` in the tier request body.",
+              "items": {
+                "type": "object",
+                "description": "Price belonging to a Tier",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the price."
+                  },
+                  "currency": {
+                    "type": "string",
+                    "enum": [
+                      "usd",
+                      "aud",
+                      "cad",
+                      "eur",
+                      "inr",
+                      "brl"
+                    ]
+                  },
+                  "amount_cents": {
+                    "type": "integer"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "interval": {
+                    "type": "string",
+                    "enum": [
+                      "month",
+                      "quarter",
+                      "year",
+                      "one_time",
+                      "donation"
+                    ]
+                  },
+                  "denominator": {
+                    "type": "string"
+                  },
+                  "cta": {
+                    "type": "string",
+                    "description": "When using the external Stripe checkout, this text will be displayed on the button"
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

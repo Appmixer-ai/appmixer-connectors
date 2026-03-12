@@ -1,0 +1,40 @@
+'use strict';
+
+const api = require('../../api');
+const methods = require('./methods.json');
+
+module.exports = {
+
+    async receive(context) {
+
+        const { method, params } = context.messages.in.content;
+
+        if (context.properties.variablesFetch) {
+            const result = Object.entries(methods).map(([name, meta]) => ({
+                label: `${meta.method} ${meta.path}`,
+                value: name
+            }));
+            return context.sendJson(result, 'out');
+        }
+
+        if (!method || !api[method]) {
+            throw new context.CancelError(`Unknown API method: ${method}`);
+        }
+
+        let parsedParams = {};
+        if (params) {
+            parsedParams = typeof params === 'string' ? JSON.parse(params) : params;
+        }
+
+        const result = await api[method].execute(context, parsedParams);
+        return context.sendJson(result, 'out');
+    },
+
+    getOutputSchema({ method }) {
+
+        if (!method || !methods[method]) {
+            return {};
+        }
+        return methods[method].outputSchema || {};
+    }
+};

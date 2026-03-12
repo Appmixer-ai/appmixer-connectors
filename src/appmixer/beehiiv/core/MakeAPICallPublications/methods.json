@@ -1,0 +1,1007 @@
+{
+  "Index": {
+    "method": "GET",
+    "path": "/publications/{publicationId}/advertisement_opportunities",
+    "inputParams": [
+      "publicationId"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data",
+        "total_results"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "A list of post templates available for this publication.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "advertiser_name",
+              "payout_rate",
+              "advertisement_kind",
+              "send_by_window_start_at",
+              "send_by_window_end_at"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The ID of the opportunity."
+              },
+              "advertiser_name": {
+                "type": "string",
+                "description": "The name of the advertiser."
+              },
+              "payout_rate": {
+                "type": "string",
+                "description": "The amount you'll earn."
+              },
+              "advertisement_kind": {
+                "type": "string",
+                "description": "What kind of an ad it is. With or without logo."
+              },
+              "send_by_window_start_at": {
+                "type": "integer",
+                "description": "The earliest this ad can be sent. Measured in seconds since the Unix epoch."
+              },
+              "send_by_window_end_at": {
+                "type": "integer",
+                "description": "When this ad needs to be sent by. Measured in seconds since the Unix epoch."
+              }
+            }
+          }
+        },
+        "total_results": {
+          "type": "integer",
+          "description": "The total number of results from all pages."
+        }
+      }
+    }
+  },
+  "Index7": {
+    "method": "GET",
+    "path": "/publications/{publicationId}/engagements",
+    "inputParams": [
+      "publicationId",
+      "start_date",
+      "number_of_days",
+      "granularity",
+      "email_type",
+      "direction"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data",
+        "publication_id",
+        "granularity",
+        "email_type",
+        "start_date",
+        "number_of_days"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "The list of engagement metrics for the publication within the specified date range and granularity. Returns an empty list if there is no engagement data for the specified period.",
+          "items": {
+            "type": "object",
+            "required": [
+              "date",
+              "total_opens",
+              "unique_opens",
+              "total_clicks",
+              "total_verified_clicks",
+              "unique_clicks",
+              "unique_verified_clicks"
+            ],
+            "properties": {
+              "date": {
+                "type": "string",
+                "description": "The starting date of the period for which the engagement metrics are reported based on the selected granularity.<br><br> `day` granularity: The specific day.<br> `week` granularity: The Monday of the week.<br> `month` granularity: The first day of the month.",
+                "format": "date"
+              },
+              "total_opens": {
+                "type": "integer",
+                "description": "The total number of times emails were opened during the period."
+              },
+              "unique_opens": {
+                "type": "integer",
+                "description": "The number of unique subscribers who opened emails during the period."
+              },
+              "total_clicks": {
+                "type": "integer",
+                "description": "The total number of times links were clicked during the period."
+              },
+              "total_verified_clicks": {
+                "type": "integer",
+                "description": "The total number of times links were clicked, during the period, as <a href=\"https://www.beehiiv.com/support/article/28404633659159-introducing-verified-clicks-accurate-email-engagement-metrics?srsltid=AfmBOoregRzZ1N6bcwITVRA-Lo6NE06y6xNwb7WO85Gv0mrWMij-yFgb\">verified by our system</a>."
+              },
+              "unique_clicks": {
+                "type": "integer",
+                "description": "The number of unique subscribers who clicked links during the period."
+              },
+              "unique_verified_clicks": {
+                "type": "integer",
+                "description": "The number of times links were clicked by unique subscribers, during the period, as <a href=\"https://www.beehiiv.com/support/article/28404633659159-introducing-verified-clicks-accurate-email-engagement-metrics?srsltid=AfmBOoregRzZ1N6bcwITVRA-Lo6NE06y6xNwb7WO85Gv0mrWMij-yFgb\">verified by our system</a>."
+              }
+            }
+          }
+        },
+        "publication_id": {
+          "type": "string",
+          "description": "The prefixed ID of the publication."
+        },
+        "granularity": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month"
+          ]
+        },
+        "email_type": {
+          "type": "string",
+          "enum": [
+            "all",
+            "post",
+            "message"
+          ]
+        },
+        "start_date": {
+          "type": "string",
+          "description": "The starting date of the engagement metrics.",
+          "format": "date"
+        },
+        "number_of_days": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "Index11": {
+    "method": "GET",
+    "path": "/publications",
+    "inputParams": [
+      "expand",
+      "limit",
+      "page",
+      "direction",
+      "order_by"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data",
+        "limit",
+        "page",
+        "total_results",
+        "total_pages"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "organization_name",
+              "referral_program_enabled",
+              "created"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The prefixed ID of the publication."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the publication"
+              },
+              "organization_name": {
+                "type": "string",
+                "description": "The name of the organization"
+              },
+              "referral_program_enabled": {
+                "type": "boolean",
+                "description": "A boolean field indicating whether the referral program is active for this publication."
+              },
+              "created": {
+                "type": "number",
+                "description": "The time that the publication was created. Measured in seconds since the Unix epoch",
+                "format": "double"
+              },
+              "stats": {
+                "type": "object",
+                "description": "Optional list of stats for a publication. Retrievable by including an `expand` array in the publication request body. Add `\"stats\"` to the array to retrieve all, or add individual stats (prefaced with `stat_`) to only retrieve specific ones.\n\nExamples:\n{\n  \"expand\": [\"stats\"]\n}\n\n{\n  \"expand\": [\"stat_active_subscriptions\", \"stat_average_click_rate\"]\n}",
+                "properties": {
+                  "active_subscriptions": {
+                    "description": "Total number of active free and premium subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "active_premium_subscriptions": {
+                    "description": "Total number of active premium/paid subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "active_free_subscriptions": {
+                    "description": "Total number of active free subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "average_open_rate": {
+                    "description": "The publications historical average open rate",
+                    "oneOf": [
+                      {
+                        "type": "number",
+                        "format": "double"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "average_click_rate": {
+                    "description": "The publications historical average click through rate",
+                    "oneOf": [
+                      {
+                        "type": "number",
+                        "format": "double"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_sent": {
+                    "description": "Total number of emails sent",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_unique_opened": {
+                    "description": "Total number of uniquely opened emails. Only counts the first open for each subscriber.",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_clicked": {
+                    "description": "The total number of links clicked from emails.",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+          "default": 1
+        },
+        "total_results": {
+          "type": "integer",
+          "description": "The total number of results from all pages."
+        },
+        "total_pages": {
+          "type": "integer",
+          "description": "The total number of pages."
+        }
+      }
+    }
+  },
+  "Show7": {
+    "method": "GET",
+    "path": "/publications/{publicationId}",
+    "inputParams": [
+      "publicationId",
+      "expand"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "organization_name",
+            "referral_program_enabled",
+            "created"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the publication."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the publication"
+            },
+            "organization_name": {
+              "type": "string",
+              "description": "The name of the organization"
+            },
+            "referral_program_enabled": {
+              "type": "boolean",
+              "description": "A boolean field indicating whether the referral program is active for this publication."
+            },
+            "created": {
+              "type": "number",
+              "description": "The time that the publication was created. Measured in seconds since the Unix epoch",
+              "format": "double"
+            },
+            "stats": {
+              "type": "object",
+              "description": "Optional list of stats for a publication. Retrievable by including an `expand` array in the publication request body. Add `\"stats\"` to the array to retrieve all, or add individual stats (prefaced with `stat_`) to only retrieve specific ones.\n\nExamples:\n{\n  \"expand\": [\"stats\"]\n}\n\n{\n  \"expand\": [\"stat_active_subscriptions\", \"stat_average_click_rate\"]\n}",
+              "properties": {
+                "active_subscriptions": {
+                  "description": "Total number of active free and premium subscriptions",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "active_premium_subscriptions": {
+                  "description": "Total number of active premium/paid subscriptions",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "active_free_subscriptions": {
+                  "description": "Total number of active free subscriptions",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "average_open_rate": {
+                  "description": "The publications historical average open rate",
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "average_click_rate": {
+                  "description": "The publications historical average click through rate",
+                  "oneOf": [
+                    {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "total_sent": {
+                  "description": "Total number of emails sent",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "total_unique_opened": {
+                  "description": "Total number of uniquely opened emails. Only counts the first open for each subscriber.",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "total_clicked": {
+                  "description": "The total number of links clicked from emails.",
+                  "oneOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Show8": {
+    "method": "GET",
+    "path": "/publications/{publicationId}/referral_program",
+    "inputParams": [
+      "publicationId",
+      "limit",
+      "page"
+    ],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data",
+        "limit",
+        "page",
+        "total_results",
+        "total_pages"
+      ],
+      "properties": {
+        "data": {
+          "type": "array",
+          "description": "A list of the milestones related to this publication's referral program.",
+          "items": {
+            "type": "object",
+            "description": "The milestone object.",
+            "required": [
+              "id",
+              "auto_fulfill",
+              "num_referrals",
+              "reward"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The prefixed ID of the milestone."
+              },
+              "auto_fulfill": {
+                "type": "boolean",
+                "description": "Only available with a promo code reward type. This indicates that an email will automatically be sent when the milestone is reached containing the reward promo code."
+              },
+              "num_referrals": {
+                "type": "integer",
+                "description": "The number of referrals needed to reach this milestone."
+              },
+              "reward": {
+                "type": "object",
+                "description": "The reward object.",
+                "required": [
+                  "id",
+                  "name",
+                  "description",
+                  "image_url",
+                  "type"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the reward."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The name given to the reward at creation."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description given to the name at creation."
+                  },
+                  "image_url": {
+                    "type": "string",
+                    "description": "A URL of an image to be displayed with the reward."
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "What type of reward this is.<br>`physical` - A product which must be sent to the subscriber.<br>`promo_code` - A code that is redeemable for goods or services.",
+                    "enum": [
+                      "physical",
+                      "promo_code",
+                      "digital",
+                      "premium_gift"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "limit": {
+          "type": "integer",
+          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+          "default": 1
+        },
+        "total_results": {
+          "type": "integer",
+          "description": "The total number of results from all pages."
+        },
+        "total_pages": {
+          "type": "integer",
+          "description": "The total number of pages."
+        }
+      }
+    }
+  },
+  "Identify": {
+    "method": "GET",
+    "path": "/workspaces/identify",
+    "inputParams": [],
+    "outputSchema": {
+      "type": "object",
+      "required": [
+        "data"
+      ],
+      "properties": {
+        "data": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "owner_email"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The prefixed ID of the workspace."
+            },
+            "name": {
+              "type": "string",
+              "description": "The name of the workspace."
+            },
+            "owner_email": {
+              "type": "string",
+              "description": "The email of the owner of the workspace."
+            }
+          }
+        }
+      }
+    }
+  },
+  "PublicationsBySubscriptionEmail": {
+    "method": "GET",
+    "path": "/workspaces/publications/by_subscription_email/{email}",
+    "inputParams": [
+      "email",
+      "expand"
+    ],
+    "outputSchema": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "publication_id",
+          "publication_name",
+          "subscription_id",
+          "status"
+        ],
+        "properties": {
+          "publication_id": {
+            "type": "string",
+            "description": "The prefixed ID of the publication."
+          },
+          "publication_name": {
+            "type": "string",
+            "description": "The name of the publication"
+          },
+          "subscription_id": {
+            "type": "string",
+            "description": "The prefixed ID of the subscription."
+          },
+          "status": {
+            "type": "string",
+            "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+            "enum": [
+              "validating",
+              "invalid",
+              "pending",
+              "active",
+              "inactive",
+              "needs_attention",
+              "paused"
+            ]
+          },
+          "publication": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "organization_name",
+              "referral_program_enabled",
+              "created"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The prefixed ID of the publication."
+              },
+              "name": {
+                "type": "string",
+                "description": "The name of the publication"
+              },
+              "organization_name": {
+                "type": "string",
+                "description": "The name of the organization"
+              },
+              "referral_program_enabled": {
+                "type": "boolean",
+                "description": "A boolean field indicating whether the referral program is active for this publication."
+              },
+              "created": {
+                "type": "number",
+                "description": "The time that the publication was created. Measured in seconds since the Unix epoch",
+                "format": "double"
+              },
+              "stats": {
+                "type": "object",
+                "description": "Optional list of stats for a publication. Retrievable by including an `expand` array in the publication request body. Add `\"stats\"` to the array to retrieve all, or add individual stats (prefaced with `stat_`) to only retrieve specific ones.\n\nExamples:\n{\n  \"expand\": [\"stats\"]\n}\n\n{\n  \"expand\": [\"stat_active_subscriptions\", \"stat_average_click_rate\"]\n}",
+                "properties": {
+                  "active_subscriptions": {
+                    "description": "Total number of active free and premium subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "active_premium_subscriptions": {
+                    "description": "Total number of active premium/paid subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "active_free_subscriptions": {
+                    "description": "Total number of active free subscriptions",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "average_open_rate": {
+                    "description": "The publications historical average open rate",
+                    "oneOf": [
+                      {
+                        "type": "number",
+                        "format": "double"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "average_click_rate": {
+                    "description": "The publications historical average click through rate",
+                    "oneOf": [
+                      {
+                        "type": "number",
+                        "format": "double"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_sent": {
+                    "description": "Total number of emails sent",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_unique_opened": {
+                    "description": "Total number of uniquely opened emails. Only counts the first open for each subscriber.",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  },
+                  "total_clicked": {
+                    "description": "The total number of links clicked from emails.",
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "boolean"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "subscription": {
+            "type": "object",
+            "description": "The subscription object",
+            "required": [
+              "id",
+              "email",
+              "status",
+              "created",
+              "subscription_tier",
+              "subscription_premium_tier_names",
+              "utm_source",
+              "utm_medium",
+              "utm_channel",
+              "utm_campaign",
+              "utm_term",
+              "utm_content",
+              "referring_site",
+              "referral_code"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The prefixed ID of the subscription."
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "status": {
+                "type": "string",
+                "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+                "enum": [
+                  "validating",
+                  "invalid",
+                  "pending",
+                  "active",
+                  "inactive",
+                  "needs_attention",
+                  "paused"
+                ]
+              },
+              "created": {
+                "type": "integer",
+                "description": "The date the subscription was created. Measured in seconds since the Unix epoch"
+              },
+              "subscription_tier": {
+                "type": "string",
+                "description": "The current tier of the subscription.",
+                "enum": [
+                  "free",
+                  "premium"
+                ]
+              },
+              "subscription_premium_tier_names": {
+                "type": "array",
+                "description": "The current premium tiers of the subscription. Empty if the subscriber is not associated with any premium tiers.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "utm_source": {
+                "type": "string",
+                "description": "The acquisition source; where the subscriber came from"
+              },
+              "utm_medium": {
+                "type": "string",
+                "description": "The acquisition medium; how the subscriber got to your publication"
+              },
+              "utm_channel": {
+                "type": "string",
+                "description": "The acquisition channel",
+                "enum": [
+                  "",
+                  "website",
+                  "import",
+                  "embed",
+                  "api",
+                  "referral",
+                  "recommendation",
+                  "magic_link",
+                  "boost",
+                  "boost_send",
+                  "boost_direct_link",
+                  "integration",
+                  "product"
+                ]
+              },
+              "utm_campaign": {
+                "type": "string",
+                "description": "The acquisition campaign"
+              },
+              "utm_term": {
+                "type": "string",
+                "description": "The acquisition term; typically the keyword or search term"
+              },
+              "utm_content": {
+                "type": "string",
+                "description": "The acquisition content; typically used for A/B testing or ad variations"
+              },
+              "referring_site": {
+                "type": "string",
+                "description": "The website that the subscriber was referred from"
+              },
+              "referral_code": {
+                "type": "string",
+                "description": "The code associated to this subscriber to refer others. When a new subscription is created with this referral code, credit for the referral goes to this subscription."
+              },
+              "subscription_premium_tiers": {
+                "type": "array",
+                "description": "Optional list of tiers for a subscription. Retrievable by including `expand: [subscription_premium_tiers]` in the request body.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "The prefixed ID of the tier."
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Returns whether or not the tier has any active prices.",
+                      "enum": [
+                        "active",
+                        "archived"
+                      ]
+                    }
+                  }
+                }
+              },
+              "custom_fields": {
+                "type": "array",
+                "description": "Optional list of custom fields for a subscription. Retrievable by including `expand: [custom_field]` in the request body.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the existing custom field"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "description": "The type of value being stored in the custom field.",
+                      "enum": [
+                        "string",
+                        "integer",
+                        "boolean",
+                        "date",
+                        "datetime",
+                        "list",
+                        "double"
+                      ]
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "tags": {
+                "type": "array",
+                "description": "Optional list of tags for a subscription. Retrievable by including `expand: [tags]` in the request body.\nMax limit of 100 unique tags per publication.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "stats": {
+                "type": "object",
+                "description": "Optional list of stats for a subscription. Retrievable by including `expand: [stats]` in the request body.",
+                "properties": {
+                  "emails_received": {
+                    "type": "integer",
+                    "description": "The total number of emails that have been sent to this subscriber"
+                  },
+                  "open_rate": {
+                    "type": "number",
+                    "description": "The percentage of emails that the subscriber has opened",
+                    "format": "double"
+                  },
+                  "click_through_rate": {
+                    "type": "number",
+                    "description": "The percentage of emails that the subscriber has clicked a link in",
+                    "format": "double"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
