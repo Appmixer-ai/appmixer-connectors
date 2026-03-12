@@ -9,6 +9,15 @@ module.exports = {
 
         const { method, params } = context.messages.in.content;
 
+        if (context.properties.variablesFetch) {
+            const result =  Object.entries(methods).map(([name, meta]) => ({
+                label: `${meta.method} ${meta.path}`,
+                value: name
+            }));
+
+            return context.sendJson(result, 'out')
+        }
+
         if (!method || !api[method]) {
             throw new context.CancelError(`Unknown API method: ${method}`);
         }
@@ -21,14 +30,6 @@ module.exports = {
 
         const result = await api[method].execute(context, parsedParams);
         return context.sendJson(result, 'out');
-    },
-
-    toSelectArray() {
-
-        return Object.entries(methods).map(([name, meta]) => ({
-            label: `${meta.method} ${meta.path}`,
-            value: name
-        }));
     },
 
     getOutputSchema({ method }) {
