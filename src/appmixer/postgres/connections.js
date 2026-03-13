@@ -114,15 +114,15 @@ const pollJob = async (jobId) => {
     // Query is done — fetch results via dblink_get_result
     // Using the generic single-column signature matching our row_to_json wrapper
     const resultRes = await client.query(
-        `SELECT * FROM dblink_get_result($1) AS r(_row text)`,
+        'SELECT * FROM dblink_get_result($1) AS r(jsonRow text)',
         [dblinkConnName]
     );
 
     const rows = resultRes.rows.map(r => {
         try {
-            return JSON.parse(r._row);
-        } catch (_) {
-            return { _raw: r._row };
+            return JSON.parse(r.jsonRow);
+        } catch (e) {
+            return { raw: r.jsonRow };
         }
     });
 
