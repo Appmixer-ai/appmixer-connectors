@@ -20,6 +20,48 @@ module.exports = async (context) => {
         await context.log('warn', `[PG_ASYNC] Could not create TTL index: ${err.message}`);
     }
 
+    /**
+     * Sync pending async jobs from service state into MongoDB.
+     * Components register jobs via context.service.stateAddToSet('pendingAsyncJobs', ...)
+     * because they don't have access to context.db.
+     */
+    async function syncPendingJobs() {
+
+        const pendingJobs = await context.service.stateGet('pendingAsyncJobs');
+        if (!pendingJobs || !pendingJobs.length) return;
+
+        for (const jobData of pendingJobs) {
+            const { jobId } = jobData;
+
+            try {
+                // Check if already in MongoDB (idempotent)
+                const existing = await collection().findOne({ jobId });
+                if (!existing) {
+                    // Persist to MongoDB
+                    await collection().insertOne({
+                        jobId: jobData.jobId,
+                        status: jobData.status || 'running',
+                        flowId: jobData.flowId,
+                        componentId: jobData.componentId,
+                        auth: jobData.auth,
+                        query: jobData.query,
+                        outputType: jobData.outputType,
+                        dblinkConnName: null,
+                        error: jobData.error || null,
+                        createdAt: new Date(jobData.createdAt || Date.now()),
+                        updatedAt: new Date()
+                    });
+                    await context.log('info', `[PG_ASYNC] Synced job ${jobId} from service state to MongoDB.`);
+                }
+
+                // Remove from state set after successful sync
+                await context.service.stateRemoveFromSet('pendingAsyncJobs', jobData);
+            } catch (err) {
+                await context.log('error', `[PG_ASYNC] Failed to sync job ${jobId}: ${err.message}`);
+            }
+        }
+    }
+
     // ─── Main Polling Job ─────────────────────────────────────────────────────
     await context.scheduleJob('pgAsyncPollJob', config.asyncPollJob.schedule, async () => {
 
@@ -33,6 +75,9 @@ module.exports = async (context) => {
         }
 
         try {
+            // First, sync any pending jobs from service state
+            await syncPendingJobs();
+
             const runningJobs = await collection()
                 .find({ status: 'running' })
                 .toArray();
@@ -63,7 +108,6 @@ module.exports = async (context) => {
                         await context.log('info', `[PG_ASYNC] Job ${jobId} not open locally — restarting query on this node.`);
                         try {
                             const dblinkConnName = await connections.startAsyncQuery(auth, jobId, query);
-                            // Update dblinkConnName in case it changed (shouldn't, but for clarity)
                             await collection().updateOne(
                                 { jobId },
                                 { $set: { dblinkConnName, updatedAt: new Date() } }
@@ -74,7 +118,6 @@ module.exports = async (context) => {
                                 { jobId },
                                 { $set: { status: 'error', error: err.message, updatedAt: new Date() } }
                             );
-                            // Trigger component so the flow can handle the error via error port (if any)
                             await context.triggerComponent(
                                 flowId, componentId,
                                 { _asyncJobId: jobId, _asyncError: err.message },
@@ -92,26 +135,26 @@ module.exports = async (context) => {
                     }
 
                     if (result.status === 'done') {
-                        await context.log('info', `[PG_ASYNC] Job ${jobId} done — ${result.rows.length} row(s).`);
+                        const rows = result.rows || [];
+                        await context.log('info', `[PG_ASYNC] Job ${jobId} done — ${rows.length} row(s).`);
 
-                        // Store rows in Mongo so the component can retrieve them
-                        // without passing a large payload through triggerComponent
+                        // Mark as done in MongoDB
                         await collection().updateOne(
                             { jobId },
                             {
                                 $set: {
                                     status: 'done',
-                                    result: result.rows,
                                     updatedAt: new Date()
                                 }
                             }
                         );
 
-                        // Wake up the component — it will fetch rows from Mongo by jobId
+                        // Deliver rows directly to the component via triggerComponent payload.
+                        // This avoids the component needing context.db access.
                         await context.triggerComponent(
                             flowId,
                             componentId,
-                            { _asyncJobId: jobId, outputType },
+                            { _asyncJobId: jobId, outputType, _asyncRows: rows },
                             { enqueueOnly: 'true' }
                         );
 
