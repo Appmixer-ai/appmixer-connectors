@@ -80,7 +80,7 @@ module.exports = {
     async startAsyncQuery(context, query, outputType) {
 
         const connections = require('../../connections');
-        const AsyncJobModel = require('../../AsyncJobModel')(context);
+        const AsyncJobModel = require('../../AsyncJobModel');
         const collection = context.db.collection(AsyncJobModel.collection);
 
         const jobId = crypto.randomBytes(16).toString('hex');
@@ -131,7 +131,7 @@ module.exports = {
      */
     async deliverAsyncResult(context, jobId, outputType, asyncError) {
 
-        const AsyncJobModel = require('../../AsyncJobModel')(context);
+        const AsyncJobModel = require('../../AsyncJobModel');
         const collection = context.db.collection(AsyncJobModel.collection);
 
         if (asyncError) {
