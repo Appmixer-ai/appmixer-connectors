@@ -19,9 +19,14 @@ npm run test-unit -- test/<connector_name>
 # Linting
 npm run lint
 
+# Repository validation
+npm run validate
+
 # Validate outputType components
 npm run validate-outputtype
 ```
+
+Run `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
 
 ### Connector Structure
 

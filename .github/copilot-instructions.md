@@ -2318,6 +2318,8 @@ return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.lengt
 
 ### Unit Tests
 
+After major refactors, run `npm run validate` to catch bundle/changelog version drift, inspector inputs missing from schema definitions, and quota resource mismatches before opening or updating a PR.
+
 - Use `mocha` for unit tests
 - Place tests in `src/appmixer/<connector_name>/artifacts/test/` directory (colocated with connector source)
 - Use `assert` from Node.js for assertions
