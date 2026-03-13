@@ -66,9 +66,12 @@ const startAsyncQuery = async (auth, jobId, query) => {
     const connStr = buildConnStr(auth);
     await client.query('SELECT dblink_connect($1, $2)', [dblinkConnName, connStr]);
 
+    // Strip trailing semicolons — they break the subquery wrapper syntax
+    const cleanQuery = query.replace(/;\s*$/, '');
+
     // Wrap user query in row_to_json() so dblink_get_result can use a generic
     // single-column (text) signature — avoids the "define column types" problem.
-    const wrappedQuery = `SELECT row_to_json(t)::text AS _row FROM (${query}) t`;
+    const wrappedQuery = `SELECT row_to_json(t)::text AS _row FROM (${cleanQuery}) t`;
 
     // dblink_send_query fires the query and returns immediately (non-blocking)
     const sendResult = await client.query(
