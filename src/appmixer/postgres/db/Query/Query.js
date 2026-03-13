@@ -12,12 +12,12 @@ module.exports = {
             return this.getOutputPortOptions(context, context.messages.in.content.outputType);
         }
 
-        const { query, outputType, asyncMode, _asyncJobId, _asyncError } = context.messages.in.content;
+        const { query, outputType, asyncMode, _asyncJobId, _asyncRows, _asyncError } = context.messages.in.content;
 
         // ─── ASYNC RESULT DELIVERY ─────────────────────────────────────────────
         // Called by jobs.js via triggerComponent when the long-running query finishes.
         if (_asyncJobId) {
-            return this.deliverAsyncResult(context, _asyncJobId, outputType, _asyncError);
+            return this.deliverAsyncResult(context, _asyncJobId, outputType, _asyncRows, _asyncError);
         }
 
         // ─── ASYNC MODE: START LONG-RUNNING QUERY ─────────────────────────────
@@ -74,21 +74,18 @@ module.exports = {
 
     /**
      * Starts an async (dblink-based) query.
-     * Creates a Mongo job record, fires dblink_send_query, and returns immediately.
+     * Registers the job via service state so jobs.js can track it in MongoDB,
+     * fires dblink_send_query via connections module, and returns immediately.
      * Results will be delivered later via deliverAsyncResult() triggered by jobs.js.
      */
     async startAsyncQuery(context, query, outputType) {
 
         const connections = require('../../connections');
-        const AsyncJobModel = require('../../AsyncJobModel');
-        const collection = context.db.collection(AsyncJobModel.collection);
-
         const jobId = crypto.randomBytes(16).toString('hex');
 
         await context.log({ step: 'async_query_start', jobId, query });
 
-        // Create the job record in Mongo before firing the query
-        await collection.insertOne({
+        const jobData = {
             jobId,
             status: 'running',
             flowId: context.flowId,
@@ -96,29 +93,19 @@ module.exports = {
             auth: context.auth,
             query,
             outputType,
-            dblinkConnName: null,
-            error: null,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
+            createdAt: new Date().toISOString()
+        };
+
+        // Register the job via service-level state so jobs.js can persist it to MongoDB.
+        // Using stateAddToSet so multiple concurrent async queries don't overwrite each other.
+        await context.service.stateAddToSet('pendingAsyncJobs', jobData);
 
         try {
             const dblinkConnName = await connections.startAsyncQuery(context.auth, jobId, query);
-
-            // Store the active dblink connection name for observability
-            await collection.updateOne(
-                { jobId },
-                { $set: { dblinkConnName, updatedAt: new Date() } }
-            );
-
             await context.log({ step: 'async_query_started', jobId, dblinkConnName });
-
         } catch (err) {
-            // Mark job as failed immediately
-            await collection.updateOne(
-                { jobId },
-                { $set: { status: 'error', error: err.message, updatedAt: new Date() } }
-            );
+            // Remove from pending set and re-add with error status
+            await context.service.stateRemoveFromSet('pendingAsyncJobs', jobData);
             throw err;
         }
 
@@ -127,33 +114,20 @@ module.exports = {
 
     /**
      * Called when jobs.js has determined the query is complete (or errored).
-     * Fetches result rows from Mongo and sends them to the output port.
+     * Receives result rows directly in the triggerComponent payload.
      */
-    async deliverAsyncResult(context, jobId, outputType, asyncError) {
-
-        const AsyncJobModel = require('../../AsyncJobModel');
-        const collection = context.db.collection(AsyncJobModel.collection);
+    async deliverAsyncResult(context, jobId, outputType, rows, asyncError) {
 
         if (asyncError) {
             throw new Error(`Async query failed: ${asyncError}`);
         }
 
-        const job = await collection.findOne({ jobId });
-
-        if (!job) {
-            throw new Error(`[PG_ASYNC] Job ${jobId} not found in database.`);
-        }
-
-        if (job.status === 'error') {
-            throw new Error(`Async query failed: ${job.error}`);
-        }
-
-        const rows = job.result || [];
+        rows = rows || [];
 
         await context.log({ step: 'async_query_deliver', jobId, rowCount: rows.length });
 
         if (!rows.length) {
-            return context.sendJson({ query: job.query, message: 'No data returned for the query.' }, 'emptyResult');
+            return context.sendJson({ query: '', message: 'No data returned for the query.' }, 'emptyResult');
         }
 
         if (outputType === 'row') {
