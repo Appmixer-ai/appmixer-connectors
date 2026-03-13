@@ -1,11 +1,11 @@
 {
     "name": "E2E PostgreSQL - Async Query Mode",
-    "description": "End-to-end test for PostgreSQL connector - tests Query component with asyncMode enabled (dblink-based long-running query execution). Seeds test data, fires async query, waits for results, asserts correctness, then cleans up. Requires dblink extension on the target database.",
+    "description": "Tests the async query feature (dblink-based). Creates a test table, runs sync query (regression check), async query with rows output, async query with row output, empty result test, then cleans up. Requires dblink extension.",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 144,
+            "y": 16,
             "source": {},
             "version": "1.0.0",
             "config": {}
@@ -13,7 +13,7 @@
         "setup-table": {
             "type": "appmixer.postgres.db.Query",
             "x": 256,
-            "y": 144,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -40,10 +40,10 @@
                 }
             }
         },
-        "async-query": {
+        "sync-query": {
             "type": "appmixer.postgres.db.Query",
             "x": 448,
-            "y": 144,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -58,26 +58,22 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "query": {},
-                                    "outputType": {},
-                                    "asyncMode": {}
+                                    "outputType": {}
                                 },
                                 "lambda": {
                                     "query": "SELECT * FROM appmixer_e2e_async_test ORDER BY id",
-                                    "outputType": "rows",
-                                    "asyncMode": true
+                                    "outputType": "rows"
                                 }
                             },
                             "emptyResult": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "query": {},
-                                    "outputType": {},
-                                    "asyncMode": {}
+                                    "outputType": {}
                                 },
                                 "lambda": {
                                     "query": "SELECT * FROM appmixer_e2e_async_test ORDER BY id",
-                                    "outputType": "rows",
-                                    "asyncMode": true
+                                    "outputType": "rows"
                                 }
                             }
                         }
@@ -85,31 +81,31 @@
                 }
             }
         },
-        "assert-async": {
+        "assert-sync": {
             "type": "appmixer.utils.test.Assert",
-            "x": 832,
-            "y": 144,
+            "x": 1200,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "async-query": ["out"]
+                    "sync-query": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "async-query": {
+                        "sync-query": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "first-val": {
-                                            "variable": "$.async-query.out.rows[0].val",
+                                            "variable": "$.sync-query.out.rows[0].val",
                                             "functions": []
                                         },
                                         "row-count": {
-                                            "variable": "$.async-query.out.rows",
-                                            "functions": [{ "name": "length" }]
+                                            "variable": "$.sync-query.out.rows",
+                                            "functions": [{"name": "length"}]
                                         }
                                     }
                                 },
@@ -135,14 +131,170 @@
                 }
             }
         },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1024,
+        "async-query-rows": {
+            "type": "appmixer.postgres.db.Query",
+            "x": 640,
             "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-async": ["out"]
+                    "sync-query": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "sync-query": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {},
+                                    "asyncMode": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT * FROM appmixer_e2e_async_test ORDER BY id",
+                                    "outputType": "rows",
+                                    "asyncMode": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-async-rows": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "async-query-rows": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "async-query-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "first-val": {
+                                            "variable": "$.async-query-rows.out.rows[0].val",
+                                            "functions": []
+                                        },
+                                        "row-count": {
+                                            "variable": "$.async-query-rows.out.rows",
+                                            "functions": [{"name": "length"}]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{first-val}}}",
+                                                "assertion": "equal",
+                                                "expected": "async-alpha"
+                                            },
+                                            {
+                                                "field": "{{{row-count}}}",
+                                                "assertion": "equal",
+                                                "expected": "3"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "async-query-empty": {
+            "type": "appmixer.postgres.db.Query",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "async-query-rows": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "async-query-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {},
+                                    "asyncMode": {}
+                                },
+                                "lambda": {
+                                    "query": "SELECT * FROM appmixer_e2e_async_test WHERE val = 'nonexistent'",
+                                    "outputType": "rows",
+                                    "asyncMode": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-async-empty": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "async-query-empty": ["emptyResult"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "async-query-empty": {
+                            "emptyResult": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "msg-val": {
+                                            "variable": "$.async-query-empty.emptyResult.message",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{msg-val}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-sync": ["out"],
+                    "assert-async-rows": ["out"],
+                    "assert-async-empty": ["out"]
                 }
             },
             "config": {
@@ -153,7 +305,7 @@
         },
         "drop-table": {
             "type": "appmixer.postgres.db.Query",
-            "x": 1216,
+            "x": 1584,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -183,7 +335,7 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1408,
+            "x": 1776,
             "y": 144,
             "version": "1.0.0",
             "source": {
