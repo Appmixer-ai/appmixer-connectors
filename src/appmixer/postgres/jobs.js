@@ -120,7 +120,7 @@ module.exports = async (context) => {
                             );
                             await context.triggerComponent(
                                 flowId, componentId,
-                                { _asyncJobId: jobId, _asyncError: err.message },
+                                { asyncJobId: jobId, asyncError: err.message },
                                 { enqueueOnly: 'true' }
                             ).catch(() => {});
                         }
@@ -154,7 +154,7 @@ module.exports = async (context) => {
                         await context.triggerComponent(
                             flowId,
                             componentId,
-                            { _asyncJobId: jobId, outputType, _asyncRows: rows },
+                            { asyncJobId: jobId, outputType, asyncRows: rows },
                             { enqueueOnly: 'true' }
                         );
 
@@ -171,7 +171,7 @@ module.exports = async (context) => {
                         await connections.closeConnection(jobId);
                         await context.triggerComponent(
                             flowId, componentId,
-                            { _asyncJobId: jobId, _asyncError: err.message },
+                            { asyncJobId: jobId, asyncError: err.message },
                             { enqueueOnly: 'true' }
                         ).catch(() => {});
                     } catch (_) { /* best effort */ }
