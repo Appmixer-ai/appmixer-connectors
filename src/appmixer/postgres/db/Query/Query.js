@@ -9,12 +9,25 @@ module.exports = {
     async receive(context) {
 
         // ─── ASYNC RESULT DELIVERY ─────────────────────────────────────────────
-        // Called by jobs.js via triggerComponent — data arrives in context.messages.webhook
-        if (context.messages.webhook) {
-            const { _asyncJobId, _asyncRows, _asyncError, outputType } = context.messages.webhook.content;
-            if (_asyncJobId) {
-                return this.deliverAsyncResult(context, _asyncJobId, outputType, _asyncRows, _asyncError);
-            }
+        // Called by jobs.js via triggerComponent — data may arrive in webhook or in port.
+        // Try multiple possible locations for the async callback data.
+        const webhookData = context.messages.webhook?.content?.data
+            || context.messages.webhook?.content
+            || null;
+        if (webhookData && webhookData.asyncJobId) {
+            return this.deliverAsyncResult(
+                context, webhookData.asyncJobId, webhookData.outputType,
+                webhookData.asyncRows, webhookData.asyncError
+            );
+        }
+
+        // Also check if triggerComponent delivered via the 'in' port
+        const inData = context.messages.in?.content;
+        if (inData && inData.asyncJobId) {
+            return this.deliverAsyncResult(
+                context, inData.asyncJobId, inData.outputType,
+                inData.asyncRows, inData.asyncError
+            );
         }
 
         if (context.properties.generateOutputPortOptions) {
