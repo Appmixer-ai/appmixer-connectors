@@ -8,17 +8,20 @@ module.exports = {
 
     async receive(context) {
 
+        // ─── ASYNC RESULT DELIVERY ─────────────────────────────────────────────
+        // Called by jobs.js via triggerComponent — data arrives in context.messages.webhook
+        if (context.messages.webhook) {
+            const { _asyncJobId, _asyncRows, _asyncError, outputType } = context.messages.webhook.content;
+            if (_asyncJobId) {
+                return this.deliverAsyncResult(context, _asyncJobId, outputType, _asyncRows, _asyncError);
+            }
+        }
+
         if (context.properties.generateOutputPortOptions) {
             return this.getOutputPortOptions(context, context.messages.in.content.outputType);
         }
 
-        const { query, outputType, asyncMode, _asyncJobId, _asyncRows, _asyncError } = context.messages.in.content;
-
-        // ─── ASYNC RESULT DELIVERY ─────────────────────────────────────────────
-        // Called by jobs.js via triggerComponent when the long-running query finishes.
-        if (_asyncJobId) {
-            return this.deliverAsyncResult(context, _asyncJobId, outputType, _asyncRows, _asyncError);
-        }
+        const { query, outputType, asyncMode } = context.messages.in.content;
 
         // ─── ASYNC MODE: START LONG-RUNNING QUERY ─────────────────────────────
         if (asyncMode) {
