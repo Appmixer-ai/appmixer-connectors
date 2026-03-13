@@ -4,7 +4,7 @@ const connections = require('./connections');
 
 module.exports = async (context) => {
 
-    const AsyncJobModel = require('./AsyncJobModel')(context);
+    const AsyncJobModel = require('./AsyncJobModel');
     const config = require('./config')(context);
     const collection = () => context.db.collection(AsyncJobModel.collection);
 
