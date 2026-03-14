@@ -5,18 +5,27 @@ const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const CONNECTORS_ROOT = path.join(REPO_ROOT, 'src', 'appmixer');
+const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', '.cache']);
 
 const failures = [];
 
 function walkFiles(dirPath, matcher, result = []) {
 
-    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    let entries;
+
+    try {
+        entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    } catch (err) {
+        return result;
+    }
 
     for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
 
         if (entry.isDirectory()) {
-            walkFiles(fullPath, matcher, result);
+            if (!IGNORED_DIRS.has(entry.name)) {
+                walkFiles(fullPath, matcher, result);
+            }
             continue;
         }
 
