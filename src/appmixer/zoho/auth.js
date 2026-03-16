@@ -9,9 +9,10 @@ const { accountsEndpoint } = require('./endpoints');
  * @param {string} [region]
  * @return {Promise<*|null>}
  */
-const validateUser = async (context) => {
+const validateUser = async (context, regionParam) => {
 
-    const zc = new ZohoClient(context, region);
+    // https://www.zoho.com/crm/developer/docs/api/v8/get-users.html
+    const zc = new ZohoClient(context, regionParam);
     const { users } = await zc.request('GET', '/crm/v2/users', {
         params: { type: 'CurrentUser' }
     });
@@ -36,6 +37,7 @@ module.exports = {
             'ZohoCRM.modules.ALL',
             'ZohoCRM.users.ALL',
             'ZohoCRM.settings.fields.READ',
+            'ZohoCRM.settings.profiles.READ',
             'ZohoCRM.notifications.ALL'
         ],
 
@@ -79,7 +81,7 @@ module.exports = {
 
         requestProfileInfo: async context => {
 
-            const user = await validateUser(context);
+            const user = await validateUser(context, region);
             if (region) {
                 user.region = region;
             } else if (context.profileInfo?.region) {
@@ -108,7 +110,7 @@ module.exports = {
 
         validateAccessToken: async context => {
 
-            return validateUser(context);
+            return validateUser(context, context.profileInfo?.region);
         }
     }
 };

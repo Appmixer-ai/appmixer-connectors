@@ -2339,7 +2339,7 @@ E2E test flows are automated workflow tests stored as `test-flow*.json` files in
 
 **Important**: Connectors should have **multiple smaller test flows** rather than one large flow. Each flow should test a specific feature or workflow (e.g., `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`). This approach makes tests easier to maintain, debug, and understand.
 
-**Full Coverage Requirement**: All components in a connector MUST be tested. Verify that every component in the connector appears in at least one test flow.
+**Full Coverage Requirement**: All components in a connector MUST be tested. Verify that every component in  the connector appears in at least one test flow.
 
 #### Test Flow Structure
 
@@ -2349,11 +2349,11 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
 2. **Components**: Dictionary of component instances with unique IDs
 3. **Connections**: Data flow between components via source/target ports
 4. **Configuration**: Input values and transformations
-
+``
 **Naming Convention**:
 - Test flow names MUST follow the format: `"E2E Connector Name - test type"`
 - Examples: `"E2E Google Docs - images"`, `"E2E Slack - messages"`, `"E2E GitHub - pull requests"`
-- The testCase field in ProcessE2EResults should match this format
+- The testCase field in ProcessE2EResults should match this forma`TEST_FLOW_SYSTEM_PROMPT`t
 
 **Basic Structure**:
 ```json
@@ -2438,6 +2438,9 @@ Every E2E test flow MUST include these components in sequence:
 #### ProcessE2EResults Component Configuration
 
 The ProcessE2EResults component is REQUIRED and must be configured with:
+
+**CRITICAL: config.transform.in Structure**
+The ProcessE2EResults MUST have a properly structured `config.transform.in` object. This is required by the E2E deployment script (`refresh-E2E-flows.js`). The script reads `processE2EComponent.config.transform.in` to update store IDs and recipients. Without this structure, the deployment will fail with errors.
 
 **Required Properties**:
 ```json

@@ -1,0 +1,139 @@
+{
+    "name": "appmixer.zoho.crm.FindCustomModules",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search for custom modules in Zoho CRM. Returns a list of custom modules that match the specified criteria. This component will return a maximum of 200 records.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:zoho",
+        "scope": [
+            "ZohoCRM.settings.ALL"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:zoho",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "searchQuery": {
+                        "type": "string"
+                    },
+                    "sortBy": {
+                        "type": "string",
+                        "default": "created_time"
+                    },
+                    "sortOrder": {
+                        "type": "string",
+                        "default": "desc"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "searchQuery": {
+                        "type": "text",
+                        "tooltip": "Search term to filter custom modules by name or display name",
+                        "label": "Search Query",
+                        "index": 0
+                    },
+                    "sortBy": {
+                        "type": "select",
+                        "tooltip": "Field to sort results by",
+                        "label": "Sort By",
+                        "options": [
+                            {
+                                "label": "created_time",
+                                "value": "created_time"
+                            },
+                            {
+                                "label": "modified_time",
+                                "value": "modified_time"
+                            },
+                            {
+                                "label": "api_name",
+                                "value": "api_name"
+                            },
+                            {
+                                "label": "display_name",
+                                "value": "display_name"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "sortOrder": {
+                        "type": "select",
+                        "tooltip": "Order to sort results",
+                        "label": "Sort Order",
+                        "options": [
+                            {
+                                "label": "asc",
+                                "value": "asc"
+                            },
+                            {
+                                "label": "desc",
+                                "value": "desc"
+                            }
+                        ],
+                        "index": 2
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/zoho/crm/FindCustomModules?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGNsYXNzPSJsb2dvLWNvbG9yIiB2aWV3Qm94PSIwIDAgMTAyNCAxMDI0Ij48cGF0aCBmaWxsPSIjMjI2ZWIzIiBkPSJNNzI5LjU0IDEwMjRIMzBjLTE2LjU3IDAtMzAtMTMuNDMtMzAtMzBWNzM5Ljg0YzAtNTUuNTIgMzUuMjgtMTA0LjkzIDg3LjgtMTIyLjk2bDc3NS4yOC0yNjYuMDlDOTIzLjQ0IDMzMC4wNyA5NjQgMjczLjI2IDk2NCAyMDkuNDQgOTY0IDEyNy4wNCA4OTYuOTYgNjAgODE0LjU2IDYwSDYwdjQ5NC45NmMwIDE2LjU3LTEzLjQzIDMwLTMwIDMwcy0zMC0xMy40My0zMC0zMFYzMEMwIDEzLjQzIDEzLjQzIDAgMzAgMGg3ODQuNTZDOTMwLjA1IDAgMTAyNCA5My45NSAxMDI0IDIwOS40NGMwIDg5LjQ1LTU2Ljg0IDE2OS4wNi0xNDEuNDUgMTk4LjFMMTA3LjI4IDY3My42M0M3OSA2ODMuMzMgNjAgNzA5Ljk0IDYwIDczOS44NFY5NjRoNjY5LjU0YzYyLjYzIDAgMTIxLjUtMjQuMzkgMTY1Ljc5LTY4LjY3QzkzOS42MSA4NTEuMDQgOTY0IDc5Mi4xNyA5NjQgNzI5LjU0YzAtNDQuMzMtMTIuNDktODcuNTYtMzYuMTEtMTI1LjAyLTIzLjM5LTM3LjEtNTYuNTUtNjYuNzktOTUuODktODUuODgtMTQuOTEtNy4yMy0yMS4xMy0yNS4xOC0xMy44OS00MC4wOSA3LjIzLTE0LjkxIDI1LjE4LTIxLjEzIDQwLjA5LTEzLjg5IDQ5LjQyIDIzLjk4IDkxLjA3IDYxLjI4IDEyMC40NSAxMDcuODYgMjkuNjggNDcuMDYgNDUuMzYgMTAxLjM2IDQ1LjM2IDE1Ny4wMyAwIDc4LjY1LTMwLjYzIDE1Mi42LTg2LjI1IDIwOC4yMi01NS42MiA1NS42LTEyOS41NyA4Ni4yMy0yMDguMjIgODYuMjN6IiBvcGFjaXR5PSIuOSIvPjxwYXRoIGZpbGw9IiMyMjZlYjMiIGQ9Ik0zMzcuNTIgNDE5LjgyYy02Ni4xNyAwLTEyMC01My44My0xMjAtMTIwczUzLjgzLTEyMCAxMjAtMTIwIDEyMCA1My44MyAxMjAgMTIwLTUzLjgzIDEyMC0xMjAgMTIwem0wLTE4MGMtMzMuMDggMC02MCAyNi45Mi02MCA2MHMyNi45MiA2MCA2MCA2MCA2MC0yNi45MiA2MC02MC0yNi45Mi02MC02MC02MHpNNjM4LjM0IDg0My41M2MtNjYuMTcgMC0xMjAtNTMuODMtMTIwLTEyMHM1My44My0xMjAgMTIwLTEyMCAxMjAgNTMuODMgMTIwIDEyMC01My44MyAxMjAtMTIwIDEyMHptMC0xODBjLTMzLjA4IDAtNjAgMjYuOTItNjAgNjBzMjYuOTIgNjAgNjAgNjAgNjAtMjYuOTIgNjAtNjAtMjYuOTItNjAtNjAtNjB6IiBvcGFjaXR5PSIuOSIvPjwvc3ZnPgo="
+}
