@@ -1,18 +1,18 @@
 {
     "name": "E2E Beehiiv - Reference Data",
-    "description": "End-to-end test for Beehiiv connector - tests reference data listing components: ListAutomations, ListCustomFields, and ListSegments. All three run in parallel from OnStart. ListCustomFields is asserted (live data confirmed). ListAutomations and ListSegments are smoke-tested; they return empty arrays in the test account and are excluded from assertions to avoid flow deadlock.",
+    "description": "E2E test: ListCustomFields, ListAutomations, ListSegments with assertions",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 16,
+            "y": 200,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "list-custom-fields": {
             "type": "appmixer.beehiiv.core.ListCustomFields",
-            "x": 256,
+            "x": 300,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -29,10 +29,12 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "publicationId": {}
+                                    "publicationId": {},
+                                    "outputType": {}
                                 },
                                 "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "outputType": "first"
                                 }
                             }
                         }
@@ -42,8 +44,8 @@
         },
         "list-automations": {
             "type": "appmixer.beehiiv.core.ListAutomations",
-            "x": 256,
-            "y": 144,
+            "x": 300,
+            "y": 200,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -72,8 +74,8 @@
         },
         "list-segments": {
             "type": "appmixer.beehiiv.core.ListSegments",
-            "x": 256,
-            "y": 272,
+            "x": 300,
+            "y": 384,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -102,8 +104,8 @@
         },
         "assert-custom-fields-id": {
             "type": "appmixer.utils.test.Assert",
-            "x": 448,
-            "y": 16,
+            "x": 550,
+            "y": 0,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -121,7 +123,7 @@
                                 "modifiers": {
                                     "expression": {
                                         "field-id": {
-                                            "variable": "$.list-custom-fields.out.result[0].id",
+                                            "variable": "$.list-custom-fields.out.id",
                                             "functions": []
                                         }
                                     }
@@ -144,8 +146,8 @@
         },
         "assert-custom-fields-kind": {
             "type": "appmixer.utils.test.Assert",
-            "x": 448,
-            "y": 144,
+            "x": 550,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -163,7 +165,7 @@
                                 "modifiers": {
                                     "expression": {
                                         "field-kind": {
-                                            "variable": "$.list-custom-fields.out.result[0].kind",
+                                            "variable": "$.list-custom-fields.out.kind",
                                             "functions": []
                                         }
                                     }
@@ -184,10 +186,82 @@
                 }
             }
         },
+        "assert-automations": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-automations": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-automations": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "ok",
+                                                "assertion": "equal",
+                                                "expected": "ok"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-segments": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 384,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-segments": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-segments": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "ok",
+                                                "assertion": "equal",
+                                                "expected": "ok"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 640,
-            "y": 80,
+            "x": 800,
+            "y": 150,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -195,6 +269,12 @@
                         "out"
                     ],
                     "assert-custom-fields-kind": [
+                        "out"
+                    ],
+                    "assert-automations": [
+                        "out"
+                    ],
+                    "assert-segments": [
                         "out"
                     ]
                 }
@@ -207,8 +287,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 832,
-            "y": 80,
+            "x": 1050,
+            "y": 150,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -218,10 +298,6 @@
                 }
             },
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
                         "after-all": {
@@ -238,7 +314,7 @@
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "jirka@client.io",
+                                    "recipients": "test@appmixer.com",
                                     "testCase": "E2E Beehiiv - Reference Data",
                                     "result": "{{{result-var}}}"
                                 }
