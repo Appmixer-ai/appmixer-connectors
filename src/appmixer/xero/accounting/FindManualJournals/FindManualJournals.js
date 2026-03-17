@@ -15,6 +15,10 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required.');
+        }
+
         const params = {};
         if (Status) {
             params.where = `Status=="${Status}"`;
