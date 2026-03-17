@@ -26,7 +26,10 @@ const CreateWorkItem = {
     method: 'POST',
     path: '/{organization}/{project}/_apis/wit/workitems/${type}',
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/create?view=azure-devops-rest-7.1',
-    async execute(context, { organization, project, workItemType, title, description, priority, assignedTo, areaPath, iterationPath, tags }) {
+    async execute(
+        context,
+        { organization, project, workItemType, title, description, priority, assignedTo, areaPath, iterationPath, tags }
+    ) {
         const patchDoc = [
             { op: 'add', path: '/fields/System.Title', value: title }
         ];
@@ -67,6 +70,7 @@ const CreateWorkItem = {
 const GetWorkItem = {
     method: 'GET',
     path: '/{organization}/{project}/_apis/wit/workitems/{id}',
+    // eslint-disable-next-line max-len
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/get-work-item?view=azure-devops-rest-7.1',
     async execute(context, { organization, project, workItemId }) {
         const response = await context.httpRequest({
@@ -83,7 +87,13 @@ const UpdateWorkItem = {
     method: 'PATCH',
     path: '/{organization}/{project}/_apis/wit/workitems/{id}',
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/update?view=azure-devops-rest-7.1',
-    async execute(context, { organization, project, workItemId, title, description, state, priority, assignedTo, areaPath, iterationPath, tags }) {
+    async execute(
+        context,
+        {
+            organization, project, workItemId, title, description,
+            state, priority, assignedTo, areaPath, iterationPath, tags
+        }
+    ) {
         const patchDoc = [];
 
         if (title !== undefined && title !== null && title !== '') {
@@ -143,6 +153,7 @@ const DeleteWorkItem = {
 const FindWorkItems = {
     method: 'POST',
     path: '/{organization}/{project}/_apis/wit/wiql',
+    // eslint-disable-next-line max-len
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/wiql/query-by-wiql?view=azure-devops-rest-7.1',
     async execute(context, { organization, project, wiqlQuery }) {
         // Step 1: Execute WIQL to get IDs
@@ -183,6 +194,7 @@ const FindWorkItems = {
 const CreateSubscription = {
     method: 'POST',
     path: '/{organization}/_apis/hooks/subscriptions',
+    // eslint-disable-next-line max-len
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/hooks/subscriptions/create?view=azure-devops-rest-7.1',
     async execute(context, { organization, projectId, eventType, webhookUrl }) {
         const response = await context.httpRequest({
@@ -209,6 +221,7 @@ const CreateSubscription = {
 const DeleteSubscription = {
     method: 'DELETE',
     path: '/{organization}/_apis/hooks/subscriptions/{subscriptionId}',
+    // eslint-disable-next-line max-len
     docsUrl: 'https://learn.microsoft.com/en-us/rest/api/azure/devops/hooks/subscriptions/delete?view=azure-devops-rest-7.1',
     async execute(context, { organization, subscriptionId }) {
         await context.httpRequest({
