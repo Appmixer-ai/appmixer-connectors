@@ -1,0 +1,155 @@
+{
+    "name": "appmixer.azuredevops.core.UpdateWorkItem",
+    "label": "Update Work Item",
+    "description": "Update one or more fields on an existing Azure DevOps work item. Only fields with provided values will be updated.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:azuredevops"
+    },
+    "quota": {
+        "manager": "appmixer:azuredevops",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organization": {
+                        "type": "string"
+                    },
+                    "project": {
+                        "type": "string"
+                    },
+                    "workItemId": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer"
+                    },
+                    "assignedTo": {
+                        "type": "string"
+                    },
+                    "areaPath": {
+                        "type": "string"
+                    },
+                    "iterationPath": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    }
+                },
+                "required": ["organization", "project", "workItemId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "organization": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "The name of your Azure DevOps organization (e.g. <b>mycompany</b> from <i>https://dev.azure.com/mycompany</i>)."
+                    },
+                    "project": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Project",
+                        "tooltip": "The name or ID of the Azure DevOps project."
+                    },
+                    "workItemId": {
+                        "type": "number",
+                        "index": 3,
+                        "label": "Work Item ID",
+                        "tooltip": "The unique numeric ID of the work item to update."
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Title",
+                        "tooltip": "New title for the work item."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Description",
+                        "tooltip": "New description for the work item. HTML is supported."
+                    },
+                    "state": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "State",
+                        "tooltip": "New state for the work item (e.g. <b>Active</b>, <b>Resolved</b>, <b>Closed</b>). Valid states depend on your process template."
+                    },
+                    "priority": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Priority",
+                        "tooltip": "New priority value. Common values: 1 (Critical), 2 (High), 3 (Medium), 4 (Low)."
+                    },
+                    "assignedTo": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Assigned To",
+                        "tooltip": "Email address or display name of the user to assign the work item to."
+                    },
+                    "areaPath": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Area Path",
+                        "tooltip": "New area path for the work item."
+                    },
+                    "iterationPath": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Iteration Path",
+                        "tooltip": "New iteration path (sprint) for the work item."
+                    },
+                    "tags": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Tags",
+                        "tooltip": "Semicolon-separated list of tags. This replaces all existing tags."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Work Item ID", "value": "id" },
+                { "label": "Revision", "value": "rev" },
+                { "label": "API URL", "value": "url" },
+                { "label": "Title", "value": "fields.System.Title" },
+                { "label": "State", "value": "fields.System.State" },
+                { "label": "Work Item Type", "value": "fields.System.WorkItemType" },
+                { "label": "Project", "value": "fields.System.TeamProject" },
+                { "label": "Area Path", "value": "fields.System.AreaPath" },
+                { "label": "Iteration Path", "value": "fields.System.IterationPath" },
+                { "label": "Description", "value": "fields.System.Description" },
+                { "label": "Tags", "value": "fields.System.Tags" },
+                { "label": "Priority", "value": "fields.Microsoft.VSTS.Common.Priority" },
+                { "label": "Assigned To (Display Name)", "value": "fields.System.AssignedTo.displayName" },
+                { "label": "Assigned To (Email)", "value": "fields.System.AssignedTo.uniqueName" },
+                { "label": "Changed Date", "value": "fields.System.ChangedDate" },
+                { "label": "Web URL", "value": "_links.html.href" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZmlsbD0iIzAwNzFjNSIgZD0iTTAgMTcuNTkyVjI4Ljg3bDE0LjE1MSA0LjEzdi03LjEyN2wtNy42NjQtMi40MDZ2LTcuMTA2em0wLTMuMTg0TDE0LjE1MS44MTJWOGwtNy42NjQgMi40MDZ2Ni4wNDd6bTE2LjE0OCAxNS40NjJ2LTcuMTI3bC04Ljk5OS0yLjg1djYuODU2em0wLTE5LjAzMVY0LjFsLTguOTk5IDIuODV2Ni4yNTZ6TTMyIDE2LjE0OGwtMTAuNTg5IDEzLjU4NlYyMi44MWwtNi45NjQtMi4xOFYxMS40MThsMTcuNTUzLTUuMzE1eiIvPjwvc3ZnPg=="
+}

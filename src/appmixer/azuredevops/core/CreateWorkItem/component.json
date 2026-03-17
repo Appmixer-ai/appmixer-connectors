@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.azuredevops.core.CreateWorkItem",
+    "label": "Create Work Item",
+    "description": "Create a new work item (Bug, Task, User Story, etc.) in an Azure DevOps project.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:azuredevops"
+    },
+    "quota": {
+        "manager": "appmixer:azuredevops",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organization": {
+                        "type": "string"
+                    },
+                    "project": {
+                        "type": "string"
+                    },
+                    "workItemType": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer"
+                    },
+                    "assignedTo": {
+                        "type": "string"
+                    },
+                    "areaPath": {
+                        "type": "string"
+                    },
+                    "iterationPath": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    }
+                },
+                "required": ["organization", "project", "workItemType", "title"]
+            },
+            "inspector": {
+                "inputs": {
+                    "organization": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "The name of your Azure DevOps organization (e.g. <b>mycompany</b> from <i>https://dev.azure.com/mycompany</i>)."
+                    },
+                    "project": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Project",
+                        "tooltip": "The name or ID of the Azure DevOps project."
+                    },
+                    "workItemType": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Work Item Type",
+                        "tooltip": "The type of work item to create.",
+                        "options": [
+                            { "label": "Bug", "value": "Bug" },
+                            { "label": "Task", "value": "Task" },
+                            { "label": "User Story", "value": "User Story" },
+                            { "label": "Feature", "value": "Feature" },
+                            { "label": "Epic", "value": "Epic" },
+                            { "label": "Issue", "value": "Issue" },
+                            { "label": "Test Case", "value": "Test Case" }
+                        ]
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Title",
+                        "tooltip": "The title of the work item."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Description",
+                        "tooltip": "A detailed description of the work item. HTML is supported."
+                    },
+                    "priority": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Priority",
+                        "tooltip": "Priority of the work item. Common values: 1 (Critical), 2 (High), 3 (Medium), 4 (Low)."
+                    },
+                    "assignedTo": {
+                        "type": "text",
+                        "index": 7,
+                        "label": "Assigned To",
+                        "tooltip": "Email address or display name of the user to assign the work item to."
+                    },
+                    "areaPath": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Area Path",
+                        "tooltip": "The area path for the work item (e.g. <b>MyProject\\TeamA</b>). Defaults to the project root if not specified."
+                    },
+                    "iterationPath": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Iteration Path",
+                        "tooltip": "The iteration path (sprint) for the work item (e.g. <b>MyProject\\Sprint 1</b>)."
+                    },
+                    "tags": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Tags",
+                        "tooltip": "Semicolon-separated list of tags to add to the work item (e.g. <b>security; api; critical</b>)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Work Item ID", "value": "id" },
+                { "label": "Revision", "value": "rev" },
+                { "label": "API URL", "value": "url" },
+                { "label": "Title", "value": "fields.System.Title" },
+                { "label": "State", "value": "fields.System.State" },
+                { "label": "Work Item Type", "value": "fields.System.WorkItemType" },
+                { "label": "Project", "value": "fields.System.TeamProject" },
+                { "label": "Area Path", "value": "fields.System.AreaPath" },
+                { "label": "Iteration Path", "value": "fields.System.IterationPath" },
+                { "label": "Description", "value": "fields.System.Description" },
+                { "label": "Tags", "value": "fields.System.Tags" },
+                { "label": "Priority", "value": "fields.Microsoft.VSTS.Common.Priority" },
+                { "label": "Assigned To (Display Name)", "value": "fields.System.AssignedTo.displayName" },
+                { "label": "Assigned To (Email)", "value": "fields.System.AssignedTo.uniqueName" },
+                { "label": "Created Date", "value": "fields.System.CreatedDate" },
+                { "label": "Changed Date", "value": "fields.System.ChangedDate" },
+                { "label": "Created By (Display Name)", "value": "fields.System.CreatedBy.displayName" },
+                { "label": "Web URL", "value": "_links.html.href" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZmlsbD0iIzAwNzFjNSIgZD0iTTAgMTcuNTkyVjI4Ljg3bDE0LjE1MSA0LjEzdi03LjEyN2wtNy42NjQtMi40MDZ2LTcuMTA2em0wLTMuMTg0TDE0LjE1MS44MTJWOGwtNy42NjQgMi40MDZ2Ni4wNDd6bTE2LjE0OCAxNS40NjJ2LTcuMTI3bC04Ljk5OS0yLjg1djYuODU2em0wLTE5LjAzMVY0LjFsLTguOTk5IDIuODV2Ni4yNTZ6TTMyIDE2LjE0OGwtMTAuNTg5IDEzLjU4NlYyMi44MWwtNi45NjQtMi4xOFYxMS40MThsMTcuNTUzLTUuMzE1eiIvPjwvc3ZnPg=="
+}

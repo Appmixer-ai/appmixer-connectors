@@ -1,0 +1,83 @@
+{
+    "name": "appmixer.azuredevops.core.NewWorkItem",
+    "label": "New Work Item",
+    "description": "Triggers when a new work item is created in an Azure DevOps project.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "webhook": true,
+    "auth": {
+        "service": "appmixer:azuredevops"
+    },
+    "quota": {
+        "manager": "appmixer:azuredevops",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "organization": {
+                    "type": "string"
+                },
+                "projectId": {
+                    "type": "string"
+                },
+                "workItemType": {
+                    "type": "string"
+                }
+            },
+            "required": ["organization", "projectId"]
+        },
+        "inspector": {
+            "inputs": {
+                "organization": {
+                    "type": "text",
+                    "index": 1,
+                    "label": "Organization",
+                    "tooltip": "The name of your Azure DevOps organization (e.g. <b>mycompany</b> from <i>https://dev.azure.com/mycompany</i>)."
+                },
+                "projectId": {
+                    "type": "text",
+                    "index": 2,
+                    "label": "Project ID",
+                    "tooltip": "The ID (GUID) of the Azure DevOps project to monitor. You can find this in the project settings or by using the List Projects component."
+                },
+                "workItemType": {
+                    "type": "text",
+                    "index": 3,
+                    "label": "Work Item Type Filter",
+                    "tooltip": "Optional. Filter triggers to a specific work item type (e.g. <b>Bug</b>, <b>Task</b>). Leave blank to trigger for all work item types."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Work Item ID", "value": "resource.id" },
+                { "label": "Revision", "value": "resource.rev" },
+                { "label": "API URL", "value": "resource.url" },
+                { "label": "Title", "value": "resource.fields.System.Title" },
+                { "label": "State", "value": "resource.fields.System.State" },
+                { "label": "Work Item Type", "value": "resource.fields.System.WorkItemType" },
+                { "label": "Project", "value": "resource.fields.System.TeamProject" },
+                { "label": "Area Path", "value": "resource.fields.System.AreaPath" },
+                { "label": "Description", "value": "resource.fields.System.Description" },
+                { "label": "Tags", "value": "resource.fields.System.Tags" },
+                { "label": "Priority", "value": "resource.fields.Microsoft.VSTS.Common.Priority" },
+                { "label": "Assigned To (Display Name)", "value": "resource.fields.System.AssignedTo.displayName" },
+                { "label": "Assigned To (Email)", "value": "resource.fields.System.AssignedTo.uniqueName" },
+                { "label": "Created Date", "value": "resource.fields.System.CreatedDate" },
+                { "label": "Created By (Display Name)", "value": "resource.fields.System.CreatedBy.displayName" },
+                { "label": "Event Type", "value": "eventType" },
+                { "label": "Event ID", "value": "id" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZmlsbD0iIzAwNzFjNSIgZD0iTTAgMTcuNTkyVjI4Ljg3bDE0LjE1MSA0LjEzdi03LjEyN2wtNy42NjQtMi40MDZ2LTcuMTA2em0wLTMuMTg0TDE0LjE1MS44MTJWOGwtNy42NjQgMi40MDZ2Ni4wNDd6bTE2LjE0OCAxNS40NjJ2LTcuMTI3bC04Ljk5OS0yLjg1djYuODU2em0wLTE5LjAzMVY0LjFsLTguOTk5IDIuODV2Ni4yNTZ6TTMyIDE2LjE0OGwtMTAuNTg5IDEzLjU4NlYyMi44MWwtNi45NjQtMi4xOFYxMS40MThsMTcuNTUzLTUuMzE1eiIvPjwvc3ZnPg=="
+}
