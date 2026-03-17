@@ -1,0 +1,131 @@
+{
+    "name": "appmixer.xero.accounting.FindManualJournals",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Find manual journals. Optionally filter by status.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:xero",
+        "scope": [
+            "accounting.transactions.read"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:xero:accounting",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "tenantId": {
+                        "type": "string"
+                    },
+                    "Status": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "tenantId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "tenantId": {
+                        "type": "select",
+                        "label": "Tenant ID",
+                        "index": 1,
+                        "source": {
+                            "url": "/component/appmixer/xero/accounting/ListTenants?outPort=tenants",
+                            "data": {
+                                "transform": "./transformers#tenantsToSelectArray"
+                            }
+                        }
+                    },
+                    "Status": {
+                        "type": "select",
+                        "label": "Status",
+                        "tooltip": "Filter by manual journal status.",
+                        "index": 2,
+                        "options": [
+                            {
+                                "clearItem": true,
+                                "label": "-- All --"
+                            },
+                            {
+                                "label": "DRAFT",
+                                "value": "DRAFT"
+                            },
+                            {
+                                "label": "POSTED",
+                                "value": "POSTED"
+                            },
+                            {
+                                "label": "DELETED",
+                                "value": "DELETED"
+                            },
+                            {
+                                "label": "VOIDED",
+                                "value": "VOIDED"
+                            },
+                            {
+                                "label": "ARCHIVED",
+                                "value": "ARCHIVED"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "items",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the rows to a file is the most efficient method.",
+                        "options": [
+                            {
+                                "label": "All at once",
+                                "value": "items"
+                            },
+                            {
+                                "label": "One at a time",
+                                "value": "item"
+                            },
+                            {
+                                "label": "File",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/xero/accounting/FindManualJournals?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/tenantId": "inputs/in/tenantId"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI3ODYuODIiIGhlaWdodD0iNzg2LjgyIiB2aWV3Qm94PSIwIDAgMjA4LjE3OSAyMDguMTc5IiB2ZXJzaW9uPSIxLjEiPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC01Ljg4NyAtMjcxLjY5NikiPjxnIHRyYW5zZm9ybT0ibWF0cml4KC4zNTI3OCAwIDAgLS4zNTI3OCAtMzkuOTMgNTI1LjYzOCkiPjxnPjxnPjxwYXRoIGQ9Ik00MjQuOTMzIDEzMC44NDNjMTYyLjMzNSAwIDI5My45MzIgMTMxLjU5NyAyOTMuOTMyIDI5My45MzMgMCAxNjIuMzM0LTEzMS41OTcgMjkzLjkzMi0yOTMuOTMyIDI5My45MzJTMTMxIDU4Ny4xMSAxMzEgNDI0Ljc3NmMwLTE2Mi4zMzYgMTMxLjU5OC0yOTMuOTMzIDI5My45MzMtMjkzLjkzMyIgc3R5bGU9ImZpbGw6IzFhYjRkNyIvPjxwYXRoIGQ9Im0yNzEuNzAxIDQyNS42MjUgNTAuMTYyIDUwLjI4NmE4Ljk4MiA4Ljk4MiAwIDAgMSAyLjU5MSA2LjMxOWMwIDQuOTYtNC4wMzIgOC45ODgtOC45OTIgOC45ODhhOC45MSA4LjkxIDAgMCAxLTYuMzg5LTIuNjc2Yy0uMDA1LS4wMS01MC4xMTctNTAuMDkzLTUwLjExNy01MC4wOTNsLTUwLjM0MSA1MC4xNjhhOC45ODYgOC45ODYgMCAwIDEtNi4zNDUgMi42MDFjLTQuOTU0IDAtOC45ODctNC4wMjYtOC45ODctOC45ODEgMC0yLjQxNy45NjUtNC42ODUgMi42OTctNi4zOTRsNTAuMTU1LTUwLjE0OC01MC4xMjktNTAuMjIzYy0xLjc2Mi0xLjczNS0yLjcyMy00LjAwOC0yLjcyMy02LjQzNiAwLTQuOTU5IDQuMDMzLTguOTgyIDguOTg3LTguOTgyIDIuMzk0IDAgNC42NS45MjkgNi4zNDUgMi42MjVsNTAuMjYzIDUwLjE5NSA1MC4wNzItNTAuMDEyYzEuNzc2LTEuODM2IDQuMDY3LTIuODE0IDYuNTEyLTIuODE0IDQuOTU1IDAgOC45ODcgNC4wMjkgOC45ODcgOC45ODhhOC45MiA4LjkyIDAgMCAxLTIuNjE0IDYuMzM2eiIgc3R5bGU9ImZpbGw6I2ZmZiIvPjwvZz48L2c+PC9nPjwvZz48L3N2Zz4="
+}
