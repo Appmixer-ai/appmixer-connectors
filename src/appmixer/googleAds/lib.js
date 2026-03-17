@@ -160,7 +160,8 @@ function buildUserIdentifiersFromCsvRow(row, schemaConfig = {}) {
         userIdentifiers.push({ hashedEmail: hashSha256(email) });
     }
 
-    const phoneNumbers = getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.phoneNumber, { splitMultiValue: true });
+    const phoneNumbers =
+        getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.phoneNumber, { splitMultiValue: true });
 
     for (const phoneNumber of phoneNumbers) {
         const normalizedPhone = phoneNumber.replace(/[^0-9+]/g, '');
@@ -194,7 +195,8 @@ function buildUserIdentifiersFromCsvRow(row, schemaConfig = {}) {
         userIdentifiers.push({ mobileId });
     }
 
-    const thirdPartyUserIds = getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.thirdPartyUserId, { splitMultiValue: true });
+    const thirdPartyUserIds =
+        getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.thirdPartyUserId, { splitMultiValue: true });
 
     for (const thirdPartyUserId of thirdPartyUserIds) {
         userIdentifiers.push({ thirdPartyUserId });
