@@ -15,9 +15,10 @@ module.exports = {
             return context.sendJson(result, 'out');
         }
 
-        // Called as source for dynamic inspector — no input messages
+        // Called as source for dynamic inspector/output — pass properties through
+        // so transform functions can access method
         if (!context.messages?.in?.content) {
-            return context.sendJson({}, 'out');
+            return context.sendJson({ method: context.properties.method }, 'out');
         }
 
         const method = context.properties.method;
