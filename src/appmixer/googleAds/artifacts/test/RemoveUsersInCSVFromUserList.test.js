@@ -29,6 +29,74 @@ function emailCsv(rows) {
     return [header, ...lines].join('\n');
 }
 
+const SHARED_CSV_HEADER = 'first_name,last_name,personal_emails,personal_phone,mobile_phone,additional_personal_emails,personal_emails_validation_status,personal_emails_last_seen,linkedin_url,personal_address,personal_address_2,personal_city,personal_state,personal_zip,personal_zip4,contact_country,gender,age_range,married,children,income_range,net_worth,homeowner,job_title,job_title_normalized,job_title_last_updated,seniority_level,seniority_level_2,department,department_2,business_email,programmatic_business_emails,business_email_validation_status,business_email_last_seen,direct_number,professional_address,professional_address_2,professional_city,professional_state,professional_zip,professional_zip4,company_name,company_domain,company_phone,company_sic,company_naics,company_address,company_city,company_state,company_zip,company_country,company_revenue,company_employee_count,primary_industry,company_last_updated,last_updated';
+
+function sharedAudienceCsv(overrides = {}) {
+    const columns = SHARED_CSV_HEADER.split(',');
+    const defaults = {
+        first_name: 'Avery',
+        last_name: 'Stone',
+        personal_emails: 'avery.stone@example.test',
+        personal_phone: '+12025550101',
+        mobile_phone: '+12025550102',
+        additional_personal_emails: 'avery.alt@example.test',
+        personal_emails_validation_status: 'Valid',
+        personal_emails_last_seen: '2026-01-15 19:00:00',
+        linkedin_url: 'https://linkedin.example.test/in/avery-stone',
+        personal_address: '101 Cedar Ave',
+        personal_city: 'Springfield',
+        personal_state: 'IL',
+        personal_zip: '62704',
+        contact_country: 'US',
+        gender: 'X',
+        age_range: '35-44',
+        married: 'N',
+        homeowner: 'Y',
+        job_title: 'Founder',
+        job_title_normalized: 'founder',
+        job_title_last_updated: '2026-01-10 08:00:00',
+        seniority_level: 'Cxo',
+        seniority_level_2: 'owner',
+        department: 'Operations',
+        department_2: 'Leadership',
+        business_email: 'avery@work.example.test',
+        programmatic_business_emails: '\\N',
+        business_email_validation_status: 'Valid',
+        business_email_last_seen: '2026-01-15 19:00:00',
+        direct_number: '+12025550103',
+        professional_address: '200 Market St',
+        professional_city: 'Chicago',
+        professional_state: 'IL',
+        professional_zip: '60601',
+        company_name: 'Example Company',
+        company_domain: 'example.test',
+        company_phone: '+12025550999',
+        company_sic: '7372',
+        company_naics: '541511',
+        company_address: '200 Market St',
+        company_city: 'Chicago',
+        company_state: 'IL',
+        company_zip: '60601',
+        company_country: 'US',
+        company_revenue: '5000000',
+        company_employee_count: '25',
+        primary_industry: 'Software',
+        company_last_updated: '2026-01-12 10:00:00',
+        last_updated: '2026-01-15 19:00:00'
+    };
+
+    const row = columns.map(column => overrides[column] ?? defaults[column] ?? '');
+    return [SHARED_CSV_HEADER, row.join(',')].join('\n');
+}
+
+function googleAdsSchema(mappings) {
+    return { ADD: mappings };
+}
+
+const BASIC_EMAIL_SCHEMA = googleAdsSchema([
+    { csvHeader: 'email', googleAdsType: 'email' }
+]);
+
 // ---------------------------------------------------------------------------
 // Shared API response stubs
 // ---------------------------------------------------------------------------
@@ -123,6 +191,19 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 message: 'User List ID is required!'
             });
         });
+
+        it('throws when schema is missing', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810'
+            };
+
+            await assert.rejects(() => RemoveUsersInCSVFromUserList.receive(context), {
+                message: 'Schema is required!'
+            });
+        });
     });
 
     // -----------------------------------------------------------------------
@@ -142,7 +223,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(CSV)));
             stubApiResponses(context);
@@ -226,7 +308,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -247,7 +330,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -273,7 +357,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -300,7 +385,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context, { partialFailureError: { code: 3, message: 'User not found' } });
@@ -315,54 +401,183 @@ describe('RemoveUsersInCSVFromUserList', () => {
     });
 
     // -----------------------------------------------------------------------
-    // Column-name flexibility
+    // Explicit schema mapping
     // -----------------------------------------------------------------------
 
-    describe('Column-name flexibility', () => {
+    describe('Explicit schema mapping', () => {
 
-        async function removeCsv(csvContent) {
+        it('uses the mapped email column', async () => {
             context.messages.in.content = {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: googleAdsSchema([{ csvHeader: 'email_address', googleAdsType: 'email' }])
             };
-            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csvContent)));
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('email_address\nalice@example.com\n')));
             stubApiResponses(context);
+
             await RemoveUsersInCSVFromUserList.receive(context);
+
             const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
-            return outCalls[0].args[0];
-        }
-
-        it('handles "email_address" column alias', async () => {
-            const result = await removeCsv('email_address\nalice@example.com\n');
-            assert.strictEqual(result.totalUsers, 1);
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
         });
 
-        it('handles "phone_number" column alias', async () => {
-            const result = await removeCsv('phone_number\n+14155552671\n');
-            assert.strictEqual(result.totalUsers, 1);
+        it('uses the mapped phone column', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([{ csvHeader: 'phone_number', googleAdsType: 'phoneNumber' }])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('phone_number\n+14155552671\n')));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
         });
 
-        it('handles case-insensitive column names (EMAIL, Phone)', async () => {
-            const result = await removeCsv('EMAIL,Phone\nalice@example.com,+14155552671\n');
-            assert.strictEqual(result.totalUsers, 1);
+        it('matches mapped headers case-insensitively', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([
+                    { csvHeader: 'email', googleAdsType: 'email' },
+                    { csvHeader: 'phone', googleAdsType: 'phoneNumber' }
+                ])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('EMAIL,Phone\nalice@example.com,+14155552671\n')));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
         });
 
-        it('handles address-based matching (first_name + last_name + country_code)', async () => {
-            const csv = 'first_name,last_name,country_code\nJohn,Doe,US\n';
-            const result = await removeCsv(csv);
-            assert.strictEqual(result.totalUsers, 1);
+        it('uses mapped address fields', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([
+                    { csvHeader: 'first_name', googleAdsType: 'firstName' },
+                    { csvHeader: 'last_name', googleAdsType: 'lastName' },
+                    { csvHeader: 'country_code', googleAdsType: 'countryCode' }
+                ])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('first_name,last_name,country_code\nJohn,Doe,US\n')));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
         });
 
-        it('handles "mobile_id" column', async () => {
-            const result = await removeCsv('mobile_id\nAEBE52E7-03EE-455A-B3C4-E57283966239\n');
-            assert.strictEqual(result.totalUsers, 1);
+        it('uses the mapped mobile ID column', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([{ csvHeader: 'mobile_id', googleAdsType: 'mobileId' }])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('mobile_id\nAEBE52E7-03EE-455A-B3C4-E57283966239\n')));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
         });
 
-        it('handles "third_party_user_id" column', async () => {
-            const result = await removeCsv('third_party_user_id\nuser_42\n');
-            assert.strictEqual(result.totalUsers, 1);
+        it('uses the mapped third-party user ID column', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([{ csvHeader: 'third_party_user_id', googleAdsType: 'thirdPartyUserId' }])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream('third_party_user_id\nuser_42\n')));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const outCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'out');
+            assert.strictEqual(outCalls[0].args[0].totalUsers, 1);
+        });
+
+        it('accepts the anonymized shared Facebook-style CSV format', async () => {
+            const csv = sharedAudienceCsv();
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([
+                    { csvHeader: 'personal_emails', googleAdsType: 'email' },
+                    { csvHeader: 'additional_personal_emails', googleAdsType: 'email' },
+                    { csvHeader: 'business_email', googleAdsType: 'email' },
+                    { csvHeader: 'personal_phone', googleAdsType: 'phoneNumber' },
+                    { csvHeader: 'mobile_phone', googleAdsType: 'phoneNumber' },
+                    { csvHeader: 'direct_number', googleAdsType: 'phoneNumber' },
+                    { csvHeader: 'first_name', googleAdsType: 'firstName' },
+                    { csvHeader: 'last_name', googleAdsType: 'lastName' },
+                    { csvHeader: 'contact_country', googleAdsType: 'countryCode' },
+                    { csvHeader: 'personal_zip', googleAdsType: 'postalCode' }
+                ])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const addOpsCall = context.httpRequest.getCalls()
+                .find(c => c.args[0].url.includes(':addOperations'));
+            const userIdentifiers = addOpsCall.args[0].data.operations[0].remove.userIdentifiers;
+
+            assert.strictEqual(userIdentifiers.filter(identifier => identifier.hashedEmail).length, 3);
+            assert.strictEqual(userIdentifiers.filter(identifier => identifier.hashedPhoneNumber).length, 3);
+            assert.ok(
+                userIdentifiers.some(identifier => identifier.addressInfo
+                    && identifier.addressInfo.countryCode === 'US'
+                    && identifier.addressInfo.postalCode === '62704')
+            );
+        });
+
+        it('uses explicit schema mapping for arbitrary CSV headers', async () => {
+            const csv = 'alpha,beta,gamma,delta\ncasey@example.test,Casey,Rivera,US\n';
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7122133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([
+                    { csvHeader: 'alpha', googleAdsType: 'email' },
+                    { csvHeader: 'beta', googleAdsType: 'firstName' },
+                    { csvHeader: 'gamma', googleAdsType: 'lastName' },
+                    { csvHeader: 'delta', googleAdsType: 'countryCode' }
+                ])
+            };
+            context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
+            stubApiResponses(context);
+
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const addOpsCall = context.httpRequest.getCalls()
+                .find(c => c.args[0].url.includes(':addOperations'));
+            const userIdentifiers = addOpsCall.args[0].data.operations[0].remove.userIdentifiers;
+
+            assert.strictEqual(userIdentifiers.filter(identifier => identifier.hashedEmail).length, 1);
+            assert.ok(userIdentifiers.some(identifier => identifier.addressInfo));
         });
     });
 
@@ -389,7 +604,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -416,6 +632,7 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 developerToken: 'dev-token',
                 loginCustomerId: null,
                 userListResourceName: USER_LIST_RESOURCE,
+                schema: BASIC_EMAIL_SCHEMA,
                 batchSize: 10000,
                 columnSeparator: ',',
                 adPersonalization: null,
@@ -503,6 +720,7 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 customerId: '7122133715',
                 developerToken: 'dev-token',
                 userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA,
                 adPersonalization: 'GRANTED',
                 adUserData: 'GRANTED'
             };
@@ -525,7 +743,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -551,7 +770,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '712-213-3715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             stubApiResponses(context);
@@ -576,7 +796,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 fileId: 'file-abc',
                 customerId: '7122133715',
                 developerToken: 'dev-token',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.getFileReadStream = sinon.stub().callsFake(() => Promise.resolve(csvStream(csv)));
             context.httpRequest.callsFake(({ url }) => {
