@@ -32,7 +32,9 @@ module.exports = {
             throw new context.CancelError(`Unknown API method: ${method}`);
         }
 
+        await context.log({ 'step': 'params', params });
         const result = await api[method].execute(context, params);
+
         return context.sendJson(result, 'out');
     },
 
@@ -117,7 +119,11 @@ module.exports = {
 
         switch (type) {
             case 'boolean':
-                return { inspectorType: 'toggle', schemaType: 'boolean', defaultValue: schema.default !== undefined ? schema.default : false };
+                return {
+                    inspectorType: 'toggle',
+                    schemaType: 'boolean',
+                    defaultValue: schema.default !== undefined ? schema.default : false
+                };
             case 'integer':
             case 'number':
                 return { inspectorType: 'number', schemaType: 'number' };

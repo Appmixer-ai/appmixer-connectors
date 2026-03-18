@@ -1,847 +1,847 @@
 {
-  "Index12": {
-    "method": "GET",
-    "path": "/publications/{publicationId}/segments",
-    "inputParams": [
-      "publicationId",
-      "type",
-      "status",
-      "limit",
-      "page",
-      "order_by",
-      "direction",
-      "expand[]"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "required": [
-        "data",
-        "limit",
-        "page",
-        "total_results",
-        "total_pages"
-      ],
-      "properties": {
-        "data": {
-          "type": "array",
-          "description": "An array of all segments.",
-          "items": {
-            "type": "object",
-            "description": "The segment object. To expand results, see the results endpoint.",
-            "required": [
-              "id",
-              "name",
-              "type",
-              "total_results",
-              "status",
-              "active"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "description": "The prefixed ID of the segment."
-              },
-              "name": {
-                "type": "string",
-                "description": "The name of the segment."
-              },
-              "type": {
-                "type": "string",
-                "description": "The type of segment.<br>`dynamic` - The segment is recalculated at set intervals.<br>`static` - The segment is calculated once at creation.<br>`manual` - The segment is not calculated at all. The results are created via CSV.",
-                "enum": [
-                  "dynamic",
-                  "static",
-                  "manual",
-                  "all"
-                ],
-                "default": "all"
-              },
-              "last_calculated": {
-                "type": "integer",
-                "description": "The time the Segment was last calculated. Measured in seconds since the Unix epoch"
-              },
-              "total_results": {
-                "type": "integer",
-                "description": "The total number of subscriptions that belong in the segment from the last calculation."
-              },
-              "status": {
-                "type": "string",
-                "description": "The status of the segment's most recent calculation.<br>`pending` - The segment has not been calculated yet.<br>`processing` - The calculation is in progress, and has not completed.<br>`completed` - The calculation was successful.<br>`failed` - Something went wrong during the calculation.",
-                "enum": [
-                  "pending",
-                  "processing",
-                  "completed",
-                  "failed"
-                ]
-              },
-              "active": {
-                "type": "boolean",
-                "description": "Dynamic segments are marked inactive if they haven't been used in a specific period of time. Inactive segments will not automatically be recalculated."
-              },
-              "stats": {
-                "type": "object",
-                "required": [
-                  "open_rate",
-                  "total_sent",
-                  "percentage_premium_subscribers",
-                  "percentage_subscribers_with_referrals",
-                  "unique_emails_clicked",
-                  "total_delivered",
-                  "total_referrals",
-                  "unsubscribed_rate",
-                  "total_subscribers",
-                  "clickthrough_rate",
-                  "unsubscribed_count",
-                  "unique_emails_opened",
-                  "premium_subscribers",
-                  "average_referrals_per_subscriber"
-                ],
-                "properties": {
-                  "open_rate": {
-                    "type": "number",
-                    "description": "The average open rate of the subscribers in the segment.",
-                    "format": "double"
-                  },
-                  "total_sent": {
-                    "type": "integer",
-                    "description": "The total number of emails sent to the subscribers in the segment."
-                  },
-                  "percentage_premium_subscribers": {
-                    "type": "number",
-                    "description": "The percentage of subscribers in this segment who are premium in any tier.",
-                    "format": "double"
-                  },
-                  "percentage_subscribers_with_referrals": {
-                    "type": "number",
-                    "description": "The percentage of subscribers in this segment who have referred at least one other subscriber.",
-                    "format": "double"
-                  },
-                  "unique_emails_clicked": {
-                    "type": "integer",
-                    "description": "The total number of unique emails clicked by subscribers in the segment."
-                  },
-                  "total_delivered": {
-                    "type": "integer",
-                    "description": "The total number of emails delivered to subscribers in the segment."
-                  },
-                  "total_referrals": {
-                    "type": "integer",
-                    "description": "The total number of referrals from subscribers in the segment."
-                  },
-                  "unsubscribed_rate": {
-                    "type": "number",
-                    "description": "The percentage of subscribers in this segment who have unsubscribed.",
-                    "format": "double"
-                  },
-                  "total_subscribers": {
-                    "type": "integer",
-                    "description": "The total number of subscribers in the segment."
-                  },
-                  "clickthrough_rate": {
-                    "type": "number",
-                    "description": "The average clickthrough rate of the subscribers in the segment.",
-                    "format": "double"
-                  },
-                  "unsubscribed_count": {
-                    "type": "integer",
-                    "description": "The total number of subscribers in the segment who are unsubscribed."
-                  },
-                  "unique_emails_opened": {
-                    "type": "integer",
-                    "description": "The total number of unique emails opened by subscribers in the segment."
-                  },
-                  "premium_subscribers": {
-                    "type": "integer",
-                    "description": "The total number of premium subscribers in the segment."
-                  },
-                  "average_referrals_per_subscriber": {
-                    "type": "number",
-                    "description": "The average number of referrals per subscriber in the segment.",
-                    "format": "double"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "limit": {
-          "type": "integer",
-          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
-          "default": 1
-        },
-        "total_results": {
-          "type": "integer",
-          "description": "The total number of results from all pages."
-        },
-        "total_pages": {
-          "type": "integer",
-          "description": "The total number of pages."
-        }
-      }
-    },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
-        },
-        "type": {
-          "type": "string",
-          "description": "Optionally filter the results by the segment's type.",
-          "enum": [
-            "dynamic",
-            "static",
-            "manual",
-            "all"
-          ],
-          "default": "all"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "pending",
-            "processing",
-            "completed",
-            "failed",
-            "all"
-          ],
-          "default": "all",
-          "description": "Optionally filter the results by the segment's status."
-        },
-        "limit": {
-          "type": "integer",
-          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
-        },
-        "order_by": {
-          "type": "string",
-          "enum": [
-            "created",
-            "last_calculated"
-          ],
-          "default": "created",
-          "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the segment was first created.<br> `last_calculated` - The time that the segment last completed calculation. Measured in seconds since the Unix epoch."
-        },
-        "direction": {
-          "type": "string",
-          "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
-          "enum": [
-            "asc",
-            "desc"
-          ],
-          "default": "asc"
-        },
-        "expand[]": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "stats"
-            ]
-          },
-          "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
-        }
-      }
-    }
-  },
-  "Show9": {
-    "method": "GET",
-    "path": "/publications/{publicationId}/segments/{segmentId}",
-    "inputParams": [
-      "publicationId",
-      "segmentId",
-      "expand[]"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "required": [
-        "data"
-      ],
-      "properties": {
-        "data": {
-          "type": "object",
-          "description": "The segment object. To expand results, see the results endpoint.",
-          "required": [
-            "id",
-            "name",
+    "Index12": {
+        "method": "GET",
+        "path": "/publications/{publicationId}/segments",
+        "inputParams": [
+            "publicationId",
             "type",
-            "total_results",
             "status",
-            "active"
-          ],
-          "properties": {
-            "id": {
-              "type": "string",
-              "description": "The prefixed ID of the segment."
-            },
-            "name": {
-              "type": "string",
-              "description": "The name of the segment."
-            },
-            "type": {
-              "type": "string",
-              "description": "The type of segment.<br>`dynamic` - The segment is recalculated at set intervals.<br>`static` - The segment is calculated once at creation.<br>`manual` - The segment is not calculated at all. The results are created via CSV.",
-              "enum": [
-                "dynamic",
-                "static",
-                "manual",
-                "all"
-              ],
-              "default": "all"
-            },
-            "last_calculated": {
-              "type": "integer",
-              "description": "The time the Segment was last calculated. Measured in seconds since the Unix epoch"
-            },
-            "total_results": {
-              "type": "integer",
-              "description": "The total number of subscriptions that belong in the segment from the last calculation."
-            },
-            "status": {
-              "type": "string",
-              "description": "The status of the segment's most recent calculation.<br>`pending` - The segment has not been calculated yet.<br>`processing` - The calculation is in progress, and has not completed.<br>`completed` - The calculation was successful.<br>`failed` - Something went wrong during the calculation.",
-              "enum": [
-                "pending",
-                "processing",
-                "completed",
-                "failed"
-              ]
-            },
-            "active": {
-              "type": "boolean",
-              "description": "Dynamic segments are marked inactive if they haven't been used in a specific period of time. Inactive segments will not automatically be recalculated."
-            },
-            "stats": {
-              "type": "object",
-              "required": [
-                "open_rate",
-                "total_sent",
-                "percentage_premium_subscribers",
-                "percentage_subscribers_with_referrals",
-                "unique_emails_clicked",
-                "total_delivered",
-                "total_referrals",
-                "unsubscribed_rate",
-                "total_subscribers",
-                "clickthrough_rate",
-                "unsubscribed_count",
-                "unique_emails_opened",
-                "premium_subscribers",
-                "average_referrals_per_subscriber"
-              ],
-              "properties": {
-                "open_rate": {
-                  "type": "number",
-                  "description": "The average open rate of the subscribers in the segment.",
-                  "format": "double"
-                },
-                "total_sent": {
-                  "type": "integer",
-                  "description": "The total number of emails sent to the subscribers in the segment."
-                },
-                "percentage_premium_subscribers": {
-                  "type": "number",
-                  "description": "The percentage of subscribers in this segment who are premium in any tier.",
-                  "format": "double"
-                },
-                "percentage_subscribers_with_referrals": {
-                  "type": "number",
-                  "description": "The percentage of subscribers in this segment who have referred at least one other subscriber.",
-                  "format": "double"
-                },
-                "unique_emails_clicked": {
-                  "type": "integer",
-                  "description": "The total number of unique emails clicked by subscribers in the segment."
-                },
-                "total_delivered": {
-                  "type": "integer",
-                  "description": "The total number of emails delivered to subscribers in the segment."
-                },
-                "total_referrals": {
-                  "type": "integer",
-                  "description": "The total number of referrals from subscribers in the segment."
-                },
-                "unsubscribed_rate": {
-                  "type": "number",
-                  "description": "The percentage of subscribers in this segment who have unsubscribed.",
-                  "format": "double"
-                },
-                "total_subscribers": {
-                  "type": "integer",
-                  "description": "The total number of subscribers in the segment."
-                },
-                "clickthrough_rate": {
-                  "type": "number",
-                  "description": "The average clickthrough rate of the subscribers in the segment.",
-                  "format": "double"
-                },
-                "unsubscribed_count": {
-                  "type": "integer",
-                  "description": "The total number of subscribers in the segment who are unsubscribed."
-                },
-                "unique_emails_opened": {
-                  "type": "integer",
-                  "description": "The total number of unique emails opened by subscribers in the segment."
-                },
-                "premium_subscribers": {
-                  "type": "integer",
-                  "description": "The total number of premium subscribers in the segment."
-                },
-                "average_referrals_per_subscriber": {
-                  "type": "number",
-                  "description": "The average number of referrals per subscriber in the segment.",
-                  "format": "double"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
-        },
-        "segmentId": {
-          "type": "string",
-          "description": "The prefixed ID of the segment object"
-        },
-        "expand[]": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "stats"
-            ]
-          },
-          "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
-        }
-      }
-    }
-  },
-  "Delete3": {
-    "method": "DELETE",
-    "path": "/publications/{publicationId}/segments/{segmentId}",
-    "inputParams": [
-      "publicationId",
-      "segmentId"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
-        },
-        "segmentId": {
-          "type": "string",
-          "description": "The prefixed ID of the segment object"
-        }
-      }
-    }
-  },
-  "Recalculate": {
-    "method": "PUT",
-    "path": "/publications/{publicationId}/segments/{segmentId}/recalculate",
-    "inputParams": [
-      "publicationId",
-      "segmentId"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
-        },
-        "segmentId": {
-          "type": "string",
-          "description": "The prefixed ID of the segment object"
-        }
-      }
-    }
-  },
-  "ListMembers": {
-    "method": "GET",
-    "path": "/publications/{publicationId}/segments/{segmentId}/members",
-    "inputParams": [
-      "publicationId",
-      "segmentId",
-      "limit",
-      "page",
-      "expand[]"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "required": [
-        "data",
-        "limit",
-        "page",
-        "total_results",
-        "total_pages"
-      ],
-      "properties": {
-        "data": {
-          "type": "array",
-          "items": {
+            "limit",
+            "page",
+            "order_by",
+            "direction",
+            "expand[]"
+        ],
+        "outputSchema": {
             "type": "object",
-            "description": "The subscription object",
             "required": [
-              "id",
-              "email",
-              "status",
-              "created",
-              "subscription_tier",
-              "subscription_premium_tier_names",
-              "utm_source",
-              "utm_medium",
-              "utm_channel",
-              "utm_campaign",
-              "utm_term",
-              "utm_content",
-              "referring_site",
-              "referral_code"
+                "data",
+                "limit",
+                "page",
+                "total_results",
+                "total_pages"
             ],
             "properties": {
-              "id": {
-                "type": "string",
-                "description": "The prefixed ID of the subscription."
-              },
-              "email": {
-                "type": "string",
-                "format": "email"
-              },
-              "status": {
-                "type": "string",
-                "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
-                "enum": [
-                  "validating",
-                  "invalid",
-                  "pending",
-                  "active",
-                  "inactive",
-                  "needs_attention",
-                  "paused"
-                ]
-              },
-              "created": {
-                "type": "integer",
-                "description": "The date the subscription was created. Measured in seconds since the Unix epoch"
-              },
-              "subscription_tier": {
-                "type": "string",
-                "description": "The current tier of the subscription.",
-                "enum": [
-                  "free",
-                  "premium"
-                ]
-              },
-              "subscription_premium_tier_names": {
-                "type": "array",
-                "description": "The current premium tiers of the subscription. Empty if the subscriber is not associated with any premium tiers.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "utm_source": {
-                "type": "string",
-                "description": "The acquisition source; where the subscriber came from"
-              },
-              "utm_medium": {
-                "type": "string",
-                "description": "The acquisition medium; how the subscriber got to your publication"
-              },
-              "utm_channel": {
-                "type": "string",
-                "description": "The acquisition channel",
-                "enum": [
-                  "",
-                  "website",
-                  "import",
-                  "embed",
-                  "api",
-                  "referral",
-                  "recommendation",
-                  "magic_link",
-                  "boost",
-                  "boost_send",
-                  "boost_direct_link",
-                  "integration",
-                  "product"
-                ]
-              },
-              "utm_campaign": {
-                "type": "string",
-                "description": "The acquisition campaign"
-              },
-              "utm_term": {
-                "type": "string",
-                "description": "The acquisition term; typically the keyword or search term"
-              },
-              "utm_content": {
-                "type": "string",
-                "description": "The acquisition content; typically used for A/B testing or ad variations"
-              },
-              "referring_site": {
-                "type": "string",
-                "description": "The website that the subscriber was referred from"
-              },
-              "referral_code": {
-                "type": "string",
-                "description": "The code associated to this subscriber to refer others. When a new subscription is created with this referral code, credit for the referral goes to this subscription."
-              },
-              "subscription_premium_tiers": {
-                "type": "array",
-                "description": "Optional list of tiers for a subscription. Retrievable by including `expand: [subscription_premium_tiers]` in the request body.",
-                "items": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "name",
-                    "status"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The prefixed ID of the tier."
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "description": "Returns whether or not the tier has any active prices.",
-                      "enum": [
-                        "active",
-                        "archived"
-                      ]
-                    }
-                  }
-                }
-              },
-              "custom_fields": {
-                "type": "array",
-                "description": "Optional list of custom fields for a subscription. Retrievable by including `expand: [custom_field]` in the request body.",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "description": "The name of the existing custom field"
-                    },
-                    "kind": {
-                      "type": "string",
-                      "description": "The type of value being stored in the custom field.",
-                      "enum": [
-                        "string",
-                        "integer",
-                        "boolean",
-                        "date",
-                        "datetime",
-                        "list",
-                        "double"
-                      ]
-                    },
-                    "value": {
-                      "oneOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "number",
-                          "format": "double"
-                        },
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
+                "data": {
+                    "type": "array",
+                    "description": "An array of all segments.",
+                    "items": {
+                        "type": "object",
+                        "description": "The segment object. To expand results, see the results endpoint.",
+                        "required": [
+                            "id",
+                            "name",
+                            "type",
+                            "total_results",
+                            "status",
+                            "active"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "The prefixed ID of the segment."
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "The name of the segment."
+                            },
+                            "type": {
+                                "type": "string",
+                                "description": "The type of segment.<br>`dynamic` - The segment is recalculated at set intervals.<br>`static` - The segment is calculated once at creation.<br>`manual` - The segment is not calculated at all. The results are created via CSV.",
+                                "enum": [
+                                    "dynamic",
+                                    "static",
+                                    "manual",
+                                    "all"
+                                ],
+                                "default": "all"
+                            },
+                            "last_calculated": {
+                                "type": "integer",
+                                "description": "The time the Segment was last calculated. Measured in seconds since the Unix epoch"
+                            },
+                            "total_results": {
+                                "type": "integer",
+                                "description": "The total number of subscriptions that belong in the segment from the last calculation."
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "The status of the segment's most recent calculation.<br>`pending` - The segment has not been calculated yet.<br>`processing` - The calculation is in progress, and has not completed.<br>`completed` - The calculation was successful.<br>`failed` - Something went wrong during the calculation.",
+                                "enum": [
+                                    "pending",
+                                    "processing",
+                                    "completed",
+                                    "failed"
+                                ]
+                            },
+                            "active": {
+                                "type": "boolean",
+                                "description": "Dynamic segments are marked inactive if they haven't been used in a specific period of time. Inactive segments will not automatically be recalculated."
+                            },
+                            "stats": {
+                                "type": "object",
+                                "required": [
+                                    "open_rate",
+                                    "total_sent",
+                                    "percentage_premium_subscribers",
+                                    "percentage_subscribers_with_referrals",
+                                    "unique_emails_clicked",
+                                    "total_delivered",
+                                    "total_referrals",
+                                    "unsubscribed_rate",
+                                    "total_subscribers",
+                                    "clickthrough_rate",
+                                    "unsubscribed_count",
+                                    "unique_emails_opened",
+                                    "premium_subscribers",
+                                    "average_referrals_per_subscriber"
+                                ],
+                                "properties": {
+                                    "open_rate": {
+                                        "type": "number",
+                                        "description": "The average open rate of the subscribers in the segment.",
+                                        "format": "double"
+                                    },
+                                    "total_sent": {
+                                        "type": "integer",
+                                        "description": "The total number of emails sent to the subscribers in the segment."
+                                    },
+                                    "percentage_premium_subscribers": {
+                                        "type": "number",
+                                        "description": "The percentage of subscribers in this segment who are premium in any tier.",
+                                        "format": "double"
+                                    },
+                                    "percentage_subscribers_with_referrals": {
+                                        "type": "number",
+                                        "description": "The percentage of subscribers in this segment who have referred at least one other subscriber.",
+                                        "format": "double"
+                                    },
+                                    "unique_emails_clicked": {
+                                        "type": "integer",
+                                        "description": "The total number of unique emails clicked by subscribers in the segment."
+                                    },
+                                    "total_delivered": {
+                                        "type": "integer",
+                                        "description": "The total number of emails delivered to subscribers in the segment."
+                                    },
+                                    "total_referrals": {
+                                        "type": "integer",
+                                        "description": "The total number of referrals from subscribers in the segment."
+                                    },
+                                    "unsubscribed_rate": {
+                                        "type": "number",
+                                        "description": "The percentage of subscribers in this segment who have unsubscribed.",
+                                        "format": "double"
+                                    },
+                                    "total_subscribers": {
+                                        "type": "integer",
+                                        "description": "The total number of subscribers in the segment."
+                                    },
+                                    "clickthrough_rate": {
+                                        "type": "number",
+                                        "description": "The average clickthrough rate of the subscribers in the segment.",
+                                        "format": "double"
+                                    },
+                                    "unsubscribed_count": {
+                                        "type": "integer",
+                                        "description": "The total number of subscribers in the segment who are unsubscribed."
+                                    },
+                                    "unique_emails_opened": {
+                                        "type": "integer",
+                                        "description": "The total number of unique emails opened by subscribers in the segment."
+                                    },
+                                    "premium_subscribers": {
+                                        "type": "integer",
+                                        "description": "The total number of premium subscribers in the segment."
+                                    },
+                                    "average_referrals_per_subscriber": {
+                                        "type": "number",
+                                        "description": "The average number of referrals per subscriber in the segment.",
+                                        "format": "double"
+                                    }
+                                }
+                            }
                         }
-                      ]
                     }
-                  }
-                }
-              },
-              "tags": {
-                "type": "array",
-                "description": "Optional list of tags for a subscription. Retrievable by including `expand: [tags]` in the request body.\nMax limit of 100 unique tags per publication.",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "stats": {
-                "type": "object",
-                "description": "Optional list of stats for a subscription. Retrievable by including `expand: [stats]` in the request body.",
-                "properties": {
-                  "emails_received": {
+                },
+                "limit": {
                     "type": "integer",
-                    "description": "The total number of emails that have been sent to this subscriber"
-                  },
-                  "open_rate": {
-                    "type": "number",
-                    "description": "The percentage of emails that the subscriber has opened",
-                    "format": "double"
-                  },
-                  "click_through_rate": {
-                    "type": "number",
-                    "description": "The percentage of emails that the subscriber has clicked a link in",
-                    "format": "double"
-                  }
+                    "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                    "default": 1
+                },
+                "total_results": {
+                    "type": "integer",
+                    "description": "The total number of results from all pages."
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "description": "The total number of pages."
                 }
-              }
             }
-          }
         },
-        "limit": {
-          "type": "integer",
-          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
-          "default": 1
-        },
-        "total_results": {
-          "type": "integer",
-          "description": "The total number of results from all pages."
-        },
-        "total_pages": {
-          "type": "integer",
-          "description": "The total number of pages."
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Optionally filter the results by the segment's type.",
+                    "enum": [
+                        "dynamic",
+                        "static",
+                        "manual",
+                        "all"
+                    ],
+                    "default": "all"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "processing",
+                        "completed",
+                        "failed",
+                        "all"
+                    ],
+                    "default": "all",
+                    "description": "Optionally filter the results by the segment's status."
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+                },
+                "order_by": {
+                    "type": "string",
+                    "enum": [
+                        "created",
+                        "last_calculated"
+                    ],
+                    "default": "created",
+                    "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the segment was first created.<br> `last_calculated` - The time that the segment last completed calculation. Measured in seconds since the Unix epoch."
+                },
+                "direction": {
+                    "type": "string",
+                    "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+                    "enum": [
+                        "asc",
+                        "desc"
+                    ],
+                    "default": "asc"
+                },
+                "expand[]": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "stats"
+                        ]
+                    },
+                    "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
+                }
+            }
         }
-      }
     },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
+    "Show9": {
+        "method": "GET",
+        "path": "/publications/{publicationId}/segments/{segmentId}",
+        "inputParams": [
+            "publicationId",
+            "segmentId",
+            "expand[]"
+        ],
+        "outputSchema": {
+            "type": "object",
+            "required": [
+                "data"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "description": "The segment object. To expand results, see the results endpoint.",
+                    "required": [
+                        "id",
+                        "name",
+                        "type",
+                        "total_results",
+                        "status",
+                        "active"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the segment."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the segment."
+                        },
+                        "type": {
+                            "type": "string",
+                            "description": "The type of segment.<br>`dynamic` - The segment is recalculated at set intervals.<br>`static` - The segment is calculated once at creation.<br>`manual` - The segment is not calculated at all. The results are created via CSV.",
+                            "enum": [
+                                "dynamic",
+                                "static",
+                                "manual",
+                                "all"
+                            ],
+                            "default": "all"
+                        },
+                        "last_calculated": {
+                            "type": "integer",
+                            "description": "The time the Segment was last calculated. Measured in seconds since the Unix epoch"
+                        },
+                        "total_results": {
+                            "type": "integer",
+                            "description": "The total number of subscriptions that belong in the segment from the last calculation."
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "The status of the segment's most recent calculation.<br>`pending` - The segment has not been calculated yet.<br>`processing` - The calculation is in progress, and has not completed.<br>`completed` - The calculation was successful.<br>`failed` - Something went wrong during the calculation.",
+                            "enum": [
+                                "pending",
+                                "processing",
+                                "completed",
+                                "failed"
+                            ]
+                        },
+                        "active": {
+                            "type": "boolean",
+                            "description": "Dynamic segments are marked inactive if they haven't been used in a specific period of time. Inactive segments will not automatically be recalculated."
+                        },
+                        "stats": {
+                            "type": "object",
+                            "required": [
+                                "open_rate",
+                                "total_sent",
+                                "percentage_premium_subscribers",
+                                "percentage_subscribers_with_referrals",
+                                "unique_emails_clicked",
+                                "total_delivered",
+                                "total_referrals",
+                                "unsubscribed_rate",
+                                "total_subscribers",
+                                "clickthrough_rate",
+                                "unsubscribed_count",
+                                "unique_emails_opened",
+                                "premium_subscribers",
+                                "average_referrals_per_subscriber"
+                            ],
+                            "properties": {
+                                "open_rate": {
+                                    "type": "number",
+                                    "description": "The average open rate of the subscribers in the segment.",
+                                    "format": "double"
+                                },
+                                "total_sent": {
+                                    "type": "integer",
+                                    "description": "The total number of emails sent to the subscribers in the segment."
+                                },
+                                "percentage_premium_subscribers": {
+                                    "type": "number",
+                                    "description": "The percentage of subscribers in this segment who are premium in any tier.",
+                                    "format": "double"
+                                },
+                                "percentage_subscribers_with_referrals": {
+                                    "type": "number",
+                                    "description": "The percentage of subscribers in this segment who have referred at least one other subscriber.",
+                                    "format": "double"
+                                },
+                                "unique_emails_clicked": {
+                                    "type": "integer",
+                                    "description": "The total number of unique emails clicked by subscribers in the segment."
+                                },
+                                "total_delivered": {
+                                    "type": "integer",
+                                    "description": "The total number of emails delivered to subscribers in the segment."
+                                },
+                                "total_referrals": {
+                                    "type": "integer",
+                                    "description": "The total number of referrals from subscribers in the segment."
+                                },
+                                "unsubscribed_rate": {
+                                    "type": "number",
+                                    "description": "The percentage of subscribers in this segment who have unsubscribed.",
+                                    "format": "double"
+                                },
+                                "total_subscribers": {
+                                    "type": "integer",
+                                    "description": "The total number of subscribers in the segment."
+                                },
+                                "clickthrough_rate": {
+                                    "type": "number",
+                                    "description": "The average clickthrough rate of the subscribers in the segment.",
+                                    "format": "double"
+                                },
+                                "unsubscribed_count": {
+                                    "type": "integer",
+                                    "description": "The total number of subscribers in the segment who are unsubscribed."
+                                },
+                                "unique_emails_opened": {
+                                    "type": "integer",
+                                    "description": "The total number of unique emails opened by subscribers in the segment."
+                                },
+                                "premium_subscribers": {
+                                    "type": "integer",
+                                    "description": "The total number of premium subscribers in the segment."
+                                },
+                                "average_referrals_per_subscriber": {
+                                    "type": "number",
+                                    "description": "The average number of referrals per subscriber in the segment.",
+                                    "format": "double"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
-        "segmentId": {
-          "type": "string",
-          "description": "The prefixed ID of the segment object"
-        },
-        "limit": {
-          "type": "integer",
-          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
-        },
-        "expand[]": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "stats",
-              "custom_fields",
-              "referrals",
-              "tags",
-              "subscription_premium_tiers"
-            ]
-          },
-          "description": "Optionally expand the response to include additional data. <br> `stats` - Returns statistics about the subscription(s). <br> `custom_fields` - Returns custom field values set on the subscription. <br> `referrals` - Returns referrals made by the subscription. <br> `tags` - Returns tags associated with the subscription. <br> `subscription_premium_tiers` - Returns premium tier(s) the subscription is subscribed to."
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the segment object"
+                },
+                "expand[]": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "stats"
+                        ]
+                    },
+                    "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
+                }
+            }
         }
-      }
-    }
-  },
-  "ExpandResults": {
-    "method": "GET",
-    "path": "/publications/{publicationId}/segments/{segmentId}/results",
-    "inputParams": [
-      "publicationId",
-      "segmentId",
-      "limit",
-      "page"
-    ],
-    "outputSchema": {
-      "type": "object",
-      "required": [
-        "data",
-        "limit",
-        "page",
-        "total_results",
-        "total_pages"
-      ],
-      "properties": {
-        "data": {
-          "type": "array",
-          "description": "An array of subscription ids",
-          "items": {
-            "type": "string"
-          }
-        },
-        "limit": {
-          "type": "integer",
-          "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
-          "default": 1
-        },
-        "total_results": {
-          "type": "integer",
-          "description": "The total number of results from all pages."
-        },
-        "total_pages": {
-          "type": "integer",
-          "description": "The total number of pages."
-        }
-      }
     },
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "publicationId": {
-          "type": "string",
-          "description": "The prefixed ID of the publication object"
+    "Delete3": {
+        "method": "DELETE",
+        "path": "/publications/{publicationId}/segments/{segmentId}",
+        "inputParams": [
+            "publicationId",
+            "segmentId"
+        ],
+        "outputSchema": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
         },
-        "segmentId": {
-          "type": "string",
-          "description": "The prefixed ID of the segment object"
-        },
-        "limit": {
-          "type": "integer",
-          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
-        },
-        "page": {
-          "type": "integer",
-          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the segment object"
+                }
+            }
         }
-      }
+    },
+    "Recalculate": {
+        "method": "PUT",
+        "path": "/publications/{publicationId}/segments/{segmentId}/recalculate",
+        "inputParams": [
+            "publicationId",
+            "segmentId"
+        ],
+        "outputSchema": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the segment object"
+                }
+            }
+        }
+    },
+    "ListMembers": {
+        "method": "GET",
+        "path": "/publications/{publicationId}/segments/{segmentId}/members",
+        "inputParams": [
+            "publicationId",
+            "segmentId",
+            "limit",
+            "page",
+            "expand[]"
+        ],
+        "outputSchema": {
+            "type": "object",
+            "required": [
+                "data",
+                "limit",
+                "page",
+                "total_results",
+                "total_pages"
+            ],
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "description": "The subscription object",
+                        "required": [
+                            "id",
+                            "email",
+                            "status",
+                            "created",
+                            "subscription_tier",
+                            "subscription_premium_tier_names",
+                            "utm_source",
+                            "utm_medium",
+                            "utm_channel",
+                            "utm_campaign",
+                            "utm_term",
+                            "utm_content",
+                            "referring_site",
+                            "referral_code"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "description": "The prefixed ID of the subscription."
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+                                "enum": [
+                                    "validating",
+                                    "invalid",
+                                    "pending",
+                                    "active",
+                                    "inactive",
+                                    "needs_attention",
+                                    "paused"
+                                ]
+                            },
+                            "created": {
+                                "type": "integer",
+                                "description": "The date the subscription was created. Measured in seconds since the Unix epoch"
+                            },
+                            "subscription_tier": {
+                                "type": "string",
+                                "description": "The current tier of the subscription.",
+                                "enum": [
+                                    "free",
+                                    "premium"
+                                ]
+                            },
+                            "subscription_premium_tier_names": {
+                                "type": "array",
+                                "description": "The current premium tiers of the subscription. Empty if the subscriber is not associated with any premium tiers.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "utm_source": {
+                                "type": "string",
+                                "description": "The acquisition source; where the subscriber came from"
+                            },
+                            "utm_medium": {
+                                "type": "string",
+                                "description": "The acquisition medium; how the subscriber got to your publication"
+                            },
+                            "utm_channel": {
+                                "type": "string",
+                                "description": "The acquisition channel",
+                                "enum": [
+                                    "",
+                                    "website",
+                                    "import",
+                                    "embed",
+                                    "api",
+                                    "referral",
+                                    "recommendation",
+                                    "magic_link",
+                                    "boost",
+                                    "boost_send",
+                                    "boost_direct_link",
+                                    "integration",
+                                    "product"
+                                ]
+                            },
+                            "utm_campaign": {
+                                "type": "string",
+                                "description": "The acquisition campaign"
+                            },
+                            "utm_term": {
+                                "type": "string",
+                                "description": "The acquisition term; typically the keyword or search term"
+                            },
+                            "utm_content": {
+                                "type": "string",
+                                "description": "The acquisition content; typically used for A/B testing or ad variations"
+                            },
+                            "referring_site": {
+                                "type": "string",
+                                "description": "The website that the subscriber was referred from"
+                            },
+                            "referral_code": {
+                                "type": "string",
+                                "description": "The code associated to this subscriber to refer others. When a new subscription is created with this referral code, credit for the referral goes to this subscription."
+                            },
+                            "subscription_premium_tiers": {
+                                "type": "array",
+                                "description": "Optional list of tiers for a subscription. Retrievable by including `expand: [subscription_premium_tiers]` in the request body.",
+                                "items": {
+                                    "type": "object",
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "status"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "string",
+                                            "description": "The prefixed ID of the tier."
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "description": "Returns whether or not the tier has any active prices.",
+                                            "enum": [
+                                                "active",
+                                                "archived"
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            "custom_fields": {
+                                "type": "array",
+                                "description": "Optional list of custom fields for a subscription. Retrievable by including `expand: [custom_field]` in the request body.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string",
+                                            "description": "The name of the existing custom field"
+                                        },
+                                        "kind": {
+                                            "type": "string",
+                                            "description": "The type of value being stored in the custom field.",
+                                            "enum": [
+                                                "string",
+                                                "integer",
+                                                "boolean",
+                                                "date",
+                                                "datetime",
+                                                "list",
+                                                "double"
+                                            ]
+                                        },
+                                        "value": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "number",
+                                                    "format": "double"
+                                                },
+                                                {
+                                                    "type": "boolean"
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            },
+                            "tags": {
+                                "type": "array",
+                                "description": "Optional list of tags for a subscription. Retrievable by including `expand: [tags]` in the request body.\nMax limit of 100 unique tags per publication.",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "stats": {
+                                "type": "object",
+                                "description": "Optional list of stats for a subscription. Retrievable by including `expand: [stats]` in the request body.",
+                                "properties": {
+                                    "emails_received": {
+                                        "type": "integer",
+                                        "description": "The total number of emails that have been sent to this subscriber"
+                                    },
+                                    "open_rate": {
+                                        "type": "number",
+                                        "description": "The percentage of emails that the subscriber has opened",
+                                        "format": "double"
+                                    },
+                                    "click_through_rate": {
+                                        "type": "number",
+                                        "description": "The percentage of emails that the subscriber has clicked a link in",
+                                        "format": "double"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                    "default": 1
+                },
+                "total_results": {
+                    "type": "integer",
+                    "description": "The total number of results from all pages."
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "description": "The total number of pages."
+                }
+            }
+        },
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the segment object"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+                },
+                "expand[]": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "stats",
+                            "custom_fields",
+                            "referrals",
+                            "tags",
+                            "subscription_premium_tiers"
+                        ]
+                    },
+                    "description": "Optionally expand the response to include additional data. <br> `stats` - Returns statistics about the subscription(s). <br> `custom_fields` - Returns custom field values set on the subscription. <br> `referrals` - Returns referrals made by the subscription. <br> `tags` - Returns tags associated with the subscription. <br> `subscription_premium_tiers` - Returns premium tier(s) the subscription is subscribed to."
+                }
+            }
+        }
+    },
+    "ExpandResults": {
+        "method": "GET",
+        "path": "/publications/{publicationId}/segments/{segmentId}/results",
+        "inputParams": [
+            "publicationId",
+            "segmentId",
+            "limit",
+            "page"
+        ],
+        "outputSchema": {
+            "type": "object",
+            "required": [
+                "data",
+                "limit",
+                "page",
+                "total_results",
+                "total_pages"
+            ],
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "description": "An array of subscription ids",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                    "default": 1
+                },
+                "total_results": {
+                    "type": "integer",
+                    "description": "The total number of results from all pages."
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "description": "The total number of pages."
+                }
+            }
+        },
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "publicationId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication object"
+                },
+                "segmentId": {
+                    "type": "string",
+                    "description": "The prefixed ID of the segment object"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+                },
+                "page": {
+                    "type": "integer",
+                    "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+                }
+            }
+        }
     }
-  }
 }
