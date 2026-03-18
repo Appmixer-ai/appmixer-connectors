@@ -1,0 +1,617 @@
+{
+    "name": "E2E Beehiiv - MakeAPICall Reference Data",
+    "description": "End-to-end test for Beehiiv connector - tests ListPublications, MakeAPICallPublications, MakeAPICallCustomFields, and MakeAPICallSegments components",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "list-publications": {
+            "type": "appmixer.beehiiv.core.ListPublications",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-publications": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-publications": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-publications": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "pub-id-check": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{pub-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-publications-list": {
+            "type": "appmixer.beehiiv.core.MakeAPICallPublications",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-publications": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Index11"
+                },
+                "transform": {
+                    "in": {
+                        "list-publications": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "limit": {}
+                                },
+                                "lambda": {
+                                    "limit": "10"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-api-publications-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-publications-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-publications-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "total-results-check": {
+                                            "variable": "$.make-api-call-publications-list.out.total_results",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{total-results-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-publications-show": {
+            "type": "appmixer.beehiiv.core.MakeAPICallPublications",
+            "x": 640,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-publications-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Show7"
+                },
+                "transform": {
+                    "in": {
+                        "make-api-call-publications-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-api-publications-show": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-publications-show": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-publications-show": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "show-data-check": {
+                                            "variable": "$.make-api-call-publications-show.out.data",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{show-data-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-custom-fields-create": {
+            "type": "appmixer.beehiiv.core.MakeAPICallCustomFields",
+            "x": 832,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-publications-show": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Create4"
+                },
+                "transform": {
+                    "in": {
+                        "make-api-call-publications-show": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id-cf": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "kind": {},
+                                    "display": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id-cf}}}",
+                                    "kind": "string",
+                                    "display": "E2E Test Custom Field"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-custom-fields-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-custom-fields-create": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-custom-fields-create": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cf-id-check": {
+                                            "variable": "$.make-api-call-custom-fields-create.out.id",
+                                            "functions": []
+                                        },
+                                        "cf-display-check": {
+                                            "variable": "$.make-api-call-custom-fields-create.out.display",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cf-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{cf-display-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Custom Field"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-custom-fields-list": {
+            "type": "appmixer.beehiiv.core.MakeAPICallCustomFields",
+            "x": 1024,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-custom-fields-create": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Index6"
+                },
+                "transform": {
+                    "in": {
+                        "make-api-call-custom-fields-create": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id-list": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id-list}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-custom-fields-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-custom-fields-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-custom-fields-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "cf-total-check": {
+                                            "variable": "$.make-api-call-custom-fields-list.out.total_results",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{cf-total-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-segments-list": {
+            "type": "appmixer.beehiiv.core.MakeAPICallSegments",
+            "x": 1024,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-custom-fields-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Index12"
+                },
+                "transform": {
+                    "in": {
+                        "make-api-call-custom-fields-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id-seg": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "limit": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id-seg}}}",
+                                    "limit": "10"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-segments-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 656,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-segments-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-segments-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "seg-page-check": {
+                                            "variable": "$.make-api-call-segments-list.out.page",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{seg-page-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1488,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-list-publications": [
+                        "out"
+                    ],
+                    "assert-api-publications-list": [
+                        "out"
+                    ],
+                    "assert-api-publications-show": [
+                        "out"
+                    ],
+                    "assert-custom-fields-create": [
+                        "out"
+                    ],
+                    "assert-custom-fields-list": [
+                        "out"
+                    ],
+                    "assert-segments-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            }
+        },
+        "delete-custom-field": {
+            "type": "appmixer.beehiiv.core.MakeAPICallCustomFields",
+            "x": 1680,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Delete"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id-del": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "id": {
+                                        "var-cf-id-del": {
+                                            "variable": "$.make-api-call-custom-fields-create.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id-del}}}",
+                                    "id": "{{{var-cf-id-del}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1872,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-custom-field": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-custom-field": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Beehiiv - MakeAPICall Reference Data",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

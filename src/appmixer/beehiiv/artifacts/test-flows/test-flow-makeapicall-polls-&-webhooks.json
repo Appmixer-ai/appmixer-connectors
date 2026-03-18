@@ -1,0 +1,526 @@
+{
+    "name": "E2E Beehiiv - MakeAPICall Polls & Webhooks",
+    "description": "End-to-end test for Beehiiv connector - tests ListPublications, MakeAPICallPolls (list polls), and MakeAPICallWebhooks (create, get, delete webhook) components.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "webhookUrl",
+                                                "text": "https://webhook.site/e2e-test-beehiiv"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "webhookDescription",
+                                                "text": "E2E Test Webhook"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-publications": {
+            "type": "appmixer.beehiiv.core.ListPublications",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-publications": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-publications": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-publications": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "pub-id-var": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{pub-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-polls": {
+            "type": "appmixer.beehiiv.core.MakeAPICallPolls",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-publications": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Index8"
+                },
+                "transform": {
+                    "in": {
+                        "list-publications": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "pub-id-var": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{pub-id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-polls": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-polls": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-polls": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "has-more-var": {
+                                            "variable": "$.list-polls.out.has_more",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{has-more-var}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-webhook": {
+            "type": "appmixer.beehiiv.core.MakeAPICallWebhooks",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-publications": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Create8"
+                },
+                "transform": {
+                    "in": {
+                        "list-publications": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "pub-id-var": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "url": {},
+                                    "event_types": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{pub-id-var}}}",
+                                    "url": "https://webhook.site/e2e-test-beehiiv",
+                                    "event_types": [
+                                        "subscription.created"
+                                    ],
+                                    "description": "E2E Test Webhook"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-webhook": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-webhook": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-webhook": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "webhook-id-var": {
+                                            "variable": "$.create-webhook.out.data.id",
+                                            "functions": []
+                                        },
+                                        "webhook-url-var": {
+                                            "variable": "$.create-webhook.out.data.url",
+                                            "functions": []
+                                        },
+                                        "webhook-desc-var": {
+                                            "variable": "$.create-webhook.out.data.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{webhook-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{webhook-url-var}}}",
+                                                "assertion": "equal",
+                                                "expected": "https://webhook.site/e2e-test-beehiiv"
+                                            },
+                                            {
+                                                "field": "{{{webhook-desc-var}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Webhook"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-webhook": {
+            "type": "appmixer.beehiiv.core.MakeAPICallWebhooks",
+            "x": 1024,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-webhook": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Show11"
+                },
+                "transform": {
+                    "in": {
+                        "create-webhook": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "pub-id-var": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "endpointId": {
+                                        "endpoint-id-var": {
+                                            "variable": "$.create-webhook.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{pub-id-var}}}",
+                                    "endpointId": "{{{endpoint-id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-webhook": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-webhook": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-webhook": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "got-id-var": {
+                                            "variable": "$.get-webhook.out.data.id",
+                                            "functions": []
+                                        },
+                                        "got-desc-var": {
+                                            "variable": "$.get-webhook.out.data.description",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{got-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{got-desc-var}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Webhook"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-list-publications": [
+                        "out"
+                    ],
+                    "assert-list-polls": [
+                        "out"
+                    ],
+                    "assert-create-webhook": [
+                        "out"
+                    ],
+                    "assert-get-webhook": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-webhook": {
+            "type": "appmixer.beehiiv.core.MakeAPICallWebhooks",
+            "x": 1584,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "method": "Delete5"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "pub-id-var": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "endpointId": {
+                                        "endpoint-id-var": {
+                                            "variable": "$.create-webhook.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{pub-id-var}}}",
+                                    "endpointId": "{{{endpoint-id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-webhook": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-webhook": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Beehiiv - MakeAPICall Polls & Webhooks",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
