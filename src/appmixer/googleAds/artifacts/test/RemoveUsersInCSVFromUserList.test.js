@@ -123,6 +123,20 @@ describe('RemoveUsersInCSVFromUserList', () => {
                 message: 'Schema is required!'
             });
         });
+
+        it('throws when schema contains an unsupported googleAdsType', async () => {
+            context.messages.in.content = {
+                fileId: 'file-abc',
+                customerId: '7123133715',
+                developerToken: 'dev-token',
+                userListId: '9329730810',
+                schema: googleAdsSchema([{ csvHeader: 'email', googleAdsType: 'emal' }])
+            };
+
+            await assert.rejects(() => RemoveUsersInCSVFromUserList.receive(context), {
+                message: 'Unsupported Google Ads Type: emal'
+            });
+        });
     });
 
     // -----------------------------------------------------------------------

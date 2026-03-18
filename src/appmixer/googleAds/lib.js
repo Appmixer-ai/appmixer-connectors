@@ -17,6 +17,7 @@ const CSV_MAPPING_TYPES = {
     mobileId: 'mobileId',
     thirdPartyUserId: 'thirdPartyUserId'
 };
+const VALID_CSV_MAPPING_TYPES = new Set(Object.values(CSV_MAPPING_TYPES));
 
 function ensureRequired(value, message, context) {
     if (value === undefined || value === null || value === '') {
@@ -83,7 +84,7 @@ function normalizeRowKey(value) {
     return String(value || '').trim().toLowerCase();
 }
 
-function buildCsvSchemaConfig(schema) {
+function buildCsvSchemaConfig(schema, context) {
     const config = {};
     const mappings = Array.isArray(schema?.ADD) ? schema.ADD : [];
 
@@ -93,6 +94,10 @@ function buildCsvSchemaConfig(schema) {
 
         if (!header || !googleAdsType) {
             continue;
+        }
+
+        if (!VALID_CSV_MAPPING_TYPES.has(googleAdsType)) {
+            throw new context.CancelError(`Unsupported Google Ads Type: ${googleAdsType}`);
         }
 
         if (!config[header]) {

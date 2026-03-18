@@ -221,7 +221,7 @@ module.exports = {
 
         const batchSize = state.batchSize;
         const delimiter = state.columnSeparator;
-        const schemaConfig = lib.buildCsvSchemaConfig(state.schema);
+        const schemaConfig = lib.buildCsvSchemaConfig(state.schema, context);
 
         if (state.totalRows === null) {
             const countStream = await context.getFileReadStream(state.fileId);
