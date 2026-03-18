@@ -182,6 +182,74 @@
           "description": "The total number of pages."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "type": {
+          "type": "string",
+          "description": "Optionally filter the results by the segment's type.",
+          "enum": [
+            "dynamic",
+            "static",
+            "manual",
+            "all"
+          ],
+          "default": "all"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "processing",
+            "completed",
+            "failed",
+            "all"
+          ],
+          "default": "all",
+          "description": "Optionally filter the results by the segment's status."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+        },
+        "order_by": {
+          "type": "string",
+          "enum": [
+            "created",
+            "last_calculated"
+          ],
+          "default": "created",
+          "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the segment was first created.<br> `last_calculated` - The time that the segment last completed calculation. Measured in seconds since the Unix epoch."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
+        }
+      }
     }
   },
   "Show9": {
@@ -337,6 +405,29 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "The prefixed ID of the segment object"
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data. <br> `stats` - Requests the most recently calculated statistics for a segment. <br> Segment stats are recalculated once daily around 7 a.m. UTC for dynamic segments, but can be manually recalculated at any time in the dashboard. Manual and static segments only calculate once upon upload or creation."
+        }
+      }
     }
   },
   "Delete3": {
@@ -353,6 +444,19 @@
           "type": "string"
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "The prefixed ID of the segment object"
+        }
+      }
     }
   },
   "Recalculate": {
@@ -367,6 +471,19 @@
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "The prefixed ID of the segment object"
         }
       }
     }
@@ -623,6 +740,41 @@
           "description": "The total number of pages."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "The prefixed ID of the segment object"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats",
+              "custom_fields",
+              "referrals",
+              "tags",
+              "subscription_premium_tiers"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data. <br> `stats` - Returns statistics about the subscription(s). <br> `custom_fields` - Returns custom field values set on the subscription. <br> `referrals` - Returns referrals made by the subscription. <br> `tags` - Returns tags associated with the subscription. <br> `subscription_premium_tiers` - Returns premium tier(s) the subscription is subscribed to."
+        }
+      }
     }
   },
   "ExpandResults": {
@@ -667,6 +819,27 @@
         "total_pages": {
           "type": "integer",
           "description": "The total number of pages."
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "segmentId": {
+          "type": "string",
+          "description": "The prefixed ID of the segment object"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
         }
       }
     }

@@ -196,6 +196,61 @@
           "description": "The total number of results from all pages."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "cursor": {
+          "type": "string",
+          "description": "**Cursor-based pagination (recommended)**: Use this opaque cursor token to fetch the next page of results. When provided, pagination will use cursor-based method which is more efficient and consistent than offset-based pagination."
+        },
+        "page": {
+          "type": "integer",
+          "description": "**Offset-based pagination (deprecated)**: Page number for offset-based pagination. Please migrate to cursor-based pagination using the `cursor` parameter. If not specified, results 1-10 from page 1 will be returned."
+        },
+        "order_by": {
+          "type": "string",
+          "enum": [
+            "created",
+            "name"
+          ],
+          "default": "created",
+          "description": "The field that the results are sorted by. Defaults to created.<br> `created` - The time the poll was created.<br> `name` - The name of the poll."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to asc.<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats",
+              "poll_responses",
+              "trivia_answer"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data.<br> `stats` - Returns aggregate vote counts per choice and total completions.<br> `poll_responses` - Returns up to 10 most recent subscriber responses. Use /polls/{pollId}/responses for paginated access to all responses.<br> `trivia_answer` - Returns the correct answer for trivia-type polls."
+        },
+        "post_id": {
+          "type": "string",
+          "description": "Filter to only return polls that were embedded in the specified post. Accepts a prefixed post ID (e.g. `post_abc123`)."
+        }
+      }
     }
   },
   "Show5": {
@@ -361,6 +416,31 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "pollId": {
+          "type": "string",
+          "description": "The prefixed ID of the poll object"
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats",
+              "poll_responses",
+              "trivia_answer"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data.<br> `stats` - Returns aggregate vote counts per choice and total completions.<br> `poll_responses` - Returns up to 10 most recent subscriber responses. Use /polls/{pollId}/responses for paginated access to all responses.<br> `trivia_answer` - Returns the correct answer for trivia-type polls."
+        }
+      }
     }
   },
   "ListResponses": {
@@ -458,6 +538,62 @@
         "total_results": {
           "type": "integer",
           "description": "The total number of results from all pages."
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "pollId": {
+          "type": "string",
+          "description": "The prefixed ID of the poll object"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "cursor": {
+          "type": "string",
+          "description": "**Cursor-based pagination (recommended)**: Use this opaque cursor token to fetch the next page of results."
+        },
+        "page": {
+          "type": "integer",
+          "description": "**Offset-based pagination (deprecated)**: Page number for offset-based pagination."
+        },
+        "order_by": {
+          "type": "string",
+          "enum": [
+            "created"
+          ],
+          "default": "created",
+          "description": "The field that the results are sorted by. Defaults to created."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to asc.<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "expand[]": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "post"
+            ]
+          },
+          "description": "Optionally expand the response to include additional data.<br> `post` - Returns the post title and publication date for the post where each response was collected."
+        },
+        "post_id": {
+          "type": "string",
+          "description": "Filter to only return responses collected via the specified post. Accepts a prefixed post ID (e.g. `post_abc123`)."
         }
       }
     }

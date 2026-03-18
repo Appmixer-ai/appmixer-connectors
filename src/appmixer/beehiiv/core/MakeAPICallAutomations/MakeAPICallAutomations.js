@@ -67,23 +67,40 @@ module.exports = {
         }
 
         const meta = methods[method];
+        const inputSchema = (meta.inputSchema && meta.inputSchema.properties) || {};
         const inputs = {};
         const fields = [];
+        const schemaProperties = {};
 
         (meta.inputParams || []).forEach((param, idx) => {
+            const paramSchema = inputSchema[param] || {};
+            const paramType = paramSchema.type;
+            const mapped = this.mapSchemaToInspector(paramType, paramSchema);
+
             inputs[param] = {
-                type: 'text',
+                type: mapped.inspectorType,
                 label: param,
                 index: idx + 1,
-                tooltip: `Parameter: ${param}`
+                tooltip: paramSchema.description || `Parameter: ${param}`
             };
+
+            if (mapped.defaultValue !== undefined) {
+                inputs[param].defaultValue = mapped.defaultValue;
+            }
+
+            if (paramSchema.enum) {
+                inputs[param].type = 'select';
+                inputs[param].options = paramSchema.enum.map(v => ({ label: String(v), value: v }));
+            }
+
+            schemaProperties[param] = { type: mapped.schemaType };
             fields.push(param);
         });
 
         return {
             schema: {
                 type: 'object',
-                properties: Object.fromEntries(fields.map(f => [f, { type: 'string' }]))
+                properties: schemaProperties
             },
             inputs,
             groups: {
@@ -94,5 +111,22 @@ module.exports = {
                 }
             }
         };
+    },
+
+    mapSchemaToInspector(type, schema) {
+
+        switch (type) {
+            case 'boolean':
+                return { inspectorType: 'toggle', schemaType: 'boolean', defaultValue: schema.default !== undefined ? schema.default : false };
+            case 'integer':
+            case 'number':
+                return { inspectorType: 'number', schemaType: 'number' };
+            case 'array':
+                return { inspectorType: 'textarea', schemaType: 'string' };
+            case 'object':
+                return { inspectorType: 'textarea', schemaType: 'string' };
+            default:
+                return { inspectorType: 'text', schemaType: 'string' };
+        }
     }
 };

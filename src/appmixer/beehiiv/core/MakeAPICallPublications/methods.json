@@ -58,6 +58,15 @@
           "description": "The total number of results from all pages."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        }
+      }
     }
   },
   "Index7": {
@@ -156,6 +165,51 @@
         },
         "number_of_days": {
           "type": "integer"
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication."
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date",
+          "description": "The starting date for the engagement metrics in `YYYY-MM-DD` format. Defaults to 1 day ago if not provided."
+        },
+        "number_of_days": {
+          "type": "integer",
+          "description": "The number of days to return engagement metrics for, starting from `start_date`. Must be between 1 and 31. Defaults to `1` if not provided."
+        },
+        "granularity": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month"
+          ],
+          "description": "The granularity at which to report the engagement metrics. Defaults to `day` if not provided."
+        },
+        "email_type": {
+          "type": "string",
+          "enum": [
+            "all",
+            "post",
+            "message"
+          ],
+          "description": "Filter engagement metrics by email type. If omitted, all email engagement is included.<br> `post`: Only post emails.<br> `message`: Only automated and system-generated emails."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to `asc`.<br> `asc`: Oldest to newest<br> `desc`: Newest to oldest",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
         }
       }
     }
@@ -330,6 +384,55 @@
           "description": "The total number of pages."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats",
+              "stat_active_subscriptions",
+              "stat_active_premium_subscriptions",
+              "stat_active_free_subscriptions",
+              "stat_average_open_rate",
+              "stat_average_click_rate",
+              "stat_total_sent",
+              "stat_total_unique_opened",
+              "stat_total_clicked"
+            ]
+          },
+          "description": "Optionally expand the results by adding additional information like subscription counts and engagement stats."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "order_by": {
+          "type": "string",
+          "enum": [
+            "created",
+            "name"
+          ],
+          "default": "created",
+          "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the publication was first created.<br> `name` - The name of the publication."
+        }
+      }
     }
   },
   "Show7": {
@@ -475,6 +578,33 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "stats",
+              "stat_active_subscriptions",
+              "stat_active_premium_subscriptions",
+              "stat_active_free_subscriptions",
+              "stat_average_open_rate",
+              "stat_average_click_rate",
+              "stat_total_sent",
+              "stat_total_unique_opened",
+              "stat_total_clicked"
+            ]
+          },
+          "description": "Optionally expand the results by adding additional information like subscription counts and engagement stats."
+        }
+      }
     }
   },
   "Show8": {
@@ -578,6 +708,23 @@
         "total_pages": {
           "type": "integer",
           "description": "The total number of pages."
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "page": {
+          "type": "integer",
+          "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
         }
       }
     }
@@ -1000,6 +1147,27 @@
               }
             }
           }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "The email address to search for subscriptions"
+        },
+        "expand": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "subscription",
+              "publication",
+              "subscription_custom_fields"
+            ]
+          },
+          "description": "Optionally expand the results by adding additional information. <br>`subscription` - Returns the full Subscription object for the email address in each publication. <br>`publication` - Returns the full Publication object instead of just ID and name. <br>`subscription_custom_fields` - Returns custom field values nested within the subscription object. (Returns the subscription object regardless of whether `subscription` is requested.)"
         }
       }
     }

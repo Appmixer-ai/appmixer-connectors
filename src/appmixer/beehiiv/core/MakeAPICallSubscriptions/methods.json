@@ -23,6 +23,138 @@
           "description": "The database ID of the import object created from the Bulk Subscription Create request"
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "email"
+            ],
+            "properties": {
+              "email": {
+                "type": "string",
+                "description": "The email address of the subscription."
+              },
+              "reactivate_existing": {
+                "type": "boolean",
+                "description": "Whether or not to reactivate the subscription if they have already unsubscribed. This option should be used only if the subscriber is knowingly resubscribing.",
+                "default": false
+              },
+              "send_welcome_email": {
+                "type": "boolean",
+                "default": false
+              },
+              "utm_source": {
+                "type": "string",
+                "description": "The source of the subscription."
+              },
+              "utm_medium": {
+                "type": "string",
+                "description": "The medium of the subscription"
+              },
+              "utm_campaign": {
+                "type": "string",
+                "description": "The acquisition campaign of the subscription"
+              },
+              "utm_term": {
+                "type": "string",
+                "description": "The acquisition term; typically the keyword or search term"
+              },
+              "utm_content": {
+                "type": "string",
+                "description": "The acquisition content; typically used for A/B testing or ad variations"
+              },
+              "referring_site": {
+                "type": "string",
+                "description": "The website that the subscriber was referred from"
+              },
+              "referral_code": {
+                "type": "string",
+                "description": "This should be a subscribers referral_code. This gives referral credit for the new subscription."
+              },
+              "custom_fields": {
+                "type": "array",
+                "description": "The custom fields must already exist for the publication. Any new custom fields here will be discarded.",
+                "items": {
+                  "type": "object",
+                  "description": "The object required for setting custom field values on a subscription",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the existing custom field"
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "double_opt_override": {
+                "type": "string",
+                "description": "Override publication double-opt settings for this subscription."
+              },
+              "tier": {
+                "type": "string",
+                "description": "The tier for this subscription.",
+                "enum": [
+                  "free",
+                  "premium"
+                ]
+              },
+              "premium_tiers": {
+                "type": "array",
+                "description": "An array of premium tier names to assign to this subscription. When provided, the subscription will be assigned to premium tiers matching these names. Can be combined with `premium_tier_ids` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "premium_tier_ids": {
+                "type": "array",
+                "description": "An array of premium tier IDs to assign to this subscription. When provided, the subscription will be assigned to these specific premium tiers. Can be combined with `premium_tiers` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "stripe_customer_id": {
+                "type": "string",
+                "description": "The prefixed ID of the Stripe customer."
+              },
+              "automation_ids": {
+                "type": "array",
+                "description": "Enroll the subscriber into automations after their subscription has been created. Requires the automations to have an active *Add by API* trigger.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "Index4": {
@@ -97,6 +229,15 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        }
+      }
     }
   },
   "Show3": {
@@ -168,6 +309,19 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "id": {
+          "type": "string",
+          "description": "The ID of the Subscription Update object"
+        }
+      }
     }
   },
   "Put": {
@@ -193,6 +347,84 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptions": {
+          "type": "array",
+          "description": "An array of objects representing the subscriptions to be updated (max 1000).",
+          "items": {
+            "type": "object",
+            "required": [
+              "subscription_id"
+            ],
+            "properties": {
+              "subscription_id": {
+                "type": "string",
+                "description": "The prefixed ID of the subscription."
+              },
+              "tier": {
+                "type": "string",
+                "description": "The Tier of the Subscription (not required)",
+                "enum": [
+                  "free",
+                  "premium"
+                ]
+              },
+              "stripe_customer_id": {
+                "type": "string",
+                "description": "The prefixed ID of the Stripe customer."
+              },
+              "unsubscribe": {
+                "type": "boolean",
+                "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+              },
+              "custom_fields": {
+                "type": "array",
+                "description": "An array of custom field objects to update",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The display value of the custom field"
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "delete": {
+                      "type": "boolean",
+                      "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "Patch": {
@@ -214,6 +446,84 @@
             "subscription_update_id": {
               "type": "string",
               "description": "The ID of the Subscription Update object responsible for handling the update job"
+            }
+          }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptions": {
+          "type": "array",
+          "description": "An array of objects representing the subscriptions to be updated (max 1000).",
+          "items": {
+            "type": "object",
+            "required": [
+              "subscription_id"
+            ],
+            "properties": {
+              "subscription_id": {
+                "type": "string",
+                "description": "The prefixed ID of the subscription."
+              },
+              "tier": {
+                "type": "string",
+                "description": "The Tier of the Subscription (not required)",
+                "enum": [
+                  "free",
+                  "premium"
+                ]
+              },
+              "stripe_customer_id": {
+                "type": "string",
+                "description": "The prefixed ID of the Stripe customer."
+              },
+              "unsubscribe": {
+                "type": "boolean",
+                "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+              },
+              "custom_fields": {
+                "type": "array",
+                "description": "An array of custom field objects to update",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "The display value of the custom field"
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    "delete": {
+                      "type": "boolean",
+                      "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -484,6 +794,92 @@
           "description": "**Mixed pagination**: The total number of results from all pages. For offset-based pagination, this is always included."
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "expand[]": {
+          "type": "string",
+          "enum": [
+            "stats",
+            "custom_fields",
+            "referrals"
+          ],
+          "description": "Optional list of expandable objects.<br>`subscription_premium_tiers ` - Returns an array of tiers the subscription is associated with.<br>`referrals` - Returns an array of subscriptions with limited data - `id`, `email`, and `status`. These are the subscriptions that were referred by this subscription.<br>`stats` - Returns statistics about the subscription(s).<br>`custom_fields` - Returns an array of custom field values that have been set on the subscription."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "validating",
+            "invalid",
+            "pending",
+            "active",
+            "inactive",
+            "all"
+          ],
+          "default": "all",
+          "description": "Optionally filter the results by a status"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "free",
+            "premium",
+            "all"
+          ],
+          "default": "all",
+          "description": "Optionally filter the results by a their tier"
+        },
+        "premium_tiers[]": {
+          "type": "string",
+          "description": "Optionally filter the results by one or multiple premium tiers"
+        },
+        "premium_tier_ids[]": {
+          "type": "string",
+          "description": "Optionally filter the results by one or multiple premium tier ids"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+        },
+        "cursor": {
+          "type": "string",
+          "description": "**Cursor-based pagination (recommended)**: Use this opaque cursor token to fetch the next page of results. When provided, pagination will use cursor-based method which is more efficient and consistent than offset-based pagination. See the [Pagination Guide](/welcome/pagination) for more details."
+        },
+        "page": {
+          "type": "integer",
+          "description": "**Offset-based pagination (deprecated)**: Page number for offset-based pagination. This method is deprecated and limited to 100 pages maximum. Please migrate to cursor-based pagination using the `cursor` parameter. If not specified, results 1-10 from page 1 will be returned. See the [Pagination Guide](/welcome/pagination) for migration guidance."
+        },
+        "email": {
+          "type": "string",
+          "description": "Optional email address to find a subscription.<br>This param must be an exact match and is case insensitive."
+        },
+        "order_by": {
+          "type": "string",
+          "enum": [
+            "created"
+          ],
+          "default": "created",
+          "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the subscription was first created.<br>"
+        },
+        "direction": {
+          "type": "string",
+          "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "default": "asc"
+        },
+        "creation_date": {
+          "type": "string",
+          "description": "Optional date entry (in the format YYYY/MM/DD) that filters returned subscriptions by their creation date."
+        }
+      }
     }
   },
   "Create3": {
@@ -728,6 +1124,127 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the subscription."
+        },
+        "reactivate_existing": {
+          "type": "boolean",
+          "description": "Whether or not to reactivate the subscription if they have already unsubscribed. This option should be used only if the subscriber is knowingly resubscribing.",
+          "default": false
+        },
+        "send_welcome_email": {
+          "type": "boolean",
+          "default": false
+        },
+        "utm_source": {
+          "type": "string",
+          "description": "The source of the subscription."
+        },
+        "utm_medium": {
+          "type": "string",
+          "description": "The medium of the subscription"
+        },
+        "utm_campaign": {
+          "type": "string",
+          "description": "The acquisition campaign of the subscription"
+        },
+        "utm_term": {
+          "type": "string",
+          "description": "The acquisition term; typically the keyword or search term"
+        },
+        "utm_content": {
+          "type": "string",
+          "description": "The acquisition content; typically used for A/B testing or ad variations"
+        },
+        "referring_site": {
+          "type": "string",
+          "description": "The website that the subscriber was referred from"
+        },
+        "referral_code": {
+          "type": "string",
+          "description": "This should be a subscribers referral_code. This gives referral credit for the new subscription."
+        },
+        "custom_fields": {
+          "type": "array",
+          "description": "The custom fields must already exist for the publication. Any new custom fields here will be discarded.",
+          "items": {
+            "type": "object",
+            "description": "The object required for setting custom field values on a subscription",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the existing custom field"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "double_opt_override": {
+          "type": "string",
+          "description": "Override publication double-opt settings for this subscription."
+        },
+        "tier": {
+          "type": "string",
+          "description": "The tier for this subscription.",
+          "enum": [
+            "free",
+            "premium"
+          ]
+        },
+        "premium_tiers": {
+          "type": "array",
+          "description": "An array of premium tier names to assign to this subscription. When provided, the subscription will be assigned to premium tiers matching these names. Can be combined with `premium_tier_ids` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "premium_tier_ids": {
+          "type": "array",
+          "description": "An array of premium tier IDs to assign to this subscription. When provided, the subscription will be assigned to these specific premium tiers. Can be combined with `premium_tiers` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stripe_customer_id": {
+          "type": "string",
+          "description": "The prefixed ID of the Stripe customer."
+        },
+        "automation_ids": {
+          "type": "array",
+          "description": "Enroll the subscriber into automations after their subscription has been created. Requires the automations to have an active *Add by API* trigger.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
   "PutStatus": {
@@ -738,7 +1255,27 @@
       "subscription_ids",
       "new_status"
     ],
-    "outputSchema": {}
+    "outputSchema": {},
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscription_ids": {
+          "type": "array",
+          "description": "An array of subscription IDs to be updated",
+          "items": {
+            "type": "string"
+          }
+        },
+        "new_status": {
+          "type": "string",
+          "description": "The new status to set for the subscriptions"
+        }
+      }
+    }
   },
   "PatchStatus": {
     "method": "PATCH",
@@ -748,7 +1285,27 @@
       "subscription_ids",
       "new_status"
     ],
-    "outputSchema": {}
+    "outputSchema": {},
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscription_ids": {
+          "type": "array",
+          "description": "An array of subscription IDs to be updated",
+          "items": {
+            "type": "string"
+          }
+        },
+        "new_status": {
+          "type": "string",
+          "description": "The new status to set for the subscriptions"
+        }
+      }
+    }
   },
   "GetByEmail": {
     "method": "GET",
@@ -975,6 +1532,29 @@
               }
             }
           }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "email": {
+          "type": "string",
+          "description": "The ID of the subscriber object"
+        },
+        "expand[]": {
+          "type": "string",
+          "enum": [
+            "stats",
+            "custom_fields",
+            "referrals",
+            "tags"
+          ],
+          "description": "Optional list of expandable objects.<br>`subscription_premium_tiers ` - Returns an array of tiers the subscription is associated with.<br>`referrals` - Returns an array of subscriptions with limited data - `id`, `email`, and `status`. These are the subscriptions that were referred by this subscription.<br>`stats` - Returns statistics about the subscription(s).<br>`custom_fields` - Returns an array of custom field values that have been set on the subscription. <br>`tags` - Returns an array of tags that have been set on the subscription."
         }
       }
     }
@@ -1211,6 +1791,86 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "email": {
+          "type": "string",
+          "description": "The new email address for the subscription"
+        },
+        "tier": {
+          "type": "string",
+          "description": "The Tier of the Subscription (not required)",
+          "enum": [
+            "free",
+            "premium"
+          ]
+        },
+        "premium_tier_ids": {
+          "type": "array",
+          "description": "An array of premium tier IDs to assign to this subscription. When provided, the subscription will be assigned to these specific premium tiers. Can be combined with `premium_tiers` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "premium_tiers": {
+          "type": "array",
+          "description": "An array of premium tier names to assign to this subscription. When provided, the subscription will be assigned to premium tiers matching these names. Can be combined with `premium_tier_ids` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stripe_customer_id": {
+          "type": "string",
+          "description": "The prefixed ID of the Stripe customer."
+        },
+        "unsubscribe": {
+          "type": "boolean",
+          "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+        },
+        "custom_fields": {
+          "type": "array",
+          "description": "An array of custom field objects to update",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the existing custom field"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "delete": {
+                "type": "boolean",
+                "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "GetById": {
@@ -1438,6 +2098,29 @@
               }
             }
           }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "The prefixed ID of the subscription object"
+        },
+        "expand[]": {
+          "type": "string",
+          "enum": [
+            "stats",
+            "custom_fields",
+            "referrals",
+            "tags"
+          ],
+          "description": "Optional list of expandable objects.<br>`subscription_premium_tiers` - Returns an array of tiers the subscription is associated with.<br>`referrals` - Returns an array of subscriptions with limited data - `id`, `email`, and `status`. These are the subscriptions that were referred by this subscription.<br>`stats` - Returns statistics about the subscription(s).<br>`custom_fields` - Returns an array of custom field values that have been set on the subscription. <br>`tags` - Returns an array of tags that have been set on the subscription."
         }
       }
     }
@@ -1670,6 +2353,90 @@
                   "description": "The percentage of emails that the subscriber has clicked a link in",
                   "format": "double"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "The prefixed ID of the subscription object"
+        },
+        "tier": {
+          "type": "string",
+          "description": "The Tier of the Subscription (not required)",
+          "enum": [
+            "free",
+            "premium"
+          ]
+        },
+        "premium_tier_ids": {
+          "type": "array",
+          "description": "An array of premium tier IDs to assign to this subscription. When provided, the subscription will be assigned to these specific premium tiers. Can be combined with `premium_tiers` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "premium_tiers": {
+          "type": "array",
+          "description": "An array of premium tier names to assign to this subscription. When provided, the subscription will be assigned to premium tiers matching these names. Can be combined with `premium_tier_ids` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "email": {
+          "type": "string",
+          "description": "The new email address for the subscription"
+        },
+        "stripe_customer_id": {
+          "type": "string",
+          "description": "The prefixed ID of the Stripe customer."
+        },
+        "unsubscribe": {
+          "type": "boolean",
+          "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+        },
+        "custom_fields": {
+          "type": "array",
+          "description": "An array of custom field objects to update",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the existing custom field"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "delete": {
+                "type": "boolean",
+                "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
               }
             }
           }
@@ -1910,6 +2677,90 @@
           }
         }
       }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "The prefixed ID of the subscription object"
+        },
+        "email": {
+          "type": "string",
+          "description": "The new email address for the subscription"
+        },
+        "tier": {
+          "type": "string",
+          "description": "The Tier of the Subscription (not required)",
+          "enum": [
+            "free",
+            "premium"
+          ]
+        },
+        "premium_tier_ids": {
+          "type": "array",
+          "description": "An array of premium tier IDs to assign to this subscription. When provided, the subscription will be assigned to these specific premium tiers. Can be combined with `premium_tiers` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "premium_tiers": {
+          "type": "array",
+          "description": "An array of premium tier names to assign to this subscription. When provided, the subscription will be assigned to premium tiers matching these names. Can be combined with `premium_tier_ids` to include tiers from both (duplicates are removed). Takes precedence over the `tier` parameter.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stripe_customer_id": {
+          "type": "string",
+          "description": "The prefixed ID of the Stripe customer."
+        },
+        "unsubscribe": {
+          "type": "boolean",
+          "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+        },
+        "custom_fields": {
+          "type": "array",
+          "description": "An array of custom field objects to update",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The display value of the custom field"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number",
+                    "format": "double"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              "delete": {
+                "type": "boolean",
+                "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "Delete4": {
@@ -1924,6 +2775,19 @@
       "properties": {
         "message": {
           "type": "string"
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication object"
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "The prefixed ID of the subscription object"
         }
       }
     }
@@ -2148,6 +3012,26 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "publicationId": {
+          "type": "string",
+          "description": "The prefixed ID of the publication."
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "The prefixed ID of the subscription."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Tags that can be used to group subscribers",
+          "items": {
+            "type": "string"
           }
         }
       }
