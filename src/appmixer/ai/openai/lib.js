@@ -84,7 +84,8 @@ module.exports = {
             mode: process.env.REDIS_MODE || 'standalone',
             sentinels: process.env.REDIS_SENTINELS,
             sentinelMasterName: process.env.REDIS_SENTINEL_MASTER_NAME,
-            sentinelRedisPassword: process.env.REDIS_SENTINEL_PASSWORD,
+            password: process.env.REDIS_PASSWORD,
+            sentinelPassword: process.env.REDIS_SENTINEL_PASSWORD,
             enableTLSForSentinelMode: process.env.REDIS_SENTINEL_ENABLE_TLS,
             caPath: process.env.REDIS_CA_PATH,
             useSSL: process.env.REDIS_USE_SSL === 'true' || parseInt(process.env.REDIS_USE_SSL) > 0
@@ -101,14 +102,19 @@ module.exports = {
 
         if (connection.mode === 'replica' && connection.sentinels) {
 
-            const sentinelsArray = connection.sentinels.split(',');
+            const sentinelsArray = connection.sentinels.split(',').map(sentinel => {
+                const [host, port] = sentinel.split(':');
+                return { host, port: parseInt(port) };
+            });
 
             client = new Redis({
                 sentinels: sentinelsArray,
                 name: connection.sentinelMasterName,
-                ...(connection.sentinelRedisPassword ? { password: connection.sentinelRedisPassword } : {}),
+                ...(connection.password ? { password: connection.password } : {}),
+                ...(connection.sentinelPassword ? { sentinelPassword: connection.sentinelPassword } : {}),
                 ...(connection.enableTLSForSentinelMode ?
-                    { enableTLSForSentinelMode: connection.enableTLSForSentinelMode } : {})
+                    { enableTLSForSentinelMode: connection.enableTLSForSentinelMode } : {}),
+                ...options
             });
         } else {
             client = connection.uri ? new Redis(connection.uri, options) : new Redis();
