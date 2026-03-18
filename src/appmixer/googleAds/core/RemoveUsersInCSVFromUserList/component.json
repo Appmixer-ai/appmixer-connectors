@@ -1,6 +1,6 @@
 {
     "name": "appmixer.googleAds.core.RemoveUsersInCSVFromUserList",
-    "description": "Remove users listed in a CSV file from a Google Ads Customer Match user list via the Offline User Data Job API. Supports large files by processing them in batches across multiple continuations. Each row must contain at least one identifier: email, phone, first_name+last_name+country_code, mobile_id, or third_party_user_id. Column names are matched case-insensitively.",
+    "description": "Remove users listed in a CSV file from a Google Ads Customer Match user list via the Offline User Data Job API. Supports large files by processing them in batches across multiple continuations. Provide a schema mapping for each upload so different CSV headers can be mapped explicitly.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -34,6 +34,9 @@
                     "userListId": {
                         "type": "string"
                     },
+                    "schema": {
+                        "type": "object"
+                    },
                     "columnSeparator": {
                         "type": "string"
                     },
@@ -48,7 +51,8 @@
                     "fileId",
                     "customerId",
                     "developerToken",
-                    "userListId"
+                    "userListId",
+                    "schema"
                 ]
             },
             "inspector": {
@@ -56,7 +60,7 @@
                     "fileId": {
                         "type": "filepicker",
                         "label": "CSV File",
-                        "tooltip": "A CSV file containing user data. The header row must name the identifier columns (e.g. email, phone, first_name, last_name, country_code, mobile_id, third_party_user_id). Each data row must have at least one usable identifier.",
+                        "tooltip": "A CSV file containing user data. Use the Schema field below to map each CSV header to the Google Ads identifier it represents.",
                         "index": 1
                     },
                     "customerId": {
@@ -83,18 +87,47 @@
                         "tooltip": "Numeric ID of the Customer Match user list to remove users from.",
                         "index": 5
                     },
+                    "schema": {
+                        "type": "expression",
+                        "levels": ["ADD"],
+                        "index": 6,
+                        "label": "Schema",
+                        "tooltip": "Required mapping between CSV headers and Google Ads identifiers. This component does not infer identifiers from header names.",
+                        "fields": {
+                            "csvHeader": {
+                                "type": "text",
+                                "label": "CSV Header",
+                                "tooltip": "The header name in the CSV file. Matching is case-insensitive."
+                            },
+                            "googleAdsType": {
+                                "type": "select",
+                                "label": "Google Ads Type",
+                                "tooltip": "The Google Ads identifier type represented by this CSV column.",
+                                "options": [
+                                    { "value": "email", "label": "Email" },
+                                    { "value": "phoneNumber", "label": "Phone Number" },
+                                    { "value": "firstName", "label": "First Name" },
+                                    { "value": "lastName", "label": "Last Name" },
+                                    { "value": "countryCode", "label": "Country Code" },
+                                    { "value": "postalCode", "label": "Postal Code" },
+                                    { "value": "mobileId", "label": "Mobile Device ID" },
+                                    { "value": "thirdPartyUserId", "label": "Third Party User ID" }
+                                ]
+                            }
+                        }
+                    },
                     "columnSeparator": {
                         "type": "text",
                         "label": "Column Separator",
                         "tooltip": "Character used to separate columns in the CSV file. Default is a comma (,).",
-                        "index": 6,
+                        "index": 7,
                         "defaultValue": ","
                     },
                     "adPersonalization": {
                         "type": "select",
                         "label": "Ad Personalization Consent",
                         "tooltip": "Consent status for ad personalization. Required by EU User Consent Policy.",
-                        "index": 7,
+                        "index": 8,
                         "options": [
                             { "label": "Unspecified", "value": "" },
                             { "label": "Granted", "value": "GRANTED" },
@@ -105,7 +138,7 @@
                         "type": "select",
                         "label": "Ad User Data Consent",
                         "tooltip": "Consent status for use of user data for ads. Required by EU User Consent Policy.",
-                        "index": 8,
+                        "index": 9,
                         "options": [
                             { "label": "Unspecified", "value": "" },
                             { "label": "Granted", "value": "GRANTED" },

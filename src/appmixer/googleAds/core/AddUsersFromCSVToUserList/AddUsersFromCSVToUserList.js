@@ -39,85 +39,13 @@ const PROGRESS_INTERVAL_MS = 5000;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Hash a string with SHA-256 (lower-cased, trimmed).
- * Re-uses the helper already present in lib.js.
- */
-const sha256 = lib.hashSha256;
-
-/**
- * Normalise a customer ID to digits only.
- */
 const normId = lib.normalizeCustomerId;
-
-/**
- * Build a UserIdentifier object for the Google Ads API from a CSV row.
- * The row is expected to contain at least one of:
- *   email, phone, (first_name + last_name + country_code), mobile_id, third_party_user_id
- *
- * Column-name matching is case-insensitive and allows common aliases.
- */
-function buildUserIdentifiers(row) {
-    const get = (...keys) => {
-        for (const k of keys) {
-            const found = Object.keys(row).find(
-                rk => rk.toLowerCase() === k.toLowerCase()
-            );
-            if (found !== undefined && row[found] !== '') {
-                return row[found];
-            }
-        }
-        return null;
-    };
-
-    const identifiers = [];
-
-    const email = get('email', 'email_address', 'emailaddress');
-    if (email) {
-        identifiers.push({ hashedEmail: sha256(email.trim().toLowerCase()) });
-    }
-
-    const phone = get('phone', 'phone_number', 'phonenumber');
-    if (phone) {
-        const normalised = phone.replace(/[^0-9+]/g, '').toLowerCase();
-        identifiers.push({ hashedPhoneNumber: sha256(normalised) });
-    }
-
-    const firstName = get('first_name', 'firstname', 'given_name');
-    const lastName = get('last_name', 'lastname', 'family_name', 'surname');
-    const countryCode = get('country_code', 'countrycode', 'country');
-
-    if (firstName && lastName && countryCode) {
-        const addressInfo = {
-            hashedFirstName: sha256(firstName.trim().toLowerCase()),
-            hashedLastName: sha256(lastName.trim().toLowerCase()),
-            countryCode: countryCode.trim().toUpperCase()
-        };
-        const postalCode = get('postal_code', 'postalcode', 'zip', 'zip_code');
-        if (postalCode) {
-            addressInfo.postalCode = postalCode.trim();
-        }
-        identifiers.push({ addressInfo });
-    }
-
-    const mobileId = get('mobile_id', 'mobileid', 'idfa', 'gaid');
-    if (mobileId) {
-        identifiers.push({ mobileId: mobileId.trim() });
-    }
-
-    const thirdPartyUserId = get('third_party_user_id', 'thirdpartyuserid', 'user_id', 'userid');
-    if (thirdPartyUserId) {
-        identifiers.push({ thirdPartyUserId: thirdPartyUserId.trim() });
-    }
-
-    return identifiers;
-}
 
 /**
  * Build an OfflineUserDataJobOperation for the Google Ads API.
  */
-function buildOperation(row, uploadMode, adPersonalization, adUserData) {
-    const userIdentifiers = buildUserIdentifiers(row);
+function buildOperation(row, schemaConfig, adPersonalization, adUserData) {
+    const userIdentifiers = lib.buildUserIdentifiersFromCsvRow(row, schemaConfig);
     if (userIdentifiers.length === 0) {
         return null; // row has no usable identifier – skip
     }
@@ -261,6 +189,7 @@ module.exports = {
             lib.ensureRequired(input.developerToken, 'Developer Token is required!', context);
             lib.ensureRequired(input.fileId, 'File is required!', context);
             lib.ensureRequired(input.userListId, 'User List ID is required!', context);
+            lib.ensureRequired(input.schema, 'Schema is required!', context);
 
             const normCustomerId = normId(input.customerId);
             const normUserListId = String(input.userListId || '').replace(/[^0-9]/g, '');
@@ -273,6 +202,7 @@ module.exports = {
                 loginCustomerId: input.loginCustomerId || null,
                 userListResourceName,
                 uploadMode: input.uploadMode || 'ADD',
+                schema: input.schema || null,
                 batchSize: getBatchSize(context),
                 columnSeparator: input.columnSeparator || ',',
                 adPersonalization: input.adPersonalization || null,
@@ -299,6 +229,7 @@ module.exports = {
 
         const batchSize = state.batchSize;
         const delimiter = state.columnSeparator;
+        const schemaConfig = lib.buildCsvSchemaConfig(state.schema, context);
 
         if (state.totalRows === null) {
             const countStream = await context.getFileReadStream(state.fileId);
@@ -364,7 +295,7 @@ module.exports = {
             let skippedInChunk = 0;
 
             for (const row of rows) {
-                const op = buildOperation(row, state.uploadMode, state.adPersonalization, state.adUserData);
+                const op = buildOperation(row, schemaConfig, state.adPersonalization, state.adUserData);
                 if (op) {
                     operations.push(op);
                 } else {
