@@ -15,8 +15,11 @@ module.exports = {
             return context.sendJson(result, 'out');
         }
 
-        // Called as source for dynamic inspector/output — pass properties through
-        // so transform functions can access method
+        if (context.properties.generateOutputPortOptions) {
+            return this.getOutputPortOptions(context);
+        }
+
+        // Called as source for dynamic inspector — pass properties through
         if (!context.messages?.in?.content) {
             return context.sendJson({ method: context.properties.method }, 'out');
         }
@@ -30,6 +33,30 @@ module.exports = {
 
         const result = await api[method].execute(context, params);
         return context.sendJson(result, 'out');
+    },
+
+    getOutputPortOptions(context) {
+
+        const method = context.properties.method;
+        if (!method || !methods[method]) {
+            return context.sendJson([], 'out');
+        }
+
+        const schema = methods[method].outputSchema;
+        if (!schema || !schema.properties) {
+            return context.sendJson([], 'out');
+        }
+
+        const options = Object.entries(schema.properties).map(([key, prop]) => {
+            const { description, ...schemaRest } = prop;
+            return {
+                label: key,
+                value: key,
+                schema: schemaRest
+            };
+        });
+
+        return context.sendJson(options, 'out');
     },
 
     getInputParamsInspector({ method }) {
@@ -68,13 +95,5 @@ module.exports = {
                 }
             }
         };
-    },
-
-    getOutputSchema({ method }) {
-
-        if (!method || !methods[method]) {
-            return {};
-        }
-        return methods[method].outputSchema || {};
     }
 };
