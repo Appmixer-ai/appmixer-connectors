@@ -19,9 +19,10 @@ module.exports = {
             return this.getOutputPortOptions(context);
         }
 
-        // Called as source for dynamic inspector — pass properties through
-        if (!context.messages?.in?.content) {
-            return context.sendJson({ method: context.properties.method }, 'out');
+        if (context.properties.generateInspector) {
+
+            const inspector = this.getInputParamsInspector({ method: context.properties.method });
+            return context.sendJson(inspector, 'out');
         }
 
         const method = context.properties.method;
@@ -84,14 +85,12 @@ module.exports = {
                 type: 'object',
                 properties: Object.fromEntries(fields.map(f => [f, { type: 'string' }]))
             },
-            inspector: {
-                inputs,
-                groups: {
-                    params: {
-                        label: 'Parameters',
-                        index: 2,
-                        fields
-                    }
+            inputs,
+            groups: {
+                params: {
+                    label: 'Parameters',
+                    index: 2,
+                    fields
                 }
             }
         };
