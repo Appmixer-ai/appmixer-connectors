@@ -12,50 +12,14 @@
         {
             "name": "in",
             "schema": {
-                "type": "object",
-                "properties": {
-                    "method": {
-                        "type": "string"
-                    },
-                    "params": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "method"
-                ]
+                "type": "object"
             },
-            "inspector": {
-                "inputs": {
-                    "method": {
-                        "type": "select",
-                        "label": "API Method",
-                        "index": 0,
-                        "tooltip": "Select the beehiiv Posts API method to call.",
-                        "source": {
-                            "url": "/component/appmixer/beehiiv/core/MakeAPICallPosts?outPort=out",
-                            "data": {
-                                "properties": {
-                                    "variablesFetch": true
-                                }
-                            }
-                        }
-                    },
-                    "params": {
-                        "type": "textarea",
-                        "label": "Parameters (JSON)",
-                        "index": 1,
-                        "tooltip": "Provide the parameters for the selected API method as a JSON object."
-                    }
-                },
-                "groups": {
-                    "settings": {
-                        "label": "Settings",
-                        "index": 1,
-                        "fields": [
-                            "method",
-                            "params"
-                        ]
+            "source": {
+                "url": "/component/appmixer/beehiiv/core/MakeAPICallPosts?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "method": "properties/method",
+                        "generateInspector": true
                     }
                 }
             }
@@ -64,21 +28,46 @@
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                {
-                    "label": "Result",
-                    "value": "result"
-                }
-            ],
             "source": {
-                "url": "/component/appmixer/beehiiv/core/MakeAPICallPosts?outPort=out",
+                "url": "/component/appmixer/beehiiv/core/MakeAPICallPosts?outPort=out&ignoreAuth=true",
                 "data": {
                     "properties": {
-                        "method": "inputs/in/method"
-                    },
-                    "transform": "./MakeAPICallPosts#getOutputSchema"
+                        "generateOutputPortOptions": true,
+                        "method": "properties/method"
+                    }
                 }
             }
         }
-    ]
+    ],
+    "properties": {
+        "schema": {
+            "properties": {
+                "method": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "method"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "method": {
+                    "type": "select",
+                    "label": "API Method",
+                    "index": 0,
+                    "tooltip": "Select the beehiiv Posts API method to call.",
+                    "source": {
+                        "url": "/component/appmixer/beehiiv/core/MakeAPICallPosts?outPort=out&ignoreAuth=true",
+                        "data": {
+                            "properties": {
+                                "variablesFetch": true,
+                                "method": "any"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
