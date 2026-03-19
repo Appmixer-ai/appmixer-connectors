@@ -45,11 +45,11 @@ module.exports = {
     getOutputPortOptions(context, outputType) {
 
         const itemSchema = [
-            { label: 'Manual Journal ID', value: 'ManualJournalID' },
-            { label: 'Narration', value: 'Narration' },
-            { label: 'Date', value: 'Date' },
-            { label: 'Status', value: 'Status' },
-            { label: 'Line Amount Types', value: 'LineAmountTypes' },
+            { label: 'Manual Journal ID', value: 'ManualJournalID', schema: { type: 'string' } },
+            { label: 'Narration', value: 'Narration', schema: { type: 'string' } },
+            { label: 'Date', value: 'Date', schema: { type: 'string' } },
+            { label: 'Status', value: 'Status', schema: { type: 'string' } },
+            { label: 'Line Amount Types', value: 'LineAmountTypes', schema: { type: 'string' } },
             {
                 label: 'Journal Lines', value: 'JournalLines', schema: {
                     type: 'array',
@@ -67,10 +67,10 @@ module.exports = {
                     }
                 }
             },
-            { label: 'Url', value: 'Url' },
-            { label: 'Show On Cash Basis Reports', value: 'ShowOnCashBasisReports' },
-            { label: 'Has Attachments', value: 'HasAttachments' },
-            { label: 'Updated Date UTC', value: 'UpdatedDateUTC' }
+            { label: 'Url', value: 'Url', schema: { type: 'string' } },
+            { label: 'Show On Cash Basis Reports', value: 'ShowOnCashBasisReports', schema: { type: 'boolean' } },
+            { label: 'Has Attachments', value: 'HasAttachments', schema: { type: 'boolean' } },
+            { label: 'Updated Date UTC', value: 'UpdatedDateUTC', schema: { type: 'string' } }
         ];
 
         if (outputType === 'item') {
