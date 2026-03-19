@@ -27,20 +27,32 @@ module.exports = {
         },
 
         validate: async (context) => {
-            await context.httpRequest({
+            // The CrowdStrike LogScale ingest host only exposes the HEC collector endpoint —
+            // no separate health/status API exists. POSTing a truly empty body (0 bytes)
+            // returns the auth status without ingesting any event:
+            //   200 {"text":"Success","code":0}   -> valid token
+            //   401                               -> invalid token
+            // NOTE: data must be null (not '' or {}); axios would serialize those to
+            // '""' / '{}' which HEC rejects with 400 "Invalid data format".
+            const response = await context.httpRequest({
                 method: 'POST',
                 url: context.url,
                 headers: {
-                    'Authorization': `Bearer ${context.apiKey}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Splunk ${context.apiKey}`,
+                    'Content-Type': 'application/json',
+                    'Content-Length': '0'
                 },
-                data: {
-                    event: 'appmixer auth validation',
-                    source: 'appmixer-auth-validation',
-                    sourcetype: '_json',
-                    host: 'appmixer'
-                }
+                data: null
             });
+
+            const code = response.data && response.data.code;
+            if (code !== 0) {
+                throw new Error(
+                    response.data && response.data.text
+                        ? `LogScale auth failed: ${response.data.text}`
+                        : 'LogScale auth failed: invalid token'
+                );
+            }
             return true;
         }
     }
