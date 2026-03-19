@@ -9,7 +9,7 @@ function xeroDateToISO(xeroDate) {
     if (!xeroDate) return null;
     const match = xeroDate.match(/\/Date\((\d+)([+-]\d{4})?\)\//);
     if (!match) return null;
-    return new Date(parseInt(match[1], 10)).toISOString();
+    return new Date(parseInt(match[1], 10)).toISOString().replace(/\.\d{3}Z$/, '');
 }
 
 module.exports = {
