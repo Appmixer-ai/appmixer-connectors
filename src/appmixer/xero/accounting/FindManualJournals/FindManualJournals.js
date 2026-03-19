@@ -4,6 +4,16 @@ const XeroClient = require('../../XeroClient');
 
 const outputPortName = 'out';
 
+/**
+ * Parse Xero's /Date(timestamp+offset)/ format into ISO string.
+ */
+function xeroDateToISO(xeroDate) {
+    if (!xeroDate) return null;
+    const match = xeroDate.match(/\/Date\((\d+)([+-]\d{4})?\)\//);
+    if (!match) return null;
+    return new Date(parseInt(match[1], 10)).toISOString();
+}
+
 module.exports = {
 
     async receive(context) {
@@ -34,6 +44,16 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
+        // Xero ManualJournals API doesn't return DateString, so we parse it.
+        for (const record of records) {
+            if (record.Date) {
+                record.DateString = xeroDateToISO(record.Date);
+            }
+            if (record.UpdatedDateUTC) {
+                record.UpdatedDateUTCString = xeroDateToISO(record.UpdatedDateUTC);
+            }
+        }
+
         return sendArrayOutput({
             context,
             outputPortName,
@@ -48,6 +68,7 @@ module.exports = {
             { label: 'Manual Journal ID', value: 'ManualJournalID', schema: { type: 'string' } },
             { label: 'Narration', value: 'Narration', schema: { type: 'string' } },
             { label: 'Date', value: 'Date', schema: { type: 'string' } },
+            { label: 'Date String', value: 'DateString', schema: { type: 'string' } },
             { label: 'Status', value: 'Status', schema: { type: 'string' } },
             { label: 'Line Amount Types', value: 'LineAmountTypes', schema: { type: 'string' } },
             {
@@ -70,7 +91,8 @@ module.exports = {
             { label: 'Url', value: 'Url', schema: { type: 'string' } },
             { label: 'Show On Cash Basis Reports', value: 'ShowOnCashBasisReports', schema: { type: 'boolean' } },
             { label: 'Has Attachments', value: 'HasAttachments', schema: { type: 'boolean' } },
-            { label: 'Updated Date UTC', value: 'UpdatedDateUTC', schema: { type: 'string' } }
+            { label: 'Updated Date UTC', value: 'UpdatedDateUTC', schema: { type: 'string' } },
+            { label: 'Updated Date UTC String', value: 'UpdatedDateUTCString', schema: { type: 'string' } }
         ];
 
         if (outputType === 'item') {
@@ -88,6 +110,7 @@ module.exports = {
                                 ManualJournalID: { type: 'string', title: 'ManualJournalID' },
                                 Narration: { type: 'string', title: 'Narration' },
                                 Date: { type: 'string', title: 'Date' },
+                                DateString: { type: 'string', title: 'DateString' },
                                 Status: { type: 'string', title: 'Status' },
                                 LineAmountTypes: { type: 'string', title: 'LineAmountTypes' },
                                 JournalLines: {
@@ -109,7 +132,8 @@ module.exports = {
                                 Url: { type: 'string', title: 'Url' },
                                 ShowOnCashBasisReports: { type: 'boolean', title: 'ShowOnCashBasisReports' },
                                 HasAttachments: { type: 'boolean', title: 'HasAttachments' },
-                                UpdatedDateUTC: { type: 'string', title: 'UpdatedDateUTC' }
+                                UpdatedDateUTC: { type: 'string', title: 'UpdatedDateUTC' },
+                                UpdatedDateUTCString: { type: 'string', title: 'UpdatedDateUTCString' }
                             }
                         }
                     }

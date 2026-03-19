@@ -1,6 +1,17 @@
 'use strict';
 const XeroClient = require('../../XeroClient');
 
+/**
+ * Parse Xero's /Date(timestamp+offset)/ format into ISO string.
+ * E.g. "/Date(1963612800000+0000)/" → "2032-03-20T00:00:00.000Z"
+ */
+function xeroDateToISO(xeroDate) {
+    if (!xeroDate) return null;
+    const match = xeroDate.match(/\/Date\((\d+)([+-]\d{4})?\)\//);
+    if (!match) return null;
+    return new Date(parseInt(match[1], 10)).toISOString();
+}
+
 module.exports = {
 
     async receive(context) {
@@ -44,6 +55,14 @@ module.exports = {
         const xc = new XeroClient(context, tenantId);
         const { ManualJournals } = await xc.request('POST', `/api.xro/2.0/ManualJournals/${ManualJournalID}`, { data });
 
-        return context.sendJson(ManualJournals[0], 'out');
+        const result = ManualJournals[0];
+        if (result.Date) {
+            result.DateString = xeroDateToISO(result.Date);
+        }
+        if (result.UpdatedDateUTC) {
+            result.UpdatedDateUTCString = xeroDateToISO(result.UpdatedDateUTC);
+        }
+
+        return context.sendJson(result, 'out');
     }
 };
