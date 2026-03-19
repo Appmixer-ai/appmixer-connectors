@@ -38,7 +38,7 @@ module.exports = {
                 method: 'POST',
                 url: context.url,
                 headers: {
-                    'Authorization': `Splunk ${context.apiKey}`,
+                    'Authorization': `Bearer ${context.apiKey}`,
                     'Content-Type': 'application/json',
                     'Content-Length': '0'
                 },
