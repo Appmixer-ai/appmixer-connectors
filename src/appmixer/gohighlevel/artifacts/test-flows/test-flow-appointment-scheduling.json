@@ -1,197 +1,73 @@
 {
-    "name": "E2E Gohighlevel - Appointment Scheduling",
-    "description": "End-to-end test for GoHighLevel connector - tests ListCalendars and CreateAppointment components",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 16,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 256,
-            "y": 16,
-            "version": "1.0.0",
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
-                    "on-start": [
+                    "assert-appointment": [
+                        "out"
+                    ],
+                    "assert-list-calendars": [
                         "out"
                     ]
                 }
             },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 928,
+            "y": 80
+        },
+        "assert-appointment": {
             "config": {
                 "transform": {
                     "in": {
-                        "on-start": {
+                        "create-appointment": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
-                                "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "type": "text",
-                                                "name": "calendarId",
-                                                "text": "oQcSHh2JaArZ6KWKK05x"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "contactId",
-                                                "text": "AwDgGd8YmiXS7qVkwFIY"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "appointmentTitle",
-                                                "text": "E2E Test Appointment"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "startTime",
-                                                "text": "2026-03-25T10:00:00+00:00"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "endTime",
-                                                "text": "2026-03-25T11:00:00+00:00"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-calendars": {
-            "type": "appmixer.gohighlevel.core.ListCalendars",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {}
-        },
-        "assert-list-calendars": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-calendars": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-calendars": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "calendars-var": {
-                                            "variable": "$.list-calendars.out.calendars",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{calendars-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{appt-id-var}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Appointment",
+                                                "field": "{{{appt-title-var}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "new",
+                                                "field": "{{{appt-status-var}}}"
                                             }
                                         ]
                                     }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "create-appointment": {
-            "type": "appmixer.gohighlevel.core.CreateAppointment",
-            "x": 448,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
+                                },
                                 "modifiers": {
-                                    "calendarId": {
-                                        "var-calendar-id": {
-                                            "variable": "$.set-variables.out.calendarId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "contactId": {
-                                        "var-contact-id": {
-                                            "variable": "$.set-variables.out.contactId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "startTime": {
-                                        "var-start-time": {
-                                            "variable": "$.set-variables.out.startTime",
-                                            "functions": []
-                                        }
-                                    },
-                                    "endTime": {
-                                        "var-end-time": {
-                                            "variable": "$.set-variables.out.endTime",
-                                            "functions": []
-                                        }
-                                    },
-                                    "title": {
-                                        "var-title": {
-                                            "variable": "$.set-variables.out.appointmentTitle",
-                                            "functions": []
+                                    "expression": {
+                                        "appt-id-var": {
+                                            "functions": [],
+                                            "variable": "$.create-appointment.out.id"
+                                        },
+                                        "appt-status-var": {
+                                            "functions": [],
+                                            "variable": "$.create-appointment.out.appointmentStatus"
+                                        },
+                                        "appt-title-var": {
+                                            "functions": [],
+                                            "variable": "$.create-appointment.out.title"
                                         }
                                     }
                                 },
-                                "lambda": {
-                                    "calendarId": "{{{var-calendar-id}}}",
-                                    "contactId": "{{{var-contact-id}}}",
-                                    "startTime": "{{{var-start-time}}}",
-                                    "endTime": "{{{var-end-time}}}",
-                                    "title": "{{{var-title}}}"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "assert-appointment": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 640,
-            "y": 144,
-            "version": "1.0.0",
+            },
             "source": {
                 "in": {
                     "create-appointment": [
@@ -199,80 +75,231 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 736,
+            "y": 144
+        },
+        "assert-list-calendars": {
             "config": {
                 "transform": {
                     "in": {
-                        "create-appointment": {
+                        "list-calendars": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "appt-id-var": {
-                                            "variable": "$.create-appointment.out.id",
-                                            "functions": []
-                                        },
-                                        "appt-title-var": {
-                                            "variable": "$.create-appointment.out.title",
-                                            "functions": []
-                                        },
-                                        "appt-status-var": {
-                                            "variable": "$.create-appointment.out.appointmentStatus",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{appt-id-var}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{appt-title-var}}}",
-                                                "assertion": "equal",
-                                                "expected": "E2E Test Appointment"
-                                            },
-                                            {
-                                                "field": "{{{appt-status-var}}}",
-                                                "assertion": "equal",
-                                                "expected": "new"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{calendars-var}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "calendars-var": {
+                                            "functions": [],
+                                            "variable": "$.list-calendars.out.calendars"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 832,
-            "y": 80,
-            "version": "1.0.0",
+            },
             "source": {
                 "in": {
-                    "assert-list-calendars": [
-                        "out"
-                    ],
-                    "assert-appointment": [
+                    "list-calendars": [
                         "out"
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 736,
+            "y": 16
+        },
+        "compute-end": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "compute-start": {
+                            "out": {
+                                "lambda": {
+                                    "code": "(() => { const d = new Date('{{{start-time}}}'); d.setMinutes(d.getMinutes() + 30); return d.toISOString(); })()"
+                                },
+                                "modifiers": {
+                                    "code": {
+                                        "start-time": {
+                                            "functions": [],
+                                            "variable": "$.compute-start.out.result"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "compute-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 352,
+            "y": 300
+        },
+        "compute-start": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "code": "(() => { const d = new Date(); d.setDate(d.getDate() + 90 + (Date.now() % 30)); if (d.getDay() === 6) d.setDate(d.getDate() + 1); d.setHours(Date.now() % 12 + 8, 0, 0, 0); return d.toISOString(); })()"
+                                },
+                                "modifiers": {
+                                    "code": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 352,
+            "y": 200
+        },
+        "create-appointment": {
             "config": {
                 "properties": {
-                    "timeout": 30
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "compute-end": {
+                            "out": {
+                                "lambda": {
+                                    "calendarId": "{{{var-calendar-id}}}",
+                                    "contactId": "{{{var-contact-id}}}",
+                                    "endTime": "{{{var-end-time}}}",
+                                    "startTime": "{{{var-start-time}}}",
+                                    "title": "{{{var-title}}}"
+                                },
+                                "modifiers": {
+                                    "calendarId": {
+                                        "var-calendar-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.calendarId"
+                                        }
+                                    },
+                                    "contactId": {
+                                        "var-contact-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.contactId"
+                                        }
+                                    },
+                                    "endTime": {
+                                        "var-end-time": {
+                                            "functions": [],
+                                            "variable": "$.compute-end.out.result"
+                                        }
+                                    },
+                                    "startTime": {
+                                        "var-start-time": {
+                                            "functions": [],
+                                            "variable": "$.compute-start.out.result"
+                                        }
+                                    },
+                                    "title": {
+                                        "var-title": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.appointmentTitle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "compute-end": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.CreateAppointment",
+            "x": 544,
+            "y": 144
+        },
+        "list-calendars": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.ListCalendars",
+            "x": 544,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1024,
-            "y": 80,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Gohighlevel - Appointment Scheduling"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -280,36 +307,61 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1120,
+            "y": 80
+        },
+        "set-variables": {
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "on-start": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "calendarId",
+                                                "text": "oQcSHh2JaArZ6KWKK05x",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "contactId",
+                                                "text": "AwDgGd8YmiXS7qVkwFIY",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "appointmentTitle",
+                                                "text": "E2E Test Appointment",
+                                                "type": "text"
+                                            }
+                                        ]
                                     }
                                 },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Gohighlevel - Appointment Scheduling",
-                                    "result": "{{{result-var}}}"
-                                }
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
         }
+    },
+    "name": "E2E Gohighlevel - Appointment Scheduling",
+    "notes": {},
+    "wizard": {
+        "fields": []
     }
 }

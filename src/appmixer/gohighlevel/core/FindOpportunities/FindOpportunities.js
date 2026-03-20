@@ -60,22 +60,9 @@ module.exports = {
 
         const opportunities = response.data?.opportunities || [];
 
-        if (outputType === 'array') {
-            return context.sendJson({ result: opportunities }, 'out');
-        }
-
         if (!opportunities.length) {
             return context.sendJson({}, 'notFound');
         }
-
-        // outputType === 'first' or default
-        for (let i = 0; i < opportunities.length; i++) {
-            const opp = opportunities[i];
-            await context.sendJson({
-                ...opp,
-                index: i,
-                count: opportunities.length
-            }, 'out');
-        }
+        return lib.sendArrayOutput({ context, outputType, records: opportunities });
     }
 };
