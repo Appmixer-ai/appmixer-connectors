@@ -1,277 +1,20 @@
 {
-    "name": "E2E Beehiiv - Reference Data",
-    "description": "E2E test: ListCustomFields, ListAutomations, ListSegments with assertions",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 200,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "list-custom-fields": {
-            "type": "appmixer.beehiiv.core.ListCustomFields",
-            "x": 300,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "on-start": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "publicationId": {},
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
-                                    "outputType": "first"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-automations": {
-            "type": "appmixer.beehiiv.core.ListAutomations",
-            "x": 300,
-            "y": 200,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "on-start": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "publicationId": {}
-                                },
-                                "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-segments": {
-            "type": "appmixer.beehiiv.core.ListSegments",
-            "x": 300,
-            "y": 384,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "on-start": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "publicationId": {}
-                                },
-                                "lambda": {
-                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-custom-fields-id": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 0,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-custom-fields": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-custom-fields": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "field-id": {
-                                            "variable": "$.list-custom-fields.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{field-id}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-custom-fields-kind": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 80,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-custom-fields": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-custom-fields": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "field-kind": {
-                                            "variable": "$.list-custom-fields.out.kind",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{field-kind}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-automations": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 200,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-automations": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-automations": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {},
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "ok",
-                                                "assertion": "equal",
-                                                "expected": "ok"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-segments": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 384,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-segments": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-segments": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {},
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "ok",
-                                                "assertion": "equal",
-                                                "expected": "ok"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 800,
-            "y": 150,
-            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
+                    "assert-automations": [
+                        "out"
+                    ],
                     "assert-custom-fields-id": [
                         "out"
                     ],
                     "assert-custom-fields-kind": [
-                        "out"
-                    ],
-                    "assert-automations": [
                         "out"
                     ],
                     "assert-segments": [
@@ -279,17 +22,295 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 800,
+            "y": 150
+        },
+        "assert-automations": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-automations": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "ok",
+                                                "field": "ok"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {},
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-automations": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 200
+        },
+        "assert-custom-fields-id": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-custom-fields": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "functions": [],
+                                            "variable": "$.list-custom-fields.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-custom-fields": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 0
+        },
+        "assert-custom-fields-kind": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-custom-fields": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-kind}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-kind": {
+                                            "functions": [],
+                                            "variable": "$.list-custom-fields.out.kind"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-custom-fields": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 80
+        },
+        "assert-segments": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-segments": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "ok",
+                                                "field": "ok"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {},
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-segments": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 384
+        },
+        "list-automations": {
             "config": {
                 "properties": {
-                    "timeout": 30
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                },
+                                "modifiers": {
+                                    "publicationId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.ListAutomations",
+            "x": 300,
+            "y": 200
+        },
+        "list-custom-fields": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first",
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                },
+                                "modifiers": {
+                                    "outputType": {},
+                                    "publicationId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.ListCustomFields",
+            "x": 300,
+            "y": 16
+        },
+        "list-segments": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                },
+                                "modifiers": {
+                                    "publicationId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.ListSegments",
+            "x": 300,
+            "y": 384
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 200
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1050,
-            "y": 150,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Beehiiv - Reference Data"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -297,32 +318,11 @@
                     ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "after-all": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Beehiiv - Reference Data",
-                                    "result": "{{{result-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1050,
+            "y": 150
         }
-    }
+    },
+    "name": "E2E Beehiiv - Reference Data",
+    "notes": {}
 }
