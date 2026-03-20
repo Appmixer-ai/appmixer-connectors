@@ -2320,8 +2320,6 @@ return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.lengt
 
 ### Unit Tests
 
-After major refactors, run `npm run validate` to catch bundle/changelog version drift, inspector inputs missing from schema definitions, and quota resource mismatches before opening or updating a PR.
-
 - Use `mocha` for unit tests
 - Place tests in `src/appmixer/<connector_name>/artifacts/test/` directory (colocated with connector source)
 - Use `assert` from Node.js for assertions
@@ -2412,9 +2410,10 @@ Every E2E test flow MUST include these components in sequence:
     - First component in the flow
     - No configuration needed
 
-2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - Optional
-    - Setup operations before tests run
+2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - **REQUIRED**
+    - Resets Assert/AfterAll state between runs, preventing stale state accumulation
     - Connects to OnStart output
+    - Must appear before SetVariable or any test logic
 
 3. **Your Components Under Test**
     - The actual connector components being tested

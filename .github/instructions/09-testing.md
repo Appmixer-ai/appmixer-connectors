@@ -92,9 +92,10 @@ Every E2E test flow MUST include these components in sequence:
     - First component in the flow
     - No configuration needed
 
-2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - Optional
-    - Setup operations before tests run
+2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - **REQUIRED**
+    - Resets Assert/AfterAll state between runs, preventing stale state accumulation
     - Connects to OnStart output
+    - Must appear before SetVariable or any test logic
 
 3. **Your Components Under Test**
     - The actual connector components being tested
