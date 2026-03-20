@@ -63,7 +63,7 @@ module.exports = {
         };
 
         if (query) params.query = query;
-        if (email) params.email = email;
+        if (email && !query) params.query = email;
 
         const response = await context.httpRequest({
             method: 'GET',

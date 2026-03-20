@@ -38,7 +38,7 @@ module.exports = {
             });
             return {
                 id: context.locationId,
-                name: `GoHighLevel (${context.locationId})`,
+                name: `GoHighLevel (${context.locationId.substring(0,5)}...)`,
                 email: ''
             };
         },

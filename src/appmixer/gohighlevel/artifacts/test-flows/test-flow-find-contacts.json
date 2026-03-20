@@ -1,6 +1,6 @@
 {
     "name": "E2E Gohighlevel - Find Contacts",
-    "description": "End-to-end test for Gohighlevel connector - tests Find Contacts functionality with Create and Delete lifecycle",
+    "description": "End-to-end test for Gohighlevel connector - tests Find Contacts with pre-existing contact, plus Create and Delete lifecycle",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -36,7 +36,12 @@
                                         "ADD": [
                                             {
                                                 "type": "text",
-                                                "name": "contactEmail",
+                                                "name": "searchEmail",
+                                                "text": "e2e-find-test@appmixer-test.com"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "createEmail",
                                                 "text": "e2e-test-gohighlevel@appmixer-test.com"
                                             },
                                             {
@@ -58,8 +63,8 @@
                 }
             }
         },
-        "create-contact": {
-            "type": "appmixer.gohighlevel.core.CreateContact",
+        "find-contacts": {
+            "type": "appmixer.gohighlevel.core.FindContacts",
             "x": 448,
             "y": 16,
             "version": "1.0.0",
@@ -77,65 +82,16 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "email": {
-                                        "var-email": {
-                                            "variable": "$.set-variables.out.contactEmail",
-                                            "functions": []
-                                        }
-                                    },
-                                    "firstName": {
-                                        "var-first-name": {
-                                            "variable": "$.set-variables.out.contactFirstName",
-                                            "functions": []
-                                        }
-                                    },
-                                    "lastName": {
-                                        "var-last-name": {
-                                            "variable": "$.set-variables.out.contactLastName",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "email": "{{{var-email}}}",
-                                    "firstName": "{{{var-first-name}}}",
-                                    "lastName": "{{{var-last-name}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "find-contacts": {
-            "type": "appmixer.gohighlevel.core.FindContacts",
-            "x": 640,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-contact": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-contact": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "email": {
-                                        "var-contact-email": {
-                                            "variable": "$.create-contact.out.email",
+                                    "query": {
+                                        "var-search-email": {
+                                            "variable": "$.set-variables.out.searchEmail",
                                             "functions": []
                                         }
                                     },
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "email": "{{{var-contact-email}}}",
+                                    "query": "{{{var-search-email}}}",
                                     "outputType": "first"
                                 }
                             }
@@ -146,8 +102,8 @@
         },
         "assert-find-contacts": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 144,
+            "x": 640,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -184,7 +140,98 @@
                                             {
                                                 "field": "{{{field-email}}}",
                                                 "assertion": "equal",
-                                                "expected": "e2e-test-gohighlevel@appmixer-test.com"
+                                                "expected": "e2e-find-test@appmixer-test.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.gohighlevel.core.CreateContact",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "var-email": {
+                                            "variable": "$.set-variables.out.createEmail",
+                                            "functions": []
+                                        }
+                                    },
+                                    "firstName": {
+                                        "var-first-name": {
+                                            "variable": "$.set-variables.out.contactFirstName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "lastName": {
+                                        "var-last-name": {
+                                            "variable": "$.set-variables.out.contactLastName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "email": "{{{var-email}}}",
+                                    "firstName": "{{{var-first-name}}}",
+                                    "lastName": "{{{var-last-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-id}}}",
+                                                "assertion": "notEmpty"
                                             }
                                         ]
                                     }
@@ -197,12 +244,15 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 144,
+            "x": 832,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
                     "assert-find-contacts": [
+                        "out"
+                    ],
+                    "assert-create": [
                         "out"
                     ]
                 }
@@ -215,8 +265,8 @@
         },
         "delete-contact": {
             "type": "appmixer.gohighlevel.core.DeleteContact",
-            "x": 1584,
-            "y": 144,
+            "x": 1024,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -250,8 +300,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1776,
-            "y": 144,
+            "x": 1216,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
