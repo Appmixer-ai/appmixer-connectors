@@ -9,7 +9,7 @@ module.exports = {
         }
 
         const accessToken = context.auth.accessToken;
-        const url = `https://graph.facebook.com/v20.0/act_${accountId}/customaudiences?access_token=${accessToken}&fields=id,name,description`;
+        const url = `https://graph.facebook.com/v25.0/act_${accountId}/customaudiences?access_token=${accessToken}&fields=id,name,description`;
         const { data } = await context.httpRequest.get(url);
         return context.sendJson({ customAudiences: data.data }, 'out');
     },

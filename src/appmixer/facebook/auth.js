@@ -1,6 +1,6 @@
 'use strict';
 
-const API_VERSION = 'v22.0';
+const API_VERSION = 'v25.0';
 
 module.exports = {
 

@@ -1,0 +1,254 @@
+{
+    "name": "appmixer.googleAds.core.AddUsersFromCSVToUserList",
+    "description": "Upload a CSV file of users to a Google Ads Customer Match user list via the Offline User Data Job API. Supports large files by processing them in batches across multiple continuations. Provide a schema mapping for each upload so different CSV headers can be mapped explicitly.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:googleAds",
+        "scope": [
+            "https://www.googleapis.com/auth/adwords"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:googleAds",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fileId": {
+                        "type": "string"
+                    },
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "developerToken": {
+                        "type": "string"
+                    },
+                    "loginCustomerId": {
+                        "type": "string"
+                    },
+                    "userListId": {
+                        "type": "string"
+                    },
+                    "uploadMode": {
+                        "type": "string"
+                    },
+                    "schema": {
+                        "type": "object"
+                    },
+                    "columnSeparator": {
+                        "type": "string"
+                    },
+                    "adPersonalization": {
+                        "type": "string"
+                    },
+                    "adUserData": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "fileId",
+                    "customerId",
+                    "developerToken",
+                    "userListId",
+                    "schema"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "fileId": {
+                        "type": "filepicker",
+                        "label": "CSV File",
+                        "tooltip": "A CSV file containing user data. Use the Schema field below to map each CSV header to the Google Ads identifier it represents.",
+                        "index": 1
+                    },
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "tooltip": "Google Ads customer ID (digits only, e.g. 1234567890). Hyphens are ignored.",
+                        "index": 2
+                    },
+                    "developerToken": {
+                        "type": "text",
+                        "label": "Developer Token",
+                        "tooltip": "Your Google Ads API developer token.",
+                        "index": 3
+                    },
+                    "loginCustomerId": {
+                        "type": "text",
+                        "label": "Login Customer ID",
+                        "tooltip": "Required when authenticating via a manager (MCC) account. Leave blank if you are using the customer account directly.",
+                        "index": 4
+                    },
+                    "userListId": {
+                        "type": "text",
+                        "label": "User List ID",
+                        "tooltip": "Numeric ID of the Customer Match user list to upload users into.",
+                        "index": 5
+                    },
+                    "uploadMode": {
+                        "type": "select",
+                        "label": "Upload Mode",
+                        "tooltip": "ADD appends users to the list. REPLACE removes all existing users and replaces them with this upload.",
+                        "index": 6,
+                        "defaultValue": "ADD",
+                        "options": [
+                            { "label": "Add (append)", "value": "ADD" },
+                            { "label": "Replace (overwrite)", "value": "REPLACE" }
+                        ]
+                    },
+                    "schema": {
+                        "type": "expression",
+                        "levels": ["ADD"],
+                        "index": 7,
+                        "label": "Schema",
+                        "tooltip": "Required mapping between CSV headers and Google Ads identifiers. This component does not infer identifiers from header names.",
+                        "fields": {
+                            "csvHeader": {
+                                "type": "text",
+                                "label": "CSV Header",
+                                "tooltip": "The header name in the CSV file. Matching is case-insensitive."
+                            },
+                            "googleAdsType": {
+                                "type": "select",
+                                "label": "Google Ads Type",
+                                "tooltip": "The Google Ads identifier type represented by this CSV column.",
+                                "options": [
+                                    { "value": "email", "label": "Email" },
+                                    { "value": "phoneNumber", "label": "Phone Number" },
+                                    { "value": "firstName", "label": "First Name" },
+                                    { "value": "lastName", "label": "Last Name" },
+                                    { "value": "countryCode", "label": "Country Code" },
+                                    { "value": "postalCode", "label": "Postal Code" },
+                                    { "value": "mobileId", "label": "Mobile Device ID" },
+                                    { "value": "thirdPartyUserId", "label": "Third Party User ID" }
+                                ]
+                            }
+                        }
+                    },
+                    "columnSeparator": {
+                        "type": "text",
+                        "label": "Column Separator",
+                        "tooltip": "Character used to separate columns in the CSV file. Default is a comma (,).",
+                        "index": 8,
+                        "defaultValue": ","
+                    },
+                    "adPersonalization": {
+                        "type": "select",
+                        "label": "Ad Personalization Consent",
+                        "tooltip": "Consent status for ad personalization. Required by EU User Consent Policy.",
+                        "index": 9,
+                        "options": [
+                            { "label": "Unspecified", "value": "" },
+                            { "label": "Granted", "value": "GRANTED" },
+                            { "label": "Denied", "value": "DENIED" }
+                        ]
+                    },
+                    "adUserData": {
+                        "type": "select",
+                        "label": "Ad User Data Consent",
+                        "tooltip": "Consent status for use of user data for ads. Required by EU User Consent Policy.",
+                        "index": 10,
+                        "options": [
+                            { "label": "Unspecified", "value": "" },
+                            { "label": "Granted", "value": "GRANTED" },
+                            { "label": "Denied", "value": "DENIED" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Total Users Uploaded",
+                    "value": "totalUsers",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Total Rows Skipped",
+                    "value": "totalSkipped",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Total Rows in File",
+                    "value": "totalRows",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Job Resource Name",
+                    "value": "jobResourceName",
+                    "schema": { "type": "string" }
+                },
+                {
+                    "label": "API Errors",
+                    "value": "errors",
+                    "schema": { "type": "array", "items": { "type": "string" } }
+                },
+                {
+                    "label": "Internal Errors",
+                    "value": "internalErrors",
+                    "schema": { "type": "array", "items": { "type": "string" } }
+                },
+                {
+                    "label": "Success",
+                    "value": "success",
+                    "schema": { "type": "boolean" }
+                }
+            ]
+        },
+        {
+            "name": "progress",
+            "options": [
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": { "type": "string" }
+                },
+                {
+                    "label": "Message",
+                    "value": "message",
+                    "schema": { "type": "string" }
+                },
+                {
+                    "label": "Total Rows",
+                    "value": "totalRows",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Last Processed Row",
+                    "value": "lastProcessedRow",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Total Users Uploaded",
+                    "value": "totalUsersUploaded",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Percentage",
+                    "value": "percentage",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "Elapsed Seconds",
+                    "value": "elapsedSeconds",
+                    "schema": { "type": "integer" }
+                },
+                {
+                    "label": "ETA (seconds)",
+                    "value": "eta",
+                    "schema": { "type": "integer" }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjMwIiBwcmVzZXJ2ZVJhdGlvPSJ4TWlkWU1pZCI+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTUuODg4IDE2Ni40MDUgOTAuODggMjAuOWMxMC43OTYgNi4zNTYgNjUuMjM2IDM2LjQ4NCA3NC4wMjggNDIuMjE0TDc5LjkxNiAyMDguNjI3Yy05LjI5NSAxMi4yOC04NS44MDQtMjMuNTg3LTc0LjAyOC00Mi4yM3oiLz48cGF0aCBmaWxsPSIjNDI4NUY0IiBkPSJNMjUwLjA4NCAxNjYuNDAyIDE2NS4wOTIgMjAuOTA2QzE1My4yMSAxLjEzMiAxMjcuNjItNi4wNTQgMTA2LjYwMSA1LjYyNVM3OS4xODIgNDIuNDYyIDkxLjA2NCA2My4xMTlsODQuOTkyIDE0NS41MTRjMTEuODgyIDE5Ljc2NSAzNy40NzMgMjYuOTUgNTguNDkyIDE1LjI3MiAyMC4xLTExLjY4IDI3LjQxOC0zNy43MyAxNS41MzYtNTcuNDg2eiIvPjxlbGxpcHNlIGN4PSI0Mi42NjQiIGN5PSIxODcuOTI0IiBmaWxsPSIjMzRBODUzIiByeD0iNDIuNjY0IiByeT0iNDEuNjA0Ii8+PC9zdmc+"
+}

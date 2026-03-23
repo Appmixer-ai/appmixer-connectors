@@ -307,7 +307,7 @@ async function sendBatchToFacebook(
         access_token: context.auth.accessToken
     };
 
-    const url = `https://graph.facebook.com/v20.0/${audienceId}/${operation}`;
+    const url = `https://graph.facebook.com/v25.0/${audienceId}/${operation}`;
 
     await context.log({
         step: 'batch',

@@ -19,9 +19,14 @@ npm run test-unit -- test/<connector_name>
 # Linting
 npm run lint
 
+# Repository validation
+npm run validate
+
 # Validate outputType components
 npm run validate-outputtype
 ```
+
+Run `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
 
 ### Connector Structure
 
@@ -114,7 +119,9 @@ See: `.github/copilot-instructions.md` section "Testing Guidelines"
 ## E2E Test Flows
 
 Required components in order:
-1. `OnStart` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
+1. `OnStart` → `BeforeAll` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
+
+**BeforeAll is REQUIRED** — resets Assert/AfterAll state between runs.
 
 **Critical:**
 - Assertion types: `equal`, `notEmpty`, `regex` only

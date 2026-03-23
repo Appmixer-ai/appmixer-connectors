@@ -5,6 +5,19 @@ const pathModule = require('path');
 
 const API_BASE_URL = 'https://googleads.googleapis.com/v23';
 const DEFAULT_PREFIX = 'googleads-objects-export';
+const CSV_NULL_TOKENS = new Set(['', '\\N', 'NULL', 'null']);
+
+const CSV_MAPPING_TYPES = {
+    email: 'email',
+    phoneNumber: 'phoneNumber',
+    firstName: 'firstName',
+    lastName: 'lastName',
+    countryCode: 'countryCode',
+    postalCode: 'postalCode',
+    mobileId: 'mobileId',
+    thirdPartyUserId: 'thirdPartyUserId'
+};
+const VALID_CSV_MAPPING_TYPES = new Set(Object.values(CSV_MAPPING_TYPES));
 
 function ensureRequired(value, message, context) {
     if (value === undefined || value === null || value === '') {
@@ -59,6 +72,142 @@ function hashSha256(value) {
         .createHash('sha256')
         .update(String(value || '').trim().toLowerCase(), 'utf8')
         .digest('hex');
+}
+
+function normalizeCsvValue(value) {
+    const normalized = String(value ?? '').trim();
+
+    return CSV_NULL_TOKENS.has(normalized) ? null : normalized;
+}
+
+function normalizeRowKey(value) {
+    return String(value || '').trim().toLowerCase();
+}
+
+function buildCsvSchemaConfig(schema, context) {
+    const config = {};
+    const mappings = Array.isArray(schema?.ADD) ? schema.ADD : [];
+
+    for (const mapping of mappings) {
+        const header = normalizeRowKey(mapping?.csvHeader);
+        const googleAdsType = String(mapping?.googleAdsType || '').trim();
+
+        if (!header || !googleAdsType) {
+            continue;
+        }
+
+        if (!VALID_CSV_MAPPING_TYPES.has(googleAdsType)) {
+            throw new context.CancelError(`Unsupported Google Ads Type: ${googleAdsType}`);
+        }
+
+        if (!config[header]) {
+            config[header] = [];
+        }
+
+        if (!config[header].includes(googleAdsType)) {
+            config[header].push(googleAdsType);
+        }
+    }
+
+    return config;
+}
+
+function getRowValues(row, aliases, { splitMultiValue = false } = {}) {
+    const aliasSet = new Set(aliases.map(normalizeRowKey));
+    const values = [];
+
+    for (const [key, rawValue] of Object.entries(row || {})) {
+        if (!aliasSet.has(normalizeRowKey(key))) {
+            continue;
+        }
+
+        const normalized = normalizeCsvValue(rawValue);
+        if (!normalized) {
+            continue;
+        }
+
+        const parts = splitMultiValue
+            ? normalized.split(/[;,]/)
+            : [normalized];
+
+        for (const part of parts) {
+            const value = normalizeCsvValue(part);
+            if (value) {
+                values.push(value);
+            }
+        }
+    }
+
+    return [...new Set(values)];
+}
+
+function getMappedHeaders(schemaConfig, googleAdsType) {
+    return Object.keys(schemaConfig || {}).filter(header => {
+        return Array.isArray(schemaConfig[header]) && schemaConfig[header].includes(googleAdsType);
+    });
+}
+
+function getMappedRowValues(row, schemaConfig, googleAdsType, options = {}) {
+    const headers = getMappedHeaders(schemaConfig, googleAdsType);
+    return getRowValues(row, headers, options);
+}
+
+function getFirstMappedRowValue(row, schemaConfig, googleAdsType) {
+    const [value] = getMappedRowValues(row, schemaConfig, googleAdsType);
+    return value || null;
+}
+
+function buildUserIdentifiersFromCsvRow(row, schemaConfig = {}) {
+    const userIdentifiers = [];
+    const emails = getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.email, { splitMultiValue: true });
+
+    for (const email of emails) {
+        userIdentifiers.push({ hashedEmail: hashSha256(email) });
+    }
+
+    const phoneNumbers =
+        getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.phoneNumber, { splitMultiValue: true });
+
+    for (const phoneNumber of phoneNumbers) {
+        const normalizedPhone = phoneNumber.replace(/[^0-9+]/g, '');
+        if (normalizedPhone) {
+            userIdentifiers.push({ hashedPhoneNumber: hashSha256(normalizedPhone) });
+        }
+    }
+
+    const firstName = getFirstMappedRowValue(row, schemaConfig, CSV_MAPPING_TYPES.firstName);
+    const lastName = getFirstMappedRowValue(row, schemaConfig, CSV_MAPPING_TYPES.lastName);
+    const countryCode = getFirstMappedRowValue(row, schemaConfig, CSV_MAPPING_TYPES.countryCode);
+
+    if (firstName && lastName && countryCode) {
+        const addressInfo = {
+            hashedFirstName: hashSha256(firstName),
+            hashedLastName: hashSha256(lastName),
+            countryCode: countryCode.toUpperCase()
+        };
+        const postalCode = getFirstMappedRowValue(row, schemaConfig, CSV_MAPPING_TYPES.postalCode);
+
+        if (postalCode) {
+            addressInfo.postalCode = postalCode;
+        }
+
+        userIdentifiers.push({ addressInfo });
+    }
+
+    const mobileIds = getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.mobileId, { splitMultiValue: true });
+
+    for (const mobileId of mobileIds) {
+        userIdentifiers.push({ mobileId });
+    }
+
+    const thirdPartyUserIds =
+        getMappedRowValues(row, schemaConfig, CSV_MAPPING_TYPES.thirdPartyUserId, { splitMultiValue: true });
+
+    for (const thirdPartyUserId of thirdPartyUserIds) {
+        userIdentifiers.push({ thirdPartyUserId });
+    }
+
+    return userIdentifiers;
 }
 
 function getOfflineUserDataJobIdFromResourceName(resourceName) {
@@ -174,6 +323,8 @@ module.exports = {
     buildHeaders,
     searchStream,
     hashSha256,
+    buildCsvSchemaConfig,
+    buildUserIdentifiersFromCsvRow,
     getOfflineUserDataJobIdFromResourceName,
     sendArrayOutput,
     getOutputPortOptions,

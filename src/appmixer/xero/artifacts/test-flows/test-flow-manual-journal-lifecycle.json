@@ -1,0 +1,490 @@
+{
+    "err": "{\"message\":\"Access token not found for component list-tenants\",\"data\":{\"componentId\":\"list-tenants\",\"componentType\":\"appmixer.xero.accounting.ListTenants\"},\"code\":1,\"name\":\"TokenError\",\"stack\":\"TokenError: Access token not found for component list-tenants\\n    at TokenHandler.prepareServiceForComponent (/usr/src/appmixer/engine/src/auth/TokenHandler.js:208:19)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async TokenHandler.injectServiceData (/usr/src/appmixer/engine/src/auth/TokenHandler.js:140:29)\\n    at async Factory.init (/usr/src/appmixer/engine/src/component/Factory.js:112:13)\\n    at async /usr/src/appmixer/engine/src/component/Factory.js:416:17\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:322:21)\"}",
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1216,
+            "y": 144
+        },
+        "assert-create": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-journal": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-journal-id}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-narration}}}",
+                                                "field": "{{{field-narration}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "2032-03-23T00:00:00",
+                                                "field": "{{{8ffbe6c3-5058-49a3-85b6-2bb9f5325437}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "8ffbe6c3-5058-49a3-85b6-2bb9f5325437": {
+                                            "functions": [],
+                                            "variable": "$.create-journal.out.DateString"
+                                        },
+                                        "expected-narration": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.narration"
+                                        },
+                                        "field-journal-id": {
+                                            "functions": [],
+                                            "variable": "$.create-journal.out.ManualJournalID"
+                                        },
+                                        "field-narration": {
+                                            "functions": [],
+                                            "variable": "$.create-journal.out.Narration"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-journal": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 16
+        },
+        "assert-find": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-journals": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-journal-id}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-narration}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "POSTED",
+                                                "field": "{{{field-status}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-journal-id": {
+                                            "functions": [],
+                                            "variable": "$.find-journals.out.ManualJournalID"
+                                        },
+                                        "field-narration": {
+                                            "functions": [],
+                                            "variable": "$.find-journals.out.Narration"
+                                        },
+                                        "field-status": {
+                                            "functions": [],
+                                            "variable": "$.find-journals.out.Status"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "find-journals": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 272
+        },
+        "assert-update": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-journal": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-updated-narration}}}",
+                                                "field": "{{{field-updated-narration}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "expected-updated-narration": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.updatedNarration"
+                                        },
+                                        "field-updated-narration": {
+                                            "functions": [],
+                                            "variable": "$.update-journal.out.Narration"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "update-journal": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 144
+        },
+        "create-journal": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "Date": "2032-03-23",
+                                    "JournalLines": "{{{var-journal-lines}}}",
+                                    "LineAmountTypes": "Exclusive",
+                                    "Narration": "{{{var-narration}}}",
+                                    "ShowOnCashBasisReports": false,
+                                    "Status": "DRAFT",
+                                    "Url": "https://www.google.com",
+                                    "tenantId": "{{{var-tenant-id}}}"
+                                },
+                                "modifiers": {
+                                    "Date": {},
+                                    "JournalLines": {
+                                        "var-journal-lines": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.journalLines"
+                                        }
+                                    },
+                                    "LineAmountTypes": {},
+                                    "Narration": {
+                                        "var-narration": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.narration"
+                                        }
+                                    },
+                                    "ShowOnCashBasisReports": {},
+                                    "Status": {},
+                                    "Url": {},
+                                    "tenantId": {
+                                        "var-tenant-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.tenantId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.xero.accounting.CreateManualJournal",
+            "x": 272,
+            "y": 16
+        },
+        "find-journals": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-journal": {
+                            "out": {
+                                "lambda": {
+                                    "Status": "POSTED",
+                                    "outputType": "item",
+                                    "tenantId": "{{{var-tenant-id}}}"
+                                },
+                                "modifiers": {
+                                    "Status": {},
+                                    "outputType": {},
+                                    "tenantId": {
+                                        "var-tenant-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.tenantId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "update-journal": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.xero.accounting.FindManualJournals",
+            "x": 832,
+            "y": 288
+        },
+        "list-tenants": {
+            "config": {
+                "properties": {
+                    "account": "69b91d182439c61750e72f88"
+                },
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "item"
+                                },
+                                "modifiers": {},
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.xero.accounting.ListTenants",
+            "x": -64,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": -224,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Xero - Manual Journal Lifecycle"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1376,
+            "y": 144
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-tenants": {
+                            "tenants": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "tenantId",
+                                                "text": "{{{tenant-id}}}",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "narration",
+                                                "text": "E2E Test Manual Journal",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "updatedNarration",
+                                                "text": "E2E Test Manual Journal Updated",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "journalLines",
+                                                "text": "[{\"LineAmount\":100,\"AccountCode\":\"400\",\"Description\":\"E2E Test Debit\"},{\"LineAmount\":-100,\"AccountCode\":\"200\",\"Description\":\"E2E Test Credit\"}]",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {
+                                        "tenant-id": {
+                                            "functions": [],
+                                            "variable": "$.list-tenants.tenants.tenantId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-tenants": [
+                        "tenants"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 112,
+            "y": 16
+        },
+        "update-journal": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-journal": {
+                            "out": {
+                                "lambda": {
+                                    "Date": "2026-03-26",
+                                    "JournalLines": "{{{var-journal-lines}}}",
+                                    "LineAmountTypes": "Inclusive",
+                                    "ManualJournalID": "{{{var-journal-id}}}",
+                                    "Narration": "{{{var-updated-narration}}}",
+                                    "Status": "DRAFT",
+                                    "tenantId": "{{{var-tenant-id}}}"
+                                },
+                                "modifiers": {
+                                    "Date": {},
+                                    "JournalLines": {
+                                        "var-journal-lines": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.journalLines"
+                                        }
+                                    },
+                                    "LineAmountTypes": {},
+                                    "ManualJournalID": {
+                                        "var-journal-id": {
+                                            "functions": [],
+                                            "variable": "$.create-journal.out.ManualJournalID"
+                                        }
+                                    },
+                                    "Narration": {
+                                        "var-updated-narration": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.updatedNarration"
+                                        }
+                                    },
+                                    "Status": {},
+                                    "tenantId": {
+                                        "var-tenant-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.tenantId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-journal": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.xero.accounting.UpdateManualJournal",
+            "x": 512,
+            "y": 144
+        }
+    },
+    "name": "E2E Xero - Manual Journal Lifecycle",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}
