@@ -1,6 +1,6 @@
 {
     "name": "E2E Beehiiv - Post Discovery",
-    "description": "End-to-end test for Beehiiv connector - tests post discovery: list publications, find posts, and list posts via raw API call. CreatePost excluded (Enterprise-only endpoint).",
+    "description": "End-to-end test for Beehiiv connector - tests post discovery: list publications, find posts, get post detail.",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -163,8 +163,8 @@
                 }
             }
         },
-        "make-api-call-list": {
-            "type": "appmixer.beehiiv.core.MakeAPICallPosts",
+        "get-post": {
+            "type": "appmixer.beehiiv.core.GetPost",
             "x": 640,
             "y": 272,
             "version": "1.0.0",
@@ -176,9 +176,6 @@
                 }
             },
             "config": {
-                "properties": {
-                    "method": "Index9"
-                },
                 "transform": {
                     "in": {
                         "find-posts": {
@@ -191,11 +188,16 @@
                                             "functions": []
                                         }
                                     },
-                                    "limit": {}
+                                    "postId": {
+                                        "var-post-id": {
+                                            "variable": "$.find-posts.out.id",
+                                            "functions": []
+                                        }
+                                    }
                                 },
                                 "lambda": {
                                     "publicationId": "{{{var-pub-id}}}",
-                                    "limit": "5"
+                                    "postId": "{{{var-post-id}}}"
                                 }
                             }
                         }
@@ -203,14 +205,14 @@
                 }
             }
         },
-        "assert-api-list": {
+        "assert-get-post": {
             "type": "appmixer.utils.test.Assert",
             "x": 832,
             "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "make-api-call-list": [
+                    "get-post": [
                         "out"
                     ]
                 }
@@ -218,17 +220,17 @@
             "config": {
                 "transform": {
                     "in": {
-                        "make-api-call-list": {
+                        "get-post": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "field-total-results": {
-                                            "variable": "$.make-api-call-list.out.total_results",
+                                        "field-id": {
+                                            "variable": "$.get-post.out.data.id",
                                             "functions": []
                                         },
-                                        "field-page": {
-                                            "variable": "$.make-api-call-list.out.page",
+                                        "field-title": {
+                                            "variable": "$.get-post.out.data.title",
                                             "functions": []
                                         }
                                     }
@@ -237,11 +239,11 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{field-total-results}}}",
+                                                "field": "{{{field-id}}}",
                                                 "assertion": "notEmpty"
                                             },
                                             {
-                                                "field": "{{{field-page}}}",
+                                                "field": "{{{field-title}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -266,7 +268,7 @@
                     "assert-find-posts": [
                         "out"
                     ],
-                    "assert-api-list": [
+                    "assert-get-post": [
                         "out"
                     ]
                 }
