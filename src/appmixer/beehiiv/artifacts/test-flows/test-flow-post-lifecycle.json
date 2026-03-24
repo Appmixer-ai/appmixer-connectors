@@ -1,6 +1,6 @@
 {
     "name": "E2E Beehiiv - Post Lifecycle",
-    "description": "End-to-end test for Beehiiv connector - tests post read operations: list publications, find posts, get post details. CreatePost is excluded (Enterprise-only endpoint).",
+    "description": "End-to-end test for Beehiiv connector - tests post read + delete: list publications, find posts, get post, delete post. CreatePost excluded (Enterprise-only).",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -10,9 +10,9 @@
             "version": "1.0.0",
             "config": {}
         },
-        "list-publications": {
-            "type": "appmixer.beehiiv.core.ListPublications",
-            "x": 256,
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 192,
             "y": 16,
             "version": "1.0.0",
             "source": {
@@ -24,9 +24,23 @@
             },
             "config": {}
         },
+        "list-publications": {
+            "type": "appmixer.beehiiv.core.ListPublications",
+            "x": 320,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
         "find-posts": {
             "type": "appmixer.beehiiv.core.FindPosts",
-            "x": 448,
+            "x": 512,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -65,7 +79,7 @@
         },
         "assert-find-posts": {
             "type": "appmixer.utils.test.Assert",
-            "x": 832,
+            "x": 896,
             "y": 144,
             "version": "1.0.0",
             "source": {
@@ -107,7 +121,7 @@
         },
         "get-post": {
             "type": "appmixer.beehiiv.core.GetPost",
-            "x": 640,
+            "x": 704,
             "y": 272,
             "version": "1.0.0",
             "source": {
@@ -149,7 +163,7 @@
         },
         "assert-get-post": {
             "type": "appmixer.utils.test.Assert",
-            "x": 832,
+            "x": 896,
             "y": 272,
             "version": "1.0.0",
             "source": {
@@ -167,12 +181,12 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "field-title": {
-                                            "variable": "$.get-post.out.data.title",
-                                            "functions": []
-                                        },
                                         "field-id": {
                                             "variable": "$.get-post.out.data.id",
+                                            "functions": []
+                                        },
+                                        "field-title": {
+                                            "variable": "$.get-post.out.data.title",
                                             "functions": []
                                         }
                                     }
@@ -197,10 +211,94 @@
                 }
             }
         },
+        "delete-post": {
+            "type": "appmixer.beehiiv.core.DeletePost",
+            "x": 704,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-post": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-post": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "publicationId": {
+                                        "var-pub-id": {
+                                            "variable": "$.list-publications.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "postId": {
+                                        "var-post-id": {
+                                            "variable": "$.get-post.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "publicationId": "{{{var-pub-id}}}",
+                                    "postId": "{{{var-post-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-delete-post": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-post": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-post": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-post-id": {
+                                            "variable": "$.delete-post.out.postId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-post-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1024,
-            "y": 208,
+            "x": 1088,
+            "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -208,6 +306,9 @@
                         "out"
                     ],
                     "assert-get-post": [
+                        "out"
+                    ],
+                    "assert-delete-post": [
                         "out"
                     ]
                 }
@@ -220,8 +321,8 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1216,
-            "y": 208,
+            "x": 1280,
+            "y": 272,
             "version": "1.0.0",
             "source": {
                 "in": {
