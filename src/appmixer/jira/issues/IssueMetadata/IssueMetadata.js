@@ -65,18 +65,20 @@ module.exports = {
         }
 
         if (!issueType) {
-            const { issueTypes } = await commons.get(
+            const response = await commons.get(
                 `${apiUrl}issue/createmeta/${project}/issuetypes`,
                 auth
             );
+            const issueTypes = response.issueTypes || response.values || [];
 
-            return context.sendJson(issueTypes || [], 'out');
+            return context.sendJson(issueTypes, 'out');
         }
 
-        const { fields } = await commons.get(
+        const response = await commons.get(
             `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
             auth
         );
+        const fields = response.fields || response.values;
 
         if (!fields) {
             return context.sendJson([], 'out');

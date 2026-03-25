@@ -1,0 +1,101 @@
+{
+    "name": "appmixer.asanamcp.core.CallToolAI",
+    "description": "AI-powered tool calling for Asana MCP. Send a natural language prompt and an AI agent will select the appropriate tool, provide the arguments, and execute it.",
+    "auth": {
+        "service": "appmixer:asanamcp"
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "model": {
+                    "type": "string"
+                },
+                "maxSteps": {
+                    "type": "number"
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "model": {
+                    "type": "select",
+                    "label": "AI Model",
+                    "index": 1,
+                    "defaultValue": "gpt-4o",
+                    "tooltip": "Select the AI model to use for tool selection and argument generation.",
+                    "options": [
+                        { "content": "GPT-4o", "value": "gpt-4o" },
+                        { "content": "GPT-4o Mini", "value": "gpt-4o-mini" },
+                        { "content": "Claude 3.5 Sonnet", "value": "claude-3-5-sonnet-20241022" }
+                    ]
+                },
+                "maxSteps": {
+                    "type": "number",
+                    "label": "Max Steps",
+                    "index": 2,
+                    "defaultValue": 3,
+                    "tooltip": "Maximum number of tool calls the AI agent can make in a single execution. Higher values allow more complex multi-step queries."
+                }
+            }
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "context": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "prompt": {
+                        "type": "textarea",
+                        "label": "Prompt",
+                        "index": 1,
+                        "tooltip": "Natural language instruction for what you want to do with Asana. Example: 'Find all my incomplete tasks due this week'"
+                    },
+                    "context": {
+                        "type": "textarea",
+                        "label": "Additional Context",
+                        "index": 2,
+                        "tooltip": "Optional additional context to help the AI understand your request better."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Answer",
+                    "value": "answer"
+                },
+                {
+                    "label": "Tools Called",
+                    "value": "toolsCalled"
+                },
+                {
+                    "label": "Results",
+                    "value": "results"
+                },
+                {
+                    "label": "Steps",
+                    "value": "steps"
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cmFkaWFsR3JhZGllbnQgaWQ9ImEiIGN4PSI2NCIgY3k9IjEyOCIgcj0iMTI4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZiOTAwIi8+PHN0b3Agb2Zmc2V0PSIuNiIgc3RvcC1jb2xvcj0iI2Y5NWQ4ZiIvPjxzdG9wIG9mZnNldD0iLjk5IiBzdG9wLWNvbG9yPSIjZjk1MzUzIi8+PC9yYWRpYWxHcmFkaWVudD48cGF0aCBmaWxsPSJ1cmwoI2EpIiBkPSJNOTguMDQ0IDc1LjkxN2MtMTMuMjU2IDAtMjQuMDA0IDEwLjc0OC0yNC4wMDQgMjQuMDA0UzQ4LjY1IDEyNCAxMi40IDEyNHMtMjQuMDA0LTEwLjc0OC0yNC4wMDQtMjQuMDA0czEwLjc0OC0yNC4wMDQgMjQuMDA0LTI0LjAwNGMxMy4yNTYgMCAyNC4wMDQgMTAuNzQ4IDI0LjAwNCAyNC4wMDRTNDguNjUgNzUuOTE3IDk4LjA0NCA3NS45MTdzMjQuMDA0IDEwLjc0OCAyNC4wMDQgMjQuMDA0UzExMS4zIDEyNCA5OC4wNDQgMTI0czI0LjAwNC0xMC43NDggMjQuMDA0LTI0LjAwNC0xMC43NDgtMjQuMDA0LTI0LjAwNC0yNC4wMDR6TTY0IDQ4LjA3Yy0xMy4yNTYgMC0yNC4wMDQtMTAuNzQ4LTI0LjAwNC0yNC4wMDRTNTAuNzQ0IDAgNjQgMHMyNC4wMDQgMTAuNzQ4IDI0LjAwNCAyNC4wMDRTNzcuMjU2IDQ4LjA3IDY0IDQ4LjA3eiIvPjwvc3ZnPg=="
+}

@@ -1,0 +1,77 @@
+{
+    "name": "appmixer.asanamcp.core.CallTool",
+    "description": "Call any tool on the Asana MCP server. Select a tool and provide its inputs — the input form is dynamically generated based on the tool's schema.",
+    "auth": {
+        "service": "appmixer:asanamcp"
+    },
+    "properties": {
+        "schema": {
+            "properties": {
+                "toolName": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "toolName"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "toolName": {
+                    "type": "select",
+                    "label": "Tool",
+                    "index": 1,
+                    "tooltip": "Select an MCP tool to call. Available tools are fetched dynamically from the Asana MCP server.",
+                    "source": {
+                        "url": "/component/appmixer/asanamcp/core/ListTools?outPort=out",
+                        "data": {
+                            "transform": "./ListTools#toolsToSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "source": {
+                "url": "/component/appmixer/asanamcp/core/ListTools?outPort=out",
+                "data": {
+                    "messages": {
+                        "in/toolName": "properties/toolName"
+                    },
+                    "transform": "./ListTools#toolInputToInspector"
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Tool Name",
+                    "value": "toolName"
+                },
+                {
+                    "label": "Result Text",
+                    "value": "text"
+                },
+                {
+                    "label": "Result JSON",
+                    "value": "json"
+                },
+                {
+                    "label": "Is Error",
+                    "value": "isError"
+                },
+                {
+                    "label": "Raw Response",
+                    "value": "raw"
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij48cmFkaWFsR3JhZGllbnQgaWQ9ImEiIGN4PSI2NCIgY3k9IjEyOCIgcj0iMTI4IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZmZiOTAwIi8+PHN0b3Agb2Zmc2V0PSIuNiIgc3RvcC1jb2xvcj0iI2Y5NWQ4ZiIvPjxzdG9wIG9mZnNldD0iLjk5IiBzdG9wLWNvbG9yPSIjZjk1MzUzIi8+PC9yYWRpYWxHcmFkaWVudD48cGF0aCBmaWxsPSJ1cmwoI2EpIiBkPSJNOTguMDQ0IDc1LjkxN2MtMTMuMjU2IDAtMjQuMDA0IDEwLjc0OC0yNC4wMDQgMjQuMDA0UzQ4LjY1IDEyNCAxMi40IDEyNHMtMjQuMDA0LTEwLjc0OC0yNC4wMDQtMjQuMDA0czEwLjc0OC0yNC4wMDQgMjQuMDA0LTI0LjAwNGMxMy4yNTYgMCAyNC4wMDQgMTAuNzQ4IDI0LjAwNCAyNC4wMDRTNDguNjUgNzUuOTE3IDk4LjA0NCA3NS45MTdzMjQuMDA0IDEwLjc0OCAyNC4wMDQgMjQuMDA0UzExMS4zIDEyNCA5OC4wNDQgMTI0czI0LjAwNC0xMC43NDggMjQuMDA0LTI0LjAwNC0xMC43NDgtMjQuMDA0LTI0LjAwNC0yNC4wMDR6TTY0IDQ4LjA3Yy0xMy4yNTYgMC0yNC4wMDQtMTAuNzQ4LTI0LjAwNC0yNC4wMDRTNTAuNzQ0IDAgNjQgMHMyNC4wMDQgMTAuNzQ4IDI0LjAwNCAyNC4wMDRTNzcuMjU2IDQ4LjA3IDY0IDQ4LjA3eiIvPjwvc3ZnPg=="
+}
