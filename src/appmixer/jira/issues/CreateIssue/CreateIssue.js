@@ -85,10 +85,11 @@ module.exports = {
         const hasCustomFields = Object.keys(issue).some(key => key.startsWith('customfield_'));
         if (hasCustomFields) {
             try {
-                const { fields } = await commons.get(
+                const response = await commons.get(
                     `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
                     auth
                 );
+                const fields = response.fields || response.values;
                 if (fields) {
                     const fieldMeta = fields.reduce((acc, field) => {
                         acc[field.fieldId] = field;
