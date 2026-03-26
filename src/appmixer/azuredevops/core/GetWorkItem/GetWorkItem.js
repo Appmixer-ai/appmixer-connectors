@@ -1,6 +1,7 @@
 'use strict';
 
 const api = require('../../api');
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -20,6 +21,6 @@ module.exports = {
 
         const workItem = await api.GetWorkItem.execute(context, { organization, project, workItemId });
 
-        return context.sendJson(workItem, 'out');
+        return context.sendJson(lib.expandDottedKeys(workItem), 'out');
     }
 };

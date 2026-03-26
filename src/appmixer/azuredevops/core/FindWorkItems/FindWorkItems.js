@@ -47,6 +47,7 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        return lib.sendArrayOutput({ context, outputType, records: workItems });
+        const expandedItems = workItems.map(item => lib.expandDottedKeys(item));
+        return lib.sendArrayOutput({ context, outputType, records: expandedItems });
     }
 };

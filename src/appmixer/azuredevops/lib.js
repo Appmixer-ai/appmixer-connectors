@@ -62,6 +62,42 @@ module.exports = {
     },
 
     /**
+     * Expand dot-notation keys in an object into nested objects.
+     * Azure DevOps API returns { fields: { "System.Title": "value" } } where
+     * "System.Title" is a single key with a dot. Appmixer resolves variable
+     * paths like $.comp.out.fields.System.Title by traversing nested keys.
+     * This function converts dotted keys into nested structures so the engine
+     * can resolve them properly.
+     */
+    expandDottedKeys(obj) {
+        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+            return obj;
+        }
+        const result = {};
+        for (const key of Object.keys(obj)) {
+            const val = obj[key];
+            if (key.includes('.')) {
+                const parts = key.split('.');
+                let current = result;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+                        current[parts[i]] = {};
+                    }
+                    current = current[parts[i]];
+                }
+                current[parts[parts.length - 1]] = (val && typeof val === 'object' && !Array.isArray(val))
+                    ? module.exports.expandDottedKeys(val)
+                    : val;
+            } else {
+                result[key] = (val && typeof val === 'object' && !Array.isArray(val))
+                    ? module.exports.expandDottedKeys(val)
+                    : val;
+            }
+        }
+        return result;
+    },
+
+    /**
      * Compare a set of known item IDs against current items and return the diff.
      * @param {Set|null} known - Previously known IDs
      * @param {Array} items - Current items from the API

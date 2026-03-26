@@ -1,6 +1,7 @@
 'use strict';
 
 const api = require('../../api');
+const lib = require('../../lib');
 
 module.exports = {
 
@@ -44,6 +45,6 @@ module.exports = {
             tags
         });
 
-        return context.sendJson(workItem, 'out');
+        return context.sendJson(lib.expandDottedKeys(workItem), 'out');
     }
 };
