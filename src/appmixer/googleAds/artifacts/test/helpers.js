@@ -83,9 +83,21 @@ const BASIC_EMAIL_SCHEMA = googleAdsSchema([
     { csvHeader: 'email', googleAdsType: 'email' }
 ]);
 
+function applyGoogleAdsConfig(context, overrides = {}) {
+    context.config = {
+        ...(context.config || {}),
+        developerToken: 'dev-token',
+        loginCustomerId: '9999999999',
+        ...overrides
+    };
+
+    return context;
+}
+
 module.exports = {
     BASIC_EMAIL_SCHEMA,
     SHARED_CSV_HEADER,
+    applyGoogleAdsConfig,
     csvStream,
     emailCsv,
     googleAdsSchema,

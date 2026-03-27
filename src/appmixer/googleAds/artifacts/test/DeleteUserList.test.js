@@ -3,6 +3,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const DeleteUserList = require('../../core/DeleteUserList/DeleteUserList.js');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('DeleteUserList', () => {
 
@@ -11,6 +12,7 @@ describe('DeleteUserList', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.messages = { in: { content: {} } };
+        applyGoogleAdsConfig(context);
     });
 
     it('should require Customer ID', async () => {
@@ -23,13 +25,14 @@ describe('DeleteUserList', () => {
         });
     });
 
-    it('should require Developer Token', async () => {
+    it('should require developer token in backoffice config', async () => {
         context.messages.in.content = {
             customerId: '123'
         };
+        context.config = {};
 
         await assert.rejects(() => DeleteUserList.receive(context), {
-            message: 'Developer Token is required!'
+            message: 'Developer Token is required in backoffice config!'
         });
     });
 
@@ -91,13 +94,12 @@ describe('DeleteUserList', () => {
         assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
     });
 
-    it('should accept loginCustomerId parameter', async () => {
+    it('should use loginCustomerId from backoffice config', async () => {
         context.messages.in.content = {
             customerId: '7107133715',
-            developerToken: 'test-token',
-            loginCustomerId: '5338559342',
             userListId: '123456'
         };
+        context.config.loginCustomerId = '5338559342';
 
         context.httpRequest.resolves({
             data: { results: [] }

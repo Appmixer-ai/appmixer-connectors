@@ -29,27 +29,37 @@ function normalizeCustomerId(customerId) {
     return String(customerId || '').replace(/[^0-9]/g, '');
 }
 
-function buildHeaders(context, { developerToken, loginCustomerId }) {
+function getGoogleAdsConfig(context) {
+    const developerToken = context.config?.developerToken;
+    const loginCustomerId = context.config?.loginCustomerId;
+
+    ensureRequired(developerToken, 'Developer Token is required in backoffice config!', context);
+    ensureRequired(loginCustomerId, 'Login Customer ID is required in backoffice config!', context);
+
+    return {
+        developerToken,
+        loginCustomerId
+    };
+}
+
+function buildHeaders(context) {
+    const { developerToken, loginCustomerId } = getGoogleAdsConfig(context);
     const headers = {
         'Authorization': `Bearer ${context.auth.accessToken}`,
         'developer-token': developerToken
     };
 
-    if (loginCustomerId) {
-        headers['login-customer-id'] = normalizeCustomerId(loginCustomerId);
-    }
+    headers['login-customer-id'] = normalizeCustomerId(loginCustomerId);
 
     return headers;
 }
 
 async function searchStream(context, {
     customerId,
-    developerToken,
-    loginCustomerId,
     query
 }) {
     const normalizedCustomerId = normalizeCustomerId(customerId);
-    const headers = buildHeaders(context, { developerToken, loginCustomerId });
+    const headers = buildHeaders(context);
 
     const { data } = await context.httpRequest({
         method: 'POST',
@@ -319,6 +329,7 @@ function toCsv(array) {
 
 module.exports = {
     ensureRequired,
+    getGoogleAdsConfig,
     normalizeCustomerId,
     buildHeaders,
     searchStream,

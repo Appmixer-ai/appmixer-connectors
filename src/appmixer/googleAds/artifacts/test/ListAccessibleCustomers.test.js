@@ -1,6 +1,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const ListAccessibleCustomers = require('../../core/ListAccessibleCustomers/ListAccessibleCustomers');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('ListAccessibleCustomers', () => {
 
@@ -9,11 +10,14 @@ describe('ListAccessibleCustomers', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.messages = { in: { content: {} } };
+        applyGoogleAdsConfig(context);
     });
 
-    it('throws when developerToken is missing', async () => {
+    it('throws when developer token is missing in backoffice config', async () => {
+        context.config = {};
+
         await assert.rejects(() => ListAccessibleCustomers.receive(context), {
-            message: 'Developer Token is required!'
+            message: 'Developer Token is required in backoffice config!'
         });
     });
 

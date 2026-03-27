@@ -8,8 +8,6 @@ module.exports = {
 
         const {
             customerId,
-            developerToken,
-            loginCustomerId,
             userListId,
             userListResourceName,
             email,
@@ -25,7 +23,7 @@ module.exports = {
         } = context.messages.in.content;
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
+        lib.getGoogleAdsConfig(context);
 
         // Resolve user list resource name from either explicit resource name or numeric ID
         const normalizedCustomerId = lib.normalizeCustomerId(customerId);
@@ -115,7 +113,7 @@ module.exports = {
         const { data } = await context.httpRequest({
             method: 'POST',
             url: `${lib.API_BASE_URL}/customers/${normalizedCustomerId}:uploadUserData`,
-            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
+            headers: lib.buildHeaders(context),
             data: requestBody
         });
 
