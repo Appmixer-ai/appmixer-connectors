@@ -34,14 +34,15 @@ module.exports = {
                 'Accept': 'application/json'
             };
 
-            console.log(url)
             const response = await context.httpRequest({
                 method: 'GET',
                 url,
                 headers
             });
 
-            console.log(response.data)
+            if (!response.data) {
+                throw new Error('Invalid response from Freshsales API');
+            }
             return true;
         }
     }
