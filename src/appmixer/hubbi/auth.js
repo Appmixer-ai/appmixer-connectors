@@ -40,7 +40,7 @@ module.exports = {
             const baseUrl = context.baseUrl.replace(/\/$/, '');
             await context.httpRequest({
                 method: 'GET',
-                url: `${baseUrl}/Flows/Home/Index`,
+                url: `${baseUrl}/Flows/Home/HubsList?clientKey=${encodeURIComponent(context.clientKey)}`,
                 headers: {
                     'Authorization': `Bearer ${context.token}`
                 }
