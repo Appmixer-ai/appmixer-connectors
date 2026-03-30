@@ -22,7 +22,7 @@ module.exports = {
     dealViewsToSelectArray({ result:views }) {
 
 
-        // console.log(views)
+
         if (!Array.isArray(views)) {
             return [];
         }
