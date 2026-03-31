@@ -2,7 +2,10 @@
 
 module.exports = {
     async receive(context) {
-        const { id, title, from_date: fromDate, end_date: endDate, time_zone: timeZone, location, description } = context.messages.in.content;
+        const {
+            id, title, from_date: fromDate, end_date: endDate,
+            time_zone: timeZone, location, description
+        } = context.messages.in.content;
         if (!id) throw new context.CancelError('Appointment ID is required!');
 
         const appointment = {};
