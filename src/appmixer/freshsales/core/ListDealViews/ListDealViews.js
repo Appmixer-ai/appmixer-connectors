@@ -22,7 +22,6 @@ module.exports = {
     dealViewsToSelectArray({ result:views }) {
 
 
-
         if (!Array.isArray(views)) {
             return [];
         }
