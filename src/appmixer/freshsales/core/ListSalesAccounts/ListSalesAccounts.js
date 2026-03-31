@@ -19,7 +19,7 @@ module.exports = {
         // https://developers.freshsales.io/api/#list_all_sales_accounts
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://${context.auth.domain}/api/sales_accounts/filters/views`,
+            url: `https://${context.auth.domain}/api/sales_accounts/filters`,
             headers: {
                 'Authorization': `Token token=${context.auth.apiKey}`,
                 'Content-Type': 'application/json',
