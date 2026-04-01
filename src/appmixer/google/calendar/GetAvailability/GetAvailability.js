@@ -30,7 +30,12 @@ module.exports = {
         const startMs = new Date(startTime).getTime();
         const endMs = new Date(endTime).getTime();
 
-        const overlapping = items.filter(event => {
+        // Only consider regular calendar events — skip working locations, out-of-office,
+        // focus time, etc. The eventType field is 'default' for regular events.
+        // Events without an eventType (older API responses) are treated as default.
+        const regularEvents = items.filter(event => !event.eventType || event.eventType === 'default');
+
+        const overlapping = regularEvents.filter(event => {
             const evStart = new Date(event.start.dateTime || event.start.date).getTime();
             const evEnd = new Date(event.end.dateTime || event.end.date).getTime();
             // Overlap condition: evStart < endMs && evEnd > startMs
