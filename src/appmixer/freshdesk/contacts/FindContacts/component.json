@@ -1,0 +1,126 @@
+{
+    "name": "appmixer.freshdesk.contacts.FindContacts",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search and filter contacts in Freshdesk.",
+    "private": false,
+    "auth": {
+        "service": "appmixer:freshdesk"
+    },
+    "quota": {
+        "manager": "appmixer:freshdesk",
+        "resources": "contacts.polling",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": { "type": "string" },
+                    "email": { "type": "string" },
+                    "phone": { "type": "string" },
+                    "mobilePhone": { "type": "string" },
+                    "companyId": { "type": "number" },
+                    "tag": { "type": "string" },
+                    "updatedSince": { "type": "string" },
+                    "page": { "type": "number" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "label": "Search Query",
+                        "index": 1,
+                        "group": "search",
+                        "tooltip": "Full-text search query (uses Freshdesk search API). If provided, other filters are ignored."
+                    },
+                    "email": {
+                        "type": "text",
+                        "label": "Email",
+                        "index": 1,
+                        "group": "filter",
+                        "tooltip": "Filter contacts by exact email address."
+                    },
+                    "phone": {
+                        "type": "text",
+                        "label": "Phone",
+                        "index": 2,
+                        "group": "filter",
+                        "tooltip": "Filter contacts by phone number."
+                    },
+                    "mobilePhone": {
+                        "type": "text",
+                        "label": "Mobile Phone",
+                        "index": 3,
+                        "group": "filter",
+                        "tooltip": "Filter contacts by mobile phone number."
+                    },
+                    "companyId": {
+                        "type": "number",
+                        "label": "Company ID",
+                        "index": 4,
+                        "group": "filter",
+                        "tooltip": "Filter contacts by company ID."
+                    },
+                    "tag": {
+                        "type": "text",
+                        "label": "Tag",
+                        "index": 5,
+                        "group": "filter",
+                        "tooltip": "Filter contacts by tag."
+                    },
+                    "updatedSince": {
+                        "type": "text",
+                        "label": "Updated Since",
+                        "index": 6,
+                        "group": "filter",
+                        "tooltip": "Return contacts updated after this timestamp (ISO 8601 format, e.g. 2021-01-01T00:00:00Z)."
+                    },
+                    "page": {
+                        "type": "number",
+                        "label": "Page",
+                        "index": 7,
+                        "group": "filter",
+                        "tooltip": "Page number for pagination (30 contacts per page).",
+                        "defaultValue": 1
+                    }
+                },
+                "groups": {
+                    "search": {
+                        "label": "Full-Text Search",
+                        "index": 1
+                    },
+                    "filter": {
+                        "label": "Filter",
+                        "index": 2
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "contacts",
+            "options": [
+                { "label": "Contacts", "value": "contacts" },
+                { "label": "Contact ID", "value": "contacts[].id" },
+                { "label": "Name", "value": "contacts[].name" },
+                { "label": "Email", "value": "contacts[].email" },
+                { "label": "Phone", "value": "contacts[].phone" },
+                { "label": "Mobile", "value": "contacts[].mobile" },
+                { "label": "Twitter Handle", "value": "contacts[].twitter_id" },
+                { "label": "Company ID", "value": "contacts[].company_id" },
+                { "label": "Job Title", "value": "contacts[].job_title" },
+                { "label": "Tags", "value": "contacts[].tags" },
+                { "label": "Active", "value": "contacts[].active" },
+                { "label": "Created At", "value": "contacts[].created_at" },
+                { "label": "Updated At", "value": "contacts[].updated_at" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHBhdGggZD0iTTMxLjkgMGgyNC4wMzZBOCA4IDAgMCAxIDY0IDguMDczVjMyLjFDNjQgNDkuNzIyIDQ5LjcyMiA2NCAzMi4xIDY0aC0uMTgyQTMxLjg5IDMxLjg5IDAgMCAxIDAgMzIuMTA5QzAgMTQuNDM3IDE0LjI1NC4xODIgMzEuOSAweiIgZmlsbD0iIzI1YzE2ZiIvPjxwYXRoIGQ9Ik0zMS45IDE0LjI1NWMtOC4wOTMgMC0xNC42NTQgNi41Ni0xNC42NTQgMTQuNjU0djkuOTY0Yy4wNTggMi42NjcgMi4yMDYgNC44MTUgNC44NzMgNC44NzNoNC4xNDVWMzIuM2gtNS42di0zLjJjLjM0LTYuMDI2IDUuMzI3LTEwLjc0IDExLjM2NC0xMC43NFM0My4wNCAyMy4wNjUgNDMuMzggMjkuMXYzLjJIMzcuN3YxMS40NTRoMy43NDV2LjE4MmMtLjA0IDIuNDc0LTIuMDM1IDQuNDctNC41IDQuNWgtNC40NzNjLS4zNjQgMC0uNzY0LjE4Mi0uNzY0LjU0NWEuOC44IDAgMCAwIC43NjQuNzY0aDQuNWMzLjIwNS0uMDIgNS43OTgtMi42MTMgNS44MTgtNS44MTh2LS4zNjRhNC44IDQuOCAwIDAgMCAzLjc0NS00LjcyN1YyOS4xYy4xODItOC4yNTQtNi4zNjQtMTQuODM2LTE0LjY1NC0xNC44MzZ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+"
+}
