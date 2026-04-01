@@ -39,16 +39,24 @@ module.exports = {
         const includeAllDay = selectedTypes.includes('allDay');
 
         // Filter to only the event types the user wants to consider.
-        // Events without an eventType field are treated as 'default' (older API responses).
-        // All-day events are identified by having start.date (no dateTime) — they are a
-        // property of the time format, not a separate eventType in the Google API.
+        // Non-default eventTypes (workingLocation, outOfOffice, focusTime) take priority —
+        // some of these are also stored as all-day events by Google, so we must check
+        // eventType first to avoid misclassifying them as allDay.
+        // The 'allDay' option only applies to regular (default) events that span a full day.
         const filteredEvents = items.filter(event => {
+            const type = event.eventType || 'default';
+
+            // Non-default event types: check against selectedTypes directly
+            if (type !== 'default') {
+                return selectedTypes.includes(type);
+            }
+
+            // Default event type: distinguish timed vs all-day by presence of dateTime
             const isAllDay = !event.start.dateTime;
             if (isAllDay) {
                 return includeAllDay;
             }
-            const type = event.eventType || 'default';
-            return selectedTypes.includes(type);
+            return selectedTypes.includes('default');
         });
 
         const overlapping = filteredEvents.filter(event => {
