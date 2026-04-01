@@ -10,7 +10,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { calendarId, startTime, endTime } = context.messages.in.content;
+        const { calendarId, startTime, endTime, eventTypes } = context.messages.in.content;
 
         // Fetch all events in the given time range
         const payload = {
@@ -30,10 +30,18 @@ module.exports = {
         const startMs = new Date(startTime).getTime();
         const endMs = new Date(endTime).getTime();
 
-        // Only consider regular calendar events — skip working locations, out-of-office,
-        // focus time, etc. The eventType field is 'default' for regular events.
-        // Events without an eventType (older API responses) are treated as default.
-        const regularEvents = items.filter(event => !event.eventType || event.eventType === 'default');
+        // Determine which event types to consider. Default to ['default'] (regular events only).
+        // Normalise: eventTypes may be a string (single value mapped from flow) or an array.
+        const selectedTypes = eventTypes
+            ? (Array.isArray(eventTypes) ? eventTypes : [eventTypes])
+            : ['default'];
+
+        // Filter to only the event types the user wants to consider.
+        // Events without an eventType field are treated as 'default' (older API responses).
+        const regularEvents = items.filter(event => {
+            const type = event.eventType || 'default';
+            return selectedTypes.includes(type);
+        });
 
         const overlapping = regularEvents.filter(event => {
             const evStart = new Date(event.start.dateTime || event.start.date).getTime();
