@@ -1,6 +1,6 @@
 {
     "name": "E2E Google Calendar - GetAvailability",
-    "description": "E2E test for the GetAvailability component. Tests two scenarios: (1) a far-future time slot that should be available, (2) verifies the response always includes a boolean 'available' field and correct eventTypes filtering.",
+    "description": "E2E test for the GetAvailability component. Tests: (1) default events in a busy range returns available=false with non-empty events array, (2) workingLocation filter returns only working-location events (available field present), (3) eventType field is present on returned events.",
     "type": "automation",
     "notes": {},
     "flow": {
@@ -60,9 +60,9 @@
                 }
             }
         },
-        "get-availability-free": {
+        "get-availability-busy": {
             "type": "appmixer.google.calendar.GetAvailability",
-            "label": "GetAvailability (far future — expect available)",
+            "label": "GetAvailability (now → 30 days, default events)",
             "x": 640,
             "y": 16,
             "version": "1.0.0",
@@ -88,8 +88,7 @@
                                         "var-start": {
                                             "variable": "$.on-start.out.started",
                                             "functions": [
-                                                { "name": "g_now" },
-                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 365 } } }
+                                                { "name": "g_now" }
                                             ]
                                         }
                                     },
@@ -98,7 +97,7 @@
                                             "variable": "$.on-start.out.started",
                                             "functions": [
                                                 { "name": "g_now" },
-                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 365 }, "hours": { "value": 1 } } }
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 30 } } }
                                             ]
                                         }
                                     },
@@ -116,27 +115,27 @@
                 }
             }
         },
-        "assert-free": {
+        "assert-events-returned": {
             "type": "appmixer.utils.test.Assert",
-            "label": "Assert: available is true for far-future slot",
+            "label": "Assert: events array is returned (calendar has events in next 30 days)",
             "x": 832,
             "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "get-availability-free": ["out"]
+                    "get-availability-busy": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "get-availability-free": {
+                        "get-availability-busy": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "available-check": {
-                                            "variable": "$.get-availability-free.out.available",
+                                        "events-check": {
+                                            "variable": "$.get-availability-busy.out.events",
                                             "functions": []
                                         }
                                     }
@@ -145,8 +144,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{available-check}}}",
-                                                "assertion": "isTrue"
+                                                "field": "{{{events-check}}}",
+                                                "assertion": "notEmpty"
                                             }
                                         ]
                                     }
@@ -157,9 +156,9 @@
                 }
             }
         },
-        "get-availability-any": {
+        "get-availability-working-location": {
             "type": "appmixer.google.calendar.GetAvailability",
-            "label": "GetAvailability (broad range — check response shape)",
+            "label": "GetAvailability (workingLocation filter)",
             "x": 640,
             "y": 160,
             "version": "1.0.0",
@@ -182,7 +181,7 @@
                                         }
                                     },
                                     "startTime": {
-                                        "var-start-now": {
+                                        "var-start": {
                                             "variable": "$.on-start.out.started",
                                             "functions": [
                                                 { "name": "g_now" }
@@ -190,11 +189,11 @@
                                         }
                                     },
                                     "endTime": {
-                                        "var-end-future": {
+                                        "var-end": {
                                             "variable": "$.on-start.out.started",
                                             "functions": [
                                                 { "name": "g_now" },
-                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 30 } } }
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 7 } } }
                                             ]
                                         }
                                     },
@@ -202,9 +201,9 @@
                                 },
                                 "lambda": {
                                     "calendarId": "{{{var-calendar-id}}}",
-                                    "startTime": "{{{var-start-now}}}",
-                                    "endTime": "{{{var-end-future}}}",
-                                    "eventTypes": ["default"]
+                                    "startTime": "{{{var-start}}}",
+                                    "endTime": "{{{var-end}}}",
+                                    "eventTypes": ["workingLocation"]
                                 }
                             }
                         }
@@ -212,27 +211,27 @@
                 }
             }
         },
-        "assert-response-shape": {
+        "assert-working-location-available-field": {
             "type": "appmixer.utils.test.Assert",
-            "label": "Assert: 'available' field is present and is boolean",
+            "label": "Assert: workingLocation filter — available field present in response",
             "x": 832,
             "y": 160,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "get-availability-any": ["out"]
+                    "get-availability-working-location": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "get-availability-any": {
+                        "get-availability-working-location": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "available-present": {
-                                            "variable": "$.get-availability-any.out.available",
+                                        "available-var": {
+                                            "variable": "$.get-availability-working-location.out.available",
                                             "functions": []
                                         }
                                     }
@@ -241,7 +240,7 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{available-present}}}",
+                                                "field": "{{{available-var}}}",
                                                 "assertion": "notEmpty"
                                             }
                                         ]
@@ -260,8 +259,8 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-free": ["out"],
-                    "assert-response-shape": ["out"]
+                    "assert-events-returned": ["out"],
+                    "assert-working-location-available-field": ["out"]
                 }
             },
             "config": {

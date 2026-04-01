@@ -71,6 +71,7 @@ module.exports = {
         }
 
         const events = overlapping.map(event => {
+            const isAllDay = !event.start.dateTime;
             return {
                 id: event.id,
                 summary: event.summary,
@@ -78,7 +79,11 @@ module.exports = {
                 location: event.location,
                 start: commons.formatDate(event.start),
                 end: commons.formatDate(event.end),
-                eventType: event.start.dateTime ? (event.eventType || 'default') : 'allDay',
+                // eventType reflects the Google API value (default, workingLocation, outOfOffice,
+                // focusTime). isAllDay is a separate boolean — an event can be both all-day
+                // AND have a non-default eventType (e.g. a workingLocation stored as all-day).
+                eventType: event.eventType || 'default',
+                isAllDay,
                 status: event.status,
                 htmlLink: event.htmlLink,
                 creator: event.creator,
