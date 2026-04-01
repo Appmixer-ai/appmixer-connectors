@@ -46,7 +46,8 @@ module.exports = {
             context,
             outputPortName,
             outputType,
-            records: tasks
+            records: tasks,
+            arrayKey: 'tasks'
         });
     },
 
