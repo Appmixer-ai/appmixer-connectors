@@ -1,0 +1,488 @@
+{
+    "name": "E2E Clickup - checklists",
+    "description": "End-to-end test for Clickup connector - tests checklist operations: CreateTask, CreateChecklist, UpdateChecklist, DeleteChecklist",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "listId",
+                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskName",
+                                                "text": "E2E Checklist Test Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "checklistName",
+                                                "text": "E2E Test Checklist"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedChecklistName",
+                                                "text": "E2E Test Checklist Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "var-list-id": {
+                                            "variable": "$.set-variables.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-task-name": {
+                                            "variable": "$.set-variables.out.taskName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{var-list-id}}}",
+                                    "name": "{{{var-task-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-task": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Assert CreateTask",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "task-id-check": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-checklist": {
+            "type": "appmixer.clickup.core.CreateChecklist",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-checklist-name": {
+                                            "variable": "$.set-variables.out.checklistName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}",
+                                    "name": "{{{var-checklist-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-checklist": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 144,
+            "version": "1.0.0",
+            "label": "Assert CreateChecklist",
+            "source": {
+                "in": {
+                    "create-checklist": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-checklist": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "checklist-id-check": {
+                                            "variable": "$.create-checklist.out.checklist.id",
+                                            "functions": []
+                                        },
+                                        "checklist-name-check": {
+                                            "variable": "$.create-checklist.out.checklist.name",
+                                            "functions": []
+                                        },
+                                        "expected-checklist-name": {
+                                            "variable": "$.set-variables.out.checklistName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{checklist-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{checklist-name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-checklist-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-checklist": {
+            "type": "appmixer.clickup.core.UpdateChecklist",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-checklist": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-checklist": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "checklistId": {
+                                        "var-checklist-id": {
+                                            "variable": "$.create-checklist.out.checklist.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-updated-name": {
+                                            "variable": "$.set-variables.out.updatedChecklistName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "checklistId": "{{{var-checklist-id}}}",
+                                    "name": "{{{var-updated-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update-checklist": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 272,
+            "version": "1.0.0",
+            "label": "Assert UpdateChecklist",
+            "source": {
+                "in": {
+                    "update-checklist": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-checklist": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-checklist-id-check": {
+                                            "variable": "$.update-checklist.out.checklistId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{updated-checklist-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1792,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-task": [
+                        "out"
+                    ],
+                    "assert-create-checklist": [
+                        "out"
+                    ],
+                    "assert-update-checklist": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-checklist": {
+            "type": "appmixer.clickup.core.DeleteChecklist",
+            "x": 1984,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "checklistId": {
+                                        "var-checklist-id": {
+                                            "variable": "$.create-checklist.out.checklist.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "checklistId": "{{{var-checklist-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-task": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 2176,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-checklist": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-checklist": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2368,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - checklists",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

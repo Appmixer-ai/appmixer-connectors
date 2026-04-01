@@ -1,0 +1,636 @@
+{
+    "name": "E2E Clickup - task-details",
+    "description": "End-to-end test for Clickup connector - tests task detail operations: CreateTask, GetTask, SetTaskCustomField, AddTaskTag, RemoveTaskTag",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "listId",
+                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskName",
+                                                "text": "E2E Test Task"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "customFieldId",
+                                                "text": "YOUR_CLICKUP_CUSTOM_FIELD_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "customFieldValue",
+                                                "text": "E2E Custom Field Value"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "text": "e2e-test-tag"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "var-list-id": {
+                                            "variable": "$.set-variables.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-task-name": {
+                                            "variable": "$.set-variables.out.taskName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{var-list-id}}}",
+                                    "name": "{{{var-task-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Assert CreateTask",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "task-id-check": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-task": {
+            "type": "appmixer.clickup.core.GetTask",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 144,
+            "version": "1.0.0",
+            "label": "Assert GetTask",
+            "source": {
+                "in": {
+                    "get-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "task-name-check": {
+                                            "variable": "$.get-task.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-task-name": {
+                                            "variable": "$.set-variables.out.taskName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{task-name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-task-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "set-custom-field": {
+            "type": "appmixer.clickup.core.SetTaskCustomField",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.get-task.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fieldId": {
+                                        "var-field-id": {
+                                            "variable": "$.set-variables.out.customFieldId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "value": {
+                                        "var-field-value": {
+                                            "variable": "$.set-variables.out.customFieldValue",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}",
+                                    "fieldId": "{{{var-field-id}}}",
+                                    "value": "{{{var-field-value}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-set-custom-field": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 272,
+            "version": "1.0.0",
+            "label": "Assert SetTaskCustomField",
+            "source": {
+                "in": {
+                    "set-custom-field": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-custom-field": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "custom-field-task-id-check": {
+                                            "variable": "$.set-custom-field.out.taskId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{custom-field-task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "add-tag": {
+            "type": "appmixer.clickup.core.AddTaskTag",
+            "x": 1216,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-custom-field": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-custom-field": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.set-custom-field.out.taskId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "var-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}",
+                                    "tagName": "{{{var-tag-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-add-tag": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 400,
+            "version": "1.0.0",
+            "label": "Assert AddTaskTag",
+            "source": {
+                "in": {
+                    "add-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "added-tag-name-check": {
+                                            "variable": "$.add-tag.out.tagName",
+                                            "functions": []
+                                        },
+                                        "expected-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{added-tag-name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-tag-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "remove-tag": {
+            "type": "appmixer.clickup.core.RemoveTaskTag",
+            "x": 1408,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "add-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.add-tag.out.taskId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "var-tag-name": {
+                                            "variable": "$.add-tag.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}",
+                                    "tagName": "{{{var-tag-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-remove-tag": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 528,
+            "version": "1.0.0",
+            "label": "Assert RemoveTaskTag",
+            "source": {
+                "in": {
+                    "remove-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "remove-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "removed-tag-name-check": {
+                                            "variable": "$.remove-tag.out.tagName",
+                                            "functions": []
+                                        },
+                                        "expected-removed-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{removed-tag-name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-removed-tag-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1792,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-set-custom-field": [
+                        "out"
+                    ],
+                    "assert-add-tag": [
+                        "out"
+                    ],
+                    "assert-remove-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-task": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 1984,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2176,
+            "y": 272,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - task-details",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

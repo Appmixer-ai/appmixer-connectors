@@ -1,0 +1,605 @@
+{
+    "name": "E2E Clickup - comments",
+    "description": "End-to-end test for Clickup connector - tests comment operations: CreateTask, CreateComment, ListComments, UpdateComment, DeleteComment",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "listId",
+                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskName",
+                                                "text": "E2E Test Task - Comments"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "commentText",
+                                                "text": "E2E Test Comment"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedCommentText",
+                                                "text": "E2E Test Comment Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "var-list-id": {
+                                            "variable": "$.set-variables.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-task-name": {
+                                            "variable": "$.set-variables.out.taskName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{var-list-id}}}",
+                                    "name": "{{{var-task-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-task": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Assert CreateTask",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "task-id-check": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-comment": {
+            "type": "appmixer.clickup.core.CreateComment",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "resourceId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "commentText": {
+                                        "var-comment-text": {
+                                            "variable": "$.set-variables.out.commentText",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentOn": "task",
+                                    "resourceId": "{{{var-task-id}}}",
+                                    "commentText": "{{{var-comment-text}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-comment": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 144,
+            "version": "1.0.0",
+            "label": "Assert CreateComment",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "comment-id-check": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{comment-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-comments": {
+            "type": "appmixer.clickup.core.ListComments",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "resourceId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentsOn": "task",
+                                    "resourceId": "{{{var-task-id}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-comments": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 272,
+            "version": "1.0.0",
+            "label": "Assert ListComments",
+            "source": {
+                "in": {
+                    "list-comments": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-comments": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "listed-comment-text-check": {
+                                            "variable": "$.list-comments.out.comment_text",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{listed-comment-text-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-comment": {
+            "type": "appmixer.clickup.core.UpdateComment",
+            "x": 1216,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-comments": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-comments": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "commentId": {
+                                        "var-comment-id": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "commentText": {
+                                        "var-updated-comment-text": {
+                                            "variable": "$.set-variables.out.updatedCommentText",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentId": "{{{var-comment-id}}}",
+                                    "commentText": "{{{var-updated-comment-text}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update-comment": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 400,
+            "version": "1.0.0",
+            "label": "Assert UpdateComment",
+            "source": {
+                "in": {
+                    "update-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-comment-id-check": {
+                                            "variable": "$.update-comment.out.commentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{updated-comment-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-comment": {
+            "type": "appmixer.clickup.core.DeleteComment",
+            "x": 1408,
+            "y": 528,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "commentId": {
+                                        "var-comment-id": {
+                                            "variable": "$.create-comment.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "commentId": "{{{var-comment-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-delete-comment": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 528,
+            "version": "1.0.0",
+            "label": "Assert DeleteComment",
+            "source": {
+                "in": {
+                    "delete-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-comment": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "deleted-comment-id-check": {
+                                            "variable": "$.delete-comment.out.commentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{deleted-comment-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1792,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-task": [
+                        "out"
+                    ],
+                    "assert-create-comment": [
+                        "out"
+                    ],
+                    "assert-list-comments": [
+                        "out"
+                    ],
+                    "assert-update-comment": [
+                        "out"
+                    ],
+                    "assert-delete-comment": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-task": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 1984,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-id": {
+                                            "variable": "$.create-task.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2176,
+            "y": 272,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-task": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-task": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - comments",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

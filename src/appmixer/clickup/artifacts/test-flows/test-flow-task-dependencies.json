@@ -1,0 +1,482 @@
+{
+    "name": "E2E Clickup - task-dependencies",
+    "description": "End-to-end test for Clickup connector - tests task dependency operations: CreateTask, CreateTaskDependency, DeleteTaskDependency",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "listId",
+                                                "text": "YOUR_CLICKUP_LIST_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskAName",
+                                                "text": "E2E Dep Task A"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "taskBName",
+                                                "text": "E2E Dep Task B"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task-a": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "var-list-id": {
+                                            "variable": "$.set-variables.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-task-a-name": {
+                                            "variable": "$.set-variables.out.taskAName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{var-list-id}}}",
+                                    "name": "{{{var-task-a-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-task-b": {
+            "type": "appmixer.clickup.core.CreateTask",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task-a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task-a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "listId": {
+                                        "var-list-id": {
+                                            "variable": "$.set-variables.out.listId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-task-b-name": {
+                                            "variable": "$.set-variables.out.taskBName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "listId": "{{{var-list-id}}}",
+                                    "name": "{{{var-task-b-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-dependency": {
+            "type": "appmixer.clickup.core.CreateTaskDependency",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-task-b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-task-b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-a-id": {
+                                            "variable": "$.create-task-a.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "dependsOnTaskId": {
+                                        "var-task-b-id": {
+                                            "variable": "$.create-task-b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-a-id}}}",
+                                    "dependsOnTaskId": "{{{var-task-b-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-dependency": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 272,
+            "version": "1.0.0",
+            "label": "Assert CreateTaskDependency",
+            "source": {
+                "in": {
+                    "create-dependency": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dependency": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dep-task-id-check": {
+                                            "variable": "$.create-dependency.out.taskId",
+                                            "functions": []
+                                        },
+                                        "dep-depends-on-check": {
+                                            "variable": "$.create-dependency.out.dependsOnTaskId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dep-task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{dep-depends-on-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-dependency": {
+            "type": "appmixer.clickup.core.DeleteTaskDependency",
+            "x": 1216,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-dependency": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dependency": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-del-task-id": {
+                                            "variable": "$.create-dependency.out.taskId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "dependsOnTaskId": {
+                                        "var-del-depends-on-id": {
+                                            "variable": "$.create-dependency.out.dependsOnTaskId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-del-task-id}}}",
+                                    "dependsOnTaskId": "{{{var-del-depends-on-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-delete-dependency": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 400,
+            "version": "1.0.0",
+            "label": "Assert DeleteTaskDependency",
+            "source": {
+                "in": {
+                    "delete-dependency": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-dependency": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "del-dep-task-id-check": {
+                                            "variable": "$.delete-dependency.out.taskId",
+                                            "functions": []
+                                        },
+                                        "del-dep-depends-on-check": {
+                                            "variable": "$.delete-dependency.out.dependsOnTaskId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{del-dep-task-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{del-dep-depends-on-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1792,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-dependency": [
+                        "out"
+                    ],
+                    "assert-delete-dependency": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-task-a": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 1984,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-a-id": {
+                                            "variable": "$.create-task-a.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-a-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-task-b": {
+            "type": "appmixer.clickup.core.DeleteTask",
+            "x": 2176,
+            "y": 336,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-task-a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-task-a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "taskId": {
+                                        "var-task-b-id": {
+                                            "variable": "$.create-task-b.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "taskId": "{{{var-task-b-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2368,
+            "y": 336,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-task-b": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-task-b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - task-dependencies",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
