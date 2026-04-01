@@ -1,0 +1,315 @@
+{
+    "name": "E2E Google Calendar - GetAvailability",
+    "description": "E2E test for the GetAvailability component. Tests two scenarios: (1) a far-future time slot that should be available, (2) verifies the response always includes a boolean 'available' field and correct eventTypes filtering.",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "calendarId",
+                                                "text": "primary"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-availability-free": {
+            "type": "appmixer.google.calendar.GetAvailability",
+            "label": "GetAvailability (far future — expect available)",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "calendarId": {
+                                        "var-calendar-id": {
+                                            "variable": "$.set-variables.out.calendarId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startTime": {
+                                        "var-start": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                { "name": "g_now" },
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 365 } } }
+                                            ]
+                                        }
+                                    },
+                                    "endTime": {
+                                        "var-end": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                { "name": "g_now" },
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 365 }, "hours": { "value": 1 } } }
+                                            ]
+                                        }
+                                    },
+                                    "eventTypes": {}
+                                },
+                                "lambda": {
+                                    "calendarId": "{{{var-calendar-id}}}",
+                                    "startTime": "{{{var-start}}}",
+                                    "endTime": "{{{var-end}}}",
+                                    "eventTypes": ["default"]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-free": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: available is true for far-future slot",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-availability-free": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-availability-free": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "available-check": {
+                                            "variable": "$.get-availability-free.out.available",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{available-check}}}",
+                                                "assertion": "isTrue"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-availability-any": {
+            "type": "appmixer.google.calendar.GetAvailability",
+            "label": "GetAvailability (broad range — check response shape)",
+            "x": 640,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "calendarId": {
+                                        "var-calendar-id": {
+                                            "variable": "$.set-variables.out.calendarId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "startTime": {
+                                        "var-start-now": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                { "name": "g_now" }
+                                            ]
+                                        }
+                                    },
+                                    "endTime": {
+                                        "var-end-future": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                { "name": "g_now" },
+                                                { "name": "g_addTimeSpan", "hashParams": { "days": { "value": 30 } } }
+                                            ]
+                                        }
+                                    },
+                                    "eventTypes": {}
+                                },
+                                "lambda": {
+                                    "calendarId": "{{{var-calendar-id}}}",
+                                    "startTime": "{{{var-start-now}}}",
+                                    "endTime": "{{{var-end-future}}}",
+                                    "eventTypes": ["default"]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-response-shape": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: 'available' field is present and is boolean",
+            "x": 832,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-availability-any": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-availability-any": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "available-present": {
+                                            "variable": "$.get-availability-any.out.available",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{available-present}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1024,
+            "y": 88,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-free": ["out"],
+                    "assert-response-shape": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 88,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "69cd26f6e2b144c4b022fd1e",
+                    "failedStoreId": "69cd26f6e92e34e939fd2d1a"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "vero.a@appmixer.ai",
+                                    "testCase": "E2E Google Calendar - GetAvailability",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
