@@ -36,14 +36,22 @@ module.exports = {
             ? (Array.isArray(eventTypes) ? eventTypes : [eventTypes])
             : ['default'];
 
+        const includeAllDay = selectedTypes.includes('allDay');
+
         // Filter to only the event types the user wants to consider.
         // Events without an eventType field are treated as 'default' (older API responses).
-        const regularEvents = items.filter(event => {
+        // All-day events are identified by having start.date (no dateTime) — they are a
+        // property of the time format, not a separate eventType in the Google API.
+        const filteredEvents = items.filter(event => {
+            const isAllDay = !event.start.dateTime;
+            if (isAllDay) {
+                return includeAllDay;
+            }
             const type = event.eventType || 'default';
             return selectedTypes.includes(type);
         });
 
-        const overlapping = regularEvents.filter(event => {
+        const overlapping = filteredEvents.filter(event => {
             const evStart = new Date(event.start.dateTime || event.start.date).getTime();
             const evEnd = new Date(event.end.dateTime || event.end.date).getTime();
             // Overlap condition: evStart < endMs && evEnd > startMs
@@ -62,6 +70,7 @@ module.exports = {
                 location: event.location,
                 start: commons.formatDate(event.start),
                 end: commons.formatDate(event.end),
+                eventType: event.start.dateTime ? (event.eventType || 'default') : 'allDay',
                 status: event.status,
                 htmlLink: event.htmlLink,
                 creator: event.creator,
