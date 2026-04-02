@@ -34,6 +34,6 @@ module.exports = {
 
     toSelectArray(msg) {
         const items = msg.result || (Array.isArray(msg) ? msg : []);
-        return items.map(hub => ({ label: hub.name, value: hub.conversionKey }));
+        return items.map(hub => ({ label: hub.name, value: hub.key }));
     }
 };
