@@ -21,8 +21,9 @@ module.exports = {
             industry: content.industry
         });
 
+        const companyId = parseInt(content.companyId, 10);
         const response = await axios.put(
-            `https://${auth.domain}.freshdesk.com/api/v2/companies/${content.companyId}`,
+            `https://${auth.domain}.freshdesk.com/api/v2/companies/${companyId}`,
             body,
             {
                 auth: {

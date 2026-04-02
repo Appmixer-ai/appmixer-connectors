@@ -110,7 +110,7 @@ module.exports = {
         // Search by name via autocomplete
         if (content.searchName) {
             const response = await axios.get(`${baseUrl}/companies/autocomplete`, {
-                params: { term: content.searchName },
+                params: { name: content.searchName },
                 auth: authConfig
             });
             const companies = Array.isArray(response.data) ? response.data : [];

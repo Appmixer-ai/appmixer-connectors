@@ -7,7 +7,7 @@ module.exports = {
     async receive(context) {
 
         const { auth } = context;
-        const { companyId } = context.messages.in.content;
+        const companyId = parseInt(context.messages.in.content.companyId, 10);
 
         const response = await axios.get(
             `https://${auth.domain}.freshdesk.com/api/v2/companies/${companyId}`,
