@@ -31,7 +31,9 @@ module.exports = {
                     'Accept': 'application/json'
                 }
             });
-            return { name: `HubBI (${context.clientKey})` };
+            const ck = context.clientKey;
+            const maskedKey = ck.length > 6 ? ck.slice(0, 3) + '...' + ck.slice(-3) : ck;
+            return { name: `HubBI (${maskedKey})` };
         },
 
         accountNameFromProfileInfo: 'name',
