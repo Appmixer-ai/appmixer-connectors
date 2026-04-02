@@ -80,14 +80,19 @@ async function poll(context, auth, exportId, polls) {
         { auth: authConfig }
     );
 
-    const { status, export_url: exportUrl } = statusResponse.data;
-    await context.log({ step: 'Export poll', exportId, status, polls });
+    const responseData = statusResponse.data;
+    const status = responseData.status;
+    const exportUrl = responseData.export_url;
+
+    // Log full response on first few polls to diagnose status values
+    await context.log({ step: 'Export poll', exportId, polls, status, exportUrl, fullResponse: polls < 3 ? responseData : undefined });
 
     if (status === 'failed') {
         throw new Error(`Freshdesk contact export failed (id: ${exportId}).`);
     }
 
-    if (status === 'completed' && exportUrl) {
+    // Handle both "completed" and any URL-present state (some Freshdesk versions return no explicit status)
+    if (exportUrl) {
         // Stream the file directly into Appmixer file storage — no buffering
         const downloadResponse = await axios.get(exportUrl, { responseType: 'stream' });
         const fileName = `freshdesk-contacts-export-${exportId}.csv`;
