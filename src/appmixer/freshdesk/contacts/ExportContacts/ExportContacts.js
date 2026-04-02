@@ -2,8 +2,8 @@
 
 const axios = require('axios');
 
-const POLL_INTERVAL_MS = 10000;   // re-check every 10s
-const MAX_POLLS = 180;            // up to 30 minutes total (180 × 10s)
+const POLL_INTERVAL_MS = 30000;   // re-check every 30s
+const MAX_POLLS = 60;             // up to 30 minutes total (60 × 30s)
 
 module.exports = {
 
