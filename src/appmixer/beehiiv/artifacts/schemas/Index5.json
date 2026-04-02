@@ -1,0 +1,342 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "expand[]": {
+                "type": "string",
+                "enum": [
+                    "stats",
+                    "custom_fields",
+                    "referrals"
+                ],
+                "description": "Optional list of expandable objects.<br>`subscription_premium_tiers ` - Returns an array of tiers the subscription is associated with.<br>`referrals` - Returns an array of subscriptions with limited data - `id`, `email`, and `status`. These are the subscriptions that were referred by this subscription.<br>`stats` - Returns statistics about the subscription(s).<br>`custom_fields` - Returns an array of custom field values that have been set on the subscription."
+            },
+            "status": {
+                "type": "string",
+                "enum": [
+                    "validating",
+                    "invalid",
+                    "pending",
+                    "active",
+                    "inactive",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by a status"
+            },
+            "tier": {
+                "type": "string",
+                "enum": [
+                    "free",
+                    "premium",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by a their tier"
+            },
+            "premium_tiers[]": {
+                "type": "string",
+                "description": "Optionally filter the results by one or multiple premium tiers"
+            },
+            "premium_tier_ids[]": {
+                "type": "string",
+                "description": "Optionally filter the results by one or multiple premium tier ids"
+            },
+            "limit": {
+                "type": "integer",
+                "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+            },
+            "cursor": {
+                "type": "string",
+                "description": "**Cursor-based pagination (recommended)**: Use this opaque cursor token to fetch the next page of results. When provided, pagination will use cursor-based method which is more efficient and consistent than offset-based pagination. See the [Pagination Guide](/welcome/pagination) for more details."
+            },
+            "page": {
+                "type": "integer",
+                "description": "**Offset-based pagination (deprecated)**: Page number for offset-based pagination. This method is deprecated and limited to 100 pages maximum. Please migrate to cursor-based pagination using the `cursor` parameter. If not specified, results 1-10 from page 1 will be returned. See the [Pagination Guide](/welcome/pagination) for migration guidance."
+            },
+            "email": {
+                "type": "string",
+                "description": "Optional email address to find a subscription.<br>This param must be an exact match and is case insensitive."
+            },
+            "order_by": {
+                "type": "string",
+                "enum": [
+                    "created"
+                ],
+                "default": "created",
+                "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the subscription was first created.<br>"
+            },
+            "direction": {
+                "type": "string",
+                "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "default": "asc"
+            },
+            "creation_date": {
+                "type": "string",
+                "description": "Optional date entry (in the format YYYY/MM/DD) that filters returned subscriptions by their creation date."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "description": "The subscription object",
+                    "required": [
+                        "id",
+                        "email",
+                        "status",
+                        "created",
+                        "subscription_tier",
+                        "subscription_premium_tier_names",
+                        "utm_source",
+                        "utm_medium",
+                        "utm_channel",
+                        "utm_campaign",
+                        "utm_term",
+                        "utm_content",
+                        "referring_site",
+                        "referral_code"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the subscription."
+                        },
+                        "email": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+                            "enum": [
+                                "validating",
+                                "invalid",
+                                "pending",
+                                "active",
+                                "inactive",
+                                "needs_attention",
+                                "paused"
+                            ]
+                        },
+                        "created": {
+                            "type": "integer",
+                            "description": "The date the subscription was created. Measured in seconds since the Unix epoch"
+                        },
+                        "subscription_tier": {
+                            "type": "string",
+                            "description": "The current tier of the subscription.",
+                            "enum": [
+                                "free",
+                                "premium"
+                            ]
+                        },
+                        "subscription_premium_tier_names": {
+                            "type": "array",
+                            "description": "The current premium tiers of the subscription. Empty if the subscriber is not associated with any premium tiers.",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "utm_source": {
+                            "type": "string",
+                            "description": "The acquisition source; where the subscriber came from"
+                        },
+                        "utm_medium": {
+                            "type": "string",
+                            "description": "The acquisition medium; how the subscriber got to your publication"
+                        },
+                        "utm_channel": {
+                            "type": "string",
+                            "description": "The acquisition channel",
+                            "enum": [
+                                "",
+                                "website",
+                                "import",
+                                "embed",
+                                "api",
+                                "referral",
+                                "recommendation",
+                                "magic_link",
+                                "boost",
+                                "boost_send",
+                                "boost_direct_link",
+                                "integration",
+                                "product"
+                            ]
+                        },
+                        "utm_campaign": {
+                            "type": "string",
+                            "description": "The acquisition campaign"
+                        },
+                        "utm_term": {
+                            "type": "string",
+                            "description": "The acquisition term; typically the keyword or search term"
+                        },
+                        "utm_content": {
+                            "type": "string",
+                            "description": "The acquisition content; typically used for A/B testing or ad variations"
+                        },
+                        "referring_site": {
+                            "type": "string",
+                            "description": "The website that the subscriber was referred from"
+                        },
+                        "referral_code": {
+                            "type": "string",
+                            "description": "The code associated to this subscriber to refer others. When a new subscription is created with this referral code, credit for the referral goes to this subscription."
+                        },
+                        "subscription_premium_tiers": {
+                            "type": "array",
+                            "description": "Optional list of tiers for a subscription. Retrievable by including `expand: [subscription_premium_tiers]` in the request body.",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "The prefixed ID of the tier."
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Returns whether or not the tier has any active prices.",
+                                        "enum": [
+                                            "active",
+                                            "archived"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "custom_fields": {
+                            "type": "array",
+                            "description": "Optional list of custom fields for a subscription. Retrievable by including `expand: [custom_field]` in the request body.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "The name of the existing custom field"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "description": "The type of value being stored in the custom field.",
+                                        "enum": [
+                                            "string",
+                                            "integer",
+                                            "boolean",
+                                            "date",
+                                            "datetime",
+                                            "list",
+                                            "double"
+                                        ]
+                                    },
+                                    "value": {
+                                        "oneOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "number",
+                                                "format": "double"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            },
+                                            {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "tags": {
+                            "type": "array",
+                            "description": "Optional list of tags for a subscription. Retrievable by including `expand: [tags]` in the request body.\nMax limit of 100 unique tags per publication.",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "stats": {
+                            "type": "object",
+                            "description": "Optional list of stats for a subscription. Retrievable by including `expand: [stats]` in the request body.",
+                            "properties": {
+                                "emails_received": {
+                                    "type": "integer",
+                                    "description": "The total number of emails that have been sent to this subscriber"
+                                },
+                                "open_rate": {
+                                    "type": "number",
+                                    "description": "The percentage of emails that the subscriber has opened",
+                                    "format": "double"
+                                },
+                                "click_through_rate": {
+                                    "type": "number",
+                                    "description": "The percentage of emails that the subscriber has clicked a link in",
+                                    "format": "double"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "limit": {
+                "type": "integer",
+                "description": "The limit placed on the results. If no limit was specified in the request, this defaults to 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "**Offset pagination only**: The page number the results are from. Only present when using deprecated offset-based pagination.",
+                "default": 1
+            },
+            "total_pages": {
+                "type": "integer",
+                "description": "**Offset pagination only**: The total number of pages. Only present when using deprecated offset-based pagination."
+            },
+            "has_more": {
+                "type": "boolean",
+                "description": "**Cursor pagination only**: Indicates whether there are more results available after the current page. Only present when using cursor-based pagination."
+            },
+            "next_cursor": {
+                "type": "string",
+                "description": "**Cursor pagination only**: The cursor token to use for fetching the next page of results. This will be null if has_more is false. Only present when using cursor-based pagination."
+            },
+            "total_results": {
+                "type": "integer",
+                "description": "**Mixed pagination**: The total number of results from all pages. For offset-based pagination, this is always included."
+            }
+        }
+    }
+}

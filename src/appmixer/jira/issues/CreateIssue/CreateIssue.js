@@ -85,11 +85,13 @@ module.exports = {
         const hasCustomFields = Object.keys(issue).some(key => key.startsWith('customfield_'));
         if (hasCustomFields) {
             try {
-                const { fields } = await commons.get(
-                    `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
-                    auth
-                );
-                if (fields) {
+                const fields = await commons.pager({
+                    endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
+                    credentials: auth,
+                    key: 'fields',
+                    params: { maxResults: 100 }
+                });
+                if (fields && fields.length > 0) {
                     const fieldMeta = fields.reduce((acc, field) => {
                         acc[field.fieldId] = field;
                         return acc;

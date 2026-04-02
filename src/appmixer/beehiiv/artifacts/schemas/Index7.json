@@ -1,0 +1,142 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication."
+            },
+            "start_date": {
+                "type": "string",
+                "format": "date",
+                "description": "The starting date for the engagement metrics in `YYYY-MM-DD` format. Defaults to 1 day ago if not provided."
+            },
+            "number_of_days": {
+                "type": "integer",
+                "description": "The number of days to return engagement metrics for, starting from `start_date`. Must be between 1 and 31. Defaults to `1` if not provided."
+            },
+            "granularity": {
+                "type": "string",
+                "enum": [
+                    "day",
+                    "week",
+                    "month"
+                ],
+                "description": "The granularity at which to report the engagement metrics. Defaults to `day` if not provided."
+            },
+            "email_type": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "post",
+                    "message"
+                ],
+                "description": "Filter engagement metrics by email type. If omitted, all email engagement is included.<br> `post`: Only post emails.<br> `message`: Only automated and system-generated emails."
+            },
+            "direction": {
+                "type": "string",
+                "description": "The direction that the results are sorted in. Defaults to `asc`.<br> `asc`: Oldest to newest<br> `desc`: Newest to oldest",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "default": "asc"
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data",
+            "publication_id",
+            "granularity",
+            "email_type",
+            "start_date",
+            "number_of_days"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "description": "The list of engagement metrics for the publication within the specified date range and granularity. Returns an empty list if there is no engagement data for the specified period.",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "date",
+                        "total_opens",
+                        "unique_opens",
+                        "total_clicks",
+                        "total_verified_clicks",
+                        "unique_clicks",
+                        "unique_verified_clicks"
+                    ],
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "description": "The starting date of the period for which the engagement metrics are reported based on the selected granularity.<br><br> `day` granularity: The specific day.<br> `week` granularity: The Monday of the week.<br> `month` granularity: The first day of the month.",
+                            "format": "date"
+                        },
+                        "total_opens": {
+                            "type": "integer",
+                            "description": "The total number of times emails were opened during the period."
+                        },
+                        "unique_opens": {
+                            "type": "integer",
+                            "description": "The number of unique subscribers who opened emails during the period."
+                        },
+                        "total_clicks": {
+                            "type": "integer",
+                            "description": "The total number of times links were clicked during the period."
+                        },
+                        "total_verified_clicks": {
+                            "type": "integer",
+                            "description": "The total number of times links were clicked, during the period, as <a href=\"https://www.beehiiv.com/support/article/28404633659159-introducing-verified-clicks-accurate-email-engagement-metrics?srsltid=AfmBOoregRzZ1N6bcwITVRA-Lo6NE06y6xNwb7WO85Gv0mrWMij-yFgb\">verified by our system</a>."
+                        },
+                        "unique_clicks": {
+                            "type": "integer",
+                            "description": "The number of unique subscribers who clicked links during the period."
+                        },
+                        "unique_verified_clicks": {
+                            "type": "integer",
+                            "description": "The number of times links were clicked by unique subscribers, during the period, as <a href=\"https://www.beehiiv.com/support/article/28404633659159-introducing-verified-clicks-accurate-email-engagement-metrics?srsltid=AfmBOoregRzZ1N6bcwITVRA-Lo6NE06y6xNwb7WO85Gv0mrWMij-yFgb\">verified by our system</a>."
+                        }
+                    }
+                }
+            },
+            "publication_id": {
+                "type": "string",
+                "description": "The prefixed ID of the publication."
+            },
+            "granularity": {
+                "type": "string",
+                "enum": [
+                    "day",
+                    "week",
+                    "month"
+                ]
+            },
+            "email_type": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "post",
+                    "message"
+                ]
+            },
+            "start_date": {
+                "type": "string",
+                "description": "The starting date of the engagement metrics.",
+                "format": "date"
+            },
+            "number_of_days": {
+                "type": "integer"
+            }
+        }
+    }
+}

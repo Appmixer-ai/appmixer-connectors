@@ -1,0 +1,409 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "email": {
+                "type": "string",
+                "description": "The email address to search for subscriptions"
+            },
+            "expand": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "subscription",
+                        "publication",
+                        "subscription_custom_fields"
+                    ]
+                },
+                "description": "Optionally expand the results by adding additional information. <br>`subscription` - Returns the full Subscription object for the email address in each publication. <br>`publication` - Returns the full Publication object instead of just ID and name. <br>`subscription_custom_fields` - Returns custom field values nested within the subscription object. (Returns the subscription object regardless of whether `subscription` is requested.)"
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "email"
+        ]
+    },
+    "outputSchema": {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "required": [
+                "publication_id",
+                "publication_name",
+                "subscription_id",
+                "status"
+            ],
+            "properties": {
+                "publication_id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the publication."
+                },
+                "publication_name": {
+                    "type": "string",
+                    "description": "The name of the publication"
+                },
+                "subscription_id": {
+                    "type": "string",
+                    "description": "The prefixed ID of the subscription."
+                },
+                "status": {
+                    "type": "string",
+                    "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+                    "enum": [
+                        "validating",
+                        "invalid",
+                        "pending",
+                        "active",
+                        "inactive",
+                        "needs_attention",
+                        "paused"
+                    ]
+                },
+                "publication": {
+                    "type": "object",
+                    "required": [
+                        "id",
+                        "name",
+                        "organization_name",
+                        "referral_program_enabled",
+                        "created"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the publication."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the publication"
+                        },
+                        "organization_name": {
+                            "type": "string",
+                            "description": "The name of the organization"
+                        },
+                        "referral_program_enabled": {
+                            "type": "boolean",
+                            "description": "A boolean field indicating whether the referral program is active for this publication."
+                        },
+                        "created": {
+                            "type": "number",
+                            "description": "The time that the publication was created. Measured in seconds since the Unix epoch",
+                            "format": "double"
+                        },
+                        "stats": {
+                            "type": "object",
+                            "description": "Optional list of stats for a publication. Retrievable by including an `expand` array in the publication request body. Add `\"stats\"` to the array to retrieve all, or add individual stats (prefaced with `stat_`) to only retrieve specific ones.\n\nExamples:\n{\n  \"expand\": [\"stats\"]\n}\n\n{\n  \"expand\": [\"stat_active_subscriptions\", \"stat_average_click_rate\"]\n}",
+                            "properties": {
+                                "active_subscriptions": {
+                                    "description": "Total number of active free and premium subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "active_premium_subscriptions": {
+                                    "description": "Total number of active premium/paid subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "active_free_subscriptions": {
+                                    "description": "Total number of active free subscriptions",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "average_open_rate": {
+                                    "description": "The publications historical average open rate",
+                                    "oneOf": [
+                                        {
+                                            "type": "number",
+                                            "format": "double"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "average_click_rate": {
+                                    "description": "The publications historical average click through rate",
+                                    "oneOf": [
+                                        {
+                                            "type": "number",
+                                            "format": "double"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_sent": {
+                                    "description": "Total number of emails sent",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_unique_opened": {
+                                    "description": "Total number of uniquely opened emails. Only counts the first open for each subscriber.",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "total_clicked": {
+                                    "description": "The total number of links clicked from emails.",
+                                    "oneOf": [
+                                        {
+                                            "type": "integer"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "subscription": {
+                    "type": "object",
+                    "description": "The subscription object",
+                    "required": [
+                        "id",
+                        "email",
+                        "status",
+                        "created",
+                        "subscription_tier",
+                        "subscription_premium_tier_names",
+                        "utm_source",
+                        "utm_medium",
+                        "utm_channel",
+                        "utm_campaign",
+                        "utm_term",
+                        "utm_content",
+                        "referring_site",
+                        "referral_code"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the subscription."
+                        },
+                        "email": {
+                            "type": "string",
+                            "format": "email"
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "The status of the subscription.<br>`validating` - The email address is being validated.<br>`invalid` - The email address is invalid.<br>`pending` - The email address is valid, but the subscription is pending double opt-in.<br>`active` - The email was valid and the subscription is active.<br>`inactive` - The subscription was made inactive, possibly due to an unsubscribe.<br>`needs_attention` - The subscription requires approval or denial.<br>`paused` - The subscriber has paused their subscription.",
+                            "enum": [
+                                "validating",
+                                "invalid",
+                                "pending",
+                                "active",
+                                "inactive",
+                                "needs_attention",
+                                "paused"
+                            ]
+                        },
+                        "created": {
+                            "type": "integer",
+                            "description": "The date the subscription was created. Measured in seconds since the Unix epoch"
+                        },
+                        "subscription_tier": {
+                            "type": "string",
+                            "description": "The current tier of the subscription.",
+                            "enum": [
+                                "free",
+                                "premium"
+                            ]
+                        },
+                        "subscription_premium_tier_names": {
+                            "type": "array",
+                            "description": "The current premium tiers of the subscription. Empty if the subscriber is not associated with any premium tiers.",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "utm_source": {
+                            "type": "string",
+                            "description": "The acquisition source; where the subscriber came from"
+                        },
+                        "utm_medium": {
+                            "type": "string",
+                            "description": "The acquisition medium; how the subscriber got to your publication"
+                        },
+                        "utm_channel": {
+                            "type": "string",
+                            "description": "The acquisition channel",
+                            "enum": [
+                                "",
+                                "website",
+                                "import",
+                                "embed",
+                                "api",
+                                "referral",
+                                "recommendation",
+                                "magic_link",
+                                "boost",
+                                "boost_send",
+                                "boost_direct_link",
+                                "integration",
+                                "product"
+                            ]
+                        },
+                        "utm_campaign": {
+                            "type": "string",
+                            "description": "The acquisition campaign"
+                        },
+                        "utm_term": {
+                            "type": "string",
+                            "description": "The acquisition term; typically the keyword or search term"
+                        },
+                        "utm_content": {
+                            "type": "string",
+                            "description": "The acquisition content; typically used for A/B testing or ad variations"
+                        },
+                        "referring_site": {
+                            "type": "string",
+                            "description": "The website that the subscriber was referred from"
+                        },
+                        "referral_code": {
+                            "type": "string",
+                            "description": "The code associated to this subscriber to refer others. When a new subscription is created with this referral code, credit for the referral goes to this subscription."
+                        },
+                        "subscription_premium_tiers": {
+                            "type": "array",
+                            "description": "Optional list of tiers for a subscription. Retrievable by including `expand: [subscription_premium_tiers]` in the request body.",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "id",
+                                    "name",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "string",
+                                        "description": "The prefixed ID of the tier."
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "description": "Returns whether or not the tier has any active prices.",
+                                        "enum": [
+                                            "active",
+                                            "archived"
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "custom_fields": {
+                            "type": "array",
+                            "description": "Optional list of custom fields for a subscription. Retrievable by including `expand: [custom_field]` in the request body.",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "The name of the existing custom field"
+                                    },
+                                    "kind": {
+                                        "type": "string",
+                                        "description": "The type of value being stored in the custom field.",
+                                        "enum": [
+                                            "string",
+                                            "integer",
+                                            "boolean",
+                                            "date",
+                                            "datetime",
+                                            "list",
+                                            "double"
+                                        ]
+                                    },
+                                    "value": {
+                                        "oneOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "number",
+                                                "format": "double"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            },
+                                            {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        },
+                        "tags": {
+                            "type": "array",
+                            "description": "Optional list of tags for a subscription. Retrievable by including `expand: [tags]` in the request body.\nMax limit of 100 unique tags per publication.",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "stats": {
+                            "type": "object",
+                            "description": "Optional list of stats for a subscription. Retrievable by including `expand: [stats]` in the request body.",
+                            "properties": {
+                                "emails_received": {
+                                    "type": "integer",
+                                    "description": "The total number of emails that have been sent to this subscriber"
+                                },
+                                "open_rate": {
+                                    "type": "number",
+                                    "description": "The percentage of emails that the subscriber has opened",
+                                    "format": "double"
+                                },
+                                "click_through_rate": {
+                                    "type": "number",
+                                    "description": "The percentage of emails that the subscriber has clicked a link in",
+                                    "format": "double"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

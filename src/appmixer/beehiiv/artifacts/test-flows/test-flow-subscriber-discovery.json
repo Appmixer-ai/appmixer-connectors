@@ -1,0 +1,315 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 80
+        },
+        "assert-find": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-subscriber-by-email": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{found-sub-id}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "e2e.discovery.test@appmixer.com",
+                                                "field": "{{{found-email}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "found-email": {
+                                            "functions": [],
+                                            "variable": "$.get-subscriber-by-email.out.data.email"
+                                        },
+                                        "found-sub-id": {
+                                            "functions": [],
+                                            "variable": "$.get-subscriber-by-email.out.data.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-subscriber-by-email": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 144
+        },
+        "assert-list": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-subscribers": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{list-sub-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "list-sub-id": {
+                                            "functions": [],
+                                            "variable": "$.list-subscribers.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-subscribers": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 16
+        },
+        "create-subscriber": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "email": "e2e.discovery.test@appmixer.com",
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "reactivate_existing": true,
+                                    "send_welcome_email": false,
+                                    "tier": "free"
+                                },
+                                "modifiers": {
+                                    "email": {},
+                                    "publicationId": {},
+                                    "reactivate_existing": {},
+                                    "send_welcome_email": {},
+                                    "tier": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.CreateSubscriber",
+            "x": 256,
+            "y": 16
+        },
+        "delete-subscriber": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358",
+                                    "subscriberId": "{{{var-del-sub-id}}}"
+                                },
+                                "modifiers": {
+                                    "publicationId": {},
+                                    "subscriberId": {
+                                        "var-del-sub-id": {
+                                            "functions": [],
+                                            "variable": "$.create-subscriber.out.data.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.DeleteSubscriber",
+            "x": 1024,
+            "y": 80
+        },
+        "get-subscriber-by-email": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "create-subscriber": {
+                            "out": {
+                                "lambda": {
+                                    "email": "e2e.discovery.test@appmixer.com",
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                },
+                                "modifiers": {
+                                    "email": {},
+                                    "publicationId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.GetSubscriberByEmail",
+            "x": 448,
+            "y": 144
+        },
+        "list-subscribers": {
+            "config": {
+                "properties": {
+                    "account": "69b2936a62e0a711e8b1f726"
+                },
+                "transform": {
+                    "in": {
+                        "create-subscriber": {
+                            "out": {
+                                "lambda": {
+                                    "limit": 10,
+                                    "outputType": "first",
+                                    "publicationId": "pub_3ea93462-7fa3-470b-b30b-94700321c358"
+                                },
+                                "modifiers": {
+                                    "limit": {},
+                                    "outputType": {},
+                                    "publicationId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.beehiiv.core.FindSubscribers",
+            "x": 448,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-subscriber": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Beehiiv - Subscriber Discovery"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-subscriber": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 80
+        }
+    },
+    "name": "E2E Beehiiv - Subscriber Discovery",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}
