@@ -5,7 +5,8 @@ const pathModule = require('path');
 
 const DEFAULT_PREFIX = 'freshdesk-contacts-export';
 
-const schema = {
+// Full contact schema — returned by the filter/search endpoints
+const schemaFull = {
     id: { type: 'integer', title: 'Contact ID' },
     name: { type: 'string', title: 'Name' },
     email: { type: 'string', title: 'Email' },
@@ -19,6 +20,15 @@ const schema = {
     tags: { type: 'array', title: 'Tags' },
     created_at: { type: 'string', title: 'Created At' },
     updated_at: { type: 'string', title: 'Updated At' }
+};
+
+// Partial schema — returned by the autocomplete (Search by Name) endpoint
+const schemaAutocomplete = {
+    id: { type: 'integer', title: 'Contact ID' },
+    name: { type: 'string', title: 'Name' },
+    phone: { type: 'string', title: 'Phone' },
+    mobile: { type: 'string', title: 'Mobile' },
+    avatar: { type: 'string', title: 'Avatar' }
 };
 
 async function sendArrayOutput({ context, records, outputType }) {
@@ -54,6 +64,9 @@ async function sendArrayOutput({ context, records, outputType }) {
 }
 
 function getOutputPortOptions(context, outputType) {
+
+    // Use the appropriate schema based on whether searchName is being used
+    const schema = context.messages.in.content.searchName ? schemaAutocomplete : schemaFull;
 
     if (outputType === 'object' || outputType === 'first') {
         const options = Object.keys(schema).reduce((res, field) => {
