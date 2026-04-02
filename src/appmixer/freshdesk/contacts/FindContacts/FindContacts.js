@@ -126,7 +126,7 @@ module.exports = {
         // If search query provided, use the search endpoint
         if (content.query) {
             const response = await axios.get(
-                `https://${auth.domain}.freshdesk.com/api/v2/contacts/search`,
+                `https://${auth.domain}.freshdesk.com/api/v2/search/contacts`,
                 {
                     params: { query: content.query },
                     auth: {
