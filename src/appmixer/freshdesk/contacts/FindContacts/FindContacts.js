@@ -124,11 +124,13 @@ module.exports = {
         if (content.mobilePhone) params.mobile_phone = content.mobilePhone;
 
         // If search query provided, use the search endpoint
+        // Freshdesk search API requires the query wrapped in double quotes, e.g. "email:'test@example.com'"
         if (content.query) {
+            const searchQuery = content.query.startsWith('"') ? content.query : `"${content.query}"`;
             const response = await axios.get(
                 `https://${auth.domain}.freshdesk.com/api/v2/search/contacts`,
                 {
-                    params: { query: content.query },
+                    params: { query: searchQuery },
                     auth: {
                         username: auth.apiKey,
                         password: 'X'
