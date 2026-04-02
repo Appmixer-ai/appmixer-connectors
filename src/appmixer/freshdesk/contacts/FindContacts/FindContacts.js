@@ -118,6 +118,27 @@ module.exports = {
 
         const params = {};
 
+        // Search by name using the autocomplete endpoint
+        if (content.searchName) {
+            const response = await axios.get(
+                `https://${auth.domain}.freshdesk.com/api/v2/contacts/autocomplete`,
+                {
+                    params: { term: content.searchName },
+                    auth: {
+                        username: auth.apiKey,
+                        password: 'X'
+                    }
+                }
+            );
+            const contacts = Array.isArray(response.data) ? response.data : [];
+
+            if (contacts.length === 0) {
+                return context.sendJson({}, 'notFound');
+            }
+
+            return sendArrayOutput({ context, records: contacts, outputType });
+        }
+
         // Filter by a single email or phone (Freshdesk filter params)
         if (content.email) params.email = content.email;
         if (content.phone) params.phone = content.phone;
