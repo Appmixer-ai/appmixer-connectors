@@ -87,7 +87,6 @@ function applyGoogleAdsConfig(context, overrides = {}) {
     context.config = {
         ...(context.config || {}),
         developerToken: 'dev-token',
-        loginCustomerId: '9999999999',
         ...overrides
     };
 

@@ -27,7 +27,8 @@ describe('DeleteUserList', () => {
 
     it('should require developer token in backoffice config', async () => {
         context.messages.in.content = {
-            customerId: '123'
+            customerId: '123',
+            userListId: '456'
         };
         context.config = {};
 
@@ -94,12 +95,12 @@ describe('DeleteUserList', () => {
         assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
     });
 
-    it('should use loginCustomerId from backoffice config', async () => {
+    it('should use loginCustomerId from user input', async () => {
         context.messages.in.content = {
             customerId: '7107133715',
+            loginCustomerId: '5338559342',
             userListId: '123456'
         };
-        context.config.loginCustomerId = '5338559342';
 
         context.httpRequest.resolves({
             data: { results: [] }

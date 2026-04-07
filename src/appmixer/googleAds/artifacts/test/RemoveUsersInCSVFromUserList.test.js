@@ -92,9 +92,13 @@ describe('RemoveUsersInCSVFromUserList', () => {
             context.messages.in.content = {
                 fileId: 'file-abc',
                 customerId: '7122133715',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
             context.config = {};
+
+            // Stub file read so CSV parsing succeeds before buildHeaders is called
+            context.getFileReadStream = sinon.stub().resolves(csvStream(emailCsv([{ email: 'a@b.com' }])));
 
             await assert.rejects(() => RemoveUsersInCSVFromUserList.receive(context), {
                 message: 'Developer Token is required in backoffice config!'
@@ -210,8 +214,8 @@ describe('RemoveUsersInCSVFromUserList', () => {
             assert.strictEqual(headers['developer-token'], 'dev-token');
         });
 
-        it('sets login-customer-id header from backoffice config', async () => {
-            context.config.loginCustomerId = '999-888-7777';
+        it('sets login-customer-id header from user input', async () => {
+            context.messages.in.content.loginCustomerId = '999-888-7777';
 
             await RemoveUsersInCSVFromUserList.receive(context);
 
@@ -221,12 +225,15 @@ describe('RemoveUsersInCSVFromUserList', () => {
             assert.strictEqual(createJobCall.args[0].headers['login-customer-id'], '9998887777');
         });
 
-        it('throws when loginCustomerId is missing in backoffice config', async () => {
-            delete context.config.loginCustomerId;
+        it('omits login-customer-id header when not provided', async () => {
+            delete context.messages.in.content.loginCustomerId;
 
-            await assert.rejects(() => RemoveUsersInCSVFromUserList.receive(context), {
-                message: 'Login Customer ID is required in backoffice config!'
-            });
+            await RemoveUsersInCSVFromUserList.receive(context);
+
+            const createJobCall = context.httpRequest.getCalls()
+                .find(c => c.args[0].url.includes('offlineUserDataJobs') && !c.args[0].url.includes(':addOperations') && !c.args[0].url.includes(':run'));
+
+            assert.strictEqual(createJobCall.args[0].headers['login-customer-id'], undefined);
         });
     });
 
