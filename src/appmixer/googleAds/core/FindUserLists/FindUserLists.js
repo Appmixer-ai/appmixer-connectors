@@ -34,7 +34,6 @@ module.exports = {
 
         const {
             customerId,
-            developerToken,
             loginCustomerId,
             searchQuery,
             outputType = 'array'
@@ -48,11 +47,9 @@ module.exports = {
         }
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
 
         const rows = await lib.searchStream(context, {
             customerId,
-            developerToken,
             loginCustomerId,
             query: searchQuery || DEFAULT_QUERY
         });

@@ -8,14 +8,12 @@ module.exports = {
 
         const {
             customerId,
-            developerToken,
             loginCustomerId,
             userListId,
             userListResourceName
         } = context.messages.in.content;
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
 
         // Resolve resource name from either userListId or userListResourceName
         let resourceName = userListResourceName;
@@ -28,7 +26,7 @@ module.exports = {
         const { data } = await context.httpRequest({
             method: 'POST',
             url: `${lib.API_BASE_URL}/customers/${lib.normalizeCustomerId(customerId)}/userLists:mutate`,
-            headers: lib.buildHeaders(context, { developerToken, loginCustomerId }),
+            headers: lib.buildHeaders(context, { loginCustomerId }),
             data: {
                 operations: [
                     { remove: resourceName }
