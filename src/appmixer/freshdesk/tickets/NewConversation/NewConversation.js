@@ -23,12 +23,17 @@ module.exports = {
         const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2`;
         const authConfig = { username: auth.apiKey, password: 'X' };
 
-        // knownConversations: { [ticketId]: number } — last known max conversation id per ticket
+        // flowStartedAt: set once on the very first tick. Any conversation created after this
+        // timestamp on a ticket we're seeing for the first time is treated as new.
+        const flowStartedAt = state.flowStartedAt || new Date().toISOString();
+        const isFirstRun = !state.flowStartedAt;
+
+        // knownMaxConvId: { [ticketId]: number } — highest conversation id seen per ticket
         const knownMaxConvId = state.knownMaxConvId || {};
         const newKnownMaxConvId = { ...knownMaxConvId };
 
-        // Step 1: use updated_since to get only recently-updated tickets
-        // A ticket's updated_at bumps when a new conversation is added, so this is precise
+        // Step 1: use updated_since to get only recently-updated tickets.
+        // A ticket's updated_at bumps when a new conversation is added, so this is precise.
         const cursorUpdatedAt = state.cursorUpdatedAt
             ? new Date(state.cursorUpdatedAt)
             : new Date(Date.now() - lookbackMs);
@@ -94,28 +99,42 @@ module.exports = {
                 continue;
             }
 
-            const prevMaxId = knownMaxConvId[ticketId] || null;
+            const prevMaxId = knownMaxConvId[ticketId] != null ? knownMaxConvId[ticketId] : null;
             let newMaxId = prevMaxId;
 
             // Track the highest conv id seen this tick for this ticket
             for (const conv of conversations) {
-                if (!newMaxId || conv.id > newMaxId) {
+                if (newMaxId === null || conv.id > newMaxId) {
                     newMaxId = conv.id;
                 }
             }
 
-            // On first encounter (no cursor for this ticket), just record state — don't fire
-            if (prevMaxId === null) {
+            // Determine which conversations are "new":
+            // - If we've seen this ticket before: any conv with id > prevMaxId
+            // - If first encounter: any conv created after flowStartedAt (catches the case where
+            //   the user adds a conversation right after starting the flow, before the first tick
+            //   had a chance to record baseline state for this ticket)
+            const isNewConv = (conv) => {
+                if (prevMaxId !== null) {
+                    return conv.id > prevMaxId;
+                }
+                // First encounter — only emit conversations created after the flow started
+                return conv.created_at >= flowStartedAt;
+            };
+
+            // On the very first run ever, just record state without emitting anything —
+            // we have no baseline to compare against and don't want to flood with old data.
+            if (isFirstRun) {
                 newKnownMaxConvId[ticketId] = newMaxId;
                 continue;
             }
 
-            // Fetch full ticket for output
+            // Fetch full ticket for output (lazy, only if we'll actually emit)
             let fullTicket = ticket;
             let fetchedFullTicket = false;
 
             for (const conv of conversations) {
-                if (conv.id <= prevMaxId) continue;
+                if (!isNewConv(conv)) continue;
 
                 // Filter by type
                 const isNote = conv.private === true;
@@ -125,7 +144,6 @@ module.exports = {
                 // Filter out ignored agents
                 if (ignoredAgentIds.length > 0 && ignoredAgentIds.includes(conv.user_id)) continue;
 
-                // Lazy-fetch full ticket detail once per ticket (only if we'll actually emit)
                 if (!fetchedFullTicket) {
                     try {
                         const { data: ticketDetail } = await axios.get(`${baseUrl}/tickets/${ticketId}`, {
@@ -150,6 +168,7 @@ module.exports = {
         }
 
         await context.saveState({
+            flowStartedAt,
             cursorUpdatedAt: maxUpdatedAt || state.cursorUpdatedAt,
             cursorTicketId: maxTicketId,
             knownMaxConvId: newKnownMaxConvId
