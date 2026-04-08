@@ -9,32 +9,78 @@ module.exports = {
         const { auth } = context;
         const { ignoreAgents, include } = context.properties;
 
-        // Normalize multiselect inputs
         const ignoredAgentIds = ignoreAgents
             ? normalizeMultiselectInput(ignoreAgents, context, 'Ignore agents').map(Number)
             : [];
 
-        // include: 'conversations', 'notes', or both (default both)
         const includeTypes = include
             ? normalizeMultiselectInput(include, context, 'Include')
             : ['conversations', 'notes'];
 
-        const authConfig = { username: auth.apiKey, password: 'X' };
+        const state = context.state || {};
+        const lookbackMs = 2 * 60 * 1000;
+
         const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2`;
+        const authConfig = { username: auth.apiKey, password: 'X' };
 
-        // --- Initialise state ---
-        // knownConversations: { [ticketId]: Set<conversationId> }
-        const knownConversations = context.state.knownConversations || {};
-        const newKnownConversations = {};
+        // knownConversations: { [ticketId]: number } — last known max conversation id per ticket
+        const knownMaxConvId = state.knownMaxConvId || {};
+        const newKnownMaxConvId = { ...knownMaxConvId };
 
-        // Step 1: fetch recent tickets (last 100, ordered by updated_at so we catch recently active ones)
-        const { data: tickets } = await axios.get(`${baseUrl}/tickets`, {
-            auth: authConfig,
-            params: { per_page: 100, order_by: 'updated_at', order_type: 'desc' }
-        });
+        // Step 1: use updated_since to get only recently-updated tickets
+        // A ticket's updated_at bumps when a new conversation is added, so this is precise
+        const cursorUpdatedAt = state.cursorUpdatedAt
+            ? new Date(state.cursorUpdatedAt)
+            : new Date(Date.now() - lookbackMs);
 
-        // Step 2: for each ticket fetch conversations
-        for (const ticket of tickets) {
+        const from = new Date(cursorUpdatedAt.getTime() - lookbackMs).toISOString();
+
+        let nextUrl =
+            `${baseUrl}/tickets?updated_since=${encodeURIComponent(from)}` +
+            `&order_by=updated_at&order_type=asc&per_page=100`;
+
+        let maxUpdatedAt = state.cursorUpdatedAt || null;
+        let maxTicketId = state.cursorTicketId || 0;
+
+        const updatedTickets = [];
+
+        while (nextUrl) {
+            const res = await axios.get(nextUrl, {
+                auth: authConfig,
+                validateStatus: s => s >= 200 && s < 300
+            });
+            const tickets = res.data || [];
+
+            for (const ticket of tickets) {
+                const updatedAt = ticket.updated_at;
+                const ticketId = ticket.id;
+
+                const isAfterCursor =
+                    !state.cursorUpdatedAt ||
+                    updatedAt > state.cursorUpdatedAt ||
+                    (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0));
+
+                if (isAfterCursor) {
+                    updatedTickets.push(ticket);
+
+                    if (
+                        !maxUpdatedAt ||
+                        updatedAt > maxUpdatedAt ||
+                        (updatedAt === maxUpdatedAt && ticketId > maxTicketId)
+                    ) {
+                        maxUpdatedAt = updatedAt;
+                        maxTicketId = ticketId;
+                    }
+                }
+            }
+
+            const link = res.headers.link || '';
+            const match = link.match(/<([^>]+)>;\s*rel="next"/);
+            nextUrl = match ? match[1] : null;
+        }
+
+        // Step 2: for each recently-updated ticket, fetch conversations and detect new ones
+        for (const ticket of updatedTickets) {
             const ticketId = ticket.id;
 
             let conversations;
@@ -45,29 +91,33 @@ module.exports = {
                 });
                 conversations = Array.isArray(data) ? data : [];
             } catch (err) {
-                // Skip tickets we can't fetch conversations for (e.g. deleted)
                 continue;
             }
 
-            const knownIds = new Set(knownConversations[ticketId] || []);
-            const currentIds = new Set();
-            const newOnes = [];
+            const prevMaxId = knownMaxConvId[ticketId] || null;
+            let newMaxId = prevMaxId;
 
+            // Track the highest conv id seen this tick for this ticket
             for (const conv of conversations) {
-                currentIds.add(conv.id);
-                if (knownIds.size > 0 && !knownIds.has(conv.id)) {
-                    newOnes.push(conv);
+                if (!newMaxId || conv.id > newMaxId) {
+                    newMaxId = conv.id;
                 }
             }
 
-            // Persist current IDs for this ticket
-            newKnownConversations[ticketId] = Array.from(currentIds);
+            // On first encounter (no cursor for this ticket), just record state — don't fire
+            if (prevMaxId === null) {
+                newKnownMaxConvId[ticketId] = newMaxId;
+                continue;
+            }
 
-            // On first run (no known state for this ticket), just record — don't fire
-            if (knownIds.size === 0) continue;
+            // Fetch full ticket for output
+            let fullTicket = ticket;
+            let fetchedFullTicket = false;
 
-            for (const conv of newOnes) {
-                // Filter by type: private notes have private=true, replies/conversations have private=false
+            for (const conv of conversations) {
+                if (conv.id <= prevMaxId) continue;
+
+                // Filter by type
                 const isNote = conv.private === true;
                 const type = isNote ? 'notes' : 'conversations';
                 if (!includeTypes.includes(type)) continue;
@@ -75,15 +125,17 @@ module.exports = {
                 // Filter out ignored agents
                 if (ignoredAgentIds.length > 0 && ignoredAgentIds.includes(conv.user_id)) continue;
 
-                // Fetch full ticket details
-                let fullTicket = ticket;
-                try {
-                    const { data: ticketDetail } = await axios.get(`${baseUrl}/tickets/${ticketId}`, {
-                        auth: authConfig
-                    });
-                    fullTicket = ticketDetail;
-                } catch (err) {
-                    // fallback to summary ticket
+                // Lazy-fetch full ticket detail once per ticket (only if we'll actually emit)
+                if (!fetchedFullTicket) {
+                    try {
+                        const { data: ticketDetail } = await axios.get(`${baseUrl}/tickets/${ticketId}`, {
+                            auth: authConfig
+                        });
+                        fullTicket = ticketDetail;
+                    } catch (err) {
+                        // fallback to summary
+                    }
+                    fetchedFullTicket = true;
                 }
 
                 await context.sendJson({
@@ -105,8 +157,14 @@ module.exports = {
                     ticketJson: fullTicket
                 }, 'out');
             }
+
+            newKnownMaxConvId[ticketId] = newMaxId;
         }
 
-        await context.saveState({ knownConversations: newKnownConversations });
+        await context.saveState({
+            cursorUpdatedAt: maxUpdatedAt || state.cursorUpdatedAt,
+            cursorTicketId: maxTicketId,
+            knownMaxConvId: newKnownMaxConvId
+        });
     }
 };
