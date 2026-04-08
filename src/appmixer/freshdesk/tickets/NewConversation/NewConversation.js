@@ -139,22 +139,10 @@ module.exports = {
                 }
 
                 await context.sendJson({
-                    conversationId: conv.id,
+                    conversation: conv,
                     conversationType: isNote ? 'note' : 'reply',
-                    conversationBody: conv.body_text || conv.body,
-                    conversationCreatedAt: conv.created_at,
-                    conversationUserId: conv.user_id,
-                    conversationPrivate: conv.private,
-                    conversationJson: conv,
                     conversationsList: conversations,
-                    ticketId: fullTicket.id,
-                    ticketSubject: fullTicket.subject,
-                    ticketStatus: fullTicket.status,
-                    ticketPriority: fullTicket.priority,
-                    ticketAgentId: fullTicket.responder_id,
-                    ticketCreatedAt: fullTicket.created_at,
-                    ticketUpdatedAt: fullTicket.updated_at,
-                    ticketJson: fullTicket
+                    ticket: fullTicket
                 }, 'out');
             }
 
