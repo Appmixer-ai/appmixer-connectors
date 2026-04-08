@@ -184,7 +184,6 @@ module.exports = {
         if (content.updatedSince) params.updated_since = content.updatedSince;
         if (content.companyId) params.company_id = content.companyId;
         if (content.tag) params.tag = content.tag;
-        if (content.page) params.page = content.page;
 
         const response = await axios.get(
             `https://${auth.domain}.freshdesk.com/api/v2/contacts`,

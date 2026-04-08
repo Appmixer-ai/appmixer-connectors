@@ -130,9 +130,8 @@ module.exports = {
             return sendArrayOutput({ context, records: companies, outputType });
         }
 
-        // List companies with optional pagination
+        // List all companies
         const params = {};
-        if (content.page) params.page = content.page;
 
         const response = await axios.get(`${baseUrl}/companies`, {
             params,
