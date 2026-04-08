@@ -37,7 +37,7 @@ module.exports = {
 
         let nextUrl =
             `${baseUrl}/tickets?updated_since=${encodeURIComponent(from)}` +
-            `&order_by=updated_at&order_type=asc&per_page=100`;
+            '&order_by=updated_at&order_type=asc&per_page=100';
 
         let maxUpdatedAt = state.cursorUpdatedAt || null;
         let maxTicketId = state.cursorTicketId || 0;
