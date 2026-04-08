@@ -1,0 +1,81 @@
+{
+    "name": "appmixer.freshdesk.tickets.NewConversation",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Triggers when a new conversation (reply or private note) is added to a ticket.",
+    "private": false,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:freshdesk"
+    },
+    "quota": {
+        "manager": "appmixer:freshdesk",
+        "resources": "tickets.polling",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "ignoreAgents": {
+                    "type": ["array", "string"]
+                },
+                "include": {
+                    "type": ["array", "string"]
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "include": {
+                    "type": "multiselect",
+                    "label": "Include",
+                    "index": 1,
+                    "defaultValue": ["conversations", "notes"],
+                    "tooltip": "Choose which types of conversations to detect. <b>Conversations</b> are public replies; <b>Notes</b> are private notes. Both are selected by default.",
+                    "options": [
+                        { "label": "Conversations (replies)", "value": "conversations" },
+                        { "label": "Notes (private)", "value": "notes" }
+                    ]
+                },
+                "ignoreAgents": {
+                    "type": "multiselect",
+                    "label": "Ignore Agents",
+                    "index": 2,
+                    "tooltip": "If the new conversation was added by any of these agents, the trigger will not fire.",
+                    "source": {
+                        "url": "/component/appmixer/freshdesk/agents/ListAgents?outPort=agents",
+                        "data": {
+                            "transform": "./ListAgents#agentsToSelectArray"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Conversation ID", "value": "conversationId" },
+                { "label": "Conversation Type", "value": "conversationType" },
+                { "label": "Conversation Body", "value": "conversationBody" },
+                { "label": "Conversation Created At", "value": "conversationCreatedAt" },
+                { "label": "Conversation User ID", "value": "conversationUserId" },
+                { "label": "Conversation Private", "value": "conversationPrivate" },
+                { "label": "Conversation (JSON)", "value": "conversationJson" },
+                { "label": "All Conversations (list)", "value": "conversationsList" },
+                { "label": "Ticket ID", "value": "ticketId" },
+                { "label": "Ticket Subject", "value": "ticketSubject" },
+                { "label": "Ticket Status", "value": "ticketStatus" },
+                { "label": "Ticket Priority", "value": "ticketPriority" },
+                { "label": "Ticket Agent ID", "value": "ticketAgentId" },
+                { "label": "Ticket Created At", "value": "ticketCreatedAt" },
+                { "label": "Ticket Updated At", "value": "ticketUpdatedAt" },
+                { "label": "Ticket (JSON)", "value": "ticketJson" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHBhdGggZD0iTTMxLjkgMGgyNC4wMzZBOCA4IDAgMCAxIDY0IDguMDczVjMyLjFDNjQgNDkuNzIyIDQ5LjcyMiA2NCAzMi4xIDY0aC0uMTgyQTMxLjg5IDMxLjg5IDAgMCAxIDAgMzIuMTA5QzAgMTQuNDM3IDE0LjI1NC4xODIgMzEuOSAweiIgZmlsbD0iIzI1YzE2ZiIvPjxwYXRoIGQ9Ik0zMS45IDE0LjI1NWMtOC4wOTMgMC0xNC42NTQgNi41Ni0xNC42NTQgMTQuNjU0djkuOTY0Yy4wNTggMi42NjcgMi4yMDYgNC44MTUgNC44NzMgNC44NzNoNC4xNDVWMzIuM2gtNS42di0zLjJjLjM0LTYuMDI2IDUuMzI3LTEwLjc0IDExLjM2NC0xMC43NFM0My4wNCAyMy4wNjUgNDMuMzggMjkuMXYzLjJIMzcuN3YxMS40NTRoMy43NDV2LjE4MmMtLjA0IDIuNDc0LTIuMDM1IDQuNDctNC41IDQuNWgtNC40NzNjLS4zNjQgMC0uNzY0LjE4Mi0uNzY0LjU0NWEuOC44IDAgMCAwIC43NjQuNzY0aDQuNWMzLjIwNS0uMDIgNS43OTgtMi42MTMgNS44MTgtNS44MTh2LS4zNjRhNC44IDQuOCAwIDAgMCAzLjc0NS00LjcyN1YyOS4xYy4xODItOC4yNTQtNi4zNjQtMTQuODM2LTE0LjY1NC0xNC44MzZ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+"
+}
