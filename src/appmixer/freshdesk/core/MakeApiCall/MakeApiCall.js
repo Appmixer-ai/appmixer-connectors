@@ -23,12 +23,13 @@ module.exports = {
             }
         };
 
-        if (headers && Object.keys(headers).length > 0) {
-            Object.assign(requestOptions.headers, headers);
+        if (headers) {
+            const parsedHeaders = JSON.parse(headers);
+            Object.assign(requestOptions.headers, parsedHeaders);
         }
 
-        if (parameters && Object.keys(parameters).length > 0) {
-            requestOptions.params = parameters;
+        if (parameters) {
+            requestOptions.params = JSON.parse(parameters);
         }
 
         if (body) {
