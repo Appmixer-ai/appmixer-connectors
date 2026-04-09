@@ -18,10 +18,14 @@ module.exports = {
         const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
         const authConfig = { username: auth.apiKey, password: 'X' };
 
-        // Cursor is based on created_at — we only want genuinely new tickets
+        // Cursor is based on created_at — we only want genuinely new tickets.
+        // initialCursorCreatedAt is used as the fallback state so that on the first tick
+        // where no new tickets are found, we still persist a cursor and avoid re-emitting
+        // updated (but not new) tickets on subsequent ticks.
+        const initialCursorCreatedAt = new Date(Date.now() - lookbackMs).toISOString();
         const cursorCreatedAt = state.cursorCreatedAt
             ? new Date(state.cursorCreatedAt)
-            : new Date(Date.now() - lookbackMs);
+            : new Date(initialCursorCreatedAt);
 
         // Use updated_since slightly before the cursor (new tickets have updated_at === created_at)
         const from = new Date(cursorCreatedAt.getTime() - lookbackMs).toISOString();
@@ -37,7 +41,7 @@ module.exports = {
         }
 
         let nextUrl = `${baseUrl}?${params.toString()}`;
-        let maxCreatedAt = state.cursorCreatedAt || null;
+        let maxCreatedAt = state.cursorCreatedAt || initialCursorCreatedAt;
         let maxTicketId = state.cursorTicketId || 0;
 
         while (nextUrl) {
@@ -107,8 +111,6 @@ module.exports = {
             nextUrl = match ? match[1] : null;
         }
 
-        if (maxCreatedAt) {
-            await context.saveState({ cursorCreatedAt: maxCreatedAt, cursorTicketId: maxTicketId });
-        }
+        await context.saveState({ cursorCreatedAt: maxCreatedAt, cursorTicketId: maxTicketId });
     }
 };
