@@ -62,13 +62,22 @@ module.exports = {
 
                 const fields = {
                     id: ticket.id,
-                    created_at: ticket.created_at,
-                    due_by: ticket.due_by,
+                    createdAt: ticket.created_at,
+                    updatedAt: ticket.updated_at,
+                    dueBy: ticket.due_by,
+                    frDueBy: ticket.fr_due_by,
                     subject: ticket.subject,
                     type: ticket.type,
+                    source: ticket.source,
+                    sourceInfo: ticket.source_info || null,
                     status: ticket.status,
                     priority: ticket.priority,
                     agentId: ticket.responder_id,
+                    groupId: ticket.group_id,
+                    emailConfigId: ticket.email_config_id,
+                    productId: ticket.product_id,
+                    tags: ticket.tags,
+                    customFields: ticket.custom_fields,
                     ticketJson: ticket
                 };
 
