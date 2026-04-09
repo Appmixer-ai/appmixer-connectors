@@ -4,7 +4,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { url, method, parameters, body } = context.messages.in.content;
+        const { url, method, headers, parameters, body } = context.messages.in.content;
 
         const requestOptions = {
             method,
@@ -14,6 +14,12 @@ module.exports = {
                 'Content-Type': 'application/json'
             }
         };
+
+        if (headers && headers.length > 0) {
+            headers.forEach(({ key, value }) => {
+                if (key) requestOptions.headers[key] = value;
+            });
+        }
 
         if (parameters && parameters.length > 0) {
             requestOptions.params = parameters.reduce((acc, { key, value }) => {
