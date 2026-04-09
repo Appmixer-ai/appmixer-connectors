@@ -110,12 +110,20 @@ module.exports = {
                 return context.sendJson({
                     id: ticket.id,
                     created_at: ticket.created_at,
+                    updated_at: ticket.updated_at,
                     due_by: ticket.due_by,
+                    fr_due_by: ticket.fr_due_by,
                     subject: ticket.subject,
                     type: ticket.type,
+                    source: ticket.source,
                     status: ticket.status,
                     priority: ticket.priority,
                     agentId: ticket.responder_id,
+                    group_id: ticket.group_id,
+                    email_config_id: ticket.email_config_id,
+                    product_id: ticket.product_id,
+                    tags: ticket.tags,
+                    custom_fields: ticket.custom_fields,
                     ticketJson: ticket
                 }, 'tickets');
             }));
