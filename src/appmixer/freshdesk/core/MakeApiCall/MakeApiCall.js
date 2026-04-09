@@ -23,17 +23,12 @@ module.exports = {
             }
         };
 
-        if (headers && headers.length > 0) {
-            headers.forEach(({ key, value }) => {
-                if (key) requestOptions.headers[key] = value;
-            });
+        if (headers && Object.keys(headers).length > 0) {
+            Object.assign(requestOptions.headers, headers);
         }
 
-        if (parameters && parameters.length > 0) {
-            requestOptions.params = parameters.reduce((acc, { key, value }) => {
-                if (key) acc[key] = value;
-                return acc;
-            }, {});
+        if (parameters && Object.keys(parameters).length > 0) {
+            requestOptions.params = parameters;
         }
 
         if (body) {
