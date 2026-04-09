@@ -1,0 +1,511 @@
+{
+    "name": "E2E GoogleAds - CSV User Operations",
+    "description": "End-to-end test for GoogleAds connector - tests CSV user list operations including create, add users, remove users, and delete",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "customerId",
+                                                "text": "1234567890"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "userListName",
+                                                "text": "E2E Test User List"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "userListDescription",
+                                                "text": "Test user list for E2E testing"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "create-user-list": {
+            "type": "appmixer.googleAds.core.CreateUserList",
+            "x": 688,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-list-name": {
+                                            "variable": "$.set-variables.out.userListName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-list-desc": {
+                                            "variable": "$.set-variables.out.userListDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "name": "{{{var-list-name}}}",
+                                    "description": "{{{var-list-desc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.create-user-list.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "add-users-from-csv": {
+            "type": "appmixer.googleAds.core.AddUsersFromCSVToUserList",
+            "x": 880,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {},
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-list-id": {
+                                            "variable": "$.create-user-list.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {},
+                                    "uploadMode": {}
+                                },
+                                "lambda": {
+                                    "fileId": "test-file-id",
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "userListId": "{{{var-list-id}}}",
+                                    "schema": [
+                                        {
+                                            "csvHeader": "email",
+                                            "googleAdsType": "email"
+                                        }
+                                    ],
+                                    "uploadMode": "ADD"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-add-users": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "add-users-from-csv": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-users-from-csv": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-success": {
+                                            "variable": "$.add-users-from-csv.out.success",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-success}}}",
+                                                "assertion": "equal",
+                                                "expected": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "remove-users-from-csv": {
+            "type": "appmixer.googleAds.core.RemoveUsersInCSVFromUserList",
+            "x": 1072,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "add-users-from-csv": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-users-from-csv": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {},
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-list-id": {
+                                            "variable": "$.create-user-list.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "schema": {}
+                                },
+                                "lambda": {
+                                    "fileId": "test-file-id",
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "userListId": "{{{var-list-id}}}",
+                                    "schema": [
+                                        {
+                                            "csvHeader": "email",
+                                            "googleAdsType": "email"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-remove-users": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "remove-users-from-csv": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "remove-users-from-csv": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-success": {
+                                            "variable": "$.remove-users-from-csv.out.success",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-success}}}",
+                                                "assertion": "equal",
+                                                "expected": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-user-list": {
+            "type": "appmixer.googleAds.core.DeleteUserList",
+            "x": 1264,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "remove-users-from-csv": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "remove-users-from-csv": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "variable": "$.set-variables.out.customerId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-list-id": {
+                                            "variable": "$.create-user-list.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "userListId": "{{{var-list-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-delete-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-user-list": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-success": {
+                                            "variable": "$.delete-user-list.out.success",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-success}}}",
+                                                "assertion": "equal",
+                                                "expected": true
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-list": [
+                        "out"
+                    ],
+                    "assert-add-users": [
+                        "out"
+                    ],
+                    "assert-remove-users": [
+                        "out"
+                    ],
+                    "assert-delete-list": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1568,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E GoogleAds - CSV User Operations",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

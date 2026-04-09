@@ -16,9 +16,19 @@ module.exports = {
 
         const resourceNames = data.resourceNames || [];
 
+        // Parse resourceNames to extract customer IDs
+        // Format: 'customers/{customerId}'
+        const customers = resourceNames.map(resourceName => {
+            const id = resourceName.replace('customers/', '');
+            return {
+                id,
+                resourceName
+            };
+        });
+
         return context.sendJson({
-            resourceNames,
-            count: resourceNames.length
+            customers,
+            count: customers.length
         }, 'out');
     }
 };

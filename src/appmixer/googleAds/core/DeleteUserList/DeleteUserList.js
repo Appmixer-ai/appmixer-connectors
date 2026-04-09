@@ -34,9 +34,6 @@ module.exports = {
             }
         });
 
-        // Google Ads returns empty results on successful delete
-        const success = data.results && Array.isArray(data.results) && data.results.length >= 0;
-
-        return context.sendJson({ success }, 'out');
+        return context.sendJson({ }, 'out');
     }
 };
