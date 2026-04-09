@@ -1,0 +1,422 @@
+{
+    "name": "E2E Jira - make-api-call",
+    "description": "End-to-end test for Jira connector - tests MakeApiCall component using GET, POST, and DELETE HTTP operations including create, verify, and cleanup of a Jira issue",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "projectKey",
+                                                "text": "TEST"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "issueSummary",
+                                                "text": "E2E Test Issue"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-get-myself": {
+            "type": "appmixer.jira.core.MakeApiCall",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/myself",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-create-issue": {
+            "type": "appmixer.jira.core.MakeApiCall",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "body": {
+                                        "pk-var": {
+                                            "variable": "$.set-variables.out.projectKey",
+                                            "functions": []
+                                        },
+                                        "summary-var": {
+                                            "variable": "$.set-variables.out.issueSummary",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "url": "/issue",
+                                    "method": "POST",
+                                    "body": "{\"fields\":{\"project\":{\"key\":\"{{{pk-var}}}\"},\"summary\":\"{{{summary-var}}}\",\"issuetype\":{\"name\":\"Task\"}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "make-api-call-get-issue": {
+            "type": "appmixer.jira.core.MakeApiCall",
+            "x": 640,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-create-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-create-issue": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "key-var": {
+                                            "variable": "$.make-api-call-create-issue.out.body.key",
+                                            "functions": [
+                                                {
+                                                    "name": "g_javascript",
+                                                    "params": [
+                                                        {
+                                                            "value": "'/issue/' + input"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{key-var}}}",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-myself": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1040,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-get-myself": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-get-myself": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "account-id-check": {
+                                            "variable": "$.make-api-call-get-myself.out.body.accountId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{account-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-issue": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1040,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-create-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-create-issue": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "issue-key-check": {
+                                            "variable": "$.make-api-call-create-issue.out.body.key",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{issue-key-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-issue": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1040,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-get-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "make-api-call-get-issue": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "summary-check": {
+                                            "variable": "$.make-api-call-get-issue.out.body.fields.summary",
+                                            "functions": []
+                                        },
+                                        "expected-summary": {
+                                            "variable": "$.set-variables.out.issueSummary",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{summary-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-summary}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1232,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-get-myself": [
+                        "out"
+                    ],
+                    "assert-create-issue": [
+                        "out"
+                    ],
+                    "assert-get-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "make-api-call-delete-issue": {
+            "type": "appmixer.jira.core.MakeApiCall",
+            "x": 1424,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "del-key-var": {
+                                            "variable": "$.make-api-call-create-issue.out.body.key",
+                                            "functions": [
+                                                {
+                                                    "name": "g_javascript",
+                                                    "params": [
+                                                        {
+                                                            "value": "'/issue/' + input"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{del-key-var}}}",
+                                    "method": "DELETE"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1616,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "make-api-call-delete-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "make-api-call-delete-issue": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Jira - make-api-call",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
