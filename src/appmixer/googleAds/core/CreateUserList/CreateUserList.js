@@ -43,9 +43,12 @@ module.exports = {
             }
         });
 
+        const resourceName = data.results?.[0]?.resourceName || null;
+        const userListId = resourceName ? resourceName.split('/').pop() : null;
+
         return context.sendJson({
-            resourceName: data.results?.[0]?.resourceName || null,
-            result: data.results?.[0] || null
+            id: userListId,
+            resourceName: resourceName
         }, 'out');
     }
 };

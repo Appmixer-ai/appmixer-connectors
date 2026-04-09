@@ -23,8 +23,8 @@ const USER_LIST_SCHEMA = {
     'name': { 'type': 'string', 'title': 'Name' },
     'description': { 'type': 'string', 'title': 'Description' },
     'membershipStatus': { 'type': 'string', 'title': 'Membership Status' },
-    'sizeForDisplay': { 'type': 'integer', 'title': 'Size For Display' },
-    'sizeForSearch': { 'type': 'integer', 'title': 'Size For Search' },
+    'sizeForDisplay': { 'type': 'string', 'title': 'Size For Display' },
+    'sizeForSearch': { 'type': 'string', 'title': 'Size For Search' },
     'type': { 'type': 'string', 'title': 'Type' }
 };
 
