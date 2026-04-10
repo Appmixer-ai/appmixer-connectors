@@ -213,7 +213,7 @@ module.exports = {
 
     publishChatProgressEvent: function(context, step, content) {
 
-        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        return context.pubSubPublish(`stream:agent:events:${context.messages.in.content.threadId}`, {
             type: 'progress',
             data: {
                 id: uuid.v6(), // UUID v6 is time ordered
@@ -229,7 +229,7 @@ module.exports = {
 
     publishChatDeltaEvent: async function(context, completionId, content) {
 
-        return lib.publish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        return context.pubSubPublish(`stream:agent:events:${context.messages.in.content.threadId}`, {
             type: 'delta',
             data: {
                 id: uuid.v6(), // UUID v6 is time ordered
