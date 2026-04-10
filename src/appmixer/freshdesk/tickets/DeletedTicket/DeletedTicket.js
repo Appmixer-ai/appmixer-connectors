@@ -2,76 +2,59 @@
 const axios = require('axios');
 
 module.exports = {
-
     async tick(context) {
-
         const { auth } = context;
-        const state = context.state || {};
-        const lookbackMs = 2 * 60 * 1000;
+        let since = new Date();
+        let deletedTickets = [];
 
-        const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
-        const authConfig = { username: auth.apiKey, password: 'X' };
+        const limit = 100;
+        const perPage = 100;
+        const pages = Math.ceil(limit / perPage);
 
-        // Deleted tickets API supports updated_since too (filter=deleted)
-        const cursorUpdatedAt = state.cursorUpdatedAt
-            ? new Date(state.cursorUpdatedAt)
-            : new Date(Date.now() - lookbackMs);
+        const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
+        const requestObject = {
+            auth: {
+                username: auth.apiKey,
+                password: 'X'
+            },
+            params: {
+                per_page: perPage,
+                filter: 'deleted',
+                order_by: 'updated_at',
+                order_type: 'desc'
+            }
+        };
 
-        const from = new Date(cursorUpdatedAt.getTime() - lookbackMs).toISOString();
+        let tickets = [];
 
-        let nextUrl =
-            `${baseUrl}?filter=deleted` +
-            `&updated_since=${encodeURIComponent(from)}` +
-            '&order_by=updated_at&order_type=asc&per_page=100';
+        for (let i = 1; i <= pages; i++) {
+            requestObject.params.page = i;
+            const { data } = await axios.get(url, requestObject);
+            if (data.length === 0) {
+                break;
+            }
+            tickets = tickets.concat(data);
+        }
 
-        let maxUpdatedAt = state.cursorUpdatedAt || null;
-        let maxTicketId = state.cursorTicketId || 0;
+        tickets = tickets.slice(0, limit);
+        const sinceToCompare = context.state.since || since;
 
-        while (nextUrl) {
-            const res = await axios.get(nextUrl, {
-                auth: authConfig,
-                validateStatus: s => s >= 200 && s < 300
-            });
-
-            const tickets = res.data || [];
-
-            for (const ticket of tickets) {
-                const updatedAt = ticket.updated_at;
-                const ticketId = ticket.id;
-
-                if (!ticket.deleted) continue;
-
-                const isAfterCursor =
-                    !state.cursorUpdatedAt ||
-                    updatedAt > state.cursorUpdatedAt ||
-                    (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0));
-
-                if (!isAfterCursor) continue;
-
-                await context.sendJson({
+        tickets.forEach(ticket => {
+            const updatedAt = new Date(ticket.updated_at);
+            if (ticket.deleted && updatedAt > sinceToCompare) {
+                deletedTickets.push({
                     id: ticket.id,
                     subject: ticket.subject,
-                    deleted_at: ticket.updated_at,
-                    ticketJson: ticket
-                }, 'ticket');
-
-                if (
-                    !maxUpdatedAt ||
-                    updatedAt > maxUpdatedAt ||
-                    (updatedAt === maxUpdatedAt && ticketId > maxTicketId)
-                ) {
-                    maxUpdatedAt = updatedAt;
-                    maxTicketId = ticketId;
-                }
+                    deleted_at: ticket.updated_at
+                });
             }
+        });
 
-            const link = res.headers.link || '';
-            const match = link.match(/<([^>]+)>;\s*rel="next"/);
-            nextUrl = match ? match[1] : null;
+        if (deletedTickets.length) {
+            deletedTickets.forEach(ticket => {
+                context.sendJson(ticket, 'ticket');
+            });
         }
-
-        if (maxUpdatedAt) {
-            await context.saveState({ cursorUpdatedAt: maxUpdatedAt, cursorTicketId: maxTicketId });
-        }
+        await context.saveState({ since });
     }
 };

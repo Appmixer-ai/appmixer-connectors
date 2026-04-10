@@ -1,5 +1,6 @@
 'use strict';
 const axios = require('axios');
+const Promise = require('bluebird');
 const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
@@ -8,107 +9,84 @@ module.exports = {
 
         const { auth } = context;
         const { embed } = context.properties;
-        const normalizedEmbed = embed
-            ? normalizeMultiselectInput(embed, context, 'Embed fields')
-            : [];
 
-        const state = context.state || {};
-        const lookbackMs = 2 * 60 * 1000;
+        // Normalize the multiselect field
+        const normalizedEmbed = embed ?
+            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
 
-        const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
-        const authConfig = { username: auth.apiKey, password: 'X' };
+        let since = (new Date()).toISOString();
 
-        // Cursor is based on created_at — we only want genuinely new tickets
-        const cursorCreatedAt = state.cursorCreatedAt
-            ? new Date(state.cursorCreatedAt)
-            : new Date(Date.now() - lookbackMs);
+        let known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
+        let actual = new Set();
+        let diff = new Set();
 
-        // Use updated_since slightly before the cursor (new tickets have updated_at === created_at)
-        const from = new Date(cursorCreatedAt.getTime() - lookbackMs).toISOString();
+        const limit = 100;
+        const perPage = 100;
+        const pages = Math.ceil(limit / perPage);
 
-        const params = new URLSearchParams({
-            updated_since: from,
-            order_by: 'created_at',
-            order_type: 'asc',
-            per_page: '100'
-        });
+        const params = { per_page: perPage };
         if (normalizedEmbed.length > 0) {
-            params.set('include', normalizedEmbed.join(','));
+            params.include = normalizedEmbed.join(',');
         }
 
-        let nextUrl = `${baseUrl}?${params.toString()}`;
-        let maxCreatedAt = state.cursorCreatedAt || null;
-        let maxTicketId = state.cursorTicketId || 0;
+        const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
 
-        while (nextUrl) {
-            const res = await axios.get(nextUrl, {
-                auth: authConfig,
-                validateStatus: s => s >= 200 && s < 300
-            });
+        const requestObject = {
+            auth: {
+                username: auth.apiKey,
+                password: 'X'
+            },
+            params
+        };
 
-            const tickets = res.data || [];
+        let tickets = [];
 
-            for (const ticket of tickets) {
-                const createdAt = ticket.created_at;
-                const ticketId = ticket.id;
+        for (let i = 1; i <= pages; i++ ) {
+            requestObject.params.page = i;
+            const { data } = await axios.get(url, requestObject);
+            if (data.length === 0) {
+                break;
+            }
+            tickets = tickets.concat(data);
+        }
 
-                // Only emit tickets created after the cursor (tie-break on id)
-                const isNew =
-                    !state.cursorCreatedAt ||
-                    createdAt > state.cursorCreatedAt ||
-                    (createdAt === state.cursorCreatedAt && ticketId > (state.cursorTicketId || 0));
+        tickets = tickets.slice(0, limit);
 
-                if (!isNew) continue;
+        tickets.forEach(ticket => {
+            if (known && !known.has(ticket['id'])) {
+                diff.add(ticket);
+            }
+            actual.add(ticket['id']);
+        });
 
+        if (diff.size) {
+            await Promise.map(diff, ticket => {
                 const fields = {
                     id: ticket.id,
-                    createdAt: ticket.created_at,
-                    updatedAt: ticket.updated_at,
-                    dueBy: ticket.due_by,
-                    frDueBy: ticket.fr_due_by,
+                    created_at: ticket.created_at,
+                    due_by: ticket.due_by,
                     subject: ticket.subject,
                     type: ticket.type,
-                    source: ticket.source,
-                    sourceInfo: ticket.source_info || null,
                     status: ticket.status,
                     priority: ticket.priority,
                     agentId: ticket.responder_id,
-                    groupId: ticket.group_id,
-                    emailConfigId: ticket.email_config_id,
-                    productId: ticket.product_id,
-                    tags: ticket.tags,
-                    customFields: ticket.custom_fields,
                     ticketJson: ticket
                 };
 
-                if (normalizedEmbed.includes('requester') && ticket.requester) {
+                if (normalizedEmbed.includes('requester')) {
                     fields.requesterId = ticket.requester.id;
                     fields.requesterName = ticket.requester.name;
                     fields.requesterEmail = ticket.requester.email;
                 }
+
                 if (normalizedEmbed.includes('description')) {
                     fields.description = ticket.description_text;
                 }
 
-                await context.sendJson(fields, 'ticket');
-
-                if (
-                    !maxCreatedAt ||
-                    createdAt > maxCreatedAt ||
-                    (createdAt === maxCreatedAt && ticketId > maxTicketId)
-                ) {
-                    maxCreatedAt = createdAt;
-                    maxTicketId = ticketId;
-                }
-            }
-
-            const link = res.headers.link || '';
-            const match = link.match(/<([^>]+)>;\s*rel="next"/);
-            nextUrl = match ? match[1] : null;
+                return context.sendJson(fields, 'ticket');
+            });
         }
 
-        if (maxCreatedAt) {
-            await context.saveState({ cursorCreatedAt: maxCreatedAt, cursorTicketId: maxTicketId });
-        }
+        await context.saveState({ known: Array.from(actual), since });
     }
 };
