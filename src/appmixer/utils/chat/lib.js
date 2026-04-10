@@ -28,6 +28,6 @@ module.exports = {
         const parsedUrl = new URL(endpoint);
         const baseUrl = `${parsedUrl.protocol}//${parsedUrl.hostname}`;
         return page(baseUrl, endpoint);
-    },
+    }
 
 };
