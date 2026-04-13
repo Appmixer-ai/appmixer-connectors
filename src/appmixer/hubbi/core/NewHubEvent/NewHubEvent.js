@@ -24,11 +24,11 @@ module.exports = {
         }
 
         if (context.messages.webhook) {
-            const payload = context.messages.webhook.content.data;
+            const payload = context.messages.webhook.content.data || {};
             const { conversionKey: configuredKey } = context.properties;
 
-            // Only process events for the configured hub
             if (payload.conversionKey && payload.conversionKey !== configuredKey) {
+                await context.log({ step: 'Webhook ignored, conversionKey mismatch', received: payload.conversionKey, expected: configuredKey });
                 return context.response();
             }
 
