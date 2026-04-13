@@ -12,6 +12,7 @@ module.exports = {
                         type: 'text',
                         readonly: true,
                         defaultValue: context.getWebhookUrl(),
+                        value: context.getWebhookUrl(),
                         tooltip: 'Configure this URL in Hubbi to send hub events to this trigger.'
                     }
                 }
@@ -40,7 +41,11 @@ module.exports = {
 
     async start(context) {
 
-        // Save the webhook URL in state so the user can retrieve it for configuration in Hubbi
+        const { conversionKey } = context.properties;
+        if (!conversionKey) {
+            throw new context.CancelError('Hub is required!');
+        }
+
         const webhookUrl = context.getWebhookUrl();
         await context.saveState({ webhookUrl });
         await context.log({ step: 'Webhook registered', webhookUrl });
