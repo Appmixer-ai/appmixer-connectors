@@ -35,7 +35,9 @@ describe('ListAccessibleCustomers', () => {
         assert.strictEqual(context.sendJson.callCount, 1);
         assert.strictEqual(context.sendJson.getCall(0).args[1], 'out');
         assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {
-            resourceNames: ['customers/1234567890'],
+            customers: [
+                { id: '1234567890', resourceName: 'customers/1234567890' }
+            ],
             count: 1
         });
     });

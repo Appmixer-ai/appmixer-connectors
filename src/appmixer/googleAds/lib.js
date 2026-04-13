@@ -30,7 +30,7 @@ function normalizeCustomerId(customerId) {
 }
 
 function getGoogleAdsConfig(context) {
-    const developerToken = context.config?.developerToken || 'zaGw7YiXSAPhSE3Qs_UxgA';
+    const developerToken = context.config?.developerToken;
 
     ensureRequired(developerToken, 'Developer Token is required in backoffice config!', context);
 

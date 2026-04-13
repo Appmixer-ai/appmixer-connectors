@@ -69,7 +69,7 @@ describe('DeleteUserList', () => {
         assert(call.args[0].data.operations[0].remove.includes('userLists/123456'));
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 
     it('should delete user list by userListResourceName', async () => {
@@ -92,7 +92,7 @@ describe('DeleteUserList', () => {
         assert.strictEqual(call.args[0].data.operations[0].remove, 'customers/7107133715/userLists/123456');
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 
     it('should use loginCustomerId from user input', async () => {
@@ -113,6 +113,6 @@ describe('DeleteUserList', () => {
         assert(call.args[0].headers);
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 });
