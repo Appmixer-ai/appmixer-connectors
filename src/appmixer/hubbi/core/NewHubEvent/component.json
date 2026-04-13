@@ -1,10 +1,11 @@
 {
-    "name": "appmixer.hubbi.core.GetSourceFields",
-    "label": "Get Source Fields",
-    "description": "Load the source field definitions of a hub.",
+    "name": "appmixer.hubbi.core.NewHubEvent",
     "author": "Appmixer <info@appmixer.com>",
+    "label": "New Hub Event",
+    "description": "Trigger that fires when a hub event is received via webhook.",
+    "private": false,
+    "webhook": true,
     "version": "1.0.0",
-    "private": true,
     "auth": {
         "service": "appmixer:hubbi"
     },
@@ -12,96 +13,67 @@
         "manager": "appmixer:hubbi",
         "resources": "requests"
     },
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "conversionKey": {
-                        "type": "string"
-                    },
-                    "outputType": {
-                        "type": "string"
-                    }
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "generateInspector": {
+                    "type": "boolean"
                 },
-                "required": [
-                    "conversionKey"
-                ]
+                "webhookUrl": {
+                    "type": "string"
+                },
+                "conversionKey": {
+                    "type": "string"
+                }
             },
-            "inspector": {
-                "inputs": {
-                    "conversionKey": {
-                        "type": "text",
-                        "label": "Conversion Key",
-                        "tooltip": "The conversion identifier (UUID) of the hub.",
-                        "index": 0,
-                        "source": {
-                            "url": "/component/appmixer/hubbi/core/ListHubs?outPort=out",
-                            "data": {
-                                "message": {
-                                    "in/outputType": "array"
-                                },
-                                "transform": "./ListHubs#toSelectArray"
+            "required": [
+                "conversionKey"
+            ]
+        },
+        "inspector": {
+            "inputs": {
+                "webhookUrl": {
+                    "type": "text",
+                    "label": "Webhook URL",
+                    "tooltip": "Configure this URL in Hubbi to send hub events to this trigger.",
+                    "index": 0,
+                    "source": {
+                        "url": "/component/appmixer/hubbi/core/NewHubEvent?outPort=out",
+                        "data": {
+                            "properties": {
+                                "generateInspector": true
                             }
                         }
-                    },
-                    "outputType": {
-                        "type": "select",
-                        "label": "Output Type",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
-                        "index": 1,
-                        "defaultValue": "array",
-                        "options": [
-                            {
-                                "label": "First Item Only",
-                                "value": "first"
-                            },
-                            {
-                                "label": "All items at once",
-                                "value": "array"
-                            },
-                            {
-                                "label": "One item at a time",
-                                "value": "object"
-                            },
-                            {
-                                "label": "Store to CSV file",
-                                "value": "file"
-                            }
-                        ]
                     }
                 },
-                "groups": {
-                    "required": {
-                        "label": "Required",
-                        "index": 1,
-                        "fields": [
-                            "conversionKey"
-                        ]
-                    },
-                    "settings": {
-                        "label": "Settings",
-                        "index": 2,
-                        "fields": [
-                            "outputType"
-                        ]
+                "conversionKey": {
+                    "type": "select",
+                    "label": "Hub",
+                    "tooltip": "Select the hub to listen for events from.",
+                    "index": 1,
+                    "source": {
+                        "url": "/component/appmixer/hubbi/core/ListHubs?outPort=out",
+                        "data": {
+                            "messages": {
+                                "in/outputType": "array"
+                            },
+                            "transform": "./ListHubs#toSelectArray"
+                        }
                     }
                 }
             }
         }
-    ],
+    },
     "outPorts": [
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/hubbi/core/GetSourceFields?outPort=out&ignoreAuth=true",
+                "url": "/component/appmixer/hubbi/core/NewHubEvent?outPort=out",
                 "data": {
                     "properties": {
-                        "generateOutputPortOptions": true
-                    },
-                    "messages": {
-                        "in/outputType": "inputs/in/outputType"
+                        "generateOutputPortOptions": true,
+                        "conversionKey": "properties/conversionKey"
                     }
                 }
             }

@@ -1,8 +1,9 @@
 {
     "name": "appmixer.hubbi.core.StartHubWithData",
+    "label": "Start Hub With Data",
     "description": "Start a hub with data matching the hub field definitions.",
     "author": "Appmixer <info@appmixer.com>",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "private": false,
     "auth": {
         "service": "appmixer:hubbi"
@@ -14,53 +15,12 @@
     "inPorts": [
         {
             "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "conversionKey": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "type": "string"
-                    }
-                },
-                "required": [
-                    "conversionKey",
-                    "data"
-                ]
-            },
-            "inspector": {
-                "inputs": {
-                    "conversionKey": {
-                        "type": "select",
-                        "label": "Conversion Key",
-                        "tooltip": "The conversion identifier (UUID) of the hub to start.",
-                        "index": 0,
-                        "source": {
-                            "url": "/component/appmixer/hubbi/core/ListHubs?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/outputType": "array"
-                                },
-                                "transform": "./ListHubs#toSelectArray"
-                            }
-                        }
-                    },
-                    "data": {
-                        "type": "textarea",
-                        "label": "Data",
-                        "tooltip": "JSON data matching the hub source field definitions.",
-                        "index": 1
-                    }
-                },
-                "groups": {
-                    "required": {
-                        "label": "Required",
-                        "index": 1,
-                        "fields": [
-                            "conversionKey",
-                            "data"
-                        ]
+            "source": {
+                "url": "/component/appmixer/hubbi/core/StartHubWithData?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateInspector": true,
+                        "conversionKey": "inputs/in/conversionKey"
                     }
                 }
             }
@@ -71,15 +31,8 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Success",
-                    "value": "success",
-                    "schema": {
-                        "type": "boolean"
-                    }
-                },
-                {
-                    "label": "Message",
-                    "value": "message",
+                    "label": "Conversion Key",
+                    "value": "conversionKey",
                     "schema": {
                         "type": "string"
                     }
