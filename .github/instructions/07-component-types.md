@@ -1043,61 +1043,100 @@ When using `source` to dynamically populate field options or output port schemas
 }
 ```
 
-**Using `variableFetch` for Error Handling in Dynamic Sources**
+**Using `variableFetch` / `isSource` for Dynamic Source Calls**
 
-When a component is used as a dynamic data source (via `source` URL), it may fail due to permissions, invalid configuration, or API errors. In the UI context (populating dropdown options), these errors should be gracefully handled by returning an empty response rather than throwing an exception that would break the UI.
+When a component is used as a dynamic data source (via `source` URL in inspector), two extra behaviours are required: **error suppression** and **response caching**.
 
-The `variableFetch` property signals to the component that it's being called as a dynamic data source, not as a regular flow component. When `variableFetch: true`:
-- **Ignore errors** and return an empty response (e.g., `{ items: [] }`)
-- This prevents UI breakage when the dynamic source call fails
+The convention is to pass a sentinel property in `source.data.properties` so the component knows it is being called from the inspector, not from a live flow. Two property names are in use — use whichever is already established in the connector, and be consistent within a connector:
 
-When the same component is used directly in a flow (without `variableFetch`):
-- **Throw errors** normally so the user is aware of failures
+| Property | Used in |
+|---|---|
+| `variableFetch: true` | microsoft (onedrive, teams, …) |
+| `isSource: true` | monday, facebookbusiness |
 
-**component.json example** (setting `variableFetch` in source):
+> **Do not mix both names in the same connector.**
+
+**component.json** — add the sentinel to every `source.data.properties` block that uses a `transform`. Do NOT add it to `generateOutputPortOptions` sources.
+
 ```json
-{
-    "driveId": {
-        "type": "text",
-        "label": "Drive ID",
-        "source": {
-            "url": "/component/appmixer/microsoft/onedrive/ListDrives?outPort=out",
-            "data": {
-                "properties": {
-                    "variableFetch": true
-                },
-                "transform": "./ListDrives#sitesToSelectArray"
-            }
-        }
+"source": {
+    "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+    "data": {
+        "properties": { "variableFetch": true },
+        "transform": "./ListFoo#toSelectArray"
     }
 }
 ```
 
-**JavaScript implementation example** (handling `variableFetch`):
-```javascript
-module.exports = {
-    async receive(context) {
-        try {
-            const drives = await listItems(context, 'me/drives?');
-            return context.sendJson({ drives }, 'out');
-        } catch (err) {
-            // When used as dynamic source, return empty response instead of error
-            if (context.properties.variableFetch) {
-                return context.sendJson({ drives: [] }, 'out');
-            }
-            // When used in flow, throw error normally
-            context.log({ stage: 'Error', err });
-            throw new Error(err);
-        }
-    },
+**Error suppression** — when the sentinel is set, catch errors and return an empty response instead of throwing. This prevents irrelevant error popups in the UI:
 
-    sitesToSelectArray({ drives }) {
-        return drives.map((drive) => ({
-            label: `${drive.name || drive.driveType} / ${drive.webUrl || drive.id}`,
-            value: drive.id
-        }));
+```javascript
+async receive(context) {
+    try {
+        const drives = await listItems(context, 'me/drives?');
+        return context.sendJson({ drives }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ drives: [] }, 'out');
+        }
+        context.log({ stage: 'Error', err });
+        throw new Error(err);
     }
-};
+},
 ```
+
+**Response caching** — dynamic source calls happen every time the user opens a dropdown. To avoid hammering the API, cache the response using `context.staticCache` + `context.lock`. Put `callEndpointCached` in the connector's `lib.js` and call it only when the sentinel is set:
+
+```javascript
+// lib.js
+const crypto = require('crypto');
+
+function getCacheKey(obj) {
+    return crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex');
+}
+
+async function callEndpointCached(context, url) {
+    let lock;
+    try {
+        const key = getCacheKey({ url, token: context.auth.accessToken });
+        lock = await context.lock(key);
+        const cached = await context.staticCache.get(key);
+        if (cached) return { data: cached };
+        const { data } = await context.httpRequest.get(url);
+        await context.staticCache.set(key, data, context.config.listCacheTTL || (2 * 60 * 1000)); // 120s default
+        return { data };
+    } finally {
+        lock?.unlock();
+    }
+}
+
+module.exports = { callEndpointCached };
+```
+
+```javascript
+// ListFoo.js
+const { callEndpointCached } = require('../../lib');
+
+async receive(context) {
+    try {
+        const url = `https://api.example.com/foo?token=${context.auth.accessToken}`;
+        const { data } = context.properties.variableFetch
+            ? await callEndpointCached(context, url)
+            : await context.httpRequest.get(url);
+        return context.sendJson({ items: data.items }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ items: [] }, 'out');
+        }
+        throw err;
+    }
+},
+```
+
+Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint. TTL is configurable via `context.config.listCacheTTL` (default 120 s).
+
+**Reference implementations:**
+- Error suppression only: `src/appmixer/microsoft/onedrive/ListSites/ListSites.js`
+- Caching + error suppression: `src/appmixer/facebookbusiness/marketing/GetAdAccounts/GetAdAccounts.js` + `facebookbusiness/lib.js`
 
 ---
