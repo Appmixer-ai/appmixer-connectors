@@ -936,8 +936,10 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - ✅ Verify all `required` fields from schema are populated
 
 3. **Wrong Variable References**
-    - ❌ `$.component.out` (missing field name)
+    - ❌ `$.component.out` — Raw Output, forbidden. Always include a field name.
+    - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
     - ✅ `$.component-id.out.fieldName`
+    - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults
