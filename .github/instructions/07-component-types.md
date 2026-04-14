@@ -1051,10 +1051,10 @@ The convention is to pass a sentinel property in `source.data.properties` so the
 
 | Property | Used in |
 |---|---|
-| `variableFetch: true` | microsoft (onedrive, teams, …) |
-| `isSource: true` | monday, facebookbusiness |
+| `isSource: true` | monday, facebookbusiness — **preferred** |
+| `variableFetch: true` | microsoft (onedrive, teams, …) — legacy |
 
-> **Do not mix both names in the same connector.**
+> **Prefer `isSource` for new connectors. Do not mix both names in the same connector.**
 
 **component.json** — add the sentinel to every `source.data.properties` block that uses a `transform`. Do NOT add it to `generateOutputPortOptions` sources.
 
