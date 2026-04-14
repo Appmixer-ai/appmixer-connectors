@@ -143,10 +143,11 @@ module.exports = (context) => {
                     }
                 };
 
-                // Subscribe to the exact channels for this thread.
-                // Using exact-channel subscribe avoids the need for psubscribe ACL permission.
-                const subChat = await context.pubSubSubscribe(`stream:chat:events:${threadId}`, sendEvent);
-                const subAgent = await context.pubSubSubscribe(`stream:agent:events:${threadId}`, sendEvent);
+                // Track subscriptions and state so the close handler can clean them
+                // up even if the client disconnects during the subscribe awaits.
+                let subChat = null;
+                let subAgent = null;
+                let closed = false;
 
                 // Necessary to keep the connection alive. Otherwise it closes after
                 // a timeout interval set on the load balancer/proxy (typically 1 minute).
@@ -156,13 +157,35 @@ module.exports = (context) => {
                     }
                 }, context.config.SSE_HEARTBEAT_INTERVAL || 15000);
 
-                // Cleanup on disconnect.
-                request.raw.req.on('close', async () => {
+                // Attach the close handler BEFORE awaiting subscriptions to avoid a
+                // race where the client disconnects during the subscribe call and the
+                // cleanup never runs.
+                request.raw.req.on('close', () => {
+                    closed = true;
                     clearInterval(heartbeat);
-                    await subChat.unsubscribe();
-                    await subAgent.unsubscribe();
-                    stream.end();
+                    // Use Promise.allSettled so both unsubscribes always run, even if
+                    // one rejects, and always end the stream in finally.
+                    Promise.allSettled([
+                        subChat ? subChat.unsubscribe() : Promise.resolve(),
+                        subAgent ? subAgent.unsubscribe() : Promise.resolve()
+                    ]).finally(() => {
+                        if (!stream.writableEnded) {
+                            stream.end();
+                        }
+                    });
                 });
+
+                // Subscribe to the exact channels for this thread.
+                // Using exact-channel subscribe avoids the need for psubscribe ACL permission.
+                subChat = await context.pubSubSubscribe(`stream:chat:events:${threadId}`, sendEvent);
+                subAgent = await context.pubSubSubscribe(`stream:agent:events:${threadId}`, sendEvent);
+
+                // If the client already disconnected during the subscribe calls, clean up immediately.
+                if (closed) {
+                    await Promise.allSettled([subChat.unsubscribe(), subAgent.unsubscribe()]);
+                    if (!stream.writableEnded) stream.end();
+                    return response;
+                }
 
                 return response;
             }
