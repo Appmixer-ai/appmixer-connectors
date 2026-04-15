@@ -1,10 +1,12 @@
 'use strict';
 
+const { htmlToGoogleDocsRequests } = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
 
-        const { title, content } = context.messages.in.content;
+        const { title, contentType, content } = context.messages.in.content;
 
         // Validate required fields
         if (!title) {
@@ -26,26 +28,37 @@ module.exports = {
             data: requestBody
         });
 
-        // If content is provided, add it to the document
+        // If content is provided, insert it into the document
         if (content) {
-            const requests = [{
-                insertText: {
-                    location: {
-                        index: 1
-                    },
-                    text: content
-                }
-            }];
+            let requests;
 
-            await context.httpRequest({
-                method: 'POST',
-                url: `https://docs.googleapis.com/v1/documents/${data.documentId}:batchUpdate`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                data: { requests }
-            });
+            if (contentType === 'html') {
+                // Convert HTML to Google Docs batchUpdate requests
+                const result = htmlToGoogleDocsRequests(content, 1);
+                requests = result.requests;
+            } else {
+                // Plain text insertion (default, backward compatible)
+                requests = [{
+                    insertText: {
+                        location: {
+                            index: 1
+                        },
+                        text: content
+                    }
+                }];
+            }
+
+            if (requests.length > 0) {
+                await context.httpRequest({
+                    method: 'POST',
+                    url: `https://docs.googleapis.com/v1/documents/${data.documentId}:batchUpdate`,
+                    headers: {
+                        'Authorization': `Bearer ${context.auth.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    data: { requests }
+                });
+            }
         }
 
         return context.sendJson({
