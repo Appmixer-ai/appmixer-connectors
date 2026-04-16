@@ -26,13 +26,11 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                 <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
             </div> 
             <div style="margin: 10px 0;"> 
-                <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
             </div> 
             <div style="margin: 15px 0;"> 
-                <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
             </div> 
             <div style="width: 100%; text-align: center;"> 
@@ -69,13 +67,11 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                     <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
                 </div> 
                 <div style="margin: 10px 0;"> 
-                    <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
                 </div> 
                 <div style="margin: 15px 0;"> 
-                    <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
                 </div> 
                 <a href="{{task_dashboard_link_requester}}" style="font-size: 15px;display: block; margin: 28px auto; 
