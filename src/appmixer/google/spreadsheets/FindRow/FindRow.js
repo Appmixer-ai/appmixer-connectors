@@ -1,6 +1,7 @@
 'use strict';
 const google = require('googleapis');
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 const _ = require('lodash');
 const Promise = require('bluebird');
 
@@ -14,7 +15,12 @@ function findRows(rows, content) {
 
     const filteredRows = [];
     const headers = rows[0];
-    const columnIndex = _.indexOf(rows[0], content['column']);
+    // Support normalized header matching (trim, collapse whitespace/line breaks)
+    const normalizedColumn = normalizeHeader(content['column']);
+    let columnIndex = _.indexOf(rows[0], content['column']);
+    if (columnIndex === -1) {
+        columnIndex = _.findIndex(rows[0], h => normalizeHeader(h) === normalizedColumn);
+    }
 
     rows.forEach(row => {
 
@@ -62,7 +68,7 @@ function addHeaders(headers, row) {
 
     let res = {};
     _.each(headers, (header, index) => {
-        res[header] = row[index] || '';
+        res[normalizeHeader(header)] = row[index] || '';
     });
     return res;
 }
