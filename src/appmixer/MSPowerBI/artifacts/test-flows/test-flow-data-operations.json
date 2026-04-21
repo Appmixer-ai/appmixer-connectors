@@ -1,0 +1,331 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-execute-queries": [
+                        "out"
+                    ],
+                    "assert-list-reports": [
+                        "out"
+                    ],
+                    "assert-refresh-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 144
+        },
+        "assert-execute-queries": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "execute-queries": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-results}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-results": {
+                                            "functions": [],
+                                            "variable": "$.execute-queries.out.results"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "execute-queries": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 144
+        },
+        "assert-list-reports": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-reports": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{7ea8726b-de0b-4aeb-9648-d92321e5aca0}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "7ea8726b-de0b-4aeb-9648-d92321e5aca0": {
+                                            "functions": [],
+                                            "variable": "$.list-reports.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-reports": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 272
+        },
+        "assert-refresh-dataset": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "refresh-dataset": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-status}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-status": {
+                                            "functions": [],
+                                            "variable": "$.refresh-dataset.out.status"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "refresh-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 16
+        },
+        "execute-queries": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-datasets": {
+                            "out": {
+                                "lambda": {
+                                    "datasetId": "{{{e3409f60-54d8-4753-b5ba-b2534479d6e1}}}",
+                                    "query": "EVALUATE ROW(\"TestValue\", 1)"
+                                },
+                                "modifiers": {
+                                    "datasetId": {
+                                        "e3409f60-54d8-4753-b5ba-b2534479d6e1": {
+                                            "functions": [],
+                                            "variable": "$.list-datasets.out.id"
+                                        }
+                                    },
+                                    "query": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-datasets": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.ExecuteQueries",
+            "x": 448,
+            "y": 144
+        },
+        "list-datasets": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.ListDatasets",
+            "x": 256,
+            "y": 80
+        },
+        "list-reports": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.ListReports",
+            "x": 256,
+            "y": 272
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 144
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E MSPowerBI - Data Operations"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1024,
+            "y": 144
+        },
+        "refresh-dataset": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-datasets": {
+                            "out": {
+                                "lambda": {
+                                    "datasetId": "{{{cc72f83b-da85-4358-9869-0472a3e465c8}}}",
+                                    "notifyOption": "NoNotification"
+                                },
+                                "modifiers": {
+                                    "datasetId": {
+                                        "cc72f83b-da85-4358-9869-0472a3e465c8": {
+                                            "functions": [],
+                                            "variable": "$.list-datasets.out.id"
+                                        }
+                                    },
+                                    "notifyOption": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-datasets": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.RefreshDataset",
+            "x": 448,
+            "y": 16
+        }
+    },
+    "name": "E2E MSPowerBI - Data Operations",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}
