@@ -4,10 +4,10 @@ const lib = require('../../lib');
 const BASE_URL = 'https://api.powerbi.com/v1.0/myorg';
 
 const schema = {
-    'name': { 'type': 'string', 'title': 'Name' },
-    'columns': { 'type': 'array', 'title': 'Columns' },
-    'rows': { 'type': 'array', 'title': 'Rows' },
-    'measures': { 'type': 'array', 'title': 'Measures' }
+    'name': { 'type': 'string', 'title': 'Name', 'example': 'Product' },
+    'columns': { 'type': 'array', 'title': 'Columns', 'example': [{ 'name': 'ProductName', 'dataType': 'string' }] },
+    'rows': { 'type': 'array', 'title': 'Rows', 'example': [{ 'ProductName': 'Helmet', 'UnitPrice': 25 }] },
+    'measures': { 'type': 'array', 'title': 'Measures', 'example': [{ 'name': 'TotalSales', 'expression': 'SUM(Sales[Amount])' }] }
 };
 
 module.exports = {
