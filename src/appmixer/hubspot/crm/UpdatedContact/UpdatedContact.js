@@ -1,23 +1,10 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
-const { WATCHED_PROPERTIES_CONTACT, getObjectProperties } = require('../../commons');
+const { getObjectProperties } = require('../../commons');
 
 const subscriptionType = 'contact.propertyChange';
 
 class UpdatedContact extends BaseSubscriptionComponent {
-
-    getSubscriptions() {
-
-        // Only watching for the properties that are present in the CreateContact inspector.
-        const subscriptions = WATCHED_PROPERTIES_CONTACT.map(propertyName => ({
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType,
-                propertyName
-            }
-        }));
-        return subscriptions;
-    }
 
     async receive(context) {
 

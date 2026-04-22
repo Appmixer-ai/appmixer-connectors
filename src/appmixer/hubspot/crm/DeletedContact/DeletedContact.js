@@ -4,16 +4,6 @@ const subscriptionType = 'contact.deletion';
 
 class DeletedContact extends BaseSubscriptionComponent {
 
-    getSubscriptions() {
-
-        return [{
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType: this.subscriptionType
-            }
-        }];
-    }
-
     async receive(context) {
 
         this.configureHubspot(context);

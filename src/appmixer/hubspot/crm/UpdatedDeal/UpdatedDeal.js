@@ -1,22 +1,10 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
-const { WATCHED_PROPERTIES_DEAL, getObjectProperties } = require('../../commons');
+const { getObjectProperties } = require('../../commons');
 
 const subscriptionType = 'deal.propertyChange';
 
 class UpdatedDeal extends BaseSubscriptionComponent {
-
-    getSubscriptions() {
-
-        const subscriptions = WATCHED_PROPERTIES_DEAL.map((propertyName) => ({
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType,
-                propertyName
-            }
-        }));
-        return subscriptions;
-    }
 
     async receive(context) {
 
