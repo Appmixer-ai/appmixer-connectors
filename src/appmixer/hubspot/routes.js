@@ -92,27 +92,11 @@ module.exports = async (context) => {
                 // Note on batching: The batch size can vary, but will be under 100 notifications.
                 // See: https://legacydocs.hubspot.com/docs/methods/webhooks/webhooks-overview
                 for (const [subscriptionType, subscriptionEvents] of Object.entries(eventsBySubscriptionType)) {
-                    // Skipping propertyChange events for properties that are not watched.
-                    const filteredEvents = [];
-                    if (subscriptionType.endsWith('propertyChange')) {
-                        let watchedProperties = [];
-                        if (subscriptionType === 'deal.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_DEAL;
-                        } else if (subscriptionType === 'contact.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_CONTACT;
-                        } else {
-                            throw new Error(`Unsupported subscriptionType: ${subscriptionType}`);
-                        }
-
-                        subscriptionEvents.forEach(event => {
-                            if (watchedProperties.includes(event.propertyName)) {
-                                filteredEvents.push(event);
-                            }
-                        });
-                    } else {
-                        // For creation events, we don't need to filter.
-                        filteredEvents.push(...subscriptionEvents);
-                    }
+                    // Pass all propertyChange events through to listeners. Individual components
+                    // (UpdatedContact, UpdatedDeal) apply their own property filtering in receive().
+                    // Filtering here was causing lifecycle and custom property changes to be silently dropped.
+                    // See: https://github.com/Appmixer-ai/appmixer-components/issues/2682
+                    const filteredEvents = [...subscriptionEvents];
                     const eventsByObjectId = _.keyBy(filteredEvents, 'objectId');
                     const objectIds = Object.keys(eventsByObjectId);
                     if (!objectIds.length) {
