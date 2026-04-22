@@ -38,18 +38,13 @@ class UpdatedContact extends BaseSubscriptionComponent {
 
             for (const [contactId, event] of Object.entries(eventsByObjectId)) {
                 const cacheKey = 'hubspot-contact-updated-' + contactId;
-                // Only track changes in these properties. These are the ones present in the CreateContact inspector.
-                // Even if we limit the subscriptions for these properties only, we need this for flows that
-                // are already running and all the subscriptions.
-                if (WATCHED_PROPERTIES_CONTACT.includes(event.propertyName)) {
-                    const cached = await context.staticCache.get(cacheKey);
-                    if (cached && event.occurredAt <= cached) {
-                        continue;
-                    }
-                    // Cache the event for 5s to avoid duplicates
-                    await context.staticCache.set(cacheKey, event.occurredAt, context.config?.eventCacheTTL || 5000);
-                    events[contactId] = { occurredAt: event.occurredAt };
+                const cached = await context.staticCache.get(cacheKey);
+                if (cached && event.occurredAt <= cached) {
+                    continue;
                 }
+                // Cache the event for 5s to avoid duplicates
+                await context.staticCache.set(cacheKey, event.occurredAt, context.config?.eventCacheTTL || 5000);
+                events[contactId] = { occurredAt: event.occurredAt };
             }
         } finally {
             await lock?.unlock();
