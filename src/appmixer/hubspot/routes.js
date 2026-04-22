@@ -1,7 +1,6 @@
 'use strict';
 
 const _ = require('lodash');
-const { WATCHED_PROPERTIES_CONTACT, WATCHED_PROPERTIES_DEAL } = require('./commons');
 
 module.exports = async (context) => {
 
@@ -92,27 +91,13 @@ module.exports = async (context) => {
                 // Note on batching: The batch size can vary, but will be under 100 notifications.
                 // See: https://legacydocs.hubspot.com/docs/methods/webhooks/webhooks-overview
                 for (const [subscriptionType, subscriptionEvents] of Object.entries(eventsBySubscriptionType)) {
-                    // Skipping propertyChange events for properties that are not watched.
-                    const filteredEvents = [];
-                    if (subscriptionType.endsWith('propertyChange')) {
-                        let watchedProperties = [];
-                        if (subscriptionType === 'deal.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_DEAL;
-                        } else if (subscriptionType === 'contact.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_CONTACT;
-                        } else {
-                            throw new Error(`Unsupported subscriptionType: ${subscriptionType}`);
-                        }
-
-                        subscriptionEvents.forEach(event => {
-                            if (watchedProperties.includes(event.propertyName)) {
-                                filteredEvents.push(event);
-                            }
-                        });
-                    } else {
-                        // For creation events, we don't need to filter.
-                        filteredEvents.push(...subscriptionEvents);
-                    }
+                    // Pass all events through — no property allowlist filtering here.
+                    // The false-trigger problem (creation also firing update) is handled downstream
+                    // in triggerListenersDelayed(), which checks if the object was just created
+                    // and skips propertyChange events that arrived within the same creation window.
+                    // Filtering here would silently drop any property not in the hardcoded list
+                    // (e.g. lifecyclestage, custom properties), breaking user-configured subscriptions.
+                    const filteredEvents = [...subscriptionEvents];
                     const eventsByObjectId = _.keyBy(filteredEvents, 'objectId');
                     const objectIds = Object.keys(eventsByObjectId);
                     if (!objectIds.length) {
