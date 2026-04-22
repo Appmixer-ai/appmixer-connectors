@@ -144,19 +144,31 @@ module.exports = async (context) => {
 // See https://github.com/clientIO/appmixer-components/issues/1700#issuecomment-2605687394
 async function triggerListenersDelayed(context, eventName, payload) {
 
-    // If this is an update event, check if the object was created in the last 5 seconds
-    // If it was, skip the update event
+    // If this is an update event, filter out per-objectId any objects that were just created.
+    // HubSpot sends propertyChange events alongside a creation event for the same object —
+    // we skip only those specific objects, not the entire payload.
     if (eventName.includes('.propertyChange:')) {
-        const objectId = Object.keys(payload)[0];
         const subscriptionType = eventName.split(':')[0];
         const subscriptionTypeCreated = subscriptionType.replace('.propertyChange', '.creation');
         const portalId = eventName.split(':')[1];
-        // Looking for the created timestamp in the database for the same object.
-        const createdTimestamp = await context.service.stateGet(`${portalId}:${subscriptionTypeCreated}:${objectId}`);
-        if (createdTimestamp && payload[objectId].occurredAt <= createdTimestamp) {
-            // This is an update event for an object that was created in the last 5 seconds.
+
+        const filteredPayload = {};
+        for (const [objectId, event] of Object.entries(payload)) {
+            // Looking for the created timestamp in the database for the same object.
+            const createdTimestamp = await context.service.stateGet(`${portalId}:${subscriptionTypeCreated}:${objectId}`);
+            if (createdTimestamp && event.occurredAt <= createdTimestamp) {
+                // This propertyChange arrived with a creation event — skip this object only.
+                continue;
+            }
+            filteredPayload[objectId] = event;
+        }
+
+        if (!Object.keys(filteredPayload).length) {
             return;
         }
+
+        await context.triggerListeners({ eventName, payload: filteredPayload });
+        return;
     }
 
     await context.triggerListeners({ eventName, payload });
