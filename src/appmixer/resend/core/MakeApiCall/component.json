@@ -1,0 +1,134 @@
+{
+    "name": "appmixer.resend.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Performs an arbitrary authorized API call to the Resend API.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:resend"
+    },
+    "quota": {
+        "manager": "appmixer:resend",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the API endpoint path relative to <code>https://api.resend.com</code> (for example <code>/v1/resource</code>) or provide a full URL."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "headers": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional request headers as a JSON object (e.g. <code>{\"X-Custom-Header\": \"value\"}</code>)."
+                    },
+                    "parameters": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters as a JSON object (e.g. <code>{\"key\": \"value\"}</code>)."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body for the API call (JSON format)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status Code",
+                    "value": "status"
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers"
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwMCIgaGVpZ2h0PSIxODAwIiB2aWV3Qm94PSIwIDAgMTgwMCAxODAwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMTAwMC40NiA0NTBDMTE3NC43NyA0NTAgMTI3OC40MyA1NTMuNjY5IDEyNzguNDMgNjkxLjI4MkMxMjc4LjQzIDgyOC44OTYgMTE3NC43NyA5MzIuNTYzIDEwMDAuNDYgOTMyLjU2M0g5MTIuMzgyTDEzNTAgMTM1MEgxMDQwLjgyTDcwNy43OTQgMTAzMy40OEM2ODMuOTQ0IDEwMTEuNDcgNjcyLjkzNiA5ODUuNzgxIDY3Mi45MzUgOTYzLjc2NUM2NzIuOTM1IDkzMi41NzIgNjk0Ljk1OSA5MDUuMDQ5IDczNy4xNjEgODkzLjEyMkw5MDguNzEyIDg0Ny4yNDRDOTczLjg1IDgyOS44MTIgMTAxOC44MSA3NzkuMzUzIDEwMTguODEgNzEzLjI5OEMxMDE4LjggNjMyLjU2NyA5NTIuNzQ1IDU4NS43OCA4NzEuMDk1IDU4NS43OEg0NTBWNDUwSDEwMDAuNDZaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K"
+}
