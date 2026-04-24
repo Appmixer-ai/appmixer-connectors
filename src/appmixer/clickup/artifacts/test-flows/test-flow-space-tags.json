@@ -1,0 +1,435 @@
+{
+    "name": "E2E Clickup - space-tags",
+    "description": "End-to-end test for Clickup connector - tests CreateSpaceTag, ListSpaceTags, UpdateSpaceTag, and DeleteSpaceTag components",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "spaceId",
+                                                "text": "90123456789"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "text": "e2e-tag-{{{g_timestamp()}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedTagName",
+                                                "text": "e2e-tag-upd-{{{g_timestamp()}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-tag": {
+            "type": "appmixer.clickup.core.CreateSpaceTag",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "var-space-id": {
+                                            "variable": "$.set-variables.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "foregroundColor": {},
+                                    "backgroundColor": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{var-space-id}}}",
+                                    "name": "{{{var-tag-name}}}",
+                                    "foregroundColor": "#000000",
+                                    "backgroundColor": "#ffffff"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-after-create": {
+            "type": "appmixer.clickup.core.ListSpaceTags",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "var-space-id-list1": {
+                                            "variable": "$.set-variables.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{var-space-id-list1}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-after-create": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-after-create": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "list-create-result": {
+                                            "variable": "$.list-after-create.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{list-create-result}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-tag": {
+            "type": "appmixer.clickup.core.UpdateSpaceTag",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-after-create": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-after-create": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "var-space-id-upd": {
+                                            "variable": "$.set-variables.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "var-tag-name-upd": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "newName": {
+                                        "var-updated-name": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{var-space-id-upd}}}",
+                                    "tagName": "{{{var-tag-name-upd}}}",
+                                    "newName": "{{{var-updated-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-after-update": {
+            "type": "appmixer.clickup.core.ListSpaceTags",
+            "x": 1216,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "var-space-id-list2": {
+                                            "variable": "$.set-variables.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{var-space-id-list2}}}",
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-after-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-after-update": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "list-update-result": {
+                                            "variable": "$.list-after-update.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{list-update-result}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1600,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-tag": {
+            "type": "appmixer.clickup.core.DeleteSpaceTag",
+            "x": 1792,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "spaceId": {
+                                        "var-space-id-del": {
+                                            "variable": "$.set-variables.out.spaceId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "var-tag-name-del": {
+                                            "variable": "$.set-variables.out.updatedTagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "spaceId": "{{{var-space-id-del}}}",
+                                    "tagName": "{{{var-tag-name-del}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1984,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "delete-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Clickup - space-tags",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

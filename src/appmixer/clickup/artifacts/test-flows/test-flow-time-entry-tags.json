@@ -1,0 +1,537 @@
+{
+    "name": "E2E Clickup - time-entry-tags",
+    "description": "End-to-end test for Clickup connector - tests time entry tag operations: CreateTimeEntry, AddTimeEntryTag, ListTimeEntryTags, RemoveTimeEntryTag, DeleteTimeEntry",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "teamId",
+                                                "text": "YOUR_TEAM_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "tagName",
+                                                "text": "e2e-test-tag"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "startTime",
+                                                "text": "2026-01-01T10:00:00.000Z"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-time-entry": {
+            "type": "appmixer.clickup.core.CreateTimeEntry",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "start": {
+                                        "var-start-time": {
+                                            "variable": "$.set-variables.out.startTime",
+                                            "functions": []
+                                        }
+                                    },
+                                    "duration": {},
+                                    "description": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "start": "{{{var-start-time}}}",
+                                    "duration": 60,
+                                    "description": "E2E Test Time Entry"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-time-entry": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-time-entry": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-entry-id": {
+                                            "variable": "$.create-time-entry.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-entry-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "add-time-entry-tag": {
+            "type": "appmixer.clickup.core.AddTimeEntryTag",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-time-entry": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-time-entry": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryIds": {
+                                        "var-entry-id": {
+                                            "variable": "$.create-time-entry.out.data.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagName": {
+                                        "var-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "timeEntryIds": "{{{var-entry-id}}}",
+                                    "tagName": "{{{var-tag-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-add": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "add-time-entry-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-time-entry-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-team-id": {
+                                            "variable": "$.add-time-entry-tag.out.teamId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-team-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-time-entry-tags": {
+            "type": "appmixer.clickup.core.ListTimeEntryTags",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "add-time-entry-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-time-entry-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-time-entry-tags": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-time-entry-tags": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-tag-name": {
+                                            "variable": "$.list-time-entry-tags.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-tag-name}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "remove-time-entry-tag": {
+            "type": "appmixer.clickup.core.RemoveTimeEntryTag",
+            "x": 1216,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-time-entry-tags": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-time-entry-tags": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryIds": {
+                                        "var-entry-id": {
+                                            "variable": "$.create-time-entry.out.data.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "tagNames": {
+                                        "var-tag-name": {
+                                            "variable": "$.set-variables.out.tagName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "timeEntryIds": "{{{var-entry-id}}}",
+                                    "tagNames": "{{{var-tag-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-remove": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1408,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "remove-time-entry-tag": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "remove-time-entry-tag": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-team-id": {
+                                            "variable": "$.remove-time-entry-tag.out.teamId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-team-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1600,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-add": [
+                        "out"
+                    ],
+                    "assert-list": [
+                        "out"
+                    ],
+                    "assert-remove": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-time-entry": {
+            "type": "appmixer.clickup.core.DeleteTimeEntry",
+            "x": 1792,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "timeEntryId": {
+                                        "var-entry-id": {
+                                            "variable": "$.create-time-entry.out.data.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "timeEntryId": "{{{var-entry-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1984,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-time-entry": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-time-entry": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Clickup - time-entry-tags",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

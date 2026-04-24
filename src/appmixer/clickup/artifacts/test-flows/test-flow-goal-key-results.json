@@ -1,0 +1,490 @@
+{
+    "name": "E2E Clickup - goal-key-results",
+    "description": "End-to-end test for Clickup connector - tests goal key result operations (CreateGoal, CreateGoalKeyResult, UpdateGoalKeyResult, DeleteGoalKeyResult)",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "teamId",
+                                                "text": "YOUR_CLICKUP_TEAM_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "goalName",
+                                                "text": "E2E Test Goal KR"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "keyResultName",
+                                                "text": "E2E Test Key Result"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedKeyResultName",
+                                                "text": "E2E Test Key Result Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-goal": {
+            "type": "appmixer.clickup.core.CreateGoal",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "teamId": {
+                                        "var-team-id": {
+                                            "variable": "$.set-variables.out.teamId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-goal-name": {
+                                            "variable": "$.set-variables.out.goalName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "teamId": "{{{var-team-id}}}",
+                                    "name": "{{{var-goal-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-goal": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Assert CreateGoal",
+            "source": {
+                "in": {
+                    "create-goal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-goal": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "goal-id-check": {
+                                            "variable": "$.create-goal.out.goal.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{goal-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-key-result": {
+            "type": "appmixer.clickup.core.CreateGoalKeyResult",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-goal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-goal": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "goalId": {
+                                        "var-goal-id": {
+                                            "variable": "$.create-goal.out.goal.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-kr-name": {
+                                            "variable": "$.set-variables.out.keyResultName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "type": {}
+                                },
+                                "lambda": {
+                                    "goalId": "{{{var-goal-id}}}",
+                                    "name": "{{{var-kr-name}}}",
+                                    "type": "number"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-kr": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "label": "Assert CreateGoalKeyResult",
+            "source": {
+                "in": {
+                    "create-key-result": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-key-result": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "kr-id-check": {
+                                            "variable": "$.create-key-result.out.key_result.id",
+                                            "functions": []
+                                        },
+                                        "kr-name-check": {
+                                            "variable": "$.create-key-result.out.key_result.name",
+                                            "functions": []
+                                        },
+                                        "expected-kr-name": {
+                                            "variable": "$.set-variables.out.keyResultName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{kr-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{kr-name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-kr-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-key-result": {
+            "type": "appmixer.clickup.core.UpdateGoalKeyResult",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-key-result": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-key-result": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "keyResultId": {
+                                        "var-kr-id": {
+                                            "variable": "$.create-key-result.out.key_result.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-updated-kr-name": {
+                                            "variable": "$.set-variables.out.updatedKeyResultName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "keyResultId": "{{{var-kr-id}}}",
+                                    "name": "{{{var-updated-kr-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update-kr": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "label": "Assert UpdateGoalKeyResult",
+            "source": {
+                "in": {
+                    "update-key-result": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-key-result": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-kr-id-check": {
+                                            "variable": "$.update-key-result.out.keyResultId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{updated-kr-id-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-goal": [
+                        "out"
+                    ],
+                    "assert-create-kr": [
+                        "out"
+                    ],
+                    "assert-update-kr": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-key-result": {
+            "type": "appmixer.clickup.core.DeleteGoalKeyResult",
+            "x": 1584,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "keyResultId": {
+                                        "var-kr-id": {
+                                            "variable": "$.create-key-result.out.key_result.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "keyResultId": "{{{var-kr-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-goal": {
+            "type": "appmixer.clickup.core.DeleteGoal",
+            "x": 1776,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-key-result": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-key-result": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "goalId": {
+                                        "var-goal-id": {
+                                            "variable": "$.create-goal.out.goal.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "goalId": "{{{var-goal-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1968,
+            "y": 144,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-goal": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-goal": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Clickup - goal-key-results",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
