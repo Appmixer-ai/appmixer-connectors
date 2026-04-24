@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = {
-
     rules: [
         {
             limit: 100,
