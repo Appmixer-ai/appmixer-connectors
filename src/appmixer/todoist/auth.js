@@ -32,7 +32,7 @@ module.exports = {
 
                 const response = await context.httpRequest({
                     method: 'GET',
-                    url: 'https://api.todoist.com/rest/v2/projects',
+                    url: 'https://api.todoist.com/api/v1/user',
                     headers: {
                         'Authorization': `Bearer ${context.accessToken}`
                     }
