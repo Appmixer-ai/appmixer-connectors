@@ -8,7 +8,18 @@ module.exports = {
             'offline_access'
         ],
 
+        pre: () => ({
+            tenantId: {
+                type: 'text',
+                name: 'Tenant ID',
+                tooltip: 'Optional. Your Azure Active Directory Tenant ID (e.g. <b>contoso.onmicrosoft.com</b> or a GUID). '
+                    + 'Required when your Azure DevOps organization is attached to a specific tenant. '
+                    + 'Leave empty to use the default <i>organizations</i> endpoint.'
+            }
+        }),
+
         authUrl: (context) => {
+            const tenant = context.tenantId || 'organizations';
             const params = new URLSearchParams({
                 client_id: context.clientId,
                 redirect_uri: context.callbackUrl,
@@ -17,13 +28,14 @@ module.exports = {
                 state: context.ticket,
                 prompt: 'select_account'
             });
-            return `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?${params}`;
+            return `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?${params}`;
         },
 
         requestAccessToken: async (context) => {
+            const tenant = context.tenantId || 'organizations';
             const response = await context.httpRequest({
                 method: 'POST',
-                url: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
+                url: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 data: new URLSearchParams({
                     code: context.authorizationCode,
@@ -43,9 +55,10 @@ module.exports = {
         },
 
         refreshAccessToken: async (context) => {
+            const tenant = context.tenantId || 'organizations';
             const response = await context.httpRequest({
                 method: 'POST',
-                url: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
+                url: `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 data: new URLSearchParams({
                     client_id: context.clientId,
