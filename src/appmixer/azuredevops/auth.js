@@ -20,7 +20,6 @@ module.exports = {
         }),
 
         authUrl: (context) => {
-            const tenant = context.tenantId || 'organizations';
             const params = new URLSearchParams({
                 client_id: context.clientId,
                 redirect_uri: context.callbackUrl,
