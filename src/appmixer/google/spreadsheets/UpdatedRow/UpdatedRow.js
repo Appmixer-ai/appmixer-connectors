@@ -2,6 +2,7 @@
 const google = require('googleapis');
 const Promise = require('bluebird');
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 
 /**
  * Compares two arrays to find if values at same index are different
@@ -45,7 +46,7 @@ const getChangedRows = (newRows, oldRows, includeHeaders, format) => {
     const rowWithHeader = (headerRow, dataRow) => {
 
         return headerRow.reduce((rowWithHeader, headerCell, cellIndex) => {
-            rowWithHeader[headerCell] = dataRow[cellIndex] || '';
+            rowWithHeader[normalizeHeader(headerCell)] = dataRow[cellIndex] || '';
             return rowWithHeader;
         }, {});
     };

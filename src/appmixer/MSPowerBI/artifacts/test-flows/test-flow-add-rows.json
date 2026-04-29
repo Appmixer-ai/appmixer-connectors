@@ -1,0 +1,439 @@
+{
+    "flow": {
+        "add-rows": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-tables": {
+                            "out": {
+                                "lambda": {
+                                    "datasetId": "{{{var-dataset-id}}}",
+                                    "rowData": {
+                                        "ADD": [
+                                            {
+                                                "column": "ProductID",
+                                                "value": "1"
+                                            },
+                                            {
+                                                "column": "Name",
+                                                "value": "E2E Test Row"
+                                            },
+                                            {
+                                                "column": "Category",
+                                                "value": "Test"
+                                            }
+                                        ]
+                                    },
+                                    "tableName": "{{{var-table-name}}}"
+                                },
+                                "modifiers": {
+                                    "datasetId": {
+                                        "var-dataset-id": {
+                                            "functions": [],
+                                            "variable": "$.create-dataset.out.datasetId"
+                                        }
+                                    },
+                                    "tableName": {
+                                        "var-table-name": {
+                                            "functions": [],
+                                            "variable": "$.get-tables.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-tables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.AddRows",
+            "x": 1120,
+            "y": 320
+        },
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-add-rows": [
+                        "out"
+                    ],
+                    "assert-create-dataset": [
+                        "out"
+                    ],
+                    "assert-delete-dataset": [
+                        "out"
+                    ],
+                    "assert-get-tables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1744,
+            "y": 160
+        },
+        "assert-add-rows": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-rows": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-status}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-status": {
+                                            "functions": [],
+                                            "variable": "$.add-rows.out.status"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "add-rows": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1312,
+            "y": 320
+        },
+        "assert-create-dataset": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dataset": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-dataset-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-dataset-id": {
+                                            "functions": [],
+                                            "variable": "$.create-dataset.out.datasetId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16
+        },
+        "assert-delete-dataset": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-dataset": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-status}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-status": {
+                                            "functions": [],
+                                            "variable": "$.delete-dataset.out.status"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1696,
+            "y": 368
+        },
+        "assert-get-tables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-tables": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-name": {
+                                            "functions": [],
+                                            "variable": "$.get-tables.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-tables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 160
+        },
+        "before-all": {
+            "config": {},
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16
+        },
+        "create-dataset": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "defaultMode": "Push",
+                                    "name": "E2E Test Dataset",
+                                    "tables": {
+                                        "ADD": [
+                                            {
+                                                "columns": "[{\"name\":\"ProductID\",\"dataType\":\"string\"},{\"name\":\"Name\",\"dataType\":\"string\"},{\"name\":\"Category\",\"dataType\":\"string\"}]",
+                                                "name": "SalesData"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {},
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.CreateDataset",
+            "x": 688,
+            "y": 16
+        },
+        "delete-dataset": {
+            "config": {
+                "transform": {}
+            },
+            "type": "appmixer.MSPowerBI.core.DeleteDataset",
+            "x": 1504,
+            "y": 656
+        },
+        "get-tables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dataset": {
+                            "out": {
+                                "lambda": {
+                                    "datasetId": "{{{var-dataset-id}}}",
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "datasetId": {
+                                        "var-dataset-id": {
+                                            "functions": [],
+                                            "variable": "$.create-dataset.out.datasetId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.ListTables",
+            "x": 896,
+            "y": 160
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E MSPowerBI - Add Rows"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2192,
+            "y": 48
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "groupId",
+                                                "text": "",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16
+        }
+    },
+    "name": "E2E MSPowerBI - Add Rows",
+    "notes": {
+        "31eeafb2-265b-44c7-b96d-61b508edc925": {
+            "content": "##New note\n\nconnect the DeleteDataset for cleanup\n",
+            "height": 304,
+            "width": 256,
+            "x": 1408,
+            "y": 512
+        }
+    },
+    "wizard": {
+        "fields": []
+    }
+}

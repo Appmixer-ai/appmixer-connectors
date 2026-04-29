@@ -1,5 +1,6 @@
 'use strict';
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 const google = require('googleapis');
 const Promise = require('bluebird');
 
@@ -29,8 +30,17 @@ module.exports = {
         if (headerValues.length === 0) {
             throw new context.CancelError('No headers found in the worksheet.');
         }
+        // Build a normalized lookup map from the incoming values so that minor
+        // whitespace/line-break differences in header names don't break matching.
+        const normalizedValues = {};
+        Object.keys(values).forEach(key => {
+            normalizedValues[normalizeHeader(key)] = values[key];
+        });
         // Map the incoming values to the columns in the sheet
-        const orderedValues = headerValues.map(column => values[column] || '');
+        const orderedValues = headerValues.map(column => {
+            const normalized = normalizeHeader(column);
+            return normalizedValues[normalized] !== undefined ? normalizedValues[normalized] : (values[column] || '');
+        });
 
         const resource = {
             values: [orderedValues]

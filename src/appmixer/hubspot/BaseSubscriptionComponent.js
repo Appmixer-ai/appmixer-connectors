@@ -18,11 +18,6 @@ class BaseSubscriptionComponent {
         this.hubspot.setToken(auth.accessToken);
     }
 
-    getSubscriptions(context) {
-
-        throw new Error('Must be extended to return subscriptions');
-    }
-
     async ensureWebhook(context) {
 
         // Skip the check if using AuthHub

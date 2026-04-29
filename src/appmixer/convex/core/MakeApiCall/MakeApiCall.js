@@ -1,11 +1,9 @@
 'use strict';
 
-const BASE_URL = 'https://api.convex.dev';
-
 module.exports = {
     async receive(context) {
 
-        const { url, method, body } = context.messages.in.content;
+        const { url, method, headers, parameters, body } = context.messages.in.content;
 
         if (!url) {
             throw new context.CancelError('API Endpoint URL is required!');
@@ -15,31 +13,50 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        const targetUrl = /^https?:\/\//i.test(url) ? url : `${BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+        // Parse headers
+        let parsedHeaders = {};
+        if (headers) {
+            try {
+                parsedHeaders = typeof headers === 'string' ? JSON.parse(headers) : headers;
+            } catch (e) {
+                throw new context.CancelError('Headers must be valid JSON.');
+            }
+        }
 
-        const headers = {
-            'Authorization': `Bearer ${context.auth.apiKey}`,
-            'Accept': 'application/json'
+        // Parse parameters and build query string
+        let queryString = '';
+        if (parameters) {
+            let parsedParams;
+            try {
+                parsedParams = typeof parameters === 'string' ? JSON.parse(parameters) : parameters;
+            } catch (e) {
+                throw new context.CancelError('Query Parameters must be valid JSON.');
+            }
+            const qs = new URLSearchParams(parsedParams).toString();
+            if (qs) queryString = '?' + qs;
+        }
+
+        const targetUrl = url + queryString;
+
+        const requestOptions = {
+            method,
+            url: targetUrl,
+            headers: {
+                'Authorization': `Bearer ${context.auth.apiKey}`,
+                'Content-Type': 'application/json',
+                ...parsedHeaders
+            }
         };
-
-        let parsedBody;
 
         if (body) {
             try {
-                parsedBody = JSON.parse(body);
-            } catch (error) {
-                throw new context.CancelError('Request Body must be valid JSON!');
+                requestOptions.data = typeof body === 'string' ? JSON.parse(body) : body;
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
             }
-
-            headers['Content-Type'] = 'application/json';
         }
 
-        const response = await context.httpRequest({
-            method: method,
-            url: targetUrl,
-            headers,
-            ...(parsedBody ? { data: parsedBody } : {})
-        });
+        const response = await context.httpRequest(requestOptions);
 
         return context.sendJson({
             status: response.status,

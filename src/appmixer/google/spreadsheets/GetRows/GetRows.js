@@ -1,6 +1,7 @@
 'use strict';
 const google = require('googleapis');
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 const Promise = require('bluebird');
 
 const sheets = google.sheets('v4');
@@ -79,7 +80,7 @@ module.exports = {
             const headerRow = rows.shift() || [];
             rows = rows.map(
                 row => row.reduce((rowObject, cell, index) => {
-                    const header = headerRow[index] || index;
+                    const header = normalizeHeader(headerRow[index] || String(index));
                     rowObject[header] = cell;
                     return rowObject;
                 }, {})
