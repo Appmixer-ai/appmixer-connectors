@@ -12,9 +12,10 @@ module.exports = {
             tenantId: {
                 type: 'text',
                 name: 'Tenant ID',
-                tooltip: 'Optional. Your Azure Active Directory Tenant ID (e.g. <b>contoso.onmicrosoft.com</b> or a GUID). '
+                placeholder: 'organizations',
+                tooltip: 'Your Azure Active Directory Tenant ID (e.g. contoso.onmicrosoft.com or a GUID). '
                     + 'Required when your Azure DevOps organization is attached to a specific tenant. '
-                    + 'Leave empty to use the default <i>organizations</i> endpoint.'
+                    + 'Use "organizations" to allow any Microsoft work or school account.'
             }
         }),
 
@@ -28,7 +29,7 @@ module.exports = {
                 state: context.ticket,
                 prompt: 'select_account'
             });
-            return `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?${params}`;
+            return `https://login.microsoftonline.com/{{tenantId}}/oauth2/v2.0/authorize?${params}`;
         },
 
         requestAccessToken: async (context) => {
