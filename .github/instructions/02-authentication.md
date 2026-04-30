@@ -114,6 +114,20 @@ module.exports = {
 
 For services using OAuth 2.0 flow.
 
+> ⚠️ **Breaking Change Warning — OAuth Scopes**
+>
+> Adding new OAuth scopes to an existing connector is a **breaking change**. Existing users will need to re-authenticate to grant the new permissions. This must be reflected in the connector's `bundle.json`:
+> - Bump the **major** version (e.g. `2.2.0` → `3.0.0`)
+> - Document the scope change clearly in the changelog entry
+> - Include a note in the PR description warning reviewers that existing users will be asked to re-authenticate
+>
+> Example `bundle.json` changelog entry:
+> ```json
+> "3.0.0": [
+>     "BREAKING: Added w_organization_social OAuth scope to support posting as an organization page. Existing users must re-authenticate."
+> ]
+> ```
+
 #### Simplified URL-Based Format
 
 For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
