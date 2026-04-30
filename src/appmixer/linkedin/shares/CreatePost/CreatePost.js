@@ -57,7 +57,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { imageUrl, authorType, organizationId } = context.messages.in.content;
+        const { imageUrl, imageFile, specificLink, authorType, organizationId } = context.messages.in.content;
 
         const author = (authorType === 'Organization' && organizationId)
             ? `urn:li:organization:${organizationId}`
@@ -65,7 +65,9 @@ module.exports = {
 
         let assetUrn = null;
 
-        if (imageUrl) {
+        const useImage = !specificLink && (imageUrl || imageFile);
+
+        if (useImage) {
 
             // Step 1: Register upload
             const registerResponse = await context.httpRequest({
@@ -95,11 +97,25 @@ module.exports = {
             ].uploadUrl;
             assetUrn = registerResponse.data.value.asset;
 
-            // Step 2: Download image bytes
-            const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            let imageBuffer;
+            if (imageUrl) {
+                // URL takes priority — download from URL
+                const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+                imageBuffer = imageResponse.data;
+            } else {
+                // Fall back to file from Appmixer storage
+                const stream = await context.getFileReadStream(imageFile);
+                const chunks = [];
+                await new Promise((resolve, reject) => {
+                    stream.on('data', chunk => chunks.push(chunk));
+                    stream.on('end', resolve);
+                    stream.on('error', reject);
+                });
+                imageBuffer = Buffer.concat(chunks);
+            }
 
             // Step 3: Upload image binary to LinkedIn
-            await axios.put(uploadUrl, imageResponse.data, {
+            await axios.put(uploadUrl, imageBuffer, {
                 headers: {
                     'Authorization': `Bearer ${context.auth.accessToken}`,
                     'Content-Type': 'application/octet-stream'
