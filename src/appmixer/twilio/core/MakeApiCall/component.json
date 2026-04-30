@@ -1,0 +1,134 @@
+{
+    "name": "appmixer.twilio.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Performs an arbitrary authorized API call to the Twilio API.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:twilio"
+    },
+    "quota": {
+        "manager": "appmixer:twilio",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the API endpoint path relative to <code>https://api.twilio.com/2010-04-01</code> (for example <code>/v1/resource</code>) or provide a full URL."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "headers": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional request headers as a JSON object (e.g. <code>{\"X-Custom-Header\": \"value\"}</code>)."
+                    },
+                    "parameters": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters as a JSON object (e.g. <code>{\"key\": \"value\"}</code>)."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body for the API call (JSON format)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status Code",
+                    "value": "status"
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers"
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwMCIgaGVpZ2h0PSIyNTAwIiB2aWV3Qm94PSIwIDAgMjU2IDI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCI+PGcgZmlsbD0iI0NGMjcyRCI+PHBhdGggZD0iTTEyNy44NiAyMjIuMzA0Yy01Mi4wMDUgMC05NC4xNjQtNDIuMTU5LTk0LjE2NC05NC4xNjMgMC01Mi4wMDUgNDIuMTU5LTk0LjE2MyA5NC4xNjQtOTQuMTYzIDUyLjAwNCAwIDk0LjE2MiA0Mi4xNTggOTQuMTYyIDk0LjE2MyAwIDUyLjAwNC00Mi4xNTggOTQuMTYzLTk0LjE2MiA5NC4xNjN6bTAtMjIyLjAyM0M1Ny4yNDUuMjgxIDAgNTcuNTI3IDAgMTI4LjE0MSAwIDE5OC43NTYgNTcuMjQ1IDI1NiAxMjcuODYgMjU2YzcwLjYxNCAwIDEyNy44NTktNTcuMjQ0IDEyNy44NTktMTI3Ljg1OSAwLTcwLjYxNC01Ny4yNDUtMTI3Ljg2LTEyNy44Ni0xMjcuODZ6Ii8+PHBhdGggZD0iTTEzMy4xMTYgOTYuMjk3YzAtMTQuNjgyIDExLjkwMy0yNi41ODUgMjYuNTg2LTI2LjU4NSAxNC42ODMgMCAyNi41ODUgMTEuOTAzIDI2LjU4NSAyNi41ODUgMCAxNC42ODQtMTEuOTAyIDI2LjU4Ni0yNi41ODUgMjYuNTg2LTE0LjY4MyAwLTI2LjU4Ni0xMS45MDItMjYuNTg2LTI2LjU4Nk0xMzMuMTE2IDE1OS45ODNjMC0xNC42ODIgMTEuOTAzLTI2LjU4NiAyNi41ODYtMjYuNTg2IDE0LjY4MyAwIDI2LjU4NSAxMS45MDQgMjYuNTg1IDI2LjU4NiAwIDE0LjY4My0xMS45MDIgMjYuNTg2LTI2LjU4NSAyNi41ODYtMTQuNjgzIDAtMjYuNTg2LTExLjkwMy0yNi41ODYtMjYuNTg2TTY5LjQzMSAxNTkuOTgzYzAtMTQuNjgyIDExLjkwNC0yNi41ODYgMjYuNTg2LTI2LjU4NiAxNC42ODMgMCAyNi41ODYgMTEuOTA0IDI2LjU4NiAyNi41ODYgMCAxNC42ODMtMTEuOTAzIDI2LjU4Ni0yNi41ODYgMjYuNTg2LTE0LjY4MiAwLTI2LjU4Ni0xMS45MDMtMjYuNTg2LTI2LjU4Nk02OS40MzEgOTYuMjk4YzAtMTQuNjgzIDExLjkwNC0yNi41ODUgMjYuNTg2LTI2LjU4NSAxNC42ODMgMCAyNi41ODYgMTEuOTAyIDI2LjU4NiAyNi41ODUgMCAxNC42ODQtMTEuOTAzIDI2LjU4Ni0yNi41ODYgMjYuNTg2LTE0LjY4MiAwLTI2LjU4Ni0xMS45MDItMjYuNTg2LTI2LjU4NiIvPjwvZz48L3N2Zz4="
+}

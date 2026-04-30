@@ -1,5 +1,6 @@
 'use strict';
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 const google = require('googleapis');
 const Promise = require('bluebird');
 
@@ -39,7 +40,7 @@ module.exports = {
             majorDimension: 'ROWS' // Fetch data by rows
         }).then(res => {
             // Extract only the first row from the retrieved data
-            const headerRow = res.values ? res.values[0] : [];
+            const headerRow = res.values ? res.values[0].map(normalizeHeader) : [];
             return context.sendJson(headerRow, 'out');
         });
     },

@@ -2,7 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 const testUtils = require('../../../../../test/utils.js');
 const UpdatedDeal = require('../../crm/UpdatedDeal/UpdatedDeal.js');
-const { WATCHED_PROPERTIES_DEAL } = require('../../commons.js');
+
 
 describe('UpdatedDeal', () => {
 
@@ -77,7 +77,7 @@ describe('UpdatedDeal', () => {
         assert.equal(context.response.callCount, 1);
     });
 
-    it('update of ignored property only', async () => {
+    it('any property change (including custom/non-standard) triggers update', async () => {
 
         context.messages.webhook.content.data = {
             '38533722673': {
@@ -87,17 +87,24 @@ describe('UpdatedDeal', () => {
             }
         };
 
-        // Mock the response of the hubspot call
+        // All property changes now pass through — HubSpot API is called
         hubspotStub.withArgs('post', 'crm/v3/objects/deals/batch/read').resolves({
             data: {
-                results: []
+                results: [
+                    {
+                        id: '38533722673',
+                        createdAt: '2023-01-01T00:00:00Z',
+                        updatedAt: '2023-02-04T00:00:00Z'
+                    }
+                ]
             }
         });
 
         await UpdatedDeal.receive(context);
 
-        assert.equal(hubspotStub.callCount, 0, 'No call to hubspot');
-        assert.equal(context.sendArray.callCount, 0);
+        assert.equal(hubspotStub.callCount, 1, 'HubSpot API called for any property change');
+        assert.equal(context.sendArray.callCount, 1);
+        assert.equal(context.sendArray.args[0][0].length, 1, 'deal emitted');
         assert.equal(context.response.callCount, 1);
     });
 
@@ -157,13 +164,6 @@ describe('UpdatedDeal', () => {
         assert.equal(context.sendArray.callCount, 1, 'Only one message sent');
         assert.equal(context.sendArray.args[0][0].length, 0, 'No changes sent');
         assert.equal(context.response.callCount, 2);
-    });
-
-    it('getSubscriptions', async () => {
-
-        // Common for both versions
-        const subscriptions = UpdatedDeal.getSubscriptions();
-        assert.equal(subscriptions.length, WATCHED_PROPERTIES_DEAL.length);
     });
 
     it('should cache outPort schema', async function() {

@@ -8,13 +8,11 @@ module.exports = {
 
         const {
             customerId,
-            developerToken,
             loginCustomerId,
             userListId
         } = context.messages.in.content;
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
         lib.ensureRequired(userListId, 'User List ID is required!', context);
 
         const query = [
@@ -34,7 +32,6 @@ module.exports = {
 
         const rows = await lib.searchStream(context, {
             customerId,
-            developerToken,
             loginCustomerId,
             query
         });

@@ -66,10 +66,10 @@ describe('POST /events handler', () => {
         });
     }
 
-    it('no call to triggerComponent', async () => {
+    it('all propertyChange events pass through to triggerListeners', async () => {
 
-        // The payload contains 2 events for the same user Airbus:
-        // Both events are of type contact.propertyChange that we are not interested in.
+        // All propertyChange events now pass through regardless of property name.
+        // Individual components apply their own filtering in receive().
         const req = {
             payload: [
                 {
@@ -103,12 +103,16 @@ describe('POST /events handler', () => {
             ]
         };
 
-        // Call the handler with the payload.
+        const clock = sinon.useFakeTimers();
         await handler(req);
+        await clock.tickAsync(6000);
 
-        // Assertions
-        // Expecting no calls to triggerListeners.
-        assert.equal(context.triggerListeners.callCount, 0, 'triggerListeners should not be called');
+        // triggerListeners should be called — all propertyChange events now pass through
+        assert.equal(context.triggerListeners.callCount, 1, 'triggerListeners should be called once');
+        const call = context.triggerListeners.getCall(0).args[0];
+        assert.equal(call.eventName, `contact.propertyChange:${PORTAL_ID_AIRBUS}`);
+        // _.keyBy keeps last event per objectId
+        assert.deepEqual(call.payload, { '38533722672': req.payload[1] });
     });
 
     it('multiple changes of the same contact in a single event', async () => {
@@ -199,12 +203,14 @@ describe('POST /events handler', () => {
         }
 
         // Expecting the call to triggerListeners to be with the correct arguments.
+        // All propertyChange events now pass through (no allowlist filter). _.keyBy groups by objectId
+        // keeping the last event per object, so the payload contains the last event in the batch.
         if (version.startsWith('4')) {
             const triggerListenersArgsExpected = [
                 [
                     {
                         eventName: `contact.propertyChange:${PORTAL_ID_AIRBUS}`,
-                        payload: { '38533722672': req.payload[2] }
+                        payload: { '38533722672': req.payload[3] }
                     }
                 ]
             ];
@@ -218,7 +224,7 @@ describe('POST /events handler', () => {
                 'flowA',
                 'updated-contact-2',
                 {
-                    '38533722672': req.payload[2]
+                    '38533722672': req.payload[3]
                 }
             ];
 

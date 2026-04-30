@@ -73,10 +73,10 @@ function buildOperation(row, schemaConfig, adPersonalization, adUserData) {
 // ---------------------------------------------------------------------------
 
 async function createOfflineUserDataJob(context, {
-    customerId, developerToken, loginCustomerId, userListResourceName, uploadMode
+    customerId, loginCustomerId, userListResourceName, uploadMode
 }) {
     const normCustomerId = normId(customerId);
-    const headers = lib.buildHeaders(context, { developerToken, loginCustomerId });
+    const headers = lib.buildHeaders(context, { loginCustomerId });
 
     const jobBody = {
         job: {
@@ -101,9 +101,9 @@ async function createOfflineUserDataJob(context, {
     return data.resourceName; // e.g. "customers/123/offlineUserDataJobs/456"
 }
 
-async function addOperations(context, { customerId, developerToken, loginCustomerId, jobResourceName, operations }) {
+async function addOperations(context, { customerId, loginCustomerId, jobResourceName, operations }) {
 
-    const headers = lib.buildHeaders(context, { developerToken, loginCustomerId });
+    const headers = lib.buildHeaders(context, { loginCustomerId });
 
     const { data } = await context.httpRequest({
         method: 'POST',
@@ -118,8 +118,8 @@ async function addOperations(context, { customerId, developerToken, loginCustome
     return data;
 }
 
-async function runOfflineUserDataJob(context, { customerId, developerToken, loginCustomerId, jobResourceName }) {
-    const headers = lib.buildHeaders(context, { developerToken, loginCustomerId });
+async function runOfflineUserDataJob(context, { customerId, loginCustomerId, jobResourceName }) {
+    const headers = lib.buildHeaders(context, { loginCustomerId });
 
     const { data } = await context.httpRequest({
         method: 'POST',
@@ -186,7 +186,6 @@ module.exports = {
             const input = context.messages.in.content;
 
             lib.ensureRequired(input.customerId, 'Customer ID is required!', context);
-            lib.ensureRequired(input.developerToken, 'Developer Token is required!', context);
             lib.ensureRequired(input.fileId, 'File is required!', context);
             lib.ensureRequired(input.userListId, 'User List ID is required!', context);
             lib.ensureRequired(input.schema, 'Schema is required!', context);
@@ -198,7 +197,6 @@ module.exports = {
             state = {
                 fileId: input.fileId,
                 customerId: input.customerId,
-                developerToken: input.developerToken,
                 loginCustomerId: input.loginCustomerId || null,
                 userListResourceName,
                 uploadMode: input.uploadMode || 'ADD',
@@ -252,7 +250,6 @@ module.exports = {
         if (!jobResourceName) {
             jobResourceName = await createOfflineUserDataJob(context, {
                 customerId: state.customerId,
-                developerToken: state.developerToken,
                 loginCustomerId: state.loginCustomerId,
                 userListResourceName: state.userListResourceName,
                 uploadMode: state.uploadMode
@@ -307,7 +304,6 @@ module.exports = {
             if (operations.length > 0) {
                 const result = await addOperations(context, {
                     customerId: state.customerId,
-                    developerToken: state.developerToken,
                     loginCustomerId: state.loginCustomerId,
                     jobResourceName,
                     operations
@@ -377,7 +373,6 @@ module.exports = {
             try {
                 runResult = await runOfflineUserDataJob(context, {
                     customerId: state.customerId,
-                    developerToken: state.developerToken,
                     loginCustomerId: state.loginCustomerId,
                     jobResourceName
                 });

@@ -9,7 +9,10 @@
     },
     "quota": {
         "manager": "appmixer:mollie",
-        "resources": "requests"
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
     },
     "inPorts": [
         {
@@ -26,13 +29,16 @@
                     "headers": {
                         "type": "string"
                     },
+                    "parameters": {
+                        "type": "string"
+                    },
                     "body": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "method",
-                    "path"
+                    "path",
+                    "method"
                 ]
             },
             "inspector": {
@@ -63,13 +69,14 @@
                                 "label": "DELETE",
                                 "value": "DELETE"
                             }
-                        ]
+                        ],
+                        "defaultValue": "GET"
                     },
                     "path": {
                         "type": "text",
-                        "tooltip": "Request path like https://api.mollie.com/v2/payments?limit=5.",
-                        "label": "Endpoint",
-                        "index": 1
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the endpoint path (e.g. <code>/v2/payments</code>) or a full URL like <code>https://api.mollie.com/v2/payments?limit=5</code>."
                     },
                     "headers": {
                         "type": "text",
@@ -77,11 +84,17 @@
                         "label": "Headers",
                         "index": 3
                     },
+                    "parameters": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters as a JSON object (e.g. <code>{\"limit\": 10, \"offset\": 0}</code>)."
+                    },
                     "body": {
-                        "type": "text",
+                        "type": "textarea",
                         "tooltip": "Optional JSON request body (for POST/PUT/PATCH).",
                         "label": "Body",
-                        "index": 4
+                        "index": 5
                     }
                 }
             }
@@ -92,10 +105,19 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Response",
-                    "value": "response",
+                    "label": "Status Code",
+                    "value": "status"
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers"
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
                     "schema": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {}
                     }
                 }
             ]

@@ -26,13 +26,11 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                 <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
             </div> 
             <div style="margin: 10px 0;"> 
-                <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                    src="https://png.pngtree.com/svg/20151126/alarm_clock_small_icon_637578.png"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
             </div> 
             <div style="margin: 15px 0;"> 
-                <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                    src="http://cdn.onlinewebfonts.com/svg/img_405324.png"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
             </div> 
             <div style="width: 100%; text-align: center;"> 
@@ -69,13 +67,11 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                     <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
                 </div> 
                 <div style="margin: 10px 0;"> 
-                    <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                        src="https://png.pngtree.com/svg/20151126/alarm_clock_small_icon_637578.png"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
                 </div> 
                 <div style="margin: 15px 0;"> 
-                    <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                        src="http://cdn.onlinewebfonts.com/svg/img_405324.png"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
                 </div> 
                 <a href="{{task_dashboard_link_requester}}" style="font-size: 15px;display: block; margin: 28px auto; 
@@ -220,7 +216,11 @@ module.exports = {
         const body = context.messages.task.content;
 
         if (body.decisionBy) {
-            body.decisionBy = new Date(body.decisionBy).toISOString();
+            const decisionBy = new Date(body.decisionBy);
+            if (decisionBy.getTime() <= Date.now()) {
+                throw new context.CancelError('Decision by must be a future date.');
+            }
+            body.decisionBy = decisionBy.toISOString();
         }
 
         const task = await context.callAppmixer({

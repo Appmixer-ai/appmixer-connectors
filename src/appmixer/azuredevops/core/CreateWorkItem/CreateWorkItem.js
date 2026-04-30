@@ -46,6 +46,11 @@ module.exports = {
             tags
         });
 
+        if (!workItem || typeof workItem !== 'object') {
+            throw new context.CancelError('Unexpected response from Azure DevOps API. '
+                + 'Please verify the organization name and ensure your connected account has access to this Azure DevOps organization.');
+        }
+
         return context.sendJson(lib.expandDottedKeys(workItem), 'out');
     }
 };

@@ -74,4 +74,19 @@ async function* loadFile(context, fileSource, delimiter, destroy, skipRows = 0) 
     }
 }
 
-module.exports = { getHeader, loadFile };
+/**
+ * Normalize a spreadsheet header string for flexible matching.
+ * Trims whitespace, replaces line breaks with a single space, and
+ * collapses any remaining sequences of whitespace to a single space.
+ * @param {string} header
+ * @returns {string}
+ */
+function normalizeHeader(header) {
+    if (typeof header !== 'string') return header;
+    return header
+        .replace(/[\r\n]+/g, ' ')  // line breaks → space
+        .replace(/\s+/g, ' ')       // collapse repeated whitespace
+        .trim();
+}
+
+module.exports = { getHeader, loadFile, normalizeHeader };

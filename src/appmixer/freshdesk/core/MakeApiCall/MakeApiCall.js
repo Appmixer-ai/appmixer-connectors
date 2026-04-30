@@ -1,39 +1,62 @@
 'use strict';
 
 module.exports = {
-
     async receive(context) {
 
         const { url, method, headers, parameters, body } = context.messages.in.content;
-        const { domain, apiKey } = context.auth;
 
-        const baseUrl = `https://${domain}.freshdesk.com/api`;
-        const fullUrl = baseUrl + url;
+        if (!url) {
+            throw new context.CancelError('API Endpoint URL is required!');
+        }
+        if (!method) {
+            throw new context.CancelError('HTTP Method is required!');
+        }
+
+        let parsedHeaders = {};
+        if (headers) {
+            try {
+                parsedHeaders = JSON.parse(headers);
+            } catch (e) {
+                throw new context.CancelError('Headers must be a valid JSON object.');
+            }
+        }
+
+        let parsedParameters = {};
+        if (parameters) {
+            try {
+                parsedParameters = JSON.parse(parameters);
+            } catch (e) {
+                throw new context.CancelError('Parameters must be a valid JSON object.');
+            }
+        }
+
+        const baseUrl = `https://${context.auth.domain}.freshdesk.com/api/v2`;
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url}`;
+
+        const queryString = Object.keys(parsedParameters).length
+            ? '?' + new URLSearchParams(parsedParameters).toString()
+            : '';
+
+        const credentials = Buffer.from(`${context.auth.apiKey}:X`).toString('base64');
 
         const requestOptions = {
             method,
-            url: fullUrl,
+            url: targetUrl + queryString,
             headers: {
+                'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            auth: {
-                username: apiKey,
-                password: 'X'
+                ...parsedHeaders
             }
         };
 
-        if (headers) {
-            const parsedHeaders = JSON.parse(headers);
-            Object.assign(requestOptions.headers, parsedHeaders);
-        }
-
-        if (parameters) {
-            requestOptions.params = JSON.parse(parameters);
-        }
-
         if (body) {
-            requestOptions.data = JSON.parse(body);
+            try {
+                requestOptions.data = JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
         }
 
         const response = await context.httpRequest(requestOptions);

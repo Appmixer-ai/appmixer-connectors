@@ -17,8 +17,8 @@ describe('Utils RequestApproval component', () => {
     });
 
     it('creates task, emits created, registers webhook, saves state', async () => {
-        // Arrange input and stubs
-        const iso = new Date().toISOString();
+        // Arrange input and stubs — decisionBy must be in the future
+        const iso = new Date(Date.now() + 60 * 60 * 1000).toISOString();
         context.messages = {
             task: {
                 content: {
@@ -71,6 +71,28 @@ describe('Utils RequestApproval component', () => {
         assert(context.stateSet.calledOnce);
         assert.strictEqual(context.stateSet.firstCall.args[0], 'W1');
         assert.deepStrictEqual(context.stateSet.firstCall.args[1], {});
+    });
+
+    it('rejects decisionBy in the past with CancelError', async () => {
+        context.messages = {
+            task: {
+                content: {
+                    title: 'Title',
+                    decisionBy: new Date(Date.now() - 1000).toISOString()
+                }
+            }
+        };
+
+        const Component = require('../../RequestApproval/RequestApproval.js');
+
+        await assert.rejects(
+            () => Component.receive(context),
+            err => {
+                assert(err instanceof context.CancelError, 'should throw CancelError');
+                assert(/future date/i.test(err.message), 'message should mention future date');
+                return true;
+            }
+        );
     });
 
     it('handles webhook payload and emits to status outport, responds 200', async () => {
