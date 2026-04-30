@@ -1,7 +1,7 @@
 'use strict';
 
 const axios = require('axios');
-const pathModule = require('path');
+const { sendArrayOutput } = require('../../lib');
 
 const DEFAULT_PREFIX = 'freshdesk-contacts-export';
 
@@ -30,38 +30,6 @@ const schemaAutocomplete = {
     mobile: { type: 'string', title: 'Mobile' },
     avatar: { type: 'string', title: 'Avatar' }
 };
-
-async function sendArrayOutput({ context, records, outputType }) {
-
-    if (outputType === 'first') {
-        if (records.length === 0) {
-            throw new context.CancelError('No records available for first output type');
-        }
-        await context.sendJson(
-            { ...records[0], index: 0, count: records.length },
-            'out'
-        );
-    } else if (outputType === 'object') {
-        for (let index = 0; index < records.length; index++) {
-            await context.sendJson(
-                { ...records[index], index, count: records.length },
-                'out'
-            );
-        }
-    } else if (outputType === 'array') {
-        await context.sendJson({ result: records, count: records.length }, 'out');
-    } else if (outputType === 'file') {
-        const csvString = toCsv(records);
-        const buffer = Buffer.from(csvString, 'utf8');
-        const componentName = context.flowDescriptor[context.componentId].label || context.componentId;
-        const fileName = `${context.config.outputFilePrefix || DEFAULT_PREFIX}-${componentName}.csv`;
-        const savedFile = await context.saveFileStream(pathModule.normalize(fileName), buffer);
-        await context.log({ step: 'File was saved', fileName, fileId: savedFile.fileId });
-        await context.sendJson({ fileId: savedFile.fileId }, 'out');
-    } else {
-        throw new context.CancelError('Unsupported outputType ' + outputType);
-    }
-}
 
 function getOutputPortOptions(context, outputType) {
 
@@ -102,21 +70,6 @@ function getOutputPortOptions(context, outputType) {
     }
 }
 
-function toCsv(array) {
-
-    if (!array || array.length === 0) return '';
-    const headers = Object.keys(array[0]);
-    return [
-        headers.join(','),
-        ...array.map(item =>
-            Object.values(item).map(property => {
-                if (typeof property === 'object') return JSON.stringify(property);
-                return property;
-            }).join(',')
-        )
-    ].join('\n');
-}
-
 module.exports = {
 
     async receive(context) {
@@ -149,7 +102,7 @@ module.exports = {
                 return context.sendJson({}, 'notFound');
             }
 
-            return sendArrayOutput({ context, records: contacts, outputType });
+            return sendArrayOutput({ context, records: contacts, outputType, defaultPrefix: DEFAULT_PREFIX });
         }
 
         // Filter by a single email or phone (Freshdesk filter params)
@@ -177,7 +130,7 @@ module.exports = {
                 return context.sendJson({}, 'notFound');
             }
 
-            return sendArrayOutput({ context, records: contacts, outputType });
+            return sendArrayOutput({ context, records: contacts, outputType, defaultPrefix: DEFAULT_PREFIX });
         }
 
         // Otherwise use the list/filter endpoint
@@ -202,6 +155,6 @@ module.exports = {
             return context.sendJson({}, 'notFound');
         }
 
-        return sendArrayOutput({ context, records: contacts, outputType });
+        return sendArrayOutput({ context, records: contacts, outputType, defaultPrefix: DEFAULT_PREFIX });
     }
 };

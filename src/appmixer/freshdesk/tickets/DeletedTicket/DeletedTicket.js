@@ -19,6 +19,8 @@ module.exports = {
 
         const from = new Date(cursorUpdatedAt.getTime() - lookbackMs).toISOString();
 
+        const isFirstRun = !state.cursorUpdatedAt;
+
         let nextUrl =
             `${baseUrl}?filter=deleted` +
             `&updated_since=${encodeURIComponent(from)}` +
@@ -41,10 +43,12 @@ module.exports = {
 
                 if (!ticket.deleted) continue;
 
+                // On the first run, skip emission entirely (baseline-only behavior).
                 const isAfterCursor =
-                    !state.cursorUpdatedAt ||
-                    updatedAt > state.cursorUpdatedAt ||
-                    (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0));
+                    !isFirstRun && (
+                        updatedAt > state.cursorUpdatedAt ||
+                        (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0))
+                    );
 
                 if (!isAfterCursor) continue;
 
@@ -70,8 +74,8 @@ module.exports = {
             nextUrl = match ? match[1] : null;
         }
 
-        if (maxUpdatedAt) {
-            await context.saveState({ cursorUpdatedAt: maxUpdatedAt, cursorTicketId: maxTicketId });
-        }
+        // Always persist cursor even when no results, to prevent gaps if polling interval exceeds lookback window.
+        const cursorToSave = maxUpdatedAt || cursorUpdatedAt.toISOString();
+        await context.saveState({ cursorUpdatedAt: cursorToSave, cursorTicketId: maxTicketId });
     }
 };

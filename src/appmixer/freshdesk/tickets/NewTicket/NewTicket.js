@@ -40,6 +40,8 @@ module.exports = {
             params.set('include', normalizedEmbed.join(','));
         }
 
+        const isFirstRun = !state.cursorCreatedAt;
+
         let nextUrl = `${baseUrl}?${params.toString()}`;
         let maxCreatedAt = state.cursorCreatedAt || initialCursorCreatedAt;
         let maxTicketId = state.cursorTicketId || 0;
@@ -57,10 +59,12 @@ module.exports = {
                 const ticketId = ticket.id;
 
                 // Only emit tickets created after the cursor (tie-break on id)
+                // On the first run, skip emission entirely (baseline-only behavior)
                 const isNew =
-                    !state.cursorCreatedAt ||
-                    createdAt > state.cursorCreatedAt ||
-                    (createdAt === state.cursorCreatedAt && ticketId > (state.cursorTicketId || 0));
+                    !isFirstRun && (
+                        createdAt > state.cursorCreatedAt ||
+                        (createdAt === state.cursorCreatedAt && ticketId > (state.cursorTicketId || 0))
+                    );
 
                 if (!isNew) continue;
 

@@ -9,17 +9,24 @@ module.exports = {
         const { auth } = context;
         const { contactId } = context.messages.in.content;
 
-        const response = await axios.get(
-            `https://${auth.domain}.freshdesk.com/api/v2/contacts/${contactId}`,
-            {
-                auth: {
-                    username: auth.apiKey,
-                    password: 'X'
+        let data;
+        try {
+            const response = await axios.get(
+                `https://${auth.domain}.freshdesk.com/api/v2/contacts/${contactId}`,
+                {
+                    auth: {
+                        username: auth.apiKey,
+                        password: 'X'
+                    }
                 }
+            );
+            data = response.data;
+        } catch (err) {
+            if (err.response?.status === 404) {
+                return context.sendJson({ contactId }, 'notFound');
             }
-        );
-
-        const data = response.data;
+            throw err;
+        }
 
         if (!data || !data.id) {
             return context.sendJson({ contactId }, 'notFound');

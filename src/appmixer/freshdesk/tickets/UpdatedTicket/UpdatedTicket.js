@@ -35,6 +35,8 @@ module.exports = {
             params.set('include', normalizedEmbed.join(','));
         }
 
+        const isFirstRun = !state.cursorUpdatedAt;
+
         let nextUrl = `${baseUrl}?${params.toString()}`;
         let maxUpdatedAt = state.cursorUpdatedAt || null;
         let maxTicketId = state.cursorTicketId || 0;
@@ -51,11 +53,13 @@ module.exports = {
                 const updatedAt = ticket.updated_at;
                 const ticketId = ticket.id;
 
-                // Strict cursor check with tie-breaker on id
+                // Strict cursor check with tie-breaker on id.
+                // On the first run, skip emission entirely (baseline-only behavior).
                 const isAfterCursor =
-                    !state.cursorUpdatedAt ||
-                    updatedAt > state.cursorUpdatedAt ||
-                    (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0));
+                    !isFirstRun && (
+                        updatedAt > state.cursorUpdatedAt ||
+                        (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0))
+                    );
 
                 if (!isAfterCursor) continue;
 
@@ -106,8 +110,8 @@ module.exports = {
             nextUrl = match ? match[1] : null;
         }
 
-        if (maxUpdatedAt) {
-            await context.saveState({ cursorUpdatedAt: maxUpdatedAt, cursorTicketId: maxTicketId });
-        }
+        // Always persist cursor even when no results, to prevent gaps if polling interval exceeds lookback window.
+        const cursorToSave = maxUpdatedAt || cursorUpdatedAt.toISOString();
+        await context.saveState({ cursorUpdatedAt: cursorToSave, cursorTicketId: maxTicketId });
     }
 };

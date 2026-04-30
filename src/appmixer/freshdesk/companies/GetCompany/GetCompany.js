@@ -9,17 +9,24 @@ module.exports = {
         const { auth } = context;
         const companyId = parseInt(context.messages.in.content.companyId, 10);
 
-        const response = await axios.get(
-            `https://${auth.domain}.freshdesk.com/api/v2/companies/${companyId}`,
-            {
-                auth: {
-                    username: auth.apiKey,
-                    password: 'X'
+        let data;
+        try {
+            const response = await axios.get(
+                `https://${auth.domain}.freshdesk.com/api/v2/companies/${companyId}`,
+                {
+                    auth: {
+                        username: auth.apiKey,
+                        password: 'X'
+                    }
                 }
+            );
+            data = response.data;
+        } catch (err) {
+            if (err.response?.status === 404) {
+                return context.sendJson({ companyId }, 'notFound');
             }
-        );
-
-        const data = response.data;
+            throw err;
+        }
 
         if (!data || !data.id) {
             return context.sendJson({ companyId }, 'notFound');
