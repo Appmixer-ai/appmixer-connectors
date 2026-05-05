@@ -69,7 +69,7 @@ async function generateOutputPortOptions(context) {
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
         const response = await context.httpRequest({
             method: 'GET',
-            url: `${baseUrl}/Flows/Home/SourceFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
+            url: `${baseUrl}/Flows/Home/TargetFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.token}`,
                 'Accept': 'application/json'
