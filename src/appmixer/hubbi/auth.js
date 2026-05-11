@@ -23,9 +23,9 @@ module.exports = {
 
         async requestProfileInfo(context) {
             const baseUrl = context.baseUrl.replace(/\/$/, '');
-            const { data } = await context.httpRequest({
+            await context.httpRequest({
                 method: 'GET',
-                url: `${baseUrl}/Flows/Home/HubsList?clientKey=${encodeURIComponent(context.clientKey)}`,
+                url: `${baseUrl}/Flows/Home/ListTargetHubs?clientKey=${encodeURIComponent(context.clientKey)}`,
                 headers: {
                     'Authorization': `Bearer ${context.token}`,
                     'Accept': 'application/json'
@@ -42,7 +42,7 @@ module.exports = {
             const baseUrl = context.baseUrl.replace(/\/$/, '');
             await context.httpRequest({
                 method: 'GET',
-                url: `${baseUrl}/Flows/Home/HubsList?clientKey=${encodeURIComponent(context.clientKey)}`,
+                url: `${baseUrl}/Flows/Home/ListTargetHubs?clientKey=${encodeURIComponent(context.clientKey)}`,
                 headers: {
                     'Authorization': `Bearer ${context.token}`
                 }

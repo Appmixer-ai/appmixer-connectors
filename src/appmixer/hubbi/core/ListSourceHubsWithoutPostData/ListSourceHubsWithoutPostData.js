@@ -20,7 +20,7 @@ module.exports = {
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
         const response = await context.httpRequest({
             method: 'GET',
-            url: `${baseUrl}/Flows/Home/HubsList?clientKey=${encodeURIComponent(context.auth.clientKey)}`,
+            url: `${baseUrl}/Flows/Home/ListSourceHubsWithoutPostData?clientKey=${encodeURIComponent(context.auth.clientKey)}`,
             headers: {
                 'Authorization': `Bearer ${context.auth.token}`,
                 'Accept': 'application/json'

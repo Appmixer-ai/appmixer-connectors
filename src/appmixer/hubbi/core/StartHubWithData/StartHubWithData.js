@@ -76,12 +76,12 @@ async function generateInspector(context) {
             tooltip: 'The conversion identifier (UUID) of the hub to start.',
             index: 0,
             source: {
-                url: '/component/appmixer/hubbi/core/ListHubs?outPort=out',
+                url: '/component/appmixer/hubbi/core/ListSourceHubsWithPostData?outPort=out',
                 data: {
                     messages: {
                         'in/outputType': 'array'
                     },
-                    transform: './ListHubs#toSelectArray'
+                    transform: './ListSourceHubsWithPostData#toSelectArray'
                 }
             }
         },
