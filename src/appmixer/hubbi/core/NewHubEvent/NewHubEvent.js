@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
@@ -79,10 +81,12 @@ async function generateOutputPortOptions(context) {
         const fields = response.data || [];
 
         for (const field of fields) {
+            if (!field.fieldId) continue;
+            const { schema } = lib.mapFieldType(field.type);
             options.push({
                 label: field.name || field.fieldId,
                 value: field.fieldId,
-                schema: { type: 'string' }
+                schema
             });
         }
     }

@@ -6,6 +6,55 @@ const DEFAULT_PREFIX = 'hubbi-objects-export';
 
 module.exports = {
 
+    mapFieldType(netType) {
+
+        const t = String(netType || '').trim().toLowerCase();
+        switch (t) {
+            case 'int16':
+            case 'int32':
+            case 'int64':
+            case 'long':
+            case 'short':
+            case 'byte':
+            case 'sbyte':
+            case 'uint16':
+            case 'uint32':
+            case 'uint64':
+            case 'integer':
+                return { inspectorType: 'number', schema: { type: 'integer' } };
+            case 'double':
+            case 'decimal':
+            case 'single':
+            case 'float':
+                return { inspectorType: 'number', schema: { type: 'number' } };
+            case 'boolean':
+            case 'bool':
+                return { inspectorType: 'toggle', schema: { type: 'boolean' } };
+            case 'datetime':
+            case 'datetimeoffset':
+                return {
+                    inspectorType: 'date-time',
+                    inspectorConfig: { enableTime: true },
+                    schema: { type: 'string', format: 'date-time' }
+                };
+            case 'date':
+            case 'dateonly':
+                return {
+                    inspectorType: 'date-time',
+                    schema: { type: 'string', format: 'date' }
+                };
+            case 'guid':
+            case 'uuid':
+                return { inspectorType: 'text', schema: { type: 'string', format: 'uuid' } };
+            case 'string':
+            case 'char':
+            case '':
+                return { inspectorType: 'text', schema: { type: 'string' } };
+            default:
+                return { inspectorType: 'text', schema: { type: 'string' } };
+        }
+    },
+
     async sendArrayOutput({
         context,
         outputPortName = 'out',

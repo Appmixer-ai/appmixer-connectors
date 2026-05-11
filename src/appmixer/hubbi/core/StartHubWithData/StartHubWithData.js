@@ -1,5 +1,7 @@
 'use strict';
 
+const lib = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
@@ -58,13 +60,17 @@ async function generateInspector(context) {
         const fields = response.data || [];
 
         fieldsInputs = fields.reduce((res, field, index) => {
-            schema.properties[field.fieldId] = { type: 'string' };
-            res[field.fieldId] = {
-                type: 'text',
+            if (!field.fieldId) return res;
+            const { inspectorType, inspectorConfig, schema: fieldSchema } = lib.mapFieldType(field.type);
+            schema.properties[field.fieldId] = fieldSchema;
+            const input = {
+                type: inspectorType,
                 label: field.name || field.fieldId,
                 tooltip: `Source field: ${field.name || field.fieldId} (${field.type || 'string'})`,
                 index: index + 1
             };
+            if (inspectorConfig) input.config = inspectorConfig;
+            res[field.fieldId] = input;
             return res;
         }, {});
     }
