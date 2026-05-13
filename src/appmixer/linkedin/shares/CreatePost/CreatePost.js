@@ -39,8 +39,8 @@ function buildPost(context, author, assetUrn) {
 
         shareObject.content = {
             media: {
-                status: 'READY',
-                media: assetUrn
+                id: assetUrn,
+                title: ''
             }
         };
     }
@@ -80,33 +80,25 @@ module.exports = {
 
         if (useImage) {
 
-            // Step 1: Register upload
+            // Step 1: Initialize image upload (versioned Images API)
             const registerResponse = await context.httpRequest({
                 method: 'POST',
-                url: `${BASE_URL}v2/assets?action=registerUpload`,
+                url: `${BASE_URL}${VERSION_PATH}/images?action=initializeUpload`,
                 headers: {
                     'X-Restli-Protocol-Version': '2.0.0',
                     'Authorization': `Bearer ${context.auth.accessToken}`,
+                    'LinkedIn-Version': VERSION_HEADER,
                     'Content-Type': 'application/json'
                 },
                 data: {
-                    registerUploadRequest: {
-                        recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                        owner: author,
-                        serviceRelationships: [
-                            {
-                                relationshipType: 'OWNER',
-                                identifier: 'urn:li:userGeneratedContent'
-                            }
-                        ]
+                    initializeUploadRequest: {
+                        owner: author
                     }
                 }
             });
 
-            const uploadUrl = registerResponse.data.value.uploadMechanism[
-                'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-            ].uploadUrl;
-            assetUrn = registerResponse.data.value.asset;
+            const uploadUrl = registerResponse.data.value.uploadUrl;
+            assetUrn = registerResponse.data.value.image;
 
             // Step 2: Fetch image data
             let imageBuffer;
@@ -125,6 +117,10 @@ module.exports = {
                     maxContentLength: 20 * 1024 * 1024,
                     maxBodyLength: 20 * 1024 * 1024
                 });
+                const contentLength = parseInt(imageResponse.headers['content-length'] || '0', 10);
+                if (contentLength > 20 * 1024 * 1024) {
+                    throw new context.CancelError('Image file exceeds the 20 MB limit.');
+                }
                 imageBuffer = Buffer.from(imageResponse.data);
             } else {
                 // Fall back to file from Appmixer storage
@@ -152,17 +148,27 @@ module.exports = {
             });
         }
 
-        const response = await context.httpRequest({
-            method: 'POST',
-            url: `${BASE_URL}${VERSION_PATH}/posts`,
-            headers: {
-                'X-Restli-Protocol-Version': '2.0.0',
-                'Authorization': `Bearer ${context.auth.accessToken}`,
-                'LinkedIn-Version': VERSION_HEADER,
-                'Content-Type': 'application/json'
-            },
-            data: buildPost(context, author, assetUrn)
-        });
+        let response;
+        try {
+            response = await context.httpRequest({
+                method: 'POST',
+                url: `${BASE_URL}${VERSION_PATH}/posts`,
+                headers: {
+                    'X-Restli-Protocol-Version': '2.0.0',
+                    'Authorization': `Bearer ${context.auth.accessToken}`,
+                    'LinkedIn-Version': VERSION_HEADER,
+                    'Content-Type': 'application/json'
+                },
+                data: buildPost(context, author, assetUrn)
+            });
+        } catch (err) {
+            if (err.response && err.response.status === 403 && authorType === 'ORGANIZATION') {
+                throw new context.CancelError(
+                    `LinkedIn rejected the request (403). Make sure you are an admin of organization ID "${organizationId}" and have granted the w_organization_social scope.`
+                );
+            }
+            throw err;
+        }
         return context.sendJson({ status: response.status, postId: response.headers['x-restli-id'] }, 'out');
     }
 };
