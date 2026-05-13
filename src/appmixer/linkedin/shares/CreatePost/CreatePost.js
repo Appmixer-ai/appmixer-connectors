@@ -1,6 +1,5 @@
 'use strict';
 
-const axios = require('axios');
 const { BASE_URL, VERSION_PATH, VERSION_HEADER } = require('../../constants');
 
 /**
@@ -59,13 +58,25 @@ module.exports = {
 
         const { imageUrl, imageFile, specificLink, authorType, organizationId } = context.messages.in.content;
 
-        const author = (authorType === 'Organization' && organizationId)
+        // Validate organizationId when posting as an organization
+        if (authorType === 'ORGANIZATION' && !organizationId) {
+            throw new context.CancelError('Organization ID is required when posting as an organization!');
+        }
+
+        // TODO: Add a ListOrganizations component to let users pick from orgs they administer
+        // (via /v2/organizationalEntityAcls) instead of entering a free-form numeric ID.
+        // See PR review comment — this is tracked as a separate improvement.
+        const author = (authorType === 'ORGANIZATION' && organizationId)
             ? `urn:li:organization:${organizationId}`
             : `urn:li:person:${context.auth.profileInfo.sub}`;
 
         let assetUrn = null;
 
         const useImage = !specificLink && (imageUrl || imageFile);
+
+        if (!useImage && (imageUrl || imageFile)) {
+            context.log('info', 'Image inputs (imageUrl/imageFile) ignored because specificLink is enabled.');
+        }
 
         if (useImage) {
 
@@ -97,11 +108,24 @@ module.exports = {
             ].uploadUrl;
             assetUrn = registerResponse.data.value.asset;
 
+            // Step 2: Fetch image data
             let imageBuffer;
             if (imageUrl) {
                 // URL takes priority — download from URL
-                const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-                imageBuffer = imageResponse.data;
+                // Validate URL scheme to prevent SSRF (only http/https allowed)
+                // TODO: Add DNS-based private IP blocking for full SSRF protection
+                const parsedUrl = new URL(imageUrl);
+                if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+                    throw new context.CancelError('Image URL must use http or https protocol.');
+                }
+                const imageResponse = await context.httpRequest({
+                    method: 'GET',
+                    url: imageUrl,
+                    responseType: 'arraybuffer',
+                    maxContentLength: 20 * 1024 * 1024,
+                    maxBodyLength: 20 * 1024 * 1024
+                });
+                imageBuffer = Buffer.from(imageResponse.data);
             } else {
                 // Fall back to file from Appmixer storage
                 const stream = await context.getFileReadStream(imageFile);
@@ -115,11 +139,16 @@ module.exports = {
             }
 
             // Step 3: Upload image binary to LinkedIn
-            await axios.put(uploadUrl, imageBuffer, {
+            await context.httpRequest({
+                method: 'PUT',
+                url: uploadUrl,
+                data: imageBuffer,
                 headers: {
                     'Authorization': `Bearer ${context.auth.accessToken}`,
                     'Content-Type': 'application/octet-stream'
-                }
+                },
+                maxContentLength: 20 * 1024 * 1024,
+                maxBodyLength: 20 * 1024 * 1024
             });
         }
 
