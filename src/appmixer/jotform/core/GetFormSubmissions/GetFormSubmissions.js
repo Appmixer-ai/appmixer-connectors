@@ -1,5 +1,25 @@
 'use strict';
 
+/**
+ * Normalize a single answer item. If the `answer` field is an object keyed by
+ * numeric strings (e.g. matrix fields: { "1": [...], "2": [...] }), convert it
+ * to an ordered array so it can be iterated in a flow.
+ */
+function normalizeAnswerItem(item) {
+    if (!item || typeof item !== 'object') return item;
+    const answer = item.answer;
+    if (answer && typeof answer === 'object' && !Array.isArray(answer)) {
+        const keys = Object.keys(answer);
+        if (keys.length > 0 && keys.every(k => /^\d+$/.test(k))) {
+            return {
+                ...item,
+                answer: keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => answer[k])
+            };
+        }
+    }
+    return item;
+}
+
 const dependencies = {
     'jsonata': require('jsonata')
 };
@@ -60,7 +80,7 @@ module.exports = {
         // Transform each submission to convert answers from object to array
         result = result.map(submission => ({
             ...submission,
-            answersList: Object.values(submission.answers || {})
+            answersList: Object.values(submission.answers || {}).map(normalizeAnswerItem)
         }));
 
         if (context.messages.in.content.xConnectorOutputType === 'object') {
@@ -207,7 +227,7 @@ module.exports = {
                     },
                     'answersList': {
                         'type': 'array',
-                        'description': 'Form answers as an ordered array. Each item represents one field. The answer property can be a string, object (compound fields), or nested object with arrays (matrix fields).',
+                        'description': 'Form answers as an ordered array. Each item represents one field. The answer property is a string for simple fields, an object for compound fields (fullname, address), or an array of row-arrays for matrix fields.',
                         'items': {
                             'type': 'object',
                             'properties': {
@@ -217,12 +237,16 @@ module.exports = {
                                 'type': { 'type': 'string', 'example': 'control_phone' },
                                 'sublabels': {
                                     'type': 'object',
-                                    'description': 'Sub-labels for compound fields',
+                                    'description': 'Sub-labels for compound fields (address, fullname, phone)',
                                     'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
                                 },
                                 'answer': {
-                                    'description': 'String for simple fields, object for compound fields (address/fullname), object with array values for matrix fields.',
-                                    'example': '(123) 123-1233'
+                                    'description': 'The submitted value. String for simple fields (text/email/dropdown), object for compound fields (address/fullname), array of row-arrays for matrix fields (numeric keys converted to ordered array).',
+                                    'examples': [
+                                        'Internet',
+                                        { 'first': 'FULL NAME', 'last': 'LAST NAME' },
+                                        [['me', 'there', '123456'], ['', '', '']]
+                                    ]
                                 },
                                 'prettyFormat': {
                                     'type': 'string',
@@ -277,6 +301,7 @@ module.exports = {
         'value': 'answersList',
         'schema': {
             'type': 'array',
+            'description': 'Form answers as an ordered array. answer is a string for simple fields, object for compound fields, or array of row-arrays for matrix fields.',
             'items': {
                 'type': 'object',
                 'properties': {
@@ -286,12 +311,16 @@ module.exports = {
                     'type': { 'type': 'string', 'example': 'control_phone' },
                     'sublabels': {
                         'type': 'object',
-                        'description': 'Sub-labels for compound fields (e.g. address parts, name parts)',
+                        'description': 'Sub-labels for compound fields (address, fullname, phone)',
                         'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
                     },
                     'answer': {
-                        'description': 'The submitted value. String for simple fields (text, email, dropdown), object for compound fields (address, fullname, phone), or object with array values for matrix fields.',
-                        'example': '(123) 123-1233'
+                        'description': 'String for simple fields, object for compound fields, array of row-arrays for matrix fields.',
+                        'examples': [
+                            'Internet',
+                            { 'first': 'FULL NAME', 'last': 'LAST NAME' },
+                            [['me', 'there', '123456'], ['', '', '']]
+                        ]
                     },
                     'prettyFormat': {
                         'type': 'string',
