@@ -293,6 +293,20 @@ module.exports = {
 
 For services using OAuth 2.0 flow.
 
+> ⚠️ **Breaking Change Warning — OAuth Scopes**
+>
+> Adding new OAuth scopes to an existing connector is a **breaking change**. Existing users will need to re-authenticate to grant the new permissions. This must be reflected in the connector's `bundle.json`:
+> - Bump the **major** version (e.g. `2.2.0` → `3.0.0`)
+> - Document the scope change clearly in the changelog entry
+> - Include a note in the PR description warning reviewers that existing users will be asked to re-authenticate
+>
+> Example `bundle.json` changelog entry:
+> ```json
+> "3.0.0": [
+>     "BREAKING: Added w_organization_social OAuth scope to support posting as an organization page. Existing users must re-authenticate."
+> ]
+> ```
+
 #### Simplified URL-Based Format
 
 For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
@@ -769,33 +783,33 @@ Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspecto
 
 Each output port can define its output structure using **either** `schema` or `options`, but **not both**:
 
-- **`schema`**: Use JSON Schema to define the structure of output data. Provides type information and validation.
-- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured.
+- **`schema`** (PREFERRED): Use JSON Schema to define the structure of output data. Provides type information, validation, and nested object/array support.
+- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured — use only when fields are flat and you don't need typed schemas.
 
-**IMPORTANT**: You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
+**IMPORTANT**: Always prefer `schema` (JSON Schema) over `options`. Use `options` only for legacy components or when dynamically generating a flat list of fields. You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
 
 ```json
-// CORRECT - using schema only
+// PREFERRED - using schema (JSON Schema)
 "outPorts": [
     {
         "name": "out",
         "schema": {
             "type": "object",
             "properties": {
-                "id": { "type": "string", "title": "ID" },
-                "name": { "type": "string", "title": "Name" }
+                "id": { "type": "string", "title": "ID", "example": "abc123" },
+                "name": { "type": "string", "title": "Name", "example": "Acme Inc." }
             }
         }
     }
 ]
 
-// CORRECT - using options only
+// ALTERNATIVE - using options (flat list only, no nested types)
 "outPorts": [
     {
         "name": "out",
         "options": [
-            { "label": "ID", "value": "id" },
-            { "label": "Name", "value": "name" }
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "abc123" } },
+            { "label": "Name", "value": "name", "schema": { "type": "string", "example": "Acme Inc." } }
         ]
     }
 ]
@@ -809,6 +823,69 @@ Each output port can define its output structure using **either** `schema` or `o
     }
 ]
 ```
+
+### Output Port Examples (variable picker preview)
+
+Output port fields should include `example` values so users see realistic sample data in the variable picker UI when wiring downstream components.
+
+**Rules:**
+
+1. **Use `example` (singular), NOT `examples` (array).** Appmixer reads `example`; the JSON Schema `examples: [...]` array is not rendered.
+2. **In JSON Schema format**: put `example` on each leaf property inside `schema.properties[key]`. This is the preferred form.
+3. **In options format**: put `example` inside the per-option `schema` object: `options[k].schema.example`.
+4. **Falsy values render correctly** (`0`, `false`, `""`) — don't omit them out of concern they won't show.
+5. **Choose realistic sample values** that match the actual API response (real ID format, real date, etc.), not placeholders like `"string"` or `"value"`.
+
+**JSON Schema format (PREFERRED):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID", "example": "1001" },
+                "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                "completed": { "type": "boolean", "title": "Completed", "example": false },
+                "priority": { "type": "integer", "title": "Priority", "example": 0 },
+                "created_at": { "type": "string", "format": "date-time", "title": "Created", "example": "2025-01-15T10:30:00Z" },
+                "tags": {
+                    "type": "array",
+                    "title": "Tags",
+                    "items": { "type": "string" },
+                    "example": ["urgent", "shopping"]
+                },
+                "assignee": {
+                    "type": "object",
+                    "title": "Assignee",
+                    "properties": {
+                        "id": { "type": "string", "example": "u-42" },
+                        "name": { "type": "string", "example": "Jane Doe" }
+                    }
+                }
+            }
+        }
+    }
+]
+```
+
+**Options format (only when you cannot use JSON Schema):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "1001" } },
+            { "label": "Title", "value": "title", "schema": { "type": "string", "example": "Buy groceries" } },
+            { "label": "Completed", "value": "completed", "schema": { "type": "boolean", "example": false } }
+        ]
+    }
+]
+```
+
+**Background:** Until recently, `schema.example` on JSON Schema output ports was not rendered in the variable picker — only `options[k].schema.example` worked. That bug was fixed (see Appmixer-ai/appmixer-core#3734), so JSON Schema with per-property `example` is now the recommended approach.
 
 ---
 
@@ -1289,13 +1366,16 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Description", "value": "description" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "description": { "type": "string", "title": "Description", "example": "Milk, eggs, bread" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1391,12 +1471,15 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1505,11 +1588,14 @@ Trigger components monitor for events and start workflows when conditions are me
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1633,11 +1719,14 @@ Webhook triggers receive HTTP callbacks from external services. They require lif
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Contact ID", "value": "id" },
-                { "label": "Email", "value": "email" },
-                { "label": "Updated Date", "value": "updated_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Contact ID", "example": "c-1001" },
+                    "email": { "type": "string", "title": "Email", "example": "jane@example.com" },
+                    "updated_at": { "type": "string", "format": "date-time", "title": "Updated Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -2073,6 +2162,11 @@ Behavior JS file MUST follow these rules:
 Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ### Critical Restrictions for AI Code Generation
+
+- **OAuth Scope Changes are Breaking Changes**: NEVER add new OAuth scopes to an existing connector's `component.json` `auth.scope` array without treating it as a **major** version bump. Adding a scope forces all existing users to re-authenticate. Always:
+  - Bump the connector `bundle.json` to the next major version (e.g. `2.x.x` → `3.0.0`)
+  - Add a `BREAKING:` prefix to the changelog entry describing the scope addition
+  - Note in the PR description that existing users must re-authenticate
 
 - **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
 

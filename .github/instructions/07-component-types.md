@@ -397,13 +397,16 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Description", "value": "description" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "description": { "type": "string", "title": "Description", "example": "Milk, eggs, bread" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -499,12 +502,15 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -613,11 +619,14 @@ Trigger components monitor for events and start workflows when conditions are me
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -741,11 +750,14 @@ Webhook triggers receive HTTP callbacks from external services. They require lif
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Contact ID", "value": "id" },
-                { "label": "Email", "value": "email" },
-                { "label": "Updated Date", "value": "updated_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Contact ID", "example": "c-1001" },
+                    "email": { "type": "string", "title": "Email", "example": "jane@example.com" },
+                    "updated_at": { "type": "string", "format": "date-time", "title": "Updated Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
