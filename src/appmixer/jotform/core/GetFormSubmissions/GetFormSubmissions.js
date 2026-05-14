@@ -203,6 +203,9 @@ module.exports = {
                         'type': 'string'
                     },
                     'answers': {
+                        'type': 'object'
+                    },
+                    'answersList': {
                         'type': 'array'
                     },
                     'workflowStatus': {
@@ -244,6 +247,10 @@ module.exports = {
     {
         'label': 'Answers',
         'value': 'answers'
+    },
+    {
+        'label': 'Answers List',
+        'value': 'answersList'
     },
     {
         'label': 'Workflow Status',
