@@ -309,7 +309,7 @@ Use `source` property to populate field options dynamically:
 ##### file output components
 - use `context.saveFileStream()` in behavior JS
 - must return `fileId` in output message
-- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+- should return additional info like `fileSize`, `prompt`, etc. — define these as fields in the `outPorts.schema.properties` (JSON Schema), each with a realistic `example`. See `05-component-config.md` § "Output Port Examples" for the canonical pattern.
 
 Examples:
 

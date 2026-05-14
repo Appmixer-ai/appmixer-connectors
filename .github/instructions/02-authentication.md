@@ -96,7 +96,7 @@ module.exports = {
         },
         validate: async context => {
             const credentials = `${context.apiKey}:X`;
-            const encoded = (new Buffer(credentials)).toString('base64');
+            const encoded = Buffer.from(credentials).toString('base64');
             await context.httpRequest({
                 method: 'GET',
                 url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,

@@ -242,6 +242,7 @@ Output port fields should include `example` values so users see realistic sample
 3. **In options format**: put `example` inside the per-option `schema` object: `options[k].schema.example`.
 4. **Falsy values render correctly** (`0`, `false`, `""`) — don't omit them out of concern they won't show.
 5. **Choose realistic sample values** that match the actual API response (real ID format, real date, etc.), not placeholders like `"string"` or `"value"`.
+6. **Do NOT use `description`** on output port properties. Use `title` for the human-readable label; `description` is not rendered by the variable picker and only adds noise. Tooltips/help text belong on input port inspectors, not on outputs.
 
 **JSON Schema format (PREFERRED):**
 
