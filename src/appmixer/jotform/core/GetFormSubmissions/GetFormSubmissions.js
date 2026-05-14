@@ -206,7 +206,31 @@ module.exports = {
                         'type': 'object'
                     },
                     'answersList': {
-                        'type': 'array'
+                        'type': 'array',
+                        'description': 'Form answers as an ordered array. Each item represents one field. The answer property can be a string, object (compound fields), or nested object with arrays (matrix fields).',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'name': { 'type': 'string', 'example': 'phoneNumber5' },
+                                'order': { 'type': 'string', 'example': '5' },
+                                'text': { 'type': 'string', 'example': 'Phone Number' },
+                                'type': { 'type': 'string', 'example': 'control_phone' },
+                                'sublabels': {
+                                    'type': 'object',
+                                    'description': 'Sub-labels for compound fields',
+                                    'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
+                                },
+                                'answer': {
+                                    'description': 'String for simple fields, object for compound fields (address/fullname), object with array values for matrix fields.',
+                                    'example': '(123) 123-1233'
+                                },
+                                'prettyFormat': {
+                                    'type': 'string',
+                                    'description': 'Human-readable formatted answer for compound/matrix fields.',
+                                    'example': 'FULL NAME LAST NAME'
+                                }
+                            }
+                        }
                     },
                     'workflowStatus': {
                         'type': 'string'
@@ -250,7 +274,33 @@ module.exports = {
     },
     {
         'label': 'Answers List',
-        'value': 'answersList'
+        'value': 'answersList',
+        'schema': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'name': { 'type': 'string', 'example': 'phoneNumber5' },
+                    'order': { 'type': 'string', 'example': '5' },
+                    'text': { 'type': 'string', 'example': 'Phone Number' },
+                    'type': { 'type': 'string', 'example': 'control_phone' },
+                    'sublabels': {
+                        'type': 'object',
+                        'description': 'Sub-labels for compound fields (e.g. address parts, name parts)',
+                        'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
+                    },
+                    'answer': {
+                        'description': 'The submitted value. String for simple fields (text, email, dropdown), object for compound fields (address, fullname, phone), or object with array values for matrix fields.',
+                        'example': '(123) 123-1233'
+                    },
+                    'prettyFormat': {
+                        'type': 'string',
+                        'description': 'Human-readable formatted answer for compound/matrix fields.',
+                        'example': 'FULL NAME LAST NAME'
+                    }
+                }
+            }
+        }
     },
     {
         'label': 'Workflow Status',
