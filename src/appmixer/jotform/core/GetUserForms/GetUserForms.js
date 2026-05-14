@@ -175,108 +175,39 @@ module.exports = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'id': {
-                        'type': 'string'
-                    },
-                    'username': {
-                        'type': 'string'
-                    },
-                    'title': {
-                        'type': 'string'
-                    },
-                    'height': {
-                        'type': 'string'
-                    },
-                    'status': {
-                        'type': 'string'
-                    },
-                    'created_at': {
-                        'type': 'string'
-                    },
-                    'updated_at': {
-                        'type': 'string'
-                    },
-                    'last_submission': {
-                        'type': 'string'
-                    },
-                    'new': {
-                        'type': 'string'
-                    },
-                    'count': {
-                        'type': 'string'
-                    },
-                    'type': {
-                        'type': 'string'
-                    },
-                    'favorite': {
-                        'type': 'number'
-                    },
-                    'archived': {
-                        'type': 'number'
-                    },
-                    'url': {
-                        'type': 'string'
-                    }
+                    'id': { 'type': 'string', 'example': '242678198603467' },
+                    'username': { 'type': 'string', 'example': 'johndoe' },
+                    'title': { 'type': 'string', 'example': 'Customer Registration Form' },
+                    'height': { 'type': 'string', 'example': '600' },
+                    'status': { 'type': 'string', 'example': 'ENABLED' },
+                    'created_at': { 'type': 'string', 'example': '2025-01-15 10:30:00' },
+                    'updated_at': { 'type': 'string', 'example': '2025-09-04 22:23:43' },
+                    'last_submission': { 'type': 'string', 'example': '2025-09-04 22:23:43' },
+                    'new': { 'type': 'string', 'example': '1' },
+                    'count': { 'type': 'string', 'example': '42' },
+                    'type': { 'type': 'string', 'example': 'LEGACY' },
+                    'favorite': { 'type': 'number', 'example': 0 },
+                    'archived': { 'type': 'number', 'example': 0 },
+                    'url': { 'type': 'string', 'example': 'https://form.jotform.com/242678198603467' }
                 }
             }
         }
     }],
 
-    objectOutputOptions: [{
-        'label': 'Id',
-        'value': 'id'
-    },
-    {
-        'label': 'Username',
-        'value': 'username'
-    },
-    {
-        'label': 'Title',
-        'value': 'title'
-    },
-    {
-        'label': 'Height',
-        'value': 'height'
-    },
-    {
-        'label': 'Status',
-        'value': 'status'
-    },
-    {
-        'label': 'Created At',
-        'value': 'created_at'
-    },
-    {
-        'label': 'Updated At',
-        'value': 'updated_at'
-    },
-    {
-        'label': 'Last Submission',
-        'value': 'last_submission'
-    },
-    {
-        'label': 'New',
-        'value': 'new'
-    },
-    {
-        'label': 'Count',
-        'value': 'count'
-    },
-    {
-        'label': 'Type',
-        'value': 'type'
-    },
-    {
-        'label': 'Favorite',
-        'value': 'favorite'
-    },
-    {
-        'label': 'Archived',
-        'value': 'archived'
-    },
-    {
-        'label': 'Url',
-        'value': 'url'
-    }
+    objectOutputOptions: [
+    { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+    { 'label': 'Username', 'value': 'username', 'schema': { 'type': 'string', 'example': 'johndoe' } },
+    { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Customer Registration Form' } },
+    { 'label': 'Height', 'value': 'height', 'schema': { 'type': 'string', 'example': '600' } },
+    { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
+    { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
+    { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+    { 'label': 'Last Submission', 'value': 'last_submission', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+    { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
+    { 'label': 'Count', 'value': 'count', 'schema': { 'type': 'string', 'example': '42' } },
+    { 'label': 'Type', 'value': 'type', 'schema': { 'type': 'string', 'example': 'LEGACY' } },
+    { 'label': 'Favorite', 'value': 'favorite', 'schema': { 'type': 'number', 'example': 0 } },
+    { 'label': 'Archived', 'value': 'archived', 'schema': { 'type': 'number', 'example': 0 } },
+    { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://form.jotform.com/242678198603467' } }
     ]
 };
