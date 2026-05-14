@@ -60,7 +60,7 @@ module.exports = {
         // Transform each submission to convert answers from object to array
         result = result.map(submission => ({
             ...submission,
-            answers: Object.values(submission.answers || {})
+            answersList: Object.values(submission.answers || {})
         }));
 
         if (context.messages.in.content.xConnectorOutputType === 'object') {

@@ -25,7 +25,7 @@ module.exports = {
             ...data,
             content: {
                 ...data.content,
-                answers: Object.values(data.content.answers || {})
+                answersList: Object.values(data.content.answers || {})
             }
         };
 
