@@ -12,17 +12,22 @@ module.exports = {
 
         const { repositories } = context.properties;
 
-        // Parse optional comma-separated repo filter into a Set for O(1) lookups
+        // Parse optional comma-separated repo filter — normalised to lowercase for case-insensitive matching
         const repoFilter = repositories
-            ? new Set(repositories.split(',').map(r => r.trim()).filter(Boolean))
+            ? new Set(repositories.split(',').map(r => r.trim().toLowerCase()).filter(Boolean))
             : null;
 
-        const res = await lib.apiRequest(context, 'notifications?all=false&per_page=100');
+        // Use all=true so we also catch notifications that GitHub has already marked as read.
+        // We track seen IDs ourselves via context.state, so read/unread doesn't matter here.
+        const res = await lib.apiRequest(context, 'notifications?all=true&per_page=100');
 
-        // Filter by reason=mention, and optionally by repository
+        // Filter by reason=mention, and optionally by repository (case-insensitive)
         const mentions = res.data.filter(n => {
             if (n.reason !== 'mention') return false;
-            if (repoFilter && !repoFilter.has(n.repository && n.repository.full_name)) return false;
+            if (repoFilter) {
+                const fullName = (n.repository && n.repository.full_name || '').toLowerCase();
+                if (!repoFilter.has(fullName)) return false;
+            }
             return true;
         });
 
