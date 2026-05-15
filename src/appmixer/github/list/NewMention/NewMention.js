@@ -8,6 +8,14 @@ const lib = require('../../lib');
  */
 module.exports = {
 
+    async start(context) {
+        // Record the flow start time so the first tick only picks up mentions
+        // that arrive AFTER the flow was started.
+        if (!context.state.since) {
+            await context.saveState({ since: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), known: [] });
+        }
+    },
+
     async tick(context) {
 
         const { repositories } = context.properties;
@@ -17,21 +25,12 @@ module.exports = {
             ? new Set(repositories.split(',').map(r => r.trim().toLowerCase()).filter(Boolean))
             : null;
 
-        // On first tick: record the start timestamp and bail out.
-        // This ensures we only fire for mentions that arrive AFTER the flow was started.
-        if (!context.state.since) {
-            await context.saveState({ since: new Date().toISOString(), known: [] });
-            return;
-        }
-
-        // participating=true — server-side filter: only notifications where the user
-        // is directly mentioned or participating (avoids pulling 800+ unrelated notifications).
         // since — server-side date filter: only notifications updated after the flow started.
+        // GitHub expects YYYY-MM-DDTHH:MM:SSZ (no milliseconds).
         const since = encodeURIComponent(context.state.since);
-        const res = await lib.apiRequest(context, `notifications?all=true&participating=true&since=${since}&per_page=100`);
+        const res = await lib.apiRequest(context, `notifications?all=true&since=${since}&per_page=100`);
 
-        // Client-side: keep only reason=mention (participating also includes 'review_requested',
-        // 'assign', 'comment', etc.) and apply optional repo filter (case-insensitive).
+        // Client-side: keep only reason=mention and apply optional repo filter (case-insensitive).
         const mentions = res.data.filter(n => {
             if (n.reason !== 'mention') return false;
             if (repoFilter) {
@@ -49,6 +48,6 @@ module.exports = {
         }
 
         // Advance the since window to now so the next tick only fetches what's new.
-        await context.saveState({ known: actual, since: new Date().toISOString() });
+        await context.saveState({ known: actual, since: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z') });
     }
 };
