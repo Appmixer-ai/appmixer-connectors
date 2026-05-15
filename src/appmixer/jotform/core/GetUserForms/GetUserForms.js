@@ -195,19 +195,19 @@ module.exports = {
     }],
 
     objectOutputOptions: [
-    { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
-    { 'label': 'Username', 'value': 'username', 'schema': { 'type': 'string', 'example': 'johndoe' } },
-    { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Customer Registration Form' } },
-    { 'label': 'Height', 'value': 'height', 'schema': { 'type': 'string', 'example': '600' } },
-    { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
-    { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
-    { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
-    { 'label': 'Last Submission', 'value': 'last_submission', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
-    { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
-    { 'label': 'Count', 'value': 'count', 'schema': { 'type': 'string', 'example': '42' } },
-    { 'label': 'Type', 'value': 'type', 'schema': { 'type': 'string', 'example': 'LEGACY' } },
-    { 'label': 'Favorite', 'value': 'favorite', 'schema': { 'type': 'number', 'example': 0 } },
-    { 'label': 'Archived', 'value': 'archived', 'schema': { 'type': 'number', 'example': 0 } },
-    { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://form.jotform.com/242678198603467' } }
+        { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+        { 'label': 'Username', 'value': 'username', 'schema': { 'type': 'string', 'example': 'johndoe' } },
+        { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Customer Registration Form' } },
+        { 'label': 'Height', 'value': 'height', 'schema': { 'type': 'string', 'example': '600' } },
+        { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
+        { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
+        { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+        { 'label': 'Last Submission', 'value': 'last_submission', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+        { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
+        { 'label': 'Count', 'value': 'count', 'schema': { 'type': 'string', 'example': '42' } },
+        { 'label': 'Type', 'value': 'type', 'schema': { 'type': 'string', 'example': 'LEGACY' } },
+        { 'label': 'Favorite', 'value': 'favorite', 'schema': { 'type': 'number', 'example': 0 } },
+        { 'label': 'Archived', 'value': 'archived', 'schema': { 'type': 'number', 'example': 0 } },
+        { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://form.jotform.com/242678198603467' } }
     ]
 };

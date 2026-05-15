@@ -26,7 +26,7 @@ const dependencies = {
 
 module.exports = {
 
-    receive: async function (context) {
+    receive: async function(context) {
 
         if (context.properties.generateOutputPortOptions) {
             return this.getOutputPortOptions(context, context.messages.in.content.xConnectorOutputType);
@@ -93,7 +93,7 @@ module.exports = {
         }
     },
 
-    httpRequest: async function (context, override = {}) {
+    httpRequest: async function(context, override = {}) {
 
         const input = context.messages.in.content;
 
@@ -177,14 +177,14 @@ module.exports = {
         }
     },
 
-    getBaseUrl: function (context) {
+    getBaseUrl: function(context) {
 
         let url = 'https://{regionPrefix}.jotform.com';
         url = url.replaceAll('{regionPrefix}', context.auth.regionPrefix || 'api');
         return url;
     },
 
-    getOutputPortOptions: function (context, xConnectorOutputType) {
+    getOutputPortOptions: function(context, xConnectorOutputType) {
 
         if (xConnectorOutputType === 'object') {
             return context.sendJson(this.objectOutputOptions, 'out');

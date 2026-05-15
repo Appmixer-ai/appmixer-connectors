@@ -148,15 +148,15 @@ module.exports = {
     }],
 
     objectOutputOptions: [
-    { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '3028431756781' } },
-    { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
-    { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Monthly Summary Report' } },
-    { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
-    { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
-    { 'label': 'Fields', 'value': 'fields', 'schema': { 'type': 'string', 'example': 'field1,field2' } },
-    { 'label': 'List Type', 'value': 'list_type', 'schema': { 'type': 'string', 'example': 'grid' } },
-    { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
-    { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://www.jotform.com/report/3028431756781' } },
-    { 'label': 'Is Protected', 'value': 'isProtected', 'schema': { 'type': 'boolean', 'example': false } }
+        { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '3028431756781' } },
+        { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+        { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Monthly Summary Report' } },
+        { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
+        { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+        { 'label': 'Fields', 'value': 'fields', 'schema': { 'type': 'string', 'example': 'field1,field2' } },
+        { 'label': 'List Type', 'value': 'list_type', 'schema': { 'type': 'string', 'example': 'grid' } },
+        { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
+        { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://www.jotform.com/report/3028431756781' } },
+        { 'label': 'Is Protected', 'value': 'isProtected', 'schema': { 'type': 'boolean', 'example': false } }
     ]
 };
