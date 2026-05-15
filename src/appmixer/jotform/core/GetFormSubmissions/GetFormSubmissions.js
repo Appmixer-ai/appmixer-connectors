@@ -26,7 +26,7 @@ const dependencies = {
 
 module.exports = {
 
-    receive: async function(context) {
+    receive: async function (context) {
 
         if (context.properties.generateOutputPortOptions) {
             return this.getOutputPortOptions(context, context.messages.in.content.xConnectorOutputType);
@@ -93,7 +93,7 @@ module.exports = {
         }
     },
 
-    httpRequest: async function(context, override = {}) {
+    httpRequest: async function (context, override = {}) {
 
         const input = context.messages.in.content;
 
@@ -177,14 +177,14 @@ module.exports = {
         }
     },
 
-    getBaseUrl: function(context) {
+    getBaseUrl: function (context) {
 
         let url = 'https://{regionPrefix}.jotform.com';
         url = url.replaceAll('{regionPrefix}', context.auth.regionPrefix || 'api');
         return url;
     },
 
-    getOutputPortOptions: function(context, xConnectorOutputType) {
+    getOutputPortOptions: function (context, xConnectorOutputType) {
 
         if (xConnectorOutputType === 'object') {
             return context.sendJson(this.objectOutputOptions, 'out');
@@ -209,12 +209,10 @@ module.exports = {
                     'status': { 'type': 'string', 'example': 'ACTIVE' },
                     'new': { 'type': 'string', 'example': '1' },
                     'answers': {
-                        'type': 'object',
-                        'description': 'Original answers object keyed by field ID'
+                        'type': 'object'
                     },
                     'answersList': {
                         'type': 'array',
-                        'description': 'Form answers as an ordered array. Each item represents one field. The answer property is a string for simple fields, an object for compound fields (fullname, address), or an array of row-arrays for matrix fields.',
                         'items': {
                             'type': 'object',
                             'properties': {
@@ -224,11 +222,9 @@ module.exports = {
                                 'type': { 'type': 'string', 'example': 'control_phone' },
                                 'sublabels': {
                                     'type': 'object',
-                                    'description': 'Sub-labels for compound fields (address, fullname, phone)',
                                     'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
                                 },
                                 'answer': {
-                                    'description': 'The submitted value. String for simple fields (text/email/dropdown), object for compound fields (address/fullname), array of row-arrays for matrix fields (numeric keys converted to ordered array).',
                                     'examples': [
                                         'Internet',
                                         { 'first': 'FULL NAME', 'last': 'LAST NAME' },
@@ -237,7 +233,6 @@ module.exports = {
                                 },
                                 'prettyFormat': {
                                     'type': 'string',
-                                    'description': 'Human-readable formatted answer for compound/matrix fields.',
                                     'example': 'FULL NAME LAST NAME'
                                 }
                             }
@@ -250,49 +245,53 @@ module.exports = {
     }],
 
     objectOutputOptions: [
-    { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '6328482234222812384' } },
-    { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
-    { 'label': 'Ip', 'value': 'ip', 'schema': { 'type': 'string', 'example': '193.179.66.224' } },
-    { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
-    { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string' } },
-    { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ACTIVE' } },
-    { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
-    { 'label': 'Answers', 'value': 'answers', 'schema': { 'type': 'object', 'description': 'Original answers object keyed by field ID' } },
-    {
-        'label': 'Answers List',
-        'value': 'answersList',
-        'schema': {
-            'type': 'array',
-            'description': 'Form answers as an ordered array. answer is a string for simple fields, object for compound fields, or array of row-arrays for matrix fields.',
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'name': { 'type': 'string', 'example': 'phoneNumber5' },
-                    'order': { 'type': 'string', 'example': '5' },
-                    'text': { 'type': 'string', 'example': 'Phone Number' },
-                    'type': { 'type': 'string', 'example': 'control_phone' },
-                    'sublabels': {
-                        'type': 'object',
-                        'description': 'Sub-labels for compound fields (address, fullname, phone)',
-                        'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
-                    },
-                    'answer': {
-                        'description': 'String for simple fields, object for compound fields, array of row-arrays for matrix fields.',
-                        'examples': [
-                            'Internet',
-                            { 'first': 'FULL NAME', 'last': 'LAST NAME' },
-                            [['me', 'there', '123456'], ['', '', '']]
-                        ]
-                    },
-                    'prettyFormat': {
-                        'type': 'string',
-                        'description': 'Human-readable formatted answer for compound/matrix fields.',
-                        'example': 'FULL NAME LAST NAME'
+        { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '6328482234222812384' } },
+        { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+        { 'label': 'Ip', 'value': 'ip', 'schema': { 'type': 'string', 'example': '193.179.66.224' } },
+        {
+            'label': 'Created At',
+            'value': 'created_at',
+            'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' }
+        },
+        { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string' } },
+        { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ACTIVE' } },
+        { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
+        {
+            'label': 'Answers',
+            'value': 'answers',
+            'schema': { 'type': 'object' }
+        },
+        {
+            'label': 'Answers List',
+            'value': 'answersList',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'name': { 'type': 'string', 'example': 'phoneNumber5' },
+                        'order': { 'type': 'string', 'example': '5' },
+                        'text': { 'type': 'string', 'example': 'Phone Number' },
+                        'type': { 'type': 'string', 'example': 'control_phone' },
+                        'sublabels': {
+                            'type': 'object',
+                            'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
+                        },
+                        'answer': {
+                            'examples': [
+                                'Internet',
+                                { 'first': 'FULL NAME', 'last': 'LAST NAME' },
+                                [['me', 'there', '123456'], ['', '', '']]
+                            ]
+                        },
+                        'prettyFormat': {
+                            'type': 'string',
+                            'example': 'FULL NAME LAST NAME'
+                        }
                     }
                 }
             }
-        }
-    },
-    { 'label': 'Workflow Status', 'value': 'workflowStatus', 'schema': { 'type': 'string', 'example': 'Approve' } }
+        },
+        { 'label': 'Workflow Status', 'value': 'workflowStatus', 'schema': { 'type': 'string', 'example': 'Approve' } }
     ]
 };
