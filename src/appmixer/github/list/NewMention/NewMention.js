@@ -17,11 +17,21 @@ module.exports = {
             ? new Set(repositories.split(',').map(r => r.trim().toLowerCase()).filter(Boolean))
             : null;
 
-        // Use all=true so we also catch notifications that GitHub has already marked as read.
-        // We track seen IDs ourselves via context.state, so read/unread doesn't matter here.
-        const res = await lib.apiRequest(context, 'notifications?all=true&per_page=100');
+        // On first tick: record the start timestamp and bail out.
+        // This ensures we only fire for mentions that arrive AFTER the flow was started.
+        if (!context.state.since) {
+            await context.saveState({ since: new Date().toISOString(), known: [] });
+            return;
+        }
 
-        // Filter by reason=mention, and optionally by repository (case-insensitive)
+        // participating=true — server-side filter: only notifications where the user
+        // is directly mentioned or participating (avoids pulling 800+ unrelated notifications).
+        // since — server-side date filter: only notifications updated after the flow started.
+        const since = encodeURIComponent(context.state.since);
+        const res = await lib.apiRequest(context, `notifications?all=true&participating=true&since=${since}&per_page=100`);
+
+        // Client-side: keep only reason=mention (participating also includes 'review_requested',
+        // 'assign', 'comment', etc.) and apply optional repo filter (case-insensitive).
         const mentions = res.data.filter(n => {
             if (n.reason !== 'mention') return false;
             if (repoFilter) {
@@ -37,6 +47,8 @@ module.exports = {
         if (diff.length) {
             await Promise.all(diff.map(notification => context.sendJson(notification, 'out')));
         }
-        await context.saveState({ known: actual });
+
+        // Advance the since window to now so the next tick only fetches what's new.
+        await context.saveState({ known: actual, since: new Date().toISOString() });
     }
 };
