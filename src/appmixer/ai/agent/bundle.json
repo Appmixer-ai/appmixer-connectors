@@ -1,8 +1,12 @@
 {
     "name": "appmixer.ai.agent",
     "engine": ">=6.4",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "changelog": {
+        "1.1.0": [
+            "Fix Langfuse tracing: tool call spans were not appearing in Langfuse traces.",
+            "Root causes: (1) tool spans were parented to the wrong OTEL context because async-context propagation through the Vercel AI SDK was unavailable; fixed by capturing the agent span OTEL context synchronously in buildVercelTools and passing it explicitly to executeToolByName. (2) langfuse.observation.type was set to 'tool' which is not a valid Langfuse type; changed to 'span'. (3) Added @opentelemetry/context-async-hooks dependency for proper async context propagation."
+        ],
         "1.0.0": [
             "First version."
         ]
