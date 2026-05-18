@@ -1,0 +1,359 @@
+{
+    "name": "E2E Salesforce - Find Customer",
+    "description": "End-to-end test for Salesforce connector - tests CreateContact, FindCustomerByEmail, and DeleteObjectRecord",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "lastName",
+                                                "text": "E2ETestContact"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "firstName",
+                                                "text": "E2E"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "accountId",
+                                                "text": "__REPLACE_WITH_VALID_ACCOUNT_ID__"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.salesforce.crm.CreateContact",
+            "x": 448,
+            "y": 16,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "accountId": {
+                                        "account-id-var": {
+                                            "variable": "$.set-variables.out.accountId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "lastName": {
+                                        "last-name-var": {
+                                            "variable": "$.set-variables.out.lastName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "firstName": {
+                                        "first-name-var": {
+                                            "variable": "$.set-variables.out.firstName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "email": {
+                                        "ts-var": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "accountId": "{{{account-id-var}}}",
+                                    "lastName": "{{{last-name-var}}}",
+                                    "firstName": "{{{first-name-var}}}",
+                                    "email": "e2e-sf-{{{ts-var}}}@appmixer-test.com"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "newContact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "newContact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "contact-id-var": {
+                                            "variable": "$.create-contact.newContact.Id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{contact-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-customer": {
+            "type": "appmixer.salesforce.crm.FindCustomerByEmail",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "newContact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "newContact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "email-var": {
+                                            "variable": "$.create-contact.newContact.Email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "email": "{{{email-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1024,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-customer": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-customer": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "found-id-var": {
+                                            "variable": "$.find-customer.out.Id",
+                                            "functions": []
+                                        },
+                                        "found-email-var": {
+                                            "variable": "$.find-customer.out.Email",
+                                            "functions": []
+                                        },
+                                        "created-id-var": {
+                                            "variable": "$.create-contact.newContact.Id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{found-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{found-email-var}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{found-id-var}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{created-id-var}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1216,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-contact": {
+            "type": "appmixer.salesforce.crm.DeleteObjectRecord",
+            "x": 1408,
+            "y": 80,
+            "version": "1.1.2",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "contact-id-var": {
+                                            "variable": "$.create-contact.newContact.Id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "objectName": {}
+                                },
+                                "lambda": {
+                                    "id": "{{{contact-id-var}}}",
+                                    "objectName": "Contact"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1600,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Salesforce - Find Customer",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
