@@ -24,7 +24,7 @@ module.exports = {
             method: 'POST',
             nsid: 'com.atproto.repo.deleteRecord',
             data: {
-                repo: context.auth.did,
+                repo: context.auth.handle,
                 collection: 'app.bsky.feed.post',
                 rkey
             }

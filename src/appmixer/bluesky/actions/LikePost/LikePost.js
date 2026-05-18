@@ -28,7 +28,7 @@ module.exports = {
             method: 'POST',
             nsid: 'com.atproto.repo.createRecord',
             data: {
-                repo: context.auth.did,
+                repo: context.auth.handle,
                 collection: 'app.bsky.feed.like',
                 record: {
                     $type: 'app.bsky.feed.like',
