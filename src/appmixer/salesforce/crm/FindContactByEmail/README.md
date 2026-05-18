@@ -1,4 +1,4 @@
-# FindCustomerByEmail
+# FindContactByEmail
 
 Finds a Salesforce **Contact** by email address. Returns the contact's key fields via the `out` port, or fires `notFound` when no matching Contact exists — making it easy to branch your flow into a "create new contact" path.
 
@@ -48,7 +48,7 @@ This component is the entry point for a **CRM handoff flow** — when a chat/voi
 
 ```
 [Webhook] conversation_ended
-   └─▶ FindCustomerByEmail
+   └─▶ FindContactByEmail
          ├── out (contact found)
          │    └─▶ CreateObjectRecord (Case)
          │              └─▶ CreateObjectRecord (Task — full transcript)
@@ -72,7 +72,7 @@ This component is the entry point for a **CRM handoff flow** — when a chat/voi
 }
 ```
 
-**Step 1 — FindCustomerByEmail**
+**Step 1 — FindContactByEmail**
 - Input: `email` → `{{webhook.email}}`
 - `out` port → proceed to create Case
 - `notFound` port → proceed to create Contact first
@@ -85,7 +85,7 @@ This component is the entry point for a **CRM handoff flow** — when a chat/voi
 **Step 3 — CreateObjectRecord (Case)**
 ```
 objectName:  Case
-ContactId:   {{FindCustomerByEmail.Id}}   (or {{CreateContact.contactId}})
+ContactId:   {{FindContactByEmail.Id}}   (or {{CreateContact.contactId}})
 Subject:     {{webhook.summary}}
 Origin:      Chat
 Status:      New
@@ -122,4 +122,4 @@ Two test flow JSONs are provided under `artifacts/test-flows/`:
 | File | Description |
 |------|-------------|
 | `test-flow-find-customer.json` | Creates a temporary Contact, finds it by email (verifies `out` port and `notFound` → create path), then cleans up. |
-| `test-flow-crm-handoff-*.json` | Full handoff: FindCustomerByEmail → CreateObjectRecord (Case) → CreateObjectRecord (Task), with assertions and cleanup. |
+| `test-flow-crm-handoff-*.json` | Full handoff: FindContactByEmail → CreateObjectRecord (Case) → CreateObjectRecord (Task), with assertions and cleanup. |
