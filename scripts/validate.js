@@ -17,9 +17,16 @@
 // Context fields available to validators:
 //   - repoRoot, connectorsRoot        absolute paths
 //   - bundleFiles, componentFiles     pre-computed file lists
-//   - addFailure(filePath, message)   record a failure
+//   - addFailure(filePath, message)   record a hard failure (gated by threshold)
+//   - addWarning(filePath, message)   record an informational warning (never fails CI)
 //   - relativePath(filePath)          repo-relative path for messages
 //   - walkFiles(dir, matcher)         walk helper for custom file discovery
+//
+// Flags
+// -----
+//   --update-thresholds        write lowered thresholds back when counts drop
+//   --connector <name>         run all validators only for src/appmixer/<name>/,
+//                              ignore thresholds, print every failure + warning
 
 const fs = require('fs');
 const path = require('path');
@@ -73,22 +80,52 @@ function writeThresholds(thresholds) {
     fs.writeFileSync(THRESHOLDS_PATH, JSON.stringify(thresholds, null, 4) + '\n');
 }
 
+function parseConnectorArg(argv) {
+
+    const idx = argv.indexOf('--connector');
+    if (idx === -1) return null;
+
+    const value = argv[idx + 1];
+    if (!value || value.startsWith('--')) {
+        throw new Error('--connector requires a connector name (e.g. --connector bluesky)');
+    }
+
+    return value;
+}
+
 async function main() {
 
     const relativePath = makeRelativePath(REPO_ROOT);
     const updateThresholds = process.argv.includes('--update-thresholds');
+    const connectorFilter = parseConnectorArg(process.argv);
 
-    const bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
-    const componentFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'component.json');
+    let bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
+    let componentFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'component.json');
+
+    if (connectorFilter) {
+        const prefix = path.join(CONNECTORS_ROOT, connectorFilter) + path.sep;
+        bundleFiles = bundleFiles.filter((filePath) => filePath.startsWith(prefix));
+        componentFiles = componentFiles.filter((filePath) => filePath.startsWith(prefix));
+
+        if (bundleFiles.length === 0 && componentFiles.length === 0) {
+            console.error(`No files found for connector "${connectorFilter}". Expected path: src/appmixer/${connectorFilter}/`);
+            process.exitCode = 1;
+            return;
+        }
+
+        console.log(`Running all validators for connector "${connectorFilter}" (thresholds ignored, ${bundleFiles.length} bundle.json, ${componentFiles.length} component.json).\n`);
+    }
 
     const validators = discoverValidators();
-    const thresholds = loadThresholds();
+    // --connector mode is a debugging view: skip thresholds, print everything.
+    const thresholds = connectorFilter ? {} : loadThresholds();
     const nextThresholds = { ...thresholds };
 
     const results = [];
 
     for (const validator of validators) {
         const failures = [];
+        const warnings = [];
 
         const context = {
             repoRoot: REPO_ROOT,
@@ -99,6 +136,9 @@ async function main() {
             relativePath,
             addFailure(filePath, message) {
                 failures.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+            },
+            addWarning(filePath, message) {
+                warnings.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
             }
         };
 
@@ -112,7 +152,11 @@ async function main() {
         let status;
         let regressed = false;
 
-        if (threshold === null) {
+        if (connectorFilter) {
+            // raw count, no threshold gating
+            const warnSuffix = warnings.length > 0 ? ` + ${warnings.length} warning(s)` : '';
+            status = `${found} issue(s)${warnSuffix}`;
+        } else if (threshold === null) {
             // strict: any failure fails CI
             regressed = found > 0;
             status = found === 0 ? 'OK' : `${found} issue(s)`;
@@ -126,8 +170,26 @@ async function main() {
             status = `${found} issue(s) (at threshold ${threshold})`;
         }
 
-        console.log(`- ${validator.name}: ${status}`);
-        results.push({ validator, failures, threshold, regressed });
+        const warnSuffix = !connectorFilter && warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
+        console.log(`- ${validator.name}: ${status}${warnSuffix}`);
+        results.push({ validator, failures, warnings, threshold, regressed });
+    }
+
+    // --connector mode: print every failure + warning, never fail CI.
+    if (connectorFilter) {
+        for (const result of results) {
+            for (const failure of result.failures) {
+                console.error(`- ${failure}`);
+            }
+            for (const warning of result.warnings) {
+                console.warn(`- (warn) ${warning}`);
+            }
+        }
+
+        const totalFailures = results.reduce((sum, r) => sum + r.failures.length, 0);
+        const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+        console.log(`\nConnector "${connectorFilter}": ${totalFailures} failure(s), ${totalWarnings} warning(s).`);
+        return;
     }
 
     // Print full failure list only when there are real CI-failing regressions,
@@ -145,6 +207,19 @@ async function main() {
 
         process.exitCode = 1;
         return;
+    }
+
+    // Warnings — informational only, never fail CI.
+    const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+
+    if (totalWarnings > 0) {
+        console.log(`\nWarnings (${totalWarnings}):`);
+
+        for (const result of results) {
+            for (const warning of result.warnings) {
+                console.warn(`- ${warning}`);
+            }
+        }
     }
 
     // No regressions. Offer / apply threshold lowering.
