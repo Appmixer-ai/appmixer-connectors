@@ -197,8 +197,11 @@ module.exports = {
      * Convert OpenAI-format tool definitions into Vercel AI SDK tool objects.
      * Each tool's execute function dispatches to the appropriate Appmixer component
      * or MCP server and returns the result as a string.
+     *
+     * @param {Function} [getStepCtx] - Optional. Returns the current model_step OTEL context
+     *   at call-time, so tool execution spans are correctly nested under the active step span.
      */
-    buildVercelTools: function(context, toolsDefinition, tracer) {
+    buildVercelTools: function(context, toolsDefinition, tracer, getStepCtx) {
 
         if (!toolsDefinition || toolsDefinition.length === 0) return undefined;
 
@@ -220,7 +223,7 @@ module.exports = {
                 description,
                 parameters: jsonSchema(params),
                 execute: async (args, options = {}) =>
-                    self.executeToolByName(context, name, args, tracer, options.toolCallId)
+                    self.executeToolByName(context, name, args, tracer, options.toolCallId, getStepCtx)
             });
         }
 
@@ -231,11 +234,10 @@ module.exports = {
      * Dispatch a single tool call by name.
      * Handles both MCP server tools (direct HTTP) and Appmixer ToolStart chains (pub/sub + poll).
      *
-     * Tool spans are nested under the active OTEL span at call-time (the Vercel AI SDK's
-     * ai.streamText span), which places them correctly in Langfuse as siblings of the two
-     * doStream GENERATION observations rather than as children of the root agent span.
+     * When getStepCtx is provided, the tool execution span is explicitly parented to the
+     * current model_step OTEL context so it appears nested under the correct step in Langfuse.
      */
-    executeToolByName: async function(context, toolFullName, args, tracer, toolCallId) {
+    executeToolByName: async function(context, toolFullName, args, tracer, toolCallId, getStepCtx) {
 
         let componentId = toolFullName.split('_')[0];
         const toolName = toolFullName.split('_').slice(1).join('_');
@@ -285,11 +287,13 @@ module.exports = {
         if (!tracer) return runTool();
 
         const { SpanStatusCode } = require('@opentelemetry/api');
-        // Use natural OTEL context propagation — AsyncLocalStorageContextManager ensures
-        // the SDK's active span (ai.streamText) flows into the execute() callback, so tool
-        // spans are automatically nested under the correct step span rather than the root
-        // agent span.
-        const startToolSpan = (name, cb) => tracer.startActiveSpan(name, cb);
+        // Use the current model_step context (from getStepCtx) so tool execution spans are
+        // nested under the right step. Falls back to natural OTEL context propagation if
+        // no step context is available.
+        const stepCtx = getStepCtx ? getStepCtx() : null;
+        const startToolSpan = stepCtx
+            ? (name, cb) => tracer.startActiveSpan(name, {}, stepCtx, cb)
+            : (name, cb) => tracer.startActiveSpan(name, cb);
         return startToolSpan(`Tool: ${toolName}`, async (span) => {
             const inputJson = JSON.stringify(args);
             span.setAttributes({
@@ -475,7 +479,12 @@ module.exports = {
         // the correct OTEL parent span without relying on async-context capture at definition time.
         const run = async () => {
 
-            const tools = this.buildVercelTools(context, toolsDefinition, tracer);
+            // getStepCtx returns the current model_step OTEL context; updated as steps progress
+            // so tool execution spans parent under the right step span in Langfuse.
+            let currentStepCtx = null;
+            const getStepCtx = () => currentStepCtx;
+
+            const tools = this.buildVercelTools(context, toolsDefinition, tracer, getStepCtx);
 
             const sharedOptions = {
                 model,
@@ -487,17 +496,60 @@ module.exports = {
             };
 
             if (isStream) {
-                const result = streamText(sharedOptions);
+                // Disable SDK auto-telemetry for streaming: we build spans manually
+                // (generation → model_step → model_chunk/tool_call) so the trace hierarchy
+                // matches what the user expects rather than the SDK's internal span tree.
+                const streamOptions = {
+                    ...sharedOptions,
+                    experimental_telemetry: { isEnabled: false }
+                };
+
+                // Determine the OTEL trace/context module (available if Langfuse is active)
+                const otelTrace = otelApi ? otelApi.trace : null;
+                const otelCtx = otelApi ? otelApi.context : null;
+
+                // Create a top-level "generation" span under the agent.
+                // It holds the full input (system + initial messages) and the final text output.
+                const agentCtx = otelCtx ? otelCtx.active() : null;
+                const generationSpan = (tracer && agentCtx) ? tracer.startSpan('generation', {
+                    attributes: {
+                        'gen_ai.operation.name': 'generation',
+                        'langfuse.observation.type': 'span',
+                        'langfuse.observation.name': 'generation',
+                        'langfuse.observation.input': JSON.stringify({
+                            system: instructions,
+                            messages: inputMessages
+                        })
+                    }
+                }, agentCtx) : null;
+                const generationCtx = (generationSpan && otelTrace && agentCtx)
+                    ? otelTrace.setSpan(agentCtx, generationSpan)
+                    : agentCtx;
+
+                const result = streamText(streamOptions);
 
                 let stepCount = 0;
+                let currentStepSpan = null;
+                let currentStepText = '';
 
                 for await (const chunk of result.fullStream) {
                     switch (chunk.type) {
-                    case 'text-delta':
-                        await this.publishChatDeltaEvent(context, null, chunk.textDelta);
-                        break;
+
                     case 'step-start':
                         stepCount++;
+                        currentStepText = '';
+                        // Create a model_step span under the generation span.
+                        if (tracer && generationCtx && otelTrace) {
+                            currentStepSpan = tracer.startSpan('model_step', {
+                                attributes: {
+                                    'gen_ai.operation.name': 'model_step',
+                                    'langfuse.observation.type': 'span',
+                                    'langfuse.observation.name': `model_step_${stepCount}`,
+                                    'appmixer.step.index': stepCount
+                                }
+                            }, generationCtx);
+                            currentStepCtx = otelTrace.setSpan(generationCtx, currentStepSpan);
+                        }
                         if (stepCount > 1) {
                             await this.publishChatProgressEvent(
                                 context,
@@ -506,6 +558,73 @@ module.exports = {
                             );
                         }
                         break;
+
+                    case 'text-delta':
+                        currentStepText += chunk.textDelta;
+                        await this.publishChatDeltaEvent(context, null, chunk.textDelta);
+                        break;
+
+                    case 'tool-call':
+                        // model_chunk span: records the model's DECISION to call a tool + args.
+                        // The tool EXECUTION span is created separately in executeToolByName.
+                        if (tracer && currentStepCtx && otelTrace) {
+                            const toolDecisionSpan = tracer.startSpan(
+                                `tool_call: ${chunk.toolName}`, {
+                                    attributes: {
+                                        'gen_ai.operation.name': 'tool_call',
+                                        'langfuse.observation.type': 'span',
+                                        'langfuse.observation.name': `tool_call: ${chunk.toolName}`,
+                                        'langfuse.observation.input': JSON.stringify(chunk.args),
+                                        'appmixer.tool.call.id': chunk.toolCallId
+                                    }
+                                }, currentStepCtx
+                            );
+                            toolDecisionSpan.end();
+                        }
+                        break;
+
+                    case 'step-finish':
+                        if (tracer && currentStepSpan && currentStepCtx) {
+                            // model_chunk span for the text output of this step (if non-empty)
+                            if (currentStepText.trim() && otelTrace) {
+                                const textChunkSpan = tracer.startSpan('text', {
+                                    attributes: {
+                                        'gen_ai.operation.name': 'text',
+                                        'langfuse.observation.type': 'span',
+                                        'langfuse.observation.name': 'text',
+                                        'langfuse.observation.output': currentStepText
+                                    }
+                                }, currentStepCtx);
+                                textChunkSpan.end();
+                            }
+                            // Step input from the request body (messages sent to model)
+                            const reqBody = chunk.request?.body;
+                            let stepInput = null;
+                            if (reqBody) {
+                                try { stepInput = JSON.parse(reqBody); } catch { stepInput = reqBody; }
+                            }
+                            const stepOutput = {
+                                text: chunk.text,
+                                ...(chunk.toolCalls?.length ? {
+                                    toolCalls: chunk.toolCalls.map(tc => ({
+                                        name: tc.toolName,
+                                        args: tc.args
+                                    }))
+                                } : {})
+                            };
+                            currentStepSpan.setAttributes({
+                                ...(stepInput ? { 'langfuse.observation.input': JSON.stringify(stepInput) } : {}),
+                                'langfuse.observation.output': JSON.stringify(stepOutput),
+                                'gen_ai.usage.input_tokens': chunk.usage?.promptTokens || 0,
+                                'gen_ai.usage.output_tokens': chunk.usage?.completionTokens || 0,
+                                'gen_ai.request.model': context.properties.model || ''
+                            });
+                            currentStepSpan.end();
+                        }
+                        currentStepSpan = null;
+                        currentStepCtx = null;
+                        break;
+
                     default:
                         break;
                     }
@@ -516,6 +635,14 @@ module.exports = {
 
                 finalText = await result.text;
                 responseMessages = (await result.response).messages;
+
+                // Close generation span with the final text output.
+                if (generationSpan) {
+                    generationSpan.setAttributes({
+                        'langfuse.observation.output': finalText || ''
+                    });
+                    generationSpan.end();
+                }
 
             } else {
                 let stepCount = 0;
