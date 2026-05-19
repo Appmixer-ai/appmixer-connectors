@@ -514,8 +514,11 @@ module.exports = {
                 const generationSpan = (tracer && agentCtx) ? tracer.startSpan('generation', {
                     attributes: {
                         'gen_ai.operation.name': 'generation',
-                        'langfuse.observation.type': 'span',
+                        // 'generation' type renders as a Langfuse Generation observation
+                        // (shows model, I/O, token counts, cost in the UI)
+                        'langfuse.observation.type': 'generation',
                         'langfuse.observation.name': 'generation',
+                        'gen_ai.request.model': context.properties.model || '',
                         'langfuse.observation.input': JSON.stringify({
                             system: instructions,
                             messages: inputMessages
@@ -565,14 +568,16 @@ module.exports = {
                         break;
 
                     case 'tool-call':
-                        // model_chunk span: records the model's DECISION to call a tool + args.
+                        // model_chunk event: records the model's DECISION to call a tool + args.
+                        // 'event' type is appropriate here — it's an instantaneous point-in-time
+                        // observation (the model decided to call this tool with these args).
                         // The tool EXECUTION span is created separately in executeToolByName.
                         if (tracer && currentStepCtx && otelTrace) {
                             const toolDecisionSpan = tracer.startSpan(
                                 `tool_call: ${chunk.toolName}`, {
                                     attributes: {
                                         'gen_ai.operation.name': 'tool_call',
-                                        'langfuse.observation.type': 'span',
+                                        'langfuse.observation.type': 'event',
                                         'langfuse.observation.name': `tool_call: ${chunk.toolName}`,
                                         'langfuse.observation.input': JSON.stringify(chunk.args),
                                         'appmixer.tool.call.id': chunk.toolCallId
@@ -636,10 +641,14 @@ module.exports = {
                 finalText = await result.text;
                 responseMessages = (await result.response).messages;
 
-                // Close generation span with the final text output.
+                // Close generation span: stamp final output and aggregated usage so
+                // Langfuse can compute total cost for the generation.
                 if (generationSpan) {
+                    const genUsage = await context.stateGet('usage');
                     generationSpan.setAttributes({
-                        'langfuse.observation.output': finalText || ''
+                        'langfuse.observation.output': finalText || '',
+                        'gen_ai.usage.input_tokens': genUsage?.prompt_tokens || 0,
+                        'gen_ai.usage.output_tokens': genUsage?.completion_tokens || 0
                     });
                     generationSpan.end();
                 }
