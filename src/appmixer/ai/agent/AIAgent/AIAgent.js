@@ -310,6 +310,10 @@ module.exports = {
         return startToolSpan(`Tool: ${toolName}`, async (span) => {
             const inputJson = JSON.stringify(args);
             span.setAttributes({
+                // gen_ai.* attribute is required for @langfuse/otel v5 isGenAISpan filter
+                // Without it, LangfuseSpanProcessor silently drops the span.
+                'gen_ai.operation.name': 'execute_tool',
+                'gen_ai.tool.name': toolName,
                 'langfuse.observation.type': 'span',
                 'langfuse.observation.name': `Tool: ${toolName}`,
                 'input.value': inputJson,
