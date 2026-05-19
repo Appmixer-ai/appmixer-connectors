@@ -305,7 +305,7 @@ module.exports = {
                 'ai.toolCall.name': toolName,
                 ...(toolCallId ? { 'ai.toolCall.id': toolCallId } : {}),
                 'ai.toolCall.args': inputJson,
-                'langfuse.observation.type': 'span',
+                'langfuse.observation.type': 'tool',
                 'langfuse.observation.name': toolName,
                 'input.value': inputJson,
                 'input.mime_type': 'application/json',
