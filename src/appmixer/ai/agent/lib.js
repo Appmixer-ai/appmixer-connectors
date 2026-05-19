@@ -1,353 +1,82 @@
 'use strict';
 
-let otelContextManagerSetup = false;
+const uuid = require('uuid');
 
-// Curated model lists for providers that do not expose a public /models REST endpoint.
-const CURATED_MODELS = {
-    'perplexity': [
-        'sonar-pro', 'sonar', 'sonar-reasoning-pro', 'sonar-reasoning',
-        'sonar-deep-research', 'r1-1776'
-    ],
-    'amazon-bedrock': [
-        'anthropic.claude-3-5-sonnet-20241022-v2:0',
-        'anthropic.claude-3-5-haiku-20241022-v1:0',
-        'anthropic.claude-3-opus-20240229-v1:0',
-        'amazon.nova-pro-v1:0',
-        'amazon.nova-lite-v1:0',
-        'amazon.nova-micro-v1:0',
-        'meta.llama3-3-70b-instruct-v1:0',
-        'meta.llama3-1-8b-instruct-v1:0',
-        'mistral.mistral-large-2402-v1:0',
-        'amazon.titan-text-premier-v1:0'
-    ],
-    'google-vertex': [
-        'gemini-2.5-pro-preview-05-06',
-        'gemini-2.5-flash-preview-05-20',
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-thinking-exp',
-        'gemini-1.5-pro',
-        'gemini-1.5-flash',
-        'gemini-1.5-flash-8b'
-    ]
-};
+/**
+ * Publish a progress event to the agent's chat stream.
+ */
+function publishChatProgressEvent(context, step, content) {
 
-// Normalises auth fields from both validate context (fields on context directly)
-// and component context (fields under context.auth).
-function resolveAuth(context) {
-
-    const src = context.auth || context;
-    return {
-        provider: src.provider || 'openai',
-        apiKey: src.apiKey,
-        secretKey: src.secretKey,
-        region: src.region,
-        projectId: src.projectId,
-        baseURL: src.baseURL,
-        customHeaders: src.customHeaders
-    };
+    return context.pubSubPublish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        type: 'progress',
+        data: {
+            id: uuid.v6(),
+            step,
+            content,
+            role: 'agent',
+            correlationId: context.messages.in.correlationId,
+            componentId: context.componentId,
+            flowId: context.flowId
+        }
+    });
 }
 
-function parseHeaders(raw) {
+/**
+ * Publish a text-delta streaming event to the agent's chat stream.
+ */
+function publishChatDeltaEvent(context, completionId, content) {
 
-    if (!raw) return undefined;
-    try {
-        return typeof raw === 'string' ? JSON.parse(raw) : raw;
-    } catch (err) {
-        throw new Error('Custom Headers must be valid JSON: ' + err.message);
-    }
+    return context.pubSubPublish(`stream:agent:events:${context.messages.in.content.threadId}`, {
+        type: 'delta',
+        data: {
+            id: uuid.v6(),
+            content,
+            role: 'agent',
+            correlationId: context.messages.in.correlationId,
+            componentId: context.componentId,
+            flowId: context.flowId
+        }
+    });
+}
+
+/**
+ * Accumulate token usage from a single LLM call into the component's persistent state.
+ * Vercel AI SDK uses camelCase; guards against both camelCase and snake_case formats.
+ */
+async function updateUsage(context, usage) {
+
+    if (!usage) return;
+
+    const totalUsage = await context.stateGet('usage') || {};
+    const promptTokens = usage.promptTokens ?? usage.prompt_tokens ?? 0;
+    const completionTokens = usage.completionTokens ?? usage.completion_tokens ?? 0;
+    const totalTokens = usage.totalTokens ?? usage.total_tokens ?? 0;
+
+    return context.stateSet('usage', {
+        prompt_tokens: (totalUsage.prompt_tokens || 0) + promptTokens,
+        completion_tokens: (totalUsage.completion_tokens || 0) + completionTokens,
+        total_tokens: (totalUsage.total_tokens || 0) + totalTokens
+    });
+}
+
+/**
+ * Human-readable byte size string.
+ */
+function formatBytes(bytes, decimals = 2) {
+
+    if (!+bytes) return '0 Bytes';
+
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 module.exports = {
-
-    /**
-     * Create a Vercel AI SDK LanguageModel for the given context.
-     * Provider and credentials are read from context.auth.
-     * To add a new provider: add a case here and the matching package to package.json.
-     */
-    createModel: function(context) {
-
-        const { provider, apiKey, secretKey, region, projectId, baseURL, customHeaders } = resolveAuth(context);
-        const modelId = context.properties.model;
-        const headers = parseHeaders(customHeaders);
-
-        switch (provider) {
-
-        case 'openai': {
-            const { createOpenAI } = require('@ai-sdk/openai');
-            return createOpenAI({ apiKey, headers })(modelId);
-        }
-        case 'openai-compatible': {
-            const { createOpenAI } = require('@ai-sdk/openai');
-            return createOpenAI({ apiKey, baseURL, compatibility: 'compatible', headers })(modelId);
-        }
-        case 'anthropic': {
-            const { createAnthropic } = require('@ai-sdk/anthropic');
-            return createAnthropic({ apiKey, headers })(modelId);
-        }
-        case 'google': {
-            const { createGoogleGenerativeAI } = require('@ai-sdk/google');
-            return createGoogleGenerativeAI({ apiKey, headers })(modelId);
-        }
-        case 'mistral': {
-            const { createMistral } = require('@ai-sdk/mistral');
-            return createMistral({ apiKey, headers })(modelId);
-        }
-        case 'xai': {
-            const { createXai } = require('@ai-sdk/xai');
-            return createXai({ apiKey, headers })(modelId);
-        }
-        case 'cohere': {
-            const { createCohere } = require('@ai-sdk/cohere');
-            return createCohere({ apiKey, headers })(modelId);
-        }
-        case 'deepseek': {
-            const { createDeepSeek } = require('@ai-sdk/deepseek');
-            return createDeepSeek({ apiKey, headers })(modelId);
-        }
-        case 'groq': {
-            const { createGroq } = require('@ai-sdk/groq');
-            return createGroq({ apiKey, headers })(modelId);
-        }
-        case 'perplexity': {
-            const { createPerplexity } = require('@ai-sdk/perplexity');
-            return createPerplexity({ apiKey, headers })(modelId);
-        }
-        case 'togetherai': {
-            const { createTogetherAI } = require('@ai-sdk/togetherai');
-            return createTogetherAI({ apiKey, headers })(modelId);
-        }
-        case 'azure': {
-            const { createAzure } = require('@ai-sdk/azure');
-            const opt = { apiKey, headers };
-            // Accept https://MY-RESOURCE.openai.azure.com and extract the resource name,
-            // or pass through a fully custom baseURL.
-            const azureMatch = baseURL && baseURL.match(/https?:\/\/([^.]+)\.openai\.azure\.com/i);
-            if (azureMatch) {
-                opt.resourceName = azureMatch[1];
-            } else if (baseURL) {
-                opt.baseURL = baseURL.replace(/\/$/, '') + '/openai';
-            }
-            return createAzure(opt)(modelId);
-        }
-        case 'amazon-bedrock': {
-            const { createAmazonBedrock } = require('@ai-sdk/amazon-bedrock');
-            return createAmazonBedrock({
-                region: region || 'us-east-1',
-                accessKeyId: apiKey,
-                secretAccessKey: secretKey
-            })(modelId);
-        }
-        case 'google-vertex': {
-            const { createVertex } = require('@ai-sdk/google-vertex');
-            return createVertex({
-                project: projectId || process.env.GOOGLE_VERTEX_PROJECT,
-                location: region || process.env.GOOGLE_VERTEX_LOCATION || 'us-central1'
-            })(modelId);
-        }
-        default:
-            throw new Error(`Unsupported AI provider: "${provider}"`);
-        }
-    },
-
-    /**
-     * List available models for the provider configured in context.auth.
-     * Returns an array of { id } objects, normalised across providers.
-     * For providers without a public listing endpoint, returns a curated list.
-     * Works in both auth-validate context (fields on context) and component context (context.auth).
-     */
-    listModels: async function(context) {
-
-        const { provider, apiKey, secretKey, region, projectId, baseURL, customHeaders } = resolveAuth(context);
-        const extraHeaders = parseHeaders(customHeaders);
-
-        const bearer = (key) => ({
-            'Authorization': `Bearer ${key}`,
-            ...extraHeaders
-        });
-
-        switch (provider) {
-
-        case 'openai': {
-            const { data } = await context.httpRequest.get(
-                'https://api.openai.com/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'openai-compatible': {
-            if (!baseURL) throw new Error('Base URL is required for OpenAI-compatible providers.');
-            const { data } = await context.httpRequest.get(
-                `${baseURL.replace(/\/$/, '')}/models`,
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'anthropic': {
-            const { data } = await context.httpRequest.get(
-                'https://api.anthropic.com/v1/models',
-                {
-                    headers: {
-                        'x-api-key': apiKey,
-                        'anthropic-version': '2023-06-01',
-                        ...extraHeaders
-                    }
-                }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'google': {
-            const { data } = await context.httpRequest.get(
-                `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-            );
-            return (data.models || [])
-                .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-                .map(m => ({ id: m.name.replace('models/', '') }));
-        }
-
-        case 'mistral': {
-            const { data } = await context.httpRequest.get(
-                'https://api.mistral.ai/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'xai': {
-            const { data } = await context.httpRequest.get(
-                'https://api.x.ai/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'cohere': {
-            const { data } = await context.httpRequest.get(
-                'https://api.cohere.ai/v2/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.models || [])
-                .filter(m => (m.endpoints || []).includes('chat'))
-                .map(m => ({ id: m.name }));
-        }
-
-        case 'deepseek': {
-            const { data } = await context.httpRequest.get(
-                'https://api.deepseek.com/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'groq': {
-            const { data } = await context.httpRequest.get(
-                'https://api.groq.com/openai/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        case 'togetherai': {
-            const { data } = await context.httpRequest.get(
-                'https://api.together.xyz/v1/models',
-                { headers: bearer(apiKey) }
-            );
-            // Together returns either { data: [...] } or a top-level array.
-            const list = Array.isArray(data) ? data : (data.data || []);
-            return list
-                .filter(m => (m.type || '').toLowerCase() === 'chat' || !m.type)
-                .map(m => ({ id: m.id || m.name }));
-        }
-
-        case 'perplexity': {
-            // Perplexity does not expose a public models listing endpoint.
-            return CURATED_MODELS['perplexity'].map(id => ({ id }));
-        }
-
-        case 'amazon-bedrock': {
-            // Bedrock's listing API requires AWS Signature V4 signing.
-            // Return a curated list of foundation models instead.
-            return CURATED_MODELS['amazon-bedrock'].map(id => ({ id }));
-        }
-
-        case 'google-vertex': {
-            // Vertex AI listing requires OAuth2 / ADC — return curated list.
-            return CURATED_MODELS['google-vertex'].map(id => ({ id }));
-        }
-
-        case 'azure': {
-            if (!baseURL) throw new Error('Base URL is required for Azure OpenAI.');
-            const endpoint = baseURL.replace(/\/$/, '');
-            const { data } = await context.httpRequest.get(
-                `${endpoint}/openai/models?api-version=2024-02-01`,
-                { headers: { 'api-key': apiKey, ...extraHeaders } }
-            );
-            return (data.data || []).map(m => ({ id: m.id }));
-        }
-
-        default:
-            throw new Error(`Unsupported AI provider: "${provider}"`);
-        }
-    },
-
-    /**
-     * Create an isolated per-call NodeTracerProvider wired to Langfuse.
-     * Credentials are read from context.config.
-     * Returns { provider, tracer } when configured, or { provider: null, tracer: undefined } otherwise.
-     * Callers must invoke provider.forceFlush() after each AI SDK call to ensure spans are exported.
-     */
-    createLangfuseTracer: function(context) {
-
-        const publicKey = context.config?.langfusePublicKey;
-        const secretKey = context.config?.langfuseSecretKey;
-
-        if (!publicKey || !secretKey) return { provider: null, tracer: undefined };
-
-        try {
-            const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
-            const { LangfuseSpanProcessor } = require('@langfuse/otel');
-            const otelApi = require('@opentelemetry/api');
-
-            // One-time: register AsyncLocalStorageContextManager as the global OTEL context manager.
-            // This is required for otelApi.context.with() to actually propagate the active span
-            // through async/await boundaries (the default NoopContextManager is a synchronous
-            // pass-through that does not use AsyncLocalStorage, so context.active() always returns
-            // the root context without this). AsyncLocalStorage is per-async-tree — concurrent
-            // agent runs are fully isolated from each other.
-            if (!otelContextManagerSetup) {
-                otelContextManagerSetup = true;
-                try {
-                    const { AsyncLocalStorageContextManager } = require('@opentelemetry/context-async-hooks');
-                    otelApi.context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
-                } catch (e) { /* package unavailable; span hierarchy will not work */ }
-            }
-
-            const provider = new NodeTracerProvider({
-                spanProcessors: [new LangfuseSpanProcessor({
-                    publicKey,
-                    secretKey,
-                    baseUrl: context.config?.langfuseBaseUrl || undefined
-                })]
-            });
-
-            return { provider, tracer: provider.getTracer('appmixer-ai-agent'), otelApi };
-        } catch (err) {
-            return { provider: null, tracer: undefined, otelApi: null };
-        }
-    },
-
-    formatBytes: function(bytes, decimals = 2) {
-
-        if (!+bytes) return '0 Bytes';
-
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-    }
+    publishChatProgressEvent,
+    publishChatDeltaEvent,
+    updateUsage,
+    formatBytes
 };
