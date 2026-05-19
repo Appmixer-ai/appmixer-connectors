@@ -13,31 +13,31 @@ const BASE_URL = 'https://bsky.social';
  * Bluesky access tokens are short-lived; we refresh automatically.
  */
 async function getAccessToken(context) {
-    // Try to refresh using the stored refresh token if it exists.
-    // Auth credentials are always available on context.auth.
-    try {
-        const resp = await context.httpRequest({
-            method: 'POST',
-            url: `${BASE_URL}/xrpc/com.atproto.server.refreshSession`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.refreshJwt || context.auth.appPassword}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        return resp.data.accessJwt;
-    } catch (e) {
-        // Fall back to a fresh session if refresh fails.
-        const resp = await context.httpRequest({
-            method: 'POST',
-            url: `${BASE_URL}/xrpc/com.atproto.server.createSession`,
-            data: {
-                identifier: context.auth.handle,
-                password: context.auth.appPassword
-            },
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return resp.data.accessJwt;
+    if (context.auth.refreshJwt) {
+        try {
+            const resp = await context.httpRequest({
+                method: 'POST',
+                url: `${BASE_URL}/xrpc/com.atproto.server.refreshSession`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.refreshJwt}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return resp.data.accessJwt;
+        } catch (e) {
+            // Fall through to createSession
+        }
     }
+    const resp = await context.httpRequest({
+        method: 'POST',
+        url: `${BASE_URL}/xrpc/com.atproto.server.createSession`,
+        data: {
+            identifier: context.auth.handle,
+            password: context.auth.appPassword
+        },
+        headers: { 'Content-Type': 'application/json' }
+    });
+    return resp.data.accessJwt;
 }
 
 /**
@@ -173,7 +173,7 @@ function getOutputPortOptions(context, outputType, itemSchema, { label, value })
     if (outputType === 'array') {
         return context.sendJson([{
             label,
-            value,
+            value: 'result',
             schema: { type: 'array', items: { type: 'object', properties: itemSchema } }
         }], 'out');
     }

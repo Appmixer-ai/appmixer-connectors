@@ -20,7 +20,7 @@ module.exports = {
             throw new context.CancelError('Could not extract rkey from Post URI.');
         }
 
-        const result = await lib.xrpc(context, {
+        await lib.xrpc(context, {
             method: 'POST',
             nsid: 'com.atproto.repo.deleteRecord',
             data: {
@@ -30,6 +30,6 @@ module.exports = {
             }
         });
 
-        return context.sendJson(result || {}, 'out');
+        return context.sendJson({}, 'out');
     }
 };
