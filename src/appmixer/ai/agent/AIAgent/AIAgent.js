@@ -294,15 +294,19 @@ module.exports = {
         const startToolSpan = stepCtx
             ? (name, cb) => tracer.startActiveSpan(name, {}, stepCtx, cb)
             : (name, cb) => tracer.startActiveSpan(name, cb);
-        return startToolSpan(`Tool: ${toolName}`, async (span) => {
+        return startToolSpan(toolName, async (span) => {
             const inputJson = JSON.stringify(args);
             span.setAttributes({
-                // gen_ai.* attribute is required for @langfuse/otel v5 isGenAISpan filter
-                // Without it, LangfuseSpanProcessor silently drops the span.
+                // gen_ai.* required for @langfuse/otel v5 isGenAISpan filter (keeps span from being dropped)
                 'gen_ai.operation.name': 'execute_tool',
                 'gen_ai.tool.name': toolName,
+                // ai.toolCall.* is the Vercel AI SDK convention Langfuse uses to render
+                // the tool-call visual badge in the trace view.
+                'ai.toolCall.name': toolName,
+                ...(toolCallId ? { 'ai.toolCall.id': toolCallId } : {}),
+                'ai.toolCall.args': inputJson,
                 'langfuse.observation.type': 'span',
-                'langfuse.observation.name': `Tool: ${toolName}`,
+                'langfuse.observation.name': toolName,
                 'input.value': inputJson,
                 'input.mime_type': 'application/json',
                 'langfuse.observation.input': inputJson,
@@ -314,6 +318,7 @@ module.exports = {
                 const output = await runTool();
                 const outputString = typeof output === 'string' ? output : JSON.stringify(output);
                 span.setAttributes({
+                    'ai.toolCall.result': outputString,
                     'output.value': outputString,
                     'output.mime_type': 'application/json',
                     'langfuse.observation.output': outputString
@@ -567,18 +572,20 @@ module.exports = {
                         await this.publishChatDeltaEvent(context, null, chunk.textDelta);
                         break;
 
-                    case 'tool-call':
+                    case 'tool-call': {
+                        // chunk.toolName is the full internal name (shortuuid_toolname).
+                        // Strip the prefix the same way executeToolByName does.
+                        const decisionToolName = chunk.toolName.split('_').slice(1).join('_');
                         // model_chunk event: records the model's DECISION to call a tool + args.
-                        // 'event' type is appropriate here — it's an instantaneous point-in-time
-                        // observation (the model decided to call this tool with these args).
-                        // The tool EXECUTION span is created separately in executeToolByName.
+                        // 'event' type is appropriate — it's an instantaneous point-in-time
+                        // observation. The tool EXECUTION span is in executeToolByName.
                         if (tracer && currentStepCtx && otelTrace) {
                             const toolDecisionSpan = tracer.startSpan(
-                                `tool_call: ${chunk.toolName}`, {
+                                `tool_call: ${decisionToolName}`, {
                                     attributes: {
                                         'gen_ai.operation.name': 'tool_call',
                                         'langfuse.observation.type': 'event',
-                                        'langfuse.observation.name': `tool_call: ${chunk.toolName}`,
+                                        'langfuse.observation.name': `tool_call: ${decisionToolName}`,
                                         'langfuse.observation.input': JSON.stringify(chunk.args),
                                         'appmixer.tool.call.id': chunk.toolCallId
                                     }
@@ -587,6 +594,7 @@ module.exports = {
                             toolDecisionSpan.end();
                         }
                         break;
+                    }
 
                     case 'step-finish':
                         if (tracer && currentStepSpan && currentStepCtx) {
