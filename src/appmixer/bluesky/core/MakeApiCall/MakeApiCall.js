@@ -2,26 +2,36 @@
 
 const lib = require('../../lib');
 
+const BASE_URL = 'https://bsky.social/xrpc/';
+
 module.exports = {
 
     async receive(context) {
 
-        const { method, nsid, params, body } = context.messages.in.content;
+        const { url, method, headers, parameters, body } = context.messages.in.content;
 
+        if (!url) {
+            throw new context.CancelError('API Endpoint Path is required!');
+        }
         if (!method) {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        if (!nsid) {
-            throw new context.CancelError('NSID (Endpoint) is required!');
+        let parsedHeaders = {};
+        if (headers) {
+            try {
+                parsedHeaders = typeof headers === 'object' ? headers : JSON.parse(headers);
+            } catch (e) {
+                throw new context.CancelError('Request Headers must be a valid JSON object.');
+            }
         }
 
-        let parsedParams;
-        if (params) {
+        let parsedParameters = {};
+        if (parameters) {
             try {
-                parsedParams = typeof params === 'object' ? params : JSON.parse(params);
+                parsedParameters = typeof parameters === 'object' ? parameters : JSON.parse(parameters);
             } catch (e) {
-                throw new context.CancelError('Query Parameters must be valid JSON.');
+                throw new context.CancelError('Query Parameters must be a valid JSON object.');
             }
         }
 
@@ -34,13 +44,37 @@ module.exports = {
             }
         }
 
-        const response = await lib.xrpc(context, {
+        // Accept full URL, /xrpc/<nsid>, or bare <nsid>
+        let targetUrl;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            targetUrl = url;
+        } else if (url.startsWith('/')) {
+            targetUrl = `https://bsky.social${url}`;
+        } else {
+            targetUrl = `${BASE_URL}${url}`;
+        }
+
+        const queryString = Object.keys(parsedParameters).length
+            ? '?' + new URLSearchParams(parsedParameters).toString()
+            : '';
+
+        const accessToken = await lib.getAccessToken(context);
+
+        const response = await context.httpRequest({
             method,
-            nsid,
-            params: parsedParams,
-            data: parsedBody
+            url: targetUrl + queryString,
+            data: parsedBody,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                ...parsedHeaders
+            }
         });
 
-        return context.sendJson({ response }, 'out');
+        return context.sendJson({
+            status: response.status,
+            headers: response.headers,
+            body: response.data
+        }, 'out');
     }
 };
