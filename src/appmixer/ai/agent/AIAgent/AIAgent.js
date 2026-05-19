@@ -197,26 +197,13 @@ module.exports = {
      * Convert OpenAI-format tool definitions into Vercel AI SDK tool objects.
      * Each tool's execute function dispatches to the appropriate Appmixer component
      * or MCP server and returns the result as a string.
-     *
-     * @param {object} otelApi - The @opentelemetry/api module (when tracing is active), or null.
-     *   When provided, the current OTEL context is captured synchronously here (inside the
-     *   otelContext.with(agentSpan) call) and forwarded to executeToolByName so that tool
-     *   spans are correctly nested under the agent span in Langfuse even when async-context
-     *   propagation through the Vercel AI SDK is unavailable.
      */
-    buildVercelTools: function(context, toolsDefinition, tracer, otelApi) {
+    buildVercelTools: function(context, toolsDefinition, tracer) {
 
         if (!toolsDefinition || toolsDefinition.length === 0) return undefined;
 
         const tools = {};
         const self = this;
-
-        // Capture the active OTEL context synchronously. This method is called from inside
-        // otelContext.with(trace.setSpan(ctx, agentSpan), run), so context.active() returns
-        // the agent span context without needing AsyncLocalStorage propagation.
-        // The captured context is then passed explicitly to startActiveSpan in
-        // executeToolByName, ensuring tool spans share the same trace ID as the agent span.
-        const capturedCtx = (otelApi && tracer) ? otelApi.context.active() : null;
 
         for (const toolDef of toolsDefinition) {
             const name = toolDef.function.name;
@@ -233,7 +220,7 @@ module.exports = {
                 description,
                 parameters: jsonSchema(params),
                 execute: async (args, options = {}) =>
-                    self.executeToolByName(context, name, args, tracer, options.toolCallId, capturedCtx, otelApi)
+                    self.executeToolByName(context, name, args, tracer, options.toolCallId)
             });
         }
 
@@ -244,13 +231,11 @@ module.exports = {
      * Dispatch a single tool call by name.
      * Handles both MCP server tools (direct HTTP) and Appmixer ToolStart chains (pub/sub + poll).
      *
-     * @param {object|null} capturedCtx - OTEL context captured synchronously inside the agent span
-     *   (passed from buildVercelTools). Used as the explicit parent for the tool span so it is
-     *   correctly nested in the Langfuse trace regardless of async-context propagation.
-     * @param {object|null} otelApi - The @opentelemetry/api module, needed to call startActiveSpan
-     *   with an explicit context argument.
+     * Tool spans are nested under the active OTEL span at call-time (the Vercel AI SDK's
+     * ai.streamText span), which places them correctly in Langfuse as siblings of the two
+     * doStream GENERATION observations rather than as children of the root agent span.
      */
-    executeToolByName: async function(context, toolFullName, args, tracer, toolCallId, capturedCtx, otelApi) {
+    executeToolByName: async function(context, toolFullName, args, tracer, toolCallId) {
 
         let componentId = toolFullName.split('_')[0];
         const toolName = toolFullName.split('_').slice(1).join('_');
@@ -300,13 +285,11 @@ module.exports = {
         if (!tracer) return runTool();
 
         const { SpanStatusCode } = require('@opentelemetry/api');
-        // Use the explicitly captured agent-span context as parent so tool spans are nested
-        // correctly in the Langfuse trace. Without this, startActiveSpan would use whatever
-        // OTEL context the Vercel AI SDK leaves active at the call site — which may be a
-        // different async context with no relation to our agent span.
-        const startToolSpan = (capturedCtx && otelApi)
-            ? (name, cb) => tracer.startActiveSpan(name, {}, capturedCtx, cb)
-            : (name, cb) => tracer.startActiveSpan(name, cb);
+        // Use natural OTEL context propagation — AsyncLocalStorageContextManager ensures
+        // the SDK's active span (ai.streamText) flows into the execute() callback, so tool
+        // spans are automatically nested under the correct step span rather than the root
+        // agent span.
+        const startToolSpan = (name, cb) => tracer.startActiveSpan(name, cb);
         return startToolSpan(`Tool: ${toolName}`, async (span) => {
             const inputJson = JSON.stringify(args);
             span.setAttributes({
@@ -464,7 +447,8 @@ module.exports = {
         const telemetry = tracer ? {
             isEnabled: true,
             tracer,
-            functionId: 'appmixer-ai-agent',
+            // Do NOT set functionId: it prefixes span names (e.g. "appmixer-ai-agent:ai.streamText.doStream")
+            // which breaks Langfuse's OTLP ingestion name-matching for input/output/toolCalls mapping.
             recordInputs: true,
             recordOutputs: true,
             metadata: {
@@ -491,7 +475,7 @@ module.exports = {
         // the correct OTEL parent span without relying on async-context capture at definition time.
         const run = async () => {
 
-            const tools = this.buildVercelTools(context, toolsDefinition, tracer, otelApi);
+            const tools = this.buildVercelTools(context, toolsDefinition, tracer);
 
             const sharedOptions = {
                 model,
@@ -586,6 +570,22 @@ module.exports = {
                 async () => {
                     try {
                         await run();
+                        // Stamp accumulated token usage on the agent span so Langfuse can
+                        // compute and display total cost for the entire agent invocation.
+                        const usage = await context.stateGet('usage');
+                        if (usage) {
+                            const inputTokens = usage.prompt_tokens || 0;
+                            const outputTokens = usage.completion_tokens || 0;
+                            agentSpan.setAttributes({
+                                'gen_ai.usage.input_tokens': inputTokens,
+                                'gen_ai.usage.output_tokens': outputTokens,
+                                'gen_ai.request.model': context.properties.model || '',
+                                'langfuse.observation.usage_details': JSON.stringify({
+                                    input: inputTokens,
+                                    output: outputTokens
+                                })
+                            });
+                        }
                         agentSpan.setAttributes({
                             'langfuse.observation.output': finalText || '',
                             'output.value': finalText || '',
