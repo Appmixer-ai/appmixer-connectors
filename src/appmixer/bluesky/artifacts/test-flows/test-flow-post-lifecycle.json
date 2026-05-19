@@ -1,297 +1,11 @@
 {
-    "name": "E2E Bluesky - Post Lifecycle",
-    "description": "End-to-end test for Bluesky connector - tests post lifecycle: create, like, repost, and delete a post.",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 16,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 256,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "on-start": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
-                                "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "type": "text",
-                                                "name": "postText",
-                                                "text": "E2E Test Post - Bluesky Post Lifecycle"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "create-post": {
-            "type": "appmixer.bluesky.actions.CreatePost",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "text": {
-                                        "ts-var": {
-                                            "variable": "$.on-start.out.started",
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "base-var": {
-                                            "variable": "$.set-variables.out.postText",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "text": "{{{base-var}}} {{{ts-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "like-post": {
-            "type": "appmixer.bluesky.actions.LikePost",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-post": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-post": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "postUri": {
-                                        "post-uri-var": {
-                                            "variable": "$.create-post.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "postUri": "{{{post-uri-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "repost-post": {
-            "type": "appmixer.bluesky.actions.RepostPost",
-            "x": 640,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-post": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-post": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "postUri": {
-                                        "post-uri-var2": {
-                                            "variable": "$.create-post.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "postUri": "{{{post-uri-var2}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-create": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 272,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-post": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-post": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "create-uri-var": {
-                                            "variable": "$.create-post.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{create-uri-var}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-like": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "like-post": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "like-post": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "like-uri-var": {
-                                            "variable": "$.like-post.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{like-uri-var}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-repost": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "repost-post": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "repost-post": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "repost-uri-var": {
-                                            "variable": "$.repost-post.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{repost-uri-var}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 144,
-            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
                     "assert-create": [
@@ -305,17 +19,198 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144
+        },
+        "assert-create": {
             "config": {
-                "properties": {
-                    "timeout": 30
+                "transform": {
+                    "in": {
+                        "create-post": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{create-uri-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "create-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.create-post.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "create-post": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272
+        },
+        "assert-like": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "like-post": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{like-uri-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "like-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.like-post.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "like-post": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16
+        },
+        "assert-repost": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "repost-post": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{repost-uri-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "repost-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.repost-post.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "repost-post": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144
+        },
+        "create-post": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "text": "{{{base-var}}} {{{ts-var}}}"
+                                },
+                                "modifiers": {
+                                    "text": {
+                                        "base-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.postText"
+                                        },
+                                        "ts-var": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ],
+                                            "variable": "$.on-start.out.started"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.CreatePost",
+            "x": 448,
+            "y": 16
         },
         "delete-post": {
-            "type": "appmixer.bluesky.actions.DeletePost",
-            "x": 1584,
-            "y": 144,
-            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "postUri": "{{{delete-uri-var}}}"
+                                },
+                                "modifiers": {
+                                    "postUri": {
+                                        "delete-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.create-post.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -323,34 +218,79 @@
                     ]
                 }
             },
+            "type": "appmixer.bluesky.posts.DeletePost",
+            "x": 1584,
+            "y": 144
+        },
+        "like-post": {
             "config": {
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "create-post": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "postUri": "{{{post-uri-var}}}"
+                                },
                                 "modifiers": {
                                     "postUri": {
-                                        "delete-uri-var": {
-                                            "variable": "$.create-post.out.uri",
-                                            "functions": []
+                                        "post-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.create-post.out.uri"
                                         }
                                     }
                                 },
-                                "lambda": {
-                                    "postUri": "{{{delete-uri-var}}}"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "create-post": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.LikePost",
+            "x": 640,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1776,
-            "y": 144,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-post": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Bluesky - Post Lifecycle"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "delete-post": [
@@ -358,36 +298,82 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 144
+        },
+        "repost-post": {
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
-                        "delete-post": {
+                        "create-post": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "postUri": "{{{post-uri-var2}}}"
+                                },
                                 "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
+                                    "postUri": {
+                                        "post-uri-var2": {
+                                            "functions": [],
+                                            "variable": "$.create-post.out.uri"
                                         }
                                     }
                                 },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Bluesky - Post Lifecycle",
-                                    "result": "{{{result-var}}}"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "create-post": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.RepostPost",
+            "x": 640,
+            "y": 144
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "postText",
+                                                "text": "E2E Test Post - Bluesky Post Lifecycle",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
         }
-    }
+    },
+    "name": "E2E Bluesky - Post Lifecycle",
+    "notes": {}
 }

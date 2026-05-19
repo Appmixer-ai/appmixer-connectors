@@ -1,267 +1,58 @@
 {
-    "name": "E2E Bluesky - User Discovery and Follow",
-    "description": "End-to-end test for Bluesky connector - tests SearchUsers, GetUserProfile, and FollowUser components",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 16,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 256,
-            "y": 16,
-            "version": "1.0.0",
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
-                    "on-start": [
+                    "assert-follow": [
+                        "out"
+                    ],
+                    "assert-profile": [
+                        "out"
+                    ],
+                    "assert-search": [
                         "out"
                     ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
-                                "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "type": "text",
-                                                "name": "searchQuery",
-                                                "text": "bsky"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "targetHandle",
-                                                "text": "bsky.app"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "search-users": {
-            "type": "appmixer.bluesky.actions.SearchUsers",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "query": {
-                                        "query-var": {
-                                            "variable": "$.set-variables.out.searchQuery",
-                                            "functions": []
-                                        }
-                                    },
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "query": "{{{query-var}}}",
-                                    "outputType": "first"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-search": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "search-users": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "search-users": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "search-handle-var": {
-                                            "variable": "$.search-users.out.handle",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{search-handle-var}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "get-user-profile": {
-            "type": "appmixer.bluesky.actions.GetUserProfile",
-            "x": 640,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "search-users": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "search-users": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "actor": {
-                                        "actor-var": {
-                                            "variable": "$.set-variables.out.targetHandle",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "actor": "{{{actor-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-profile": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-user-profile": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-user-profile": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "profile-did-var": {
-                                            "variable": "$.get-user-profile.out.did",
-                                            "functions": []
-                                        },
-                                        "profile-handle-var": {
-                                            "variable": "$.get-user-profile.out.handle",
-                                            "functions": []
-                                        },
-                                        "expected-handle-var": {
-                                            "variable": "$.set-variables.out.targetHandle",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{profile-did-var}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{profile-handle-var}}}",
-                                                "assertion": "equal",
-                                                "expected": "{{{expected-handle-var}}}"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "follow-user": {
-            "type": "appmixer.bluesky.actions.FollowUser",
-            "x": 832,
-            "y": 272,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-user-profile": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-user-profile": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "actor": {
-                                        "follow-actor-var": {
-                                            "variable": "$.get-user-profile.out.did",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "actor": "{{{follow-actor-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144
         },
         "assert-follow": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1200,
-            "y": 272,
-            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "follow-user": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{follow-uri-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "follow-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.follow-user.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "follow-user": [
@@ -269,65 +60,208 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272
+        },
+        "assert-profile": {
             "config": {
                 "transform": {
                     "in": {
-                        "follow-user": {
+                        "get-user-profile": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "follow-uri-var": {
-                                            "variable": "$.follow-user.out.uri",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{follow-uri-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{profile-did-var}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-handle-var}}}",
+                                                "field": "{{{profile-handle-var}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "expected-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.targetHandle"
+                                        },
+                                        "profile-did-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.did"
+                                        },
+                                        "profile-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.handle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1392,
-            "y": 144,
-            "version": "1.0.0",
+            },
             "source": {
                 "in": {
-                    "assert-search": [
-                        "out"
-                    ],
-                    "assert-profile": [
-                        "out"
-                    ],
-                    "assert-follow": [
+                    "get-user-profile": [
                         "out"
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144
+        },
+        "assert-search": {
             "config": {
-                "properties": {
-                    "timeout": 30
+                "transform": {
+                    "in": {
+                        "search-users": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{search-handle-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "search-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.search-users.out.handle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "search-users": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16
+        },
+        "follow-user": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-profile": {
+                            "out": {
+                                "lambda": {
+                                    "actor": "{{{follow-actor-var}}}"
+                                },
+                                "modifiers": {
+                                    "actor": {
+                                        "follow-actor-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.did"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-user-profile": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.FollowUser",
+            "x": 832,
+            "y": 272
+        },
+        "get-user-profile": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "search-users": {
+                            "out": {
+                                "lambda": {
+                                    "actor": "{{{actor-var}}}"
+                                },
+                                "modifiers": {
+                                    "actor": {
+                                        "actor-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.targetHandle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "search-users": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.GetUserProfile",
+            "x": 640,
+            "y": 144
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1584,
-            "y": 144,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Bluesky - User Discovery and Follow"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -335,36 +269,89 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1584,
+            "y": 144
+        },
+        "search-users": {
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "set-variables": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "outputType": "first",
+                                    "query": "{{{query-var}}}"
+                                },
                                 "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
+                                    "outputType": {},
+                                    "query": {
+                                        "query-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.searchQuery"
                                         }
                                     }
                                 },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Bluesky - User Discovery and Follow",
-                                    "result": "{{{result-var}}}"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.SearchUsers",
+            "x": 448,
+            "y": 16
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "searchQuery",
+                                                "text": "bsky",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "targetHandle",
+                                                "text": "bsky.app",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
         }
-    }
+    },
+    "name": "E2E Bluesky - User Discovery and Follow",
+    "notes": {}
 }

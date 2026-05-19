@@ -11,12 +11,12 @@ module.exports = {
             handle: {
                 type: 'text',
                 name: 'Handle',
-                tooltip: 'Your Bluesky handle, e.g. <b>alice.bsky.social</b>. You can find it in your Bluesky profile settings.'
+                tooltip: 'Your Bluesky handle, e.g. alice.bsky.social. You can find it in your Bluesky profile settings.'
             },
             appPassword: {
                 type: 'password',
                 name: 'App Password',
-                tooltip: 'Generate an app-specific password at <a href="https://bsky.app/settings/app-passwords" target="_blank">bsky.app/settings/app-passwords</a>. Do NOT use your main account password.'
+                tooltip: 'Generate an app-specific password at https://bsky.app/settings/app-passwords. Do NOT use your main account password.'
             }
         },
 
@@ -36,12 +36,7 @@ module.exports = {
                 }
             });
 
-            const { accessJwt, refreshJwt, did, handle, email } = sessionResp.data;
-
-            // Store the tokens so components can read them from context.auth.*
-            context.auth.accessJwt = accessJwt;
-            context.auth.refreshJwt = refreshJwt;
-            context.auth.did = did;
+            const { did, handle, email } = sessionResp.data;
 
             return {
                 handle,

@@ -1,172 +1,58 @@
 {
-    "name": "E2E Bluesky - Content Discovery",
-    "description": "End-to-end test for Bluesky connector - tests SearchPosts, GetTimeline, and ListAuthorPosts components",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 272,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 256,
-            "y": 272,
-            "version": "1.0.0",
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
-                    "on-start": [
+                    "assert-get-timeline": [
+                        "out"
+                    ],
+                    "assert-list-author-posts": [
+                        "out"
+                    ],
+                    "assert-search-posts": [
                         "out"
                     ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
-                                "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "type": "text",
-                                                "name": "searchQuery",
-                                                "text": "bluesky"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "authorHandle",
-                                                "text": "bsky.app"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 912,
+            "y": 272
         },
-        "search-posts": {
-            "type": "appmixer.bluesky.actions.SearchPosts",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
+        "assert-get-timeline": {
             "config": {
                 "transform": {
                     "in": {
-                        "set-variables": {
+                        "get-timeline": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "query": {
-                                        "query-var": {
-                                            "variable": "$.set-variables.out.searchQuery",
-                                            "functions": []
-                                        }
-                                    },
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "query": "{{{query-var}}}",
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-search-posts": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 688,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "search-posts": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "search-posts": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "search-result-var": {
-                                            "variable": "$.search-posts.out.result",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{search-result-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{timeline-result-var}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "timeline-result-var": {
+                                            "functions": [],
+                                            "variable": "$.get-timeline.out.result"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
-                }
-            }
-        },
-        "get-timeline": {
-            "type": "appmixer.bluesky.actions.GetTimeline",
-            "x": 448,
-            "y": 272,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-get-timeline": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 688,
-            "y": 272,
-            "version": "1.0.0",
             "source": {
                 "in": {
                     "get-timeline": [
@@ -174,78 +60,40 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 272
+        },
+        "assert-list-author-posts": {
             "config": {
                 "transform": {
                     "in": {
-                        "get-timeline": {
+                        "list-author-posts": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "timeline-result-var": {
-                                            "variable": "$.get-timeline.out.result",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{timeline-result-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{author-posts-var}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "author-posts-var": {
+                                            "functions": [],
+                                            "variable": "$.list-author-posts.out.result"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
-                }
-            }
-        },
-        "list-author-posts": {
-            "type": "appmixer.bluesky.actions.ListAuthorPosts",
-            "x": 448,
-            "y": 528,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "actor": {
-                                        "actor-var": {
-                                            "variable": "$.set-variables.out.authorHandle",
-                                            "functions": []
-                                        }
-                                    },
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "actor": "{{{actor-var}}}",
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-list-author-posts": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 688,
-            "y": 528,
-            "version": "1.0.0",
             "source": {
                 "in": {
                     "list-author-posts": [
@@ -253,65 +101,151 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 528
+        },
+        "assert-search-posts": {
             "config": {
                 "transform": {
                     "in": {
-                        "list-author-posts": {
+                        "search-posts": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "author-posts-var": {
-                                            "variable": "$.list-author-posts.out.result",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{author-posts-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{search-result-var}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "search-result-var": {
+                                            "functions": [],
+                                            "variable": "$.search-posts.out.result"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 912,
-            "y": 272,
-            "version": "1.0.0",
+            },
             "source": {
                 "in": {
-                    "assert-search-posts": [
-                        "out"
-                    ],
-                    "assert-get-timeline": [
-                        "out"
-                    ],
-                    "assert-list-author-posts": [
+                    "search-posts": [
                         "out"
                     ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 16
+        },
+        "get-timeline": {
             "config": {
-                "properties": {
-                    "timeout": 30
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "array"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.GetTimeline",
+            "x": 448,
+            "y": 272
+        },
+        "list-author-posts": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "actor": "{{{actor-var}}}",
+                                    "outputType": "array"
+                                },
+                                "modifiers": {
+                                    "actor": {
+                                        "actor-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.authorHandle"
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.ListAuthorPosts",
+            "x": 448,
+            "y": 528
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 272
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1104,
-            "y": 272,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Bluesky - Content Discovery"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -319,36 +253,89 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 272
+        },
+        "search-posts": {
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "set-variables": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "outputType": "array",
+                                    "query": "{{{query-var}}}"
+                                },
                                 "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
+                                    "outputType": {},
+                                    "query": {
+                                        "query-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.searchQuery"
                                         }
                                     }
                                 },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Bluesky - Content Discovery",
-                                    "result": "{{{result-var}}}"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.posts.SearchPosts",
+            "x": 448,
+            "y": 16
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "searchQuery",
+                                                "text": "bluesky",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "authorHandle",
+                                                "text": "bsky.app",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 272
         }
-    }
+    },
+    "name": "E2E Bluesky - Content Discovery",
+    "notes": {}
 }
