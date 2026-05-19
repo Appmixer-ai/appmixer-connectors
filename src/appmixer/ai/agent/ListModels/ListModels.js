@@ -1,12 +1,12 @@
 'use strict';
 
-const lib = require('../lib');
+const provider = require('../provider');
 
 module.exports = {
 
     receive: async function(context) {
 
-        const models = await lib.listModels(context);
+        const models = await provider.listModels(context);
         return context.sendJson({ models }, 'out');
     },
 
