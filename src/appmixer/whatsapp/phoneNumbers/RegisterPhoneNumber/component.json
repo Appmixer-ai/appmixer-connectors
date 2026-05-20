@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.whatsapp.messages.SendVideoMessage",
+    "name": "appmixer.whatsapp.phoneNumbers.RegisterPhoneNumber",
     "author": "Appmixer <info@appmixer.com>",
-    "label": "Send Video Message",
-    "description": "Send a video message via WhatsApp. Provide either a media ID or a public HTTPS link.",
+    "label": "Register Phone Number",
+    "description": "Register a WhatsApp phone number with the Cloud API. Required one-time step before the number can send or receive messages.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -10,7 +10,7 @@
     },
     "quota": {
         "manager": "appmixer:whatsapp",
-        "resources": "messages",
+        "resources": "requests",
         "scope": {
             "userId": "{{userId}}"
         }
@@ -24,70 +24,67 @@
                     "phoneNumberId": {
                         "type": "string"
                     },
-                    "to": {
+                    "pin": {
                         "type": "string"
                     },
-                    "contextMessageId": {
-                        "type": "string"
-                    },
-                    "mediaId": {
-                        "type": "string"
-                    },
-                    "link": {
-                        "type": "string"
-                    },
-                    "caption": {
+                    "dataLocalizationRegion": {
                         "type": "string"
                     }
                 },
                 "required": [
                     "phoneNumberId",
-                    "to"
+                    "pin"
                 ]
             },
             "inspector": {
                 "inputs": {
                     "phoneNumberId": {
-                        "type": "select",
+                        "type": "text",
                         "index": 1,
-                        "label": "Phone Number",
-                        "tooltip": "Pick a phone number from your connected WhatsApp Business Account(s). Numbers across all your accessible WABAs are listed.",
-                        "source": {
-                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListAllPhoneNumbers?outPort=out",
-                            "data": {
-                                "transform": "./ListAllPhoneNumbers#toSelectArray"
-                            }
-                        }
+                        "label": "Phone Number ID",
+                        "tooltip": "ID of the WhatsApp Business phone number to register (from Meta Business Manager \u2192 WhatsApp \u2192 Phone numbers)."
                     },
-                    "to": {
-                        "type": "text",
+                    "pin": {
+                        "type": "password",
                         "index": 2,
-                        "label": "Recipient Phone Number",
-                        "tooltip": "Recipient's phone number in E.164 format (e.g. <code>+1XXXXXXXXXX</code>)."
+                        "label": "Two-step Verification PIN",
+                        "tooltip": "6-digit PIN. For Meta test numbers this is usually <code>000000</code>. For owned numbers it is the PIN set during phone verification; reset via Meta App Dashboard \u2192 WhatsApp \u2192 API Setup \u2192 Two-step verification."
                     },
-                    "mediaId": {
-                        "type": "text",
+                    "dataLocalizationRegion": {
+                        "type": "select",
                         "index": 3,
-                        "label": "Media ID",
-                        "tooltip": "Optional. ID of a previously uploaded video. Use either Media ID or Link."
-                    },
-                    "link": {
-                        "type": "text",
-                        "index": 4,
-                        "label": "Video Link (URL)",
-                        "tooltip": "Optional. Publicly-accessible HTTPS URL. MP4 or 3GP, max 16 MB."
-                    },
-                    "caption": {
-                        "type": "textarea",
-                        "index": 5,
-                        "label": "Caption",
-                        "tooltip": "Optional caption."
-                    },
-                    "contextMessageId": {
-                        "type": "text",
-                        "index": 6,
-                        "label": "Reply To Message ID",
-                        "tooltip": "Optional. The WhatsApp message ID to reply to (creates a threaded reply)."
+                        "label": "Data Localization Region",
+                        "tooltip": "Optional. ISO 3166-1 alpha-2 region code if your WABA participates in WhatsApp data-localization. Leave blank for global storage.",
+                        "options": [
+                            {
+                                "label": "(none \u2014 global)",
+                                "value": ""
+                            },
+                            {
+                                "label": "Australia (AU)",
+                                "value": "AU"
+                            },
+                            {
+                                "label": "Brazil (BR)",
+                                "value": "BR"
+                            },
+                            {
+                                "label": "Germany (DE)",
+                                "value": "DE"
+                            },
+                            {
+                                "label": "India (IN)",
+                                "value": "IN"
+                            },
+                            {
+                                "label": "Indonesia (ID)",
+                                "value": "ID"
+                            },
+                            {
+                                "label": "United Kingdom (GB)",
+                                "value": "GB"
+                            }
+                        ]
                     }
                 }
             }
@@ -99,20 +96,10 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "messageId": {
-                        "type": "string",
-                        "title": "Message ID",
-                        "example": "wamid.HBgLMTIzNDU2Nzg5MFASCQAB"
-                    },
-                    "contactWaId": {
-                        "type": "string",
-                        "title": "Contact WhatsApp ID",
-                        "example": "1234567890"
-                    },
-                    "input": {
-                        "type": "string",
-                        "title": "Recipient Input",
-                        "example": "+1234567890"
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "example": true
                     }
                 }
             }

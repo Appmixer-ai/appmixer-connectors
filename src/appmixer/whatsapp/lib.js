@@ -2,19 +2,19 @@
 
 const crypto = require('crypto');
 
-const GRAPH_VERSION = 'v22.0';
+const GRAPH_VERSION = 'v25.0';
 const BASE_URL = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
 /**
  * Make an authorized request against the Meta Graph API. The caller passes
- * the path (e.g. `/{phone-number-id}/messages`). Auth header is attached
- * automatically.
+ * the path (e.g. `/{phone-number-id}/messages`). The OAuth access token
+ * from the connected account is attached automatically.
  */
 async function apiRequest(context, { method = 'GET', path, params, data, extraHeaders = {} }) {
 
     const accessToken = context.auth && context.auth.accessToken;
     if (!accessToken) {
-        throw new context.CancelError('Access Token is missing. Re-authenticate the WhatsApp account.');
+        throw new context.CancelError('Access token missing. Re-authenticate the WhatsApp account.');
     }
 
     const response = await context.httpRequest({
@@ -34,13 +34,13 @@ async function apiRequest(context, { method = 'GET', path, params, data, extraHe
 
 /**
  * Convenience wrapper for `POST /{phone-number-id}/messages`.
- * Throws CancelError when phoneNumberId is missing.
+ * The caller passes phoneNumberId explicitly — each component takes it
+ * from its own inspector field.
  */
-async function sendMessage(context, payload) {
+async function sendMessage(context, phoneNumberId, payload) {
 
-    const phoneNumberId = context.auth && context.auth.phoneNumberId;
     if (!phoneNumberId) {
-        throw new context.CancelError('Phone Number ID is missing. Set it in the auth account.');
+        throw new context.CancelError('Phone Number ID is required.');
     }
 
     const body = {
@@ -71,7 +71,9 @@ function sanitizePhoneNumber(input) {
 
 /**
  * Verify the X-Hub-Signature-256 header sent by Meta on every webhook
- * payload. Returns `true` when the signature matches.
+ * payload. Returns `true` when the signature matches. `appSecret` is
+ * the Appmixer Meta app secret (the OAuth clientSecret). When it is
+ * not available the caller should skip signature verification.
  */
 function verifyWebhookSignature({ rawBody, signatureHeader, appSecret }) {
 
@@ -86,57 +88,8 @@ function verifyWebhookSignature({ rawBody, signatureHeader, appSecret }) {
 }
 
 /**
- * Subscribe a webhook callback URL on the Meta App level.
- * Mirrors the n8n WhatsAppTrigger flow:
- *   POST /{app-id}/subscriptions
- */
-async function subscribeAppWebhook(context, { callbackUrl, verifyToken, fields }) {
-
-    const { appId, appSecret } = context.auth || {};
-    if (!appId || !appSecret) {
-        throw new context.CancelError('Meta App ID and App Secret are required for webhook triggers. Add them to the WhatsApp auth account.');
-    }
-
-    // App-level access token = "<app-id>|<app-secret>"
-    const appAccessToken = `${appId}|${appSecret}`;
-
-    const { data } = await context.httpRequest({
-        method: 'POST',
-        url: `${BASE_URL}/${appId}/subscriptions`,
-        data: {
-            object: 'whatsapp_business_account',
-            callback_url: callbackUrl,
-            verify_token: verifyToken,
-            fields: JSON.stringify(fields),
-            include_values: true
-        },
-        headers: {
-            'Authorization': `Bearer ${appAccessToken}`,
-            'Content-Type': 'application/json'
-        }
-    });
-
-    return data;
-}
-
-async function unsubscribeAppWebhook(context) {
-
-    const { appId, appSecret } = context.auth || {};
-    if (!appId || !appSecret) return;
-
-    const appAccessToken = `${appId}|${appSecret}`;
-
-    await context.httpRequest({
-        method: 'DELETE',
-        url: `${BASE_URL}/${appId}/subscriptions`,
-        params: { object: 'whatsapp_business_account' },
-        headers: { 'Authorization': `Bearer ${appAccessToken}` }
-    });
-}
-
-/**
  * Extract the inbound message and outbound status arrays from a Meta
- * webhook payload. Returns { messages: [...], statuses: [...], wabaId, phoneNumberId }
+ * webhook payload. Returns { messages, statuses, wabaId, phoneNumberId }.
  */
 function parseWebhookPayload(body) {
 
@@ -163,7 +116,5 @@ module.exports = {
     sendMessage,
     sanitizePhoneNumber,
     verifyWebhookSignature,
-    subscribeAppWebhook,
-    unsubscribeAppWebhook,
     parseWebhookPayload
 };

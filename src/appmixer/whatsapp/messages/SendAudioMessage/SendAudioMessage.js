@@ -6,8 +6,11 @@ module.exports = {
 
     async receive(context) {
 
-        const { to, mediaId, link, contextMessageId } = context.messages.in.content;
+        const { phoneNumberId, to, mediaId, link, contextMessageId } = context.messages.in.content;
 
+        if (!phoneNumberId) {
+            throw new context.CancelError('Phone Number ID is required!');
+        }
         if (!to) {
             throw new context.CancelError('Recipient phone number is required!');
         }
@@ -30,7 +33,7 @@ module.exports = {
             payload.context = { message_id: contextMessageId };
         }
 
-        const data = await lib.sendMessage(context, payload);
+        const data = await lib.sendMessage(context, phoneNumberId, payload);
 
         const contact = (data.contacts && data.contacts[0]) || {};
         const message = (data.messages && data.messages[0]) || {};

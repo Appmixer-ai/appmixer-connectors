@@ -7,18 +7,16 @@ module.exports = {
 
     async receive(context) {
 
-        const { fileId, mimeType } = context.messages.in.content;
+        const { phoneNumberId, fileId, mimeType } = context.messages.in.content;
 
+        if (!phoneNumberId) {
+            throw new context.CancelError('Phone Number ID is required!');
+        }
         if (!fileId) {
             throw new context.CancelError('File is required!');
         }
         if (!mimeType) {
             throw new context.CancelError('MIME Type is required!');
-        }
-
-        const phoneNumberId = context.auth && context.auth.phoneNumberId;
-        if (!phoneNumberId) {
-            throw new context.CancelError('Phone Number ID is missing. Set it in the auth account.');
         }
 
         const fileInfo = await context.getFileInfo(fileId);

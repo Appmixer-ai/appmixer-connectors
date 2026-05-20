@@ -21,6 +21,9 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "phoneNumberId": {
+                        "type": "string"
+                    },
                     "to": {
                         "type": "string"
                     },
@@ -35,34 +38,47 @@
                     }
                 },
                 "required": [
+                    "phoneNumberId",
                     "to",
                     "text"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "to": {
+                    "phoneNumberId": {
                         "type": "text",
                         "index": 1,
+                        "label": "Phone Number",
+                        "tooltip": "Pick a phone number from your connected WhatsApp Business Account(s). Numbers across all your accessible WABAs are listed.",
+                        "source": {
+                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListAllPhoneNumbers?outPort=out",
+                            "data": {
+                                "transform": "./ListAllPhoneNumbers#toSelectArray"
+                            }
+                        }
+                    },
+                    "to": {
+                        "type": "text",
+                        "index": 2,
                         "label": "Recipient Phone Number",
                         "tooltip": "Recipient's phone number in E.164 format (e.g. <code>+1XXXXXXXXXX</code>)."
                     },
                     "text": {
                         "type": "textarea",
-                        "index": 2,
+                        "index": 3,
                         "label": "Message Text",
                         "tooltip": "Message body. Max 4096 characters."
                     },
                     "previewUrl": {
                         "type": "toggle",
-                        "index": 3,
+                        "index": 4,
                         "label": "Preview URLs",
                         "tooltip": "If enabled, the first URL in the message text is rendered as a link preview.",
                         "defaultValue": false
                     },
                     "contextMessageId": {
                         "type": "text",
-                        "index": 4,
+                        "index": 5,
                         "label": "Reply To Message ID",
                         "tooltip": "Optional. The WhatsApp message ID to reply to (creates a threaded reply)."
                     }

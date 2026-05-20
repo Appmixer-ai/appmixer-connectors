@@ -2,43 +2,27 @@
 
 const lib = require('../../lib');
 
-const SUBSCRIBED_FIELDS = ['messages'];
+// NOTE on webhook setup
+// ---------------------
+// Meta does not let an OAuth'd end-user manage their own webhook subscription on a
+// Meta App — that requires the App's clientId + clientSecret, which belong to the
+// Appmixer instance (not the connected user). Two consequences:
+//
+//   1. This trigger does NOT auto-subscribe. The Appmixer operator must configure
+//      the Meta App once (callback URL = the trigger's webhook URL, verify token =
+//      the trigger's component ID) and subscribe to the `messages` field.
+//   2. Signature verification (X-Hub-Signature-256) needs the Meta App secret.
+//      When `context.config.clientSecret` is available it is used; otherwise the
+//      signature step is skipped.
 
 module.exports = {
 
-    async start(context) {
-
-        // Auto-subscribe the webhook on the Meta App level when appId+appSecret are configured.
-        // Otherwise the user is expected to set up the webhook manually in the Meta App Dashboard
-        // (callback URL = the trigger URL, verify token = the trigger's component ID).
-        const { appId, appSecret } = context.auth || {};
-        if (!appId || !appSecret) {
-            await context.log({ step: 'webhook-setup-required', message: 'Set the webhook URL and verify token manually in Meta App Dashboard. App ID/Secret not provided so auto-subscribe was skipped.' });
-            return;
-        }
-
-        try {
-            await lib.subscribeAppWebhook(context, {
-                callbackUrl: context.getWebhookUrl(),
-                verifyToken: context.componentId,
-                fields: SUBSCRIBED_FIELDS
-            });
-        } catch (err) {
-            throw new context.CancelError('Failed to subscribe webhook on Meta App: ' + (err.message || err));
-        }
+    async start() {
+        // Intentionally empty — webhook setup is operator-managed (see header).
     },
 
-    async stop(context) {
-
-        const { appId, appSecret } = context.auth || {};
-        if (!appId || !appSecret) return;
-
-        try {
-            await lib.unsubscribeAppWebhook(context);
-        } catch (err) {
-            // best-effort
-            await context.log({ step: 'webhook-unsubscribe-failed', message: err.message || String(err) });
-        }
+    async stop() {
+        // Intentionally empty.
     },
 
     async receive(context) {
@@ -55,8 +39,9 @@ module.exports = {
             return context.response({ statusCode: 200, body: query['hub.challenge'] });
         }
 
-        // Signature verification (optional but recommended)
-        const appSecret = context.auth && context.auth.appSecret;
+        // Optional signature verification — relies on Appmixer exposing the
+        // Meta App secret via context.config.clientSecret.
+        const appSecret = context.config && context.config.clientSecret;
         const signature = headers && (headers['x-hub-signature-256'] || headers['X-Hub-Signature-256']);
         if (appSecret && signature && rawBody) {
             const ok = lib.verifyWebhookSignature({ rawBody, signatureHeader: signature, appSecret });

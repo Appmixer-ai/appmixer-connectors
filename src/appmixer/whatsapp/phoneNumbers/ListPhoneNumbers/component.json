@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.whatsapp.messages.SendVideoMessage",
+    "name": "appmixer.whatsapp.phoneNumbers.ListPhoneNumbers",
     "author": "Appmixer <info@appmixer.com>",
-    "label": "Send Video Message",
-    "description": "Send a video message via WhatsApp. Provide either a media ID or a public HTTPS link.",
+    "label": "List Phone Numbers",
+    "description": "List all phone numbers attached to a WhatsApp Business Account (WABA).",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -10,7 +10,7 @@
     },
     "quota": {
         "manager": "appmixer:whatsapp",
-        "resources": "messages",
+        "resources": "requests",
         "scope": {
             "userId": "{{userId}}"
         }
@@ -21,73 +21,21 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "phoneNumberId": {
-                        "type": "string"
-                    },
-                    "to": {
-                        "type": "string"
-                    },
-                    "contextMessageId": {
-                        "type": "string"
-                    },
-                    "mediaId": {
-                        "type": "string"
-                    },
-                    "link": {
-                        "type": "string"
-                    },
-                    "caption": {
+                    "businessAccountId": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "phoneNumberId",
-                    "to"
+                    "businessAccountId"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "phoneNumberId": {
-                        "type": "select",
+                    "businessAccountId": {
+                        "type": "text",
                         "index": 1,
-                        "label": "Phone Number",
-                        "tooltip": "Pick a phone number from your connected WhatsApp Business Account(s). Numbers across all your accessible WABAs are listed.",
-                        "source": {
-                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListAllPhoneNumbers?outPort=out",
-                            "data": {
-                                "transform": "./ListAllPhoneNumbers#toSelectArray"
-                            }
-                        }
-                    },
-                    "to": {
-                        "type": "text",
-                        "index": 2,
-                        "label": "Recipient Phone Number",
-                        "tooltip": "Recipient's phone number in E.164 format (e.g. <code>+1XXXXXXXXXX</code>)."
-                    },
-                    "mediaId": {
-                        "type": "text",
-                        "index": 3,
-                        "label": "Media ID",
-                        "tooltip": "Optional. ID of a previously uploaded video. Use either Media ID or Link."
-                    },
-                    "link": {
-                        "type": "text",
-                        "index": 4,
-                        "label": "Video Link (URL)",
-                        "tooltip": "Optional. Publicly-accessible HTTPS URL. MP4 or 3GP, max 16 MB."
-                    },
-                    "caption": {
-                        "type": "textarea",
-                        "index": 5,
-                        "label": "Caption",
-                        "tooltip": "Optional caption."
-                    },
-                    "contextMessageId": {
-                        "type": "text",
-                        "index": 6,
-                        "label": "Reply To Message ID",
-                        "tooltip": "Optional. The WhatsApp message ID to reply to (creates a threaded reply)."
+                        "label": "Business Account ID (WABA)",
+                        "tooltip": "Your WhatsApp Business Account ID. Found in Meta Business Manager \u2192 WhatsApp Accounts \u2192 Settings."
                     }
                 }
             }
@@ -99,20 +47,45 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "messageId": {
-                        "type": "string",
-                        "title": "Message ID",
-                        "example": "wamid.HBgLMTIzNDU2Nzg5MFASCQAB"
+                    "phoneNumbers": {
+                        "type": "array",
+                        "title": "Phone Numbers",
+                        "example": [],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Phone Number ID",
+                                    "example": "1044539225419737"
+                                },
+                                "displayPhoneNumber": {
+                                    "type": "string",
+                                    "title": "Display Phone Number",
+                                    "example": "+1 555-123-4567"
+                                },
+                                "verifiedName": {
+                                    "type": "string",
+                                    "title": "Verified Name",
+                                    "example": "Acme Corp"
+                                },
+                                "qualityRating": {
+                                    "type": "string",
+                                    "title": "Quality Rating",
+                                    "example": "GREEN"
+                                },
+                                "codeVerificationStatus": {
+                                    "type": "string",
+                                    "title": "Code Verification Status",
+                                    "example": "VERIFIED"
+                                }
+                            }
+                        }
                     },
-                    "contactWaId": {
-                        "type": "string",
-                        "title": "Contact WhatsApp ID",
-                        "example": "1234567890"
-                    },
-                    "input": {
-                        "type": "string",
-                        "title": "Recipient Input",
-                        "example": "+1234567890"
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 1
                     }
                 }
             }
