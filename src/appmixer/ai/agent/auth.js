@@ -1,6 +1,6 @@
 'use strict';
 
-const lib = require('./lib');
+const provider = require('./provider');
 
 module.exports = {
 
@@ -80,7 +80,7 @@ module.exports = {
                 }
 
                 // All other providers: validate by making a real models list call.
-                await lib.listModels(context);
+                await provider.listModels(context);
             },
 
             accountNameFromProfileInfo: (context) => {
