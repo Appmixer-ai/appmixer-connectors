@@ -77,7 +77,8 @@ async function fetchAndCacheManifests(context) {
         try {
             const { data } = await context.httpRequest({
                 url: `${process.env.APPMIXER_API_URL}/components/${encodeURIComponent(otherType)}?manifest=yes`,
-                method: 'GET'
+                method: 'GET',
+                headers: { Authorization: `Bearer ${context.config.token}` }
             });
             manifests[componentId] = data;
         } catch (err) {
@@ -129,7 +130,8 @@ async function buildDefsFromManifests(context, manifests) {
             try {
                 const { data } = await context.httpRequest({
                     url: `${process.env.APPMIXER_API_URL}/components/${encodeURIComponent(component.type)}?manifest=yes`,
-                    method: 'GET'
+                    method: 'GET',
+                    headers: { Authorization: `Bearer ${context.config.token}` }
                 });
                 manifest = data;
             } catch (err) {
