@@ -6,69 +6,80 @@
  * This is intentionally separate from tools.js (which handles ToolStart chains + MCP servers
  * wired to the "tools" port). Components wired to the "tool" port are called synchronously
  * via context.callAppmixer() rather than through the pub/sub poll mechanism.
+ *
+ * Parameter model
+ * ───────────────
+ * The user marks fields they want the AI to fill with the "Model Defined Parameter" output
+ * variable from the AI Agent (port "tool", option "modelDefinedParameter").  Only those
+ * fields become parameters in the tool definition sent to the LLM.  Fields with a literal
+ * user-set value are passed as static `properties` on every callAppmixer invocation.
+ *
+ * This means connected tool components can have required fields without blocking flow
+ * startup: the user satisfies the validator by setting required fields to the
+ * "Model Defined Parameter" variable, and the AI fills them at call time.
  */
 
 const { jsonSchema, tool } = require('ai');
 
 const TOOL_PORT = 'tool';
+/** Variable value exposed on the agent's "tool" outPort options. */
+const MODEL_DEFINED_PARAM_KEY = 'modelDefinedParameter';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Returns true when the value is a Handlebars/template expression set by
- * flow-mapping rather than a literal user-typed value.
+ * Returns true when the value is any Handlebars/template expression (flow-mapping).
  */
 function isHandlebarsExpression(val) {
     return typeof val === 'string' && /\{\{.*?\}\}/.test(val);
 }
 
+/**
+ * Returns true when the field value is a reference to the AI Agent's
+ * "Model Defined Parameter" variable — meaning the AI should fill this field.
+ *
+ * Appmixer stores variable references as expressions like:
+ *   {{{agentComponentId.tool.modelDefinedParameter}}}
+ * We match on both the agent's componentId and the variable key so we don't
+ * accidentally treat references to other components' variables as AI-fillable.
+ */
+function isModelDefinedParameter(val, agentComponentId) {
+    return typeof val === 'string' &&
+        val.includes(agentComponentId) &&
+        val.includes(MODEL_DEFINED_PARAM_KEY);
+}
+
 // ─── Discovery ────────────────────────────────────────────────────────────────
 
 /**
- * Collect all components wired to the agent's "tool" output port, fetch their
- * component.json manifests, build tool definitions, and persist them to state.
- *
- * Called from AIAgent.start() so definitions are ready before the first receive().
+ * Fetch manifests for all components wired to the agent's "tool" port and cache
+ * them to state keyed by componentId.  Called from AIAgent.start() so the HTTP
+ * round-trips happen once at flow startup rather than on every receive().
  */
-async function collectComponentTools(context) {
-    const defs = await getComponentToolsDefinition(context);
-    await context.log({ step: 'component-tools', count: defs.length });
-    await context.stateSet('componentTools', defs);
-    return defs;
-}
-
-/**
- * Discover components wired to the "tool" port and build their tool definitions.
- * Fetches the manifest for each component so we can derive parameter descriptions.
- */
-async function getComponentToolsDefinition(context) {
+async function fetchAndCacheManifests(context) {
     const flowDescriptor = context.flowDescriptor;
     const agentComponentId = context.componentId;
-    const connectedComponents = {};
+    const manifests = {};
 
-    // Walk the flow graph: find components whose source references the agent's "tool" outPort
     Object.keys(flowDescriptor).forEach((componentId) => {
         const component = flowDescriptor[componentId];
         const sources = component.source || {};
         Object.keys(sources).forEach((inPort) => {
             const source = sources[inPort];
             if (source[agentComponentId] && source[agentComponentId].includes(TOOL_PORT)) {
-                connectedComponents[componentId] = { component, inPortName: inPort };
+                manifests[componentId] = null; // placeholder
             }
         });
     });
 
-    const defs = [];
-
-    for (const [componentId, { component, inPortName }] of Object.entries(connectedComponents)) {
-        const otherType = component.type;
-        let manifest;
+    for (const componentId of Object.keys(manifests)) {
+        const otherType = flowDescriptor[componentId].type;
         try {
             const { data } = await context.httpRequest.get(
                 `${context.config.apiUrl}/components/${encodeURIComponent(otherType)}?manifest=yes`,
                 { headers: { Authorization: `Bearer ${context.config.token}` } }
             );
-            manifest = data;
+            manifests[componentId] = data;
         } catch (err) {
             await context.log({
                 step: 'component-tool-manifest-error',
@@ -76,10 +87,63 @@ async function getComponentToolsDefinition(context) {
                 type: otherType,
                 error: err.message
             });
-            continue;
+        }
+    }
+
+    await context.stateSet('componentToolManifests', manifests);
+    return manifests;
+}
+
+/**
+ * Build tool definitions from the current flowDescriptor + (optionally) pre-fetched
+ * manifests.  If a manifest is missing from the cache it is fetched on-demand.
+ *
+ * This is called both from collectComponentTools (start) and
+ * buildComponentToolDefs (receive) so parameter detection always reflects the
+ * live flowDescriptor — i.e. which fields currently carry the
+ * "Model Defined Parameter" variable.
+ */
+async function buildDefsFromManifests(context, manifests) {
+    const flowDescriptor = context.flowDescriptor;
+    const agentComponentId = context.componentId;
+    const defs = [];
+
+    for (const componentId of Object.keys(manifests)) {
+        const component = flowDescriptor[componentId];
+        if (!component) continue;
+
+        // Determine which inPort is wired to the agent's "tool" port
+        let inPortName = null;
+        const sources = component.source || {};
+        for (const [port, src] of Object.entries(sources)) {
+            if (src[agentComponentId] && src[agentComponentId].includes(TOOL_PORT)) {
+                inPortName = port;
+                break;
+            }
+        }
+        if (!inPortName) continue;
+
+        let manifest = manifests[componentId];
+        if (!manifest) {
+            // On-demand fetch if the manifest wasn't cached (e.g. newly connected component)
+            try {
+                const { data } = await context.httpRequest.get(
+                    `${context.config.apiUrl}/components/${encodeURIComponent(component.type)}?manifest=yes`,
+                    { headers: { Authorization: `Bearer ${context.config.token}` } }
+                );
+                manifest = data;
+            } catch (err) {
+                await context.log({
+                    step: 'component-tool-manifest-error',
+                    componentId,
+                    type: component.type,
+                    error: err.message
+                });
+                continue;
+            }
         }
 
-        const def = buildComponentToolDef(componentId, component, manifest, inPortName);
+        const def = buildComponentToolDef(componentId, component, manifest, inPortName, agentComponentId);
         if (def) defs.push(def);
     }
 
@@ -87,77 +151,104 @@ async function getComponentToolsDefinition(context) {
 }
 
 /**
+ * Full discovery: fetch manifests, cache them, build and cache tool definitions.
+ * Called from AIAgent.start().
+ */
+async function collectComponentTools(context) {
+    const manifests = await fetchAndCacheManifests(context);
+    const defs = await buildDefsFromManifests(context, manifests);
+    await context.log({ step: 'component-tools', count: defs.length });
+    await context.stateSet('componentTools', defs);
+    return defs;
+}
+
+/**
+ * Runtime refresh: rebuild tool definitions from cached manifests + current
+ * flowDescriptor.  No HTTP calls unless a component has no cached manifest.
+ * Called from AIAgent.receive() so "Model Defined Parameter" markings are
+ * evaluated against the live flow configuration on every agent turn.
+ */
+async function buildComponentToolDefs(context) {
+    const manifests = (await context.stateGet('componentToolManifests')) || {};
+    const defs = await buildDefsFromManifests(context, manifests);
+    return defs;
+}
+
+/**
  * Build a single OpenAI-format tool definition from a fetched component manifest.
  *
- * Rules for parameters:
- *   - Start from all inPort schema fields + properties schema fields.
- *   - Any field with a literal (non-expression) value already set by the user in
- *     the component's config is EXCLUDED from AI-fillable parameters — the user
- *     deliberately pre-configured it (e.g. a specific Google Calendar ID).
- *   - Descriptions are taken from inspector labels + tooltips.
- *
- * Extra metadata fields (_componentTool, _componentType, _inPort, _userStaticValues)
- * are stored alongside the standard function object so the executor can retrieve
- * them at call time without extra state lookups.
+ * Parameter rules:
+ *   - A field is an AI parameter ONLY if the user has set it to the agent's
+ *     "Model Defined Parameter" variable (detectable via agentComponentId +
+ *     MODEL_DEFINED_PARAM_KEY in the stored value).
+ *   - Fields with a literal user-set value are collected as _userStaticValues
+ *     and passed verbatim as `properties` on every callAppmixer call.
+ *   - Fields with neither (not set, or set to some other expression) are ignored.
  *
  * @param {string} componentId
- * @param {object} componentDescriptor - Flow descriptor entry for this component
- * @param {object} manifest            - Fetched component.json manifest
- * @param {string} connectedInPortName - Name of the inPort wired to the agent's "tool" port
+ * @param {object} componentDescriptor  - Flow descriptor entry for this component
+ * @param {object} manifest             - Fetched component.json manifest
+ * @param {string} connectedInPortName  - Name of the inPort wired to the agent's "tool" port
+ * @param {string} agentComponentId     - componentId of the AI Agent itself
  * @returns {object|null} OpenAI-format tool definition, or null on invalid input
  */
-function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName) {
+function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, agentComponentId) {
     const userConfig = componentDescriptor.config?.properties || {};
 
-    // Collect literal user-preset values (skip Handlebars expressions / empty values)
+    // Classify each configured field:
+    //   aiFields        → value is the "Model Defined Parameter" variable → AI fills at runtime
+    //   userStaticValues→ literal value set by user → passed as static properties
+    const aiFields = new Set();
     const userStaticValues = {};
+
     for (const [key, val] of Object.entries(userConfig)) {
-        if (
-            val !== null &&
-            val !== undefined &&
-            val !== '' &&
-            !isHandlebarsExpression(String(val))
-        ) {
+        if (val === null || val === undefined || val === '') continue;
+        const str = String(val);
+        if (isModelDefinedParameter(str, agentComponentId)) {
+            aiFields.add(key);
+        } else if (!isHandlebarsExpression(str)) {
             userStaticValues[key] = val;
         }
+        // Any other Handlebars expression (reference to a different component's output)
+        // is silently ignored — it won't resolve in a direct callAppmixer call.
     }
 
-    // Locate the manifest inPort definition that matches the connected port
+    // Locate the manifest inPort definition for the connected port
     const inPortDef =
         (manifest.inPorts || []).find(p => p.name === connectedInPortName) ||
         (manifest.inPorts || [])[0];
 
     const inPortSchemaProps = inPortDef?.schema?.properties || {};
     const inPortInspector = inPortDef?.inspector?.inputs || {};
+    const inPortRequired = new Set(inPortDef?.schema?.required || []);
 
-    // Properties (static config) schema + inspector
+    // Properties schema + inspector
     const propSchemaProps = manifest.properties?.schema?.properties || {};
     const propInspector = manifest.properties?.inspector?.inputs || {};
+    const propRequired = new Set(manifest.properties?.schema?.required || []);
 
-    const parameters = { type: 'object', properties: {} };
+    const parameters = { type: 'object', properties: {}, required: [] };
 
-    // inPort fields → AI parameters (skip user-preset ones)
+    // inPort fields marked for AI
     for (const [key, schemaProp] of Object.entries(inPortSchemaProps)) {
-        if (key in userStaticValues) continue;
+        if (!aiFields.has(key)) continue;
         const inp = inPortInspector[key] || {};
         const desc = [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key;
-        parameters.properties[key] = {
-            type: schemaProp.type || 'string',
-            description: desc
-        };
+        parameters.properties[key] = { type: schemaProp.type || 'string', description: desc };
+        if (inPortRequired.has(key)) parameters.required.push(key);
     }
 
-    // Properties fields → AI parameters (skip user-preset ones; skip inPort duplicates)
+    // Properties fields marked for AI (skip duplicates already added from inPort)
     for (const [key, schemaProp] of Object.entries(propSchemaProps)) {
-        if (key in userStaticValues) continue;
+        if (!aiFields.has(key)) continue;
         if (key in parameters.properties) continue;
         const inp = propInspector[key] || {};
         const desc = [inp.label, inp.tooltip].filter(Boolean).join(' — ') || key;
-        parameters.properties[key] = {
-            type: schemaProp.type || 'string',
-            description: desc
-        };
+        parameters.properties[key] = { type: schemaProp.type || 'string', description: desc };
+        if (propRequired.has(key)) parameters.required.push(key);
     }
+
+    if (!parameters.required.length) delete parameters.required;
 
     // Sanitize tool name: <componentId>_<Label>, max 64 chars total
     const rawLabel = manifest.label || manifest.name || componentDescriptor.type.split('.').pop();
@@ -172,7 +263,7 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
             name: toolName,
             description: manifest.description || rawLabel,
             ...(Object.keys(parameters.properties).length ? { parameters } : {}),
-            // ── Execution metadata (not sent to the model) ─────────────────
+            // ── Execution metadata (not sent to the model) ──────────────────
             _componentTool: true,
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
@@ -187,12 +278,6 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
  * Convert component tool definitions into Vercel AI SDK tool objects.
  * Returns a plain object keyed by tool name, ready to spread into the
  * final tools map passed to generateText / streamText.
- *
- * @param {object}   context
- * @param {Array}    componentToolsDef  - Definitions returned by getComponentToolsDefinition()
- * @param {object}   [tracer]           - OTEL tracer for Langfuse spans (optional)
- * @param {Function} [getStepCtx]       - Returns current model_step OTEL context (optional)
- * @returns {object} Map of toolName → Vercel AI SDK tool
  */
 function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCtx) {
     if (!componentToolsDef || componentToolsDef.length === 0) return {};
@@ -222,15 +307,9 @@ function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCt
 
 /**
  * Execute a component tool by calling it directly via the Appmixer REST API.
- * The call is synchronous from the agent's perspective — no pub/sub polling needed.
  *
- * The body sent to callAppmixer follows the Appmixer component invocation contract:
- *   messages: { [inPort]: [argsFilledByAI] }
- *   properties: { ...userStaticValues }
- *
- * The response is a map of outPort → result values.
- *
- * @returns {string} JSON-stringified result map, or an error message string.
+ * AI-filled args go into messages.[inPort][0]; user static values go into properties.
+ * Returns the outPort → result map as a JSON string.
  */
 async function executeComponentTool(context, toolDef, args, tracer, toolCallId, getStepCtx) {
     const { name: fullToolName, _componentType, _inPort, _userStaticValues } = toolDef.function;
@@ -263,10 +342,8 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
         }
     };
 
-    // Without a tracer, just run and return.
     if (!tracer) return runTool();
 
-    // With a tracer, wrap in a Langfuse tool span for observability.
     const { SpanStatusCode } = require('@opentelemetry/api');
     const stepCtx = getStepCtx ? getStepCtx() : null;
     const startSpan = stepCtx
@@ -312,7 +389,7 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
 
 module.exports = {
     collectComponentTools,
-    getComponentToolsDefinition,
+    buildComponentToolDefs,
     buildComponentToolDef,
     buildComponentVercelTools,
     executeComponentTool
