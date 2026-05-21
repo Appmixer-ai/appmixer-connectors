@@ -75,11 +75,11 @@ async function fetchAndCacheManifests(context) {
     for (const componentId of Object.keys(manifests)) {
         const otherType = flowDescriptor[componentId].type;
         try {
-            const manifest = await context.callAppmixer({
+            const raw = await context.callAppmixer({
                 endPoint: `/components/${encodeURIComponent(otherType)}?manifest=yes`,
                 method: 'GET'
             });
-            manifests[componentId] = manifest;
+            manifests[componentId] = typeof raw === 'string' ? JSON.parse(raw) : raw;
         } catch (err) {
             await context.log({
                 step: 'component-tool-manifest-error',
@@ -127,10 +127,11 @@ async function buildDefsFromManifests(context, manifests) {
         if (!manifest) {
             // On-demand fetch if the manifest wasn't cached (e.g. newly connected component)
             try {
-                manifest = await context.callAppmixer({
+                const raw = await context.callAppmixer({
                     endPoint: `/components/${encodeURIComponent(component.type)}?manifest=yes`,
                     method: 'GET'
                 });
+                manifest = typeof raw === 'string' ? JSON.parse(raw) : raw;
             } catch (err) {
                 await context.log({
                     step: 'component-tool-manifest-error',
@@ -142,6 +143,15 @@ async function buildDefsFromManifests(context, manifests) {
             }
         }
 
+        await context.log({
+            step: 'component-tool-manifest-inspect',
+            componentId,
+            manifestDescription: manifest?.description,
+            manifestLabel: manifest?.label,
+            manifestName: manifest?.name,
+            inPortNames: (manifest?.inPorts || []).map(p => p.name),
+            configProperties: component.config?.properties || {}
+        });
         const def = buildComponentToolDef(componentId, component, manifest, inPortName, agentComponentId);
         if (def) defs.push(def);
     }
