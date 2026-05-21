@@ -54,9 +54,47 @@ module.exports = {
 
         requestProfileInfo: async context => {
 
-            const url = `https://graph.facebook.com/${GRAPH_VERSION}/me?access_token=${context.accessToken}`;
-            const response = await context.httpRequest.get(url);
-            return response.data;
+            // 1) Basic user profile.
+            const meUrl = `https://graph.facebook.com/${GRAPH_VERSION}/me?access_token=${context.accessToken}`;
+            const me = await context.httpRequest.get(meUrl);
+
+            const profile = { ...me.data };
+
+            // 2) Discover the user's WABA(s) via /debug_token granular_scopes.
+            //    Facebook Login for Business returns the WABA IDs the user
+            //    granted access to under `granular_scopes[].target_ids` —
+            //    accessible without business_management scope, unlike /me/businesses.
+            try {
+                const appAccessToken = `${context.clientId}|${context.clientSecret}`;
+                const debugUrl = `https://graph.facebook.com/${GRAPH_VERSION}/debug_token`
+                    + `?input_token=${encodeURIComponent(context.accessToken)}`
+                    + `&access_token=${encodeURIComponent(appAccessToken)}`;
+                const debug = await context.httpRequest.get(debugUrl);
+
+                const granular = (debug.data && debug.data.data && debug.data.data.granular_scopes) || [];
+
+                const wabaIds = [];
+                for (const entry of granular) {
+                    if (entry && entry.scope === 'whatsapp_business_management' && Array.isArray(entry.target_ids)) {
+                        for (const id of entry.target_ids) {
+                            if (id && !wabaIds.includes(id)) wabaIds.push(id);
+                        }
+                    }
+                }
+
+                if (wabaIds.length > 0) {
+                    profile.businessAccountId = wabaIds[0];   // default WABA
+                    profile.wabaIds = wabaIds;                // full list for diagnostics
+                }
+                console.log('------------------')
+                console.log(wabaIds)
+
+            } catch (err) {
+                // Best-effort — auth still succeeds even when /debug_token is unavailable.
+                // The user can paste the WABA ID into the inspector field as a fallback.
+            }
+
+            return profile;
         },
 
         refreshAccessToken: async context => {

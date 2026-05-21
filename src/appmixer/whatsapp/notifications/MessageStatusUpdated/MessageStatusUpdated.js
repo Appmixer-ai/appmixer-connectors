@@ -2,56 +2,51 @@
 
 const lib = require('../../lib');
 
-// See NewMessage.js for the webhook-setup notes — same constraints apply.
+// See NewMessage.js for the model — same lifecycle, just listens on the
+// `statuses:<wabaId>` event channel instead.
 
 module.exports = {
 
-    async start() {},
+    async start(context) {
 
-    async stop() {},
+        const wabaId = lib.resolveWabaId(context);
+        if (!wabaId) {
+            throw new context.CancelError(
+                'No WhatsApp Business Account ID on the connected account. ' +
+                'Reconnect the WhatsApp account so the WABA is discovered.'
+            );
+        }
+
+        try {
+            await lib.subscribeWabaApp(context, wabaId);
+        } catch (err) {
+            await context.log({ step: 'whatsapp-subscribe-waba-failed', message: err.message || String(err) });
+        }
+
+        await context.addListener(`statuses:${wabaId}`, {
+            wabaId,
+            accessToken: context.auth.accessToken
+        });
+
+        await context.saveState({ wabaId });
+    },
+
+    async stop(context) {
+
+        const state = await context.loadState();
+        const wabaId = (state && state.wabaId) || lib.resolveWabaId(context);
+        if (!wabaId) return;
+
+        await context.removeListener(`statuses:${wabaId}`);
+    },
 
     async receive(context) {
 
         if (!context.messages.webhook) return;
 
-        const { body, headers, query, rawBody } = context.messages.webhook.content || {};
+        const data = context.messages.webhook.content && context.messages.webhook.content.data;
+        if (!data) return;
 
-        if (query && query['hub.challenge']) {
-            if (query['hub.verify_token'] !== context.componentId) {
-                return context.response({ statusCode: 403 });
-            }
-            return context.response({ statusCode: 200, body: query['hub.challenge'] });
-        }
-
-        const appSecret = context.config && context.config.clientSecret;
-        const signature = headers && (headers['x-hub-signature-256'] || headers['X-Hub-Signature-256']);
-        if (appSecret && signature && rawBody) {
-            const ok = lib.verifyWebhookSignature({ rawBody, signatureHeader: signature, appSecret });
-            if (!ok) {
-                await context.log({ step: 'webhook-signature-mismatch' });
-                return context.response({ statusCode: 401 });
-            }
-        }
-
-        const { statuses, wabaId, phoneNumberId } = lib.parseWebhookPayload(body);
-
-        if (!statuses.length) {
-            return context.response({ statusCode: 200 });
-        }
-
-        for (const status of statuses) {
-            await context.sendJson({
-                id: status.id,
-                recipientId: status.recipient_id,
-                status: status.status,
-                timestamp: status.timestamp,
-                conversation: status.conversation,
-                errors: status.errors,
-                phoneNumberId,
-                wabaId
-            }, 'status');
-        }
-
-        return context.response({ statusCode: 200 });
+        await context.sendJson(data, 'status');
     }
 };

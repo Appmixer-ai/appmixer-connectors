@@ -21,6 +21,9 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "businessAccountId": {
+                        "type": "string"
+                    },
                     "phoneNumberId": {
                         "type": "string"
                     },
@@ -49,46 +52,62 @@
             },
             "inspector": {
                 "inputs": {
-                    "phoneNumberId": {
-                        "type": "select",
+                    "businessAccountId": {
+                        "type": "text",
                         "index": 1,
-                        "label": "Phone Number",
-                        "tooltip": "Pick a phone number from your connected WhatsApp Business Account(s). Numbers across all your accessible WABAs are listed.",
+                        "label": "WhatsApp Business Account ID",
+                        "tooltip": "Your WhatsApp Business Account ID. <b>Leave blank to use the default WABA from your connected account</b> (auto-discovered during OAuth). Only fill in to override \u2014 e.g. to switch to a different WABA when your account has access to multiple."
+                    },
+                    "phoneNumberId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Sender Phone Number",
+                        "tooltip": "Sender phone number \u2014 the number the message is sent FROM. Pick from the dropdown (populated when the WABA above is filled in), or paste a Phone Number ID manually.",
                         "source": {
-                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListAllPhoneNumbers?outPort=out",
+                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListPhoneNumbers?outPort=out",
                             "data": {
-                                "transform": "./ListAllPhoneNumbers#toSelectArray"
+                                "messages": {
+                                    "in/businessAccountId": "inputs/in/businessAccountId",
+                                    "in/phoneNumberId": "any",
+                                    "in/to": "any",
+                                    "in/templateName": "any",
+                                    "in/languageCode": "any"
+                                },
+                                "transform": "./ListPhoneNumbers#toSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
                             }
                         }
                     },
                     "to": {
                         "type": "text",
-                        "index": 2,
+                        "index": 3,
                         "label": "Recipient Phone Number",
                         "tooltip": "Recipient's phone number in E.164 format (e.g. <code>+1XXXXXXXXXX</code>)."
                     },
                     "templateName": {
                         "type": "text",
-                        "index": 3,
+                        "index": 4,
                         "label": "Template Name",
                         "tooltip": "Name of an approved template in your WABA."
                     },
                     "languageCode": {
                         "type": "text",
-                        "index": 4,
+                        "index": 5,
                         "label": "Language Code",
                         "tooltip": "BCP-47 language code (e.g. <code>en_US</code>, <code>cs</code>).",
                         "defaultValue": "en_US"
                     },
                     "components": {
                         "type": "textarea",
-                        "index": 5,
+                        "index": 6,
                         "label": "Template Components (JSON)",
                         "tooltip": "Optional. JSON array of template components (header/body/buttons) with parameters. See <a href=\"https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates\" target=\"_blank\">docs</a>."
                     },
                     "contextMessageId": {
                         "type": "text",
-                        "index": 6,
+                        "index": 7,
                         "label": "Reply To Message ID",
                         "tooltip": "Optional. The WhatsApp message ID to reply to (creates a threaded reply)."
                     }

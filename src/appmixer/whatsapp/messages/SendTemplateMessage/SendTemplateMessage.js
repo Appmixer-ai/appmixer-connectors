@@ -6,7 +6,14 @@ module.exports = {
 
     async receive(context) {
 
-        const { phoneNumberId, to, templateName, languageCode, components, contextMessageId } = context.messages.in.content;
+        const {
+            phoneNumberId,
+            to,
+            templateName,
+            languageCode,
+            components,
+            contextMessageId
+        } = context.messages.in.content;
 
         if (!phoneNumberId) {
             throw new context.CancelError('Phone Number ID is required!');

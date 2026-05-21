@@ -1802,6 +1802,115 @@ module.exports = {
 };
 ```
 
+#### 2b. Plugin-based Triggers (shared global endpoint + `addListener`)
+
+When the upstream service requires a **single global webhook callback URL per app** (Meta WhatsApp, Slack Events API, Stripe Webhooks at the app level), the per-trigger `getWebhookUrl()` pattern in section 2 does NOT work — you can only register one URL on the upstream service, and Appmixer issues a different URL per trigger instance. The right pattern is a **connector-level plugin** that owns one endpoint and fans out events to many subscribed trigger instances.
+
+**Architecture**
+
+```
+External service → ONE global URL → /plugins/<vendor>/<service>/<path>
+                                          │
+                                          │  parse + HMAC-verify → triggerListeners
+                                          ▼
+                              Trigger instances (one per flow)
+                                start():    addListener(eventName, params)
+                                stop():     removeListener(eventName)
+                                receive():  context.messages.webhook.content.data
+```
+
+**Required files at the connector root**
+
+`plugin.js` — executed once when the connector is installed onto the Appmixer server:
+
+```javascript
+'use strict';
+module.exports = async context => {
+    require('./routes')(context);
+};
+```
+
+`routes.js` — registers the HTTP endpoint and the listener-added validator:
+
+```javascript
+'use strict';
+
+module.exports = async context => {
+
+    // Runs every time a trigger calls context.addListener().
+    context.onListenerAdded(async listener => {
+        // listener.eventName, listener.params  — mutable; throw to reject.
+    });
+
+    context.http.router.register({
+        method: 'POST',
+        path: '/events',                        // → /plugins/<vendor>/<service>/events
+        options: {
+            auth: false,
+            handler: async (req, h) => {
+                if (!isValidSignature(context, req)) return h.response().code(401);
+                await context.triggerListeners({
+                    eventName: extractEventName(req.payload),
+                    payload: extractEventBody(req.payload),
+                    filter: listener => listener.params.userId === extractUserId(req.payload)
+                });
+                return {};
+            }
+        }
+    });
+};
+```
+
+The endpoint URL is `<API_BASE>/plugins/<vendor>/<service>/<path>` — derived from the connector's directory path. **No `context.getWebhookUrl()` is involved** — the admin configures this single URL on the upstream service once.
+
+**Trigger component pattern**
+
+```javascript
+'use strict';
+module.exports = {
+
+    async start(context) {
+        await context.addListener(`channel:${context.properties.channelId}`, {
+            userId: context.profileInfo.userId,
+            accessToken: context.auth.accessToken
+        });
+    },
+
+    async stop(context) {
+        await context.removeListener(`channel:${context.properties.channelId}`);
+    },
+
+    async receive(context) {
+        if (!context.messages.webhook) return;
+        const data = context.messages.webhook.content.data;     // from triggerListeners()
+        await context.sendJson(data, 'out');
+    }
+};
+```
+
+**Key APIs**
+
+| API | Where | Purpose |
+|---|---|---|
+| `context.http.router.register({ method, path, options })` | `routes.js` | Mount an HTTP route under `/plugins/<vendor>/<service>` |
+| `context.onListenerAdded(cb)` | `routes.js` | Hook fired when a trigger calls `addListener` — validate / transform `listener.params` |
+| `context.triggerListeners({ eventName, payload, filter })` | inside route handler | Fan event out to subscribed listeners |
+| `context.addListener(eventName, params)` | trigger `start()` | Register this instance |
+| `context.removeListener(eventName)` | trigger `stop()` | Unregister |
+| `context.messages.webhook.content.data` | trigger `receive()` | The payload from `triggerListeners` |
+
+**When to use this pattern (vs. section 2's per-trigger webhook URL)**
+
+- Upstream service allows **only one callback URL per app** (Meta App, Slack App, GitHub App)
+- Events fan out to many tenants; routing happens server-side
+- HMAC signature verification of the **app's** secret should be centralized
+- Multiple trigger types share the same upstream stream
+
+**Reference implementations**
+
+- `src/appmixer/slack/plugin.js` + `routes.js` + `list/NewChannelMessageRT/NewChannelMessageRT.js`
+- `src/appmixer/whatsapp/plugin.js` + `routes.js` + `notifications/NewMessage/NewMessage.js`
+
 #### 3. Hybrid Triggers (`webhook: true` + `tick: true`)
 
 Some triggers use both webhook and tick - webhooks for real-time events and tick for maintenance (e.g., refreshing webhook registration before expiry).
@@ -2027,7 +2136,45 @@ When using `source` to dynamically populate field options or output port schemas
 
 **Using `variableFetch` / `isSource` for Dynamic Source Calls**
 
-When a component is used as a dynamic data source (via `source` URL in inspector), two extra behaviours are required: **error suppression** and **response caching**.
+When a component is used as a dynamic data source (via `source` URL in inspector), four rules apply: **inspector field is `text`**, **dependencies are optional**, **error suppression**, and **response caching**.
+
+**Rule 1 — Inspector field type is `text`, never `select`.**
+The dropdown source can fail (auth not yet established, dependency input empty, API down). When that happens the user MUST be able to type the value manually. `select` constrains the field to dropdown options only and traps the user when the source returns `[]`. Use `type: "text"` with the `source` block — Appmixer renders this as a typeahead/autocomplete: user can pick from the loaded options OR type any value.
+
+```jsonc
+"phoneNumberId": {
+    "type": "text",          // NOT "select"
+    "label": "Phone Number",
+    "tooltip": "Pick a phone number, or type the Phone Number ID directly.",
+    "source": {
+        "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+        "data": {
+            "properties": { "isSource": true },
+            "transform": "./ListFoo#toSelectArray"
+        }
+    }
+}
+```
+
+**Rule 2 — Dependency inputs are optional.**
+When a dropdown depends on another input (e.g. `phoneNumberId` dropdown depends on `businessAccountId`), the dependency itself must NOT be in `schema.required[]`. Reason: the inspector evaluates required-input checks at design time on the host component; if a hard-required dependency is empty, the dropdown call never fires and the user sees no options AND no way to recover. Keeping the dependency optional means:
+
+- The dropdown source is still called when the dependency is empty
+- The source component handles missing input gracefully (returns `[]`)
+- The user can still type the target value manually
+- Runtime validation of the dependency happens at `receive()` time on the host component — set the actual requirement check there, not in `schema.required`.
+
+```jsonc
+"schema": {
+    "properties": {
+        "businessAccountId": { "type": "string" },
+        "phoneNumberId":     { "type": "string" }
+    },
+    "required": ["phoneNumberId"]   // NOT businessAccountId — it's a dropdown helper, not a hard requirement
+}
+```
+
+**Rule 3 & 4 — Error suppression and response caching** are covered below.
 
 The convention is to pass a sentinel property in `source.data.properties` so the component knows it is being called from the inspector, not from a live flow. Two property names are in use — use whichever is already established in the connector, and be consistent within a connector:
 
