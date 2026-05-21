@@ -4,6 +4,7 @@ const { generateText, streamText } = require('ai');
 const provider = require('./provider');
 const tracer = require('./tracer');
 const tools = require('./tools');
+const componentTool = require('./tool');
 const lib = require('./lib');
 
 const AI_AGENT_MAX_ATTEMPTS = 20;
@@ -87,7 +88,7 @@ async function buildUserContent(context, prompt, fileId) {
  *
  * Returns { messages, answer }.
  */
-async function agent(context, instructions, prompt, fileId, toolsDefinition, history) {
+async function agent(context, instructions, prompt, fileId, toolsDefinition, componentToolsDef, history) {
 
     const model = provider.createModel(context);
     const isStream = !!context.properties.stream;
@@ -132,7 +133,11 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, his
         let currentStepCtx = null;
         const getStepCtx = () => currentStepCtx;
 
-        const vercelTools = tools.buildVercelTools(context, toolsDefinition, otelTracer, getStepCtx);
+        const regularVercelTools = tools.buildVercelTools(context, toolsDefinition, otelTracer, getStepCtx);
+        const componentVercelTools = componentTool.buildComponentVercelTools(context, componentToolsDef, otelTracer, getStepCtx);
+        const vercelTools = (regularVercelTools || Object.keys(componentVercelTools).length)
+            ? { ...(regularVercelTools || {}), ...componentVercelTools }
+            : undefined;
 
         const sharedOptions = {
             model,
