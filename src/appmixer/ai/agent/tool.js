@@ -75,12 +75,11 @@ async function fetchAndCacheManifests(context) {
     for (const componentId of Object.keys(manifests)) {
         const otherType = flowDescriptor[componentId].type;
         try {
-            const { data } = await context.httpRequest({
-                url: `${process.env.APPMIXER_API_URL}/components/${encodeURIComponent(otherType)}?manifest=yes`,
-                method: 'GET',
-                headers: { Authorization: `Bearer ${context.config.token}` }
+            const manifest = await context.callAppmixer({
+                endPoint: `/components/${encodeURIComponent(otherType)}?manifest=yes`,
+                method: 'GET'
             });
-            manifests[componentId] = data;
+            manifests[componentId] = manifest;
         } catch (err) {
             await context.log({
                 step: 'component-tool-manifest-error',
@@ -128,12 +127,10 @@ async function buildDefsFromManifests(context, manifests) {
         if (!manifest) {
             // On-demand fetch if the manifest wasn't cached (e.g. newly connected component)
             try {
-                const { data } = await context.httpRequest({
-                    url: `${process.env.APPMIXER_API_URL}/components/${encodeURIComponent(component.type)}?manifest=yes`,
-                    method: 'GET',
-                    headers: { Authorization: `Bearer ${context.config.token}` }
+                manifest = await context.callAppmixer({
+                    endPoint: `/components/${encodeURIComponent(component.type)}?manifest=yes`,
+                    method: 'GET'
                 });
-                manifest = data;
             } catch (err) {
                 await context.log({
                     step: 'component-tool-manifest-error',
