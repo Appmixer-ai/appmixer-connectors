@@ -1,6 +1,7 @@
 'use strict';
 
 const tools = require('../tools');
+const componentTool = require('../tool');
 const agentModule = require('../agent');
 const memory = require('../memory');
 const lib = require('../lib');
@@ -15,6 +16,7 @@ module.exports = {
     start: async function(context) {
 
         await tools.collectTools(context);
+        await componentTool.collectComponentTools(context);
     },
 
     /**
@@ -42,6 +44,11 @@ module.exports = {
             toolsDefinition = await tools.collectTools(context);
         }
 
+        let componentToolsDef = await context.stateGet('componentTools');
+        if (!componentToolsDef) {
+            componentToolsDef = await componentTool.collectComponentTools(context);
+        }
+
         let history = [];
         if (threadId) {
             history = await memory.loadSummary(context, storeId, threadId);
@@ -56,6 +63,7 @@ module.exports = {
             prompt,
             fileId,
             toolsDefinition,
+            componentToolsDef,
             history
         );
 
