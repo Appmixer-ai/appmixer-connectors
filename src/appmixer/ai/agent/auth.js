@@ -1,7 +1,5 @@
 'use strict';
 
-const provider = require('./provider');
-
 module.exports = {
 
     type: 'apiKey',
@@ -80,7 +78,9 @@ module.exports = {
                 }
 
                 // All other providers: validate by making a real models list call.
-                await provider.listModels(context);
+                // Lazy-require so the module is loaded at call time, not at startup.
+                const { listModels } = require('./provider');
+                await listModels(context);
             },
 
             accountNameFromProfileInfo: (context) => {
