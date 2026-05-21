@@ -9,7 +9,7 @@ module.exports = {
         const { schema: schemaString, data } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
-            return this.generateOutputPortSchema(context, schemaString);
+            return this.generateOutputPortOptions(context, schemaString);
         }
 
         let output;
@@ -25,24 +25,19 @@ module.exports = {
         return context.sendJson(output, 'out');
     },
 
-    generateOutputPortSchema(context, schemaString) {
+    generateOutputPortOptions(context, schemaString) {
 
         let parsed;
         try {
             parsed = JSON.parse(schemaString);
         } catch (err) {
-            return context.sendJson({}, 'out');
+            return context.sendJson([], 'out');
         }
 
-        if (this.isJsonSchema(parsed)) {
-            return context.sendJson(parsed, 'out');
-        }
-
-        const schema = this.inferSchema(parsed);
-        if (parsed && typeof parsed === 'object') {
-            schema.example = parsed;
-        }
-        return context.sendJson(schema, 'out');
+        const schema = this.isJsonSchema(parsed) ? parsed : this.inferSchema(parsed);
+        const options = [];
+        this.schemaToOptions(schema, '', options);
+        return context.sendJson(options, 'out');
     },
 
     isJsonSchema(value) {
@@ -55,45 +50,84 @@ module.exports = {
         return false;
     },
 
-    inferSchema(value, key) {
+    inferSchema(value) {
 
-        if (value === null) return { type: 'null', title: this.titleFromKey(key) };
+        if (value === null) return { type: 'null' };
         if (Array.isArray(value)) {
             return {
                 type: 'array',
-                title: this.titleFromKey(key),
                 items: value.length > 0 ? this.inferSchema(value[0]) : {}
             };
         }
         if (typeof value === 'object') {
             const properties = {};
             for (const k of Object.keys(value)) {
-                properties[k] = this.inferSchema(value[k], k);
+                properties[k] = this.inferSchema(value[k]);
             }
-            const out = { type: 'object', properties };
-            if (key) out.title = this.titleFromKey(key);
-            return out;
+            return { type: 'object', properties };
         }
         switch (typeof value) {
-            case 'string': return { type: 'string', title: this.titleFromKey(key) };
-            case 'number': return { type: Number.isInteger(value) ? 'integer' : 'number', title: this.titleFromKey(key) };
-            case 'boolean': return { type: 'boolean', title: this.titleFromKey(key) };
+            case 'string': return { type: 'string', example: value };
+            case 'number': return { type: Number.isInteger(value) ? 'integer' : 'number', example: value };
+            case 'boolean': return { type: 'boolean', example: value };
             default: return {};
         }
     },
 
-    titleFromKey(key) {
+    // Mirror engine's createOutPortOptions: flat array with dotted paths,
+    // arrays are pushed as one option carrying the full schema, primitives
+    // and nested objects get individual entries.
+    schemaToOptions(schema, parentPath, options) {
 
-        if (!key) return undefined;
-        // snake_case / kebab-case / camelCase → Title Case
-        return String(key)
-            .replace(/[_-]+/g, ' ')
-            .replace(/([a-z])([A-Z])/g, '$1 $2')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .split(' ')
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+        if (!schema) return;
+
+        if (schema.type === 'array') {
+            options.push({
+                label: this.titleFromPath(parentPath) || 'Items',
+                value: parentPath || 'value',
+                schema
+            });
+            return;
+        }
+
+        const properties = schema.properties;
+        if (!properties) {
+            if (parentPath === '') {
+                options.push({
+                    label: 'Value',
+                    value: 'value',
+                    schema
+                });
+            }
+            return;
+        }
+
+        Object.keys(properties).forEach(prop => {
+            const path = parentPath ? (parentPath + '.' + prop) : prop;
+            const propSchema = properties[prop];
+            if (propSchema.type !== 'array') {
+                const option = { label: this.titleFromPath(path), value: path };
+                if (propSchema.type) {
+                    // For objects, only expose the type (no `properties`) — children are
+                    // covered by separate flat dotted-path entries below; including
+                    // `properties` would make the picker render duplicates.
+                    option.schema = propSchema.type === 'object'
+                        ? { type: 'object' }
+                        : { type: propSchema.type, ...(propSchema.example !== undefined ? { example: propSchema.example } : {}) };
+                }
+                options.push(option);
+            }
+            this.schemaToOptions(propSchema, path, options);
+        });
+    },
+
+    titleFromPath(path) {
+
+        if (!path) return '';
+        return String(path)
+            .split('.')
+            .map(seg => seg.charAt(0).toUpperCase() + seg.slice(1))
+            .join('.');
     },
 
     tryParseJson(str) {
