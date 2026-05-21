@@ -44,10 +44,10 @@ module.exports = {
             toolsDefinition = await tools.collectTools(context);
         }
 
-        let componentToolsDef = await context.stateGet('componentTools');
-        if (!componentToolsDef) {
-            componentToolsDef = await componentTool.collectComponentTools(context);
-        }
+        // Rebuild component tool definitions from cached manifests + live flowDescriptor
+        // on every receive() so "Model Defined Parameter" field markings are always
+        // evaluated against the current flow configuration.
+        const componentToolsDef = await componentTool.buildComponentToolDefs(context);
 
         let history = [];
         if (threadId) {
