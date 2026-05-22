@@ -9,11 +9,15 @@ module.exports = {
 
     async start(context) {
 
-        const wabaId = lib.resolveWabaId(context);
+        // Form override (inspector input) wins over the auto-discovered default
+        // from the OAuth profile.
+        const wabaId = (context.properties && context.properties.businessAccountId)
+            || lib.resolveWabaId(context);
+
         if (!wabaId) {
             throw new context.CancelError(
-                'No WhatsApp Business Account ID on the connected account. ' +
-                'Reconnect the WhatsApp account so the WABA is discovered.'
+                'No WhatsApp Business Account ID. Either fill the inspector field, ' +
+                'or reconnect the WhatsApp account so the WABA is discovered automatically.'
             );
         }
 
