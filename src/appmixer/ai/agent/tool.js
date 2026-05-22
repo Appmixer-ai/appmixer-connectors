@@ -298,7 +298,7 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
                 method: 'POST',
                 body: {
                     componentId: _componentId,
-                    messages: { [_inPort]: [messagePayload] }
+                    messages: { [_inPort]: { content: messagePayload } }
                 }
             });
             await context.log({ step: 'component-tool-result', displayName, result });
