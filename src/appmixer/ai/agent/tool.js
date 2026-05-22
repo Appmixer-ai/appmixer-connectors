@@ -15,67 +15,10 @@
  * user-set value are passed as static `properties` on every callAppmixer invocation.
  */
 
-const zlib = require('zlib');
 const { jsonSchema, tool } = require('ai');
 
 const TOOL_PORT = 'tool';
 const MODEL_DEFINED_PARAM_KEY = 'modelDefinedParameter';
-
-// ─── ZIP extraction ───────────────────────────────────────────────────────────
-
-/**
- * Extract and parse the component.json for a given component type from the ZIP
- * blob returned by GET /components/{type}.
- *
- * The ZIP contains entries like:
- *   appmixer/slack/list/SendChannelMessage/component.json
- *
- * We scan all local-file-header entries, decompress each component.json we find,
- * and return the one whose "name" field matches componentType.
- */
-function extractComponentJson(raw, componentType) {
-    // callAppmixer may return a Buffer or a binary string — normalise to Buffer.
-    const buf = Buffer.isBuffer(raw) ? raw : Buffer.from(raw, 'binary');
-
-    const LOCAL_FILE_SIG = 0x04034b50; // PK\x03\x04
-    let offset = 0;
-    const candidates = [];
-
-    while (offset + 30 <= buf.length) {
-        if (buf.readUInt32LE(offset) !== LOCAL_FILE_SIG) {
-            offset++;
-            continue;
-        }
-
-        const compression  = buf.readUInt16LE(offset + 8);
-        const compressedSz = buf.readUInt32LE(offset + 18);
-        const filenameSz   = buf.readUInt16LE(offset + 26);
-        const extraSz      = buf.readUInt16LE(offset + 28);
-        const dataStart    = offset + 30 + filenameSz + extraSz;
-        const dataEnd      = dataStart + compressedSz;
-
-        if (dataEnd > buf.length) break;
-
-        const filename = buf.slice(offset + 30, offset + 30 + filenameSz).toString('utf8');
-
-        if (filename.endsWith('component.json')) {
-            const compressed = buf.slice(dataStart, dataEnd);
-            try {
-                const jsonStr = compression === 0
-                    ? compressed.toString('utf8')                        // stored
-                    : zlib.inflateRawSync(compressed).toString('utf8'); // deflated
-                const parsed = JSON.parse(jsonStr);
-                candidates.push(parsed);
-            } catch (_) { /* skip unreadable entry */ }
-        }
-
-        offset = dataEnd;
-    }
-
-    if (candidates.length === 0) return null;
-    // Prefer the entry whose "name" matches the requested type exactly.
-    return candidates.find(c => c.name === componentType) || candidates[0];
-}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,12 +34,18 @@ function isModelDefinedParameter(val, agentComponentId) {
 
 // ─── Manifest fetching ────────────────────────────────────────────────────────
 
+/**
+ * Fetch the component manifest for a given fully-qualified component type.
+ * Uses the public /components?selector=TYPE endpoint — no auth required.
+ * Returns the first (and normally only) entry in the result array.
+ */
 async function fetchManifest(context, componentType) {
     const raw = await context.callAppmixer({
-        endPoint: `/components/${encodeURIComponent(componentType)}`,
+        endPoint: `/components?selector=${encodeURIComponent(componentType)}`,
         method: 'GET'
     });
-    return extractComponentJson(raw, componentType);
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed[0] : parsed;
 }
 
 // ─── Discovery ────────────────────────────────────────────────────────────────
