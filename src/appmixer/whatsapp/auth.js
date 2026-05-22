@@ -86,8 +86,6 @@ module.exports = {
                     profile.businessAccountId = wabaIds[0];   // default WABA
                     profile.wabaIds = wabaIds;                // full list for diagnostics
                 }
-                console.log('------------------')
-                console.log(wabaIds)
 
             } catch (err) {
                 // Best-effort — auth still succeeds even when /debug_token is unavailable.
