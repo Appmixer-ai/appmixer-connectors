@@ -240,6 +240,7 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
             description: manifest.description || rawLabel,
             ...(Object.keys(parameters.properties).length ? { parameters } : {}),
             _componentTool: true,
+            _componentId: componentId,
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
             _userStaticValues: userStaticValues,
@@ -275,7 +276,7 @@ function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCt
 }
 
 async function executeComponentTool(context, toolDef, args, tracer, toolCallId, getStepCtx) {
-    const { name: fullToolName, _componentType, _inPort, _userStaticValues } = toolDef.function;
+    const { name: fullToolName, _componentId, _componentType, _inPort, _userStaticValues } = toolDef.function;
     const endPoint = '/component/' + _componentType.replace(/\./g, '/');
     const displayName = fullToolName.split('_').slice(1).join('_');
 
@@ -285,6 +286,7 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
                 endPoint,
                 method: 'POST',
                 body: {
+                    componentId: _componentId,
                     messages: { [_inPort]: [args] },
                     properties: _userStaticValues
                 }
