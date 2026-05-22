@@ -126,6 +126,8 @@ async function buildDefsFromManifests(context, manifests) {
             }
         }
 
+        const def = buildComponentToolDef(componentId, component, manifest, inPortName, agentComponentId);
+
         await context.log({
             step: 'component-tool-manifest-inspect',
             componentId,
@@ -133,10 +135,9 @@ async function buildDefsFromManifests(context, manifests) {
             manifestLabel: manifest?.label,
             manifestName: manifest?.name,
             inPortNames: (manifest?.inPorts || []).map(p => p.name),
-            configProperties: component.config?.properties || {}
+            aiFields: def?.function?._aiFields || [],
+            userStaticValues: def?.function?._userStaticValues || {}
         });
-
-        const def = buildComponentToolDef(componentId, component, manifest, inPortName, agentComponentId);
         if (def) defs.push(def);
     }
 
@@ -159,18 +160,35 @@ async function buildComponentToolDefs(context) {
 // ─── Tool definition builder ──────────────────────────────────────────────────
 
 function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, agentComponentId) {
-    const userConfig = componentDescriptor.config?.properties || {};
-
     const aiFields = new Set();
     const userStaticValues = {};
 
-    for (const [key, val] of Object.entries(userConfig)) {
-        if (val === null || val === undefined || val === '') continue;
-        const str = String(val);
-        if (isModelDefinedParameter(str, agentComponentId)) {
-            aiFields.add(key);
-        } else if (!isHandlebarsExpression(str)) {
-            userStaticValues[key] = val;
+    // Field configuration lives in config.transform[inPortName][agentComponentId][TOOL_PORT]
+    // (not config.properties — that's empty for tool-port components).
+    const transform = componentDescriptor.config?.transform?.[connectedInPortName]?.[agentComponentId]?.[TOOL_PORT];
+    if (transform) {
+        const modifiers = transform.modifiers || {};
+        const lambda = transform.lambda || {};
+
+        // AI fields: modifier entries whose variable references modelDefinedParameter
+        for (const [key, modifier] of Object.entries(modifiers)) {
+            if (!modifier || typeof modifier !== 'object') continue;
+            for (const entry of Object.values(modifier)) {
+                if (entry?.variable && entry.variable.includes('modelDefinedParameter')) {
+                    aiFields.add(key);
+                    break;
+                }
+            }
+        }
+
+        // Static values: lambda entries that are literal (not Handlebars) and not AI-filled
+        for (const [key, val] of Object.entries(lambda)) {
+            if (aiFields.has(key)) continue;
+            if (val === null || val === undefined || val === '') continue;
+            const str = String(val);
+            if (!isHandlebarsExpression(str)) {
+                userStaticValues[key] = val;
+            }
         }
     }
 
@@ -224,7 +242,8 @@ function buildComponentToolDef(componentId, componentDescriptor, manifest, conne
             _componentTool: true,
             _componentType: manifest.name || componentDescriptor.type,
             _inPort: inPortDef?.name || 'in',
-            _userStaticValues: userStaticValues
+            _userStaticValues: userStaticValues,
+            _aiFields: [...aiFields]
         }
     };
 }
