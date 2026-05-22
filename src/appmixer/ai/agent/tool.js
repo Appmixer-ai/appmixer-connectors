@@ -281,16 +281,27 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
     const displayName = fullToolName.split('_').slice(1).join('_');
 
     const runTool = async () => {
+        // Merge static user-configured values with AI-provided args into a single message object.
+        const messagePayload = { ..._userStaticValues, ...args };
+        await context.log({
+            step: 'component-tool-call',
+            displayName,
+            componentId: _componentId,
+            inPort: _inPort,
+            aiArgs: args,
+            staticValues: _userStaticValues,
+            mergedPayload: messagePayload
+        });
         try {
             const result = await context.callAppmixer({
                 endPoint,
                 method: 'POST',
                 body: {
                     componentId: _componentId,
-                    messages: { [_inPort]: [args] },
-                    properties: _userStaticValues
+                    messages: { [_inPort]: [messagePayload] }
                 }
             });
+            await context.log({ step: 'component-tool-result', displayName, result });
             return typeof result === 'string' ? result : JSON.stringify(result, null, 2);
         } catch (err) {
             await context.log({ step: 'component-tool-call-error', displayName, endPoint, error: err.message });
