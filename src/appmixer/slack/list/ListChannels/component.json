@@ -11,43 +11,69 @@
         ]
     },
     "inPorts": [
-        "in"
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "min": 1
+                    }
+                },
+                "required": []
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "defaultValue": "first",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the rows to a file is the most efficient method.",
+                        "options": [
+                            {
+                                "label": "First Found",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "File",
+                                "value": "file"
+                            }
+                        ]
+                    },
+                    "limit": {
+                        "type": "number",
+                        "label": "Limit",
+                        "tooltip": "The maximum number of channels to fetch. If left blank, all channels will be fetched.",
+                        "index": 2
+                    }
+                }
+            }
+        }
     ],
     "outPorts": [
         {
-            "name": "channels",
-            "schema": {
-                "type": "array",
-                "items": {
-                    "type": "object",
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/slack/list/ListChannels?outPort=out",
+                "data": {
                     "properties": {
-                        "id":          { "type": "string",  "title": "Channel ID" },
-                        "name":        { "type": "string",  "title": "Channel Name" },
-                        "is_private":  { "type": "boolean", "title": "Is Private" },
-                        "is_archived": { "type": "boolean", "title": "Is Archived" },
-                        "is_general":  { "type": "boolean", "title": "Is General" },
-                        "is_member":   { "type": "boolean", "title": "Is Member" },
-                        "created":     { "type": "number",  "title": "Created (Unix timestamp)" },
-                        "num_members": { "type": "number",  "title": "Member Count" },
-                        "creator":     { "type": "string",  "title": "Creator User ID" },
-                        "topic": {
-                            "type": "object",
-                            "title": "Topic",
-                            "properties": {
-                                "value":    { "type": "string" },
-                                "creator":  { "type": "string" },
-                                "last_set": { "type": "number" }
-                            }
-                        },
-                        "purpose": {
-                            "type": "object",
-                            "title": "Purpose",
-                            "properties": {
-                                "value":    { "type": "string" },
-                                "creator":  { "type": "string" },
-                                "last_set": { "type": "number" }
-                            }
-                        }
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
                     }
                 }
             }
