@@ -1,0 +1,368 @@
+{
+    "name": "E2E Ai/openai - Generate Image",
+    "flow": {
+        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0"
+        },
+        "27fe7676-6028-43d0-b16f-368cc2d8d0d6": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 260,
+            "y": 320,
+            "source": {
+                "in": {
+                    "fbb75e69-59ee-4f2e-a7e8-212e903ce201": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "imagePrompt",
+                                                "text": "A serene mountain landscape at sunset with snow-capped peaks"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 430,
+            "y": 320,
+            "source": {
+                "in": {
+                    "27fe7676-6028-43d0-b16f-368cc2d8d0d6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "aa11bb22-cc33-dd44-ee55-ff6677889900": {
+            "type": "appmixer.ai.openai.GenerateImage",
+            "x": 620,
+            "y": 320,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "prompt": {},
+                                    "size": {},
+                                    "model": {}
+                                },
+                                "lambda": {
+                                    "prompt": "A serene mountain landscape at sunset with snow-capped peaks",
+                                    "size": "1024x1024",
+                                    "model": "dall-e-3"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a1b2c3d4-e5f6-7890-abcd-ef1234567890": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 840,
+            "y": 180,
+            "source": {
+                "in": {
+                    "aa11bb22-cc33-dd44-ee55-ff6677889900": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "aa11bb22-cc33-dd44-ee55-ff6677889900": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "actual": {
+                                        "a1b2c3d4-0001-0001-0001-ef1234567890": {
+                                            "variable": "$.aa11bb22-cc33-dd44-ee55-ff6677889900.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "expected": {},
+                                    "operator": {}
+                                },
+                                "lambda": {
+                                    "actual": "{{{a1b2c3d4-0001-0001-0001-ef1234567890}}}",
+                                    "expected": "",
+                                    "operator": "isNotEmpty",
+                                    "testCase": "GenerateImage - fileId is not empty"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "b2c3d4e5-f6a7-8901-bcde-f12345678901": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 840,
+            "y": 320,
+            "source": {
+                "in": {
+                    "aa11bb22-cc33-dd44-ee55-ff6677889900": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "aa11bb22-cc33-dd44-ee55-ff6677889900": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "actual": {
+                                        "b2c3d4e5-0001-0001-0001-f12345678901": {
+                                            "variable": "$.aa11bb22-cc33-dd44-ee55-ff6677889900.out.size",
+                                            "functions": []
+                                        }
+                                    },
+                                    "expected": {},
+                                    "operator": {}
+                                },
+                                "lambda": {
+                                    "actual": "{{{b2c3d4e5-0001-0001-0001-f12345678901}}}",
+                                    "expected": "1024x1024",
+                                    "operator": "equal",
+                                    "testCase": "GenerateImage - size equals 1024x1024"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c3d4e5f6-a7b8-9012-cdef-123456789012": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 840,
+            "y": 460,
+            "source": {
+                "in": {
+                    "aa11bb22-cc33-dd44-ee55-ff6677889900": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "aa11bb22-cc33-dd44-ee55-ff6677889900": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "actual": {
+                                        "c3d4e5f6-0001-0001-0001-123456789012": {
+                                            "variable": "$.aa11bb22-cc33-dd44-ee55-ff6677889900.out.prompt",
+                                            "functions": []
+                                        }
+                                    },
+                                    "expected": {},
+                                    "operator": {}
+                                },
+                                "lambda": {
+                                    "actual": "{{{c3d4e5f6-0001-0001-0001-123456789012}}}",
+                                    "expected": "",
+                                    "operator": "isNotEmpty",
+                                    "testCase": "GenerateImage - prompt is not empty"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "d4e5f6a7-b8c9-0123-defa-234567890123": {
+            "type": "appmixer.ai.openai.VariableExtractor",
+            "x": 1060,
+            "y": 320,
+            "source": {
+                "in": {
+                    "b2c3d4e5-f6a7-8901-bcde-f12345678901": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "b2c3d4e5-f6a7-8901-bcde-f12345678901": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {},
+                                    "model": {},
+                                    "outputVariables": {}
+                                },
+                                "lambda": {
+                                    "text": "A serene mountain landscape at sunset with snow-capped peaks",
+                                    "model": "gpt-4o",
+                                    "outputVariables": {
+                                        "ADD": [
+                                            {
+                                                "name": "subject",
+                                                "dataType": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e5f6a7b8-c9d0-1234-efab-345678901234": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1280,
+            "y": 320,
+            "source": {
+                "in": {
+                    "d4e5f6a7-b8c9-0123-defa-234567890123": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d4e5f6a7-b8c9-0123-defa-234567890123": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "actual": {
+                                        "e5f6a7b8-0001-0001-0001-345678901234": {
+                                            "variable": "$.d4e5f6a7-b8c9-0123-defa-234567890123.out.subject",
+                                            "functions": []
+                                        }
+                                    },
+                                    "expected": {},
+                                    "operator": {}
+                                },
+                                "lambda": {
+                                    "actual": "{{{e5f6a7b8-0001-0001-0001-345678901234}}}",
+                                    "expected": "",
+                                    "operator": "isNotEmpty",
+                                    "testCase": "VariableExtractor - subject variable is not empty"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1500,
+            "y": 320,
+            "source": {
+                "in": {
+                    "a1b2c3d4-e5f6-7890-abcd-ef1234567890": [
+                        "out"
+                    ],
+                    "b2c3d4e5-f6a7-8901-bcde-f12345678901": [
+                        "out"
+                    ],
+                    "c3d4e5f6-a7b8-9012-cdef-123456789012": [
+                        "out"
+                    ],
+                    "e5f6a7b8-c9d0-1234-efab-345678901234": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "e0c5d708-7014-4766-87b3-73dd3d528f5c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1700,
+            "y": 320,
+            "source": {
+                "in": {
+                    "e2051970-21f2-4a3e-9cf5-3afc253a478b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "661a2f77-19b7-4dbd-9f30-7ff556d65c4a": {
+                                            "variable": "$.e2051970-21f2-4a3e-9cf5-3afc253a478b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Ai/openai - Generate Image",
+                                    "result": "{{{661a2f77-19b7-4dbd-9f30-7ff556d65c4a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
