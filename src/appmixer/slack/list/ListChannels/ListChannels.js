@@ -4,7 +4,35 @@
 const lib = require('../../lib');
 const { WebClient } = require('@slack/web-api');
 
-const outputPortName = 'out';
+const outputPortName = 'channels';
+
+const schema = {
+    id:          { type: 'string',  title: 'Channel ID',              example: 'C01234567' },
+    name:        { type: 'string',  title: 'Channel Name',            example: 'general' },
+    is_private:  { type: 'boolean', title: 'Is Private',              example: false },
+    is_archived: { type: 'boolean', title: 'Is Archived',             example: false },
+    is_general:  { type: 'boolean', title: 'Is General',              example: true },
+    is_member:   { type: 'boolean', title: 'Is Member',               example: true },
+    created:     { type: 'number',  title: 'Created (Unix timestamp)', example: 1609459200 },
+    num_members: { type: 'number',  title: 'Member Count',            example: 42 },
+    creator:     { type: 'string',  title: 'Creator User ID',         example: 'U01234567' },
+    topic: {
+        type: 'object', title: 'Topic',
+        properties: {
+            value:    { type: 'string', title: 'Topic Value',    example: 'Company announcements' },
+            creator:  { type: 'string', title: 'Topic Creator',  example: 'U01234567' },
+            last_set: { type: 'number', title: 'Topic Last Set', example: 1609459200 }
+        }
+    },
+    purpose: {
+        type: 'object', title: 'Purpose',
+        properties: {
+            value:    { type: 'string', title: 'Purpose Value',    example: 'This channel is for team-wide communication' },
+            creator:  { type: 'string', title: 'Purpose Creator',  example: 'U01234567' },
+            last_set: { type: 'number', title: 'Purpose Last Set', example: 1609459200 }
+        }
+    }
+};
 
 module.exports = {
 
@@ -37,103 +65,62 @@ module.exports = {
 
         const records = limit ? channels.slice(0, limit) : channels;
 
+        // When called as a dropdown source (no outputType), preserve original behaviour
+        // so consuming components' channelsToSelectArray transform still works.
+        if (!outputType) {
+            return context.sendJson(records, outputPortName);
+        }
+
         return lib.sendArrayOutput({ context, outputPortName, outputType, records });
     },
 
     getOutputPortOptions(context, outputType) {
 
         if (outputType === 'object' || outputType === 'first') {
-            return context.sendJson([
-                { label: 'Channel ID', value: 'id' },
-                { label: 'Channel Name', value: 'name' },
-                { label: 'Is Private', value: 'is_private' },
-                { label: 'Is Archived', value: 'is_archived' },
-                { label: 'Is General', value: 'is_general' },
-                { label: 'Is Member', value: 'is_member' },
-                { label: 'Created (Unix timestamp)', value: 'created' },
-                { label: 'Member Count', value: 'num_members' },
-                { label: 'Creator User ID', value: 'creator' },
-                { label: 'Topic', value: 'topic', schema: {
-                    type: 'object',
-                    properties: {
-                        value: { type: 'string', title: 'Topic Value' },
-                        creator: { type: 'string', title: 'Topic Creator' },
-                        last_set: { type: 'number', title: 'Topic Last Set' }
-                    }
-                } },
-                { label: 'Purpose', value: 'purpose', schema: {
-                    type: 'object',
-                    properties: {
-                        value: { type: 'string', title: 'Purpose Value' },
-                        creator: { type: 'string', title: 'Purpose Creator' },
-                        last_set: { type: 'number', title: 'Purpose Last Set' }
-                    }
-                } }
-            ], outputPortName);
-        } else if (outputType === 'array') {
-            return context.sendJson([
-                {
-                    label: 'Channels',
-                    value: 'records',
-                    schema: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            properties: {
-                                id: { label: 'Channel ID', value: 'id' },
-                                name: { label: 'Channel Name', value: 'name' },
-                                is_private: { label: 'Is Private', value: 'is_private' },
-                                is_archived: { label: 'Is Archived', value: 'is_archived' },
-                                is_general: { label: 'Is General', value: 'is_general' },
-                                is_member: { label: 'Is Member', value: 'is_member' },
-                                created: { label: 'Created (Unix timestamp)', value: 'created' },
-                                num_members: { label: 'Member Count', value: 'num_members' },
-                                creator: { label: 'Creator User ID', value: 'creator' },
-                                topic: { label: 'Topic', value: 'topic', schema: {
-                                    type: 'object',
-                                    properties: {
-                                        value: { type: 'string', title: 'Topic Value' },
-                                        creator: { type: 'string', title: 'Topic Creator' },
-                                        last_set: { type: 'number', title: 'Topic Last Set' }
-                                    }
-                                } },
-                                purpose: { label: 'Purpose', value: 'purpose', schema: {
-                                    type: 'object',
-                                    properties: {
-                                        value: { type: 'string', title: 'Purpose Value' },
-                                        creator: { type: 'string', title: 'Purpose Creator' },
-                                        last_set: { type: 'number', title: 'Purpose Last Set' }
-                                    }
-                                } }
-                            }
-                        }
+            const options = Object.entries(schema).map(([field, def]) => {
+                const { title: label, ...rest } = def;
+                return { label, value: field, schema: rest };
+            });
+            return context.sendJson(options, outputPortName);
+        }
+
+        if (outputType === 'array') {
+            return context.sendJson([{
+                label: 'Channels',
+                value: 'records',
+                schema: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: Object.fromEntries(
+                            Object.entries(schema).map(([field, def]) => {
+                                const { title: label, ...rest } = def;
+                                return [field, { label, value: field, schema: rest }];
+                            })
+                        )
                     }
                 }
-            ], outputPortName);
-        } else if (outputType === 'file') {
+            }], outputPortName);
+        }
+
+        if (outputType === 'file') {
             return context.sendJson([
                 { label: 'File ID', value: 'fileId', schema: { type: 'string', format: 'appmixer-file-id' } }
             ], outputPortName);
-        } else {
-            return context.sendJson([], outputPortName);
         }
+
+        return context.sendJson([], outputPortName);
     },
 
     channelsToSelectArray(channels) {
 
-        let transformed = [];
+        if (!Array.isArray(channels)) return [];
 
-        if (Array.isArray(channels)) {
-            channels.forEach(channel => {
-                if (channel['is_member']) {
-                    transformed.push({
-                        label: channel['name'],
-                        value: channel['id']
-                    });
-                }
-            });
-        }
-
-        return transformed;
+        return channels
+            .filter(channel => channel['is_member'])
+            .map(channel => ({
+                label: channel['name'],
+                value: channel['id']
+            }));
     }
 };
