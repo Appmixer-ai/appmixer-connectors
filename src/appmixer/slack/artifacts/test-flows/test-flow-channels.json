@@ -1,10 +1,8 @@
 {
-    "name": "E2E Slack - Channels",
-    "description": "End-to-end test for Slack connector - tests ListChannels (outputType=first), verifying the first channel has non-empty id and name fields",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
+            "x": -208,
             "y": 80,
             "source": {},
             "version": "1.0.0",
@@ -12,7 +10,7 @@
         },
         "list-channels": {
             "type": "appmixer.slack.list.ListChannels",
-            "x": 256,
+            "x": 128,
             "y": 80,
             "version": "1.0.0",
             "source": {
@@ -23,13 +21,14 @@
                 }
             },
             "config": {
-                "properties": {},
                 "transform": {
                     "in": {
                         "on-start": {
                             "out": {
                                 "type": "json2new",
-                                "modifiers": {},
+                                "modifiers": {
+                                    "outputType": {}
+                                },
                                 "lambda": {
                                     "outputType": "first"
                                 }
@@ -44,13 +43,6 @@
             "x": 448,
             "y": 16,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-channels": [
-                        "channels"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
@@ -59,8 +51,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "channel-id-var": {
-                                            "variable": "$.list-channels.out.id",
+                                        "86178af0-a25e-4a96-9b79-df50e4e6fef6": {
+                                            "variable": "$.list-channels.channels.id",
                                             "functions": []
                                         }
                                     }
@@ -69,8 +61,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{channel-id-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{86178af0-a25e-4a96-9b79-df50e4e6fef6}}}"
                                             }
                                         ]
                                     }
@@ -78,6 +70,13 @@
                             }
                         }
                     }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-channels": [
+                        "channels"
+                    ]
                 }
             }
         },
@@ -86,13 +85,6 @@
             "x": 448,
             "y": 144,
             "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-channels": [
-                        "channels"
-                    ]
-                }
-            },
             "config": {
                 "transform": {
                     "in": {
@@ -101,8 +93,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "channel-name-var": {
-                                            "variable": "$.list-channels.out.name",
+                                        "3ead8694-3f67-4db7-b2c4-95b1eb4115cc": {
+                                            "variable": "$.list-channels.channels.name",
                                             "functions": []
                                         }
                                     }
@@ -111,8 +103,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{channel-name-var}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{3ead8694-3f67-4db7-b2c4-95b1eb4115cc}}}"
                                             }
                                         ]
                                     }
@@ -120,6 +112,13 @@
                             }
                         }
                     }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-channels": [
+                        "channels"
+                    ]
                 }
             }
         },
@@ -148,7 +147,7 @@
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 832,
             "y": 80,
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "in": {
                     "after-all": [
@@ -158,8 +157,8 @@
             },
             "config": {
                 "properties": {
-                    "successStoreId": "",
-                    "failedStoreId": ""
+                    "successStoreId": "69d7a34d8c93c638d53aaf8d",
+                    "failedStoreId": "69d7a34d8c93c638d53aaf8c"
                 },
                 "transform": {
                     "in": {
@@ -167,17 +166,19 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "expression": {
-                                        "result-var": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ef50e9cb-272d-42bf-8344-1c2bfffd010d": {
                                             "variable": "$.after-all.out",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "recipients": "",
+                                    "recipients": "test@appmixer.ai",
                                     "testCase": "E2E Slack - Channels",
-                                    "result": "{{{result-var}}}"
+                                    "result": "{{{ef50e9cb-272d-42bf-8344-1c2bfffd010d}}}"
                                 }
                             }
                         }
