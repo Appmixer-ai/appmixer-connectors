@@ -1,113 +1,34 @@
 {
     "flow": {
-        "start": {
+        "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 94,
-            "y": 192,
+            "x": 48,
+            "y": 208,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 240,
-            "y": 192,
-            "source": {
-                "in": {
-                    "start": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {
-                                        "b2b3da79-4d91-4796-950b-8bef1112d9e7": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "f7266361-4795-48ab-8b8a-de5be7f55b6a": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "type": "text",
-                                                "name": "campaignName",
-                                                "toggle": false,
-                                                "text": "E2E Test Campaign{{{b2b3da79-4d91-4796-950b-8bef1112d9e7}}}"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "updatedCampaignName",
-                                                "text": "E2E Test Campaign Updated{{{f7266361-4795-48ab-8b8a-de5be7f55b6a}}}"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 394,
-            "y": 192,
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0"
-        },
         "create-campaign": {
             "type": "appmixer.getResponse.core.CreateCampaign",
-            "x": 528,
-            "y": 192,
+            "x": 208,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "before-all": [
-                        "out"
-                    ]
+                    "on-start": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "on-start": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "name": {
-                                        "var-campaign-name": {
-                                            "variable": "$.set-variables.out.campaignName",
-                                            "functions": []
-                                        }
-                                    }
+                                    "name": {}
                                 },
                                 "lambda": {
-                                    "name": "{{{var-campaign-name}}}"
+                                    "name": "e2e-test-campaign"
                                 }
                             }
                         }
@@ -115,16 +36,14 @@
                 }
             }
         },
-        "assert-create": {
+        "assert-campaign-created": {
             "type": "appmixer.utils.test.Assert",
-            "x": 944,
-            "y": 192,
+            "x": 400,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-campaign": [
-                        "out"
-                    ]
+                    "create-campaign": ["out"]
                 }
             },
             "config": {
@@ -135,16 +54,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "campaign-id-check": {
+                                        "campaign-id": {
                                             "variable": "$.create-campaign.out.campaignId",
-                                            "functions": []
-                                        },
-                                        "campaign-name-check": {
-                                            "variable": "$.create-campaign.out.name",
-                                            "functions": []
-                                        },
-                                        "57a16a41-26c9-4597-a0ba-b9241eb457ab": {
-                                            "variable": "$.set-variables.out.campaignName",
                                             "functions": []
                                         }
                                     }
@@ -154,12 +65,7 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{campaign-id-check}}}"
-                                            },
-                                            {
-                                                "assertion": "equal",
-                                                "field": "{{{campaign-name-check}}}",
-                                                "expected": "{{{57a16a41-26c9-4597-a0ba-b9241eb457ab}}}"
+                                                "field": "{{{campaign-id}}}"
                                             }
                                         ]
                                     }
@@ -170,16 +76,14 @@
                 }
             }
         },
-        "list-campaigns": {
+        "find-campaigns": {
             "type": "appmixer.getResponse.core.FindCampaigns",
-            "x": 736,
-            "y": 528,
+            "x": 608,
+            "y": 96,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-campaign": [
-                        "out"
-                    ]
+                    "create-campaign": ["out"]
                 }
             },
             "config": {
@@ -189,12 +93,10 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "outputType": {},
-                                    "status": {}
+                                    "outputType": {}
                                 },
                                 "lambda": {
-                                    "outputType": "first",
-                                    "status": "active"
+                                    "outputType": "first"
                                 }
                             }
                         }
@@ -202,25 +104,26 @@
                 }
             }
         },
-        "assert-list": {
+        "assert-find-campaigns": {
             "type": "appmixer.utils.test.Assert",
-            "x": 944,
-            "y": 512,
+            "x": 800,
+            "y": 96,
             "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-campaigns": ["out"]
+                }
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "list-campaigns": {
+                        "find-campaigns": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "campaigns-count-check": {
-                                            "variable": "$.list-campaigns.out.count",
-                                            "functions": []
-                                        },
-                                        "b4aed32f-e63f-4812-9d3d-1aca33a1d27b": {
-                                            "variable": "$.create-campaign.out.campaignId",
+                                        "found-campaign-id": {
+                                            "variable": "$.find-campaigns.out.campaignId",
                                             "functions": []
                                         }
                                     }
@@ -230,11 +133,7 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{campaigns-count-check}}}"
-                                            },
-                                            {
-                                                "field": "{{{b4aed32f-e63f-4812-9d3d-1aca33a1d27b}}}",
-                                                "assertion": "notEmpty"
+                                                "field": "{{{found-campaign-id}}}"
                                             }
                                         ]
                                     }
@@ -242,26 +141,17 @@
                             }
                         }
                     }
-                }
-            },
-            "source": {
-                "in": {
-                    "list-campaigns": [
-                        "out"
-                    ]
                 }
             }
         },
         "update-campaign": {
             "type": "appmixer.getResponse.core.UpdateCampaign",
-            "x": 736,
-            "y": 368,
+            "x": 608,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-campaign": [
-                        "out"
-                    ]
+                    "create-campaign": ["out"]
                 }
             },
             "config": {
@@ -277,16 +167,11 @@
                                             "functions": []
                                         }
                                     },
-                                    "name": {
-                                        "var-updated-name": {
-                                            "variable": "$.set-variables.out.updatedCampaignName",
-                                            "functions": []
-                                        }
-                                    }
+                                    "name": {}
                                 },
                                 "lambda": {
                                     "campaignId": "{{{var-campaign-id}}}",
-                                    "name": "{{{var-updated-name}}}"
+                                    "name": "e2e-test-campaign-updated"
                                 }
                             }
                         }
@@ -294,16 +179,14 @@
                 }
             }
         },
-        "assert-update": {
+        "assert-campaign-updated": {
             "type": "appmixer.utils.test.Assert",
-            "x": 944,
-            "y": 368,
+            "x": 800,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "update-campaign": [
-                        "out"
-                    ]
+                    "update-campaign": ["out"]
                 }
             },
             "config": {
@@ -314,8 +197,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "success-check": {
-                                            "variable": "$.set-variables.out.updatedCampaignName",
+                                        "updated-campaign-id": {
+                                            "variable": "$.update-campaign.out.campaignId",
                                             "functions": []
                                         }
                                     }
@@ -325,7 +208,7 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{success-check}}}"
+                                                "field": "{{{updated-campaign-id}}}"
                                             }
                                         ]
                                     }
@@ -338,22 +221,16 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1306,
-            "y": 192,
+            "x": 1008,
+            "y": 208,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-create": [
-                        "out"
-                    ],
-                    "assert-list": [
-                        "out"
-                    ],
-                    "assert-update": [
-                        "out"
-                    ]
+                    "assert-campaign-created": ["out"],
+                    "assert-find-campaigns": ["out"],
+                    "assert-campaign-updated": ["out"]
                 }
             },
-            "version": "1.0.0",
             "config": {
                 "properties": {
                     "timeout": 30
@@ -362,14 +239,12 @@
         },
         "delete-campaign": {
             "type": "appmixer.getResponse.core.DeleteCampaign",
-            "x": 1456,
-            "y": 192,
+            "x": 1200,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "after-all": [
-                        "out"
-                    ]
+                    "after-all": ["out"]
                 }
             },
             "config": {
@@ -397,18 +272,15 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1606,
-            "y": 192,
+            "x": 1392,
+            "y": 208,
             "version": "1.0.1",
             "source": {
                 "in": {
-                    "delete-campaign": [
-                        "out"
-                    ]
+                    "delete-campaign": ["out"]
                 }
             },
             "config": {
-                "properties": {},
                 "transform": {
                     "in": {
                         "delete-campaign": {

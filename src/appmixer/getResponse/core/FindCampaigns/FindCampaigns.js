@@ -3,7 +3,7 @@
 const lib = require('../../lib');
 
 const schema = {
-    'id': { 'type': 'string', 'title': 'Campaign ID' },
+    'campaignId': { 'type': 'string', 'title': 'Campaign ID' },
     'name': { 'type': 'string', 'title': 'Name' },
     'status': { 'type': 'string', 'title': 'Status' },
     'createdOn': { 'type': 'string', 'format': 'date-time', 'title': 'Created On' },

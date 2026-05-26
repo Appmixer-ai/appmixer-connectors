@@ -2,106 +2,26 @@
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 48,
+            "y": 208,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 250,
-            "y": 200,
-            "source": {
-                "in": {
-                    "on-start": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {}
-        },
-        "list-contacts": {
-            "type": "appmixer.getResponse.core.ListContacts",
-            "x": 400,
-            "y": 100,
+        "find-campaigns-array": {
+            "type": "appmixer.getResponse.core.FindCampaigns",
+            "x": 208,
+            "y": 96,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "before-all": [
-                        "out"
-                    ]
+                    "on-start": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "state": {},
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "state": "active",
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-campaigns": {
-            "type": "appmixer.getResponse.core.ListCampaigns",
-            "x": 400,
-            "y": 200,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "before-all": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "before-all": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "status": {},
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "status": "active",
-                                    "outputType": "array"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-tags": {
-            "type": "appmixer.getResponse.core.ListTags",
-            "x": 400,
-            "y": 300,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "before-all": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "before-all": {
+                        "on-start": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -116,28 +36,26 @@
                 }
             }
         },
-        "assert-contacts": {
+        "assert-campaigns-list": {
             "type": "appmixer.utils.test.Assert",
-            "x": 600,
-            "y": 100,
+            "x": 400,
+            "y": 96,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "list-contacts": [
-                        "out"
-                    ]
+                    "find-campaigns-array": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "list-contacts": {
+                        "find-campaigns-array": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "contacts-check": {
-                                            "variable": "$.list-contacts.out.result",
+                                        "campaigns-count": {
+                                            "variable": "$.find-campaigns-array.out.count",
                                             "functions": []
                                         }
                                     }
@@ -146,8 +64,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{contacts-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{campaigns-count}}}"
                                             }
                                         ]
                                     }
@@ -158,28 +76,54 @@
                 }
             }
         },
-        "assert-campaigns": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 600,
-            "y": 200,
+        "find-contacts-array": {
+            "type": "appmixer.getResponse.core.FindContacts",
+            "x": 208,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "list-campaigns": [
-                        "out"
-                    ]
+                    "on-start": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "list-campaigns": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-contacts-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 400,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-contacts-array": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-contacts-array": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "campaigns-check": {
-                                            "variable": "$.list-campaigns.out",
+                                        "contacts-count": {
+                                            "variable": "$.find-contacts-array.out.count",
                                             "functions": []
                                         }
                                     }
@@ -188,8 +132,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{campaigns-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{contacts-count}}}"
                                             }
                                         ]
                                     }
@@ -200,28 +144,54 @@
                 }
             }
         },
-        "assert-tags": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 600,
-            "y": 300,
+        "find-tags-array": {
+            "type": "appmixer.getResponse.core.FindTags",
+            "x": 208,
+            "y": 320,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "list-tags": [
-                        "out"
-                    ]
+                    "on-start": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "list-tags": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-tags-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 400,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-tags-array": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-tags-array": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "tags-check": {
-                                            "variable": "$.list-tags.out",
+                                        "tags-count": {
+                                            "variable": "$.find-tags-array.out.count",
                                             "functions": []
                                         }
                                     }
@@ -230,8 +200,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{tags-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{tags-count}}}"
                                             }
                                         ]
                                     }
@@ -244,42 +214,33 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 800,
-            "y": 200,
+            "x": 592,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-contacts": [
-                        "out"
-                    ],
-                    "assert-campaigns": [
-                        "out"
-                    ],
-                    "assert-tags": [
-                        "out"
-                    ]
+                    "assert-campaigns-list": ["out"],
+                    "assert-contacts-list": ["out"],
+                    "assert-tags-list": ["out"]
                 }
             },
             "config": {
                 "properties": {
-                    "timeout": 60
+                    "timeout": 30
                 }
             }
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 950,
-            "y": 200,
+            "x": 784,
+            "y": 208,
             "version": "1.0.1",
             "source": {
                 "in": {
-                    "after-all": [
-                        "out"
-                    ]
+                    "after-all": ["out"]
                 }
             },
             "config": {
-                "properties": {},
                 "transform": {
                     "in": {
                         "after-all": {

@@ -3,7 +3,7 @@
 const lib = require('../../lib');
 
 const schema = {
-    'gid': { 'type': 'string', 'title': 'Tag ID' },
+    'tagId': { 'type': 'string', 'title': 'Tag ID' },
     'name': { 'type': 'string', 'title': 'Name' },
     'createdOn': { 'type': 'string', 'title': 'Created On' }
 };

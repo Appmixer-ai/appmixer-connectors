@@ -24,7 +24,7 @@ module.exports = {
         const tag = response.data;
 
         return context.sendJson({
-            tagId: tag.id,
+            tagId: tag.tagId,
             name: tag.name,
             href: tag.href,
             createdAt: tag.createdAt

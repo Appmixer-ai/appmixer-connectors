@@ -62,7 +62,7 @@ module.exports = {
 
         // https://apireference.getresponse.com/#operation/updateContact
         await context.httpRequest({
-            method: 'POST',
+            method: 'PATCH',
             url: `https://api.getresponse.com/v3/contacts/${contactId}`,
             headers: {
                 'X-Auth-Token': `api-key ${context.auth.apiKey}`,
@@ -72,6 +72,6 @@ module.exports = {
             data: body
         });
 
-        return context.sendJson({}, 'out');
+        return context.sendJson({ contactId }, 'out');
     }
 };

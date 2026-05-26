@@ -2,24 +2,22 @@
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 192,
+            "x": 48,
+            "y": 208,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 250,
-            "y": 192,
+        "create-campaign": {
+            "type": "appmixer.getResponse.core.CreateCampaign",
+            "x": 208,
+            "y": 208,
+            "version": "1.0.0",
             "source": {
                 "in": {
-                    "on-start": [
-                        "out"
-                    ]
+                    "on-start": ["out"]
                 }
             },
-            "version": "1.0.0",
             "config": {
                 "transform": {
                     "in": {
@@ -27,48 +25,84 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "variables": {
-                                        "3c223411-6849-4f7d-b353-0ad8e061fc0f": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "name": "e2e-contact-test-list"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.getResponse.core.CreateContact",
+            "x": 400,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-campaign": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {},
+                                    "name": {},
+                                    "campaignId": {
+                                        "var-campaign-id": {
+                                            "variable": "$.create-campaign.out.campaignId",
+                                            "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "variables": {
-                                        "ADD": [
+                                    "email": "e2e-test-contact@appmixer-test.com",
+                                    "name": "E2E Test Contact",
+                                    "campaignId": "{{{var-campaign-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-contact-created": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 592,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "contact-email": {
+                                            "variable": "$.create-contact.out.email",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
                                             {
-                                                "type": "text",
-                                                "name": "testEmail",
-                                                "toggle": false,
-                                                "text": "test-findcontacts@example.com"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "testName",
-                                                "text": "Test FindContacts"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "campaignName",
-                                                "toggle": false,
-                                                "text": "E2E Test Campaign {{{a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6}}}"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "updatedName",
-                                                "toggle": false,
-                                                "text": "E2E {{{3c223411-6849-4f7d-b353-0ad8e061fc0f}}} Test Contact Updated"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{contact-email}}}"
                                             }
                                         ]
                                     }
@@ -79,100 +113,14 @@
                 }
             }
         },
-        "create-campaign": {
-            "type": "appmixer.getResponse.core.CreateCampaign",
-            "x": 400,
-            "y": 192,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "name": {
-                                        "name-var": {
-                                            "variable": "$.set-variables.out.campaignName",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "name": "{{{name-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "create-contact": {
-            "type": "appmixer.getResponse.core.CreateContact",
-            "x": 550,
-            "y": 192,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-campaign": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-campaign": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "email": {
-                                        "email-var": {
-                                            "variable": "$.set-variables.out.testEmail",
-                                            "functions": []
-                                        }
-                                    },
-                                    "name": {
-                                        "name-var": {
-                                            "variable": "$.set-variables.out.testName",
-                                            "functions": []
-                                        }
-                                    },
-                                    "campaignId": {
-                                        "campaign-var": {
-                                            "variable": "$.create-campaign.out.campaignId",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "email": "{{{email-var}}}",
-                                    "name": "{{{name-var}}}",
-                                    "campaignId": "{{{campaign-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "list-contacts": {
+        "find-contacts": {
             "type": "appmixer.getResponse.core.FindContacts",
-            "x": 700,
-            "y": 192,
+            "x": 784,
+            "y": 96,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-contact": [
-                        "out"
-                    ]
+                    "create-contact": ["out"]
                 }
             },
             "config": {
@@ -180,18 +128,19 @@
                     "in": {
                         "create-contact": {
                             "out": {
-                                "lambda": {
-                                    "email": "{{{email-var}}}",
-                                    "outputType": "first"
-                                },
+                                "type": "json2new",
                                 "modifiers": {
                                     "email": {
-                                        "email-var": {
-                                            "variable": "$.set-variables.out.testEmail",
+                                        "var-email": {
+                                            "variable": "$.create-contact.out.email",
                                             "functions": []
                                         }
                                     },
                                     "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{var-email}}}",
+                                    "outputType": "first"
                                 }
                             }
                         }
@@ -199,59 +148,87 @@
                 }
             }
         },
-        "assert-create": {
+        "assert-find-contacts": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1276,
-            "y": 192,
+            "x": 976,
+            "y": 96,
             "version": "1.0.0",
-            "config": {
-                "transform": {}
-            }
-        },
-        "get-contact": {
-            "type": "appmixer.getResponse.core.GetContact",
-            "x": 908,
-            "y": 352,
-            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-contacts": ["out"]
+                }
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "list-contacts": {
+                        "find-contacts": {
                             "out": {
-                                "lambda": {
-                                    "contactId": "{{{id-var}}}"
-                                },
+                                "type": "json2new",
                                 "modifiers": {
-                                    "contactId": {
-                                        "id-var": {
-                                            "variable": "$.list-contacts.out.contactId",
+                                    "expression": {
+                                        "found-contact-id": {
+                                            "variable": "$.find-contacts.out.contactId",
                                             "functions": []
                                         }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{found-contact-id}}}"
+                                            }
+                                        ]
                                     }
                                 }
                             }
                         }
                     }
                 }
-            },
-            "source": {
-                "in": {
-                    "list-contacts": [
-                        "out"
-                    ]
-                }
             }
         },
-        "assert-get": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1276,
-            "y": 352,
+        "get-contact": {
+            "type": "appmixer.getResponse.core.GetContact",
+            "x": 784,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "get-contact": [
-                        "out"
-                    ]
+                    "find-contacts": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-contacts": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-contact-id": {
+                                            "variable": "$.find-contacts.out.contactId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{var-contact-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-contact": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 976,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-contact": ["out"]
                 }
             },
             "config": {
@@ -262,12 +239,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "email-check": {
+                                        "contact-email": {
                                             "variable": "$.get-contact.out.email",
-                                            "functions": []
-                                        },
-                                        "name-check": {
-                                            "variable": "$.get-contact.out.name",
                                             "functions": []
                                         }
                                     }
@@ -276,12 +249,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{email-check}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{name-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{contact-email}}}"
                                             }
                                         ]
                                     }
@@ -294,39 +263,32 @@
         },
         "update-contact": {
             "type": "appmixer.getResponse.core.UpdateContact",
-            "x": 1100,
-            "y": 512,
+            "x": 784,
+            "y": 320,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "get-contact": [
-                        "out"
-                    ]
+                    "find-contacts": ["out"]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "get-contact": {
+                        "find-contacts": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "contactId": {
-                                        "id-var": {
-                                            "variable": "$.list-contacts.out.contactId",
+                                        "var-contact-id": {
+                                            "variable": "$.find-contacts.out.contactId",
                                             "functions": []
                                         }
                                     },
-                                    "name": {
-                                        "updated-name-var": {
-                                            "variable": "$.set-variables.out.updatedName",
-                                            "functions": []
-                                        }
-                                    }
+                                    "name": {}
                                 },
                                 "lambda": {
-                                    "contactId": "{{{id-var}}}",
-                                    "name": "{{{updated-name-var}}}"
+                                    "contactId": "{{{var-contact-id}}}",
+                                    "name": "E2E Test Contact Updated"
                                 }
                             }
                         }
@@ -334,16 +296,14 @@
                 }
             }
         },
-        "assert-update": {
+        "assert-contact-updated": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1276,
-            "y": 512,
+            "x": 976,
+            "y": 320,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "update-contact": [
-                        "out"
-                    ]
+                    "update-contact": ["out"]
                 }
             },
             "config": {
@@ -354,8 +314,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "success-check": {
-                                            "variable": "$.set-variables.out.updatedName",
+                                        "updated-contact-id": {
+                                            "variable": "$.update-contact.out.contactId",
                                             "functions": []
                                         }
                                     }
@@ -364,8 +324,8 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{success-check}}}",
-                                                "assertion": "notEmpty"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{updated-contact-id}}}"
                                             }
                                         ]
                                     }
@@ -378,38 +338,31 @@
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1484,
-            "y": 192,
+            "x": 1168,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-create": [
-                        "out"
-                    ],
-                    "assert-get": [
-                        "out"
-                    ],
-                    "assert-update": [
-                        "out"
-                    ]
+                    "assert-contact-created": ["out"],
+                    "assert-find-contacts": ["out"],
+                    "assert-get-contact": ["out"],
+                    "assert-contact-updated": ["out"]
                 }
             },
             "config": {
                 "properties": {
-                    "timeout": 30
+                    "timeout": 60
                 }
             }
         },
         "delete-contact": {
             "type": "appmixer.getResponse.core.DeleteContact",
-            "x": 1618,
-            "y": 192,
+            "x": 1360,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "after-all": [
-                        "out"
-                    ]
+                    "after-all": ["out"]
                 }
             },
             "config": {
@@ -420,14 +373,14 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "contactId": {
-                                        "id-var": {
-                                            "variable": "$.list-contacts.out.contactId",
+                                        "var-contact-id": {
+                                            "variable": "$.find-contacts.out.contactId",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "contactId": "{{{id-var}}}"
+                                    "contactId": "{{{var-contact-id}}}"
                                 }
                             }
                         }
@@ -437,14 +390,12 @@
         },
         "delete-campaign": {
             "type": "appmixer.getResponse.core.DeleteCampaign",
-            "x": 1768,
-            "y": 192,
+            "x": 1552,
+            "y": 208,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "delete-contact": [
-                        "out"
-                    ]
+                    "delete-contact": ["out"]
                 }
             },
             "config": {
@@ -455,14 +406,14 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "campaignId": {
-                                        "campaign-id-var": {
+                                        "var-campaign-id": {
                                             "variable": "$.create-campaign.out.campaignId",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "campaignId": "{{{campaign-id-var}}}"
+                                    "campaignId": "{{{var-campaign-id}}}"
                                 }
                             }
                         }
@@ -472,18 +423,15 @@
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1918,
-            "y": 192,
+            "x": 1744,
+            "y": 208,
             "version": "1.0.1",
             "source": {
                 "in": {
-                    "delete-campaign": [
-                        "out"
-                    ]
+                    "delete-campaign": ["out"]
                 }
             },
             "config": {
-                "properties": {},
                 "transform": {
                     "in": {
                         "delete-campaign": {
@@ -513,13 +461,5 @@
     },
     "name": "E2E GetResponse - contact-crud",
     "type": "automation",
-    "notes": {
-        "37d69a71-d851-4c2b-bed4-a6b896c05cde": {
-            "x": 560,
-            "y": -48,
-            "width": 240,
-            "height": 194,
-            "content": "Create Contact - API is delayed - when you create a new contact, it won't be listed straight away"
-        }
-    }
+    "notes": {}
 }

@@ -14,7 +14,7 @@ module.exports = {
         requestProfileInfo(context) {
             const apiKey = context.apiKey;
             return {
-                key: apiKey.substr(0, 3) + '...' + apiKey.substr(4)
+                key: apiKey.substr(0, 3) + '...' + apiKey.substr(-4)
             };
         },
         accountNameFromProfileInfo: 'key',
