@@ -85,8 +85,9 @@ module.exports = {
 
         // GetResponse API v3 returns contacts in _embedded.contacts array
         let contacts = [];
-        if (response.data && response.data._embedded && Array.isArray(response.data._embedded.contacts)) {
-            contacts = response.data._embedded.contacts;
+        const embedded = response.data && response.data['_embedded'];
+        if (embedded && Array.isArray(embedded.contacts)) {
+            contacts = embedded.contacts;
         } else if (Array.isArray(response.data)) {
             // Fallback for direct array response
             contacts = response.data;
