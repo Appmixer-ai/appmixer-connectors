@@ -1,264 +1,267 @@
 {
-    "name": "E2E Google Calendar - DeclineEvent",
-    "description": "E2E test for the DeclineEvent component. Tests: (1) declining an event by eventId returns a response with an id field, (2) the response contains a calendarId field matching the input, (3) the response status reflects the updated attendee status.",
-    "type": "automation",
-    "notes": {},
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 16,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 256,
-            "y": 16,
-            "source": {
-                "in": {
-                    "on-start": ["out"]
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
                 }
             },
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 448,
-            "y": 16,
-            "version": "1.0.0",
             "source": {
                 "in": {
-                    "before-all": ["out"]
+                    "assert-calendar-id-returned": [
+                        "out"
+                    ],
+                    "assert-event-id-returned": [
+                        "out"
+                    ]
                 }
             },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1024,
+            "y": 88
+        },
+        "assert-calendar-id-returned": {
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "decline-event": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
                                 "lambda": {
-                                    "variables": {
-                                        "ADD": [
+                                    "expression": {
+                                        "AND": [
                                             {
-                                                "type": "text",
-                                                "name": "calendarId",
-                                                "text": "primary"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "eventId",
-                                                "text": "{{E2E_GOOGLE_CALENDAR_EVENT_ID}}"
-                                            },
-                                            {
-                                                "type": "text",
-                                                "name": "attendeeEmail",
-                                                "text": "{{E2E_GOOGLE_CALENDAR_ATTENDEE_EMAIL}}"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{calendar-id-check}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "calendar-id-check": {
+                                            "functions": [],
+                                            "variable": "$.decline-event.out.calendarId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "decline-event": {
-            "type": "appmixer.google.calendar.DeclineEvent",
-            "label": "DeclineEvent (decline invitation)",
-            "x": 640,
-            "y": 16,
-            "version": "1.0.0",
+            },
+            "label": "Assert: calendarId is returned in response",
             "source": {
                 "in": {
-                    "set-variables": ["out"]
+                    "decline-event": [
+                        "out"
+                    ]
                 }
             },
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 160
+        },
+        "assert-event-id-returned": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "decline-event": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{event-id-check}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "event-id-check": {
+                                            "functions": [],
+                                            "variable": "$.decline-event.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "Assert: event id is returned",
+            "source": {
+                "in": {
+                    "decline-event": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 16
+        },
+        "before-all": {
+            "config": {},
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16
+        },
+        "decline-event": {
             "config": {
                 "transform": {
                     "in": {
                         "set-variables": {
                             "out": {
-                                "type": "json2new",
+                                "lambda": {
+                                    "attendeeEmail": "{{{var-attendee-email}}}",
+                                    "calendarId": "{{{var-calendar-id}}}",
+                                    "eventId": "{{{var-event-id}}}",
+                                    "sendUpdates": "none"
+                                },
                                 "modifiers": {
+                                    "attendeeEmail": {
+                                        "var-attendee-email": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.attendeeEmail"
+                                        }
+                                    },
                                     "calendarId": {
                                         "var-calendar-id": {
-                                            "variable": "$.set-variables.out.calendarId",
-                                            "functions": []
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.calendarId"
                                         }
                                     },
                                     "eventId": {
                                         "var-event-id": {
-                                            "variable": "$.set-variables.out.eventId",
-                                            "functions": []
-                                        }
-                                    },
-                                    "attendeeEmail": {
-                                        "var-attendee-email": {
-                                            "variable": "$.set-variables.out.attendeeEmail",
-                                            "functions": []
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.eventId"
                                         }
                                     },
                                     "sendUpdates": {}
                                 },
-                                "lambda": {
-                                    "calendarId": "{{{var-calendar-id}}}",
-                                    "eventId": "{{{var-event-id}}}",
-                                    "attendeeEmail": "{{{var-attendee-email}}}",
-                                    "sendUpdates": "none"
-                                }
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
-        },
-        "assert-event-id-returned": {
-            "type": "appmixer.utils.test.Assert",
-            "label": "Assert: event id is returned",
-            "x": 832,
-            "y": 16,
-            "version": "1.0.0",
+            },
+            "label": "DeclineEvent (decline invitation)",
             "source": {
                 "in": {
-                    "decline-event": ["out"]
+                    "set-variables": [
+                        "out"
+                    ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "decline-event": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "event-id-check": {
-                                            "variable": "$.decline-event.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{event-id-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.google.calendar.DeclineEvent",
+            "x": 640,
+            "y": 16
         },
-        "assert-calendar-id-returned": {
-            "type": "appmixer.utils.test.Assert",
-            "label": "Assert: calendarId is returned in response",
-            "x": 832,
-            "y": 160,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "decline-event": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "decline-event": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "calendar-id-check": {
-                                            "variable": "$.decline-event.out.calendarId",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{calendar-id-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1024,
-            "y": 88,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "assert-event-id-returned": ["out"],
-                    "assert-calendar-id-returned": ["out"]
-                }
-            },
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            }
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1216,
-            "y": 88,
-            "version": "1.0.1",
-            "source": {
-                "in": {
-                    "after-all": ["out"]
-                }
-            },
             "config": {
-                "properties": {
-                    "successStoreId": "69cd26f6e2b144c4b022fd1e",
-                    "failedStoreId": "69cd26f6e92e34e939fd2d1a"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
                         "after-all": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
-                                    }
-                                },
                                 "lambda": {
                                     "recipients": "vero.a@appmixer.ai",
-                                    "testCase": "E2E Google Calendar - DeclineEvent",
-                                    "result": "{{{result-var}}}"
-                                }
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Google Calendar - DeclineEvent"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 88
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "calendarId",
+                                                "text": "primary",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "eventId",
+                                                "text": "{{E2E_GOOGLE_CALENDAR_EVENT_ID}}",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "attendeeEmail",
+                                                "text": "{{E2E_GOOGLE_CALENDAR_ATTENDEE_EMAIL}}",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16
         }
-    }
+    },
+    "name": "E2E Google Calendar - DeclineEvent",
+    "notes": {}
 }
