@@ -27,7 +27,7 @@ module.exports = {
 
         validate: async function(context) {
             // appmixer-944514646623155365.myfreshworks.com/crm/sales
-            const url = `https://${context.domain}/api/tasks?filter=open&include=owner`;
+            const url = `https://${context.domain}/api/selector/owners`;
             const headers = {
                 'Authorization': `Token token=${context.apiKey}`,
                 'Content-Type': 'application/json',
@@ -40,8 +40,8 @@ module.exports = {
                 headers
             });
 
-            if (!response.data) {
-                throw new Error('Invalid response from Freshsales API');
+            if (response.status !== 200 || !response.data) {
+                throw new Error('Invalid Freshsales credentials. Please check your Bundle Alias and API Key.');
             }
             return true;
         }
