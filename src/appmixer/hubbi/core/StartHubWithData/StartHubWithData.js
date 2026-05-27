@@ -10,13 +10,22 @@ module.exports = {
             return generateInspector(context);
         }
 
-        const { conversionKey, records } = context.messages.in.content;
+        const { conversionKey, inputMode, records, recordsArray } = context.messages.in.content;
 
         if (!conversionKey) {
             throw new context.CancelError('Conversion Key is required!');
         }
 
-        const rows = Array.isArray(records?.ADD) ? records.ADD : [];
+        let rows;
+        if (inputMode === 'array') {
+            rows = toRecordsArray(recordsArray);
+            if (rows === null) {
+                throw new context.CancelError('Records array must be a JSON array of record objects.');
+            }
+        } else {
+            rows = Array.isArray(records?.ADD) ? records.ADD : [];
+        }
+
         if (rows.length === 0) {
             throw new context.CancelError('At least one record is required!');
         }
@@ -37,12 +46,35 @@ module.exports = {
     }
 };
 
+// Normalize the mapped "Records array" value into an array of record objects.
+// Returns [] when empty, an array of objects when valid, or null when the value
+// cannot be interpreted as records (so the caller can raise a clear error).
+function toRecordsArray(value) {
+
+    if (value == null || value === '') return [];
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'object') return [value];
+    if (typeof value === 'string') {
+        let parsed;
+        try {
+            parsed = JSON.parse(value);
+        } catch (err) {
+            return null;
+        }
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && typeof parsed === 'object') return [parsed];
+        return null;
+    }
+    return null;
+}
+
 async function generateInspector(context) {
 
     const { conversionKey } = context.properties;
 
     const recordFields = {};
     const itemProperties = {};
+    let keysHint = '';
 
     if (conversionKey) {
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
@@ -56,6 +88,7 @@ async function generateInspector(context) {
         });
 
         const fields = response.data || [];
+        const keys = [];
 
         fields.forEach((field, index) => {
             if (!field.fieldId) return;
@@ -69,13 +102,19 @@ async function generateInspector(context) {
             };
             if (inspectorConfig) input.config = inspectorConfig;
             recordFields[field.fieldId] = input;
+            keys.push(field.name && field.name !== field.fieldId ? `${field.fieldId} (${field.name})` : field.fieldId);
         });
+
+        if (keys.length) {
+            keysHint = ` Each object's keys must match the hub source fields: ${keys.join(', ')}.`;
+        }
     }
 
     const schema = {
         type: 'object',
         properties: {
             conversionKey: { type: 'string' },
+            inputMode: { type: 'string', enum: ['manual', 'array'] },
             records: {
                 type: 'object',
                 properties: {
@@ -85,9 +124,13 @@ async function generateInspector(context) {
                         minItems: 1
                     }
                 }
+            },
+            recordsArray: {
+                type: 'array',
+                items: { type: 'object' }
             }
         },
-        required: ['conversionKey', 'records']
+        required: ['conversionKey']
     };
 
     const inputs = {
@@ -106,14 +149,34 @@ async function generateInspector(context) {
                 }
             }
         },
+        inputMode: {
+            type: 'select',
+            label: 'Records source',
+            tooltip: 'Choose how to provide records: build them row by row using the hub field definitions, or map a whole array of records coming from a previous step.',
+            index: 1,
+            variables: false,
+            defaultValue: 'manual',
+            options: [
+                { content: 'Build manually', value: 'manual' },
+                { content: 'Map array from previous step', value: 'array' }
+            ]
+        },
         records: {
             type: 'expression',
             label: 'Records',
-            tooltip: 'One or more records to send to the hub in a single bulk request. Add rows manually or map an array from a previous step. Each row uses the source field definitions of the selected hub.',
-            index: 1,
+            tooltip: 'Add one row per record. Each row uses the source field definitions of the selected hub. Within a row you can map single values from previous steps. All rows are sent to the hub in a single bulk request.',
+            index: 2,
             levels: ['ADD'],
             minItems: 1,
+            when: { eq: { './inputMode': 'manual' } },
             fields: recordFields
+        },
+        recordsArray: {
+            type: 'text',
+            label: 'Records array',
+            tooltip: `Map an array of record objects from a previous step (e.g. the output of a list/find/CSV step). The whole array is sent to the hub in a single bulk request.${keysHint}`,
+            index: 3,
+            when: { eq: { './inputMode': 'array' } }
         }
     };
 
