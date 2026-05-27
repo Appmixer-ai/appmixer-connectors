@@ -6,7 +6,14 @@ const BASE_URL = 'https://bsky.social/xrpc/';
 
 function kvToObj(arr) {
     if (!arr || !Array.isArray(arr)) return {};
-    return Object.fromEntries(arr.map(({ key, value }) => [key, value]));
+    const out = {};
+    for (const row of arr) {
+        if (!row || typeof row !== "object") continue;
+        const key = row.key;
+        if (typeof key !== "string" || key.length === 0) continue;
+        out[key] = row.value;
+    }
+    return out;
 }
 
 module.exports = {
