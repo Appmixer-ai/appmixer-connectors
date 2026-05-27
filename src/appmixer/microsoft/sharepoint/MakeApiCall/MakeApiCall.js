@@ -22,6 +22,15 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
+        let bodyData = {};
+        if (body) {
+            try {
+                bodyData = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
+        }
+
         const apiResponse = await makeRequest({ url, method, extraHeaders, queryParams, bodyData }, context);
         return context.sendJson({ response: apiResponse }, 'out');
     }

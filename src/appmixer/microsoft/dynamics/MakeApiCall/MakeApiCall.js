@@ -22,6 +22,15 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
+        let parsedBody;
+        if (body) {
+            try {
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
+        }
+
         const options = {
             method,
             url: (context.resource || context.auth.resource) + url,
@@ -29,9 +38,12 @@ module.exports = {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${context.accessToken || context.auth?.accessToken}`,
                 ...extraHeaders
-            },
-            data: bodyData
+            }
         };
+
+        if (parsedBody !== undefined) {
+            options.data = parsedBody;
+        }
 
         if (Object.keys(queryParams).length > 0) {
             options.params = queryParams;
