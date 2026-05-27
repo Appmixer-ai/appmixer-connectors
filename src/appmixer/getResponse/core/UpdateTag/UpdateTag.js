@@ -14,7 +14,7 @@ module.exports = {
 
         // https://apireference.getresponse.com/#tags
         const { data } = await context.httpRequest({
-            method: 'PATCH',
+            method: 'POST',
             url: `https://api.getresponse.com/v3/tags/${tagId}`,
             headers: {
                 'X-Auth-Token': `api-key ${context.auth.apiKey}`,

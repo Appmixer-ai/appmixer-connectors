@@ -38,7 +38,7 @@ module.exports = {
 
         const tags = data || [];
 
-        if (tags.length === 0) {
+        if (tags.length === 0 && outputType !== 'array') {
             return context.sendJson({}, 'notFound');
         }
 

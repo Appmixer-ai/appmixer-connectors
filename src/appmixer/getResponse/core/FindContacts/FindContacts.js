@@ -93,7 +93,7 @@ module.exports = {
             contacts = response.data;
         }
 
-        if (contacts.length === 0) {
+        if (contacts.length === 0 && outputType !== 'array') {
             return context.sendJson({}, 'notFound');
         }
 

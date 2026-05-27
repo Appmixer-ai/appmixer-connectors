@@ -15,7 +15,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "on-start": ["out"]
+                    "on-start": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -25,10 +27,16 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "name": {}
+                                    "ts": {
+                                        "functions": [
+                                            {
+                                                "name": "g_timestamp"
+                                            }
+                                        ]
+                                    }
                                 },
                                 "lambda": {
-                                    "name": "e2e-contact-test-list"
+                                    "name": "e2e-contact-campaign-{{{ts}}}"
                                 }
                             }
                         }
@@ -43,7 +51,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-campaign": ["out"]
+                    "create-campaign": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -60,10 +70,17 @@
                                             "variable": "$.create-campaign.out.campaignId",
                                             "functions": []
                                         }
+                                    },
+                                    "ts": {
+                                        "functions": [
+                                            {
+                                                "name": "g_timestamp"
+                                            }
+                                        ]
                                     }
                                 },
                                 "lambda": {
-                                    "email": "e2e-test-contact@appmixer-test.com",
+                                    "email": "e2e-{{{ts}}}@test.appmixer.ai",
                                     "name": "E2E Test Contact",
                                     "campaignId": "{{{var-campaign-id}}}"
                                 }
@@ -80,7 +97,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-contact": ["out"]
+                    "create-contact": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -120,7 +139,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-contact": ["out"]
+                    "delay-after-create": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -155,7 +176,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "find-contacts": ["out"]
+                    "find-contacts": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -195,7 +218,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "find-contacts": ["out"]
+                    "find-contacts": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -228,7 +253,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "get-contact": ["out"]
+                    "get-contact": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -268,7 +295,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "find-contacts": ["out"]
+                    "find-contacts": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -303,7 +332,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "update-contact": ["out"]
+                    "update-contact": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -343,10 +374,18 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-contact-created": ["out"],
-                    "assert-find-contacts": ["out"],
-                    "assert-get-contact": ["out"],
-                    "assert-contact-updated": ["out"]
+                    "assert-contact-created": [
+                        "out"
+                    ],
+                    "assert-find-contacts": [
+                        "out"
+                    ],
+                    "assert-get-contact": [
+                        "out"
+                    ],
+                    "assert-contact-updated": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -362,7 +401,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "after-all": ["out"]
+                    "after-all": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -395,7 +436,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "delete-contact": ["out"]
+                    "delete-contact": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -428,7 +471,9 @@
             "version": "1.0.1",
             "source": {
                 "in": {
-                    "delete-campaign": ["out"]
+                    "delete-campaign": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -455,6 +500,24 @@
                             }
                         }
                     }
+                }
+            }
+        },
+        "delay-after-create": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 784,
+            "y": -32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "code": "await new Promise(r => setTimeout(r, 6000))"
                 }
             }
         }
