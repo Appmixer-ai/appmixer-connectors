@@ -4,9 +4,9 @@ function kvToObj(arr) {
     if (!arr || !Array.isArray(arr)) return {};
     const out = {};
     for (const row of arr) {
-        if (!row || typeof row !== "object") continue;
+        if (!row || typeof row !== 'object') continue;
         const key = row.key;
-        if (typeof key !== "string" || key.length === 0) continue;
+        if (typeof key !== 'string' || key.length === 0) continue;
         out[key] = row.value;
     }
     return out;
@@ -28,10 +28,19 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
+        let parsedBody = {};
+        if (body) {
+            try {
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
+        }
+
         const baseUrl = 'https://external-api.xtremepush.com';
         const targetUrl = url.startsWith('http://') || url.startsWith('https://')
             ? url
-            : `${baseUrl}${url}`;
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
         const requestOptions = {
             method,
@@ -40,9 +49,11 @@ module.exports = {
                 'Content-Type': 'application/json',
                 ...extraHeaders
             },
+            // Xtremepush expects the app token in the request body. User body fields are merged first,
+            // then `apptoken` is set last so it cannot be overridden.
             data: {
-                apptoken: context.auth.apiKey,
-                ...bodyData
+                ...parsedBody,
+                apptoken: context.auth.apiKey
             }
         };
 

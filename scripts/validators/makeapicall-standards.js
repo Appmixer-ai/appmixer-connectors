@@ -143,7 +143,7 @@ function validateScope(componentPath, component, connectorRoot, addWarning) {
     const scope = component.auth && component.auth.scope;
 
     if (!Array.isArray(scope) || scope.length === 0) {
-        addWarning(componentPath, `auth.scope is empty — OAuth-based MakeApiCall should declare scopes (most-privileged or all; see #1459)`);
+        addWarning(componentPath, 'auth.scope is empty — OAuth-based MakeApiCall should declare scopes (most-privileged or all; see #1459)');
     }
 }
 

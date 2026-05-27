@@ -4,9 +4,9 @@ function kvToObj(arr) {
     if (!arr || !Array.isArray(arr)) return {};
     const out = {};
     for (const row of arr) {
-        if (!row || typeof row !== "object") continue;
+        if (!row || typeof row !== 'object') continue;
         const key = row.key;
-        if (typeof key !== "string" || key.length === 0) continue;
+        if (typeof key !== 'string' || key.length === 0) continue;
         out[key] = row.value;
     }
     return out;
@@ -38,9 +38,9 @@ module.exports = {
         let parsedBody;
         if (body) {
             try {
-                parsedBody = typeof body === "object" ? body : JSON.parse(body);
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
             } catch (e) {
-                throw new context.CancelError("Request Body must be valid JSON.");
+                throw new context.CancelError('Request Body must be valid JSON.');
             }
             requestOptions.data = parsedBody;
         }
