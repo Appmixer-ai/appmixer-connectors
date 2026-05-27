@@ -1,0 +1,54 @@
+{
+    "name": "appmixer.utils.controls.SchemaPassThrough",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Define an output shape from an example JSON or a JSON Schema, then pass JSON data through with a typed output port for easy variable mapping downstream.",
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNOCAzSDdhMiAyIDAgMCAwLTIgMnY1YTIgMiAwIDAgMS0yIDIgMiAyIDAgMCAxIDIgMnY1YTIgMiAwIDAgMCAyIDJoMU0xNiAzaDFhMiAyIDAgMCAxIDIgMnY1YTIgMiAwIDAgMCAyIDIgMiAyIDAgMCAwLTIgMnY1YTIgMiAwIDAgMS0yIDJoLTFNOSA5aDZNOSAxM2g0TTkgMTdoNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPgo=",
+    "private": false,
+    "inPorts": [
+        {
+            "name": "in",
+            "maxConnections": 1,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "schema": { "type": "string" },
+                    "data": {}
+                },
+                "required": ["schema"]
+            },
+            "inspector": {
+                "inputs": {
+                    "schema": {
+                        "type": "textarea",
+                        "label": "Schema or Example JSON",
+                        "index": 1,
+                        "tooltip": "Paste either a <a target=\"_blank\" href=\"https://json-schema.org/\">JSON Schema</a> or an example JSON object. The component auto-detects which one and uses it to derive the output port shape so downstream components can map properties easily. Example schema: <code>{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"age\":{\"type\":\"number\"}}}</code>. Example JSON: <code>{\"name\":\"John\",\"age\":30}</code>."
+                    },
+                    "data": {
+                        "type": "text",
+                        "label": "Data",
+                        "index": 2,
+                        "tooltip": "JSON object to pass through. Wire it from an upstream component (e.g. <code>{{{upstream.payload}}}</code>) or paste a literal JSON value. If left empty and the Schema field contains an example JSON, that example is emitted (useful for testing)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/utils/controls/SchemaPassThrough?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/schema": "inputs/in/schema",
+                        "in/data": "dummy"
+                    }
+                }
+            }
+        }
+    ]
+}
