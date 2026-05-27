@@ -27,6 +27,10 @@
 //   --update-thresholds        write lowered thresholds back when counts drop
 //   --connector <name>         run all validators only for src/appmixer/<name>/,
 //                              ignore thresholds, print every failure + warning
+//   --show-suppressed          print failures that are normally hidden by a
+//                              threshold (count ≤ threshold), so they can be
+//                              fixed. Does not change CI exit status.
+//   --help, -h                 print usage and exit
 
 const fs = require('fs');
 const path = require('path');
@@ -93,10 +97,49 @@ function parseConnectorArg(argv) {
     return value;
 }
 
+function printHelp() {
+
+    console.log(`Usage: node scripts/validate.js [options]
+
+Runs all validators in scripts/validators/ over bundle.json and component.json
+files under src/appmixer/. Validators with an entry in
+scripts/validators/.thresholds.json fail CI only when their failure count
+exceeds the threshold (ratchet pattern); validators without an entry are strict.
+
+Options:
+  --connector <name>     Run all validators only for src/appmixer/<name>/.
+                         Thresholds are ignored and every failure + warning is
+                         printed. Useful when developing a single connector.
+
+  --show-suppressed      Print failures that are normally hidden because the
+                         validator is at or under its threshold. Use this when
+                         you want to fix the leftover issues. Does not change
+                         the CI exit status.
+
+  --update-thresholds    When a validator's failure count drops below its
+                         current threshold, write the lower number back to
+                         .thresholds.json so the ratchet tightens.
+
+  --help, -h             Print this help and exit.
+
+Examples:
+  node scripts/validate.js
+  node scripts/validate.js --connector google/calendar
+  node scripts/validate.js --show-suppressed
+  node scripts/validate.js --update-thresholds
+`);
+}
+
 async function main() {
+
+    if (process.argv.includes('--help') || process.argv.includes('-h')) {
+        printHelp();
+        return;
+    }
 
     const relativePath = makeRelativePath(REPO_ROOT);
     const updateThresholds = process.argv.includes('--update-thresholds');
+    const showSuppressed = process.argv.includes('--show-suppressed');
     const connectorFilter = parseConnectorArg(process.argv);
 
     let bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
@@ -219,6 +262,25 @@ async function main() {
             for (const warning of result.warnings) {
                 console.warn(`- ${warning}`);
             }
+        }
+    }
+
+    // --show-suppressed: print failures hidden by the threshold so they can be fixed.
+    if (showSuppressed) {
+        const suppressed = results.filter((r) => r.threshold !== null && r.failures.length > 0 && !r.regressed);
+        const totalSuppressed = suppressed.reduce((sum, r) => sum + r.failures.length, 0);
+
+        if (totalSuppressed > 0) {
+            console.log(`\nSuppressed failures (${totalSuppressed}) — under threshold, not failing CI:`);
+
+            for (const result of suppressed) {
+                console.log(`\n  ${result.validator.name} (${result.failures.length} of ${result.threshold} allowed):`);
+                for (const failure of result.failures) {
+                    console.log(`  - ${failure}`);
+                }
+            }
+        } else {
+            console.log('\nNo suppressed failures — all thresholded validators are clean.');
         }
     }
 
