@@ -10,11 +10,10 @@ const { API_VERSION } = require('../../lib');
 
 module.exports = {
     async receive(context) {
-        const { url, method, headers: headersKV, parameters: parametersKV, body: bodyKV } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
 
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
-        const bodyData = kvToObj(bodyKV);
 
         const requestOptions = {
             method: method,
@@ -27,8 +26,14 @@ module.exports = {
             }
         };
 
-        if (Object.keys(bodyData).length > 0) {
-            requestOptions.data = bodyData;
+        let parsedBody;
+        if (body) {
+            try {
+                parsedBody = typeof body === "object" ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError("Request Body must be valid JSON.");
+            }
+            requestOptions.data = parsedBody;
         }
 
         if (Object.keys(queryParams).length > 0) {

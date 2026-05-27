@@ -9,11 +9,10 @@ function kvToObj(arr) {
 module.exports = {
     async receive(context) {
 
-        const { url, method, headers: headersKV, parameters: parametersKV, body: bodyKV } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
 
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
-        const bodyData = kvToObj(bodyKV);
 
         if (!url) {
             throw new context.CancelError('API Endpoint URL is required!');
