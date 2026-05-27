@@ -10,10 +10,15 @@ module.exports = {
             return generateInspector(context);
         }
 
-        const { conversionKey, ...data } = context.messages.in.content;
+        const { conversionKey, records } = context.messages.in.content;
 
         if (!conversionKey) {
             throw new context.CancelError('Conversion Key is required!');
+        }
+
+        const rows = Array.isArray(records?.ADD) ? records.ADD : [];
+        if (rows.length === 0) {
+            throw new context.CancelError('At least one record is required!');
         }
 
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
@@ -25,10 +30,10 @@ module.exports = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            data
+            data: rows
         });
 
-        return context.sendJson({ conversionKey }, 'out');
+        return context.sendJson({ conversionKey, count: rows.length }, 'out');
     }
 };
 
@@ -36,15 +41,8 @@ async function generateInspector(context) {
 
     const { conversionKey } = context.properties;
 
-    const schema = {
-        type: 'object',
-        properties: {
-            conversionKey: { type: 'string' }
-        },
-        required: ['conversionKey']
-    };
-
-    let fieldsInputs = {};
+    const recordFields = {};
+    const itemProperties = {};
 
     if (conversionKey) {
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
@@ -59,10 +57,10 @@ async function generateInspector(context) {
 
         const fields = response.data || [];
 
-        fieldsInputs = fields.reduce((res, field, index) => {
-            if (!field.fieldId) return res;
+        fields.forEach((field, index) => {
+            if (!field.fieldId) return;
             const { inspectorType, inspectorConfig, schema: fieldSchema } = lib.mapFieldType(field.type);
-            schema.properties[field.fieldId] = fieldSchema;
+            itemProperties[field.fieldId] = fieldSchema;
             const input = {
                 type: inspectorType,
                 label: field.name || field.fieldId,
@@ -70,10 +68,27 @@ async function generateInspector(context) {
                 index: index + 1
             };
             if (inspectorConfig) input.config = inspectorConfig;
-            res[field.fieldId] = input;
-            return res;
-        }, {});
+            recordFields[field.fieldId] = input;
+        });
     }
+
+    const schema = {
+        type: 'object',
+        properties: {
+            conversionKey: { type: 'string' },
+            records: {
+                type: 'object',
+                properties: {
+                    ADD: {
+                        type: 'array',
+                        items: { type: 'object', properties: itemProperties },
+                        minItems: 1
+                    }
+                }
+            }
+        },
+        required: ['conversionKey', 'records']
+    };
 
     const inputs = {
         conversionKey: {
@@ -91,19 +106,16 @@ async function generateInspector(context) {
                 }
             }
         },
-        ...fieldsInputs
+        records: {
+            type: 'expression',
+            label: 'Records',
+            tooltip: 'One or more records to send to the hub in a single bulk request. Add rows manually or map an array from a previous step. Each row uses the source field definitions of the selected hub.',
+            index: 1,
+            levels: ['ADD'],
+            minItems: 1,
+            fields: recordFields
+        }
     };
 
-    return context.sendJson({ schema, inputs, groups: {
-        required: {
-            label: 'Hub',
-            index: 1,
-            fields: ['conversionKey']
-        },
-        sourceFields: {
-            label: 'Source Fields',
-            index: 2,
-            fields: Object.keys(fieldsInputs)
-        }
-    } }, 'out');
+    return context.sendJson({ schema, inputs }, 'out');
 }
