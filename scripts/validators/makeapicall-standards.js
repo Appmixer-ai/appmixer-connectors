@@ -8,17 +8,23 @@
 //
 // Mandatory inputs (FAILURE if missing or wrong shape):
 //   • url        (string, required)         — text input,    "API Endpoint Path"
+//                                              inspector.index = 1
 //   • method     (string, required, enum)   — select input,  defaultValue "GET",
 //                                              5 options: GET, POST, PUT, PATCH, DELETE
-//   • headers    (string)                   — key-value      list of header pairs
+//                                              inspector.index = 2
 //   • parameters (string)                   — key-value      list of query-param pairs (note: not "params")
+//                                              inspector.index = 3
 //   • body       (string)                   — textarea       JSON body — supports
 //                                              nested objects/arrays/non-string
-//                                              values. Headers and parameters use
-//                                              key-value inspector but their JSON
-//                                              Schema type is declared "string" —
-//                                              declaring "array" makes the Designer
-//                                              UI reject the runtime value.
+//                                              values
+//                                              inspector.index = 4
+//   • headers    (string)                   — key-value      list of header pairs
+//                                              inspector.index = 5
+//
+// Headers and parameters use the key-value inspector but their JSON Schema
+// type is declared "string" — declaring "array" makes the Designer UI reject
+// the runtime value. Inspector order is fixed (url → method → parameters →
+// body → headers); deviating order is flagged as a failure.
 //
 // Soft conformance (WARNING):
 //   • method.enum is the full set of 5 HTTP verbs
@@ -40,11 +46,11 @@ const { readJson } = require('./_shared');
 const STANDARD_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
 const STANDARD_FIELDS = [
-    { field: 'url', schemaType: 'string', inspectorType: 'text' },
-    { field: 'method', schemaType: 'string', inspectorType: 'select' },
-    { field: 'headers', schemaType: 'string', inspectorType: 'key-value' },
-    { field: 'parameters', schemaType: 'string', inspectorType: 'key-value' },
-    { field: 'body', schemaType: 'string', inspectorType: 'textarea' }
+    { field: 'url', schemaType: 'string', inspectorType: 'text', index: 1 },
+    { field: 'method', schemaType: 'string', inspectorType: 'select', index: 2 },
+    { field: 'parameters', schemaType: 'string', inspectorType: 'key-value', index: 3 },
+    { field: 'body', schemaType: 'string', inspectorType: 'textarea', index: 4 },
+    { field: 'headers', schemaType: 'string', inspectorType: 'key-value', index: 5 }
 ];
 
 function isMakeApiCall(componentPath) {
@@ -89,7 +95,7 @@ function validateInputSchemaField(componentPath, props, required, field, expecte
     }
 }
 
-function validateInspectorInput(componentPath, inputs, field, expectedType, addFailure) {
+function validateInspectorInput(componentPath, inputs, field, expectedType, expectedIndex, addFailure) {
 
     const input = inputs[field];
 
@@ -100,6 +106,10 @@ function validateInspectorInput(componentPath, inputs, field, expectedType, addF
 
     if (input.type !== expectedType) {
         addFailure(componentPath, `inspector.inputs.${field}.type must be "${expectedType}" (found "${input.type}")`);
+    }
+
+    if (input.index !== expectedIndex) {
+        addFailure(componentPath, `inspector.inputs.${field}.index must be ${expectedIndex} (found ${JSON.stringify(input.index)}). Canonical order: url=1, method=2, parameters=3, body=4, headers=5.`);
     }
 }
 
@@ -178,9 +188,9 @@ function validateComponent(componentPath, addFailure, addWarning) {
         addFailure(componentPath, 'inPorts[0].schema.properties.params is legacy — rename to "parameters" (standard #1459)');
     }
 
-    for (const { field, schemaType, inspectorType } of STANDARD_FIELDS) {
+    for (const { field, schemaType, inspectorType, index } of STANDARD_FIELDS) {
         validateInputSchemaField(componentPath, props, required, field, schemaType, addFailure);
-        validateInspectorInput(componentPath, inputs, field, inspectorType, addFailure);
+        validateInspectorInput(componentPath, inputs, field, inspectorType, index, addFailure);
     }
 
     for (const field of ['url', 'method']) {

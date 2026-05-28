@@ -18,6 +18,8 @@ module.exports = {
 
         const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
 
+        await context.log({ 'step': 'ss', in: context.messages.in.content });
+
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
