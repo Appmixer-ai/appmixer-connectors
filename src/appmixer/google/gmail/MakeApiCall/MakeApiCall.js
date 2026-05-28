@@ -20,9 +20,14 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
+        const baseUrl = 'https://gmail.googleapis.com/gmail/v1';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
+
         const requestOptions = {
             method: method,
-            url: url,
+            url: targetUrl,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json',

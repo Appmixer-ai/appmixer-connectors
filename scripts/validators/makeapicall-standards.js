@@ -10,14 +10,15 @@
 //   • url        (string, required)         — text input,    "API Endpoint Path"
 //   • method     (string, required, enum)   — select input,  defaultValue "GET",
 //                                              5 options: GET, POST, PUT, PATCH, DELETE
-//   • headers    (array)                    — key-value      list of header pairs
-//   • parameters (array)                    — key-value      list of query-param pairs (note: not "params")
-//   • body       (string)                   — textarea       JSON body — keeps textarea/JSON
-//                                              because many APIs require nested
-//                                              JSON bodies (objects, arrays,
-//                                              non-string values). Only headers
-//                                              and parameters are naturally flat
-//                                              string maps; the body is not.
+//   • headers    (string)                   — key-value      list of header pairs
+//   • parameters (string)                   — key-value      list of query-param pairs (note: not "params")
+//   • body       (string)                   — textarea       JSON body — supports
+//                                              nested objects/arrays/non-string
+//                                              values. Headers and parameters use
+//                                              key-value inspector but their JSON
+//                                              Schema type is declared "string" —
+//                                              declaring "array" makes the Designer
+//                                              UI reject the runtime value.
 //
 // Soft conformance (WARNING):
 //   • method.enum is the full set of 5 HTTP verbs
@@ -41,8 +42,8 @@ const STANDARD_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 const STANDARD_FIELDS = [
     { field: 'url', schemaType: 'string', inspectorType: 'text' },
     { field: 'method', schemaType: 'string', inspectorType: 'select' },
-    { field: 'headers', schemaType: 'array', inspectorType: 'key-value' },
-    { field: 'parameters', schemaType: 'array', inspectorType: 'key-value' },
+    { field: 'headers', schemaType: 'string', inspectorType: 'key-value' },
+    { field: 'parameters', schemaType: 'string', inspectorType: 'key-value' },
     { field: 'body', schemaType: 'string', inspectorType: 'textarea' }
 ];
 

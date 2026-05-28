@@ -28,9 +28,14 @@ module.exports = {
         }
 
 
+        const baseUrl = 'https://api.canva.com/rest/v1';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
+
         const requestOptions = {
             method: method,
-            url: url,
+            url: targetUrl,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json',

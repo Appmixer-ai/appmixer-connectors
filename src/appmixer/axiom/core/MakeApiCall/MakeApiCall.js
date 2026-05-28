@@ -28,7 +28,10 @@ module.exports = {
         if (!method) {
             throw new context.CancelError('HTTP Method is required!');
         }
-        const targetUrl = `https://api.axiom.co${url.startsWith('/') ? '' : '/'}${url}`;
+        const baseUrl = 'https://api.axiom.co';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
         const requestOptions = {
             method,

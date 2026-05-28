@@ -31,9 +31,14 @@ module.exports = {
             }
         }
 
+        const resourceBase = context.resource || context.auth.resource || '';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${resourceBase}${url.startsWith('/') ? url : '/' + url}`;
+
         const options = {
             method,
-            url: (context.resource || context.auth.resource) + url,
+            url: targetUrl,
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${context.accessToken || context.auth?.accessToken}`,

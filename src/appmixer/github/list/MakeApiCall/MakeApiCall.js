@@ -24,9 +24,14 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
+        const baseUrl = 'https://api.github.com';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
+
         const requestOptions = {
             method: method,
-            url: url,
+            url: targetUrl,
             headers: {
                 'accept': 'application/vnd.github+json',
                 'X-GitHub-Api-Version': '2022-11-28',
