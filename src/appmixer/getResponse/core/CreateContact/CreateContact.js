@@ -85,7 +85,7 @@ module.exports = {
 
         // The API returns 202 Accepted with no body.
         // Echo back the input values for reference.
-        // To get the contactId, use ListContacts with email filter after this component.
+        // To get the contactId, use FindContacts with email filter after this component.
         const result = {
             email,
             name: name || null,
