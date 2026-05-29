@@ -7,36 +7,7 @@
 const { PassThrough } = require('stream');
 const jwt = require('jsonwebtoken');
 
-// In-memory map of connected SSE clients per user ID.
-const sseClients = new Map();
-
-async function publish(channel, event) {
-
-    const redisPub = process.CONNECTOR_STREAM_PUB_CLIENT;
-    if (redisPub) {
-        return redisPub.publish(channel, JSON.stringify(event));
-    }
-}
-
 module.exports = (context) => {
-
-    // assert(Redis clients have been connected in plugin.js).
-    process.CONNECTOR_STREAM_SUB_CLIENT.psubscribe('stream:mcp:events:*');
-    process.CONNECTOR_STREAM_SUB_CLIENT.on('pmessage', async (pattern, channel, payload) => {
-        if (pattern !== 'stream:mcp:events:*') {
-            return; // Ignore messages not matching the expected pattern.
-        }
-        const [, , ,userId] = channel.split(':'); // e.g., 'stream:mcp:events:123'
-
-        await context.log('info', `[AI.MCPTOOLS] Received event on channel ${channel} pattern ${pattern} for user ${userId}: ${JSON.stringify(Array.from(sseClients.entries()))}`);
-        if (sseClients.has(userId)) {
-            for (const stream of sseClients.get(userId)) {
-                if (!stream.writableEnded) {
-                    stream.write(`data: ${payload}\n\n`);
-                }
-            }
-        }
-    });
 
     context.http.router.register({
         method: 'GET',
@@ -67,7 +38,7 @@ module.exports = (context) => {
                 const user = await context.http.auth.getUser(req);
                 const userId = user.getId();
 
-                await publish(`stream:mcp:events:${userId}`, {
+                await context.pubSubPublish(`stream:mcp:events:${userId}`, {
                     type: 'gateway-add',
                     data: req.payload
                 });
@@ -88,7 +59,7 @@ module.exports = (context) => {
                 const userId = user.getId();
                 const gatewayId = req.params.gatewayId;
 
-                await publish(`stream:mcp:events:${userId}`, {
+                await context.pubSubPublish(`stream:mcp:events:${userId}`, {
                     type: 'gateway-delete',
                     id: gatewayId,
                     data: req.payload
@@ -98,13 +69,18 @@ module.exports = (context) => {
         }
     });
 
-    // SSE
+    // SSE — MCP clients (e.g. Claude Desktop) connect here to receive real-time
+    // gateway events. Auth is done via a JWT passed as a query param because
+    // browser EventSource / MCP clients cannot set custom headers.
     context.http.router.register({
         method: 'GET',
         path: '/events',
         options: {
             auth: {
                 strategies: ['public']
+            },
+            cors: {
+                origin: ['*']
             },
             handler: async (request, h) => {
 
@@ -121,47 +97,52 @@ module.exports = (context) => {
                     return h.response('Invalid or expired token').code(401);
                 }
 
-                await context.log('info', `[AI.MCPTOOLS] SSE connection request for user ${userId}. headers: ${JSON.stringify(request.headers)}`);
-
                 const stream = new PassThrough();
                 const response = h.response(stream);
                 response.type('text/event-stream');
                 response.header('Cache-Control', 'no-cache');
                 response.header('Connection', 'keep-alive');
-                // Force raw, uncompressed output.
-                // This is necessary to avoid the ERR_INCOMPLETE_CHUNKED_ENCODING error.
-                // It essentially disables response compression which interferes with
-                // streaming behaviour.
+                // Force raw, uncompressed output to avoid ERR_INCOMPLETE_CHUNKED_ENCODING.
                 response.header('Content-Encoding', 'identity');
-                stream.write(': init\n\n'); // Send SSE comment to kickstart stream.
+                stream.write(': init\n\n'); // Kickstart stream.
 
-                // Track connection.
-                if (!sseClients.has(userId)) sseClients.set(userId, new Set());
-                sseClients.get(userId).add(stream);
+                const sendEvent = (data) => {
+                    if (!stream.writableEnded) {
+                        stream.write(`data: ${JSON.stringify(data)}\n\n`);
+                    }
+                };
 
-                await context.log('info', `[AI.MCPTOOLS] SSE connection for user ${userId} established. ${JSON.stringify(Array.from(sseClients.entries()))}`);
+                // Track subscription so the close handler can unsubscribe even if the
+                // client disconnects during the subscribe await.
+                let sub = null;
+                let closed = false;
 
-                // Necessary to keep the connection alive. Otherwise it closes after
-                // a timeout interval set on the load balancer/proxy (typically 1 minute).
                 const heartbeat = setInterval(() => {
                     if (!stream.writableEnded) {
                         stream.write(': ping\n\n');
                     }
                 }, context.config.SSE_HEARTBEAT_INTERVAL || 15000);
 
-                // Cleanup on disconnect.
-                request.raw.req.on('close', async () => {
+                // Attach close handler BEFORE awaiting subscribe to avoid a race where
+                // the client disconnects during subscribe and cleanup never runs.
+                request.raw.req.on('close', () => {
+                    closed = true;
                     clearInterval(heartbeat);
-                    const userStreams = sseClients.get(userId);
-                    if (userStreams) {
-                        userStreams.delete(stream);
-                        if (userStreams.size === 0) {
-                            sseClients.delete(userId);
-                        }
-                    }
-                    stream.end();
-                    await context.log('info', `[AI.MCPTOOLS] SSE connection for user ${userId} closed. ${JSON.stringify(Array.from(sseClients.entries()))}`);
+                    Promise.allSettled([
+                        sub ? sub.unsubscribe() : Promise.resolve()
+                    ]).finally(() => {
+                        if (!stream.writableEnded) stream.end();
+                    });
                 });
+
+                sub = await context.pubSubSubscribe(`stream:mcp:events:${userId}`, sendEvent);
+
+                // If client disconnected during subscribe, clean up immediately.
+                if (closed) {
+                    await sub.unsubscribe();
+                    if (!stream.writableEnded) stream.end();
+                    return response;
+                }
 
                 return response;
             }
