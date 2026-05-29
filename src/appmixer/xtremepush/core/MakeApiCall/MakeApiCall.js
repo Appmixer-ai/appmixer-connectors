@@ -1,9 +1,25 @@
 'use strict';
 
+function kvToObj(arr) {
+    if (!arr || !Array.isArray(arr)) return {};
+    const out = {};
+    for (const row of arr) {
+        if (!row || typeof row !== 'object') continue;
+        const key = row.key;
+        if (typeof key !== 'string' || key.length === 0) continue;
+        out[key] = row.value;
+    }
+    return out;
+}
+
+
 module.exports = {
     async receive(context) {
 
-        const { url, method, headers, parameters, body } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
+
+        const extraHeaders = kvToObj(headersKV);
+        const queryParams = kvToObj(parametersKV);
 
         if (!url) {
             throw new context.CancelError('API Endpoint URL is required!');
@@ -12,54 +28,38 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        let parsedHeaders = {};
-        if (headers) {
+        let parsedBody = {};
+        if (body) {
             try {
-                parsedHeaders = JSON.parse(headers);
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
             } catch (e) {
-                throw new context.CancelError('Headers must be a valid JSON object.');
-            }
-        }
-
-        let parsedParameters = {};
-        if (parameters) {
-            try {
-                parsedParameters = JSON.parse(parameters);
-            } catch (e) {
-                throw new context.CancelError('Parameters must be a valid JSON object.');
+                throw new context.CancelError('Request Body must be valid JSON.');
             }
         }
 
         const baseUrl = 'https://external-api.xtremepush.com';
         const targetUrl = url.startsWith('http://') || url.startsWith('https://')
             ? url
-            : `${baseUrl}${url}`;
-
-        const queryString = Object.keys(parsedParameters).length
-            ? '?' + new URLSearchParams(parsedParameters).toString()
-            : '';
-
-        let parsedBody = {};
-        if (body) {
-            try {
-                parsedBody = JSON.parse(body);
-            } catch (e) {
-                throw new context.CancelError('Request Body must be valid JSON.');
-            }
-        }
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
         const requestOptions = {
             method,
-            url: targetUrl + queryString,
+            url: targetUrl,
             headers: {
                 'Content-Type': 'application/json',
-                ...parsedHeaders
+                ...extraHeaders
             },
+            // Xtremepush expects the app token in the request body. User body fields are merged first,
+            // then `apptoken` is set last so it cannot be overridden.
             data: {
-                apptoken: context.auth.apiKey,
-                ...parsedBody
+                ...parsedBody,
+                apptoken: context.auth.apiKey
             }
         };
+
+        if (Object.keys(queryParams).length > 0) {
+            requestOptions.params = queryParams;
+        }
 
         const response = await context.httpRequest(requestOptions);
 

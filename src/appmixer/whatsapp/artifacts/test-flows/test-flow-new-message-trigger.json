@@ -1,0 +1,287 @@
+{
+    "name": "E2E Whatsapp - New Message Trigger",
+    "description": "End-to-end test for Whatsapp connector - tests NewMessage trigger and SendTextMessage action. Sends a text message and validates the send response. The NewMessage trigger fires independently when an inbound message is received.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "recipientPhone",
+                                                "text": "+15550000000"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "phoneNumberId",
+                                                "text": "YOUR_PHONE_NUMBER_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "messageText",
+                                                "text": "E2E Test Message"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-text-message": {
+            "type": "appmixer.whatsapp.messages.SendTextMessage",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "var-phone-number-id": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "var-recipient": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "text": {
+                                        "var-ts": {
+                                            "variable": "$.on-start.out.started",
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{var-phone-number-id}}}",
+                                    "to": "{{{var-recipient}}}",
+                                    "text": "E2E Test Message {{{var-ts}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-send": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-text-message": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-text-message": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-message-id": {
+                                            "variable": "$.send-text-message.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "new-message": {
+            "type": "appmixer.whatsapp.notifications.NewMessage",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {},
+            "config": {}
+        },
+        "assert-new-message": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "new-message": [
+                        "message"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "new-message": {
+                            "message": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-msg-id": {
+                                            "variable": "$.new-message.message.id",
+                                            "functions": []
+                                        },
+                                        "field-from": {
+                                            "variable": "$.new-message.message.from",
+                                            "functions": []
+                                        },
+                                        "field-type": {
+                                            "variable": "$.new-message.message.type",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-msg-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-from}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-type}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1024,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-send": [
+                        "out"
+                    ],
+                    "assert-new-message": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Whatsapp - New Message Trigger",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
