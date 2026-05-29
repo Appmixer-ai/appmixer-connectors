@@ -8,7 +8,7 @@ const TOOLS_OUTPUT_POLL_INTERVAL = 300;  // 300ms
 
 module.exports = {
 
-    start: async function(context) {
+    start: async function (context) {
 
         const tools = await this.collectTools(context);
         await context.service.stateAddToSet(`mcpgateways:user:${context.userId}`, {
@@ -17,14 +17,14 @@ module.exports = {
             tools,
             webhook: context.getWebhookUrl()
         });
-        return context.httpRequest({
-            url: `${process.env.APPMIXER_API_URL}/plugins/appmixer/ai/mcptools/gateways`,
+        return context.callAppmixer({
+            endPoint: '/plugins/appmixer/ai/mcptools/gateways',
             method: 'POST',
-            data: {}
+            body: {}
         });
     },
 
-    stop: async function(context) {
+    stop: async function (context) {
 
         const tools = await context.stateGet('tools');
         await context.service.stateRemoveFromSet(`mcpgateways:user:${context.userId}`, {
@@ -33,13 +33,13 @@ module.exports = {
             tools,
             webhook: context.getWebhookUrl()
         });
-        return context.httpRequest({
-            url: `${process.env.APPMIXER_API_URL}/plugins/appmixer/ai/mcptools/gateways/${context.componentId}`,
+        return context.callAppmixer({
+            endPoint: `/plugins/appmixer/ai/mcptools/gateways/${context.componentId}`,
             method: 'DELETE'
         });
     },
 
-    collectTools: async function(context) {
+    collectTools: async function (context) {
 
         const tools = await this.getAllToolsDefinition(context);
         await context.log({ step: 'tools', tools });
@@ -47,7 +47,7 @@ module.exports = {
         return tools;
     },
 
-    getAllToolsDefinition: async function(context) {
+    getAllToolsDefinition: async function (context) {
 
         const flowDescriptor = context.flowDescriptor;
         const agentComponentId = context.componentId;
@@ -85,18 +85,25 @@ module.exports = {
         return toolsDefinition.concat(mcpToolsDefinition);
     },
 
-    mcpListTools: async function(context, componentId) {
+    mcpListTools: async function (context, componentId) {
 
-        const { data } = await context.httpRequest({
-            url: `${process.env.APPMIXER_API_URL}/flows/${context.flowId}/components/${componentId}?action=listTools`,
+
+        const { data } = context.callAppmixer({
+            endPoint: `/flows/${context.flowId}/components/${componentId}?action=listTools`,
             method: 'POST',
-            data: {}
+            body: {}
         });
+
+        // const { data } = await context.httpRequest({
+        //     url: `${process.env.APPMIXER_API_URL}/flows/${context.flowId}/components/${componentId}?action=listTools`,
+        //     method: 'POST',
+        //     data: {}
+        // });
 
         return data;
     },
 
-    mcpCallTool: async function(context, componentId, toolName, args) {
+    mcpCallTool: async function (context, componentId, toolName, args) {
 
         const { data } = await context.httpRequest({
             url: `${process.env.APPMIXER_API_URL}/flows/${context.flowId}/components/${componentId}?action=callTool`,
@@ -110,7 +117,7 @@ module.exports = {
         return data;
     },
 
-    isMCPserver: function(context, componentId) {
+    isMCPserver: function (context, componentId) {
         const component = context.flowDescriptor[componentId];
         if (!component) {
             return false;
@@ -119,7 +126,7 @@ module.exports = {
             && component.type.split('.').at(-1) === 'MCPServer');
     },
 
-    getMCPToolsDefinition: async function(context) {
+    getMCPToolsDefinition: async function (context) {
 
         // https://platform.openai.com/docs/assistants/tools/function-calling
         const toolsDefinition = [];
@@ -181,7 +188,7 @@ module.exports = {
         return toolsDefinition;
     },
 
-    getToolsDefinition: function(tools) {
+    getToolsDefinition: function (tools) {
 
         // https://platform.openai.com/docs/assistants/tools/function-calling
         const toolsDefinition = [];
@@ -221,7 +228,7 @@ module.exports = {
         return toolsDefinition;
     },
 
-    callTool: async function(context, componentId, args) {
+    callTool: async function (context, componentId, args) {
 
         const toolCall = {
             componentId,
@@ -251,7 +258,7 @@ module.exports = {
         return 'Error: Tool timed out.';
     },
 
-    receive: async function(context) {
+    receive: async function (context) {
 
         if (context.messages.webhook) {
 
