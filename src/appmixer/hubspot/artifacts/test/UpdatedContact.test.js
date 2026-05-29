@@ -2,8 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 const testUtils = require('../../../../../test/utils.js');
 const UpdatedContact = require('../../crm/UpdatedContact/UpdatedContact.js');
-const { version } = require('../../bundle.json');
-const { WATCHED_PROPERTIES_CONTACT } = require('../../commons.js');
+
 
 describe('UpdatedContact', () => {
 
@@ -160,13 +159,35 @@ describe('UpdatedContact', () => {
         assert.equal(context.response.callCount, 2);
     });
 
-    it('getSubscriptions', async () => {
+    it('lifecyclestage change triggers update', async () => {
 
-        if (version.startsWith('4')) {
-            const subscriptions = UpdatedContact.getSubscriptions();
+        context.messages.webhook.content.data = {
+            '38533722680': {
+                occurredAt: 1726820305517,
+                propertyName: 'lifecyclestage',
+                propertyValue: 'evangelist'
+            }
+        };
 
-            assert.equal(subscriptions.length, WATCHED_PROPERTIES_CONTACT.length);
-        }
+        hubspotStub.withArgs('post', 'crm/v3/objects/contacts/batch/read').resolves({
+            data: {
+                results: [
+                    {
+                        id: '38533722680',
+                        createdAt: '2023-01-01T00:00:00Z',
+                        updatedAt: '2023-02-04T00:00:00Z',
+                        properties: { lifecyclestage: 'evangelist' }
+                    }
+                ]
+            }
+        });
+
+        await UpdatedContact.receive(context);
+
+        assert.equal(hubspotStub.callCount, 1, 'HubSpot API called');
+        assert.equal(context.sendArray.callCount, 1);
+        assert.equal(context.sendArray.args[0][0].length, 1, 'lifecyclestage change emitted');
+        assert.equal(context.response.callCount, 1);
     });
 
     it('should cache outPort schema', async function() {

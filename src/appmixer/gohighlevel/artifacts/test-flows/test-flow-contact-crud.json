@@ -1,0 +1,469 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1200,
+            "y": 144
+        },
+        "assert-create": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-id}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-email}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-email": {
+                                            "functions": [],
+                                            "variable": "$.create-contact.out.email"
+                                        },
+                                        "field-id": {
+                                            "functions": [],
+                                            "variable": "$.create-contact.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 16
+        },
+        "assert-get": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-contact": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-get-email}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2ETest",
+                                                "field": "{{{field-get-first-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-email": {
+                                            "functions": [],
+                                            "variable": "$.get-contact.out.email"
+                                        },
+                                        "field-get-first-name": {
+                                            "functions": [],
+                                            "variable": "$.get-contact.out.firstName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 144
+        },
+        "assert-update": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-contact": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-updated-id}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2EUpdated",
+                                                "field": "{{{field-updated-first-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-updated-first-name": {
+                                            "functions": [],
+                                            "variable": "$.update-contact.out.firstName"
+                                        },
+                                        "field-updated-id": {
+                                            "functions": [],
+                                            "variable": "$.update-contact.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "update-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 272
+        },
+        "before-all": {
+            "config": {},
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 160,
+            "y": 16
+        },
+        "create-contact": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "email": "{{{var-email-prefix}}}-{{{var-ts}}}@appmixer-test.com",
+                                    "firstName": "{{{var-first-name}}}",
+                                    "lastName": "{{{var-last-name}}}"
+                                },
+                                "modifiers": {
+                                    "email": {
+                                        "var-email-prefix": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.contactEmailPrefix"
+                                        },
+                                        "var-ts": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ],
+                                            "variable": "$.on-start.out.started"
+                                        }
+                                    },
+                                    "firstName": {
+                                        "var-first-name": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.contactFirstName"
+                                        }
+                                    },
+                                    "lastName": {
+                                        "var-last-name": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.contactLastName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.CreateContact",
+            "x": 448,
+            "y": 16
+        },
+        "delete-contact": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "contactId": "{{{var-delete-contact-id}}}"
+                                },
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-delete-contact-id": {
+                                            "functions": [],
+                                            "variable": "$.create-contact.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.DeleteContact",
+            "x": 1392,
+            "y": 144
+        },
+        "get-contact": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "lambda": {
+                                    "contactId": "{{{var-contact-id}}}"
+                                },
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-contact-id": {
+                                            "functions": [],
+                                            "variable": "$.create-contact.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.GetContact",
+            "x": 640,
+            "y": 144
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-contact": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "auth@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Gohighlevel - Contact CRUD"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1584,
+            "y": 144
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "contactEmailPrefix",
+                                                "text": "e2e-ghl",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "contactFirstName",
+                                                "text": "E2ETest",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "contactLastName",
+                                                "text": "GHLContact",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "updatedFirstName",
+                                                "text": "E2EUpdated",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
+        },
+        "update-contact": {
+            "config": {
+                "properties": {
+                    "account": "69bd20b72e33e81a1e686f91"
+                },
+                "transform": {
+                    "in": {
+                        "get-contact": {
+                            "out": {
+                                "lambda": {
+                                    "contactId": "{{{var-update-contact-id}}}",
+                                    "firstName": "{{{var-updated-first-name}}}"
+                                },
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-update-contact-id": {
+                                            "functions": [],
+                                            "variable": "$.create-contact.out.id"
+                                        }
+                                    },
+                                    "firstName": {
+                                        "var-updated-first-name": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.updatedFirstName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.gohighlevel.core.UpdateContact",
+            "x": 832,
+            "y": 272
+        }
+    },
+    "name": "E2E Gohighlevel - Contact CRUD",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

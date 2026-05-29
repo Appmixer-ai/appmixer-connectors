@@ -1,0 +1,497 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "expand": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "stats",
+                        "free_web_content",
+                        "free_email_content",
+                        "free_rss_content",
+                        "premium_web_content",
+                        "premium_email_content"
+                    ]
+                },
+                "description": "Optionally expand the results by adding additional information. <br>`stats` - Adds statistics about the post(s). <br>`free_web_content` - Adds the web HTML rendered to a free reader. <br>`free_email_content` - Adds the email HTML rendered to a free reader. <br>`free_rss_content` - Adds the RSS feed HTML. <br>`premium_web_content` - Adds the web HTML rendered to a premium reader. <br>`premium_email_content` - Adds the email HTML rendered to a premium reader."
+            },
+            "audience": {
+                "type": "string",
+                "enum": [
+                    "free",
+                    "premium",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by audience"
+            },
+            "platform": {
+                "type": "string",
+                "enum": [
+                    "web",
+                    "email",
+                    "both",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by platform.<br>`web` - Posts only published to web.<br>`email` - Posts only published to email.<br>`both` - Posts published to email and web.<br>`all` - Does not restrict results by platform."
+            },
+            "status": {
+                "type": "string",
+                "enum": [
+                    "draft",
+                    "confirmed",
+                    "archived",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by the status of the post.<br>`draft` - not been scheduled.<br>`confirmed` - The post will be active after the `scheduled_at`.<br>`archived` - The post is no longer active.<br>`all` - Does not restrict results by status."
+            },
+            "content_tags[]": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by content_tags. Adding a content tag will return any post with that content tag associated to it.<br><br><b>Example</b>: Filtering for `content_tags: [\"sales\",\"closing\"]` will return results of posts that have *either* `sales` or `closing` content_tags."
+            },
+            "slugs[]": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by their slugs. Adding a slug will return any post with that exact slug associated to it.<br><br><b>Example:</b> Filtering for `slugs: [\"my-first-post\",\"another-post\"]` will return results of posts that have *either* `my-first-post` or `another-post` as their slug."
+            },
+            "authors[]": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by their authors. Adding an author name will return any post with that author associated to it (case-insensitive).<br><br><b>Example:</b> Filtering for `authors: [\"John Doe\",\"Jane Smith\"]` will return results of posts that have *either* John Doe or Jane Smith as authors."
+            },
+            "premium_tiers": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by audience based on premium tiers.<br> This takes in an array of Display Names of the premium tiers.<br> It will also scope any expanded content output to the specified premium tiers.<br> Note: This is case insensitive."
+            },
+            "limit": {
+                "type": "integer",
+                "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+            },
+            "order_by": {
+                "type": "string",
+                "enum": [
+                    "created",
+                    "publish_date",
+                    "displayed_date"
+                ],
+                "default": "created",
+                "description": "The field that the results are sorted by. Defaults to created<br> `created` - The time in which the post was first created.<br> `publish_date` - The time the post was set to be published.<br> `displayed_date` - The time displayed in place of the `publish_date`. If no `displayed_date` was set, it will default to the `publish_date`"
+            },
+            "direction": {
+                "type": "string",
+                "description": "The direction that the results are sorted in. Defaults to asc<br> `asc` - Ascending, sorts from smallest to largest.<br> `desc` - Descending, sorts from largest to smallest.",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "default": "asc"
+            },
+            "hidden_from_feed": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "true",
+                    "false"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by the `hidden_from_feed` attribute of the post.<br>`all` - Does not restrict results by `hidden_from_feed`.<br>`true` - Only return posts hidden from the feed.<br>`false` - Only return posts that are visible on the feed."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data",
+            "limit",
+            "page",
+            "total_results",
+            "total_pages"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "id",
+                        "subtitle",
+                        "title",
+                        "authors",
+                        "created",
+                        "status",
+                        "split_tested",
+                        "subject_line",
+                        "preview_text",
+                        "slug",
+                        "thumbnail_url",
+                        "web_url",
+                        "audience",
+                        "platform",
+                        "content_tags",
+                        "hidden_from_feed",
+                        "enforce_gated_content",
+                        "email_capture_popup"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the post."
+                        },
+                        "subtitle": {
+                            "type": "string",
+                            "description": "The subtitle displayed in web views"
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "The title displayed in web views"
+                        },
+                        "authors": {
+                            "type": "array",
+                            "description": "An array of author names",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "created": {
+                            "type": "integer",
+                            "description": "The time the post was created. Measured in seconds since the Unix epoch"
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "The status of the post.<br>`draft` - not been scheduled.<br>`confirmed` - The post will be active after the `scheduled_at`.<br>`archived` - The post is no longer active.",
+                            "enum": [
+                                "draft",
+                                "confirmed",
+                                "archived"
+                            ],
+                            "default": "draft"
+                        },
+                        "publish_date": {
+                            "type": "integer",
+                            "description": "The time the post was set to be published. Measured in seconds since the Unix epoch"
+                        },
+                        "displayed_date": {
+                            "type": "integer",
+                            "description": "The time displayed in place of the `publish_date`. Measured in seconds since the Unix epoch"
+                        },
+                        "split_tested": {
+                            "type": "boolean",
+                            "description": "A flag to indicate if a split test was done. Only applicable to email posts."
+                        },
+                        "subject_line": {
+                            "type": "string",
+                            "description": "The email subject line. In cases of A/B Testing, this will be adjusted to the winning subject line."
+                        },
+                        "preview_text": {
+                            "type": "string",
+                            "description": "The email preview text"
+                        },
+                        "slug": {
+                            "type": "string",
+                            "description": "The web slug where this post can be accessed."
+                        },
+                        "thumbnail_url": {
+                            "type": "string",
+                            "description": "The URL of the thumbnail. Defaults to the Publication logo if not set."
+                        },
+                        "web_url": {
+                            "type": "string",
+                            "description": "The full URL where this post can be accessed on the web. Only applicable if the platform is `web` or `both`."
+                        },
+                        "audience": {
+                            "type": "string",
+                            "description": "The audience that the post is available to on the web. Only applicable if the platform is `web` or `both`.",
+                            "enum": [
+                                "free",
+                                "premium",
+                                "both"
+                            ]
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "The platform that the post is or will be published to.",
+                            "enum": [
+                                "web",
+                                "email",
+                                "both"
+                            ]
+                        },
+                        "content_tags": {
+                            "type": "array",
+                            "description": "All content tags that were associated with the post.",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "meta_default_description": {
+                            "type": "string",
+                            "description": "Meta tag description for the post, called SEO Description in the admin UI"
+                        },
+                        "meta_default_title": {
+                            "type": "string",
+                            "description": "meta tag title for the post, called SEO Title in the admin UI"
+                        },
+                        "content": {
+                            "type": "object",
+                            "description": "Optional html content for a post. Retrievable by including any of `expand: [free_web_content, free_email_content, free_rss_content, premium_web_content, premium_email_content]` in the post request body.\n\n**Note:** Generating HTML is slow. We recommend only requesting the HTML versions you need at the time.",
+                            "properties": {
+                                "free": {
+                                    "type": "object",
+                                    "description": "The requested free post HTML. This HTML has paywalls enforced.",
+                                    "properties": {
+                                        "web": {
+                                            "type": "string",
+                                            "description": "The web HTML rendered to a free or annonomous reader."
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "description": "The email HTML rendered to a free reader."
+                                        },
+                                        "rss": {
+                                            "type": "string",
+                                            "description": "The HTML that is rendered in RSS feeds."
+                                        }
+                                    }
+                                },
+                                "premium": {
+                                    "type": "object",
+                                    "description": "The requested premium post HTML. This HTML does not have paywalls enforced.",
+                                    "properties": {
+                                        "web": {
+                                            "type": "string",
+                                            "description": "The website HTML rendered to a free reader"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "description": "The email HTML rendered to a premium reader"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "stats": {
+                            "type": "object",
+                            "description": "Optional list of stats for a post. Retrievable by including `expand: [stats]` in the post request body. <br><br> **Note:** If a timeout occurs while aggregating stats, subsequent requests may return consolidated click metrics rather than individual raw click metrics.",
+                            "properties": {
+                                "email": {
+                                    "type": "object",
+                                    "description": "Stats scoped only to email recipients. Not relevant for posts published only to web",
+                                    "properties": {
+                                        "recipients": {
+                                            "type": "integer",
+                                            "description": "Total number of email recipients",
+                                            "default": 0
+                                        },
+                                        "delivered": {
+                                            "type": "integer",
+                                            "description": "Total number of emails delivered",
+                                            "default": 0
+                                        },
+                                        "opens": {
+                                            "type": "integer",
+                                            "description": "Total number of email opens",
+                                            "default": 0
+                                        },
+                                        "unique_opens": {
+                                            "type": "integer",
+                                            "description": "Total number of unique email opens",
+                                            "default": 0
+                                        },
+                                        "open_rate": {
+                                            "type": "number",
+                                            "description": "The percentage of emails that have been opened",
+                                            "format": "double"
+                                        },
+                                        "clicks": {
+                                            "type": "integer",
+                                            "description": "Total number of email clicks",
+                                            "default": 0
+                                        },
+                                        "unique_clicks": {
+                                            "type": "integer",
+                                            "description": "Unique number of email clicks",
+                                            "default": 0
+                                        },
+                                        "verified_clicks": {
+                                            "type": "integer",
+                                            "description": "Total number of verified human email clicks across all URLs in this post. Verified clicks have passed bot detection and are confirmed to be from real subscribers.",
+                                            "default": 0
+                                        },
+                                        "unique_verified_clicks": {
+                                            "type": "integer",
+                                            "description": "Unique number of verified human email clicks across all URLs in this post. Only counts the first verified click per subscriber.",
+                                            "default": 0
+                                        },
+                                        "click_rate": {
+                                            "type": "number",
+                                            "description": "The percentage of emails that have been clicked",
+                                            "format": "double"
+                                        },
+                                        "unsubscribes": {
+                                            "type": "integer",
+                                            "description": "Total number of email unsubscribes",
+                                            "default": 0
+                                        },
+                                        "spam_reports": {
+                                            "type": "integer",
+                                            "description": "The number of subscribers that reported this post email as spam",
+                                            "default": 0
+                                        }
+                                    }
+                                },
+                                "web": {
+                                    "type": "object",
+                                    "description": "Stats scoped only to web views. Not relevant for posts published only to email",
+                                    "properties": {
+                                        "views": {
+                                            "type": "integer",
+                                            "description": "Total number of web views",
+                                            "default": 0
+                                        },
+                                        "clicks": {
+                                            "type": "integer",
+                                            "description": "Total number of web clicks",
+                                            "default": 0
+                                        }
+                                    }
+                                },
+                                "clicks": {
+                                    "type": "array",
+                                    "description": "An array of click statistics for each URL in the post",
+                                    "items": {
+                                        "type": "object",
+                                        "description": "Details about specific URL's click stats from a post.",
+                                        "properties": {
+                                            "url": {
+                                                "type": "string",
+                                                "description": "The URL the stats are for"
+                                            },
+                                            "base_url": {
+                                                "type": "string",
+                                                "description": "The canonical URL with all query parameters and fragments removed. Derived by stripping everything after the '?' and '#' characters. Preserves the protocol, host (including casing), port, and path exactly as they appear in the original URL. Guaranteed to be present whenever url is present, enabling grouping of clicks by destination regardless of tracking parameters."
+                                            },
+                                            "email": {
+                                                "type": "object",
+                                                "description": "URL stats scoped only to email recipients. Not relevant for posts published only to web",
+                                                "properties": {
+                                                    "clicks": {
+                                                        "type": "integer"
+                                                    },
+                                                    "unique_clicks": {
+                                                        "type": "integer"
+                                                    },
+                                                    "verified_clicks": {
+                                                        "type": "integer",
+                                                        "description": "Total number of verified human email clicks on this URL. Verified clicks have passed bot detection and are confirmed to be from real subscribers."
+                                                    },
+                                                    "unique_verified_clicks": {
+                                                        "type": "integer",
+                                                        "description": "Unique number of verified human email clicks on this URL. Only counts the first verified click per subscriber."
+                                                    },
+                                                    "click_through_rate": {
+                                                        "type": "number",
+                                                        "description": "The percentage of email clicks on the URL compared to the total number of recipients",
+                                                        "format": "double"
+                                                    }
+                                                }
+                                            },
+                                            "web": {
+                                                "type": "object",
+                                                "description": "Stats scoped only to web views. Not relevant for posts published only to email",
+                                                "properties": {
+                                                    "clicks": {
+                                                        "type": "integer"
+                                                    },
+                                                    "unique_clicks": {
+                                                        "type": "integer"
+                                                    },
+                                                    "click_through_rate": {
+                                                        "type": "number",
+                                                        "description": "The percentage of clicks on the URL compared to the total number of web views",
+                                                        "format": "double"
+                                                    }
+                                                }
+                                            },
+                                            "total_clicks": {
+                                                "type": "integer"
+                                            },
+                                            "total_unique_clicks": {
+                                                "type": "integer"
+                                            },
+                                            "total_click_through_rate": {
+                                                "type": "number",
+                                                "description": "The percentage of clicks on the URL compared to the total number of recipients and web views",
+                                                "format": "double"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "hidden_from_feed": {
+                            "type": "boolean",
+                            "description": "A flag to indicate if the post is hidden from the website feed.",
+                            "default": false
+                        },
+                        "enforce_gated_content": {
+                            "type": "boolean",
+                            "description": "A flag to indicate if the post enforces gated content for non-subscribers.",
+                            "default": false
+                        },
+                        "email_capture_popup": {
+                            "type": "boolean",
+                            "description": "A flag to indicate if popup email capture is enabled for this post.",
+                            "default": false
+                        }
+                    }
+                }
+            },
+            "limit": {
+                "type": "integer",
+                "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                "default": 1
+            },
+            "total_results": {
+                "type": "integer",
+                "description": "The total number of results from all pages."
+            },
+            "total_pages": {
+                "type": "integer",
+                "description": "The total number of pages."
+            }
+        }
+    }
+}

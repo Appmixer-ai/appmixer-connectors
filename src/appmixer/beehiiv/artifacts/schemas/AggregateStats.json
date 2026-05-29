@@ -1,0 +1,249 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "audience": {
+                "type": "string",
+                "enum": [
+                    "free",
+                    "premium",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by audience"
+            },
+            "platform": {
+                "type": "string",
+                "enum": [
+                    "web",
+                    "email",
+                    "both",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by platform.<br>`web` - Posts only published to web.<br>`email` - Posts only published to email.<br>`both` - Posts published to email and web.<br>`all` - Does not restrict results by platform."
+            },
+            "status": {
+                "type": "string",
+                "enum": [
+                    "draft",
+                    "confirmed",
+                    "archived",
+                    "all"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by the status of the post.<br>`draft` - not been scheduled.<br>`confirmed` - The post will be active after the `scheduled_at`.<br>`archived` - The post is no longer active.<br>`all` - Does not restrict results by status."
+            },
+            "content_tags[]": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by content_tags. Adding a content tag will return any post with that content tag associated to it.<br>Example: Filtering for `content_tags: [\"sales\",\"closing\"]` will return results of posts that have *either* sales or closing content_tags."
+            },
+            "authors[]": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Optionally filter posts by their authors. Adding an author name will return any post with that author associated to it (case-insensitive).<br><br><b>Example:</b> Filtering for `authors: [\"John Doe\",\"Jane Smith\"]` will return results of posts that have *either* John Doe or Jane Smith as authors."
+            },
+            "hidden_from_feed": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "true",
+                    "false"
+                ],
+                "default": "all",
+                "description": "Optionally filter the results by the `hidden_from_feed` attribute of the post.<br>`all` - Does not restrict results by `hidden_from_feed`.<br>`true` - Only return posts hidden from the feed.<br>`false` - Only return posts that are visible on the feed."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": [
+                    "stats"
+                ],
+                "properties": {
+                    "stats": {
+                        "type": "object",
+                        "description": "Optional list of stats for a post. Retrievable by including `expand: [stats]` in the post request body. <br><br> **Note:** If a timeout occurs while aggregating stats, subsequent requests may return consolidated click metrics rather than individual raw click metrics.",
+                        "properties": {
+                            "email": {
+                                "type": "object",
+                                "description": "Stats scoped only to email recipients. Not relevant for posts published only to web",
+                                "properties": {
+                                    "recipients": {
+                                        "type": "integer",
+                                        "description": "Total number of email recipients",
+                                        "default": 0
+                                    },
+                                    "delivered": {
+                                        "type": "integer",
+                                        "description": "Total number of emails delivered",
+                                        "default": 0
+                                    },
+                                    "opens": {
+                                        "type": "integer",
+                                        "description": "Total number of email opens",
+                                        "default": 0
+                                    },
+                                    "unique_opens": {
+                                        "type": "integer",
+                                        "description": "Total number of unique email opens",
+                                        "default": 0
+                                    },
+                                    "open_rate": {
+                                        "type": "number",
+                                        "description": "The percentage of emails that have been opened",
+                                        "format": "double"
+                                    },
+                                    "clicks": {
+                                        "type": "integer",
+                                        "description": "Total number of email clicks",
+                                        "default": 0
+                                    },
+                                    "unique_clicks": {
+                                        "type": "integer",
+                                        "description": "Unique number of email clicks",
+                                        "default": 0
+                                    },
+                                    "verified_clicks": {
+                                        "type": "integer",
+                                        "description": "Total number of verified human email clicks across all URLs in this post. Verified clicks have passed bot detection and are confirmed to be from real subscribers.",
+                                        "default": 0
+                                    },
+                                    "unique_verified_clicks": {
+                                        "type": "integer",
+                                        "description": "Unique number of verified human email clicks across all URLs in this post. Only counts the first verified click per subscriber.",
+                                        "default": 0
+                                    },
+                                    "click_rate": {
+                                        "type": "number",
+                                        "description": "The percentage of emails that have been clicked",
+                                        "format": "double"
+                                    },
+                                    "unsubscribes": {
+                                        "type": "integer",
+                                        "description": "Total number of email unsubscribes",
+                                        "default": 0
+                                    },
+                                    "spam_reports": {
+                                        "type": "integer",
+                                        "description": "The number of subscribers that reported this post email as spam",
+                                        "default": 0
+                                    }
+                                }
+                            },
+                            "web": {
+                                "type": "object",
+                                "description": "Stats scoped only to web views. Not relevant for posts published only to email",
+                                "properties": {
+                                    "views": {
+                                        "type": "integer",
+                                        "description": "Total number of web views",
+                                        "default": 0
+                                    },
+                                    "clicks": {
+                                        "type": "integer",
+                                        "description": "Total number of web clicks",
+                                        "default": 0
+                                    }
+                                }
+                            },
+                            "clicks": {
+                                "type": "array",
+                                "description": "An array of click statistics for each URL in the post",
+                                "items": {
+                                    "type": "object",
+                                    "description": "Details about specific URL's click stats from a post.",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string",
+                                            "description": "The URL the stats are for"
+                                        },
+                                        "base_url": {
+                                            "type": "string",
+                                            "description": "The canonical URL with all query parameters and fragments removed. Derived by stripping everything after the '?' and '#' characters. Preserves the protocol, host (including casing), port, and path exactly as they appear in the original URL. Guaranteed to be present whenever url is present, enabling grouping of clicks by destination regardless of tracking parameters."
+                                        },
+                                        "email": {
+                                            "type": "object",
+                                            "description": "URL stats scoped only to email recipients. Not relevant for posts published only to web",
+                                            "properties": {
+                                                "clicks": {
+                                                    "type": "integer"
+                                                },
+                                                "unique_clicks": {
+                                                    "type": "integer"
+                                                },
+                                                "verified_clicks": {
+                                                    "type": "integer",
+                                                    "description": "Total number of verified human email clicks on this URL. Verified clicks have passed bot detection and are confirmed to be from real subscribers."
+                                                },
+                                                "unique_verified_clicks": {
+                                                    "type": "integer",
+                                                    "description": "Unique number of verified human email clicks on this URL. Only counts the first verified click per subscriber."
+                                                },
+                                                "click_through_rate": {
+                                                    "type": "number",
+                                                    "description": "The percentage of email clicks on the URL compared to the total number of recipients",
+                                                    "format": "double"
+                                                }
+                                            }
+                                        },
+                                        "web": {
+                                            "type": "object",
+                                            "description": "Stats scoped only to web views. Not relevant for posts published only to email",
+                                            "properties": {
+                                                "clicks": {
+                                                    "type": "integer"
+                                                },
+                                                "unique_clicks": {
+                                                    "type": "integer"
+                                                },
+                                                "click_through_rate": {
+                                                    "type": "number",
+                                                    "description": "The percentage of clicks on the URL compared to the total number of web views",
+                                                    "format": "double"
+                                                }
+                                            }
+                                        },
+                                        "total_clicks": {
+                                            "type": "integer"
+                                        },
+                                        "total_unique_clicks": {
+                                            "type": "integer"
+                                        },
+                                        "total_click_through_rate": {
+                                            "type": "number",
+                                            "description": "The percentage of clicks on the URL compared to the total number of recipients and web views",
+                                            "format": "double"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

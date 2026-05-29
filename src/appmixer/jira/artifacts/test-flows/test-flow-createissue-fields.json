@@ -1,0 +1,238 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-create-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1100,
+            "y": 304
+        },
+        "assert-create-issue": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-issue": {
+                            "deleted": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{issue-id}}}",
+                                                "label": "Created issue should have an ID"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{issue-key}}}",
+                                                "label": "Created issue should have a key"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "issue-id": {
+                                            "functions": [],
+                                            "variable": "$.create-issue.out.id"
+                                        },
+                                        "issue-key": {
+                                            "functions": [],
+                                            "variable": "$.create-issue.out.key"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-issue": [
+                        "deleted"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 880,
+            "y": 304
+        },
+        "create-issue": {
+            "config": {
+                "properties": {
+                    "issueType": "10001",
+                    "project": "10000"
+                },
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "customfield_10076": "asdfdsf",
+                                    "reporter": "5eafb639ddd45f0b94215fa9",
+                                    "summary": "asdfasdf"
+                                },
+                                "modifiers": {
+                                    "customfield_10076": {},
+                                    "reporter": {},
+                                    "summary": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.jira.issues.CreateIssue",
+            "x": 416,
+            "y": 304
+        },
+        "delete-issue": {
+            "config": {
+                "properties": {
+                    "account": "698df646f513883a8203c88e"
+                },
+                "transform": {
+                    "in": {
+                        "create-issue": {
+                            "out": {
+                                "lambda": {
+                                    "id": "{{{var-issue-id}}}"
+                                },
+                                "modifiers": {
+                                    "id": {
+                                        "var-issue-id": {
+                                            "functions": [],
+                                            "variable": "$.create-issue.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-issue": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.jira.issues.DeleteIssue",
+            "x": 656,
+            "y": 304
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 0,
+            "y": 304
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "Jira CreateIssue E2E"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 304
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "projectId",
+                                                "text": "10000",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "issueTypeId",
+                                                "text": "10001",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 176,
+            "y": 304
+        }
+    },
+    "name": "E2E Jira - CreateIssue required fields",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

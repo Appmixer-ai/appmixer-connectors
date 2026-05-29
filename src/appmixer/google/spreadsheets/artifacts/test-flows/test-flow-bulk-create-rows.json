@@ -1,0 +1,315 @@
+{
+    "name": "E2E Google/spreadsheets - Bulk Row Creation",
+    "description": "End-to-end test for the CreateRows component. Creates multiple rows from a CSV file URL, then verifies the rows were added via GetRows and FindRow. Tests normalized header matching resilience — the same flow should work even if sheet column headers contain minor whitespace differences.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {},
+            "config": {}
+        },
+        "create-rows": {
+            "type": "appmixer.google.spreadsheets.CreateRows",
+            "x": 256,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "sheetId": {},
+                                    "worksheetId": {},
+                                    "fileUrl": {},
+                                    "delimiter": {},
+                                    "append": {},
+                                    "autoMatch": {}
+                                },
+                                "lambda": {
+                                    "sheetId": "TEST_SPREADSHEET_ID",
+                                    "worksheetId": "0/Sheet1",
+                                    "fileUrl": "TEST_CSV_FILE_URL",
+                                    "delimiter": ",",
+                                    "append": true,
+                                    "autoMatch": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-rows": {
+            "type": "appmixer.google.spreadsheets.GetRows",
+            "x": 448,
+            "y": 180,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-rows": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "sheetId": {},
+                                    "worksheetId": {},
+                                    "allAtOnce": {},
+                                    "withHeaders": {},
+                                    "rowFormat": {}
+                                },
+                                "lambda": {
+                                    "sheetId": "TEST_SPREADSHEET_ID",
+                                    "worksheetId": "0/Sheet1",
+                                    "allAtOnce": true,
+                                    "withHeaders": true,
+                                    "rowFormat": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-row": {
+            "type": "appmixer.google.spreadsheets.FindRow",
+            "x": 448,
+            "y": 420,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-rows": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "sheetId": "TEST_SPREADSHEET_ID",
+                    "worksheetId": "0/Sheet1"
+                },
+                "transform": {
+                    "in": {
+                        "create-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "column": {},
+                                    "value": {},
+                                    "operator": {}
+                                },
+                                "lambda": {
+                                    "column": "Name",
+                                    "value": "TEST_ROW_VALUE",
+                                    "operator": "equalTo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-rows": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-rows": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "spreadsheet-id-var": {
+                                            "variable": "$.create-rows.out.spreadsheetId",
+                                            "functions": []
+                                        },
+                                        "new-rows-var": {
+                                            "variable": "$.create-rows.out.newRows",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{spreadsheet-id-var}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{new-rows-var}}}",
+                                                "assertion": "greaterThan",
+                                                "value": "0",
+                                                "type": "number"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-rows": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 260,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-rows": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-rows": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "rows-var": {
+                                            "variable": "$.get-rows.out.rows",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{rows-var}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find-row": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 440,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-row": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-row": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-var": {
+                                            "variable": "$.find-row.out.Name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-var}}}",
+                                                "assertion": "equal",
+                                                "expected": "TEST_ROW_VALUE",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-rows": ["out"],
+                    "assert-get-rows": ["out"],
+                    "assert-find-row": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1024,
+            "y": 300,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Google/spreadsheets - Bulk Row Creation",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

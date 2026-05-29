@@ -190,33 +190,33 @@ Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspecto
 
 Each output port can define its output structure using **either** `schema` or `options`, but **not both**:
 
-- **`schema`**: Use JSON Schema to define the structure of output data. Provides type information and validation.
-- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured.
+- **`schema`** (PREFERRED): Use JSON Schema to define the structure of output data. Provides type information, validation, and nested object/array support.
+- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured — use only when fields are flat and you don't need typed schemas.
 
-**IMPORTANT**: You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
+**IMPORTANT**: Always prefer `schema` (JSON Schema) over `options`. Use `options` only for legacy components or when dynamically generating a flat list of fields. You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
 
 ```json
-// CORRECT - using schema only
+// PREFERRED - using schema (JSON Schema)
 "outPorts": [
     {
         "name": "out",
         "schema": {
             "type": "object",
             "properties": {
-                "id": { "type": "string", "title": "ID" },
-                "name": { "type": "string", "title": "Name" }
+                "id": { "type": "string", "title": "ID", "example": "abc123" },
+                "name": { "type": "string", "title": "Name", "example": "Acme Inc." }
             }
         }
     }
 ]
 
-// CORRECT - using options only
+// ALTERNATIVE - using options (flat list only, no nested types)
 "outPorts": [
     {
         "name": "out",
         "options": [
-            { "label": "ID", "value": "id" },
-            { "label": "Name", "value": "name" }
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "abc123" } },
+            { "label": "Name", "value": "name", "schema": { "type": "string", "example": "Acme Inc." } }
         ]
     }
 ]
@@ -230,5 +230,69 @@ Each output port can define its output structure using **either** `schema` or `o
     }
 ]
 ```
+
+### Output Port Examples (variable picker preview)
+
+Output port fields should include `example` values so users see realistic sample data in the variable picker UI when wiring downstream components.
+
+**Rules:**
+
+1. **Use `example` (singular), NOT `examples` (array).** Appmixer reads `example`; the JSON Schema `examples: [...]` array is not rendered.
+2. **In JSON Schema format**: put `example` on each leaf property inside `schema.properties[key]`. This is the preferred form.
+3. **In options format**: put `example` inside the per-option `schema` object: `options[k].schema.example`.
+4. **Falsy values render correctly** (`0`, `false`, `""`) — don't omit them out of concern they won't show.
+5. **Choose realistic sample values** that match the actual API response (real ID format, real date, etc.), not placeholders like `"string"` or `"value"`.
+6. **Do NOT use `description`** on output port properties. Use `title` for the human-readable label; `description` is not rendered by the variable picker and only adds noise. Tooltips/help text belong on input port inspectors, not on outputs.
+
+**JSON Schema format (PREFERRED):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID", "example": "1001" },
+                "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                "completed": { "type": "boolean", "title": "Completed", "example": false },
+                "priority": { "type": "integer", "title": "Priority", "example": 0 },
+                "created_at": { "type": "string", "format": "date-time", "title": "Created", "example": "2025-01-15T10:30:00Z" },
+                "tags": {
+                    "type": "array",
+                    "title": "Tags",
+                    "items": { "type": "string" },
+                    "example": ["urgent", "shopping"]
+                },
+                "assignee": {
+                    "type": "object",
+                    "title": "Assignee",
+                    "properties": {
+                        "id": { "type": "string", "example": "u-42" },
+                        "name": { "type": "string", "example": "Jane Doe" }
+                    }
+                }
+            }
+        }
+    }
+]
+```
+
+**Options format (only when you cannot use JSON Schema):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "1001" } },
+            { "label": "Title", "value": "title", "schema": { "type": "string", "example": "Buy groceries" } },
+            { "label": "Completed", "value": "completed", "schema": { "type": "boolean", "example": false } }
+        ]
+    }
+]
+```
+
+**Background:** Until recently, `schema.example` on JSON Schema output ports was not rendered in the variable picker — only `options[k].schema.example` worked. That bug was fixed (see Appmixer-ai/appmixer-core#3734), so JSON Schema with per-property `example` is now the recommended approach.
 
 ---

@@ -3,6 +3,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const AddUserToUserList = require('../../core/AddUserToUserList/AddUserToUserList');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('AddUserToUserList', () => {
 
@@ -11,6 +12,7 @@ describe('AddUserToUserList', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.messages = { in: { content: {} } };
+        applyGoogleAdsConfig(context);
     });
 
     describe('Required inputs validation', () => {
@@ -27,15 +29,16 @@ describe('AddUserToUserList', () => {
             });
         });
 
-        it('throws when developerToken is missing', async () => {
+        it('throws when developer token is missing in backoffice config', async () => {
             context.messages.in.content = {
                 customerId: '7107133715',
                 userListId: '12345',
                 email: 'test@example.com'
             };
+            context.config = {};
 
             await assert.rejects(() => AddUserToUserList.receive(context), {
-                message: 'Developer Token is required!'
+                message: 'Developer Token is required in backoffice config!'
             });
         });
 

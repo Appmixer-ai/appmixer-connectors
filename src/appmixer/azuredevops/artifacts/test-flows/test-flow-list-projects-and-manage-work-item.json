@@ -1,0 +1,370 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-create-work-item": [
+                        "out"
+                    ],
+                    "assert-list-projects": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 80
+        },
+        "assert-create-work-item": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-work-item": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{work-item-id}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-title}}}",
+                                                "field": "{{{work-item-title}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "expected-title": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.workItemTitle"
+                                        },
+                                        "work-item-id": {
+                                            "functions": [],
+                                            "variable": "$.create-work-item.out.id"
+                                        },
+                                        "work-item-title": {
+                                            "functions": [],
+                                            "variable": "$.create-work-item.out.fields.System.Title"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-work-item": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 144
+        },
+        "assert-list-projects": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-projects": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{project-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "project-name": {
+                                            "functions": [],
+                                            "variable": "$.list-projects.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-projects": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 16
+        },
+        "before-all": {
+            "config": {},
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 16
+        },
+        "create-work-item": {
+            "config": {
+                "properties": {
+                    "account": "69c51056d084ff83fe33e2be"
+                },
+                "transform": {
+                    "in": {
+                        "assert-list-projects": {
+                            "out": {
+                                "lambda": {
+                                    "organization": "{{{var-org}}}",
+                                    "project": "{{{var-project}}}",
+                                    "title": "{{{var-title}}}",
+                                    "workItemType": "Task"
+                                },
+                                "modifiers": {
+                                    "organization": {
+                                        "var-org": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.organization"
+                                        }
+                                    },
+                                    "project": {
+                                        "var-project": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.project"
+                                        }
+                                    },
+                                    "title": {
+                                        "var-title": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.workItemTitle"
+                                        }
+                                    },
+                                    "workItemType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-list-projects": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.azuredevops.core.CreateWorkItem",
+            "x": 1024,
+            "y": 144
+        },
+        "delete-work-item": {
+            "config": {
+                "properties": {
+                    "account": "69c51056d084ff83fe33e2be"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "organization": "{{{var-org}}}",
+                                    "project": "{{{var-project}}}",
+                                    "workItemId": "{{{var-work-item-id}}}"
+                                },
+                                "modifiers": {
+                                    "organization": {
+                                        "var-org": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.organization"
+                                        }
+                                    },
+                                    "project": {
+                                        "var-project": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.project"
+                                        }
+                                    },
+                                    "workItemId": {
+                                        "var-work-item-id": {
+                                            "functions": [],
+                                            "variable": "$.create-work-item.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.azuredevops.core.DeleteWorkItem",
+            "x": 1600,
+            "y": 80
+        },
+        "list-projects": {
+            "config": {
+                "properties": {
+                    "account": "69c51056d084ff83fe33e2be"
+                },
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "organization": "{{{var-org}}}",
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "organization": {
+                                        "var-org": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.organization"
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.azuredevops.core.ListProjects",
+            "x": 640,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-work-item": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Azuredevops - List Projects and Manage Work Item"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-work-item": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1792,
+            "y": 80
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "organization",
+                                                "text": "appmixer-test",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "project",
+                                                "text": "appmixer-test-project",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "workItemTitle",
+                                                "text": "E2E Test Work Item",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16
+        }
+    },
+    "name": "E2E Azuredevops - List Projects and Manage Work Item",
+    "notes": {}
+}

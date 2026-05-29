@@ -29,15 +29,24 @@ module.exports = {
 
         const fields = {
             id: data.id,
-            created_at: data.created_at,
-            due_by: data.due_by,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+            dueBy: data.due_by,
+            frDueBy: data.fr_due_by,
             subject: data.subject,
             description: data.description_text,
-            requester_id: data.requester_id,
+            requesterId: data.requester_id,
             type: data.type,
+            source: data.source,
+            sourceInfo: data.source_info || null,
             status: data.status,
             priority: data.priority,
             agentId: data.responder_id,
+            groupId: data.group_id,
+            emailConfigId: data.email_config_id,
+            productId: data.product_id,
+            tags: data.tags,
+            customFields: data.custom_fields,
             ticketJson: data
         };
 
@@ -46,8 +55,8 @@ module.exports = {
         }
 
         if (normalizedEmbed.includes('requester')) {
-            fields.requester_name = data.requester.name;
-            fields.requester_email = data.requester.email;
+            fields.requesterName = data.requester.name;
+            fields.requesterEmail = data.requester.email;
         }
 
         if (normalizedEmbed.includes('company')) {

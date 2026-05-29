@@ -1,0 +1,434 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 0,
+            "y": 208,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 208,
+            "y": 208,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "plainTitle",
+                                                "text": "E2E Test - Plain Text Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "htmlTitle",
+                                                "text": "E2E Test - HTML Rich Text Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "plainContent",
+                                                "text": "This is a plain text document created by E2E tests."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "htmlContent",
+                                                "text": "<h1>Rich Text Heading</h1><p>This document contains <b>bold</b>, <i>italic</i>, and <u>underlined</u> text.</p><ul><li>Item one</li><li>Item two</li></ul><p>Visit <a href=\"https://appmixer.com\">Appmixer</a> for more.</p>"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-plain-doc": {
+            "type": "appmixer.googleDocs.core.CreateDocument",
+            "x": 416,
+            "y": 128,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-plain-title": {
+                                            "variable": "$.set-variables.out.plainTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "contentType": {},
+                                    "content": {
+                                        "var-plain-content": {
+                                            "variable": "$.set-variables.out.plainContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "{{{var-plain-title}}}",
+                                    "contentType": "plain",
+                                    "content": "{{{var-plain-content}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-html-doc": {
+            "type": "appmixer.googleDocs.core.CreateDocument",
+            "x": 416,
+            "y": 288,
+            "version": "1.1.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "var-html-title": {
+                                            "variable": "$.set-variables.out.htmlTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "contentType": {},
+                                    "content": {
+                                        "var-html-content": {
+                                            "variable": "$.set-variables.out.htmlContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "{{{var-html-title}}}",
+                                    "contentType": "html",
+                                    "content": "{{{var-html-content}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-plain": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 672,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-plain-doc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-plain-doc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-doc-id": {
+                                            "variable": "$.create-plain-doc.out.documentId",
+                                            "functions": []
+                                        },
+                                        "field-title": {
+                                            "variable": "$.create-plain-doc.out.title",
+                                            "functions": []
+                                        },
+                                        "field-url": {
+                                            "variable": "$.create-plain-doc.out.documentUrl",
+                                            "functions": []
+                                        },
+                                        "expected-title": {
+                                            "variable": "$.set-variables.out.plainTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-doc-id}}}",
+                                                "assertion": "not-empty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{field-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-title}}}"
+                                            },
+                                            {
+                                                "field": "{{{field-url}}}",
+                                                "assertion": "contains",
+                                                "expected": "docs.google.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-html": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 672,
+            "y": 288,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-html-doc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-html-doc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-doc-id": {
+                                            "variable": "$.create-html-doc.out.documentId",
+                                            "functions": []
+                                        },
+                                        "field-title": {
+                                            "variable": "$.create-html-doc.out.title",
+                                            "functions": []
+                                        },
+                                        "field-url": {
+                                            "variable": "$.create-html-doc.out.documentUrl",
+                                            "functions": []
+                                        },
+                                        "expected-title": {
+                                            "variable": "$.set-variables.out.htmlTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-doc-id}}}",
+                                                "assertion": "not-empty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{field-title}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-title}}}"
+                                            },
+                                            {
+                                                "field": "{{{field-url}}}",
+                                                "assertion": "contains",
+                                                "expected": "docs.google.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 928,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-plain": [
+                        "out"
+                    ],
+                    "assert-html": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-plain-doc": {
+            "type": "appmixer.googleDocs.core.DeleteDocument",
+            "x": 1136,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-plain-doc-id": {
+                                            "variable": "$.create-plain-doc.out.documentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-plain-doc-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-html-doc": {
+            "type": "appmixer.googleDocs.core.DeleteDocument",
+            "x": 1136,
+            "y": 288,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-html-doc-id": {
+                                            "variable": "$.create-html-doc.out.documentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-html-doc-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "join-deletes": {
+            "type": "appmixer.utils.controls.Join",
+            "x": 1344,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-plain-doc": [
+                        "out"
+                    ],
+                    "delete-html-doc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1552,
+            "y": 208,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "join-deletes": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "join-deletes": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E googleDocs - createdocument-richtext",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E googleDocs - createdocument-richtext",
+    "type": "automation",
+    "notes": {}
+}

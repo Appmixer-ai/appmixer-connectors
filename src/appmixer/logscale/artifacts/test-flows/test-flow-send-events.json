@@ -1,0 +1,415 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "send-event-json": {
+            "type": "appmixer.logscale.core.SendEvent",
+            "x": 300,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "event": "{\"message\":\"E2E test JSON event\",\"level\":\"info\",\"service\":\"appmixer-e2e\"}",
+                                    "source": "appmixer-e2e",
+                                    "type": "json",
+                                    "repository": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-send-event-json": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-event-json": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-event-json": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "status-var": {
+                                            "variable": "$.send-event-json.out.status",
+                                            "functions": []
+                                        },
+                                        "code-var": {
+                                            "variable": "$.send-event-json.out.body.code",
+                                            "functions": []
+                                        },
+                                        "text-var": {
+                                            "variable": "$.send-event-json.out.body.text",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{status-var}}}",
+                                                "assertion": "equals",
+                                                "value": "200"
+                                            },
+                                            {
+                                                "field": "{{{code-var}}}",
+                                                "assertion": "equals",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "field": "{{{text-var}}}",
+                                                "assertion": "equals",
+                                                "value": "Success"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-event-text": {
+            "type": "appmixer.logscale.core.SendEvent",
+            "x": 300,
+            "y": 150,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "event": "E2E plain text event from appmixer",
+                                    "source": "appmixer-e2e-plaintext",
+                                    "type": "",
+                                    "repository": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-send-event-text": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 150,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-event-text": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-event-text": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "status-var": {
+                                            "variable": "$.send-event-text.out.status",
+                                            "functions": []
+                                        },
+                                        "code-var": {
+                                            "variable": "$.send-event-text.out.body.code",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{status-var}}}",
+                                                "assertion": "equals",
+                                                "value": "200"
+                                            },
+                                            {
+                                                "field": "{{{code-var}}}",
+                                                "assertion": "equals",
+                                                "value": "0"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-events-array": {
+            "type": "appmixer.logscale.core.SendEvents",
+            "x": 300,
+            "y": 290,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "events": "[{\"message\":\"batch event 1\",\"level\":\"info\"},{\"message\":\"batch event 2\",\"level\":\"warn\"},{\"message\":\"batch event 3\",\"level\":\"error\"}]",
+                                    "source": "appmixer-e2e-batch",
+                                    "type": "json",
+                                    "repository": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-send-events-array": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 290,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-events-array": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-events-array": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "status-var": {
+                                            "variable": "$.send-events-array.out.status",
+                                            "functions": []
+                                        },
+                                        "code-var": {
+                                            "variable": "$.send-events-array.out.body.code",
+                                            "functions": []
+                                        },
+                                        "count-var": {
+                                            "variable": "$.send-events-array.out.eventsCount",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{status-var}}}",
+                                                "assertion": "equals",
+                                                "value": "200"
+                                            },
+                                            {
+                                                "field": "{{{code-var}}}",
+                                                "assertion": "equals",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "field": "{{{count-var}}}",
+                                                "assertion": "equals",
+                                                "value": "3"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-events-ndjson": {
+            "type": "appmixer.logscale.core.SendEvents",
+            "x": 300,
+            "y": 430,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "events": "{\"event\":{\"action\":\"login\",\"user\":\"e2e-user\"},\"host\":\"test-host\"}\n{\"event\":{\"action\":\"logout\",\"user\":\"e2e-user\"},\"source\":\"e2e-ndjson\"}",
+                                    "source": "appmixer-e2e-ndjson",
+                                    "type": "",
+                                    "repository": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-send-events-ndjson": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 430,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-events-ndjson": ["out"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-events-ndjson": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "status-var": {
+                                            "variable": "$.send-events-ndjson.out.status",
+                                            "functions": []
+                                        },
+                                        "code-var": {
+                                            "variable": "$.send-events-ndjson.out.body.code",
+                                            "functions": []
+                                        },
+                                        "count-var": {
+                                            "variable": "$.send-events-ndjson.out.eventsCount",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{status-var}}}",
+                                                "assertion": "equals",
+                                                "value": "200"
+                                            },
+                                            {
+                                                "field": "{{{code-var}}}",
+                                                "assertion": "equals",
+                                                "value": "0"
+                                            },
+                                            {
+                                                "field": "{{{count-var}}}",
+                                                "assertion": "equals",
+                                                "value": "2"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 800,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-send-event-json": ["out"],
+                    "assert-send-event-text": ["out"],
+                    "assert-send-events-array": ["out"],
+                    "assert-send-events-ndjson": ["out"]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1050,
+            "y": 200,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": ["out"]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E LogScale - SendEvent & SendEvents",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E LogScale - SendEvent & SendEvents",
+    "type": "automation",
+    "notes": {}
+}

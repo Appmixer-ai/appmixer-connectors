@@ -1,0 +1,321 @@
+{
+    "name": "E2E Whatsapp - Send Location and Template Messages",
+    "description": "End-to-end test for Whatsapp connector - tests SendLocationMessage and SendTemplateMessage components",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 144,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "phoneNumberId",
+                                                "text": "YOUR_PHONE_NUMBER_ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "recipientPhone",
+                                                "text": "+15550000000"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "templateName",
+                                                "text": "hello_world"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "languageCode",
+                                                "text": "en_US"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-location-message": {
+            "type": "appmixer.whatsapp.messages.SendLocationMessage",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "var-phone-number-id": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "var-recipient": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "latitude": {},
+                                    "longitude": {},
+                                    "name": {},
+                                    "address": {}
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{var-phone-number-id}}}",
+                                    "to": "{{{var-recipient}}}",
+                                    "latitude": 37.7749,
+                                    "longitude": -122.4194,
+                                    "name": "E2E Test Location",
+                                    "address": "San Francisco, CA, USA"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-template-message": {
+            "type": "appmixer.whatsapp.messages.SendTemplateMessage",
+            "x": 448,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "var-phone-number-id-tmpl": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "var-recipient-tmpl": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "templateName": {
+                                        "var-template-name": {
+                                            "variable": "$.set-variables.out.templateName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "languageCode": {
+                                        "var-language-code": {
+                                            "variable": "$.set-variables.out.languageCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{var-phone-number-id-tmpl}}}",
+                                    "to": "{{{var-recipient-tmpl}}}",
+                                    "templateName": "{{{var-template-name}}}",
+                                    "languageCode": "{{{var-language-code}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-location-message": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-location-message": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-location-message": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "loc-message-id": {
+                                            "variable": "$.send-location-message.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{loc-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-template-message": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-template-message": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-template-message": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "tmpl-message-id": {
+                                            "variable": "$.send-template-message.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{tmpl-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 960,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-location-message": [
+                        "out"
+                    ],
+                    "assert-template-message": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1152,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Whatsapp - Send Location and Template Messages",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

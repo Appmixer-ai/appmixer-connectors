@@ -3,6 +3,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const FindUserLists = require('../../core/FindUserLists/FindUserLists');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('FindUserLists', () => {
 
@@ -13,21 +14,23 @@ describe('FindUserLists', () => {
         beforeEach(() => {
             context = testUtils.createMockContext();
             context.messages = { in: { content: {} } };
+            applyGoogleAdsConfig(context);
         });
 
         it('throws when customerId is missing', async () => {
-            context.messages.in.content = { developerToken: 'dev-token' };
+            context.messages.in.content = {};
 
             await assert.rejects(() => FindUserLists.receive(context), {
                 message: 'Customer ID is required!'
             });
         });
 
-        it('throws when developerToken is missing', async () => {
+        it('throws when developer token is missing in backoffice config', async () => {
             context.messages.in.content = { customerId: '123-456-7890' };
+            context.config = {};
 
             await assert.rejects(() => FindUserLists.receive(context), {
-                message: 'Developer Token is required!'
+                message: 'Developer Token is required in backoffice config!'
             });
         });
     });
@@ -39,6 +42,7 @@ describe('FindUserLists', () => {
         beforeEach(() => {
             context = testUtils.createMockContext();
             context.messages = { in: { content: {} } };
+            applyGoogleAdsConfig(context);
         });
 
         it('returns notFound when no user lists match (outputType=array)', async () => {
@@ -187,6 +191,7 @@ describe('FindUserLists', () => {
         beforeEach(() => {
             context = testUtils.createMockContext();
             context.messages = { in: { content: {} } };
+            applyGoogleAdsConfig(context);
         });
 
         it('uses default query when searchQuery is empty', async () => {
@@ -231,13 +236,12 @@ describe('FindUserLists', () => {
             assert.strictEqual(result.result[0].name, 'My Audience');
         });
 
-        it('supports loginCustomerId for cross-account access', async () => {
+        it('supports loginCustomerId from backoffice config for cross-account access', async () => {
             context.messages.in.content = {
                 customerId: '123-456-7890',
-                developerToken: 'dev-token',
-                loginCustomerId: '9999999999',
                 outputType: 'array'
             };
+            context.config.loginCustomerId = '9999999999';
             context.httpRequest.resolves({
                 data: [{
                     results: [
@@ -266,6 +270,7 @@ describe('FindUserLists', () => {
             context = testUtils.createMockContext();
             context.messages = { in: { content: { outputType: 'array' } } };
             context.properties = { generateOutputPortOptions: true };
+            applyGoogleAdsConfig(context);
         });
 
         it('generates output port options', async () => {

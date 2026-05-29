@@ -1,0 +1,124 @@
+{
+    "name": "appmixer.bluesky.users.GetUserProfile",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Get User Profile",
+    "description": "Retrieve the profile of a Bluesky user by their handle or DID.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:bluesky"
+    },
+    "quota": {
+        "manager": "appmixer:bluesky",
+        "resources": "xrpc",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "actor": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "actor"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "actor": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Handle or DID",
+                        "tooltip": "The handle (e.g. user.bsky.social) or DID of the user to look up."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "did": {
+                        "type": "string",
+                        "title": "DID",
+                        "example": "did:plc:abc123xyz456abc123xyz456"
+                    },
+                    "handle": {
+                        "type": "string",
+                        "title": "Handle",
+                        "example": "alice.bsky.social"
+                    },
+                    "displayName": {
+                        "type": "string",
+                        "title": "Display Name",
+                        "example": "Alice"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "example": "Software engineer and Bluesky enthusiast."
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "title": "Avatar URL",
+                        "example": "https://cdn.bsky.app/img/avatar/plain/did:plc:abc123/bafkrei123"
+                    },
+                    "banner": {
+                        "type": "string",
+                        "title": "Banner URL",
+                        "example": "https://cdn.bsky.app/img/banner/plain/did:plc:abc123/bafkrei456"
+                    },
+                    "followersCount": {
+                        "type": "integer",
+                        "title": "Followers Count",
+                        "example": 42
+                    },
+                    "followsCount": {
+                        "type": "integer",
+                        "title": "Follows Count",
+                        "example": 100
+                    },
+                    "postsCount": {
+                        "type": "integer",
+                        "title": "Posts Count",
+                        "example": 500
+                    },
+                    "indexedAt": {
+                        "type": "string",
+                        "title": "Indexed At",
+                        "example": "2024-01-15T12:00:00.000Z"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "title": "Created At",
+                        "example": "2023-06-01T10:00:00.000Z"
+                    },
+                    "associated": {
+                        "type": "object",
+                        "title": "Associated",
+                        "example": {}
+                    },
+                    "viewer": {
+                        "type": "object",
+                        "title": "Viewer",
+                        "example": {}
+                    },
+                    "labels": {
+                        "type": "array",
+                        "title": "Labels",
+                        "example": []
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjUzMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogPHBhdGggZD0ibTEzNS43MiA0NC4wM2M2Ni40OTYgNDkuOTIxIDEzOC4wMiAxNTEuMTQgMTY0LjI4IDIwNS40NiAyNi4yNjItNTQuMzE2IDk3Ljc4Mi0xNTUuNTQgMTY0LjI4LTIwNS40NiA0Ny45OC0zNi4wMjEgMTI1LjcyLTYzLjg5MiAxMjUuNzIgMjQuNzk1IDAgMTcuNzEyLTEwLjE1NSAxNDguNzktMTYuMTExIDE3MC4wNy0yMC43MDMgNzMuOTg0LTk2LjE0NCA5Mi44NTQtMTYzLjI1IDgxLjQzMyAxMTcuMyAxOS45NjQgMTQ3LjE0IDg2LjA5MiA4Mi42OTcgMTUyLjIyLTEyMi4zOSAxMjUuNTktMTc1LjkxLTMxLjUxMS0xODkuNjMtNzEuNzY2LTIuNTE0LTcuMzc5Ny0zLjY5MDQtMTAuODMyLTMuNzA3Ny03Ljg5NjQtMC4wMTc0LTIuOTM1Ny0xLjE5MzcgMC41MTY2OS0zLjcwNzcgNy44OTY0LTEzLjcxNCA0MC4yNTUtNjcuMjMzIDE5Ny4zNi0xODkuNjMgNzEuNzY2LTY0LjQ0NC02Ni4xMjgtMzQuNjA1LTEzMi4yNiA4Mi42OTctMTUyLjIyLTY3LjEwOCAxMS40MjEtMTQyLjU1LTcuNDQ5MS0xNjMuMjUtODEuNDMzLTUuOTU2Mi0yMS4yODItMTYuMTExLTE1Mi4zNi0xNi4xMTEtMTcwLjA3IDAtODguNjg3IDc3Ljc0Mi02MC44MTYgMTI1LjcyLTI0Ljc5NXoiIGZpbGw9IiMxMTg1ZmUiLz4KPC9zdmc+Cg=="
+}

@@ -100,9 +100,24 @@ See: `.github/copilot-instructions.md` section "Component Behavior (JavaScript) 
 
 ### Output Port Schema
 
-Use **either** `schema` or `options` in outPorts, **NOT both**.
+Use **either** `schema` or `options` in outPorts, **NOT both**. JSON Schema (`schema`) is PREFERRED over the `options[]` array form.
 
-See: `.github/copilot-instructions.md` section "Output Port Schema Definition"
+Add a realistic `example` (singular, not `examples` array) on each leaf property — it powers the variable picker preview.
+
+```json
+"outPorts": [{
+    "name": "out",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "id": { "type": "string", "title": "ID", "example": "1001" },
+            "completed": { "type": "boolean", "title": "Completed", "example": false }
+        }
+    }
+}]
+```
+
+See: `.github/copilot-instructions.md` sections "Output Port Schema Definition" and "Output Port Examples"
 
 ## Testing Components
 
@@ -119,7 +134,9 @@ See: `.github/copilot-instructions.md` section "Testing Guidelines"
 ## E2E Test Flows
 
 Required components in order:
-1. `OnStart` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
+1. `OnStart` → `BeforeAll` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
+
+**BeforeAll is REQUIRED** — resets Assert/AfterAll state between runs.
 
 **Critical:**
 - Assertion types: `equal`, `notEmpty`, `regex` only

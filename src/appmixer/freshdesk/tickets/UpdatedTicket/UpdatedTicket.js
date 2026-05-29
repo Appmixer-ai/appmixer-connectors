@@ -1,6 +1,5 @@
 'use strict';
 const axios = require('axios');
-const Promise = require('bluebird');
 const { normalizeMultiselectInput } = require('../../lib');
 
 module.exports = {
@@ -9,84 +8,110 @@ module.exports = {
 
         const { auth } = context;
         const { embed } = context.properties;
+        const normalizedEmbed = embed
+            ? normalizeMultiselectInput(embed, context, 'Embed fields')
+            : [];
 
-        // Normalize the multiselect field
-        const normalizedEmbed = embed ?
-            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
+        const state = context.state || {};
+        const lookbackMs = 2 * 60 * 1000;
 
-        let since = new Date();
-        let updated = new Set();
+        const baseUrl = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
+        const authConfig = { username: auth.apiKey, password: 'X' };
 
-        const limit = 100;
-        const perPage = 100;
-        const pages = Math.ceil(limit / perPage);
+        const cursorUpdatedAt = state.cursorUpdatedAt
+            ? new Date(state.cursorUpdatedAt)
+            : new Date(Date.now() - lookbackMs);
 
-        const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
-        const requestObject = {
-            auth: {
-                username: auth.apiKey,
-                password: 'X'
-            },
-            params: {
-                per_page: 100,
-                order_by: 'updated_at'
-            }
-        };
+        // Start slightly before the cursor to avoid missing boundary updates
+        const from = new Date(cursorUpdatedAt.getTime() - lookbackMs).toISOString();
 
-        if (normalizedEmbed.length > 0) {
-            requestObject.params.include = normalizedEmbed.join(',');
-        }
-
-        let tickets = [];
-
-        for (let i = 1; i <= pages; i++ ) {
-            requestObject.params.page = i;
-            const { data } = await axios.get(url, requestObject);
-            if (data.length === 0) {
-                break;
-            }
-            tickets = tickets.concat(data);
-        }
-
-        tickets = tickets.slice(0, limit);
-
-        const sinceToCompare = context.state.since || since;
-
-        tickets.forEach(ticket => {
-            const updatedAt = new Date(ticket.updated_at);
-            if (updatedAt > sinceToCompare) {
-                updated.add(ticket);
-            }
+        const params = new URLSearchParams({
+            updated_since: from,
+            order_by: 'updated_at',
+            order_type: 'asc',
+            per_page: '100'
         });
+        if (normalizedEmbed.length > 0) {
+            params.set('include', normalizedEmbed.join(','));
+        }
 
-        if (updated.size) {
-            await Promise.map(updated, ticket => {
+        const isFirstRun = !state.cursorUpdatedAt;
+
+        let nextUrl = `${baseUrl}?${params.toString()}`;
+        let maxUpdatedAt = state.cursorUpdatedAt || null;
+        let maxTicketId = state.cursorTicketId || 0;
+
+        while (nextUrl) {
+            const res = await axios.get(nextUrl, {
+                auth: authConfig,
+                validateStatus: s => s >= 200 && s < 300
+            });
+
+            const tickets = res.data || [];
+
+            for (const ticket of tickets) {
+                const updatedAt = ticket.updated_at;
+                const ticketId = ticket.id;
+
+                // Strict cursor check with tie-breaker on id.
+                // On the first run, skip emission entirely (baseline-only behavior).
+                const isAfterCursor =
+                    !isFirstRun && (
+                        updatedAt > state.cursorUpdatedAt ||
+                        (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0))
+                    );
+
+                if (!isAfterCursor) continue;
+
                 const fields = {
                     id: ticket.id,
-                    created_at: ticket.created_at,
-                    due_by: ticket.due_by,
+                    createdAt: ticket.created_at,
+                    updatedAt: ticket.updated_at,
+                    dueBy: ticket.due_by,
+                    frDueBy: ticket.fr_due_by,
                     subject: ticket.subject,
                     type: ticket.type,
+                    source: ticket.source,
+                    sourceInfo: ticket.source_info || null,
                     status: ticket.status,
                     priority: ticket.priority,
                     agentId: ticket.responder_id,
+                    groupId: ticket.group_id,
+                    emailConfigId: ticket.email_config_id,
+                    productId: ticket.product_id,
+                    tags: ticket.tags,
+                    customFields: ticket.custom_fields,
                     ticketJson: ticket
                 };
 
-                if (normalizedEmbed.includes('requester')) {
+                if (normalizedEmbed.includes('requester') && ticket.requester) {
                     fields.requesterId = ticket.requester.id;
                     fields.requesterName = ticket.requester.name;
                     fields.requesterEmail = ticket.requester.email;
                 }
-
                 if (normalizedEmbed.includes('description')) {
                     fields.description = ticket.description_text;
                 }
 
-                return context.sendJson(fields, 'ticket');
-            });
+                await context.sendJson(fields, 'ticket');
+
+                if (
+                    !maxUpdatedAt ||
+                    updatedAt > maxUpdatedAt ||
+                    (updatedAt === maxUpdatedAt && ticketId > maxTicketId)
+                ) {
+                    maxUpdatedAt = updatedAt;
+                    maxTicketId = ticketId;
+                }
+            }
+
+            const link = res.headers.link || '';
+            const match = link.match(/<([^>]+)>;\s*rel="next"/);
+            nextUrl = match ? match[1] : null;
         }
 
-        await context.saveState({ since });
+        // Always persist cursor even when no results, to prevent gaps if polling interval exceeds lookback window.
+        const cursorToSave = maxUpdatedAt || cursorUpdatedAt.toISOString();
+        await context.saveState({ cursorUpdatedAt: cursorToSave, cursorTicketId: maxTicketId });
     }
 };

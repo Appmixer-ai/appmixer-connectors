@@ -1,0 +1,101 @@
+{
+    "name": "appmixer.bluesky.posts.CreatePost",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Create Post",
+    "description": "Create a new post on Bluesky. Text is limited to 300 characters. Facets (mentions and links) are auto-detected from the text.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:bluesky"
+    },
+    "quota": {
+        "manager": "appmixer:bluesky",
+        "resources": "writes",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string"
+                    },
+                    "langs": {
+                        "type": "string"
+                    },
+                    "replyUri": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "text": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Text",
+                        "tooltip": "The text content of the post. Maximum 300 characters. Mentions (@handle) and URLs are auto-detected."
+                    },
+                    "langs": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Languages",
+                        "tooltip": "Comma-separated BCP-47 language codes (e.g. en, es, fr). Optional."
+                    },
+                    "replyUri": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Reply To Post URI",
+                        "tooltip": "AT URI of the post to reply to (e.g. at://did:plc:xxx/app.bsky.feed.post/rkey). Leave empty for a top-level post."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Post URI",
+                    "value": "uri",
+                    "schema": {
+                        "type": "string",
+                        "example": "at://did:plc:abc123/app.bsky.feed.post/xyz456"
+                    }
+                },
+                {
+                    "label": "Post CID",
+                    "value": "cid",
+                    "schema": {
+                        "type": "string",
+                        "example": "bafyreib2abcdefghijklmnopqrstuvwxyz1234567890"
+                    }
+                },
+                {
+                    "label": "Commit CID",
+                    "value": "commit.cid",
+                    "schema": {
+                        "type": "string",
+                        "example": "bafyreid2abcdefghijklmnopqrstuvwxyz1234567890"
+                    }
+                },
+                {
+                    "label": "Validation Status",
+                    "value": "validationStatus",
+                    "schema": {
+                        "type": "string",
+                        "example": "valid"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjUzMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogPHBhdGggZD0ibTEzNS43MiA0NC4wM2M2Ni40OTYgNDkuOTIxIDEzOC4wMiAxNTEuMTQgMTY0LjI4IDIwNS40NiAyNi4yNjItNTQuMzE2IDk3Ljc4Mi0xNTUuNTQgMTY0LjI4LTIwNS40NiA0Ny45OC0zNi4wMjEgMTI1LjcyLTYzLjg5MiAxMjUuNzIgMjQuNzk1IDAgMTcuNzEyLTEwLjE1NSAxNDguNzktMTYuMTExIDE3MC4wNy0yMC43MDMgNzMuOTg0LTk2LjE0NCA5Mi44NTQtMTYzLjI1IDgxLjQzMyAxMTcuMyAxOS45NjQgMTQ3LjE0IDg2LjA5MiA4Mi42OTcgMTUyLjIyLTEyMi4zOSAxMjUuNTktMTc1LjkxLTMxLjUxMS0xODkuNjMtNzEuNzY2LTIuNTE0LTcuMzc5Ny0zLjY5MDQtMTAuODMyLTMuNzA3Ny03Ljg5NjQtMC4wMTc0LTIuOTM1Ny0xLjE5MzcgMC41MTY2OS0zLjcwNzcgNy44OTY0LTEzLjcxNCA0MC4yNTUtNjcuMjMzIDE5Ny4zNi0xODkuNjMgNzEuNzY2LTY0LjQ0NC02Ni4xMjgtMzQuNjA1LTEzMi4yNiA4Mi42OTctMTUyLjIyLTY3LjEwOCAxMS40MjEtMTQyLjU1LTcuNDQ5MS0xNjMuMjUtODEuNDMzLTUuOTU2Mi0yMS4yODItMTYuMTExLTE1Mi4zNi0xNi4xMTEtMTcwLjA3IDAtODguNjg3IDc3Ljc0Mi02MC44MTYgMTI1LjcyLTI0Ljc5NXoiIGZpbGw9IiMxMTg1ZmUiLz4KPC9zdmc+Cg=="
+}

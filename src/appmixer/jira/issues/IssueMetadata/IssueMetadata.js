@@ -65,20 +65,24 @@ module.exports = {
         }
 
         if (!issueType) {
-            const { issueTypes } = await commons.get(
-                `${apiUrl}issue/createmeta/${project}/issuetypes`,
-                auth
-            );
+            const issueTypes = await commons.pager({
+                endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes`,
+                credentials: auth,
+                key: 'issueTypes',
+                params: { maxResults: 100 }
+            });
 
             return context.sendJson(issueTypes || [], 'out');
         }
 
-        const { fields } = await commons.get(
-            `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
-            auth
-        );
+        const fields = await commons.pager({
+            endpoint: `${apiUrl}issue/createmeta/${project}/issuetypes/${issueType}`,
+            credentials: auth,
+            key: 'fields',
+            params: { maxResults: 100 }
+        });
 
-        if (!fields) {
+        if (!fields || fields.length === 0) {
             return context.sendJson([], 'out');
         }
 

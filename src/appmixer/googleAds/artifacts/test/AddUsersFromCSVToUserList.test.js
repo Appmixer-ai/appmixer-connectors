@@ -6,6 +6,7 @@ const testUtils = require('../../../../../test/utils');
 const AddUsersFromCSVToUserList = require('../../core/AddUsersFromCSVToUserList/AddUsersFromCSVToUserList');
 const {
     BASIC_EMAIL_SCHEMA,
+    applyGoogleAdsConfig,
     csvStream,
     emailCsv,
     googleAdsSchema,
@@ -56,7 +57,7 @@ describe('AddUsersFromCSVToUserList', () => {
         context.messages = { in: { content: {} } };
         context.clearTimeout = sinon.stub().resolves();
         context.auth = { accessToken: 'test-access-token' };
-        context.config = {};
+        applyGoogleAdsConfig(context);
         context.setTimeout = sinon.stub().resolves('timeout-id-1');
     });
 
@@ -90,15 +91,20 @@ describe('AddUsersFromCSVToUserList', () => {
             });
         });
 
-        it('throws when developerToken is missing', async () => {
+        it('throws when developer token is missing in backoffice config', async () => {
             context.messages.in.content = {
                 fileId: 'file-abc',
                 customerId: '7123133715',
-                userListId: '9329730810'
+                userListId: '9329730810',
+                schema: BASIC_EMAIL_SCHEMA
             };
+            context.config = {};
+
+            // Stub file read so CSV parsing succeeds before buildHeaders is called
+            context.getFileReadStream = sinon.stub().resolves(csvStream(emailCsv([{ email: 'a@b.com' }])));
 
             await assert.rejects(() => AddUsersFromCSVToUserList.receive(context), {
-                message: 'Developer Token is required!'
+                message: 'Developer Token is required in backoffice config!'
             });
         });
 
@@ -213,7 +219,7 @@ describe('AddUsersFromCSVToUserList', () => {
             assert.strictEqual(headers['developer-token'], 'dev-token');
         });
 
-        it('sets login-customer-id header when loginCustomerId is provided', async () => {
+        it('sets login-customer-id header from user input', async () => {
             context.messages.in.content.loginCustomerId = '999-888-7777';
 
             await AddUsersFromCSVToUserList.receive(context);
@@ -224,13 +230,15 @@ describe('AddUsersFromCSVToUserList', () => {
             assert.strictEqual(createJobCall.args[0].headers['login-customer-id'], '9998887777');
         });
 
-        it('does not set login-customer-id header when loginCustomerId is absent', async () => {
+        it('omits login-customer-id header when not provided', async () => {
+            delete context.messages.in.content.loginCustomerId;
+
             await AddUsersFromCSVToUserList.receive(context);
 
             const createJobCall = context.httpRequest.getCalls()
                 .find(c => c.args[0].url.includes('offlineUserDataJobs') && !c.args[0].url.includes(':addOperations') && !c.args[0].url.includes(':run'));
 
-            assert.ok(!('login-customer-id' in createJobCall.args[0].headers));
+            assert.strictEqual(createJobCall.args[0].headers['login-customer-id'], undefined);
         });
     });
 

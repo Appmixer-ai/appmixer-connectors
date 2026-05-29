@@ -1,9 +1,25 @@
 'use strict';
 
+function kvToObj(arr) {
+    if (!arr || !Array.isArray(arr)) return {};
+    const out = {};
+    for (const row of arr) {
+        if (!row || typeof row !== 'object') continue;
+        const key = row.key;
+        if (typeof key !== 'string' || key.length === 0) continue;
+        out[key] = row.value;
+    }
+    return out;
+}
+
+
 module.exports = {
     async receive(context) {
 
-        const { url, method, body } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
+
+        const extraHeaders = kvToObj(headersKV);
+        const queryParams = kvToObj(parametersKV);
 
         if (!url) {
             throw new context.CancelError('API Endpoint URL is required!');
@@ -12,26 +28,30 @@ module.exports = {
         if (!method) {
             throw new context.CancelError('HTTP Method is required!');
         }
-
-        const targetUrl = url.startsWith('https://') || url.startsWith('http://')
-            ? url
-            : `https://api.vercel.com${url}`;
+        const targetUrl = (url.startsWith('https://') || url.startsWith('http://')) ? url : `https://api.vercel.com${url}`;
 
         const requestOptions = {
-            method: method,
+            method,
             url: targetUrl,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiToken}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...extraHeaders
             }
         };
 
+        let parsedBody;
         if (body) {
             try {
-                requestOptions.data = JSON.parse(body);
-            } catch (error) {
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
                 throw new context.CancelError('Request Body must be valid JSON.');
             }
+            requestOptions.data = parsedBody;
+        }
+
+        if (Object.keys(queryParams).length > 0) {
+            requestOptions.params = queryParams;
         }
 
         const response = await context.httpRequest(requestOptions);
@@ -42,5 +62,4 @@ module.exports = {
             body: response.data
         }, 'out');
     }
-
 };

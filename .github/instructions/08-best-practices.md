@@ -39,6 +39,11 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ### Critical Restrictions for AI Code Generation
 
+- **OAuth Scope Changes are Breaking Changes**: NEVER add new OAuth scopes to an existing connector's `component.json` `auth.scope` array without treating it as a **major** version bump. Adding a scope forces all existing users to re-authenticate. Always:
+  - Bump the connector `bundle.json` to the next major version (e.g. `2.x.x` → `3.0.0`)
+  - Add a `BREAKING:` prefix to the changelog entry describing the scope addition
+  - Note in the PR description that existing users must re-authenticate
+
 - **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
 
 - **Property Name Consistency**: Property names in `component.json` (both schema and inspector) MUST exactly match the property names used in the behavior file's `context.messages.in.content`. Use underscore `_` or camelCase as separator, NOT pipe `|`. For example:
@@ -304,7 +309,7 @@ Use `source` property to populate field options dynamically:
 ##### file output components
 - use `context.saveFileStream()` in behavior JS
 - must return `fileId` in output message
-- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+- should return additional info like `fileSize`, `prompt`, etc. — define these as fields in the `outPorts.schema.properties` (JSON Schema), each with a realistic `example`. See `05-component-config.md` § "Output Port Examples" for the canonical pattern.
 
 Examples:
 

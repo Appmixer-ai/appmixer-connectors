@@ -92,11 +92,7 @@ Every E2E test flow MUST include these components in sequence:
     - First component in the flow
     - No configuration needed
 
-2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - Optional
-    - Setup operations before tests run
-    - Connects to OnStart output
-
-3. **Your Components Under Test**
+2. **Your Components Under Test**
     - The actual connector components being tested
     - Should test main CRUD operations (Create, Read, Update, Delete)
     - Chain components to test realistic workflows
@@ -169,6 +165,91 @@ The ProcessE2EResults component is REQUIRED and must be configured with:
 - `recipients`: Email address for test result notifications
 - `testCase`: Human-readable test name (e.g., "Google Docs E2E")
 - `result`: Variable reference to AfterAll component output
+
+#### Modifier Functions (Prefer Over CodeBlock)
+
+Appmixer transforms support **modifier functions** in the `functions` array of a variable reference. These run natively in the engine without needing a CodeBlock component. **Always prefer modifiers over CodeBlock** — they are simpler, faster, and don't have the `result` wrapping issue.
+
+| Function | Description | Parameters |
+|----------|-------------|------------|
+| `g_uuid4` | Generate UUID v4 | none |
+| `g_timestamp` | Current Unix timestamp (ms) | none |
+| `g_now` | Current ISO 8601 date | none |
+| `g_addTimeSpan` | Add time to a date | `hashParams: { days: {value: N}, hours: {value: N}, minutes: {value: N} }` |
+| `g_random` | Random number (0-1) | none |
+| `g_flowName` | Current flow name | none |
+| `g_flowId` | Current flow ID | none |
+| `g_userId` | Current user ID | none |
+| `g_jsonPath` | Extract from JSON via JSONPath | `params: [{value: "$.path"}]` |
+| `g_regex` | Regex matching | `params` for pattern, `hashParams` for flags |
+| `g_first` | First element of array | none |
+| `g_last` | Last element of array | none |
+| `g_length` | Length of string/array | none |
+| `g_javascript` | Run arbitrary JS code | `params: [{value: "code"}]` |
+| `g_stringify` | Object to JSON string | none |
+| `g_split` | Split string by delimiter | `params: [{value: "delimiter"}]` |
+| `g_add` | Addition | `params: [{value: N}]` |
+| `g_mul` | Multiplication | `params: [{value: N}]` |
+| `g_floor` | Floor rounding | none |
+| `g_greaterThan` | Comparison (greater than) | `params: [{value: N}]` |
+
+**Common E2E patterns using modifiers:**
+
+**Unique email per run** (instead of CodeBlock):
+```json
+"email": {
+    "email-var": {
+        "variable": "$.set-variables.out.emailPrefix",
+        "functions": []
+    },
+    "ts-var": {
+        "variable": "$.on-start.out.started",
+        "functions": [{ "name": "g_timestamp" }]
+    }
+}
+```
+With lambda: `"email": "{{{email-var}}}-{{{ts-var}}}@appmixer-test.com"`
+
+**Future date** (instead of CodeBlock):
+```json
+"startTime": {
+    "start-var": {
+        "variable": "$.on-start.out.started",
+        "functions": [
+            { "name": "g_now" },
+            { "name": "g_addTimeSpan", "hashParams": { "days": {"value": 14} } }
+        ]
+    }
+}
+```
+
+**UUID as unique identifier**:
+```json
+"uniqueName": {
+    "name-var": {
+        "variable": "$.set-variables.out.baseName",
+        "functions": [{ "name": "g_uuid4" }]
+    }
+}
+```
+With lambda: `"uniqueName": "E2E-{{{name-var}}}"`
+
+**When to use CodeBlock instead:**
+Use CodeBlock only when modifiers can't express the logic: complex string formatting requiring multiple transformations chained, conditional logic (if/else), math beyond simple add/multiply, parsing complex nested structures.
+
+**CodeBlock gotchas:**
+- Output wraps the return value under `result` field. Access via `$.code-block-id.out.result`. Deep access like `$.code-block-id.out.result.field` does NOT work — return simple strings/numbers.
+- Code runs in `isolated-vm`. Bare `return` statements are illegal. Use expressions directly (e.g. `'value-' + Date.now()`) or IIFEs.
+
+#### Deterministic Test Design
+
+Tests must pass on repeated runs without input changes:
+
+- **Unique inputs**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers (e.g. `e2e-{{{ts-var}}}@test.com`). Prefer modifiers over CodeBlock.
+- **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
+- **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
+- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: add a CodeBlock delay (`await new Promise(r => setTimeout(r, 5000))`).
+- **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
 
 #### Component Configuration Pattern
 
@@ -855,8 +936,10 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - ✅ Verify all `required` fields from schema are populated
 
 3. **Wrong Variable References**
-    - ❌ `$.component.out` (missing field name)
+    - ❌ `$.component.out` — Raw Output, forbidden. Always include a field name.
+    - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
     - ✅ `$.component-id.out.fieldName`
+    - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults
