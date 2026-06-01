@@ -53,7 +53,6 @@ function toRecordsArray(value) {
 
     if (value == null || value === '') return [];
     if (Array.isArray(value)) return value;
-    if (typeof value === 'object') return [value];
     if (typeof value === 'string') {
         let parsed;
         try {
@@ -61,9 +60,16 @@ function toRecordsArray(value) {
         } catch (err) {
             return null;
         }
-        if (Array.isArray(parsed)) return parsed;
-        if (parsed && typeof parsed === 'object') return [parsed];
-        return null;
+        return toRecordsArray(parsed);
+    }
+    if (typeof value === 'object') {
+        // Appmixer may serialize a mapped array into an object keyed by index
+        // ("0", "1", "2", ...) when it flows through a non-array inspector field.
+        // Detect that shape and restore the original array of records.
+        const keys = Object.keys(value);
+        const isIndexed = keys.length > 0 && keys.every((key, index) => key === String(index));
+        if (isIndexed) return keys.map(key => value[key]);
+        return [value];
     }
     return null;
 }
