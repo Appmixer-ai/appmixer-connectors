@@ -4,7 +4,7 @@
     "changelog": {
         "1.4.1": [
             "StartHubWithData: fix bulk array input being collapsed into a single record. When a whole array is mapped from a previous step, Appmixer may serialize it into an object keyed by index (\"0\", \"1\", \"2\", ...); the component now restores it to an array so all records are sent to the hub.",
-            "NewHubEvent: fix webhook payload carrying an array of records being spread into an object with numeric keys (\"0\", \"1\", \"2\", ...) on the output. The trigger now emits one event per record so the flat output schema stays valid."
+            "NewHubEvent: fix webhook payload carrying an array of records being spread into an object with numeric keys (\"0\", \"1\", \"2\", ...) on the output. The trigger now exposes the records as an array under 'result' (with a 'count'), preserving a bulk batch as an array. BREAKING: the output shape changed from flat per-field columns to 'conversionKey' + 'result' array, so existing flows reading fields directly must remap them under 'result'."
         ],
         "1.4.0": [
             "StartHubWithData: support sending multiple records (bulk) in a single request. A 'Records source' switch lets you either build rows manually using the hub's dynamic source fields (repeating 'Records' field) or map a whole array of records from a previous step ('Records array'). The request body is sent as a JSON array either way. BREAKING: the input shape changed from flat per-field inputs to the new records inputs, so existing flows must remap their fields. Output now also returns the records count."

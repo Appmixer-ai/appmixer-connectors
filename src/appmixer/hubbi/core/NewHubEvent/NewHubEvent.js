@@ -35,13 +35,17 @@ module.exports = {
             }
 
             // A hub event may carry a single record (object) or a bulk batch
-            // (array). Emit one message per record so the flat output schema
-            // (conversionKey + field columns) stays valid; spreading an array
-            // would otherwise produce numeric keys ("0", "1", ...).
-            const records = Array.isArray(payload.data) ? payload.data : [payload.data || {}];
-            for (const record of records) {
-                await context.sendJson({ conversionKey: payload.conversionKey, ...record }, 'out');
-            }
+            // (array). Always expose the records as an array under `result` so
+            // a bulk batch is preserved as an array instead of being spread
+            // into an object with numeric keys ("0", "1", ...).
+            const records = Array.isArray(payload.data)
+                ? payload.data
+                : (payload.data ? [payload.data] : []);
+
+            await context.sendJson(
+                { conversionKey: payload.conversionKey, result: records, count: records.length },
+                'out'
+            );
             return context.response();
         }
     },
@@ -68,9 +72,7 @@ async function generateOutputPortOptions(context) {
 
     const { conversionKey } = context.properties;
 
-    const options = [
-        { label: 'Conversion Key', value: 'conversionKey', schema: { type: 'string' } }
-    ];
+    const itemProperties = {};
 
     if (conversionKey) {
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
@@ -88,13 +90,22 @@ async function generateOutputPortOptions(context) {
         for (const field of fields) {
             if (!field.fieldId) continue;
             const { schema } = lib.mapFieldType(field.type);
-            options.push({
-                label: field.name || field.fieldId,
-                value: field.fieldId,
-                schema
-            });
+            itemProperties[field.fieldId] = schema;
         }
     }
+
+    const options = [
+        { label: 'Conversion Key', value: 'conversionKey', schema: { type: 'string' } },
+        {
+            label: 'Records',
+            value: 'result',
+            schema: {
+                type: 'array',
+                items: { type: 'object', properties: itemProperties }
+            }
+        },
+        { label: 'Items Count', value: 'count', schema: { type: 'integer' } }
+    ];
 
     return context.sendJson(options, 'out');
 }
