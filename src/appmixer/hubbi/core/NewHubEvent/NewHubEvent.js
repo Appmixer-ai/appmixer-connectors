@@ -34,9 +34,14 @@ module.exports = {
                 return context.response();
             }
 
-            const data = payload.data || {};
-
-            await context.sendJson({ conversionKey: payload.conversionKey, ...data }, 'out');
+            // A hub event may carry a single record (object) or a bulk batch
+            // (array). Emit one message per record so the flat output schema
+            // (conversionKey + field columns) stays valid; spreading an array
+            // would otherwise produce numeric keys ("0", "1", ...).
+            const records = Array.isArray(payload.data) ? payload.data : [payload.data || {}];
+            for (const record of records) {
+                await context.sendJson({ conversionKey: payload.conversionKey, ...record }, 'out');
+            }
             return context.response();
         }
     },
