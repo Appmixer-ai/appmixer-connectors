@@ -13,6 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Full history so validate:changed can resolve merge-base against the base branch.
+        fetch-depth: 0
     - name: Use Node.js 24.6.0
       uses: actions/setup-node@v4
       with:
@@ -31,7 +34,9 @@ jobs:
       run: node ./scripts/npm_install.js
     - name: Run lint
       run: npm run lint
-    - name: Run validate
+    - name: Run validate (whole repo, ratcheted)
       run: npm run validate
+    - name: Run validate (changed files, strict)
+      run: node scripts/validate.js --changed --base origin/${{ github.base_ref }}
     - name: Run unit tests
       run: npm run test-unit
