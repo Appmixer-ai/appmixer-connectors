@@ -45,15 +45,33 @@ function getChangedFiles(repoRoot, baseRef) {
 
     // Committed changes on this branch vs the base ref.
     let baseResolved = false;
+    let baseCommit = null;
     const mergeBase = tryGit(['merge-base', baseRef, 'HEAD']);
 
     if (mergeBase) {
-        const base = mergeBase.trim();
-        addLines(tryGit(['diff', '--name-only', '--diff-filter=d', base, 'HEAD']));
+        baseCommit = mergeBase.trim();
+        addLines(tryGit(['diff', '--name-only', '--diff-filter=d', baseCommit, 'HEAD']));
         baseResolved = true;
     }
 
-    return { files, baseResolved };
+    return { files, baseResolved, baseCommit };
+}
+
+// Returns the contents of `relPath` (repo-relative) at git ref `ref`, or null if
+// the file did not exist there (e.g. a newly added file).
+function getFileAtRef(repoRoot, ref, relPath) {
+
+    if (!ref) return null;
+
+    try {
+        return execFileSync('git', ['show', `${ref}:${relPath}`], {
+            cwd: repoRoot,
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'ignore']
+        });
+    } catch (err) {
+        return null;
+    }
 }
 
 function isGitRepo(repoRoot) {
@@ -159,5 +177,6 @@ module.exports = {
     parseVersion,
     compareVersions,
     getChangedFiles,
+    getFileAtRef,
     isGitRepo
 };

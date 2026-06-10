@@ -167,7 +167,7 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
         return true;
     }
 
-    const { files: changed, baseResolved } = getChangedFiles(REPO_ROOT, baseRef);
+    const { files: changed, baseResolved, baseCommit } = getChangedFiles(REPO_ROOT, baseRef);
 
     if (!baseResolved) {
         console.warn(`Warning: could not resolve base ref "${baseRef}" — comparing staged + unstaged changes only.`);
@@ -194,6 +194,8 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
             connectorsRoot: CONNECTORS_ROOT,
             bundleFiles: changedBundles,
             componentFiles: changedComponents,
+            // Resolved base commit for diff-aware validators (null if unresolved).
+            baseRef: baseCommit,
             walkFiles,
             relativePath,
             addFailure(filePath, message) {

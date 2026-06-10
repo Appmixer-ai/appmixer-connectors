@@ -7,7 +7,8 @@
 - Add one empty line after the `receive` function definition
 - Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
 - Remove all unused variables and imports
-- Property names in component.json must use underscore `_` or camelCase as separator (NOT pipe `|`, e.g., `lock_type` or `lockType`, not `lock|type`)
+- Property names in component.json must NEVER use a pipe `|` (e.g., `lockType`, not `lock|type`)
+- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding). CI enforces camelCase only on changed/new inputs via `npm run validate:changed`.
 - Property names in component.json must exactly match those used in `context.messages.in.content`
 
 ## Development Guidelines (For All)
