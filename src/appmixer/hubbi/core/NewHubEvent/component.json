@@ -5,7 +5,7 @@
     "description": "Trigger that fires when a hub event is received via webhook.",
     "private": false,
     "webhook": true,
-    "version": "1.1.0",
+    "version": "1.2.0",
     "auth": {
         "service": "appmixer:hubbi"
     },
@@ -20,6 +20,9 @@
                     "type": "boolean"
                 },
                 "conversionKey": {
+                    "type": "string"
+                },
+                "outputType": {
                     "type": "string"
                 }
             }
@@ -52,6 +55,18 @@
                             "transform": "./ListTargetHubs#toSelectArray"
                         }
                     }
+                },
+                "outputType": {
+                    "type": "select",
+                    "label": "Output Type",
+                    "index": 2,
+                    "defaultValue": "array",
+                    "tooltip": "Choose how the received hub records are emitted: all at once as a single list, one record at a time, or only the first record. When set to a single record at a time or the first record, the individual hub fields are exposed directly on the output.",
+                    "options": [
+                        { "label": "First Record", "value": "first" },
+                        { "label": "All records at once", "value": "array" },
+                        { "label": "One record at a time", "value": "object" }
+                    ]
                 }
             }
         }
@@ -64,7 +79,8 @@
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true,
-                        "conversionKey": "properties/conversionKey"
+                        "conversionKey": "properties/conversionKey",
+                        "outputType": "properties/outputType"
                     }
                 }
             }

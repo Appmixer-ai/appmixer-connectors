@@ -26,8 +26,8 @@ module.exports = {
         }
 
         if (context.messages.webhook) {
+            const { conversionKey: configuredKey, outputType = 'array' } = context.properties;
             const payload = context.messages.webhook.content.data || {};
-            const { conversionKey: configuredKey } = context.properties;
 
             if (payload.conversionKey && payload.conversionKey !== configuredKey) {
                 await context.log({ step: 'Webhook ignored, conversionKey mismatch', received: payload.conversionKey, expected: configuredKey });
@@ -35,17 +35,15 @@ module.exports = {
             }
 
             // A hub event may carry a single record (object) or a bulk batch
-            // (array). Always expose the records as an array under `result` so
-            // a bulk batch is preserved as an array instead of being spread
-            // into an object with numeric keys ("0", "1", ...).
+            // (array). Normalize to an array of records so a bulk batch is
+            // preserved instead of being spread into an object with numeric
+            // keys ("0", "1", ...). lib.sendArrayOutput then emits them
+            // according to the selected output type.
             const records = Array.isArray(payload.data)
                 ? payload.data
                 : (payload.data ? [payload.data] : []);
 
-            await context.sendJson(
-                { conversionKey: payload.conversionKey, result: records, count: records.length },
-                'out'
-            );
+            await lib.sendArrayOutput({ context, outputType, records });
             return context.response();
         }
     },
@@ -70,42 +68,37 @@ module.exports = {
 
 async function generateOutputPortOptions(context) {
 
-    const { conversionKey } = context.properties;
+    const { conversionKey, outputType = 'array' } = context.properties;
 
-    const itemProperties = {};
+    // Build the per-record field schema. Any failure here (missing auth during
+    // port generation, endpoint error, empty hub) must NOT blank out the whole
+    // option list, so it is isolated in a try/catch and we fall back to the
+    // generic record options that lib.getOutputPortOptions always provides.
+    const itemSchema = {};
 
     if (conversionKey) {
-        const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
-        const response = await context.httpRequest({
-            method: 'GET',
-            url: `${baseUrl}/Flows/Home/TargetFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.token}`,
-                'Accept': 'application/json'
+        try {
+            const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: `${baseUrl}/Flows/Home/TargetFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const fields = response.data || [];
+
+            for (const field of fields) {
+                if (!field.fieldId) continue;
+                const { schema } = lib.mapFieldType(field.type);
+                itemSchema[field.fieldId] = field.name ? { ...schema, title: field.name } : schema;
             }
-        });
-
-        const fields = response.data || [];
-
-        for (const field of fields) {
-            if (!field.fieldId) continue;
-            const { schema } = lib.mapFieldType(field.type);
-            itemProperties[field.fieldId] = schema;
+        } catch (err) {
+            await context.log({ step: 'Failed to load target fields for output port options', conversionKey, error: err.message });
         }
     }
 
-    const options = [
-        { label: 'Conversion Key', value: 'conversionKey', schema: { type: 'string' } },
-        {
-            label: 'Records',
-            value: 'result',
-            schema: {
-                type: 'array',
-                items: { type: 'object', properties: itemProperties }
-            }
-        },
-        { label: 'Items Count', value: 'count', schema: { type: 'integer' } }
-    ];
-
-    return context.sendJson(options, 'out');
+    return lib.getOutputPortOptions(context, outputType, itemSchema, { label: 'Records', value: 'result' });
 }
