@@ -149,7 +149,7 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, com
         };
 
         if (isStream) {
-            await runStream(context, sharedOptions, instructions, inputMessages, otelTracer, otelApi,
+            await runStream(context, sharedOptions, inputMessages, otelTracer, otelApi,
                 getStepCtx, (stepCtx) => { currentStepCtx = stepCtx; },
                 (result) => {
                     finalText = result.text;
@@ -179,7 +179,7 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, com
 
 // ─── Streaming execution ──────────────────────────────────────────────────────
 
-async function runStream(context, sharedOptions, instructions, inputMessages,
+async function runStream(context, sharedOptions, inputMessages,
     otelTracer, otelApi, getStepCtx, setStepCtx, setResult) {
 
     // Disable SDK auto-telemetry for streaming: we build spans manually
@@ -412,4 +412,4 @@ async function runWithAgentSpan(context, otelTracer, otelApi, telemetryProvider,
     );
 }
 
-module.exports = { agent, buildUserContent };
+module.exports = { agent };

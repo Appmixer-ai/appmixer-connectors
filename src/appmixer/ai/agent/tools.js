@@ -343,12 +343,5 @@ async function executeToolByName(context, toolFullName, args, tracer, toolCallId
 
 module.exports = {
     collectTools,
-    getAllToolsDefinition,
-    getToolsDefinition,
-    getMCPToolsDefinition,
-    mcpListTools,
-    mcpCallTool,
-    isMCPserver,
-    buildVercelTools,
-    executeToolByName
+    buildVercelTools
 };
