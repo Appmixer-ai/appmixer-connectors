@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.whatsapp.messages.SendVideoMessage",
+    "name": "appmixer.whatsapp.messages.ListMessageTemplates",
     "author": "Appmixer <info@appmixer.com>",
-    "label": "Send Video Message",
-    "description": "Send a video to a WhatsApp user. Provide either a media ID or a public HTTPS link. Can only be sent within 24 hours of the recipient's last message to you. Important: A successful response does NOT guarantee delivery. Use the \"Message Status Updated\" trigger to track delivery status.",
+    "label": "List Message Templates",
+    "description": "List all pre-approved WhatsApp message templates available on a WhatsApp Business Account (WABA). Used internally as a dropdown source for the Template Name field on Send Template Message, but also useful as a standalone action component for inventory / status auditing.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -10,7 +10,7 @@
     },
     "quota": {
         "manager": "appmixer:whatsapp",
-        "resources": "messages",
+        "resources": "requests",
         "scope": {
             "userId": "{{userId}}"
         }
@@ -23,30 +23,10 @@
                 "properties": {
                     "businessAccountId": {
                         "type": "string"
-                    },
-                    "phoneNumberId": {
-                        "type": "string"
-                    },
-                    "to": {
-                        "type": "string"
-                    },
-                    "contextMessageId": {
-                        "type": "string"
-                    },
-                    "mediaId": {
-                        "type": "string"
-                    },
-                    "link": {
-                        "type": "string"
-                    },
-                    "caption": {
-                        "type": "string"
                     }
                 },
                 "required": [
-                    "businessAccountId",
-                    "phoneNumberId",
-                    "to"
+                    "businessAccountId"
                 ]
             },
             "inspector": {
@@ -65,56 +45,6 @@
                                 "transform": "./ListBusinessAccounts#toSelectArray"
                             }
                         }
-                    },
-                    "phoneNumberId": {
-                        "type": "text",
-                        "index": 2,
-                        "label": "Sender Phone Number",
-                        "tooltip": "Sender phone number — the number the message is sent FROM. Pick from the dropdown (populated when the WABA above is filled in), or paste a Phone Number ID manually.",
-                        "source": {
-                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListPhoneNumbers?outPort=out",
-                            "data": {
-                                "messages": {
-                                    "in/businessAccountId": "inputs/in/businessAccountId",
-                                    "in/phoneNumberId": "any",
-                                    "in/to": "any"
-                                },
-                                "transform": "./ListPhoneNumbers#toSelectArray",
-                                "properties": {
-                                    "isSource": true
-                                }
-                            }
-                        }
-                    },
-                    "to": {
-                        "type": "text",
-                        "index": 3,
-                        "label": "Recipient Phone Number",
-                        "tooltip": "Recipient's phone number in E.164 format (e.g. <code>+1XXXXXXXXXX</code>)."
-                    },
-                    "mediaId": {
-                        "type": "text",
-                        "index": 4,
-                        "label": "Media ID",
-                        "tooltip": "Optional. ID of a previously uploaded video. Use either Media ID or Link."
-                    },
-                    "link": {
-                        "type": "text",
-                        "index": 5,
-                        "label": "Video Link (URL)",
-                        "tooltip": "Optional. Publicly-accessible HTTPS URL. MP4 or 3GP, max 16 MB."
-                    },
-                    "caption": {
-                        "type": "textarea",
-                        "index": 6,
-                        "label": "Caption",
-                        "tooltip": "Optional caption."
-                    },
-                    "contextMessageId": {
-                        "type": "text",
-                        "index": 7,
-                        "label": "Reply To Message ID",
-                        "tooltip": "Optional. The WhatsApp message ID to reply to (creates a threaded reply)."
                     }
                 }
             }
@@ -126,20 +56,45 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "messageId": {
-                        "type": "string",
-                        "title": "Message ID",
-                        "example": "wamid.HBgLMTIzNDU2Nzg5MFASCQAB"
+                    "templates": {
+                        "type": "array",
+                        "title": "Templates",
+                        "example": [],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "Template ID",
+                                    "example": "123456789012345"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "Name",
+                                    "example": "hello_world"
+                                },
+                                "language": {
+                                    "type": "string",
+                                    "title": "Language Code",
+                                    "example": "en_US"
+                                },
+                                "status": {
+                                    "type": "string",
+                                    "title": "Status",
+                                    "example": "APPROVED"
+                                },
+                                "category": {
+                                    "type": "string",
+                                    "title": "Category",
+                                    "example": "MARKETING"
+                                }
+                            }
+                        }
                     },
-                    "contactWaId": {
-                        "type": "string",
-                        "title": "Contact WhatsApp ID",
-                        "example": "1234567890"
-                    },
-                    "input": {
-                        "type": "string",
-                        "title": "Recipient Input",
-                        "example": "+1234567890"
+                    "count": {
+                        "type": "integer",
+                        "title": "Count",
+                        "example": 1
                     }
                 }
             }

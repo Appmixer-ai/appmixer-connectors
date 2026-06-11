@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.whatsapp.phoneNumbers.ListPhoneNumbers",
+    "name": "appmixer.whatsapp.phoneNumbers.GetRegistrationStatus",
     "author": "Appmixer <info@appmixer.com>",
-    "label": "List Sender Phone Numbers",
-    "description": "List all WhatsApp Business Sender phone numbers attached to a WhatsApp Business Account (WABA). These are YOUR business numbers — the numbers you send FROM. Recipients (end users you send TO) are not listed here; they are identified only by their E.164 phone number.",
+    "label": "Get Sender Registration Status",
+    "description": "Check whether YOUR business sender phone number is registered on the WhatsApp Cloud API. Read-only \u2014 no side effects. Use for diagnostics or as a branch condition before sending messages. Returns `registered: true` when platform_type is CLOUD_API.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -21,30 +21,21 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "businessAccountId": {
+                    "phoneNumberId": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "businessAccountId"
+                    "phoneNumberId"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "businessAccountId": {
+                    "phoneNumberId": {
                         "type": "text",
                         "index": 1,
-                        "label": "WhatsApp Business Account ID",
-                        "tooltip": "Select the WhatsApp Business Account (WABA). If the dropdown is empty, enter your WABA ID manually — you can find it in Meta Business Manager (business.facebook.com → Settings → Accounts → WhatsApp Accounts).",
-                        "source": {
-                            "url": "/component/appmixer/whatsapp/businessAccounts/ListBusinessAccounts?outPort=out",
-                            "data": {
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListBusinessAccounts#toSelectArray"
-                            }
-                        }
+                        "label": "Phone Number ID",
+                        "tooltip": "ID of YOUR business sender phone number to check."
                     }
                 }
             }
@@ -56,45 +47,45 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "phoneNumbers": {
-                        "type": "array",
-                        "title": "Phone Numbers",
-                        "example": [],
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "title": "Phone Number ID",
-                                    "example": "1044539225419737"
-                                },
-                                "displayPhoneNumber": {
-                                    "type": "string",
-                                    "title": "Display Phone Number",
-                                    "example": "+1 555-123-4567"
-                                },
-                                "verifiedName": {
-                                    "type": "string",
-                                    "title": "Verified Name",
-                                    "example": "Acme Corp"
-                                },
-                                "qualityRating": {
-                                    "type": "string",
-                                    "title": "Quality Rating",
-                                    "example": "GREEN"
-                                },
-                                "codeVerificationStatus": {
-                                    "type": "string",
-                                    "title": "Code Verification Status",
-                                    "example": "VERIFIED"
-                                }
-                            }
-                        }
+                    "registered": {
+                        "type": "boolean",
+                        "title": "Registered on Cloud API",
+                        "example": true
                     },
-                    "count": {
-                        "type": "integer",
-                        "title": "Count",
-                        "example": 1
+                    "platformType": {
+                        "type": "string",
+                        "title": "Platform Type",
+                        "example": "CLOUD_API"
+                    },
+                    "codeVerified": {
+                        "type": "boolean",
+                        "title": "Phone Number Verified",
+                        "example": true
+                    },
+                    "codeVerificationStatus": {
+                        "type": "string",
+                        "title": "Code Verification Status",
+                        "example": "VERIFIED"
+                    },
+                    "messagingLimit": {
+                        "type": "string",
+                        "title": "Messaging Tier Limit",
+                        "example": "TIER_1K"
+                    },
+                    "displayPhoneNumber": {
+                        "type": "string",
+                        "title": "Display Phone Number",
+                        "example": "+1 555-635-4389"
+                    },
+                    "verifiedName": {
+                        "type": "string",
+                        "title": "Verified Name",
+                        "example": "Acme Test"
+                    },
+                    "qualityRating": {
+                        "type": "string",
+                        "title": "Quality Rating",
+                        "example": "GREEN"
                     }
                 }
             }

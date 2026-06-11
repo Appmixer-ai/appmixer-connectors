@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.whatsapp.phoneNumbers.ListPhoneNumbers",
+    "name": "appmixer.whatsapp.phoneNumbers.EnsurePhoneNumberRegistered",
     "author": "Appmixer <info@appmixer.com>",
-    "label": "List Sender Phone Numbers",
-    "description": "List all WhatsApp Business Sender phone numbers attached to a WhatsApp Business Account (WABA). These are YOUR business numbers — the numbers you send FROM. Recipients (end users you send TO) are not listed here; they are identified only by their E.164 phone number.",
+    "label": "Ensure Sender Phone Number Registered",
+    "description": "Idempotent registration helper for YOUR business sender phone number \u2014 checks the number's current Cloud API registration status and only calls Register if it isn't already registered. Safe to run once per onboarding flow without re-checking. Does NOT register recipients.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -21,30 +21,70 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "businessAccountId": {
+                    "phoneNumberId": {
+                        "type": "string"
+                    },
+                    "pin": {
+                        "type": "string"
+                    },
+                    "dataLocalizationRegion": {
                         "type": "string"
                     }
                 },
                 "required": [
-                    "businessAccountId"
+                    "phoneNumberId",
+                    "pin"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "businessAccountId": {
+                    "phoneNumberId": {
                         "type": "text",
                         "index": 1,
-                        "label": "WhatsApp Business Account ID",
-                        "tooltip": "Select the WhatsApp Business Account (WABA). If the dropdown is empty, enter your WABA ID manually — you can find it in Meta Business Manager (business.facebook.com → Settings → Accounts → WhatsApp Accounts).",
-                        "source": {
-                            "url": "/component/appmixer/whatsapp/businessAccounts/ListBusinessAccounts?outPort=out",
-                            "data": {
-                                "properties": {
-                                    "isSource": true
-                                },
-                                "transform": "./ListBusinessAccounts#toSelectArray"
+                        "label": "Phone Number ID",
+                        "tooltip": "ID of YOUR business sender phone number to ensure is registered."
+                    },
+                    "pin": {
+                        "type": "password",
+                        "index": 2,
+                        "label": "Two-step Verification PIN",
+                        "tooltip": "6-digit PIN. Used only if the number is not yet registered. For Meta test numbers this is usually <code>000000</code>; for owned business numbers it is the PIN set during phone verification."
+                    },
+                    "dataLocalizationRegion": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Data Localization Region",
+                        "tooltip": "Optional. ISO 3166-1 alpha-2 region code if your WABA participates in data-localization. Leave blank for global.",
+                        "options": [
+                            {
+                                "label": "(none \u2014 global)",
+                                "value": ""
+                            },
+                            {
+                                "label": "Australia (AU)",
+                                "value": "AU"
+                            },
+                            {
+                                "label": "Brazil (BR)",
+                                "value": "BR"
+                            },
+                            {
+                                "label": "Germany (DE)",
+                                "value": "DE"
+                            },
+                            {
+                                "label": "India (IN)",
+                                "value": "IN"
+                            },
+                            {
+                                "label": "Indonesia (ID)",
+                                "value": "ID"
+                            },
+                            {
+                                "label": "United Kingdom (GB)",
+                                "value": "GB"
                             }
-                        }
+                        ]
                     }
                 }
             }
@@ -56,45 +96,20 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "phoneNumbers": {
-                        "type": "array",
-                        "title": "Phone Numbers",
-                        "example": [],
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "title": "Phone Number ID",
-                                    "example": "1044539225419737"
-                                },
-                                "displayPhoneNumber": {
-                                    "type": "string",
-                                    "title": "Display Phone Number",
-                                    "example": "+1 555-123-4567"
-                                },
-                                "verifiedName": {
-                                    "type": "string",
-                                    "title": "Verified Name",
-                                    "example": "Acme Corp"
-                                },
-                                "qualityRating": {
-                                    "type": "string",
-                                    "title": "Quality Rating",
-                                    "example": "GREEN"
-                                },
-                                "codeVerificationStatus": {
-                                    "type": "string",
-                                    "title": "Code Verification Status",
-                                    "example": "VERIFIED"
-                                }
-                            }
-                        }
+                    "registered": {
+                        "type": "boolean",
+                        "title": "Registered",
+                        "example": true
                     },
-                    "count": {
-                        "type": "integer",
-                        "title": "Count",
-                        "example": 1
+                    "wasAlreadyRegistered": {
+                        "type": "boolean",
+                        "title": "Was Already Registered",
+                        "example": false
+                    },
+                    "platformType": {
+                        "type": "string",
+                        "title": "Platform Type",
+                        "example": "CLOUD_API"
                     }
                 }
             }
