@@ -18,18 +18,11 @@
 const { jsonSchema, tool } = require('ai');
 
 const TOOL_PORT = 'tool';
-const MODEL_DEFINED_PARAM_KEY = 'modelDefinedParameter';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isHandlebarsExpression(val) {
     return typeof val === 'string' && /\{\{.*?\}\}/.test(val);
-}
-
-function isModelDefinedParameter(val, agentComponentId) {
-    return typeof val === 'string' &&
-        val.includes(agentComponentId) &&
-        val.includes(MODEL_DEFINED_PARAM_KEY);
 }
 
 // ─── Manifest fetching ────────────────────────────────────────────────────────
@@ -357,7 +350,5 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
 module.exports = {
     collectComponentTools,
     buildComponentToolDefs,
-    buildComponentToolDef,
-    buildComponentVercelTools,
-    executeComponentTool
+    buildComponentVercelTools
 };
