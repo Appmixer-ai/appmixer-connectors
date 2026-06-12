@@ -6,7 +6,6 @@ const agentModule = require('../agent');
 const memory = require('../memory');
 const lib = require('../lib');
 
-const AI_AGENT_MAX_HISTORY_SIZE = 512000;
 
 module.exports = {
 
@@ -23,7 +22,7 @@ module.exports = {
      * Appmixer receive lifecycle: orchestrate a full agent turn.
      *
      * 1. Load tool definitions (from state or rebuild from flow graph)
-     * 2. Load conversation history for the thread
+     * 2. Load agent memory for the thread
      * 3. Run the agentic loop
      * 4. Save new messages and a condensed summary back to the store
      * 5. Emit the answer
@@ -49,12 +48,11 @@ module.exports = {
         // evaluated against the current flow configuration.
         const componentToolsDef = await componentTool.buildComponentToolDefs(context);
 
-        let history = [];
+        let memoryData = {};
         if (threadId) {
-            history = await memory.loadSummary(context, storeId, threadId);
+            memoryData = await memory.loadMemory(context, storeId, threadId);
         }
 
-        const historyLength = history.length;
         const agentTimeStart = Date.now();
 
         const response = await agentModule.agent(
@@ -64,31 +62,17 @@ module.exports = {
             fileId,
             toolsDefinition,
             componentToolsDef,
-            history
+            memoryData
         );
 
-        await context.log({ step: 'agent-response', time: Date.now() - agentTimeStart });
-
-        const newMessages = response.messages.slice(historyLength);
-        if (threadId) {
-            await memory.saveMessages(context, storeId, threadId, newMessages);
-        }
-
-        let newHistory = response.messages;
-        const maxHistorySize = context.config.AI_AGENT_MAX_HISTORY_SIZE || AI_AGENT_MAX_HISTORY_SIZE;
-
-        if (threadId && JSON.stringify(newHistory).length > maxHistorySize) {
-            const summary = await memory.summarizeHistory(context, newHistory);
-            newHistory = [{ role: 'user', content: summary }];
-            await context.log({
-                step: 'summarized-history',
-                threadId,
-                newHistoryTextLength: summary.length
-            });
-        }
+        await context.log({ step: 'agent-response', latency: Date.now() - agentTimeStart });
 
         if (threadId) {
-            await memory.saveSummary(context, storeId, threadId, newHistory);
+            const newMessages = response.messages;
+            await memory.appendMessages(context, storeId, threadId, newMessages);
+
+            memoryData.messages = memoryData.messages.concat(newMessages);
+            await memory.saveMemory(context, storeId, threadId, memoryData);
         }
 
         return context.sendJson({
