@@ -2,7 +2,7 @@
     "name": "appmixer.whatsapp.phoneNumbers.GetRegistrationStatus",
     "author": "Appmixer <info@appmixer.com>",
     "label": "Get Sender Registration Status",
-    "description": "Check whether YOUR business sender phone number is registered on the WhatsApp Cloud API. Read-only \u2014 no side effects. Use for diagnostics or as a branch condition before sending messages. Returns `registered: true` when platform_type is CLOUD_API.",
+    "description": "Check whether YOUR business sender phone number is registered on the WhatsApp Cloud API. Read-only — no side effects. Use for diagnostics or as a branch condition before sending messages. Returns `registered: true` when platform_type is CLOUD_API.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -21,21 +21,53 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "businessAccountId": {
+                        "type": "string"
+                    },
                     "phoneNumberId": {
                         "type": "string"
                     }
                 },
                 "required": [
+                    "businessAccountId",
                     "phoneNumberId"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "phoneNumberId": {
+                    "businessAccountId": {
                         "type": "text",
                         "index": 1,
+                        "label": "WhatsApp Business Account ID",
+                        "tooltip": "Select the WhatsApp Business Account (WABA). If the dropdown is empty, enter your WABA ID manually — you can find it in Meta Business Manager (business.facebook.com → Settings → Accounts → WhatsApp Accounts).",
+                        "source": {
+                            "url": "/component/appmixer/whatsapp/businessAccounts/ListBusinessAccounts?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListBusinessAccounts#toSelectArray"
+                            }
+                        }
+                    },
+                    "phoneNumberId": {
+                        "type": "text",
+                        "index": 2,
                         "label": "Phone Number ID",
-                        "tooltip": "ID of YOUR business sender phone number to check."
+                        "tooltip": "ID of YOUR business sender phone number to check. Pick from the dropdown (populated when the WABA above is filled in), or paste a Phone Number ID manually.",
+                        "source": {
+                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListPhoneNumbers?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/businessAccountId": "inputs/in/businessAccountId",
+                                    "in/phoneNumberId": "any"
+                                },
+                                "transform": "./ListPhoneNumbers#toSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
                     }
                 }
             }

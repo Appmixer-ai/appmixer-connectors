@@ -2,7 +2,7 @@
     "name": "appmixer.whatsapp.phoneNumbers.EnsurePhoneNumberRegistered",
     "author": "Appmixer <info@appmixer.com>",
     "label": "Ensure Sender Phone Number Registered",
-    "description": "Idempotent registration helper for YOUR business sender phone number \u2014 checks the number's current Cloud API registration status and only calls Register if it isn't already registered. Safe to run once per onboarding flow without re-checking. Does NOT register recipients.",
+    "description": "Idempotent registration helper for YOUR business sender phone number — checks the number's current Cloud API registration status and only calls Register if it isn't already registered. Safe to run once per onboarding flow without re-checking. Does NOT register recipients.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -21,6 +21,9 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "businessAccountId": {
+                        "type": "string"
+                    },
                     "phoneNumberId": {
                         "type": "string"
                     },
@@ -32,32 +35,62 @@
                     }
                 },
                 "required": [
+                    "businessAccountId",
                     "phoneNumberId",
                     "pin"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "phoneNumberId": {
+                    "businessAccountId": {
                         "type": "text",
                         "index": 1,
+                        "label": "WhatsApp Business Account ID",
+                        "tooltip": "Select the WhatsApp Business Account (WABA). If the dropdown is empty, enter your WABA ID manually — you can find it in Meta Business Manager (business.facebook.com → Settings → Accounts → WhatsApp Accounts).",
+                        "source": {
+                            "url": "/component/appmixer/whatsapp/businessAccounts/ListBusinessAccounts?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListBusinessAccounts#toSelectArray"
+                            }
+                        }
+                    },
+                    "phoneNumberId": {
+                        "type": "text",
+                        "index": 2,
                         "label": "Phone Number ID",
-                        "tooltip": "ID of YOUR business sender phone number to ensure is registered."
+                        "tooltip": "ID of YOUR business sender phone number to ensure is registered. Pick from the dropdown (populated when the WABA above is filled in), or paste a Phone Number ID manually.",
+                        "source": {
+                            "url": "/component/appmixer/whatsapp/phoneNumbers/ListPhoneNumbers?outPort=out",
+                            "data": {
+                                "messages": {
+                                    "in/businessAccountId": "inputs/in/businessAccountId",
+                                    "in/phoneNumberId": "any",
+                                    "in/pin": "any"
+                                },
+                                "transform": "./ListPhoneNumbers#toSelectArray",
+                                "properties": {
+                                    "isSource": true
+                                }
+                            }
+                        }
                     },
                     "pin": {
-                        "type": "password",
-                        "index": 2,
+                        "type": "text",
+                        "index": 3,
                         "label": "Two-step Verification PIN",
                         "tooltip": "6-digit PIN. Used only if the number is not yet registered. For Meta test numbers this is usually <code>000000</code>; for owned business numbers it is the PIN set during phone verification."
                     },
                     "dataLocalizationRegion": {
                         "type": "select",
-                        "index": 3,
+                        "index": 4,
                         "label": "Data Localization Region",
                         "tooltip": "Optional. ISO 3166-1 alpha-2 region code if your WABA participates in data-localization. Leave blank for global.",
                         "options": [
                             {
-                                "label": "(none \u2014 global)",
+                                "label": "(none — global)",
                                 "value": ""
                             },
                             {
