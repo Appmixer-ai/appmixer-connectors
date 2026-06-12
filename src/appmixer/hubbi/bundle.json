@@ -1,7 +1,10 @@
 {
     "name": "appmixer.hubbi",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "changelog": {
+        "1.6.0": [
+            "StartHub and StartHubWithData: re-classify Hubbi HTTP errors for the retry engine via the shared lib.rethrowHubbiError helper. A 409 (Conflict) is now treated as transient and retried (the engine would otherwise drop it as a permanent client error), while a 423 (Locked) is turned into a CancelError so it is NOT retried (the engine would otherwise retry it as an unknown error). All other errors keep the engine's default classification."
+        ],
         "1.5.0": [
             "NewHubEvent: add an 'Output Type' option (First record / All records at once / One record at a time) and route the output through the shared lib helpers (sendArrayOutput / getOutputPortOptions). In the 'One record at a time' and 'First record' modes the individual hub fields are now exposed directly on the output port instead of being nested under the 'result' array. Loading the hub fields for the output port options is now fault-tolerant: if the TargetFields lookup fails, the generic record options are still offered instead of the option list ending up empty. BREAKING: the standalone 'conversionKey' output field was removed; events are already filtered to the configured hub."
         ],

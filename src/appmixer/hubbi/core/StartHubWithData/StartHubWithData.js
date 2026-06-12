@@ -31,16 +31,20 @@ module.exports = {
         }
 
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
-        await context.httpRequest({
-            method: 'POST',
-            url: `${baseUrl}/Flows/Home/HubsStartWithData?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            data: rows
-        });
+        try {
+            await context.httpRequest({
+                method: 'POST',
+                url: `${baseUrl}/Flows/Home/HubsStartWithData?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                data: rows
+            });
+        } catch (err) {
+            lib.rethrowHubbiError(context, err);
+        }
 
         return context.sendJson({ conversionKey, count: rows.length }, 'out');
     }

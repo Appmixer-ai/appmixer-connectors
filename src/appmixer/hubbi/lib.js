@@ -55,6 +55,28 @@ module.exports = {
         }
     },
 
+    // Re-classify Hubbi HTTP errors for the Appmixer retry engine. By default
+    // the engine treats 409 as a permanent client error (no retry) and an
+    // unclassified 423 as "unknown" (retried). Hubbi's semantics are the
+    // opposite, so:
+    //   - 409 (Conflict) -> rethrow a plain Error with no HTTP status attached.
+    //     The classifier then sees an "unknown" error and retries it (relies on
+    //     the default RETRY_UNKNOWN_ERRORS=true).
+    //   - 423 (Locked)   -> throw CancelError so the engine does NOT retry.
+    //   - anything else  -> rethrow untouched for the engine's default handling.
+    rethrowHubbiError(context, err) {
+
+        const status = err.response && err.response.status;
+
+        if (status === 409) {
+            throw new Error(`Hubbi conflict (HTTP 409), retrying: ${err.message}`);
+        }
+        if (status === 423) {
+            throw new context.CancelError(`Hubbi resource locked (HTTP 423), not retrying: ${err.message}`);
+        }
+        throw err;
+    },
+
     async sendArrayOutput({
         context,
         outputPortName = 'out',
