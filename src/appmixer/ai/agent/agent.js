@@ -88,7 +88,7 @@ async function buildUserContent(context, prompt, fileId) {
  *
  * Returns { messages, answer }.
  */
-async function agent(context, instructions, prompt, fileId, toolsDefinition, componentToolsDef, history) {
+async function agent(context, instructions, prompt, fileId, toolsDefinition, componentToolsDef, memory) {
 
     const model = provider.createModel(context);
     const isStream = !!context.properties.stream;
@@ -115,11 +115,12 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, com
 
     const userContent = await buildUserContent(context, prompt, fileId);
     const inputMessages = [
-        ...history,
+        ...(memory.summary ? [{ role: 'system', content: 'Conversation summary so far:\n' + memory.summary }] : []),
+        ...(memory.messages || []),
         { role: 'user', content: userContent }
     ];
 
-    await context.log({ step: 'agent-start', isStream, maxSteps, historyLength: history.length });
+    await context.log({ step: 'agent-start', isStream, maxSteps });
 
     let finalText;
     let responseMessages;
@@ -172,9 +173,7 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, com
         await run();
     }
 
-    const newHistory = [...inputMessages, ...responseMessages];
-
-    return { messages: newHistory, answer: finalText };
+    return { messages: responseMessages, answer: finalText };
 }
 
 // ─── Streaming execution ──────────────────────────────────────────────────────
