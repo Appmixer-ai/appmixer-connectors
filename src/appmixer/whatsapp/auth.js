@@ -154,11 +154,6 @@ module.exports = {
                 }
             } catch (err) {
                 debugError = err;
-                await context.log({
-                    'step': 'debug-token-failed',
-                    message: err.message,
-                    response: err.response && err.response.data
-                });
             }
 
             // Unrestricted grant — try to enumerate WABAs via Business Manager.
@@ -177,24 +172,9 @@ module.exports = {
                         }
                     }
                 } catch (err) {
-                    await context.log({
-                        'step': 'businesses-enumeration-failed',
-                        message: err.message,
-                        response: err.response && err.response.data
-                    });
+                    // Best-effort — ignore (e.g. business_management not granted).
                 }
             }
-
-            await context.log({
-                'step': 'waba-discovery',
-                debugSucceeded: !debugError,
-                whatsappScopeGranted,
-                // Raw /debug_token payload — scopes, granular_scopes, token
-                // type, is_valid, inner error… Kept while the Embedded Signup
-                // flow is being rolled out; contains no secrets.
-                debugTokenData: debugData,
-                wabaIds
-            });
 
             if (wabaIds.length > 0) {
                 profile.businessAccountId = wabaIds[0];   // default WABA

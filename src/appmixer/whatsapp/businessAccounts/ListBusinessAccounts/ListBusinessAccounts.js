@@ -42,7 +42,7 @@ module.exports = {
                 return { id: String(id), name: (item && item.name) || null };
             });
         } catch (err) {
-            await context.log({ step: 'list-business-accounts-names-error', message: err.message || String(err) });
+            // Name enrichment is best-effort — fall back to bare IDs.
         }
 
         return context.sendJson({
