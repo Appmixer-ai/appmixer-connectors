@@ -1,0 +1,153 @@
+{
+    "name": "appmixer.utils.timers.Throttle",
+    "author": "Camilo Manrique <camilo@client.io>",
+    "description": "Queues and throttles incoming messages in order to \"slow down\" the message flow. Messages are throttled in regular intervals. If time slots are defined, the throttle sends messages in regular intervals but only within the time slots defined (not outside).",
+    "version": "1.0.0",
+    "webhook": true,
+    "authConfig": {
+        "service": "appmixer:utils:throttle"
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "messageQueue": { "type": "string" },
+                "interval": { "type": "number" },
+                "maxPerInterval": { "type": "number" },
+                "strategy": { "type": "string" },
+                "spacing": { "type": "number" },
+                "minPerSpace": { "type": "number" },
+                "maxPerSpace": { "type": "number" },
+                "timeSlots": { "type": "object" },
+                "start": { "type": "string" }
+            },
+            "required": ["messageQueue", "interval", "maxPerInterval", "strategy"]
+        },
+        "inspector": {
+            "inputs": {
+                "messageQueue": {
+                    "type": "select",
+                    "label": "Message Queue Data Store",
+                    "index": 1,
+                    "source": {
+                        "url": "/component/appmixer/utils/storage/ListStores?outPort=out",
+                        "data": {
+                            "transform": "./ListStores#toSelectArray"
+                        }
+                    },
+                    "tooltip": "Select a data store to store queued messages and current throttling counter. If you choose to select an existing data store, make sure the data store is cleaned first. Otherwise, existing messages from that data store will be used and mixed with new ones the Throttle is processing. Also, do not select an existing data store for two Throttle components as, again, the messages from the data store will be mixed leading to an unexpected behaviour for your flows."
+                },
+                "interval": {
+                    "type": "number",
+                    "label": "Interval",
+                    "index": 4,
+                    "tooltip": "Pass no more than 'Max per interval' messages in the interval specified in minutes."
+                },
+                "maxPerInterval": {
+                    "type": "number",
+                    "label": "Max per interval",
+                    "index": 5,
+                    "tooltip": "The maximum number of messages that will be sent in the interval specified.",
+                    "defaultValue": 1
+                },
+                "strategy": {
+                    "type": "select",
+                    "label": "Strategy",
+                    "index": 6,
+                    "options": [
+                        { "label": "As soon as possible", "value": "asap" },
+                        { "label": "Space out", "value": "spaceOut" }
+                    ],
+                    "defaultValue": "asap",
+                    "tooltip": "The strategy used to process messages."
+                },
+                "spacing": {
+                    "when": { "eq": { "./strategy": "spaceOut" } },
+                    "type": "number",
+                    "label": "Spacing",
+                    "index": 6,
+                    "tooltip": "The spacing (in seconds) by which you want to distribute messages within the interval specified. For example, if Interval is 10 minutes, Spacing is 60 seconds and Max per space is 10 messages, no more than 10 messages will be sent in 60 seconds even though there can be more messages waiting in the queue."
+                },
+                "minPerSpace": {
+                    "when": { "eq": { "./strategy": "spaceOut" } },
+                    "type": "number",
+                    "label": "Min per space",
+                    "index": 7,
+                    "tooltip": "The minimum number of messages to send to the output port. If there are less messages waiting in the queue, the Throttle will wait till the minimum is reached before sending anything to the output port."
+                },
+                "maxPerSpace": {
+                    "when": { "eq": { "./strategy": "spaceOut" } },
+                    "type": "number",
+                    "label": "Max per space",
+                    "index": 8,
+                    "tooltip": "The maximum number of messages to send to the output port within the Spacing defined. If not defined, the value will be automatically calculated as 'Interval' / 'Spacing' mod 'Max per interval'.\n"
+                },
+                "timeSlots": {
+                    "type": "expression",
+                    "label": "Time Slots",
+                    "index": 9,
+                    "levels": ["AND"],
+                    "tooltip": "Send messages only in the specified time slots. For example, you can set the throttle to send messages only on Mondays from 8am-10am.",
+                    "fields": {
+                        "timeFrom": {
+                            "type": "text",
+                            "label": "Time from",
+                            "index": 1,
+                            "tooltip": "Time (e.g. 8:00)"
+                        },
+                        "timeTo": {
+                            "type": "text",
+                            "label": "Time to",
+                            "index": 2,
+                            "tooltip": "Time (e.g. 16:00)"
+                        },
+                        "days": {
+                            "type": "multiselect",
+                            "label": "Days",
+                            "index": 3,
+                            "options": [
+                                { "label": "Monday", "value": 1 },
+                                { "label": "Tuesday", "value": 2 },
+                                { "label": "Wednesday", "value": 3 },
+                                { "label": "Thursday", "value": 4 },
+                                { "label": "Friday", "value": 5 },
+                                { "label": "Saturday", "value": 6 },
+                                { "label": "Sunday", "value": 0 }
+                            ],
+                            "tooltip": "Days of the week. Leave it empty for all days of the week."
+                        },
+                        "months": {
+                            "type": "multiselect",
+                            "label": "Months",
+                            "index": 4,
+                            "options": [
+                                { "label": "January", "value": 0 },
+                                { "label": "February", "value": 1 },
+                                { "label": "March", "value": 2 },
+                                { "label": "April", "value": 3 },
+                                { "label": "May", "value": 4 },
+                                { "label": "June", "value": 5 },
+                                { "label": "July", "value": 6 },
+                                { "label": "August", "value": 7 },
+                                { "label": "September", "value": 8 },
+                                { "label": "October", "value": 9 },
+                                { "label": "November", "value": 10 },
+                                { "label": "December", "value": 11 }
+                            ],
+                            "tooltip": "Months of the year. Leave it empty for all months of the year."
+                        }
+                    }
+                },
+                "start": {
+                    "type": "date-time",
+                    "label": "Start",
+                    "index": 10,
+                    "tooltip": "Messages will be queued until the Start date/time specified is reached. Leave blank if you want to start immediately."
+                }
+            }
+        }
+    },
+    "inPorts": ["in"],
+    "outPorts": ["out"],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij4KICA8ZyBpZD0iR3JvdXBfNTQzIiBkYXRhLW5hbWU9Ikdyb3VwIDU0MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTIyIC00NDYuNSkiPgogICAgPHJlY3QgaWQ9IlJlY3RhbmdsZV8zMzM3IiBkYXRhLW5hbWU9IlJlY3RhbmdsZSAzMzM3IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIyIDQ0Ni41KSIgZmlsbD0ibm9uZSIvPgogICAgPGcgaWQ9ImFwcC51dGlscy50aW1lcnMiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDI0IDQ0OSkiPgogICAgICA8cGF0aCBpZD0iYWxhcm0tY2xvY2siIGQ9Ik0xMSwxMGgyYTEsMSwwLDAsMSwwLDJIMTBhMSwxLDAsMCwxLTEtMVY2YTEsMSwwLDAsMSwyLDBabTcuNjMtMS41NjJhOSw5LDAsMSwxLTE3LjI2LDBBNSw1LDAsMSwxLDkuMDM4LDIuMDUxYTkuMSw5LjEsMCwwLDEsMS45MjQsMEE1LDUsMCwxLDEsMTguNjMsOC40MzhabS0uOTM4LTIuMTEzYTMsMywwLDAsMC00LjQ4LTMuNzM1LDkuMDMsOS4wMywwLDAsMSw0LjQ4LDMuNzM1Wk02Ljc4NywyLjU5YTMsMywwLDAsMC00LjQ4LDMuNzM1QTkuMDMsOS4wMywwLDAsMSw2Ljc4NywyLjU5Wk0xMCwxOGE3LDcsMCwxLDAtNy03LDcsNywwLDAsMCw3LDdaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMSAwLjAwMSkiLz4KICAgIDwvZz4KICA8L2c+Cjwvc3ZnPgo="
+}
