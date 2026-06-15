@@ -4,6 +4,13 @@ const uuid = require('uuid');
 // Timeout interval in milliseconds (3 minutes)
 const TIMEOUT_INTERVAL = (context) => parseInt(context.config.timeoutIntervalMs, 10) || 180000; // 3 minutes
 
+// Cooldown time to allow downstream components and connection pools to settle
+const BATCH_COOLDOWN = 500;
+
+// Maximum batch size to prevent connection pool exhaustion
+// This is the key fix: limit batch size even if timeout interval would allow more
+const MAX_BATCH_SIZE = 50;
+
 function parseVariable(listVariable) {
 
     const re = new RegExp(/{{{(.*?)}}}/g);
@@ -42,11 +49,16 @@ function getInputConfig(componentConfig) {
 
 /**
  * Calculate batch size based on delay and timeout interval.
+ * Prevents connection pool exhaustion by limiting batch size.
  * @param {number} delay - Delay between items in milliseconds
  * @returns {number} - Number of items that can be processed in one timeout interval
  */
 function calculateBatchSize(context, delay) {
-    return Math.floor(TIMEOUT_INTERVAL(context) / delay);
+    const timeoutInterval = TIMEOUT_INTERVAL(context);
+    // Original calculation: how many items can fit based on delay alone
+    const calculatedSize = Math.floor(timeoutInterval / delay);
+    // Cap at MAX_BATCH_SIZE to prevent connection pool exhaustion
+    return Math.max(1, Math.min(MAX_BATCH_SIZE, calculatedSize));
 }
 
 /**
@@ -73,6 +85,12 @@ async function sendBatch(context, items, startIndex, count, correlationId, delay
         if (delay && i < items.length - 1) {
             await new Promise(resolve => setTimeout(resolve, delay));
         }
+    }
+
+    // After batch is sent, add a cooldown period to allow downstream components
+    // and connection pools to settle before scheduling the next batch
+    if (delay && items.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_COOLDOWN));
     }
 }
 
@@ -157,62 +175,76 @@ module.exports = {
         if (context.messages.timeout) {
             const { id } = context.messages.timeout.content;
 
-            // Fetch the stored data from the plugin (items list only)
-            const storedData = await context.callAppmixer({
-                endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
-                method: 'GET'
-            });
-
-            if (!storedData || !storedData.items) {
-                // Data no longer exists, nothing to process
-                await context.log({ 'step': 'no-data', message: 'Each timeout: nothing to process, stored data missing or has no items' });
-                return;
-            }
-
-            const { items, delay, correlationId, count } = storedData;
-
-            // Get current index from state (same pattern as non-delayed Each)
-            const lastSentIndexCache = await context.stateGet(id);
-            const currentIndex = lastSentIndexCache?.index || 0;
-
-            const batchSize = calculateBatchSize(context, delay);
-            const remainingItems = items.slice(currentIndex);
-
-            if (remainingItems.length === 0) {
-                // All items have been processed, clean up and send done
-                await context.callAppmixer({
+            try {
+                // Fetch the stored data from the plugin (items list only)
+                const storedData = await context.callAppmixer({
                     endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
-                    method: 'DELETE'
+                    method: 'GET'
                 });
-                await context.stateUnset(id);
-                await context.sendJson({ count, correlationId }, 'done');
+
+                if (!storedData || !storedData.items) {
+                    // Data no longer exists, nothing to process
+                    await context.log({ 'step': 'no-data', message: 'Each timeout: nothing to process, stored data missing or has no items' });
+                    return;
+                }
+
+                const { items, delay, correlationId, count } = storedData;
+
+                // Get current index from state (same pattern as non-delayed Each)
+                const lastSentIndexCache = await context.stateGet(id);
+                const currentIndex = lastSentIndexCache?.index || 0;
+
+                const batchSize = calculateBatchSize(context, delay);
+                const remainingItems = items.slice(currentIndex);
+
+                if (remainingItems.length === 0) {
+                    // All items have been processed, clean up and send done
+                    await context.callAppmixer({
+                        endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
+                        method: 'DELETE'
+                    });
+                    await context.stateUnset(id);
+                    await context.sendJson({ count, correlationId }, 'done');
+                    return;
+                }
+
+                // Get the batch to process
+                const batchItems = remainingItems.slice(0, batchSize);
+                const newIndex = currentIndex + batchItems.length;
+
+                await context.log({
+                    'step': 'batch-processing',
+                    message: `Processing batch: items ${currentIndex} to ${newIndex} of ${items.length}, batch size: ${batchSize}`
+                });
+
+                // Send the batch with delays
+                await sendBatch(context, batchItems, currentIndex, count, correlationId, delay);
+
+                // Update index in state after each item is sent
+                await context.stateSet(id, { index: newIndex });
+
+                if (newIndex >= items.length) {
+                    // All items have been sent, clean up and send done
+                    await context.callAppmixer({
+                        endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
+                        method: 'DELETE'
+                    });
+                    await context.stateUnset(id);
+                    await context.sendJson({ count, correlationId }, 'done');
+                } else {
+                    // Schedule next timeout
+                    await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
+                }
+
                 return;
-            }
-
-            // Get the batch to process
-            const batchItems = remainingItems.slice(0, batchSize);
-            const newIndex = currentIndex + batchItems.length;
-
-            // Send the batch with delays
-            await sendBatch(context, batchItems, currentIndex, count, correlationId, delay);
-
-            // Update index in state after each item is sent
-            await context.stateSet(id, { index: newIndex });
-
-            if (newIndex >= items.length) {
-                // All items have been sent, clean up and send done
-                await context.callAppmixer({
-                    endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
-                    method: 'DELETE'
+            } catch (error) {
+                await context.log({
+                    'step': 'error',
+                    message: `Error processing batch: ${error.message}`,
+                    error: error.stack
                 });
-                await context.stateUnset(id);
-                await context.sendJson({ count, correlationId }, 'done');
-            } else {
-                // Schedule next timeout
-                await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
+                throw error;
             }
-
-            return;
         }
 
         if (buildOutPortOptions) {
