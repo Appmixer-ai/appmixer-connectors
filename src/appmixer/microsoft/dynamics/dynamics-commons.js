@@ -249,12 +249,24 @@ async function generateInspector(context, isValidFor) {
     /** Default inspector fields: objectName, rawJson, json. */
     let defaultInputs = {
         objectName: {
+            // `text` (not `select`) so the user can also type any entity logical name manually -
+            // the source only suggests the most common entities. See "List Entities" component for
+            // the full list.
             label: 'Object Name',
             index: 1,
-            type: 'select',
+            type: 'text',
             defaultValue: objectName,
-            options: DEFAULT_ENTITIES,
-            tooltip: 'Select object name.'
+            source: {
+                url: '/component/appmixer/microsoft/dynamics/CreateObjectRecord?outPort=out',
+                data: {
+                    properties: {
+                        listDefaultEntities: true
+                    }
+                }
+            },
+            tooltip: 'The suggestions list only the most common entities. You can type any other '
+                + 'entity logical name manually, or use the "List Entities" component to fetch the '
+                + 'full list and bind its "Logical Name" output here.'
         },
         rawJson: {
             type: 'toggle',
@@ -500,6 +512,7 @@ function getInputs(item, index) {
 }
 
 module.exports = {
+    DEFAULT_ENTITIES,
     getOutputPortOptions,
     getSchemaProperties,
     getInspectorType,
