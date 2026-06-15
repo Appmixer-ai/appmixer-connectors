@@ -3,7 +3,6 @@
 const { generateText, streamText } = require('ai');
 const provider = require('./provider');
 const tracer = require('./tracer');
-const tools = require('./tools');
 const componentTool = require('./tool');
 const lib = require('./lib');
 
@@ -88,7 +87,7 @@ async function buildUserContent(context, prompt, fileId) {
  *
  * Returns { messages, answer }.
  */
-async function agent(context, instructions, prompt, fileId, toolsDefinition, componentToolsDef, memory) {
+async function agent(context, instructions, prompt, fileId, componentToolsDef, memory) {
 
     const model = provider.createModel(context);
     const isStream = !!context.properties.stream;
@@ -134,18 +133,14 @@ async function agent(context, instructions, prompt, fileId, toolsDefinition, com
         let currentStepCtx = null;
         const getStepCtx = () => currentStepCtx;
 
-        const regularVercelTools = tools.buildVercelTools(context, toolsDefinition, otelTracer, getStepCtx);
         const componentVercelTools = componentTool.buildComponentVercelTools(context, componentToolsDef, otelTracer, getStepCtx);
-        const vercelTools = (regularVercelTools || Object.keys(componentVercelTools).length)
-            ? { ...(regularVercelTools || {}), ...componentVercelTools }
-            : undefined;
+        const vercelTools = Object.keys(componentVercelTools).length ? componentVercelTools : undefined;
 
         const sharedOptions = {
             model,
             system: instructions || 'You are a helpful assistant.',
             messages: inputMessages,
-            tools: vercelTools,
-            maxSteps,
+            ...(vercelTools ? { tools: vercelTools, maxSteps } : {}),
             experimental_telemetry: sdkTelemetry
         };
 
@@ -245,7 +240,7 @@ async function runStream(context, sharedOptions, inputMessages,
             break;
 
         case 'tool-call': {
-            // chunk.toolName carries the full internal name (shortuuid_toolname); strip the prefix.
+            // chunk.toolName carries the full internal name (componentId_toolname); strip the prefix.
             const decisionToolName = chunk.toolName.split('_').slice(1).join('_');
             // EVENT: records the model's DECISION to call a tool + args (instantaneous).
             // The tool EXECUTION span is created separately in executeToolByName.

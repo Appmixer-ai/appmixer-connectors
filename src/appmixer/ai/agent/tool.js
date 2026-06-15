@@ -1,21 +1,25 @@
 'use strict';
 
 /**
- * tool.js — "tool" output port: use any Appmixer action component as an AI agent tool.
+ * tool.js — "tool" output port: use any Appmixer action component or MCP server as an AI agent tool.
  *
- * This is intentionally separate from tools.js (which handles ToolStart chains + MCP servers
- * wired to the "tools" port). Components wired to the "tool" port are called synchronously
- * via context.callAppmixer() rather than through the pub/sub poll mechanism.
+ * This is intentionally separate from tools.js (which handles ToolStart chains wired to the
+ * "tools" port). Components wired to the "tool" port are either:
  *
- * Parameter model
- * ───────────────
+ *   - Regular action components: called synchronously via context.callAppmixer().
+ *   - MCP servers: detected by component type (appmixer.mcpservers.*); tools are enumerated
+ *     at runtime via mcpListTools and executed via mcpCallTool (see mcp.js).
+ *
+ * Parameter model (regular action components)
+ * ───────────────────────────────────────────
  * The user marks fields they want the AI to fill with the "Model Defined Parameter" output
  * variable from the AI Agent (port "tool", option "modelDefinedParameter").  Only those
  * fields become parameters in the tool definition sent to the LLM.  Fields with a literal
- * user-set value are passed as static `properties` on every callAppmixer invocation.
+ * user-set value are passed as static properties on every callAppmixer invocation.
  */
 
 const { jsonSchema, tool } = require('ai');
+const mcp = require('./mcp');
 
 const TOOL_PORT = 'tool';
 
@@ -46,6 +50,9 @@ async function fetchManifest(context, componentType) {
 /**
  * Fetch manifests for all components wired to the agent's "tool" port and cache
  * them to state.  Called from AIAgent.start().
+ *
+ * MCP servers have no static manifest — they get a sentinel { _isMCP: true } entry
+ * so buildDefsFromManifests knows to enumerate tools dynamically at call-time.
  */
 async function fetchAndCacheManifests(context) {
     const flowDescriptor = context.flowDescriptor;
@@ -64,6 +71,11 @@ async function fetchAndCacheManifests(context) {
     });
 
     for (const componentId of Object.keys(manifests)) {
+        if (mcp.isMCPserver(context, componentId)) {
+            // MCP servers expose dynamic tools — no static manifest to fetch.
+            manifests[componentId] = { _isMCP: true };
+            continue;
+        }
         const otherType = flowDescriptor[componentId].type;
         try {
             manifests[componentId] = await fetchManifest(context, otherType);
@@ -83,7 +95,9 @@ async function fetchAndCacheManifests(context) {
 
 /**
  * Build tool definitions from cached manifests + current flowDescriptor.
- * On-demand fetches if a manifest is missing from cache.
+ *
+ * For MCP servers the tool list is fetched fresh on each call (tools are dynamic).
+ * For regular components, the cached manifest is used; fetches on-demand if missing.
  */
 async function buildDefsFromManifests(context, manifests) {
     const flowDescriptor = context.flowDescriptor;
@@ -91,6 +105,15 @@ async function buildDefsFromManifests(context, manifests) {
     const defs = [];
 
     for (const componentId of Object.keys(manifests)) {
+        const manifest = manifests[componentId];
+
+        // MCP server: enumerate tools dynamically via mcpListTools.
+        if (manifest?._isMCP) {
+            const mcpDefs = await buildMCPToolDefs(context, componentId);
+            defs.push(...mcpDefs);
+            continue;
+        }
+
         const component = flowDescriptor[componentId];
         if (!component) continue;
 
@@ -104,10 +127,10 @@ async function buildDefsFromManifests(context, manifests) {
         }
         if (!inPortName) continue;
 
-        let manifest = manifests[componentId];
-        if (!manifest) {
+        let resolvedManifest = manifest;
+        if (!resolvedManifest) {
             try {
-                manifest = await fetchManifest(context, component.type);
+                resolvedManifest = await fetchManifest(context, component.type);
             } catch (err) {
                 await context.log({
                     step: 'component-tool-manifest-error',
@@ -119,15 +142,15 @@ async function buildDefsFromManifests(context, manifests) {
             }
         }
 
-        const def = buildComponentToolDef(componentId, component, manifest, inPortName, agentComponentId);
+        const def = buildComponentToolDef(componentId, component, resolvedManifest, inPortName, agentComponentId);
 
         await context.log({
             step: 'component-tool-manifest-inspect',
             componentId,
-            manifestDescription: manifest?.description,
-            manifestLabel: manifest?.label,
-            manifestName: manifest?.name,
-            inPortNames: (manifest?.inPorts || []).map(p => p.name),
+            manifestDescription: resolvedManifest?.description,
+            manifestLabel: resolvedManifest?.label,
+            manifestName: resolvedManifest?.name,
+            inPortNames: (resolvedManifest?.inPorts || []).map(p => p.name),
             aiFields: def?.function?._aiFields || [],
             userStaticValues: def?.function?._userStaticValues || {}
         });
@@ -135,6 +158,43 @@ async function buildDefsFromManifests(context, manifests) {
     }
 
     return defs;
+}
+
+/**
+ * Build tool defs for a single MCP server by listing its tools at runtime.
+ * One MCP server can expose N tools — each becomes a separate tool def.
+ */
+async function buildMCPToolDefs(context, componentId) {
+    try {
+        const mcpTools = await mcp.mcpListTools(context, componentId);
+        await context.log({ step: 'mcp-tool-port-list-tools', componentId, tools: mcpTools });
+
+        return mcpTools.map((mcpTool) => {
+            const safeName = mcpTool.name
+                .replace(/[^a-zA-Z0-9_]/g, '_')
+                .slice(0, 64 - componentId.length - 1);
+            const parameters = mcpTool.inputSchema
+                ? { ...mcpTool.inputSchema }
+                : { type: 'object', properties: {} };
+            if (parameters.type === 'object' && !parameters.properties) {
+                parameters.properties = {};
+            }
+            return {
+                type: 'function',
+                function: {
+                    name: `${componentId}_${safeName}`,
+                    description: mcpTool.description || mcpTool.name,
+                    parameters,
+                    _isMCP: true,
+                    _componentId: componentId,
+                    _mcpToolName: mcpTool.name
+                }
+            };
+        });
+    } catch (err) {
+        await context.log({ step: 'mcp-tool-port-list-tools-error', componentId, error: err.message });
+        return [];
+    }
 }
 
 async function collectComponentTools(context) {
@@ -150,7 +210,7 @@ async function buildComponentToolDefs(context) {
     return buildDefsFromManifests(context, manifests);
 }
 
-// ─── Tool definition builder ──────────────────────────────────────────────────
+// ─── Tool definition builder (regular action components) ──────────────────────
 
 function buildComponentToolDef(componentId, componentDescriptor, manifest, connectedInPortName, agentComponentId) {
     const aiFields = new Set();
@@ -269,12 +329,24 @@ function buildComponentVercelTools(context, componentToolsDef, tracer, getStepCt
 }
 
 async function executeComponentTool(context, toolDef, args, tracer, toolCallId, getStepCtx) {
-    const { name: fullToolName, _componentId, _componentType, _inPort, _userStaticValues } = toolDef.function;
-    const endPoint = '/component/' + _componentType.replace(/\./g, '/');
-    const displayName = fullToolName.split('_').slice(1).join('_');
+    const { name: fullToolName, _isMCP, _componentId, _mcpToolName,
+        _componentType, _inPort, _userStaticValues } = toolDef.function;
+    const displayName = _isMCP ? _mcpToolName : fullToolName.split('_').slice(1).join('_');
 
     const runTool = async () => {
-        // Merge static user-configured values with AI-provided args into a single message object.
+        if (_isMCP) {
+            try {
+                const output = await mcp.mcpCallTool(context, _componentId, _mcpToolName, args);
+                await context.log({ step: 'mcp-tool-call-result', displayName, output });
+                return typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+            } catch (err) {
+                await context.log({ step: 'mcp-tool-call-error', displayName, error: err.message });
+                return `Error calling tool ${displayName}: ${err.message}`;
+            }
+        }
+
+        // Regular action component: merge static + AI args and call via callAppmixer.
+        const endPoint = '/component/' + _componentType.replace(/\./g, '/');
         const messagePayload = { ..._userStaticValues, ...args };
         await context.log({
             step: 'component-tool-call',
@@ -324,7 +396,9 @@ async function executeComponentTool(context, toolDef, args, tracer, toolCallId, 
             'input.mime_type': 'application/json',
             'langfuse.observation.input': inputJson,
             'appmixer.tool.name': displayName,
-            'appmixer.tool.component.type': _componentType,
+            ...(_isMCP
+                ? { 'appmixer.tool.component.id': _componentId }
+                : { 'appmixer.tool.component.type': _componentType }),
             ...(toolCallId ? { 'appmixer.tool.call.id': toolCallId } : {})
         });
         try {

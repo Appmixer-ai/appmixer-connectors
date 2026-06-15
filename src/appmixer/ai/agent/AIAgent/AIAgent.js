@@ -1,6 +1,5 @@
 'use strict';
 
-const tools = require('../tools');
 const componentTool = require('../tool');
 const agentModule = require('../agent');
 const memory = require('../memory');
@@ -14,17 +13,16 @@ module.exports = {
      */
     start: async function(context) {
 
-        await tools.collectTools(context);
         await componentTool.collectComponentTools(context);
     },
 
     /**
      * Appmixer receive lifecycle: orchestrate a full agent turn.
      *
-     * 1. Load tool definitions (from state or rebuild from flow graph)
+     * 1. Rebuild tool definitions from cached manifests + live flowDescriptor
      * 2. Load agent memory for the thread
      * 3. Run the agentic loop
-     * 4. Save new messages and a condensed summary back to the store
+     * 4. Save new messages and updated memory back to the store
      * 5. Emit the answer
      */
     receive: async function(context) {
@@ -38,14 +36,8 @@ module.exports = {
             throw new context.CancelError('Prompt is required');
         }
 
-        let toolsDefinition = await context.stateGet('tools');
-        if (!toolsDefinition) {
-            toolsDefinition = await tools.collectTools(context);
-        }
-
-        // Rebuild component tool definitions from cached manifests + live flowDescriptor
-        // on every receive() so "Model Defined Parameter" field markings are always
-        // evaluated against the current flow configuration.
+        // Rebuild tool definitions on every receive() so "Model Defined Parameter" field
+        // markings are always evaluated against the current flow configuration.
         const componentToolsDef = await componentTool.buildComponentToolDefs(context);
 
         let memoryData = {};
@@ -60,7 +52,6 @@ module.exports = {
             context.properties.instructions || 'You are a helpful assistant.',
             prompt,
             fileId,
-            toolsDefinition,
             componentToolsDef,
             memoryData
         );
