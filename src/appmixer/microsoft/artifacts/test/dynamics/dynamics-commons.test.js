@@ -173,7 +173,7 @@ describe('dynamics-commons', () => {
                 assert.equal(out.schema.properties.id.type, 'string', 'ID should be string');
                 assert.ok(out.schema.required.includes('id'), 'ID should be required');
 
-                assert.equal(out.inputs.objectName.type, 'select', 'should be select in inspector');
+                assert.equal(out.inputs.objectName.type, 'text', 'should be text in inspector (typeahead so any entity name can be entered)');
                 assert.equal(out.schema.properties.objectName.type, 'string', 'objectName should be string');
                 assert.ok(out.schema.required.includes('objectName'), 'objectName should be required');
             });
