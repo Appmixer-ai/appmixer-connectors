@@ -235,6 +235,53 @@ async function generateInspector(context, isValidFor) {
 
     const { objectName, rawJson, hideEntitySelection = false } = context.properties;
 
+    // Shared "Object Name" typeahead. `text` (not `select`) so the user can also type any entity
+    // logical name manually - the source only suggests the most common entities. See the
+    // "List Entities" component for the full list.
+    const objectNameInput = {
+        label: 'Object Name',
+        index: 1,
+        type: 'text',
+        defaultValue: objectName,
+        source: {
+            url: '/component/appmixer/microsoft/dynamics/CreateObjectRecord?outPort=out',
+            data: {
+                properties: {
+                    listDefaultEntities: true
+                }
+            }
+        },
+        tooltip: 'The suggestions list only the most common entities. You can type any other '
+            + 'entity logical name manually, or use the "List Entities" component to fetch the '
+            + 'full list and bind its "Logical Name" output here.'
+    };
+
+    // Get (Read) and Delete only identify a record by entity type + ID. They take no field
+    // values, so the inspector is static (objectName + id) - no rawJson/json toggles and no
+    // metadata API call. (Note: there is no `IsValidForDelete` attribute flag in Dynamics, so
+    // running per-field generation for Delete would also fail against the API.)
+    if (isValidFor === 'IsValidForRead' || isValidFor === 'IsValidForDelete') {
+        return {
+            schema: {
+                type: 'object',
+                properties: {
+                    objectName: { type: 'string' },
+                    id: { type: 'string' }
+                },
+                required: ['objectName', 'id']
+            },
+            inputs: {
+                objectName: objectNameInput,
+                id: {
+                    type: 'text',
+                    label: 'ID',
+                    tooltip: 'The ID (GUID) of the object record.',
+                    index: 2
+                }
+            }
+        };
+    }
+
     const required = ['objectName'];
     if (rawJson) {
         required.push('json');
@@ -251,26 +298,7 @@ async function generateInspector(context, isValidFor) {
 
     /** Default inspector fields: objectName, rawJson, json. */
     let defaultInputs = {
-        objectName: {
-            // `text` (not `select`) so the user can also type any entity logical name manually -
-            // the source only suggests the most common entities. See "List Entities" component for
-            // the full list.
-            label: 'Object Name',
-            index: 1,
-            type: 'text',
-            defaultValue: objectName,
-            source: {
-                url: '/component/appmixer/microsoft/dynamics/CreateObjectRecord?outPort=out',
-                data: {
-                    properties: {
-                        listDefaultEntities: true
-                    }
-                }
-            },
-            tooltip: 'The suggestions list only the most common entities. You can type any other '
-                + 'entity logical name manually, or use the "List Entities" component to fetch the '
-                + 'full list and bind its "Logical Name" output here.'
-        },
+        objectName: objectNameInput,
         rawJson: {
             type: 'toggle',
             label: 'Input as raw JSON.',
