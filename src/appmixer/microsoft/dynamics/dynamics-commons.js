@@ -219,6 +219,9 @@ function getGroups(objectName) {
                 index: 4
             };
             break;
+        case 'campaign':
+            // Campaign doesn't have address fields, just use main and additional groups
+            break;
 
         default:
             break;
@@ -403,7 +406,8 @@ async function getSchemaAndInputs(context, schema, logicalName, isValidFor) {
         /** Ignored fields. Each entity has different set of fields that are marked as ValidForCreate but are not actually valid
              *  or are difficult to implement. */
         const ignoredLogicalNames = {
-            lead: ['entityimage', 'customerid', 'customeridtype', 'ownerid', 'owneridtype']
+            lead: ['entityimage', 'customerid', 'customeridtype', 'ownerid', 'owneridtype'],
+            campaign: ['regardingobjectid', 'entityimage']
         };
 
         if (ignoredLogicalNames[logicalName]?.includes(item.LogicalName)) {
