@@ -37,6 +37,34 @@ describe('Each Component', () => {
             );
         });
 
+        it('should throw CancelError for negative delay', async () => {
+            const context = createMockContext({
+                id: 'test-context-id',
+                messages: {
+                    in: {
+                        content: {
+                            list: ['a', 'b', 'c'],
+                            delay: -5
+                        }
+                    }
+                },
+                properties: {}
+            });
+
+            await assert.rejects(
+                async () => Each.receive(context),
+                (err) => {
+                    assert.ok(err instanceof context.CancelError);
+                    assert.ok(err.message.includes('delay'));
+                    return true;
+                }
+            );
+
+            // Must not have sent anything or scheduled a timeout
+            assert.strictEqual(context.sendJson.callCount, 0);
+            assert.ok(context.setTimeout.notCalled);
+        });
+
         it('should send done with count 0 for non-array input', async () => {
             const context = createMockContext({
                 id: 'test-context-id',
@@ -209,6 +237,11 @@ describe('Each Component', () => {
             // Done should still have original count
             const doneCall = context.sendJson.getCalls().find(call => call.args[1] === 'done');
             assert.strictEqual(doneCall.args[0].count, 5);
+
+            // State must be persisted using ABSOLUTE indices (3, 4), not local loop indices (0, 1).
+            // Otherwise a second crash would re-send already-processed items.
+            const stateSetIndices = context.stateSet.getCalls().map(call => call.args[1].index);
+            assert.deepStrictEqual(stateSetIndices, [3, 4]);
         });
     });
 

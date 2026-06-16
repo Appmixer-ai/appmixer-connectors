@@ -192,9 +192,8 @@ module.exports = {
             const currentIndex = lastSentIndexCache?.index || 0;
 
             const batchSize = calculateBatchSize(context, delay);
-            const remainingItems = items.slice(currentIndex);
 
-            if (remainingItems.length === 0) {
+            if (currentIndex >= items.length) {
                 // All items have been processed, clean up and send done
                 await context.callAppmixer({
                     endPoint: `/plugins/appmixer/utils/controls/${encodeURIComponent(id)}`,
@@ -205,14 +204,15 @@ module.exports = {
                 return;
             }
 
-            // Get the batch to process
-            const batchItems = remainingItems.slice(0, batchSize);
+            // Get the batch to process (single slice, bounded by the batch-size upper bound)
+            const batchItems = items.slice(currentIndex, currentIndex + batchSize);
 
             // Send the batch with delays, returns actual count sent (may be less if deadline exceeded)
             const actualSent = await sendBatch(context, batchItems, currentIndex, count, correlationId, delay);
             const newIndex = currentIndex + actualSent;
 
-            // Update index in state after each item is sent
+            // Persist progress once the batch finishes. This is at-least-once: a crash after some
+            // items were sent but before this stateSet will re-deliver the timeout and re-send the batch.
             await context.stateSet(id, { index: newIndex });
 
             if (newIndex >= items.length) {
@@ -225,7 +225,7 @@ module.exports = {
                 await context.sendJson({ count, correlationId }, 'done');
             } else {
                 // Schedule next timeout
-                await context.setTimeout({ id }, TIMEOUT_INTERVAL(context));
+                await context.setTimeout({ id, timestamp: new Date() }, TIMEOUT_INTERVAL(context));
             }
 
             return;
@@ -239,6 +239,12 @@ module.exports = {
 
         const eachCorrelationId = uuid.v4();
         const { delay } = context.messages.in.content;
+
+        // Guard against invalid delay. A negative delay would produce a negative batch size,
+        // yielding an empty batch that never makes progress and re-schedules timeouts forever.
+        if (delay != null && delay < 0) {
+            throw new context.CancelError('Property \'delay\' must be a non-negative number (milliseconds).');
+        }
 
         if (!Array.isArray(list)) {
             // Not an array, send empty done
@@ -287,19 +293,23 @@ module.exports = {
         // No delay - process all items immediately
         const contextId = context.id;
         const lastSentIndexCache = await context.stateGet(contextId);
+        const resumeOffset = lastSentIndexCache?.index || 0;
         if (lastSentIndexCache) {
-            list = list.slice(lastSentIndexCache.index);
+            list = list.slice(resumeOffset);
         }
         for (let i = 0; i < list.length; i++) {
+            const absoluteIndex = i + resumeOffset;
             const listItem = {
-                index: i + (lastSentIndexCache?.index || 0),
+                index: absoluteIndex,
                 value: list[i],
                 count,
                 correlationId: eachCorrelationId
             };
             await context.sendJson(listItem, 'item');
+            // Persist the ABSOLUTE index so a crash + resume continues from the right place
+            // (storing the local loop index here would re-send already-processed items).
             await context.stateSet(contextId, {
-                index: i
+                index: absoluteIndex
             });
         }
 
