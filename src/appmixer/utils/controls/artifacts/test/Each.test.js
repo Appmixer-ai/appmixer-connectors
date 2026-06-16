@@ -493,6 +493,206 @@ describe('Each Component', () => {
             assert.ok(context.stateUnset.calledWith('test-context-id'));
         });
 
+        it('should stop early on first batch if deadline exceeded (time pressure)', async () => {
+            // Simulate sendJson being slow: 8ms per call
+            // With timeoutIntervalMs = 10ms, SAFETY_MARGIN = 0.85, deadline = 8.5ms
+            // After sending first item, time elapsed >= 8.5ms, so loop breaks
+            const largeList = Array.from({ length: 10 }, (_, i) => `item-${i}`);
+            const delay = 3;
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    in: {
+                        content: {
+                            list: largeList,
+                            delay
+                        }
+                    }
+                },
+                properties: {}
+            });
+
+            // Stub sendJson to take 8ms (simulating slow network)
+            context.sendJson = sinon.stub().callsFake(() =>
+                new Promise(resolve => setTimeout(resolve, 8))
+            );
+            context.callAppmixer = sinon.stub().resolves({ success: true });
+
+            await Each.receive(context);
+
+            // Should only send 1 item (not 3 which is the calculated batch size)
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 1);
+            assert.strictEqual(itemCalls[0].args[0].value, 'item-0');
+            assert.strictEqual(itemCalls[0].args[0].index, 0);
+
+            // Should store list in plugin
+            assert.ok(context.callAppmixer.calledOnce);
+            const postCall = context.callAppmixer.getCall(0);
+            assert.strictEqual(postCall.args[0].method, 'POST');
+            assert.strictEqual(postCall.args[0].body.items.length, 10);
+
+            // Should store CORRECT index in state (1, not 3)
+            assert.ok(context.stateSet.calledWith('test-context-id', { index: 1 }));
+
+            // Should schedule timeout
+            assert.ok(context.setTimeout.calledOnce);
+        });
+
+        it('should stop early on continuation batch if deadline exceeded', async () => {
+            const delay = 3;
+            const storedData = {
+                items: Array.from({ length: 10 }, (_, i) => `item-${i}`),
+                delay,
+                correlationId: 'test-correlation-id',
+                count: 10
+            };
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // Starting at index 2
+            context.stateGet = sinon.stub().resolves({ index: 2 });
+
+            // Stub sendJson to take 8ms
+            context.sendJson = sinon.stub().callsFake(() =>
+                new Promise(resolve => setTimeout(resolve, 8))
+            );
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
+
+            await Each.receive(context);
+
+            // Should only send 1 item (index 2)
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 1);
+            assert.strictEqual(itemCalls[0].args[0].index, 2);
+            assert.strictEqual(itemCalls[0].args[0].value, 'item-2');
+
+            // Should update state with CORRECT index (3, not 5 which is batchSize)
+            assert.ok(context.stateSet.calledWith('test-context-id', { index: 3 }));
+
+            // Should NOT send done yet (more items remain)
+            const doneCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'done');
+            assert.strictEqual(doneCalls.length, 0);
+
+            // Should schedule next timeout
+            assert.ok(context.setTimeout.calledOnce);
+        });
+
+        it('should handle one item sent when deadline exceeded during first sendJson (no duplicates)', async () => {
+            // deadline is ~8.5ms (10 * 0.85). sendJson takes 20ms, so it exceeds deadline during first send.
+            // However, sendJson is called, completes, and next check stops further sends.
+            // So we get 1 item, not 2+ due to early deadline check on next iteration.
+            const delay = 3;
+            const storedData = {
+                items: Array.from({ length: 10 }, (_, i) => `item-${i}`),
+                delay,
+                correlationId: 'test-correlation-id',
+                count: 10
+            };
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 10 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // Starting at index 5
+            context.stateGet = sinon.stub().resolves({ index: 5 });
+
+            // Stub sendJson to take 20ms (exceeds deadline)
+            context.sendJson = sinon.stub().callsFake(() =>
+                new Promise(resolve => setTimeout(resolve, 20))
+            );
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
+
+            await Each.receive(context);
+
+            // Should send 1 item (first sendJson runs, exceeds deadline, next iteration stops)
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 1);
+            assert.strictEqual(itemCalls[0].args[0].index, 5);
+
+            // State should be set with incremented index (6, we sent one item)
+            assert.ok(context.stateSet.calledWith('test-context-id', { index: 6 }));
+
+            // Should NOT send done (more items remain)
+            const doneCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'done');
+            assert.strictEqual(doneCalls.length, 0);
+
+            // Should schedule next timeout (continue with remaining items)
+            assert.ok(context.setTimeout.calledOnce);
+        });
+
+        it('should process normal batch when no time pressure (regression test)', async () => {
+            // Normal case: sendJson is instant (synchronous stub), no deadline pressure
+            // With timeoutIntervalMs = 1000ms and delay = 5ms, batch size = 200 items
+            // But deadline = 1000 * 0.85 = 850ms, which is plenty for fast sendJson calls
+            const delay = 5;
+            const storedData = {
+                items: Array.from({ length: 300 }, (_, i) => `item-${i}`),
+                delay,
+                correlationId: 'test-correlation-id',
+                count: 300
+            };
+
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 1000 },
+                messages: {
+                    timeout: {
+                        content: { id: 'test-context-id', timestamp: new Date() }
+                    }
+                },
+                properties: {}
+            });
+
+            // Starting at index 0
+            context.stateGet = sinon.stub().resolves({ index: 0 });
+
+            // Default sendJson (instant, synchronous)
+            context.callAppmixer = sinon.stub();
+            context.callAppmixer.withArgs(sinon.match({ method: 'GET' })).resolves(storedData);
+
+            await Each.receive(context);
+
+            // Should send close to batch size (200 items)
+            // Due to deadline check overhead, may be 130-170 items depending on system speed
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.ok(itemCalls.length >= 100 && itemCalls.length <= 200, `Expected 100-200 items, got ${itemCalls.length}`);
+            assert.strictEqual(itemCalls[0].args[0].index, 0);
+            assert.strictEqual(itemCalls[itemCalls.length - 1].args[0].index, itemCalls.length - 1);
+
+            // Should update state with actual sent count
+            assert.ok(context.stateSet.calledWith('test-context-id', sinon.match({ index: sinon.match.number })));
+            const stateSetCall = context.stateSet.getCall(0);
+            assert.ok(stateSetCall.args[1].index === itemCalls.length);
+
+            // Should NOT send done (more items remain)
+            const doneCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'done');
+            assert.strictEqual(doneCalls.length, 0);
+
+            // Should schedule next timeout
+            assert.ok(context.setTimeout.calledOnce);
+        });
+
         it('should handle null stateGet on timeout (use index 0)', async () => {
             const delay = 5;
             const storedData = {
