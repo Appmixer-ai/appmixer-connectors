@@ -1,395 +1,427 @@
 'use strict';
 
+// Entry point for repository validation. Discovers and runs every validator
+// in ./validators (any *.js file that does not start with an underscore).
+//
+// Thresholds (ratchet pattern)
+// ----------------------------
+// scripts/validators/.thresholds.json optionally caps the allowed number of
+// failures per validator. A validator listed there fails CI only when its
+// count exceeds the threshold (regression). When the count drops, the run
+// prints a hint that the threshold can be lowered; pass --update-thresholds
+// to write the new lower number back. Validators with no entry in the file
+// are strict — any failure fails CI.
+//
+// To add a new validator: create scripts/validators/<name>.js exporting
+//   { name, description, run(context) }
+// Context fields available to validators:
+//   - repoRoot, connectorsRoot        absolute paths
+//   - bundleFiles, componentFiles     pre-computed file lists
+//   - addFailure(filePath, message)   record a hard failure (gated by threshold)
+//   - addWarning(filePath, message)   record an informational warning (never fails CI)
+//   - relativePath(filePath)          repo-relative path for messages
+//   - walkFiles(dir, matcher)         walk helper for custom file discovery
+//
+// Flags
+// -----
+//   --update-thresholds        write lowered thresholds back when counts drop
+//   --connector <name>         run all validators only for src/appmixer/<name>/,
+//                              ignore thresholds, print every failure + warning
+//   --show-suppressed          print failures that are normally hidden by a
+//                              threshold (count ≤ threshold), so they can be
+//                              fixed. Does not change CI exit status.
+//   --help, -h                 print usage and exit
+
 const fs = require('fs');
 const path = require('path');
 
+const { walkFiles, makeRelativePath, getChangedFiles, isGitRepo } = require('./validators/_shared');
+
+const DEFAULT_BASE_REF = 'dev';
+
 const REPO_ROOT = path.resolve(__dirname, '..');
 const CONNECTORS_ROOT = path.join(REPO_ROOT, 'src', 'appmixer');
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', '.cache']);
+const VALIDATORS_DIR = path.join(__dirname, 'validators');
+const THRESHOLDS_PATH = path.join(VALIDATORS_DIR, '.thresholds.json');
 
-const failures = [];
+function discoverValidators() {
 
-function walkFiles(dirPath, matcher, result = []) {
-
-    let entries;
-
-    try {
-        entries = fs.readdirSync(dirPath, { withFileTypes: true });
-    } catch (err) {
-        return result;
-    }
+    const entries = fs.readdirSync(VALIDATORS_DIR, { withFileTypes: true });
+    const validators = [];
 
     for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
+        if (!entry.isFile()) continue;
+        if (!entry.name.endsWith('.js')) continue;
+        if (entry.name.startsWith('_')) continue;
 
-        if (entry.isDirectory()) {
-            if (!IGNORED_DIRS.has(entry.name)) {
-                walkFiles(fullPath, matcher, result);
-            }
-            continue;
+        const validatorPath = path.join(VALIDATORS_DIR, entry.name);
+        const mod = require(validatorPath);
+
+        if (!mod || typeof mod.run !== 'function' || typeof mod.name !== 'string') {
+            throw new Error(`Invalid validator ${entry.name}: must export { name: string, run: function }`);
         }
 
-        if (matcher(fullPath)) {
-            result.push(fullPath);
-        }
+        validators.push(mod);
     }
 
-    return result;
+    validators.sort((left, right) => left.name.localeCompare(right.name));
+    return validators;
 }
 
-function readJson(filePath) {
+function loadThresholds() {
 
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
-
-function relativePath(filePath) {
-
-    return path.relative(REPO_ROOT, filePath);
-}
-
-function addFailure(filePath, message) {
-
-    failures.push(`${relativePath(filePath)}: ${message}`);
-}
-
-function parseVersion(version) {
-
-    const match = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(version);
-
-    if (!match) {
-        return null;
+    if (!fs.existsSync(THRESHOLDS_PATH)) {
+        return {};
     }
-
-    return {
-        major: Number(match[1]),
-        minor: Number(match[2]),
-        patch: Number(match[3]),
-        prerelease: match[4] || ''
-    };
-}
-
-function compareVersions(left, right) {
-
-    for (const key of ['major', 'minor', 'patch']) {
-        if (left[key] !== right[key]) {
-            return left[key] - right[key];
-        }
-    }
-
-    if (left.prerelease === right.prerelease) {
-        return 0;
-    }
-
-    if (!left.prerelease) {
-        return 1;
-    }
-
-    if (!right.prerelease) {
-        return -1;
-    }
-
-    return left.prerelease.localeCompare(right.prerelease, undefined, {
-        numeric: true,
-        sensitivity: 'base'
-    });
-}
-
-function validateBundleVersions(bundlePath) {
-
-    let bundle;
 
     try {
-        bundle = readJson(bundlePath);
+        return JSON.parse(fs.readFileSync(THRESHOLDS_PATH, 'utf8'));
     } catch (error) {
-        addFailure(bundlePath, `failed to parse JSON: ${error.message}`);
-        return;
-    }
-
-    const currentVersion = parseVersion(bundle.version || '');
-
-    if (!currentVersion) {
-        addFailure(bundlePath, `invalid bundle version '${bundle.version || ''}'`);
-        return;
-    }
-
-    const changelog = bundle.changelog;
-
-    if (!changelog || typeof changelog !== 'object' || Array.isArray(changelog)) {
-        addFailure(bundlePath, 'missing or invalid changelog object');
-        return;
-    }
-
-    const changelogVersions = Object.keys(changelog);
-
-    if (changelogVersions.length === 0) {
-        addFailure(bundlePath, 'changelog must contain at least one version');
-        return;
-    }
-
-    const parsedChangelogVersions = changelogVersions.map((version) => ({
-        raw: version,
-        parsed: parseVersion(version)
-    }));
-
-    const invalidVersion = parsedChangelogVersions.find(({ parsed }) => !parsed);
-
-    if (invalidVersion) {
-        addFailure(bundlePath, `invalid changelog version '${invalidVersion.raw}'`);
-        return;
-    }
-
-    parsedChangelogVersions.sort((left, right) => compareVersions(left.parsed, right.parsed));
-
-    const latestVersion = parsedChangelogVersions.at(-1).raw;
-
-    if (bundle.version !== latestVersion) {
-        addFailure(bundlePath, `bundle version '${bundle.version}' does not match latest changelog version '${latestVersion}'`);
+        throw new Error(`Could not parse ${THRESHOLDS_PATH}: ${error.message}`);
     }
 }
 
-function getSchemaProperties(schema) {
+function writeThresholds(thresholds) {
 
-    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
-        return new Set();
-    }
-
-    const properties = schema.properties;
-
-    if (!properties || typeof properties !== 'object' || Array.isArray(properties)) {
-        return new Set();
-    }
-
-    return new Set(Object.keys(properties));
+    fs.writeFileSync(THRESHOLDS_PATH, JSON.stringify(thresholds, null, 4) + '\n');
 }
 
-function schemaUsesUnsupportedExpressions(schema) {
+function parseConnectorArg(argv) {
 
-    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
-        return false;
+    const idx = argv.indexOf('--connector');
+    if (idx === -1) return null;
+
+    const value = argv[idx + 1];
+    if (!value || value.startsWith('--')) {
+        throw new Error('--connector requires a connector name (e.g. --connector bluesky)');
     }
 
-    // TODO: we should ideally support these at some point,
-    // but for now we want to allow them in the schema without causing false positives in the inspector validation
-    if (Array.isArray(schema.oneOf) || Array.isArray(schema.anyOf)) {
+    return value;
+}
+
+function printHelp() {
+
+    console.log(`Usage: node scripts/validate.js [options]
+
+Runs all validators in scripts/validators/ over bundle.json and component.json
+files under src/appmixer/. Validators with an entry in
+scripts/validators/.thresholds.json fail CI only when their failure count
+exceeds the threshold (ratchet pattern); validators without an entry are strict.
+
+Options:
+  --changed              Strict mode scoped to a git diff: run every validator
+                         only over bundle.json / component.json files that
+                         changed vs the base ref (committed-on-branch + staged +
+                         unstaged). Thresholds are IGNORED and ANY failure exits
+                         1. This lets new/changed work be held to a clean bar
+                         without having to first clear the repo-wide legacy debt.
+
+  --base <ref>           Base ref for --changed (default "${DEFAULT_BASE_REF}").
+                         The diff uses merge-base(<ref>, HEAD).
+
+  --connector <name>     Run all validators only for src/appmixer/<name>/.
+                         Thresholds are ignored and every failure + warning is
+                         printed. Useful when developing a single connector.
+
+  --show-suppressed      Print failures that are normally hidden because the
+                         validator is at or under its threshold. Use this when
+                         you want to fix the leftover issues. Does not change
+                         the CI exit status.
+
+  --update-thresholds    When a validator's failure count drops below its
+                         current threshold, write the lower number back to
+                         .thresholds.json so the ratchet tightens.
+
+  --help, -h             Print this help and exit.
+
+Examples:
+  node scripts/validate.js
+  node scripts/validate.js --changed
+  node scripts/validate.js --changed --base origin/dev
+  node scripts/validate.js --connector google/calendar
+  node scripts/validate.js --show-suppressed
+  node scripts/validate.js --update-thresholds
+`);
+}
+
+function parseBaseArg(argv) {
+
+    const idx = argv.indexOf('--base');
+    if (idx === -1) return DEFAULT_BASE_REF;
+
+    const value = argv[idx + 1];
+    if (!value || value.startsWith('--')) {
+        throw new Error('--base requires a git ref (e.g. --base origin/dev)');
+    }
+
+    return value;
+}
+
+// Strict, git-diff-scoped run. Returns true when the run failed (caller sets
+// the exit code). Validators run over only the changed files; thresholds are
+// ignored and any failure is a hard fail.
+async function runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef }) {
+
+    if (!isGitRepo(REPO_ROOT)) {
+        console.error('--changed requires a git repository, but none was found.');
         return true;
     }
 
-    for (const value of Object.values(schema)) {
-        if (Array.isArray(value)) {
-            for (const item of value) {
-                if (schemaUsesUnsupportedExpressions(item)) {
-                    return true;
-                }
-            }
-            continue;
-        }
+    const { files: changed, baseResolved, baseCommit } = getChangedFiles(REPO_ROOT, baseRef);
 
-        if (schemaUsesUnsupportedExpressions(value)) {
-            return true;
-        }
+    if (!baseResolved) {
+        console.warn(`Warning: could not resolve base ref "${baseRef}" — comparing staged + unstaged changes only.`);
     }
 
+    const changedBundles = bundleFiles.filter((filePath) => changed.has(filePath));
+    const changedComponents = componentFiles.filter((filePath) => changed.has(filePath));
+
+    if (changedBundles.length === 0 && changedComponents.length === 0) {
+        console.log('No changed bundle.json / component.json files to validate.');
+        return false;
+    }
+
+    console.log(`Validating changed files (strict, thresholds ignored): ${changedBundles.length} bundle.json, ${changedComponents.length} component.json.\n`);
+
+    let totalFailures = 0;
+
+    for (const validator of validators) {
+        const failures = [];
+        const warnings = [];
+
+        const context = {
+            repoRoot: REPO_ROOT,
+            connectorsRoot: CONNECTORS_ROOT,
+            bundleFiles: changedBundles,
+            componentFiles: changedComponents,
+            // Resolved base commit for diff-aware validators (null if unresolved).
+            baseRef: baseCommit,
+            walkFiles,
+            relativePath,
+            addFailure(filePath, message) {
+                failures.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+            },
+            addWarning(filePath, message) {
+                warnings.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+            }
+        };
+
+        await validator.run(context);
+
+        const warnSuffix = warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
+        console.log(`- ${validator.name}: ${failures.length === 0 ? 'OK' : `${failures.length} issue(s)`}${warnSuffix}`);
+
+        for (const failure of failures) {
+            console.error(`  - ${failure}`);
+        }
+        for (const warning of warnings) {
+            console.warn(`  - (warn) ${warning}`);
+        }
+
+        totalFailures += failures.length;
+    }
+
+    if (totalFailures > 0) {
+        console.error(`\nValidation failed: ${totalFailures} issue(s) in changed files.`);
+        return true;
+    }
+
+    console.log('\nValidation passed for changed files.');
     return false;
 }
 
-function schemaHasPropertyPath(schema, inputName) {
+async function main() {
 
-    if (!inputName) {
-        return false;
+    if (process.argv.includes('--help') || process.argv.includes('-h')) {
+        printHelp();
+        return;
     }
 
-    const directProperties = getSchemaProperties(schema);
+    const relativePath = makeRelativePath(REPO_ROOT);
+    const updateThresholds = process.argv.includes('--update-thresholds');
+    const showSuppressed = process.argv.includes('--show-suppressed');
+    const changedMode = process.argv.includes('--changed');
+    const baseRef = parseBaseArg(process.argv);
+    const connectorFilter = parseConnectorArg(process.argv);
 
-    if (directProperties.has(inputName)) {
-        return true;
-    }
+    let bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
+    let componentFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'component.json');
 
-    const parts = inputName.split('.');
-    let currentSchema = schema;
+    if (connectorFilter) {
+        const prefix = path.join(CONNECTORS_ROOT, connectorFilter) + path.sep;
+        bundleFiles = bundleFiles.filter((filePath) => filePath.startsWith(prefix));
+        componentFiles = componentFiles.filter((filePath) => filePath.startsWith(prefix));
 
-    for (const part of parts) {
-        if (!currentSchema || typeof currentSchema !== 'object' || Array.isArray(currentSchema)) {
-            return false;
+        if (bundleFiles.length === 0 && componentFiles.length === 0) {
+            console.error(`No files found for connector "${connectorFilter}". Expected path: src/appmixer/${connectorFilter}/`);
+            process.exitCode = 1;
+            return;
         }
 
-        const properties = currentSchema.properties;
+        console.log(`Running all validators for connector "${connectorFilter}" (thresholds ignored, ${bundleFiles.length} bundle.json, ${componentFiles.length} component.json).\n`);
+    }
 
-        if (!properties || typeof properties !== 'object' || Array.isArray(properties) || !properties[part]) {
-            return false;
+    const validators = discoverValidators();
+
+    // --changed mode: strict, scoped to a git diff. Mutually exclusive with the
+    // repo-wide threshold run below.
+    if (changedMode) {
+        const failed = await runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef });
+        if (failed) {
+            process.exitCode = 1;
+        }
+        return;
+    }
+
+    // --connector mode is a debugging view: skip thresholds, print everything.
+    const thresholds = connectorFilter ? {} : loadThresholds();
+    const nextThresholds = { ...thresholds };
+
+    const results = [];
+
+    for (const validator of validators) {
+        const failures = [];
+        const warnings = [];
+
+        const context = {
+            repoRoot: REPO_ROOT,
+            connectorsRoot: CONNECTORS_ROOT,
+            bundleFiles,
+            componentFiles,
+            walkFiles,
+            relativePath,
+            addFailure(filePath, message) {
+                failures.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+            },
+            addWarning(filePath, message) {
+                warnings.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+            }
+        };
+
+        await validator.run(context);
+
+        const found = failures.length;
+        const threshold = Object.prototype.hasOwnProperty.call(thresholds, validator.name)
+            ? thresholds[validator.name]
+            : null;
+
+        let status;
+        let regressed = false;
+
+        if (connectorFilter) {
+            // raw count, no threshold gating
+            const warnSuffix = warnings.length > 0 ? ` + ${warnings.length} warning(s)` : '';
+            status = `${found} issue(s)${warnSuffix}`;
+        } else if (threshold === null) {
+            // strict: any failure fails CI
+            regressed = found > 0;
+            status = found === 0 ? 'OK' : `${found} issue(s)`;
+        } else if (found > threshold) {
+            regressed = true;
+            status = `${found} issue(s) — REGRESSION (threshold ${threshold}, +${found - threshold})`;
+        } else if (found < threshold) {
+            nextThresholds[validator.name] = found;
+            status = `${found} issue(s) (under threshold ${threshold} — can be lowered)`;
+        } else {
+            status = `${found} issue(s) (at threshold ${threshold})`;
         }
 
-        currentSchema = properties[part];
+        const warnSuffix = !connectorFilter && warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
+        console.log(`- ${validator.name}: ${status}${warnSuffix}`);
+        results.push({ validator, failures, warnings, threshold, regressed });
     }
 
-    return true;
-}
-
-function validateInspectorAgainstSchema(filePath, location, schema, inspector) {
-
-    if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
-        return;
-    }
-
-    if (schemaUsesUnsupportedExpressions(schema)) {
-        return;
-    }
-
-    if (!inspector || typeof inspector !== 'object' || Array.isArray(inspector)) {
-        return;
-    }
-
-    const inputs = inspector.inputs;
-
-    if (!inputs || typeof inputs !== 'object' || Array.isArray(inputs)) {
-        return;
-    }
-
-    for (const inputName of Object.keys(inputs)) {
-        if (!schemaHasPropertyPath(schema, inputName)) {
-            addFailure(filePath, `${location} inspector input '${inputName}' is missing from schema.properties`);
+    // --connector mode: print every failure + warning, never fail CI.
+    if (connectorFilter) {
+        for (const result of results) {
+            for (const failure of result.failures) {
+                console.error(`- ${failure}`);
+            }
+            for (const warning of result.warnings) {
+                console.warn(`- (warn) ${warning}`);
+            }
         }
-    }
-}
 
-function validateComponentSchemas(componentPath) {
-
-    let component;
-
-    try {
-        component = readJson(componentPath);
-    } catch (error) {
-        addFailure(componentPath, `failed to parse JSON: ${error.message}`);
+        const totalFailures = results.reduce((sum, r) => sum + r.failures.length, 0);
+        const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+        console.log(`\nConnector "${connectorFilter}": ${totalFailures} failure(s), ${totalWarnings} warning(s).`);
         return;
     }
 
-    const inPorts = Array.isArray(component.inPorts) ? component.inPorts : [];
+    // Print full failure list only when there are real CI-failing regressions,
+    // or when a threshold-bound validator regressed (so the diff is visible).
+    const regressions = results.filter((r) => r.regressed);
 
-    for (let index = 0; index < inPorts.length; index++) {
-        const inPort = inPorts[index];
-        validateInspectorAgainstSchema(componentPath, `inPorts[${index}]`, inPort.schema, inPort.inspector);
-    }
-}
+    if (regressions.length > 0) {
+        console.error('\nValidation failed:');
 
-function getQuotaResources(quotaPath) {
-
-    try {
-        delete require.cache[require.resolve(quotaPath)];
-        const quotaModule = require(quotaPath);
-        const rules = Array.isArray(quotaModule && quotaModule.rules) ? quotaModule.rules : [];
-
-        return new Set(
-            rules
-                .map((rule) => rule && rule.resource)
-                .filter((resource) => typeof resource === 'string' && resource.length > 0)
-        );
-    } catch (error) {
-        addFailure(quotaPath, `failed to load quota file: ${error.message}`);
-        return null;
-    }
-}
-
-function managerToQuotaPath(manager) {
-
-    if (typeof manager !== 'string' || !manager.startsWith('appmixer:')) {
-        return null;
-    }
-
-    const managerParts = manager.split(':').slice(1);
-    return path.join(CONNECTORS_ROOT, ...managerParts, 'quota.js');
-}
-
-function normalizeQuotaResources(resources) {
-
-    if (typeof resources === 'string') {
-        return [resources];
-    }
-
-    if (Array.isArray(resources)) {
-        return resources.filter((resource) => typeof resource === 'string' && resource.length > 0);
-    }
-
-    return [];
-}
-
-function validateQuotaResources(componentPath) {
-
-    let component;
-
-    try {
-        component = readJson(componentPath);
-    } catch (error) {
-        addFailure(componentPath, `failed to parse JSON: ${error.message}`);
-        return;
-    }
-
-    const quota = component.quota;
-
-    if (!quota || typeof quota !== 'object' || Array.isArray(quota)) {
-        return;
-    }
-
-    const resources = normalizeQuotaResources(quota.resources);
-
-    if (resources.length === 0) {
-        return;
-    }
-
-    if (!quota.manager) {
-        addFailure(componentPath, `quota.resources references ${resources.join(', ')} but quota.manager is missing`);
-        return;
-    }
-
-    const quotaPath = managerToQuotaPath(quota.manager);
-
-    if (!quotaPath) {
-        addFailure(componentPath, `unsupported quota manager '${quota.manager}'`);
-        return;
-    }
-
-    if (!fs.existsSync(quotaPath)) {
-        addFailure(componentPath, `quota manager '${quota.manager}' points to missing file ${relativePath(quotaPath)}`);
-        return;
-    }
-
-    const knownResources = getQuotaResources(quotaPath);
-
-    if (!knownResources) {
-        return;
-    }
-
-    for (const resource of resources) {
-        if (!knownResources.has(resource)) {
-            addFailure(componentPath, `quota resource '${resource}' is not defined in ${relativePath(quotaPath)}`);
-        }
-    }
-}
-
-function main() {
-
-    const bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
-    const componentFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'component.json');
-
-    for (const bundleFile of bundleFiles) {
-        validateBundleVersions(bundleFile);
-    }
-
-    for (const componentFile of componentFiles) {
-        validateComponentSchemas(componentFile);
-        validateQuotaResources(componentFile);
-    }
-
-    if (failures.length > 0) {
-        console.error('Validation failed.');
-
-        for (const failure of failures) {
-            console.error(`- ${failure}`);
+        for (const result of regressions) {
+            for (const failure of result.failures) {
+                console.error(`- ${failure}`);
+            }
         }
 
         process.exitCode = 1;
         return;
     }
 
-    console.log(`Validation passed for ${bundleFiles.length} bundle.json files and ${componentFiles.length} component.json files.`);
+    // Warnings — informational only, never fail CI.
+    const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
+
+    if (totalWarnings > 0) {
+        console.log(`\nWarnings (${totalWarnings}):`);
+
+        for (const result of results) {
+            for (const warning of result.warnings) {
+                console.warn(`- ${warning}`);
+            }
+        }
+    }
+
+    // --show-suppressed: print failures hidden by the threshold so they can be fixed.
+    if (showSuppressed) {
+        const suppressed = results.filter((r) => r.threshold !== null && r.failures.length > 0 && !r.regressed);
+        const totalSuppressed = suppressed.reduce((sum, r) => sum + r.failures.length, 0);
+
+        if (totalSuppressed > 0) {
+            console.log(`\nSuppressed failures (${totalSuppressed}) — under threshold, not failing CI:`);
+
+            for (const result of suppressed) {
+                console.log(`\n  ${result.validator.name} (${result.failures.length} of ${result.threshold} allowed):`);
+                for (const failure of result.failures) {
+                    console.log(`  - ${failure}`);
+                }
+            }
+        } else {
+            console.log('\nNo suppressed failures — all thresholded validators are clean.');
+        }
+    }
+
+    // No regressions. Offer / apply threshold lowering.
+    const loweredThresholds = Object.keys(nextThresholds)
+        .filter((name) => nextThresholds[name] !== thresholds[name]);
+
+    if (loweredThresholds.length > 0) {
+        if (updateThresholds) {
+            writeThresholds(nextThresholds);
+            console.log(`\nThresholds updated in ${path.relative(REPO_ROOT, THRESHOLDS_PATH)}:`);
+
+            for (const name of loweredThresholds) {
+                console.log(`  ${name}: ${thresholds[name]} -> ${nextThresholds[name]}`);
+            }
+        } else {
+            console.log('\nThresholds can be lowered (re-run with --update-thresholds to apply):');
+
+            for (const name of loweredThresholds) {
+                console.log(`  ${name}: ${thresholds[name]} -> ${nextThresholds[name]}`);
+            }
+        }
+    }
+
+    console.log(`\nValidation passed (${validators.length} validators, ${bundleFiles.length} bundle.json, ${componentFiles.length} component.json).`);
 }
 
-main();
+main().catch((error) => {
+    console.error('Validation crashed:', error);
+    process.exitCode = 1;
+});

@@ -1,0 +1,360 @@
+{
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-follow": [
+                        "out"
+                    ],
+                    "assert-profile": [
+                        "out"
+                    ],
+                    "assert-search": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1200,
+            "y": 144
+        },
+        "assert-follow": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "follow-user": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{follow-uri-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "follow-uri-var": {
+                                            "functions": [],
+                                            "variable": "$.follow-user.out.uri"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "follow-user": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 272
+        },
+        "assert-profile": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-profile": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{profile-did-var}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-handle-var}}}",
+                                                "field": "{{{profile-handle-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "expected-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.targetHandle"
+                                        },
+                                        "profile-did-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.did"
+                                        },
+                                        "profile-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.handle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-user-profile": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 144
+        },
+        "assert-search": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "search-users": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{search-handle-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "search-handle-var": {
+                                            "functions": [],
+                                            "variable": "$.search-users.out.handle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "search-users": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1008,
+            "y": 0
+        },
+        "follow-user": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-profile": {
+                            "out": {
+                                "lambda": {
+                                    "actor": "{{{follow-actor-var}}}"
+                                },
+                                "modifiers": {
+                                    "actor": {
+                                        "follow-actor-var": {
+                                            "functions": [],
+                                            "variable": "$.get-user-profile.out.did"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-user-profile": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.FollowUser",
+            "x": 832,
+            "y": 272
+        },
+        "get-user-profile": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "search-users": {
+                            "out": {
+                                "lambda": {
+                                    "actor": "{{{actor-var}}}"
+                                },
+                                "modifiers": {
+                                    "actor": {
+                                        "actor-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.targetHandle"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "search-users": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.GetUserProfile",
+            "x": 640,
+            "y": 144
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Bluesky - User Discovery and Follow"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1392,
+            "y": 144
+        },
+        "search-users": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first",
+                                    "query": "{{{query-var}}}"
+                                },
+                                "modifiers": {
+                                    "outputType": {},
+                                    "query": {
+                                        "query-var": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.searchQuery"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.bluesky.users.SearchUsers",
+            "x": 448,
+            "y": 16
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "searchQuery",
+                                                "text": "bsky",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "targetHandle",
+                                                "text": "bsky.app",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
+        }
+    },
+    "name": "E2E Bluesky - User Discovery and Follow",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

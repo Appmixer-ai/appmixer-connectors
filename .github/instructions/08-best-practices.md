@@ -7,7 +7,8 @@
 - Add one empty line after the `receive` function definition
 - Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
 - Remove all unused variables and imports
-- Property names in component.json must use underscore `_` or camelCase as separator (NOT pipe `|`, e.g., `lock_type` or `lockType`, not `lock|type`)
+- Property names in component.json must NEVER use a pipe `|` (e.g., `lockType`, not `lock|type`)
+- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding). CI enforces camelCase only on changed/new inputs via `npm run validate:changed`.
 - Property names in component.json must exactly match those used in `context.messages.in.content`
 
 ## Development Guidelines (For All)
@@ -38,6 +39,11 @@ Behavior JS file MUST follow these rules:
 Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ### Critical Restrictions for AI Code Generation
+
+- **OAuth Scope Changes are Breaking Changes**: NEVER add new OAuth scopes to an existing connector's `component.json` `auth.scope` array without treating it as a **major** version bump. Adding a scope forces all existing users to re-authenticate. Always:
+  - Bump the connector `bundle.json` to the next major version (e.g. `2.x.x` → `3.0.0`)
+  - Add a `BREAKING:` prefix to the changelog entry describing the scope addition
+  - Note in the PR description that existing users must re-authenticate
 
 - **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
 
@@ -304,7 +310,7 @@ Use `source` property to populate field options dynamically:
 ##### file output components
 - use `context.saveFileStream()` in behavior JS
 - must return `fileId` in output message
-- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+- should return additional info like `fileSize`, `prompt`, etc. — define these as fields in the `outPorts.schema.properties` (JSON Schema), each with a realistic `example`. See `05-component-config.md` § "Output Port Examples" for the canonical pattern.
 
 Examples:
 

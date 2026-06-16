@@ -1,0 +1,271 @@
+{
+    "name": "appmixer.azuredevops.core.UpdateWorkItem",
+    "label": "Update Work Item",
+    "description": "Update one or more fields on an existing Azure DevOps work item. Only fields with provided values will be updated.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:azuredevops"
+    },
+    "quota": {
+        "manager": "appmixer:azuredevops",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organization": {
+                        "type": "string"
+                    },
+                    "project": {
+                        "type": "string"
+                    },
+                    "workItemId": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "integer"
+                    },
+                    "assignedTo": {
+                        "type": "string"
+                    },
+                    "areaPath": {
+                        "type": "string"
+                    },
+                    "iterationPath": {
+                        "type": "string"
+                    },
+                    "tags": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "organization",
+                    "project",
+                    "workItemId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "organization": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "The name of your Azure DevOps organization (e.g. <b>mycompany</b> from <i>https://dev.azure.com/mycompany</i>)."
+                    },
+                    "project": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Project",
+                        "tooltip": "The name or ID of the Azure DevOps project."
+                    },
+                    "workItemId": {
+                        "type": "number",
+                        "index": 3,
+                        "label": "Work Item ID",
+                        "tooltip": "The unique numeric ID of the work item to update."
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Title",
+                        "tooltip": "New title for the work item."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "index": 5,
+                        "label": "Description",
+                        "tooltip": "New description for the work item. HTML is supported."
+                    },
+                    "state": {
+                        "type": "text",
+                        "index": 6,
+                        "label": "State",
+                        "tooltip": "New state for the work item (e.g. <b>Active</b>, <b>Resolved</b>, <b>Closed</b>). Valid states depend on your process template."
+                    },
+                    "priority": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Priority",
+                        "tooltip": "New priority value. Common values: 1 (Critical), 2 (High), 3 (Medium), 4 (Low)."
+                    },
+                    "assignedTo": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Assigned To",
+                        "tooltip": "Email address or display name of the user to assign the work item to."
+                    },
+                    "areaPath": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Area Path",
+                        "tooltip": "New area path for the work item."
+                    },
+                    "iterationPath": {
+                        "type": "text",
+                        "index": 10,
+                        "label": "Iteration Path",
+                        "tooltip": "New iteration path (sprint) for the work item."
+                    },
+                    "tags": {
+                        "type": "text",
+                        "index": 11,
+                        "label": "Tags",
+                        "tooltip": "Semicolon-separated list of tags. This replaces all existing tags."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Work Item ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 42
+                },
+                {
+                    "label": "Revision",
+                    "value": "rev",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 1
+                },
+                {
+                    "label": "API URL",
+                    "value": "url",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "https://dev.azure.com/myorg/myproject/_apis/wit/workItems/42"
+                },
+                {
+                    "label": "Title",
+                    "value": "fields.System.Title",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "Fix login page timeout"
+                },
+                {
+                    "label": "State",
+                    "value": "fields.System.State",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "New"
+                },
+                {
+                    "label": "Work Item Type",
+                    "value": "fields.System.WorkItemType",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "Bug"
+                },
+                {
+                    "label": "Project",
+                    "value": "fields.System.TeamProject",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "MyProject"
+                },
+                {
+                    "label": "Area Path",
+                    "value": "fields.System.AreaPath",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "MyProject\\Web"
+                },
+                {
+                    "label": "Iteration Path",
+                    "value": "fields.System.IterationPath",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "MyProject\\Sprint 1"
+                },
+                {
+                    "label": "Description",
+                    "value": "fields.System.Description",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "<p>Users experience timeout on login page</p>"
+                },
+                {
+                    "label": "Tags",
+                    "value": "fields.System.Tags",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "security; api; critical"
+                },
+                {
+                    "label": "Priority",
+                    "value": "fields.Microsoft.VSTS.Common.Priority",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 2
+                },
+                {
+                    "label": "Assigned To (Display Name)",
+                    "value": "fields.System.AssignedTo.displayName",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "John Doe"
+                },
+                {
+                    "label": "Assigned To (Email)",
+                    "value": "fields.System.AssignedTo.uniqueName",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "john.doe@example.com"
+                },
+                {
+                    "label": "Changed Date",
+                    "value": "fields.System.ChangedDate",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "2024-01-16T14:20:00Z"
+                },
+                {
+                    "label": "Web URL",
+                    "value": "_links.html.href",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "example": "https://dev.azure.com/myorg/myproject/_workitems/edit/42"
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyBpZD0iZjQzMzc1MDYtNWQ5NS00ZTgwLWI3Y2EtNjg0OThjNmUwMDhlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiYTQyMDI3Ny03MDBlLTQyY2MtOWRlOS01Mzg4YTVjMTZlNTQiIHgxPSI5IiB5MT0iMTYuOTciIHgyPSI5IiB5Mj0iMS4wMyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMC4xNiIgc3RvcC1jb2xvcj0iIzEzODBkYSIvPjxzdG9wIG9mZnNldD0iMC41MyIgc3RvcC1jb2xvcj0iIzNjOTFlNSIvPjxzdG9wIG9mZnNldD0iMC44MiIgc3RvcC1jb2xvcj0iIzU1OWNlYyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0aXRsZT5JY29uLWRldm9wcy0yNjE8L3RpdGxlPjxwYXRoIGlkPSJhOTFmMGNhNC04ZmI3LTQwMTktOWMwOS0wYTUyZTJjMDU3NTQiIGQ9Ik0xNyw0djkuNzRsLTQsMy4yOC02LjItMi4yNlYxN0wzLjI5LDEyLjQxbDEwLjIzLjhWNC40NFptLTMuNDEuNDlMNy44NSwxVjMuMjlMMi41OCw0Ljg0LDEsNi44N3Y0LjYxbDIuMjYsMVY2LjU3WiIgZmlsbD0idXJsKCNiYTQyMDI3Ny03MDBlLTQyY2MtOWRlOS01Mzg4YTVjMTZlNTQpIi8+PC9zdmc+"
+}

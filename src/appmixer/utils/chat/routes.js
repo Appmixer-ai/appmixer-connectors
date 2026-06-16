@@ -20,39 +20,12 @@ const { PassThrough } = require('stream');
 
 const chatBundleJs = fs.readFileSync(__dirname + '/chat.bundle.js', 'utf8');
 
-// In-memory map of connected clients per threadId.
-const chatClients = new Map();
-
-async function publish(channel, event) {
-
-    const redisPub = process.CONNECTOR_STREAM_PUB_CLIENT;
-    if (redisPub) {
-        return redisPub.publish(channel, JSON.stringify(event));
-    }
-}
-
 module.exports = (context) => {
 
     const ChatMessage = require('./ChatMessageModel')(context);
     const ChatSession = require('./ChatSessionModel')(context);
     const ChatAgent = require('./ChatAgentModel')(context);
     const ChatThread = require('./ChatThreadModel')(context);
-
-    // assert(Redis clients have been connected in plugin.js).
-    process.CONNECTOR_STREAM_SUB_CLIENT.psubscribe('stream:agent:events:*');
-    process.CONNECTOR_STREAM_SUB_CLIENT.psubscribe('stream:chat:events:*');
-    process.CONNECTOR_STREAM_SUB_CLIENT.on('pmessage', (pattern, channel, payload) => {
-        const [, , ,threadId] = channel.split(':'); // e.g., 'stream:chat:events:123'
-        const data = JSON.parse(payload);
-
-        if (chatClients.has(threadId)) {
-            for (const stream of chatClients.get(threadId)) {
-                if (!stream.writableEnded) {
-                    stream.write(`data: ${JSON.stringify(data)}\n\n`);
-                }
-            }
-        }
-    });
 
     // ASSETS
 
@@ -86,7 +59,7 @@ module.exports = (context) => {
                 message.threadId = threadId;
                 message.createdAt = new Date;
                 message.userId = userId;
-                await publish(`stream:chat:events:${threadId}`, {
+                await context.pubSubPublish(`stream:chat:events:${threadId}`, {
                     type: 'message',
                     data: message
                 });
@@ -149,7 +122,7 @@ module.exports = (context) => {
             cors: {
                 origin: ['*']
             },
-            handler: (request, h) => {
+            handler: async (request, h) => {
                 const { threadId } = request.params;
 
                 const stream = new PassThrough();
@@ -164,9 +137,17 @@ module.exports = (context) => {
                 response.header('Content-Encoding', 'identity');
                 stream.write(': init\n\n'); // Send SSE comment to kickstart stream.
 
-                // Track connection.
-                if (!chatClients.has(threadId)) chatClients.set(threadId, new Set());
-                chatClients.get(threadId).add(stream);
+                const sendEvent = (data) => {
+                    if (!stream.writableEnded) {
+                        stream.write(`data: ${JSON.stringify(data)}\n\n`);
+                    }
+                };
+
+                // Track subscriptions and state so the close handler can clean them
+                // up even if the client disconnects during the subscribe awaits.
+                let subChat = null;
+                let subAgent = null;
+                let closed = false;
 
                 // Necessary to keep the connection alive. Otherwise it closes after
                 // a timeout interval set on the load balancer/proxy (typically 1 minute).
@@ -176,13 +157,35 @@ module.exports = (context) => {
                     }
                 }, context.config.SSE_HEARTBEAT_INTERVAL || 15000);
 
-                // Cleanup on disconnect.
+                // Attach the close handler BEFORE awaiting subscriptions to avoid a
+                // race where the client disconnects during the subscribe call and the
+                // cleanup never runs.
                 request.raw.req.on('close', () => {
+                    closed = true;
                     clearInterval(heartbeat);
-                    chatClients.get(threadId).delete(stream);
-                    if (chatClients.get(threadId).size === 0) chatClients.delete(threadId);
-                    stream.end();
+                    // Use Promise.allSettled so both unsubscribes always run, even if
+                    // one rejects, and always end the stream in finally.
+                    Promise.allSettled([
+                        subChat ? subChat.unsubscribe() : Promise.resolve(),
+                        subAgent ? subAgent.unsubscribe() : Promise.resolve()
+                    ]).finally(() => {
+                        if (!stream.writableEnded) {
+                            stream.end();
+                        }
+                    });
                 });
+
+                // Subscribe to the exact channels for this thread.
+                // Using exact-channel subscribe avoids the need for psubscribe ACL permission.
+                subChat = await context.pubSubSubscribe(`stream:chat:events:${threadId}`, sendEvent);
+                subAgent = await context.pubSubSubscribe(`stream:agent:events:${threadId}`, sendEvent);
+
+                // If the client already disconnected during the subscribe calls, clean up immediately.
+                if (closed) {
+                    await Promise.allSettled([subChat.unsubscribe(), subAgent.unsubscribe()]);
+                    if (!stream.writableEnded) stream.end();
+                    return response;
+                }
 
                 return response;
             }
@@ -374,4 +377,5 @@ module.exports = (context) => {
             }
         }
     });
+
 };

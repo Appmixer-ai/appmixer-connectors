@@ -32,14 +32,23 @@ module.exports = {
         const fields = [
             { label: 'Ticket ID', value: 'id' },
             { label: 'CreatedAt', value: 'createdAt' },
+            { label: 'Updated At', value: 'updatedAt' },
             { label: 'Due By', value: 'dueBy' },
+            { label: 'First Response Due By', value: 'frDueBy' },
             { label: 'Subject', value: 'subject' },
             { label: 'Description', value: 'description' },
             { label: 'Requester ID', value: 'requesterId' },
             { label: 'Type', value: 'type' },
+            { label: 'Source', value: 'source' },
+            { label: 'Source Info', value: 'sourceInfo' },
             { label: 'Status', value: 'status' },
             { label: 'Priority', value: 'priority' },
             { label: 'Assigned Agent ID', value: 'agentId' },
+            { label: 'Group ID', value: 'groupId' },
+            { label: 'Email Config ID', value: 'emailConfigId' },
+            { label: 'Product ID', value: 'productId' },
+            { label: 'Tags', value: 'tags' },
+            { label: 'Custom Fields', value: 'customFields' },
             { label: 'Ticket JSON', value: 'ticketJson' }
         ];
 
@@ -67,13 +76,22 @@ module.exports = {
 
         const fields = [
             { label: 'Ticket ID', value: 'id' },
-            { label: 'CreatedAt', value: 'createdAt' },
+            { label: 'Created At', value: 'createdAt' },
+            { label: 'Updated At', value: 'updatedAt' },
             { label: 'Due By', value: 'dueBy' },
+            { label: 'First Response Due By', value: 'frDueBy' },
             { label: 'Subject', value: 'subject' },
             { label: 'Type', value: 'type' },
+            { label: 'Source', value: 'source' },
+            { label: 'Source Info', value: 'sourceInfo' },
             { label: 'Status', value: 'status' },
             { label: 'Priority', value: 'priority' },
             { label: 'Assigned Agent ID', value: 'agentId' },
+            { label: 'Group ID', value: 'groupId' },
+            { label: 'Email Config ID', value: 'emailConfigId' },
+            { label: 'Product ID', value: 'productId' },
+            { label: 'Tags', value: 'tags' },
+            { label: 'Custom Fields', value: 'customFields' },
             { label: 'Ticket JSON', value: 'ticketJson' }
         ];
 
@@ -98,12 +116,20 @@ module.exports = {
             output = output.concat([
                 { label: 'Ticket ID', value: 'id' },
                 { label: 'CreatedAt', value: 'createdAt' },
+                { label: 'Updated At', value: 'updatedAt' },
                 { label: 'Due By', value: 'dueBy' },
+                { label: 'First Response Due By', value: 'frDueBy' },
                 { label: 'Subject', value: 'subject' },
                 { label: 'Type', value: 'type' },
+                { label: 'Source', value: 'source' },
                 { label: 'Status', value: 'status' },
                 { label: 'Priority', value: 'priority' },
                 { label: 'Assigned Agent ID', value: 'agentId' },
+                { label: 'Group ID', value: 'groupId' },
+                { label: 'Email Config ID', value: 'emailConfigId' },
+                { label: 'Product ID', value: 'productId' },
+                { label: 'Tags', value: 'tags' },
+                { label: 'Custom Fields', value: 'customFields' },
                 { label: 'Ticket JSON', value: 'ticketJson' }
             ]);
         }

@@ -1,0 +1,394 @@
+{
+    "err": "{\"message\":\"Access token not found for component get-dashboard\",\"data\":{\"componentId\":\"get-dashboard\",\"componentType\":\"appmixer.MSPowerBI.core.GetDashboard\"},\"code\":1,\"name\":\"TokenError\",\"stack\":\"TokenError: Access token not found for component get-dashboard\\n    at TokenHandler.prepareServiceForComponent (/usr/src/appmixer/engine/src/auth/TokenHandler.js:208:19)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async TokenHandler.injectServiceData (/usr/src/appmixer/engine/src/auth/TokenHandler.js:140:29)\\n    at async Factory.init (/usr/src/appmixer/engine/src/component/Factory.js:106:13)\\n    at async /usr/src/appmixer/engine/src/component/Factory.js:352:17\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:266:21)\"}",
+    "flow": {
+        "0dee1467-50a5-41de-8f32-2ce64a526421": {
+            "config": {
+                "properties": {
+                    "account": "69d8b5d78c93c638d53abec5"
+                },
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "name": "{{{788be951-a853-4c82-a2a6-ad725e43a601}}}"
+                                },
+                                "modifiers": {
+                                    "name": {
+                                        "788be951-a853-4c82-a2a6-ad725e43a601": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.dashboardName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.CreateDashboard",
+            "x": 480,
+            "y": 0
+        },
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 60
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-get-dashboard": [
+                        "out"
+                    ],
+                    "assert-get-tiles": [
+                        "out"
+                    ],
+                    "assert-list-dashboards": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1424,
+            "y": 16
+        },
+        "assert-get-dashboard": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-dashboard": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "functions": [],
+                                            "variable": "$.get-dashboard.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-dashboard": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1232,
+            "y": 176
+        },
+        "assert-get-tiles": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-tiles": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-value}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "field-value": {
+                                            "functions": [],
+                                            "variable": "$.get-tiles.out.value"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-tiles": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1232,
+            "y": 320
+        },
+        "assert-list-dashboards": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-dashboards": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "{{{5db67bd0-bb5d-428f-a2ff-6d9ef9b2aaab}}}",
+                                                "field": "{{{19724e6a-8d4b-4f94-8a90-aeb66b41401c}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "19724e6a-8d4b-4f94-8a90-aeb66b41401c": {
+                                            "functions": [],
+                                            "variable": "$.list-dashboards.out.displayName"
+                                        },
+                                        "5db67bd0-bb5d-428f-a2ff-6d9ef9b2aaab": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.dashboardName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-dashboards": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 16
+        },
+        "get-dashboard": {
+            "config": {
+                "properties": {
+                    "account": "69d8b5d78c93c638d53abec5"
+                },
+                "transform": {
+                    "in": {
+                        "list-dashboards": {
+                            "out": {
+                                "lambda": {
+                                    "dashboardId": "{{{a63bcf7a-7598-4e39-8d0d-0ddb8b855847}}}"
+                                },
+                                "modifiers": {
+                                    "dashboardId": {
+                                        "a63bcf7a-7598-4e39-8d0d-0ddb8b855847": {
+                                            "functions": [],
+                                            "variable": "$.list-dashboards.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-dashboards": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.GetDashboard",
+            "x": 848,
+            "y": 176
+        },
+        "get-tiles": {
+            "config": {
+                "properties": {
+                    "account": "69d8b5d78c93c638d53abec5"
+                },
+                "transform": {
+                    "in": {
+                        "get-dashboard": {
+                            "out": {
+                                "lambda": {
+                                    "dashboardId": "{{{var-dashboard-id}}}"
+                                },
+                                "modifiers": {
+                                    "dashboardId": {
+                                        "var-dashboard-id": {
+                                            "functions": [],
+                                            "variable": "$.get-dashboard.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-dashboard": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.GetTiles",
+            "x": 1040,
+            "y": 304
+        },
+        "list-dashboards": {
+            "config": {
+                "properties": {
+                    "account": "69d8b5d78c93c638d53abec5"
+                },
+                "transform": {
+                    "in": {
+                        "0dee1467-50a5-41de-8f32-2ce64a526421": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "0dee1467-50a5-41de-8f32-2ce64a526421": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.MSPowerBI.core.ListDashboards",
+            "x": 656,
+            "y": 0
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 48,
+            "y": 0
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E MSPowerBI - Dashboards"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1616,
+            "y": 16
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {},
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "groupId",
+                                                "text": "",
+                                                "toggle": false,
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "dashboardName",
+                                                "text": "test dashboard",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 0
+        }
+    },
+    "name": "E2E MSPowerBI - Dashboards",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

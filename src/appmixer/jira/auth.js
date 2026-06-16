@@ -13,12 +13,6 @@ module.exports = {
             accountNameFromProfileInfo: 'name',
 
             scope: [
-                'read:jira-work',
-                'write:jira-work',
-                'manage:jira-project',
-                'manage:jira-configuration',
-                'read:jira-user',
-                'report:personal-data',
                 'offline_access'
             ],
 

@@ -1,3 +1,5 @@
+const { callEndpointCached } = require('../../lib');
+
 module.exports = {
 
     async receive(context) {
@@ -8,10 +10,19 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
-        const accessToken = context.auth.accessToken;
-        const url = `https://graph.facebook.com/v25.0/me/adaccounts?access_token=${accessToken}&fields=id,account_id,name,account_status`;
-        const { data } = await context.httpRequest.get(url);
-        return context.sendJson({ accounts: data.data }, 'out');
+        try {
+            const accessToken = context.auth.accessToken;
+            const url = `https://graph.facebook.com/v25.0/me/adaccounts?access_token=${accessToken}&fields=id,account_id,name,account_status`;
+            const { data } = context.properties.isSource
+                ? await callEndpointCached(context, url)
+                : await context.httpRequest.get(url);
+            return context.sendJson({ accounts: data.data }, 'out');
+        } catch (err) {
+            if (context.properties.isSource) {
+                return context.sendJson({ accounts: [] }, 'out');
+            }
+            throw err;
+        }
     },
 
     toSelectArray(out) {

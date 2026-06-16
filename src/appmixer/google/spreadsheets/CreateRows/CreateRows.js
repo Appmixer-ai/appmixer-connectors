@@ -1,7 +1,7 @@
 'use strict';
 const commons = require('../../google-commons');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
-const { loadFile } = require('../common');
+const { loadFile, normalizeHeader } = require('../common');
 
 /**
  * @param {Context} context
@@ -36,11 +36,17 @@ async function setWorksheetHeader(context, sheet, csvHeader, append, autoMatch, 
 
     const csvColumnMap = {};
     const newHeader = [...headerRow];
+    // Build a normalized index of the spreadsheet header row for flexible matching
+    const normalizedHeaderRow = headerRow.map(normalizeHeader);
 
     csvHeader.forEach((column, index) => {
-        const headerIndex = headerRow.indexOf(column);
+        // First try exact match, then fall back to normalized match
+        let headerIndex = headerRow.indexOf(column);
+        if (headerIndex === -1) {
+            headerIndex = normalizedHeaderRow.indexOf(normalizeHeader(column));
+        }
         if (headerIndex !== -1) {
-            csvColumnMap[index] = column;
+            csvColumnMap[index] = headerRow[headerIndex];
         } else if (append) {
             newHeader.push(column);
             csvColumnMap[index] = column;

@@ -1,6 +1,7 @@
 'use strict';
 const google = require('googleapis');
 const commons = require('../../google-commons');
+const { normalizeHeader } = require('../common');
 const Promise = require('bluebird');
 
 module.exports = {
@@ -84,11 +85,13 @@ module.exports = {
     }
 };
 
-// Helper function to add headers to row cells
+// Helper function to add headers to row cells.
+// Headers are normalized (whitespace/line-breaks collapsed) so that minor
+// edits to Google Form questions don't produce unrecognized keys.
 function addHeaders(headers, row) {
     let res = {};
     headers.forEach((header, index) => {
-        res[header] = row[index] || '';
+        res[normalizeHeader(header)] = row[index] || '';
     });
     return res;
 }

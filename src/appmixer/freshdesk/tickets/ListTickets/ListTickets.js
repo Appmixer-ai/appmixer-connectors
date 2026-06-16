@@ -1,6 +1,6 @@
 'use strict';
-const axios = require('axios');
 const moment = require('moment');
+const { apiCall } = require('../../lib');
 
 function joinOrClauses(orArray) {
 
@@ -60,38 +60,28 @@ module.exports = {
 
     async receive(context) {
 
-        const { auth } = context;
         const { withFilters, limit, filters, allAtOnce } = context.messages.in.content;
-
-        const requestObject = {
-            auth: {
-                username: auth.apiKey,
-                password: 'X'
-            }
-        };
 
         const perPage = withFilters ? 30 : 100;
         const pages = limit ? Math.ceil(limit / perPage) : 1;
 
-        requestObject.params = {};
-
+        const params = {};
         let url;
 
         if (withFilters) {
-            const query = getQuery(filters);
-            url = `https://${auth.domain}.freshdesk.com/api/v2/search/tickets`;
-            requestObject.params.query = query;
+            url = '/search/tickets';
+            params.query = getQuery(filters);
         } else {
-            requestObject.params.per_page = perPage;
-            requestObject.params.updated_since = moment().subtract(30, 'years').format('YYYY-MM-DD');
-            url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
+            url = '/tickets';
+            params.per_page = perPage;
+            params.updated_since = moment().subtract(30, 'years').format('YYYY-MM-DD');
         }
 
         let tickets = [];
 
         for (let i = 1; i <= pages; i++ ) {
-            requestObject.params.page = i;
-            let { data } = await axios.get(url, requestObject);
+            params.page = i;
+            let { data } = await apiCall(context, { url, params });
 
             if (!Array.isArray(data)) {
                 data = data.results;
@@ -109,13 +99,21 @@ module.exports = {
             return Promise.all(tickets.map(ticket => {
                 return context.sendJson({
                     id: ticket.id,
-                    created_at: ticket.created_at,
-                    due_by: ticket.due_by,
+                    createdAt: ticket.created_at,
+                    updatedAt: ticket.updated_at,
+                    dueBy: ticket.due_by,
+                    frDueBy: ticket.fr_due_by,
                     subject: ticket.subject,
                     type: ticket.type,
+                    source: ticket.source,
                     status: ticket.status,
                     priority: ticket.priority,
                     agentId: ticket.responder_id,
+                    groupId: ticket.group_id,
+                    emailConfigId: ticket.email_config_id,
+                    productId: ticket.product_id,
+                    tags: ticket.tags,
+                    customFields: ticket.custom_fields,
                     ticketJson: ticket
                 }, 'tickets');
             }));

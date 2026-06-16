@@ -397,13 +397,16 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Description", "value": "description" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "description": { "type": "string", "title": "Description", "example": "Milk, eggs, bread" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -499,12 +502,15 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -613,11 +619,14 @@ Trigger components monitor for events and start workflows when conditions are me
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -741,11 +750,14 @@ Webhook triggers receive HTTP callbacks from external services. They require lif
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Contact ID", "value": "id" },
-                { "label": "Email", "value": "email" },
-                { "label": "Updated Date", "value": "updated_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Contact ID", "example": "c-1001" },
+                    "email": { "type": "string", "title": "Email", "example": "jane@example.com" },
+                    "updated_at": { "type": "string", "format": "date-time", "title": "Updated Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -819,6 +831,146 @@ module.exports = {
     }
 };
 ```
+
+#### 2b. Plugin-based Triggers (shared global endpoint + `addListener`)
+
+When the upstream service requires a **single global webhook callback URL per app** (Meta WhatsApp, Slack Events API, Stripe Webhooks at the app level), the per-trigger `getWebhookUrl()` pattern in section 2 does NOT work — you can only register one URL on the upstream service, and Appmixer issues a different URL per trigger instance. The right pattern is a **connector-level plugin** that owns one endpoint and fans out events to many subscribed trigger instances.
+
+**Architecture**
+
+```
+External service (Meta App / Slack App / …)
+         │  one global callback URL configured once by the admin
+         ▼
+<API_BASE>/plugins/<vendor>/<service>/<path>         (registered in plugin.js → routes.js)
+         │
+         │  routes.js parses payload, optionally HMAC-verifies, then:
+         ▼
+context.triggerListeners({ eventName, payload, filter })
+         │
+         │  Engine fans out to all matching listener instances:
+         ▼
+Trigger component instance (one per flow)
+   start():    context.addListener(eventName, params)
+   stop():     context.removeListener(eventName)
+   receive():  context.messages.webhook.content.data  → sendJson
+```
+
+**Required files at the connector root**
+
+`plugin.js` — entrypoint executed once when the connector is installed onto the Appmixer server. Loads routes (and optionally jobs):
+
+```javascript
+'use strict';
+module.exports = async context => {
+    require('./routes')(context);
+    context.log('info', '[MYSERVICE] Plugin initialized.');
+};
+```
+
+`routes.js` — registers the HTTP endpoint(s) and the listener-added validator:
+
+```javascript
+'use strict';
+
+module.exports = async context => {
+
+    // Runs every time a trigger calls context.addListener().
+    // Use it to validate params, transform them, or perform per-subscription
+    // setup against the upstream API.
+    context.onListenerAdded(async listener => {
+        // listener.eventName, listener.params  — mutable
+        // throw to reject the subscription
+    });
+
+    context.http.router.register({
+        method: 'POST',
+        path: '/events',                        // → /plugins/<vendor>/<service>/events
+        options: {
+            auth: false,
+            handler: async (req, h) => {
+                if (!isValidSignature(context, req)) {
+                    return h.response(undefined).code(401);
+                }
+
+                // Optional verification handshake (GET hub.challenge etc.)
+                if (req.payload?.challenge) {
+                    return { challenge: req.payload.challenge };
+                }
+
+                // Parse the payload then dispatch per-listener.
+                await context.triggerListeners({
+                    eventName: extractEventName(req.payload),
+                    payload: extractEventBody(req.payload),
+                    filter: listener => listener.params.userId === extractUserId(req.payload)
+                });
+                return {};
+            }
+        }
+    });
+};
+```
+
+The endpoint URL is `<API_BASE>/plugins/<vendor>/<service>/<path>` — derived from the connector's directory path. **No `context.getWebhookUrl()` is involved** — the admin configures this single URL on the upstream service once.
+
+**Trigger component pattern**
+
+```javascript
+'use strict';
+
+module.exports = {
+
+    async start(context) {
+
+        // (Optional) Upstream-side per-subscription setup. Mandatory only if
+        // the upstream needs to know "this user wants events" — e.g. Meta's
+        // POST /{waba-id}/subscribed_apps.
+
+        await context.addListener(`channel:${context.properties.channelId}`, {
+            userId: context.profileInfo.userId,
+            accessToken: context.auth.accessToken
+        });
+    },
+
+    async stop(context) {
+        await context.removeListener(`channel:${context.properties.channelId}`);
+    },
+
+    async receive(context) {
+        if (!context.messages.webhook) return;
+        const data = context.messages.webhook.content.data;     // payload passed in via triggerListeners
+        await context.sendJson(data, 'out');
+    }
+};
+```
+
+**Key APIs**
+
+| API | Where | Purpose |
+|---|---|---|
+| `context.http.router.register({ method, path, options })` | `routes.js` | Mount an HTTP route under `/plugins/<vendor>/<service>` |
+| `context.onListenerAdded(cb)` | `routes.js` | Hook fired when a trigger calls `addListener` — validate / transform `listener.params` |
+| `context.triggerListeners({ eventName, payload, filter })` | `routes.js` (inside route handler) | Fan an event out to all subscribed listeners matching `eventName` and optional `filter` |
+| `context.addListener(eventName, params)` | trigger `start()` | Register this trigger instance as a consumer of `eventName` |
+| `context.removeListener(eventName)` | trigger `stop()` | Unregister this instance |
+| `context.messages.webhook.content.data` | trigger `receive()` | The payload from `triggerListeners` |
+
+**When to use this pattern (vs. section 2's per-trigger webhook URL)**
+
+- Upstream service allows **only one callback URL per app** (Meta App, Slack App, GitHub App)
+- Upstream events fan out to many tenants and you must route them server-side
+- You want HMAC signature verification of the **app's** secret centrally, not per-trigger
+- You have multiple trigger types listening to the same upstream stream (e.g. `NewMessage` and `MessageStatusUpdated` both consume Meta's `messages` webhook)
+
+**When NOT to use this pattern**
+
+- The upstream service supports per-resource webhooks (ActiveCampaign, Stripe per-account) — section 2 is simpler
+- Polling is acceptable and the upstream has no webhook API — use `tick: true`
+
+**Reference implementations**
+
+- `src/appmixer/slack/plugin.js` + `routes.js` + `list/NewChannelMessageRT/NewChannelMessageRT.js`
+- `src/appmixer/whatsapp/plugin.js` + `routes.js` + `notifications/NewMessage/NewMessage.js`
 
 #### 3. Hybrid Triggers (`webhook: true` + `tick: true`)
 
@@ -1043,61 +1195,138 @@ When using `source` to dynamically populate field options or output port schemas
 }
 ```
 
-**Using `variableFetch` for Error Handling in Dynamic Sources**
+**Using `variableFetch` / `isSource` for Dynamic Source Calls**
 
-When a component is used as a dynamic data source (via `source` URL), it may fail due to permissions, invalid configuration, or API errors. In the UI context (populating dropdown options), these errors should be gracefully handled by returning an empty response rather than throwing an exception that would break the UI.
+When a component is used as a dynamic data source (via `source` URL in inspector), four rules apply: **inspector field is `text`**, **dependencies are optional**, **error suppression**, and **response caching**.
 
-The `variableFetch` property signals to the component that it's being called as a dynamic data source, not as a regular flow component. When `variableFetch: true`:
-- **Ignore errors** and return an empty response (e.g., `{ items: [] }`)
-- This prevents UI breakage when the dynamic source call fails
+**Rule 1 — Inspector field type is `text`, never `select`.**
+The dropdown source can fail (auth not yet established, dependency input empty, API down). When that happens the user MUST be able to type the value manually. `select` constrains the field to dropdown options only and traps the user when the source returns `[]`. Use `type: "text"` with the `source` block — Appmixer renders this as a typeahead/autocomplete: user can pick from the loaded options OR type any value.
 
-When the same component is used directly in a flow (without `variableFetch`):
-- **Throw errors** normally so the user is aware of failures
-
-**component.json example** (setting `variableFetch` in source):
-```json
-{
-    "driveId": {
-        "type": "text",
-        "label": "Drive ID",
-        "source": {
-            "url": "/component/appmixer/microsoft/onedrive/ListDrives?outPort=out",
-            "data": {
-                "properties": {
-                    "variableFetch": true
-                },
-                "transform": "./ListDrives#sitesToSelectArray"
-            }
+```jsonc
+"phoneNumberId": {
+    "type": "text",          // NOT "select"
+    "label": "Phone Number",
+    "tooltip": "Pick a phone number, or type the Phone Number ID directly.",
+    "source": {
+        "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+        "data": {
+            "properties": { "isSource": true },
+            "transform": "./ListFoo#toSelectArray"
         }
     }
 }
 ```
 
-**JavaScript implementation example** (handling `variableFetch`):
-```javascript
-module.exports = {
-    async receive(context) {
-        try {
-            const drives = await listItems(context, 'me/drives?');
-            return context.sendJson({ drives }, 'out');
-        } catch (err) {
-            // When used as dynamic source, return empty response instead of error
-            if (context.properties.variableFetch) {
-                return context.sendJson({ drives: [] }, 'out');
-            }
-            // When used in flow, throw error normally
-            context.log({ stage: 'Error', err });
-            throw new Error(err);
-        }
-    },
+**Rule 2 — Dependency inputs are optional.**
+When a dropdown depends on another input (e.g. `phoneNumberId` dropdown depends on `businessAccountId`), the dependency itself must NOT be in `schema.required[]`. Reason: the inspector evaluates required-input checks at design time on the host component; if a hard-required dependency is empty, the dropdown call never fires and the user sees no options AND no way to recover. Keeping the dependency optional means:
 
-    sitesToSelectArray({ drives }) {
-        return drives.map((drive) => ({
-            label: `${drive.name || drive.driveType} / ${drive.webUrl || drive.id}`,
-            value: drive.id
-        }));
-    }
-};
+- The dropdown source is still called when the dependency is empty
+- The source component handles missing input gracefully (returns `[]`)
+- The user can still type the target value manually
+- Runtime validation of the dependency happens at `receive()` time on the host component — set the actual requirement check there, not in `schema.required`.
+
+```jsonc
+"schema": {
+    "properties": {
+        "businessAccountId": { "type": "string" },
+        "phoneNumberId":     { "type": "string" }
+    },
+    "required": ["phoneNumberId"]   // NOT businessAccountId — it's a dropdown helper, not a hard requirement
+}
 ```
+
+**Rule 3 & 4 — Error suppression and response caching** are covered below.
+
+The convention is to pass a sentinel property in `source.data.properties` so the component knows it is being called from the inspector, not from a live flow. Two property names are in use — use whichever is already established in the connector, and be consistent within a connector:
+
+| Property | Used in |
+|---|---|
+| `isSource: true` | monday, facebookbusiness — **preferred** |
+| `variableFetch: true` | microsoft (onedrive, teams, …) — legacy |
+
+> **Prefer `isSource` for new connectors. Do not mix both names in the same connector.**
+
+**component.json** — add the sentinel to every `source.data.properties` block that uses a `transform`. Do NOT add it to `generateOutputPortOptions` sources.
+
+```json
+"source": {
+    "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+    "data": {
+        "properties": { "variableFetch": true },
+        "transform": "./ListFoo#toSelectArray"
+    }
+}
+```
+
+**Error suppression** — when the sentinel is set, catch errors and return an empty response instead of throwing. This prevents irrelevant error popups in the UI:
+
+```javascript
+async receive(context) {
+    try {
+        const drives = await listItems(context, 'me/drives?');
+        return context.sendJson({ drives }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ drives: [] }, 'out');
+        }
+        context.log({ stage: 'Error', err });
+        throw new Error(err);
+    }
+},
+```
+
+**Response caching** — dynamic source calls happen every time the user opens a dropdown. To avoid hammering the API, cache the response using `context.staticCache` + `context.lock`. Put `callEndpointCached` in the connector's `lib.js` and call it only when the sentinel is set:
+
+```javascript
+// lib.js
+const crypto = require('crypto');
+
+function getCacheKey(obj) {
+    return crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex');
+}
+
+async function callEndpointCached(context, url) {
+    let lock;
+    try {
+        const key = getCacheKey({ url, token: context.auth.accessToken });
+        lock = await context.lock(key);
+        const cached = await context.staticCache.get(key);
+        if (cached) return { data: cached };
+        const { data } = await context.httpRequest.get(url);
+        await context.staticCache.set(key, data, context.config.listCacheTTL || (2 * 60 * 1000)); // 120s default
+        return { data };
+    } finally {
+        lock?.unlock();
+    }
+}
+
+module.exports = { callEndpointCached };
+```
+
+```javascript
+// ListFoo.js
+const { callEndpointCached } = require('../../lib');
+
+async receive(context) {
+    try {
+        const url = `https://api.example.com/foo?token=${context.auth.accessToken}`;
+        const { data } = context.properties.variableFetch
+            ? await callEndpointCached(context, url)
+            : await context.httpRequest.get(url);
+        return context.sendJson({ items: data.items }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ items: [] }, 'out');
+        }
+        throw err;
+    }
+},
+```
+
+Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint. TTL is configurable via `context.config.listCacheTTL` (default 120 s).
+
+**Reference implementations:**
+- Error suppression only: `src/appmixer/microsoft/onedrive/ListSites/ListSites.js`
+- Caching + error suppression: `src/appmixer/facebookbusiness/marketing/GetAdAccounts/GetAdAccounts.js` + `facebookbusiness/lib.js`
 
 ---

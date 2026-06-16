@@ -9,7 +9,10 @@
     },
     "quota": {
         "manager": "appmixer:stripe",
-        "resources": "requests"
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
     },
     "inPorts": [
         {
@@ -17,10 +20,13 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "method": {
+                        "type": "string"
+                    },
                     "customEndpoint": {
                         "type": "string"
                     },
-                    "method": {
+                    "headers": {
                         "type": "string"
                     },
                     "parameters": {
@@ -34,23 +40,52 @@
             },
             "inspector": {
                 "inputs": {
-                    "customEndpoint": {
-                        "type": "text",
-                        "tooltip": "The custom endpoint path (e.g., 'charges').",
-                        "label": "Custom Endpoint",
-                        "index": 0
-                    },
                     "method": {
-                        "type": "text",
+                        "type": "select",
                         "tooltip": "HTTP method to use for the API call (GET, POST, etc.).",
                         "label": "Method",
-                        "index": 1
+                        "index": 1,
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ],
+                        "defaultValue": "GET"
+                    },
+                    "customEndpoint": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the endpoint path relative to <code>https://api.stripe.com/v1</code> (e.g. <code>charges</code>) or a full URL."
+                    },
+                    "headers": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Headers",
+                        "tooltip": "Optional additional HTTP headers as a JSON object (e.g. <code>{\"X-Custom-Header\": \"value\"}</code>)."
                     },
                     "parameters": {
                         "type": "textarea",
-                        "tooltip": "Key-value object containing parameters for the API call.",
-                        "label": "Parameters",
-                        "index": 2
+                        "index": 4,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters as a JSON object (e.g. <code>{\"limit\": 10, \"offset\": 0}</code>)."
                     }
                 }
             }
@@ -61,11 +96,24 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Response",
-                    "value": "response",
+                    "label": "Status Code",
+                    "value": "status"
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers"
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
                     "schema": {
                         "type": "object",
-                        "properties": {}
+                        "properties": {},
+                        "example": {
+                            "id": "cus_ABC123",
+                            "object": "customer",
+                            "email": "user@example.com"
+                        }
                     }
                 }
             ]

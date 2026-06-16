@@ -3,6 +3,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const DeleteUserList = require('../../core/DeleteUserList/DeleteUserList.js');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('DeleteUserList', () => {
 
@@ -11,6 +12,7 @@ describe('DeleteUserList', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.messages = { in: { content: {} } };
+        applyGoogleAdsConfig(context);
     });
 
     it('should require Customer ID', async () => {
@@ -23,13 +25,15 @@ describe('DeleteUserList', () => {
         });
     });
 
-    it('should require Developer Token', async () => {
+    it('should require developer token in backoffice config', async () => {
         context.messages.in.content = {
-            customerId: '123'
+            customerId: '123',
+            userListId: '456'
         };
+        context.config = {};
 
         await assert.rejects(() => DeleteUserList.receive(context), {
-            message: 'Developer Token is required!'
+            message: 'Developer Token is required in backoffice config!'
         });
     });
 
@@ -65,7 +69,7 @@ describe('DeleteUserList', () => {
         assert(call.args[0].data.operations[0].remove.includes('userLists/123456'));
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 
     it('should delete user list by userListResourceName', async () => {
@@ -88,13 +92,12 @@ describe('DeleteUserList', () => {
         assert.strictEqual(call.args[0].data.operations[0].remove, 'customers/7107133715/userLists/123456');
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 
-    it('should accept loginCustomerId parameter', async () => {
+    it('should use loginCustomerId from user input', async () => {
         context.messages.in.content = {
             customerId: '7107133715',
-            developerToken: 'test-token',
             loginCustomerId: '5338559342',
             userListId: '123456'
         };
@@ -110,6 +113,6 @@ describe('DeleteUserList', () => {
         assert(call.args[0].headers);
 
         assert.strictEqual(context.sendJson.callCount, 1);
-        assert.strictEqual(context.sendJson.getCall(0).args[0].success, true);
+        assert.deepStrictEqual(context.sendJson.getCall(0).args[0], {});
     });
 });

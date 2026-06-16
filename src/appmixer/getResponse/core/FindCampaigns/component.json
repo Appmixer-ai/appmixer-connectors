@@ -1,0 +1,119 @@
+{
+    "name": "appmixer.getResponse.core.FindCampaigns",
+    "label": "Find Campaigns",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search for campaigns in your GetResponse account. Returns a maximum of 1000 campaigns per request.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:getResponse"
+    },
+    "quota": {
+        "manager": "appmixer:getResponse",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "status": {
+                        "type": "select",
+                        "tooltip": "Filter campaigns by status.",
+                        "label": "Status",
+                        "options": [
+                            {
+                                "label": "Active",
+                                "value": "active"
+                            },
+                            {
+                                "label": "Inactive",
+                                "value": "inactive"
+                            }
+                        ],
+                        "index": 0
+                    },
+                    "sort": {
+                        "type": "select",
+                        "tooltip": "Sort order for campaigns.",
+                        "label": "Sort",
+                        "options": [
+                            {
+                                "label": "Name (A-Z)",
+                                "value": "name"
+                            },
+                            {
+                                "label": "Created On (Newest)",
+                                "value": "-createdOn"
+                            },
+                            {
+                                "label": "Created On (Oldest)",
+                                "value": "createdOn"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/getResponse/core/FindCampaigns?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI3LjguMSwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA4Ny45IDU2IiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA4Ny45IDU2OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGw6IzAwQUJFOTt9Cgkuc3Qxe2ZpbGw6I0ZGRkZGRjt9Cjwvc3R5bGU+CjxnPgoJPGc+CgkJPHBhdGggY2xhc3M9InN0MCIgZD0iTTg3LjgsNTIuMWMwLDIuMS0xLjcsMy43LTMuNywzLjdIMy45Yy0yLjEsMC0zLjctMS43LTMuNy0zLjdWMy45YzAtMi4xLDEuNy0zLjcsMy43LTMuN0g4NAoJCQljMi4xLDAsMy43LDEuNywzLjcsMy43VjUyLjF6Ii8+Cgk8L2c+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNODYuOSwxLjVDNzYuNiwxNy43LDYwLjUsMzIuNCw0My45LDMyLjFjLTYuMS0wLjEtMTMuMS0xLjktMTktNi43Yy00LjQtMy42LTguOC05LjItMTAuNS0xNy4yCgkJYy0wLjcsMC0xLjIsMC0xLjgsMGMtMi43LDAtNC4zLDIuNC00LDQuNmMwLjEsMC41LDAuMiwxLjEsMC4zLDEuN2MxLjMsNy44LDUuOSwxNi42LDEzLjYsMjIuM2M2LDQuNCwxMy40LDcuMywyMS41LDcuMwoJCWMxNC42LDAsMzAuMi05LjMsNDMuOC0zMy4yVjMuOUM4Ny44LDMsODcuNSwyLjIsODYuOSwxLjV6Ii8+CjwvZz4KPC9zdmc+Cg=="
+}

@@ -1,0 +1,519 @@
+{
+    "name": "E2E Whatsapp - Send Media Messages",
+    "description": "End-to-end test for Whatsapp connector - tests SendImageMessage, SendAudioMessage, SendVideoMessage, and SendDocumentMessage components",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "phoneNumberId",
+                                                "text": "{{E2E_WHATSAPP_PHONE_NUMBER_ID}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "recipientPhone",
+                                                "text": "{{E2E_WHATSAPP_RECIPIENT_PHONE}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "imageUrl",
+                                                "text": "https://www.gstatic.com/webp/gallery/1.jpg"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "audioUrl",
+                                                "text": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "videoUrl",
+                                                "text": "https://www.w3schools.com/html/mov_bbb.mp4"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "documentUrl",
+                                                "text": "https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-image": {
+            "type": "appmixer.whatsapp.messages.SendImageMessage",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "phone-number-id-var": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "recipient-var": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "link": {
+                                        "image-url-var": {
+                                            "variable": "$.set-variables.out.imageUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "caption": {}
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{phone-number-id-var}}}",
+                                    "to": "{{{recipient-var}}}",
+                                    "link": "{{{image-url-var}}}",
+                                    "caption": "E2E Test - Image Message"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-image": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-image": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-image": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "image-message-id": {
+                                            "variable": "$.send-image.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{image-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-audio": {
+            "type": "appmixer.whatsapp.messages.SendAudioMessage",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "phone-number-id-var-2": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "recipient-var-2": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "link": {
+                                        "audio-url-var": {
+                                            "variable": "$.set-variables.out.audioUrl",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{phone-number-id-var-2}}}",
+                                    "to": "{{{recipient-var-2}}}",
+                                    "link": "{{{audio-url-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-audio": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-audio": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-audio": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "audio-message-id": {
+                                            "variable": "$.send-audio.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{audio-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-video": {
+            "type": "appmixer.whatsapp.messages.SendVideoMessage",
+            "x": 448,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "phone-number-id-var-3": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "recipient-var-3": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "link": {
+                                        "video-url-var": {
+                                            "variable": "$.set-variables.out.videoUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "caption": {}
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{phone-number-id-var-3}}}",
+                                    "to": "{{{recipient-var-3}}}",
+                                    "link": "{{{video-url-var}}}",
+                                    "caption": "E2E Test - Video Message"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-video": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-video": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-video": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "video-message-id": {
+                                            "variable": "$.send-video.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{video-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "send-document": {
+            "type": "appmixer.whatsapp.messages.SendDocumentMessage",
+            "x": 448,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "phone-number-id-var-4": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "to": {
+                                        "recipient-var-4": {
+                                            "variable": "$.set-variables.out.recipientPhone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "link": {
+                                        "document-url-var": {
+                                            "variable": "$.set-variables.out.documentUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "filename": {},
+                                    "caption": {}
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{phone-number-id-var-4}}}",
+                                    "to": "{{{recipient-var-4}}}",
+                                    "link": "{{{document-url-var}}}",
+                                    "filename": "e2e-test-sample.pdf",
+                                    "caption": "E2E Test - Document Message"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-document": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 704,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "send-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "send-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "document-message-id": {
+                                            "variable": "$.send-document.out.messageId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{document-message-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-image": [
+                        "out"
+                    ],
+                    "assert-audio": [
+                        "out"
+                    ],
+                    "assert-video": [
+                        "out"
+                    ],
+                    "assert-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1088,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Whatsapp - Send Media Messages",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
