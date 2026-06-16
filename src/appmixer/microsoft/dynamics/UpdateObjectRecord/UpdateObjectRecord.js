@@ -17,6 +17,13 @@ module.exports = {
 
         const { id, json, rawJson, objectName } = context.messages.in.content;
 
+        if (!objectName) {
+            throw new context.CancelError('Object Name is required!');
+        }
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
+
         let objectRecord;
 
         if (rawJson) {

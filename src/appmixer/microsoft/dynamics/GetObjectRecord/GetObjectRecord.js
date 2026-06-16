@@ -1,4 +1,4 @@
-const { generateInspector, DEFAULT_ENTITIES } = require('../dynamics-commons');
+const { DEFAULT_ENTITIES } = require('../dynamics-commons');
 
 module.exports = {
 
@@ -9,12 +9,14 @@ module.exports = {
             return context.sendJson(DEFAULT_ENTITIES, 'out');
         }
 
-        if (context.properties.generateInspector) {
-            const inPort = await generateInspector(context, 'IsValidForRead');
-            return context.sendJson(inPort, 'out');
-        }
-
         const { id, objectName } = context.messages.in.content;
+
+        if (!objectName) {
+            throw new context.CancelError('Object Name is required!');
+        }
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
 
         const options = {
             // TODO: Make the url construction more robust.
