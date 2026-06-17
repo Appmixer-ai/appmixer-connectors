@@ -273,7 +273,7 @@ describe('dynamics-commons', () => {
 
                 // Stub the first set of HTTP requests to return the metadata for Lead entity.
                 context.httpRequest
-                    .onCall(5).rejects('Dynamics API should not be called! 5')
+                    .onCall(13).rejects('Dynamics API should not be called! 13')
                     .onCall(6).rejects('Dynamics API should not be called! 6')
                     .onCall(7).rejects('Dynamics API should not be called! 7')
                     .onCall(8).rejects('Dynamics API should not be called! 4');
@@ -295,7 +295,7 @@ describe('dynamics-commons', () => {
 
                 await commons.generateInspector(context, 'IsValidForUpdate'); // 2nd call should use cache.
                 await commons.generateInspector(context, 'IsValidForUpdate'); // 3rd call should use cache.
-                assert.equal(context.httpRequest.callCount, 5);
+                assert.equal(context.httpRequest.callCount, 6);
                 assert.equal(context.lock.callCount, 3, 'should call lock every time');
                 assert.equal(context.staticCache.set.callCount, 1, 'should call staticCache.set only once');
                 assert.equal(context.staticCache.get.callCount, 3, 'should call staticCache.get every time');
@@ -453,7 +453,7 @@ describe('dynamics-commons', () => {
 
                 // Stub the first set of HTTP requests to return the metadata for Lead entity.
                 context.httpRequest
-                    .onCall(5).rejects('Dynamics API should not be called! 5')
+                    .onCall(13).rejects('Dynamics API should not be called! 13')
                     .onCall(6).rejects('Dynamics API should not be called! 6')
                     .onCall(7).rejects('Dynamics API should not be called! 7')
                     .onCall(8).rejects('Dynamics API should not be called! 4');
@@ -475,7 +475,7 @@ describe('dynamics-commons', () => {
 
                 await commons.generateInspector(context, 'IsValidForCreate'); // 2nd call should use cache.
                 await commons.generateInspector(context, 'IsValidForCreate'); // 3rd call should use cache.
-                assert.equal(context.httpRequest.callCount, 5);
+                assert.equal(context.httpRequest.callCount, 6);
                 assert.equal(context.lock.callCount, 3, 'should call lock every time');
                 assert.equal(context.staticCache.set.callCount, 1, 'should call staticCache.set only once');
                 assert.equal(context.staticCache.get.callCount, 3, 'should call staticCache.get every time');
@@ -565,6 +565,55 @@ describe('dynamics-commons', () => {
                 });
             });
         });
+
+        describe('polymorphic lookup (regardingobjectid)', () => {
+
+            beforeEach(function() {
+
+                context.properties = { objectName: 'campaignresponse' };
+                context.messages = { in: { content: {} } };
+                context.staticCache.get.resolves(null);
+
+                // Attributes: a single required regardingobjectid Lookup.
+                context.httpRequest.onCall(0).resolves({ data: { value: [{
+                    LogicalName: 'regardingobjectid',
+                    AttributeType: 'Lookup',
+                    SchemaName: 'RegardingObjectId',
+                    IsCustomAttribute: false,
+                    RequiredLevel: { Value: 'ApplicationRequired' },
+                    DisplayName: { UserLocalizedLabel: { Label: 'Regarding' } }
+                }] } });
+                context.httpRequest.onCall(1).resolves({ data: { value: [] } }); // picklists
+                context.httpRequest.onCall(2).resolves({ data: { value: [] } }); // statuscodes
+                context.httpRequest.onCall(3).resolves({ data: { value: [
+                    { LogicalName: 'regardingobjectid', Targets: ['campaign'] }
+                ] } }); // lookups
+                context.httpRequest.onCall(4).resolves({ data: { value: [] } }); // datetime
+                context.httpRequest.onCall(5).resolves({ data: { value: [
+                    {
+                        ReferencingAttribute: 'regardingobjectid',
+                        ReferencedEntity: 'campaign',
+                        ReferencingEntityNavigationPropertyName: 'regardingobjectid_campaign'
+                    }
+                ] } }); // relationships
+            });
+
+            it('binds the lookup via the target-specific navigation property', async function() {
+
+                const out = await commons.generateInspector(context, 'IsValidForCreate');
+
+                // Polymorphic "regarding" lookups must bind via <lookup>_<target>, not the bare
+                // logical name — otherwise Dynamics drops the bind ("RegardingObject must be supplied").
+                assert.ok(out.inputs['regardingobjectid_campaign@odata|bind'], 'uses target-specific nav property');
+                assert.ok(out.schema.properties['regardingobjectid_campaign@odata|bind'], 'schema uses target-specific nav property');
+                assert.ok(!out.inputs['regardingobjectid@odata|bind'], 'does not use the bare logical name');
+
+                // Lookups must NOT be hard-required: the bare logical name would be an
+                // unsatisfiable required property (no field uses that name), blocking the designer.
+                assert.ok(!out.schema.required.includes('regardingobjectid'), 'does not require the bare logical name');
+                assert.ok(!out.schema.required.includes('regardingobjectid_campaign@odata|bind'), 'does not hard-require the lookup field');
+            });
+        });
     });
 });
 
@@ -601,6 +650,13 @@ function setCreateStubs(context) {
             value: fixtureLeadDateTime.value
         }
     });
+    // Stub the 6th HTTP request to return lookup relationships. Empty here -> the nav property
+    // falls back to the logical/schema name for these single-target lead lookups.
+    context.httpRequest.onCall(5).resolves({
+        data: {
+            value: []
+        }
+    });
 }
 
 function setUpdateStubs(context) {
@@ -633,6 +689,13 @@ function setUpdateStubs(context) {
     context.httpRequest.onCall(4).resolves({
         data: {
             value: fixtureLeadDateTime.value
+        }
+    });
+    // Stub the 6th HTTP request to return lookup relationships. Empty here -> the nav property
+    // falls back to the logical/schema name for these single-target lead lookups.
+    context.httpRequest.onCall(5).resolves({
+        data: {
+            value: []
         }
     });
 }

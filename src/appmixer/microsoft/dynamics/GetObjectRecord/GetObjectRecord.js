@@ -29,7 +29,6 @@ module.exports = {
             }
         };
 
-        await context.log({ step: 'Making request', options });
         const { data } = await context.httpRequest(options);
 
         return context.sendJson(data, 'out');

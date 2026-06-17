@@ -386,20 +386,46 @@ async function getSchemaAndInputs(context, schema, logicalName, isValidFor) {
         headers
     };
 
+    // Getting the single-valued navigation property of each lookup's relationship. For a
+    // polymorphic lookup (e.g. regardingobjectid) the @odata.bind property is target-specific
+    // (regardingobjectid_campaign) — the bare logical name is not a valid navigation property,
+    // so the bind is silently dropped and a required "regarding" object ends up missing.
+    const urlRelationships = `${resource}/api/data/v9.2/EntityDefinitions(LogicalName='${logicalName}')/ManyToOneRelationships?$select=ReferencingAttribute,ReferencedEntity,ReferencingEntityNavigationPropertyName`;
+    const optionsRelationships = {
+        url: urlRelationships,
+        headers
+    };
+
     // Await for all requests to finish.
     const [
         { data },
         { data: dataPickList },
         { data: dataStatus },
         { data: dataLookup },
-        { data: dataDateTimeBehavior }
+        { data: dataDateTimeBehavior },
+        { data: dataRelationships }
     ] = await Promise.all([
         context.httpRequest(optionsAttributes),
         context.httpRequest(optionsPickList),
         context.httpRequest(optionsStatus),
         context.httpRequest(optionsLookup),
-        context.httpRequest(optionsDateTimeBehavior)
+        context.httpRequest(optionsDateTimeBehavior),
+        context.httpRequest(optionsRelationships)
     ]);
+
+    // Map each lookup attribute + referenced entity to its single-valued navigation property,
+    // e.g. relationshipNavProps['regardingobjectid']['campaign'] === 'regardingobjectid_campaign'.
+    const relationshipNavProps = {};
+    for (const rel of dataRelationships?.value || []) {
+        const attr = rel.ReferencingAttribute;
+        if (!attr) {
+            continue;
+        }
+        if (!relationshipNavProps[attr]) {
+            relationshipNavProps[attr] = {};
+        }
+        relationshipNavProps[attr][rel.ReferencedEntity] = rel.ReferencingEntityNavigationPropertyName;
+    }
 
     let fieldsInputs = {};
     for (let i = 0; i < data.value.length; i++) {
@@ -419,27 +445,36 @@ async function getSchemaAndInputs(context, schema, logicalName, isValidFor) {
         // Field name used in inspector can be different from LogicalName (see Lookup fields).
         let fieldName = item.LogicalName;
 
-        // Use navigation property for lookup fields.
+        // Use the single-valued navigation property for lookup fields.
         // See: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/create-entity-web-api#associate-table-rows-on-create
         if (item.AttributeType === 'Lookup') {
-            if (item.IsCustomAttribute) {
-                // For a custom field, use SchemaName instead of LogicalName.
-                // Applies only to custom lookup fields.
-                // Example: msdyn_predictivescoreid -> msdyn_PredictiveScoreId
-                // See: https://stackoverflow.com/questions/43970292/an-undeclared-property-when-trying-to-create-record-via-web-api
-                fieldName = item.SchemaName;
-            }
-            // Change LogicalName to the navigation property. LogicalNameNavigation is only used for Lookup fields.
-            // Workaround to support Lookup fields with dots in the name.
-            fieldName += '@odata|bind';
-
-            // Add Targets array to the item.
+            // Add Targets array to the item. ListLookupOptions resolves options from Targets[0].
             item.Targets = dataLookup?.value.find(x => x.LogicalName === item.LogicalName)?.Targets;
+            const target = Array.isArray(item.Targets) ? item.Targets[0] : undefined;
+
+            // The bind uses the lookup's single-valued navigation property. For a polymorphic
+            // lookup (e.g. regardingobjectid) this is target-specific (regardingobjectid_campaign);
+            // for a single-target lookup it is usually the logical name. Custom fields fall back to
+            // SchemaName (e.g. msdyn_predictivescoreid -> msdyn_PredictiveScoreId). See:
+            // https://stackoverflow.com/questions/43970292/an-undeclared-property-when-trying-to-create-record-via-web-api
+            const navProperty = (target && relationshipNavProps[item.LogicalName]
+                && relationshipNavProps[item.LogicalName][target])
+                || (item.IsCustomAttribute ? item.SchemaName : item.LogicalName);
+
+            // Workaround to support Lookup fields with dots in the name (| is restored to . at runtime).
+            fieldName = `${navProperty}@odata|bind`;
         }
 
-        // Add to required
-        if (item.RequiredLevel?.Value === 'ApplicationRequired' && isValidFor === 'IsValidForCreate') {
-            schema.required.push(item.LogicalName);
+        // Add to required (non-lookup fields only). Lookup fields are exposed under a
+        // target-specific navigation property name (e.g. regardingobjectid_campaign@odata|bind),
+        // not their logical name, so requiring the bare logical name produces an unsatisfiable
+        // schema. They are also frequently auto-populated by the Web API (transactioncurrencyid,
+        // ownerid), and for polymorphic lookups we only expose one target variant — forcing it
+        // would wrongly lock the user to that single target. So we never hard-require lookups.
+        if (item.RequiredLevel?.Value === 'ApplicationRequired'
+            && isValidFor === 'IsValidForCreate'
+            && item.AttributeType !== 'Lookup') {
+            schema.required.push(fieldName);
         }
 
         // Add to schema.

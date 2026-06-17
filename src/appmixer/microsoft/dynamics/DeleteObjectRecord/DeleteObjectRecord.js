@@ -29,7 +29,6 @@ module.exports = {
             }
         };
 
-        await context.log({ step: 'Making request', options });
         // Delete returns an empty object on success (consistent with the other Delete
         // components and the platform convention). A failed request throws.
         await context.httpRequest(options);

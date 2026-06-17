@@ -21,7 +21,6 @@ module.exports = {
             }
         };
 
-        context.log({ step: 'Making request', options });
         const { data } = await context.httpRequest(options);
 
         let entities = data.value;

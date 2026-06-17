@@ -61,7 +61,6 @@ module.exports = {
             data: objectRecord
         };
 
-        await context.log({ step: 'Making request', options });
         try {
             const { data, headers, status, statusText } = await context.httpRequest(options);
 
