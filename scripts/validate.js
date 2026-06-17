@@ -358,7 +358,14 @@ async function main() {
     // --changed mode: strict, scoped to a git diff. Mutually exclusive with the
     // repo-wide threshold run below.
     if (changedMode) {
-        const failed = await runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef, showIgnored });
+        const failed = await runChangedMode({
+            validators,
+            bundleFiles,
+            componentFiles,
+            relativePath,
+            baseRef,
+            showIgnored
+        });
         if (failed) {
             process.exitCode = 1;
         }
