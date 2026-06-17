@@ -248,7 +248,7 @@ describe('dynamics-commons', () => {
             it('should have Lookup field parentaccountid', async function() {
 
                 const out = await commons.generateInspector(context, 'IsValidForUpdate');
-                assert.equal(out.inputs['parentaccountid@odata|bind'].type, 'select', 'should be select in inspector');
+                assert.equal(out.inputs['parentaccountid@odata|bind'].type, 'text', 'should be text in inspector (typeahead, so any value can be typed/bound)');
                 assert.deepEqual(out.inputs['parentaccountid@odata|bind'].source, {
                     url: '/component/appmixer/microsoft/dynamics/ListLookupOptions?outPort=out',
                     data: {
@@ -428,7 +428,7 @@ describe('dynamics-commons', () => {
             it('should have Lookup field parentaccountid', async function() {
 
                 const out = await commons.generateInspector(context, 'IsValidForCreate');
-                assert.equal(out.inputs['parentaccountid@odata|bind'].type, 'select', 'should be select in inspector');
+                assert.equal(out.inputs['parentaccountid@odata|bind'].type, 'text', 'should be text in inspector (typeahead, so any value can be typed/bound)');
                 assert.deepEqual(out.inputs['parentaccountid@odata|bind'].source, {
                     url: '/component/appmixer/microsoft/dynamics/ListLookupOptions?outPort=out',
                     data: {
