@@ -1,0 +1,694 @@
+{
+    "name": "E2E Microsoft Dynamics - Create Object Record",
+    "description": "Creates an Account, a Contact and a Lead via CreateObjectRecord (dynamic entity), plus a Campaign and a Campaign Response (polymorphic regardingobjectid lookup), asserts each returns an ID, then deletes them to clean up.",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "accountName",
+                                                "text": "E2E Create Account"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "contactLast",
+                                                "text": "E2E Create Contact"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "leadSubject",
+                                                "text": "E2E Create Lead"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-account": {
+            "type": "appmixer.microsoft.dynamics.CreateObjectRecord",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Create Account",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "name": {
+                                        "name-var": {
+                                            "variable": "$.set-variables.out.accountName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "account",
+                                    "name": "{{{name-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.microsoft.dynamics.CreateObjectRecord",
+            "x": 448,
+            "y": 160,
+            "version": "1.0.0",
+            "label": "Create Contact",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "firstname": {},
+                                    "lastname": {
+                                        "last-var": {
+                                            "variable": "$.set-variables.out.contactLast",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "contact",
+                                    "firstname": "E2E",
+                                    "lastname": "{{{last-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-lead": {
+            "type": "appmixer.microsoft.dynamics.CreateObjectRecord",
+            "x": 448,
+            "y": 304,
+            "version": "1.0.0",
+            "label": "Create Lead",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "lastname": {},
+                                    "companyname": {},
+                                    "subject": {
+                                        "subject-var": {
+                                            "variable": "$.set-variables.out.leadSubject",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "lead",
+                                    "lastname": "E2E",
+                                    "companyname": "E2E Test Co",
+                                    "subject": "{{{subject-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-account": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Assert Account Created",
+            "source": {
+                "in": {
+                    "create-account": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-account": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id": {
+                                            "variable": "$.create-account.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-contact": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 160,
+            "version": "1.0.0",
+            "label": "Assert Contact Created",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-lead": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 304,
+            "version": "1.0.0",
+            "label": "Assert Lead Created",
+            "source": {
+                "in": {
+                    "create-lead": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-lead": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id": {
+                                            "variable": "$.create-lead.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-account": {
+            "type": "appmixer.microsoft.dynamics.DeleteObjectRecord",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "label": "Cleanup Account",
+            "source": {
+                "in": {
+                    "assert-account": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "assert-account": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "id": {
+                                        "id-var": {
+                                            "variable": "$.create-account.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "account",
+                                    "id": "{{{id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-contact": {
+            "type": "appmixer.microsoft.dynamics.DeleteObjectRecord",
+            "x": 832,
+            "y": 160,
+            "version": "1.0.0",
+            "label": "Cleanup Contact",
+            "source": {
+                "in": {
+                    "assert-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "assert-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "id": {
+                                        "id-var": {
+                                            "variable": "$.create-contact.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "contact",
+                                    "id": "{{{id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-lead": {
+            "type": "appmixer.microsoft.dynamics.DeleteObjectRecord",
+            "x": 832,
+            "y": 304,
+            "version": "1.0.0",
+            "label": "Cleanup Lead",
+            "source": {
+                "in": {
+                    "assert-lead": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "assert-lead": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "id": {
+                                        "id-var": {
+                                            "variable": "$.create-lead.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "lead",
+                                    "id": "{{{id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-campaign": {
+            "type": "appmixer.microsoft.dynamics.CreateObjectRecord",
+            "x": 448,
+            "y": 448,
+            "version": "1.0.0",
+            "label": "Create Campaign",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "name": {},
+                                    "rawJson": {}
+                                },
+                                "lambda": {
+                                    "objectName": "campaign",
+                                    "name": "E2E Campaign",
+                                    "rawJson": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-campaignresponse": {
+            "type": "appmixer.microsoft.dynamics.CreateObjectRecord",
+            "x": 640,
+            "y": 448,
+            "version": "1.0.0",
+            "label": "Create Campaign Response",
+            "source": {
+                "in": {
+                    "create-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "subject": {},
+                                    "rawJson": {},
+                                    "regardingobjectid_campaign@odata|bind": {
+                                        "cid": {
+                                            "variable": "$.create-campaign.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "campaignresponse",
+                                    "subject": "E2E Campaign Response",
+                                    "rawJson": false,
+                                    "regardingobjectid_campaign@odata|bind": "/campaigns({{{cid}}})"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-campaignresponse": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 448,
+            "version": "1.0.0",
+            "label": "Assert Campaign Response Created",
+            "source": {
+                "in": {
+                    "create-campaignresponse": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-campaignresponse": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "id": {
+                                            "variable": "$.create-campaignresponse.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-campaignresponse": {
+            "type": "appmixer.microsoft.dynamics.DeleteObjectRecord",
+            "x": 1024,
+            "y": 448,
+            "version": "1.0.0",
+            "label": "Cleanup Campaign Response",
+            "source": {
+                "in": {
+                    "assert-campaignresponse": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "assert-campaignresponse": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "id": {
+                                        "id-var": {
+                                            "variable": "$.create-campaignresponse.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "campaignresponse",
+                                    "id": "{{{id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-campaign": {
+            "type": "appmixer.microsoft.dynamics.DeleteObjectRecord",
+            "x": 1216,
+            "y": 448,
+            "version": "1.0.0",
+            "label": "Cleanup Campaign",
+            "source": {
+                "in": {
+                    "delete-campaignresponse": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-campaignresponse": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "objectName": {},
+                                    "id": {
+                                        "id-var": {
+                                            "variable": "$.create-campaign.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "objectName": "campaign",
+                                    "id": "{{{id-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-account": [
+                        "out"
+                    ],
+                    "assert-contact": [
+                        "out"
+                    ],
+                    "assert-lead": [
+                        "out"
+                    ],
+                    "assert-campaignresponse": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1600,
+            "y": 160,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "69d7a34d8c93c638d53aaf8d",
+                    "failedStoreId": "69d7a34d8c93c638d53aaf8c"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Microsoft Dynamics - Create Object Record",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "customFields": {
+        "category": "E2E_test_flow"
+    }
+}

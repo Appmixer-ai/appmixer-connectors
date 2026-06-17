@@ -526,7 +526,7 @@ function getInputs(item, index) {
     if (item.AttributeType === 'Lookup') {
         return {
             index,
-            type: 'select',
+            type: 'text',
             source: {
                 url: '/component/appmixer/microsoft/dynamics/ListLookupOptions?outPort=out',
                 data: {
