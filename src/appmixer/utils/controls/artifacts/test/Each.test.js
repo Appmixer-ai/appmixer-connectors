@@ -65,6 +65,45 @@ describe('Each Component', () => {
             assert.ok(context.setTimeout.notCalled);
         });
 
+        it('should throw CancelError for non-numeric delay (NaN batch-size guard)', async () => {
+            // A transform/lambda can feed a non-numeric delay. It must be rejected, not flow into the
+            // delayed path where 180000 / 'foo' = NaN -> empty batches -> infinite timeout loop.
+            for (const badDelay of ['foo', {}, NaN]) {
+                const context = createMockContext({
+                    id: 'test-context-id',
+                    messages: { in: { content: { list: ['a', 'b', 'c'], delay: badDelay } } },
+                    properties: {}
+                });
+
+                await assert.rejects(
+                    async () => Each.receive(context),
+                    (err) => {
+                        assert.ok(err instanceof context.CancelError);
+                        assert.ok(err.message.includes('delay'));
+                        return true;
+                    }
+                );
+                assert.strictEqual(context.sendJson.callCount, 0);
+                assert.ok(context.setTimeout.notCalled);
+            }
+        });
+
+        it('should treat a numeric-string delay as a number', async () => {
+            // '25' must be coerced and routed to the delayed path, not rejected.
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 100 },  // batch size 4 -> 3 items fit in first batch
+                messages: { in: { content: { list: ['a', 'b', 'c'], delay: '25' } } },
+                properties: {}
+            });
+            context.callAppmixer = sinon.stub().resolves({ success: true });
+
+            await Each.receive(context);
+
+            const itemCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 3);
+        });
+
         it('should send done with count 0 for non-array input', async () => {
             const context = createMockContext({
                 id: 'test-context-id',

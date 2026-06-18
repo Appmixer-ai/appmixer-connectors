@@ -22,10 +22,12 @@ const storeEndpoint = id => `/plugins/appmixer/utils/controls/${encodeURICompone
  * @returns {number} - Upper bound on items per batch (used for pre-slicing, not guaranteed count)
  */
 function calculateBatchSize(context, delay) {
-    // Guard against a zero/negative batch size (e.g. a custom timeoutIntervalMs config smaller than
-    // the delay). A batch size below 1 would send no items, never advance the index, and re-schedule
-    // timeouts forever. Always make progress by sending at least one item per cycle.
-    return Math.max(1, Math.floor(TIMEOUT_INTERVAL(context) / delay));
+    // Always return a finite size of at least 1 so the loop makes progress. A batch size below 1
+    // (e.g. a custom timeoutIntervalMs config smaller than the delay) or a non-finite one (NaN/
+    // Infinity from a bad delay) would otherwise send no items, never advance the index, and
+    // re-schedule timeouts forever. Note Math.max(1, NaN) === NaN, so NaN must be handled explicitly.
+    const size = Math.floor(TIMEOUT_INTERVAL(context) / delay);
+    return Number.isFinite(size) && size >= 1 ? size : 1;
 }
 
 /**

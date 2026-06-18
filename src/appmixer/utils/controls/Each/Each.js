@@ -134,11 +134,14 @@ module.exports = {
         // intentionally NOT the message-envelope correlationId (context.messages.in.correlationId),
         // which can be shared across the items of a parent Each and would collide in nested loops.
         const eachCorrelationId = context.id;
-        const { delay } = context.messages.in.content;
 
-        // Guard against invalid delay. A negative delay would produce a negative batch size,
-        // yielding an empty batch that never makes progress and re-schedules timeouts forever.
-        if (delay != null && delay < 0) {
+        // Normalize and validate the delay. The inspector is numeric, but a transform/lambda can feed
+        // any value (a non-numeric string, an object, ...). An invalid delay must be rejected here:
+        // otherwise it flows into the delayed path as a NaN/negative batch size, producing empty
+        // batches that never advance the index and re-schedule timeouts forever.
+        const rawDelay = context.messages.in.content.delay;
+        const delay = (rawDelay == null || rawDelay === '') ? 0 : Number(rawDelay);
+        if (!Number.isFinite(delay) || delay < 0) {
             throw new context.CancelError('Property \'delay\' must be a non-negative number (milliseconds).');
         }
 
