@@ -1,8 +1,8 @@
 {
-    "name": "appmixer.microsoft.dynamics.ListContacts",
+    "name": "appmixer.microsoft.dynamics.ListEntities",
     "author": "AppMixer <info@appmixer.com>",
-    "label": "List Contacts",
-    "description": "Retrieve a list of contacts",
+    "label": "List Entities",
+    "description": "Retrieve the list of entities (object types) available in your Dynamics 365 organization. Use the 'Logical Name' output as the Object Name in other components.",
     "private": false,
     "auth": {
         "service": "appmixer:microsoft:dynamics",
@@ -15,57 +15,27 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "fullname": { "type": "string" },
-                    "telephone1": { "type": "string" },
-                    "address1City": { "type": "string" },
-                    "emailaddress1": { "type": "string" },
-                    "maxRecords": { "type": "number" },
-                    "orderBy": { "type": "string" },
+                    "userFacingOnly": { "type": "boolean" },
                     "outputType": { "type": "string" }
                 }
             },
             "required": [],
             "inspector": {
                 "inputs": {
-                    "fullname": {
-                        "type": "text",
-                        "label": "Full Name",
-                        "index": 1
-                    },
-                    "telephone1": {
-                        "type": "text",
-                        "label": "Main Phone",
-                        "index": 2
-                    },
-                    "address1City": {
-                        "type": "text",
-                        "label": "Address 1: City",
-                        "index": 3
-                    },
-                    "emailaddress1": {
-                        "type": "text",
-                        "label": "Email",
-                        "index": 4
-                    },
-                    "maxRecords": {
-                        "type": "number",
-                        "label": "Max Records",
-                        "index": 5
-                    },
-                    "orderBy": {
-                        "type": "text",
-                        "label": "Order By",
-                        "group": "filters",
-                        "tooltip": "Comma-separated list of properties used to sort the order of items in the response collection.",
-                        "index": 6
+                    "userFacingOnly": {
+                        "type": "toggle",
+                        "label": "User-Facing Entities Only",
+                        "index": 1,
+                        "defaultValue": true,
+                        "tooltip": "When enabled, system, internal and many-to-many relationship entities are excluded so you only get the entities a user normally works with. Disable to return every entity in the organization."
                     },
                     "outputType": {
                         "group": "last",
                         "type": "select",
                         "label": "Output Type",
-                        "index": 7,
+                        "index": 2,
                         "defaultValue": "array",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the rows to a file is the most efficient method.",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, one item at a time, or streamed into a file.",
                         "options": [
                             { "label": "All items at once", "value": "array" },
                             { "label": "One item at a time", "value": "object" },
@@ -80,10 +50,9 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/microsoft/dynamics/DynamicEntity?outPort=out",
+                "url": "/component/appmixer/microsoft/dynamics/ListEntities?outPort=out&ignoreAuth=true",
                 "data": {
                     "messages": {
-                        "in/logicalName": "contact",
                         "in/outputType": "inputs/in/outputType"
                     },
                     "properties": {
@@ -95,8 +64,7 @@
         {
             "name": "emptyResult",
             "options": [
-                { "label": "Options", "value": "options", "schema": { "example": {} } },
-                { "label": "Message", "value": "message", "schema": { "example": "No data returned." } }
+                { "label": "Message", "value": "message", "schema": { "example": "No entities returned." } }
             ]
         }
     ],
