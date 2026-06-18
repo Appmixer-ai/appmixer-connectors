@@ -7,11 +7,15 @@
 //
 // 1. Required-input wiring (FAILURE)
 //    Every input field marked required in an inPort's `schema.required`
-//    MUST also be wired into `source.data.messages`. The expected key
-//    in messages is `<inPortName>/<fieldName>` (e.g. `in/query`). The
-//    value is allowed to be any of the formats the engine accepts —
-//    typically the literal string `"any"`, or a reference like
-//    `"inputs/in/query"`. Only the KEY presence is enforced.
+//    MUST also be wired into `source.data.messages`. Two equivalent
+//    formats are accepted:
+//      - flat key:   `messages["<inPortName>/<fieldName>"]` (e.g. `in/query`)
+//      - nested map:  `messages["<inPortName>"]["<fieldName>"]`
+//                     (e.g. `{ "in": { "query": [] } }`)
+//    The value is allowed to be any of the formats the engine accepts —
+//    typically the literal string `"any"`, a reference like
+//    `"inputs/in/query"`, or a literal placeholder such as `[]`. Only the
+//    presence of the field (in either form) is enforced.
 //
 // 2. `ignoreAuth=true` query parameter (WARNING)
 //    A dynamic outPort `source.url` should usually carry
@@ -99,11 +103,16 @@ function validateOutPort(componentPath, outPort, portLocation, requiredByPort, a
     const messages = getMessagesMap(outPort);
 
     for (const [inPortName, requiredFields] of Object.entries(requiredByPort)) {
-        for (const field of requiredFields) {
-            const key = `${inPortName}/${field}`;
+        const nested = messages[inPortName];
+        const hasNestedMap = nested && typeof nested === 'object' && !Array.isArray(nested);
 
-            if (!(key in messages)) {
-                addFailure(componentPath, `${portLocation} source.data.messages missing required input "${key}"`);
+        for (const field of requiredFields) {
+            // Accept either the flat key form (`in/list`) or the nested map form (`{ in: { list } }`).
+            const hasFlatKey = `${inPortName}/${field}` in messages;
+            const hasNestedKey = hasNestedMap && field in nested;
+
+            if (!hasFlatKey && !hasNestedKey) {
+                addFailure(componentPath, `${portLocation} source.data.messages missing required input "${inPortName}/${field}"`);
             }
         }
     }

@@ -291,8 +291,8 @@ describe('Each Component', () => {
             assert.strictEqual(postCall.args[0].body.delay, 5);
             assert.strictEqual(postCall.args[0].body.count, 5);
 
-            // Should store current index in state
-            assert.ok(context.stateSet.calledWith('test-context-id', { index: 2 }));
+            // Should store current index in state (now also persists the correlationId for resume)
+            assert.ok(context.stateSet.calledWith('test-context-id', sinon.match({ index: 2 })));
 
             // Should schedule timeout
             assert.ok(context.setTimeout.calledOnce);
@@ -568,7 +568,7 @@ describe('Each Component', () => {
             assert.strictEqual(postCall.args[0].body.items.length, 10);
 
             // Should store CORRECT index in state (1, not 3)
-            assert.ok(context.stateSet.calledWith('test-context-id', { index: 1 }));
+            assert.ok(context.stateSet.calledWith('test-context-id', sinon.match({ index: 1 })));
 
             // Should schedule timeout
             assert.ok(context.setTimeout.calledOnce);
@@ -760,6 +760,110 @@ describe('Each Component', () => {
             assert.strictEqual(itemCalls.length, 3);
             assert.strictEqual(itemCalls[0].args[0].index, 0);
             assert.strictEqual(itemCalls[0].args[0].value, 'a');
+        });
+    });
+
+    describe('Engine-retry idempotency & batch-size guard', () => {
+
+        it('should NOT restart from 0 when the store POST throws (engine re-delivers `in`)', async () => {
+            // Reproduces the customer's scenario 2: the store request fails after the first batch was
+            // already sent. The component is allowed to throw - the engine re-delivers `in` - but on
+            // that re-delivery it must resume from the persisted index, NOT restart the loop from 0.
+            const id = 'test-context-id';
+            const list = ['a', 'b', 'c', 'd', 'e'];
+            const eproto = new Error('write EPROTO ... packet length too long');
+            eproto.code = 'EPROTO';
+
+            // --- Attempt 1: first batch sent, then POST throws ---
+            const ctx1 = createMockContext({
+                id,
+                config: { timeoutIntervalMs: 10 },  // batch size = 10/5 = 2
+                messages: { in: { content: { list, delay: 5 } } },
+                properties: {}
+            });
+            ctx1.callAppmixer = sinon.stub().rejects(eproto);  // POST fails
+
+            await assert.rejects(async () => Each.receive(ctx1), /EPROTO/);
+
+            // Progress (index) was persisted before the throw. The correlationId is derived from the
+            // retry-stable context.id, so it does not need to live in state.
+            const persisted = ctx1.stateSet.getCalls().map(c => c.args[1]).pop();
+            assert.strictEqual(persisted.index, 2);
+            const firstBatchItems = ctx1.sendJson.getCalls().filter(c => c.args[1] === 'item');
+            assert.strictEqual(firstBatchItems.length, 2);
+            const firstCorrelationId = firstBatchItems[0].args[0].correlationId;
+            // correlationId is the (retry-stable) context.id, not a generated/random value.
+            assert.strictEqual(firstCorrelationId, id);
+
+            // --- Attempt 2: engine re-delivers the SAME `in` message (same context.id); state survives ---
+            const ctx2 = createMockContext({
+                id,
+                config: { timeoutIntervalMs: 10 },
+                messages: { in: { content: { list, delay: 5 } } },
+                properties: {}
+            });
+            // Simulate the persisted index surviving across the re-delivery.
+            ctx2.stateGet = sinon.stub().resolves(persisted);
+            ctx2.callAppmixer = sinon.stub().resolves({ success: true });  // POST now succeeds
+
+            await Each.receive(ctx2);
+
+            const resumedItems = ctx2.sendJson.getCalls().filter(c => c.args[1] === 'item');
+            // Resumes at index 2 (c, d) - does NOT re-send a/b from index 0.
+            assert.strictEqual(resumedItems.length, 2);
+            assert.strictEqual(resumedItems[0].args[0].index, 2);
+            assert.strictEqual(resumedItems[0].args[0].value, 'c');
+            // Same correlationId as attempt 1 (derived from the stable context.id), so JoinEach pairing
+            // stays intact across the re-delivery.
+            assert.strictEqual(resumedItems[0].args[0].correlationId, firstCorrelationId);
+            assert.ok(ctx2.callAppmixer.calledWith(sinon.match({ method: 'POST' })));
+            assert.ok(ctx2.setTimeout.calledOnce);
+        });
+
+        it('should not touch the plugin store when all items fit in the first batch', async () => {
+            // Small delayed lists complete in the first batch: resume relies on state + the in-message,
+            // so no POST/DELETE round-trip to the plugin store should happen.
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 100 },  // batch size = 20, fits 3 items
+                messages: { in: { content: { list: ['a', 'b', 'c'], delay: 5 } } },
+                properties: {}
+            });
+            context.callAppmixer = sinon.stub().resolves({ success: true });
+
+            await Each.receive(context);
+
+            const itemCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 3);
+            assert.ok(context.callAppmixer.notCalled);   // no plugin store used
+            assert.ok(context.setTimeout.notCalled);
+            assert.ok(context.stateUnset.calledWith('test-context-id'));
+            const doneCalls = context.sendJson.getCalls().filter(c => c.args[1] === 'done');
+            assert.strictEqual(doneCalls.length, 1);
+        });
+
+        it('should send at least one item when timeoutIntervalMs < delay (no infinite empty batch)', async () => {
+            // Misconfiguration: interval smaller than delay => floor(interval/delay) === 0.
+            // The guard clamps batch size to 1 so the loop always makes progress.
+            const context = createMockContext({
+                id: 'test-context-id',
+                config: { timeoutIntervalMs: 5 },  // floor(5/10) = 0 -> clamped to 1
+                messages: {
+                    in: { content: { list: ['a', 'b', 'c'], delay: 10 } }
+                },
+                properties: {}
+            });
+
+            context.callAppmixer = sinon.stub().resolves({ success: true });
+
+            await Each.receive(context);
+
+            const itemCalls = context.sendJson.getCalls().filter(call => call.args[1] === 'item');
+            assert.strictEqual(itemCalls.length, 1);
+            assert.strictEqual(itemCalls[0].args[0].index, 0);
+            // Progress persisted and continuation scheduled (not an empty, stuck batch).
+            assert.ok(context.stateSet.calledWith('test-context-id', sinon.match({ index: 1 })));
+            assert.ok(context.setTimeout.calledOnce);
         });
     });
 
