@@ -1,6 +1,9 @@
 'use strict';
 
 /**
+ * Maps the ListTrackingCategories output to a Designer select array.
+ * Lives here (next to the source component) because dropdown `source.data.transform`
+ * is resolved relative to the component named in `source.url` — i.e. ListTrackingCategories.
  * @param {Object|string} trackingCategories
  */
 module.exports.categoriesToSelectArray = trackingCategories => {

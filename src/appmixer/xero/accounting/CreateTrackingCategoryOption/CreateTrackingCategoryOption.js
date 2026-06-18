@@ -7,6 +7,16 @@ module.exports = {
 
         const { tenantId, trackingCategoryId, name } = context.messages.in.content;
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required!');
+        }
+        if (!trackingCategoryId) {
+            throw new context.CancelError('Tracking Category ID is required!');
+        }
+        if (!name) {
+            throw new context.CancelError('Option Name is required!');
+        }
+
         const xc = new XeroClient(context, tenantId);
         const response = await xc.request('PUT', `/api.xro/2.0/TrackingCategories/${trackingCategoryId}/Options`, {
             data: { Name: name }
