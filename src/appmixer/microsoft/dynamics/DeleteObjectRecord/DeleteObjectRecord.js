@@ -1,8 +1,22 @@
+const {  DEFAULT_ENTITIES } = require('../dynamics-commons');
+
 module.exports = {
 
     async receive(context) {
 
+        // Source for the Object Name typeahead - just the curated default entities, no API call.
+        if (context.properties.listDefaultEntities) {
+            return context.sendJson(DEFAULT_ENTITIES, 'out');
+        }
+
         const { id, objectName } = context.messages.in.content;
+
+        if (!objectName) {
+            throw new context.CancelError('Object Name is required!');
+        }
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
 
         const options = {
             // TODO: Make the url construction more robust.
@@ -15,9 +29,10 @@ module.exports = {
             }
         };
 
-        await context.log({ step: 'Making request', options });
-        const { data, status, statusText } = await context.httpRequest(options);
+        // Delete returns an empty object on success (consistent with the other Delete
+        // components and the platform convention). A failed request throws.
+        await context.httpRequest(options);
 
-        return context.sendJson({ objectName, data, id, status, statusText }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

@@ -1,6 +1,6 @@
 {
     "name": "appmixer.whatsapp",
-    "version": "2.0.0",
+    "version": "2.1.1",
     "changelog": {
         "1.0.0": [
             "Initial WhatsApp Business Cloud API connector.",
@@ -18,6 +18,13 @@
         ],
         "2.0.0": [
             "(breaking change) MakeApiCall: headers and parameters changed from textarea/JSON string to key-value array inputs per standard #1459 (body remains textarea/JSON to support nested structures) — existing flows that used the old string-typed headers or parameters must be updated."
+        ],
+        "2.1.1": [
+            "New WhatsApp Embedded Signup flow (Backoffice: appmixer:whatsapp.esConfigId + Meta App 'Allowed Domains for the JavaScript SDK'). Auth starts on a plugin-served page running Meta's Embedded Signup via the FB JS SDK — users select or create a WABA and phone number, Zapier-style; the resulting token carries enumerable WABA target_ids. Requires a verified business and advanced access for the whatsapp scopes on the Meta App.",
+            "OAuth simplified to two flows: Embedded Signup (esConfigId) and plain OAuth with explicit whatsapp scopes (+ auth_type=rerequest so stale Business Integration grants are re-prompted). The Login-Configuration redirect flow (configId) was removed — it added setup complexity over plain OAuth without any benefit (same picker, same scopes, no WABA enumeration).",
+            "Auth: WABA discovery hardened — /debug_token failures are logged instead of silently swallowed; auth now always fails when the token carries no whatsapp scope at all (Meta drops scopes silently for stale grants or standard access without an app role). WABA IDs are collected from both whatsapp granular scopes; unrestricted grants ('all current and future WABAs', no target_ids) pass with manual WABA entry, with best-effort enumeration via /me/businesses when business_management happens to be granted.",
+            "New ListBusinessAccounts component (businessAccounts/). Lists the WABAs granted during OAuth (from profileInfo, no extra Graph API scope needed) with best-effort name enrichment.",
+            "WhatsApp Business Account ID is now a required dynamic dropdown (sourced from ListBusinessAccounts) on all components that take it — Send*Message, ListMessageTemplates, ListPhoneNumbers, UploadMedia, NewMessage, MessageStatusUpdated. Manual entry remains possible via variable mode."
         ]
     }
 }

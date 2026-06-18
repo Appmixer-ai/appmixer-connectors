@@ -31,8 +31,7 @@ module.exports = {
         try {
             await lib.subscribeWabaApp(context, wabaId);
         } catch (err) {
-            // Continue — Meta may already be subscribed. Log for diagnostics.
-            await context.log({ step: 'whatsapp-subscribe-waba-failed', message: err.message || String(err) });
+            // Continue — Meta may already be subscribed.
         }
 
         await context.addListener(`messages:${wabaId}`, {
