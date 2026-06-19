@@ -7,29 +7,16 @@ const lib = require('../../lib');
 
 module.exports = {
 
-    // Flow Test Mode: the WhatsApp Cloud API has no endpoint to list past status
-    // updates, so emit a representative status in the exact shape routes.js maps a
-    // status into for this trigger.
+    // Flow Test Mode: the WhatsApp Cloud API has no endpoint to list past status updates — this
+    // trigger only ever gets data from a real message-status webhook. Fabricating a fake sample
+    // would emit data that matches nothing real, so fail with a clear explanation instead.
     async test(context) {
 
-        const wabaId = (context.properties && context.properties.businessAccountId)
-            || lib.resolveWabaId(context);
-        if (!wabaId) {
-            throw new context.CancelError(
-                'No WhatsApp Business Account ID to build test data. Fill the inspector '
-                + 'field or reconnect the WhatsApp account.'
-            );
-        }
-
-        return context.sendJson({
-            id: 'wamid.TEST' + Date.now(),
-            recipientId: '15551234567',
-            status: 'delivered',
-            timestamp: String(Math.floor(Date.now() / 1000)),
-            conversation: { id: 'TEST_CONVERSATION', origin: { type: 'service' } },
-            wabaId,
-            phoneNumberId: '000000000000000'
-        }, 'status');
+        throw new context.CancelError(
+            'Flow Test Mode is not available for this trigger: WhatsApp does not provide an API to '
+            + 'fetch a message status update, so no real sample data can be produced. Send a message '
+            + 'that reaches a delivered/read status to trigger the flow instead.'
+        );
     },
 
     async start(context) {
