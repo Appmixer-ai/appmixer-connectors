@@ -28,5 +28,14 @@ module.exports = {
             });
             return Promise.all(promises);
         }
+    },
+
+    async test(context) {
+
+        const report = await commons.fetchLatestReport(context);
+        if (!report) {
+            throw new Error('No reports to use as test data.');
+        }
+        return context.sendJson(report, 'report');
     }
 };
