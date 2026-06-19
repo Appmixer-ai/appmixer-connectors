@@ -1,9 +1,14 @@
 const _ = require('lodash');
-const { generateInspector } = require('../dynamics-commons');
+const { generateInspector, DEFAULT_ENTITIES } = require('../dynamics-commons');
 
 module.exports = {
 
     async receive(context) {
+
+        // Source for the Object Name typeahead - just the curated default entities, no API call.
+        if (context.properties.listDefaultEntities) {
+            return context.sendJson(DEFAULT_ENTITIES, 'out');
+        }
 
         if (context.properties.generateInspector) {
             const inPort = await generateInspector(context, 'IsValidForCreate');
@@ -49,7 +54,6 @@ module.exports = {
             data: objectRecord
         };
 
-        await context.log({ step: 'Making request', options });
         try {
             const { data, headers, status, statusText } = await context.httpRequest(options);
 

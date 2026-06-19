@@ -98,6 +98,16 @@ If the connector already exposes a polling helper (`lib.listNewMessages`, etc.),
 directly with empty state instead of writing a new request. Only extract a new helper when the
 logic is inlined in `tick()`/`receive()`.
 
+**SDK-based connectors.** Some connectors don't issue raw HTTP at all — they call a vendor SDK
+(`asana`, `@slack/web-api`, `googleapis`, …) that builds the request *and* maps the response.
+There's then no URL/auth/query/mapping to extract: **the SDK call itself is the shared seam.**
+`test()` must call the **exact same SDK methods** `tick()`/`receive()` uses (e.g. the same
+`list` + `findById` pair) so the emitted object is identical — the server does the mapping. The
+only new code is usually a tiny "pick the newest record" selector. Don't wrap the SDK in a new
+`context.httpRequest` helper just to satisfy the "share a helper" rule; reusing the same SDK
+methods already satisfies it. See `src/appmixer/asana` (`asana-commons.pickLatest()` + each
+trigger's `test()`).
+
 ## Hard rules
 
 1. **Read-only against upstream.** Only `GET`/list. No `POST`/`PUT`/`PATCH`/`DELETE`, no
@@ -135,6 +145,11 @@ logic is inlined in `tick()`/`receive()`.
    call the shared request with a **newest-first, single-item** query (`per_page=1`/`limit=1`,
    `order_by=<created>` `desc`) honoring `context.properties` filters, then `sendJson(records[0],
    '<port>')`. **No cursor, no `saveState`.** `throw` if empty.
+   - **Branching triggers.** If `tick()`/`receive()` takes a different code path depending on a
+     property (e.g. `TaskCompleted`: a single-item lookup when `task` is set vs a project-wide
+     scan when it isn't), `test()` must **mirror the same branch selection** so its output
+     matches whichever path production would take for that config — don't collapse the branches
+     into one.
 6. **Verify** (see "Verifying your test() method" below): run lint/validate, then invoke
    `test()` either via the CLI `--test` flag or via Flow Test Mode on a live instance.
 
@@ -172,7 +187,7 @@ those mean the engine fell back to schema samples because `test()` threw or is m
 
 | Group | Description | `test()` approach |
 |-------|-------------|-------------------|
-| **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. |
+| **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`, `asana.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. For SDK-based connectors (`asana`) reuse the same SDK `list`+`findById` calls — the SDK is the shared seam (see "SDK-based connectors" above). |
 | **B** Per-flow webhook | `start()` registers a per-flow webhook (e.g. `calendly`, `shopify`, `xero`, `hubspot`, `microsoft.mail`) | Do NOT register. Add a shared `lib.fetchLatestExample(context, type, properties)` once per connector, fetch newest record via REST, reshape into the webhook payload. |
 | **C** Plugin-based (global URL + `addListener`) | app-level webhook, `plugin.js`/`routes.js` fan out (e.g. `slack`, `whatsapp`, `meta.*`) | Skip `addListener`, fetch one recent matching event via REST, return it in the exact shape `routes.js` puts on the wire. |
 | **D** Generic webhook (`utils.http.Webhook*`) | no schema/upstream | **Do not implement.** Rely on log search or user-provided `payload`; document in the description. |
@@ -386,6 +401,14 @@ Worked examples across the groups:
   init phase), so `test()` could **not** just call it with empty state — it needed the dedicated
   `fetchLatestExample()` that lists newest-first and honors `query`. Watch for this whenever the
   polling helper has init/baseline semantics.
+- **`asana.*`** (`src/appmixer/asana/` — `NewTask`, `NewSubtask`, `NewStory`, `NewComment`,
+  `NewTag`, `TagAdded`, `TaskCompleted`, `NewProject`, `NewTeam`) — *SDK-based, no HTTP helper.*
+  Every `tick()` lists via the `asana` SDK, dedups vs state, then re-fetches each hit with
+  `<resource>.findById(gid)` and emits that. `test()` calls the **same** list + `findById`, so
+  the shape is identical; the one shared addition is `asana-commons.pickLatest()` (newest by
+  `created_at`/`gid`). `NewComment` keeps the `type === 'comment'` filter; `TagAdded` reads the
+  task's `tags`; `TaskCompleted` mirrors both of `tick()`'s branches (single `task` vs
+  project-wide scan) — a worked example of the branching-trigger rule.
 
 **Group B — per-flow webhook:**
 - **`calendly.events.InviteeCreated`** (`src/appmixer/calendly/events/InviteeCreated/` +
