@@ -17,25 +17,16 @@ const chatScriptSnippet = `
 
 module.exports = {
 
-    // Flow Test Mode: the 'out' port emits a user chat message (the send-message
-    // path). There is no read-only upstream that lists live chat messages, so emit a
-    // representative message in that shape. Throws in inspector-generation mode, which
-    // has no message example.
+    // Flow Test Mode: the 'out' port emits a live user chat message. There is no API to fetch a
+    // real one and its shape is not derived from user config, so a fabricated sample would test
+    // nothing and match no real run. Fail with a clear explanation instead.
     async test(context) {
 
-        if (context.properties.generateInspector) {
-            throw new Error('No chat message example available in inspector-generation mode.');
-        }
-
-        return context.sendJson({
-            id: 'test-message-' + Date.now(),
-            threadId: 'test-thread',
-            content: 'Hello, this is a test chat message.',
-            role: 'user',
-            componentId: context.componentId,
-            flowId: context.flowId,
-            sessionId: 'test-session'
-        }, 'out');
+        throw new context.CancelError(
+            'Flow Test Mode is not available for this trigger: a chat message can only come from a '
+            + 'real conversation, and there is no API to fetch one as sample data. Open the chat and '
+            + 'send a message to trigger the flow instead.'
+        );
     },
 
     async start(context) {
