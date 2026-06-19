@@ -12,6 +12,14 @@
 // to write the new lower number back. Validators with no entry in the file
 // are strict — any failure fails CI.
 //
+// Ignore-list (known false positives)
+// -----------------------------------
+// scripts/validators/_ignore-list.js lists specific (validator, path, message)
+// reports that are intentionally suppressed, each with a recorded reason. A
+// matching failure/warning is removed from the output and never fails CI. Run
+// with --show-ignored to see what is suppressed and why; a full-repo run also
+// notes any rule that matched nothing (likely stale).
+//
 // To add a new validator: create scripts/validators/<name>.js exporting
 //   { name, description, run(context) }
 // Context fields available to validators:
@@ -27,15 +35,21 @@
 //   --update-thresholds        write lowered thresholds back when counts drop
 //   --connector <name>         run all validators only for src/appmixer/<name>/,
 //                              ignore thresholds, print every failure + warning
+//   --changed                  validate only files changed on this branch (staged +
+//                              unstaged + committed vs the base ref); strict, fails on
+//                              any issue. Used by the pre-commit hook.
 //   --show-suppressed          print failures that are normally hidden by a
 //                              threshold (count ≤ threshold), so they can be
 //                              fixed. Does not change CI exit status.
+//   --show-ignored             list the reports suppressed by the ignore-list
+//                              (scripts/validators/_ignore-list.js) and why.
 //   --help, -h                 print usage and exit
 
 const fs = require('fs');
 const path = require('path');
 
 const { walkFiles, makeRelativePath, getChangedFiles, isGitRepo } = require('./validators/_shared');
+const ignoreRules = require('./validators/_ignore-list');
 
 const DEFAULT_BASE_REF = 'dev';
 
@@ -43,6 +57,54 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const CONNECTORS_ROOT = path.join(REPO_ROOT, 'src', 'appmixer');
 const VALIDATORS_DIR = path.join(__dirname, 'validators');
 const THRESHOLDS_PATH = path.join(VALIDATORS_DIR, '.thresholds.json');
+
+function normalizeForMatch(relPath) {
+
+    return relPath.split(path.sep).join('/');
+}
+
+// Returns the index of the first ignore-list rule matching this report, or -1.
+// A rule matches when every constraint it declares holds (validator name,
+// message substring, and — if given — one of its path substrings).
+function findIgnoreRuleIndex(validatorName, relPath, message) {
+
+    const normPath = normalizeForMatch(relPath);
+
+    for (let i = 0; i < ignoreRules.length; i++) {
+        const rule = ignoreRules[i];
+
+        if (rule.validator && rule.validator !== validatorName) continue;
+        if (rule.messageIncludes && !message.includes(rule.messageIncludes)) continue;
+
+        if (Array.isArray(rule.paths) && rule.paths.length > 0) {
+            const matchesPath = rule.paths.some((p) => normPath.includes(normalizeForMatch(p)));
+            if (!matchesPath) continue;
+        }
+
+        return i;
+    }
+
+    return -1;
+}
+
+function printSuppressed(suppressed, showIgnored) {
+
+    if (suppressed.length === 0) {
+        return;
+    }
+
+    if (!showIgnored) {
+        console.log(`\n${suppressed.length} report(s) suppressed by ignore-list (run with --show-ignored to see them).`);
+        return;
+    }
+
+    console.log(`\nSuppressed by ignore-list (${suppressed.length}):`);
+    for (const item of suppressed) {
+        const tag = item.severity === 'warning' ? 'warn' : 'fail';
+        console.log(`- (${tag}) ${item.text}`);
+        console.log(`    reason: ${item.reason}`);
+    }
+}
 
 function discoverValidators() {
 
@@ -123,10 +185,18 @@ Options:
                          Thresholds are ignored and every failure + warning is
                          printed. Useful when developing a single connector.
 
+  --changed              Validate only the files changed on this branch (staged +
+                         unstaged + committed since the base branch). Strict —
+                         exits non-zero on any issue. Used by the pre-commit hook.
+
   --show-suppressed      Print failures that are normally hidden because the
                          validator is at or under its threshold. Use this when
                          you want to fix the leftover issues. Does not change
                          the CI exit status.
+
+  --show-ignored         List the reports suppressed by the ignore-list
+                         (scripts/validators/_ignore-list.js), with the reason
+                         each is treated as a known false positive.
 
   --update-thresholds    When a validator's failure count drops below its
                          current threshold, write the lower number back to
@@ -139,6 +209,7 @@ Examples:
   node scripts/validate.js --changed
   node scripts/validate.js --changed --base origin/dev
   node scripts/validate.js --connector google/calendar
+  node scripts/validate.js --changed
   node scripts/validate.js --show-suppressed
   node scripts/validate.js --update-thresholds
 `);
@@ -160,7 +231,7 @@ function parseBaseArg(argv) {
 // Strict, git-diff-scoped run. Returns true when the run failed (caller sets
 // the exit code). Validators run over only the changed files; thresholds are
 // ignored and any failure is a hard fail.
-async function runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef }) {
+async function runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef, showIgnored }) {
 
     if (!isGitRepo(REPO_ROOT)) {
         console.error('--changed requires a git repository, but none was found.');
@@ -181,9 +252,13 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
         return false;
     }
 
-    console.log(`Validating changed files (strict, thresholds ignored): ${changedBundles.length} bundle.json, ${changedComponents.length} component.json.\n`);
+    console.log(`Validating changed files (strict, thresholds ignored, ignore-list applied): ${changedBundles.length} bundle.json, ${changedComponents.length} component.json.\n`);
 
     let totalFailures = 0;
+    // Reports matched by scripts/validators/_ignore-list.js are suppressed (known
+    // false positives / intentional deviations) rather than failing the run.
+    const suppressed = [];
+    const ruleHits = new Array(ignoreRules.length).fill(0);
 
     for (const validator of validators) {
         const failures = [];
@@ -199,10 +274,24 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
             walkFiles,
             relativePath,
             addFailure(filePath, message) {
-                failures.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+                const rel = relativePath(filePath);
+                const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
+                if (ruleIndex !== -1) {
+                    ruleHits[ruleIndex] += 1;
+                    suppressed.push({ severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    return;
+                }
+                failures.push(`[${validator.name}] ${rel}: ${message}`);
             },
             addWarning(filePath, message) {
-                warnings.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+                const rel = relativePath(filePath);
+                const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
+                if (ruleIndex !== -1) {
+                    ruleHits[ruleIndex] += 1;
+                    suppressed.push({ severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    return;
+                }
+                warnings.push(`[${validator.name}] ${rel}: ${message}`);
             }
         };
 
@@ -220,6 +309,8 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
 
         totalFailures += failures.length;
     }
+
+    printSuppressed(suppressed, showIgnored);
 
     if (totalFailures > 0) {
         console.error(`\nValidation failed: ${totalFailures} issue(s) in changed files.`);
@@ -242,6 +333,7 @@ async function main() {
     const showSuppressed = process.argv.includes('--show-suppressed');
     const changedMode = process.argv.includes('--changed');
     const baseRef = parseBaseArg(process.argv);
+    const showIgnored = process.argv.includes('--show-ignored');
     const connectorFilter = parseConnectorArg(process.argv);
 
     let bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
@@ -266,7 +358,14 @@ async function main() {
     // --changed mode: strict, scoped to a git diff. Mutually exclusive with the
     // repo-wide threshold run below.
     if (changedMode) {
-        const failed = await runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef });
+        const failed = await runChangedMode({
+            validators,
+            bundleFiles,
+            componentFiles,
+            relativePath,
+            baseRef,
+            showIgnored
+        });
         if (failed) {
             process.exitCode = 1;
         }
@@ -278,6 +377,10 @@ async function main() {
     const nextThresholds = { ...thresholds };
 
     const results = [];
+    // Reports matched by scripts/validators/_ignore-list.js are collected here instead
+    // of being failed/warned — known false positives / intentional deviations, with reasons.
+    const suppressed = [];
+    const ruleHits = new Array(ignoreRules.length).fill(0);
 
     for (const validator of validators) {
         const failures = [];
@@ -291,10 +394,24 @@ async function main() {
             walkFiles,
             relativePath,
             addFailure(filePath, message) {
-                failures.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+                const rel = relativePath(filePath);
+                const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
+                if (ruleIndex !== -1) {
+                    ruleHits[ruleIndex] += 1;
+                    suppressed.push({ severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    return;
+                }
+                failures.push(`[${validator.name}] ${rel}: ${message}`);
             },
             addWarning(filePath, message) {
-                warnings.push(`[${validator.name}] ${relativePath(filePath)}: ${message}`);
+                const rel = relativePath(filePath);
+                const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
+                if (ruleIndex !== -1) {
+                    ruleHits[ruleIndex] += 1;
+                    suppressed.push({ severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    return;
+                }
+                warnings.push(`[${validator.name}] ${rel}: ${message}`);
             }
         };
 
@@ -331,7 +448,8 @@ async function main() {
         results.push({ validator, failures, warnings, threshold, regressed });
     }
 
-    // --connector mode: print every failure + warning, never fail CI.
+    // --connector is a read-only debugging view: print every failure + warning,
+    // never fails CI (the --changed gate handles that, returning early above).
     if (connectorFilter) {
         for (const result of results) {
             for (const failure of result.failures) {
@@ -344,7 +462,9 @@ async function main() {
 
         const totalFailures = results.reduce((sum, r) => sum + r.failures.length, 0);
         const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
-        console.log(`\nConnector "${connectorFilter}": ${totalFailures} failure(s), ${totalWarnings} warning(s).`);
+        const suppressedSuffix = suppressed.length > 0 ? ` (${suppressed.length} suppressed by ignore-list)` : '';
+        console.log(`\nConnector "${connectorFilter}": ${totalFailures} failure(s), ${totalWarnings} warning(s).${suppressedSuffix}`);
+        printSuppressed(suppressed, showIgnored);
         return;
     }
 
@@ -374,6 +494,22 @@ async function main() {
         for (const result of results) {
             for (const warning of result.warnings) {
                 console.warn(`- ${warning}`);
+            }
+        }
+    }
+
+    // Reports suppressed by the ignore-list (known false positives), with reasons.
+    printSuppressed(suppressed, showIgnored);
+
+    // Flag ignore-list rules that matched nothing this run — likely stale. Only on full-repo
+    // runs, since --connector deliberately processes a subset and would make most rules "miss".
+    if (!connectorFilter) {
+        const staleRules = ignoreRules.filter((rule, index) => ruleHits[index] === 0);
+        if (staleRules.length > 0) {
+            console.log(`\nNote: ${staleRules.length} ignore-list rule(s) matched nothing (possibly stale):`);
+            for (const rule of staleRules) {
+                const where = Array.isArray(rule.paths) && rule.paths.length > 0 ? ` @ ${rule.paths.join(', ')}` : '';
+                console.log(`  - [${rule.validator || 'any'}] "${rule.messageIncludes || '(any message)'}"${where}`);
             }
         }
     }
