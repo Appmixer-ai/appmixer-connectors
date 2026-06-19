@@ -250,7 +250,7 @@ const getChangedFiles = async (
             if (fileTypesRestriction?.length) {
                 let isAllowed = false;
                 for (const allowedType of fileTypesRestriction) {
-                    isAllowed = allowedType === '#FILE' ? false : mimeType.startsWith(allowedType);
+                    isAllowed = allowedType === '#FILE' ? mimeType !== 'application/vnd.google-apps.folder' : mimeType.startsWith(allowedType);
                     if (isAllowed) break; // No need to search further since we found a match.
                 }
                 if (!isAllowed) return;
@@ -421,7 +421,7 @@ const fetchLatestExampleFile = async (context, { orderBy, filter } = {}) => {
             const mimeType = file.mimeType;
             let isAllowed = false;
             for (const allowedType of normalizedFileTypesRestriction) {
-                isAllowed = allowedType === '#FILE' ? false : mimeType.startsWith(allowedType);
+                isAllowed = allowedType === '#FILE' ? mimeType !== 'application/vnd.google-apps.folder' : mimeType.startsWith(allowedType);
                 if (isAllowed) break;
             }
             if (!isAllowed) continue;

@@ -79,6 +79,10 @@ module.exports = {
         const { accessToken } = context.auth;
         const { driveId } = context.properties;
 
+        if (!driveId) {
+            throw new context.CancelError('Drive ID is required!');
+        }
+
         // Flow Test Mode: fetch the current delta WITHOUT the baseline deltaLink
         // (which start()/tick() use to suppress already-seen items) so we get the
         // existing files, then emit the most recently modified one. Same fetch +

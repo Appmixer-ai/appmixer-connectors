@@ -130,7 +130,7 @@ async function getSubfolderIds(context, folderId) {
  * @param {boolean} recursive - Whether to include subfolders
  * @returns {Promise<string[]>} Array of folder IDs to monitor
  */
-async function getMonitoredFolderIds(context, folderId, recursive) {
+async function getMonitoredFolderIds(context, folderId, recursive, { skipCache = false } = {}) {
 
     if (!folderId) {
         return [];
@@ -141,15 +141,21 @@ async function getMonitoredFolderIds(context, folderId, recursive) {
     }
 
     const cacheKey = `googledocs_subfolders_${folderId}`;
-    const cached = await context.staticCache.get(cacheKey);
 
-    if (cached) {
-        return cached;
+    // Flow Test Mode passes skipCache so test() stays read-only (no staticCache writes, which have
+    // no cleanup path in test runs and would otherwise leak across runs/users).
+    if (!skipCache) {
+        const cached = await context.staticCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
     }
 
     const subfolderIds = await getSubfolderIds(context, folderId);
     const folderIds = [folderId, ...subfolderIds];
-    await context.staticCache.set(cacheKey, folderIds, FOLDER_CACHE_TTL_MS);
+    if (!skipCache) {
+        await context.staticCache.set(cacheKey, folderIds, FOLDER_CACHE_TTL_MS);
+    }
 
     return folderIds;
 }
@@ -271,7 +277,7 @@ module.exports = {
         const { folder = {}, recursive } = context.properties;
         const folderId = typeof folder === 'string' ? folder : folder.id;
 
-        const folderIds = await getMonitoredFolderIds(context, folderId, recursive);
+        const folderIds = await getMonitoredFolderIds(context, folderId, recursive, { skipCache: true });
         let documents = await fetchDocuments(context, folderId, recursive);
 
         if (folderId && recursive) {

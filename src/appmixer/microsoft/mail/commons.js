@@ -54,6 +54,17 @@ module.exports = {
             }
         });
         const messages = (data && data.value) || [];
-        return messages[0] || null;
+        const listItem = messages[0];
+        if (!listItem) {
+            return null;
+        }
+
+        // Re-fetch the message by id so test() emits the SAME shape receive() forwards
+        // (GET /me/messages/{id}); the listing projection can omit fields.
+        const { data: message } = await this.makeRequest(context, {
+            method: 'GET',
+            path: `/me/messages/${listItem.id}`
+        });
+        return message || listItem;
     }
 };
