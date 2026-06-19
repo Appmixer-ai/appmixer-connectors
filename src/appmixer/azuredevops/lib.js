@@ -129,11 +129,15 @@ module.exports = {
         const api = require('./api');
         const { organization, projectId, workItemType } = context.properties;
         if (!organization || !projectId) {
-            throw new context.CancelError('Organization and Project are required!');
+            throw new context.CancelError('Organization and Project ID are required!');
         }
-        let wiqlQuery = 'SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project';
+        // SELECT TOP 1 — only the newest work item is needed, so don't fetch every matching ID.
+        let wiqlQuery = 'SELECT TOP 1 [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project';
         if (workItemType) {
-            wiqlQuery += ` AND [System.WorkItemType] = '${workItemType}'`;
+            // Escape single quotes so a value containing one cannot break out of the WIQL string
+            // literal (prevents a broken query and WIQL injection).
+            const safeWorkItemType = workItemType.replace(/'/g, '\'\'');
+            wiqlQuery += ` AND [System.WorkItemType] = '${safeWorkItemType}'`;
         }
         wiqlQuery += ` ORDER BY [${orderField}] DESC`;
         const data = await api.FindWorkItems.execute(context, { organization, project: projectId, wiqlQuery });
