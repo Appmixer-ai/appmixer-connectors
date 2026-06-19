@@ -27,7 +27,6 @@ module.exports = {
             status: 'delivered',
             timestamp: String(Math.floor(Date.now() / 1000)),
             conversation: { id: 'TEST_CONVERSATION', origin: { type: 'service' } },
-            errors: undefined,
             wabaId,
             phoneNumberId: '000000000000000'
         }, 'status');
