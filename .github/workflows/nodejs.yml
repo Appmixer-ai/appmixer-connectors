@@ -34,9 +34,12 @@ jobs:
       run: node ./scripts/npm_install.js
     - name: Run lint
       run: npm run lint
-    - name: Run validate (whole repo, ratcheted)
-      run: npm run validate
+    # Gate PRs on the files they actually change (strict) — a PR no longer fails for unrelated repo-wide debt.
     - name: Run validate (changed files, strict)
       run: node scripts/validate.js --changed --base origin/${{ github.base_ref }}
+    # Whole-repo ratchet kept as an informational signal only (does not block the PR).
+    - name: Run validate (whole repo, ratcheted — informational)
+      run: npm run validate
+      continue-on-error: true
     - name: Run unit tests
       run: npm run test-unit
