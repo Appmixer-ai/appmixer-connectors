@@ -32,7 +32,9 @@ module.exports = {
         // { input: { callerId, <field>: value, ... } } shape receive() emits.
         const fields = context.properties.input?.ADD || [];
 
-        const data = { callerId: context.flowId };
+        // callerId identifies the *calling* flow; in Test Mode there is no caller, so use an
+        // explicit synthetic placeholder rather than this callee flow's id (context.flowId).
+        const data = { callerId: 'test-caller-flow-id' };
         fields.forEach(field => {
             if (!field.name) {
                 return;

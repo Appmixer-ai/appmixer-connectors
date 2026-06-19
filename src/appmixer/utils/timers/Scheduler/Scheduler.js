@@ -1,6 +1,8 @@
 'use strict';
 const parser = require('cron-parser');
-const moment = require('moment');
+// moment-timezone (not plain moment) — isValidTimezone() below uses moment.tz.zone(),
+// which is undefined on plain moment and would throw whenever a timezone is set.
+const moment = require('moment-timezone');
 
 const getExpression = properties => {
 
