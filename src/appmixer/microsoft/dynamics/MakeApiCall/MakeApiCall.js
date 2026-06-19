@@ -54,7 +54,6 @@ module.exports = {
             options.params = queryParams;
         }
 
-        await context.log({ step: 'Making request', options });
 
         try {
             const { data, status, statusText } = await context.httpRequest(options);
