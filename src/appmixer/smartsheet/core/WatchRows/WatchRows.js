@@ -25,8 +25,9 @@ module.exports = {
         }
     },
 
-    // Flow Test Mode: fetch the sheet's newest row through the SAME single-row
-    // GET that receive() uses, so the emitted shape is identical.
+    // Flow Test Mode: first fetch the full sheet (GET /sheets/{sheetId}) to find the newest row's
+    // ID, then fetch that row via the SAME single-row GET receive() uses so the emitted shape is
+    // identical. Note the full-sheet fetch makes test() heavier than a single receive() call.
     async test(context) {
 
         const { sheetId } = context.properties;

@@ -166,12 +166,10 @@ module.exports = {
     // Shared by every trigger's test() (Flow Test Mode). Opens its own short-lived
     // client and closes it; does NOT touch any state, change stream or resume token.
     async fetchLatestDocument(context) {
-        const { flowId, componentId } = context;
-        const connectionUri = context.auth.connectionUri;
-
-        const { client, connectionId } = await module.exports.getClient(
-            context, flowId, componentId, connectionUri, context.auth
-        );
+        // test() must not write connector state. getClient()/closeClient() persist state via
+        // context.service.stateSet/stateUnset, so use a short-lived client (getClientForAuth) that
+        // only opens a connection and is closed directly here, touching no state.
+        const client = await module.exports.getClientForAuth(context.auth);
 
         try {
             const collection = module.exports.getCollection(
@@ -183,7 +181,7 @@ module.exports = {
             if (!doc) return null;
             return JSON.parse(JSON.stringify(doc));
         } finally {
-            await module.exports.closeClient(context, connectionId);
+            await client.close();
         }
     },
 

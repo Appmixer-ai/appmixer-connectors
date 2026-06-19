@@ -131,7 +131,10 @@ async function fetchLatestRow(context) {
 
     // Wrap as a subquery so we can deterministically pick the newest row by the configured
     // idField without assuming anything about the user's ORDER BY / column list.
-    const wrappedQuery = `SELECT TOP 1 * FROM (${baseQuery}) AS appmixer_test_sub ORDER BY [${idField}] DESC`;
+    // Escape closing brackets (T-SQL doubles `]` inside a bracket-quoted identifier) so an idField
+    // containing `]` cannot break out of the quoting / inject SQL.
+    const safeIdField = String(idField).replace(/]/g, ']]');
+    const wrappedQuery = `SELECT TOP 1 * FROM (${baseQuery}) AS appmixer_test_sub ORDER BY [${safeIdField}] DESC`;
 
     const result = await runQuery({ context: context.auth, query: wrappedQuery });
     const recordset = (result && result.recordset) || [];
