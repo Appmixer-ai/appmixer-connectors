@@ -118,6 +118,9 @@ module.exports = {
 
     async test(context) {
         const { uid } = context.properties;
+        if (!uid) {
+            throw new context.CancelError('List UID is required!');
+        }
 
         // Fetch only the newest member (query orders by CREATED_AT_DESC) without
         // the state baseline, so a real example is emitted in the same shape and

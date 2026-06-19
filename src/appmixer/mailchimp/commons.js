@@ -138,18 +138,21 @@ const getLatestMember = async (context, listId, status) => {
 // Reshape a REST member object into the flat shape receive() emits from a
 // subscribe/unsubscribe webhook body (i.e. parseData() output): the webhook's
 // data[...] keys flattened, with merge fields grouped under `merges`.
-const toSubscriberWebhookShape = (member, listId) => {
+const toSubscriberWebhookShape = (member, listId, type) => {
 
     if (!member) {
         return null;
     }
     return {
+        type,
+        fired_at: member.last_changed,
         id: member.id,
         list_id: member.list_id || listId,
         email: member.email_address,
         email_type: member.email_type,
         ip_opt: member.ip_opt,
         ip_signup: member.ip_signup,
+        web_id: member.web_id,
         merges: { EMAIL: member.email_address, ...(member.merge_fields || {}) }
     };
 };
