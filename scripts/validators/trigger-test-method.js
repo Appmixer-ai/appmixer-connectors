@@ -12,15 +12,17 @@
 //      `context.state = ...` assignment leaks.
 //   2. Emit exactly one item — `context.sendJson(item, '<port>')`, never
 //      `sendArray` / `sendArrayOutput`.
-//   3. Must actually emit something: a `sendJson(...)` call has to be present.
+//   3. Must do ONE of: emit via `sendJson(...)`, OR `throw` when no example can be
+//      produced. A throw-only `test()` is valid (e.g. webhook-only triggers with no
+//      API to fetch a representative sample). Doing neither is a failure.
 //
 // Scope: the checks apply ONLY to the body of the `test(` method (extracted by
 // brace matching), so a `tick()` that legitimately saves state is never flagged.
 // Any component behavior file that declares a `test(` method is examined — no
 // trigger-vs-action classification is needed.
 //
-// A missing `throw` (the "no example available" fallback) is reported as a
-// warning, not a failure, since some test() variants legitimately always emit.
+// A `test()` that emits but never `throw`s (no "no example available" fallback) is
+// reported as a warning, not a failure.
 //
 // See .claude/skills/connector-test-method/SKILL.md ("Hard rules").
 
@@ -98,11 +100,16 @@ function validateComponent(componentPath, context) {
         context.addFailure(componentPath, `test() must emit a single item with sendJson, not sendArray/sendArrayOutput — found in ${name}.js`);
     }
 
-    if (!SEND_JSON.test(body)) {
-        context.addFailure(componentPath, `test() must emit exactly one item via context.sendJson(item, '<port>') — no sendJson found in ${name}.js`);
-    }
+    const emitsJson = SEND_JSON.test(body);
+    const throws = THROWS.test(body);
 
-    if (!THROWS.test(body)) {
+    // test() must do ONE of two things: emit a single example via sendJson, OR throw when no
+    // example can be produced. A throw-only test() is valid — e.g. webhook-only triggers whose
+    // upstream exposes no API to fetch a representative sample (WhatsApp received messages /
+    // status updates, the in-app chat trigger). Only flag a test() that does neither.
+    if (!emitsJson && !throws) {
+        context.addFailure(componentPath, `test() must either emit one item via context.sendJson(item, '<port>') or throw when no example is available — ${name}.js does neither`);
+    } else if (emitsJson && !throws) {
         context.addWarning(componentPath, `test() should throw when no example is available so the engine fallback chain takes over — no throw found in ${name}.js`);
     }
 }
