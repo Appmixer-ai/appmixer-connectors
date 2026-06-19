@@ -64,7 +64,11 @@ module.exports = {
 
         let latest = null;
         let continuationToken;
-        // ListObjectsV2 returns no ordering guarantee, so scan all pages and keep the newest.
+        // ListObjectsV2 returns no ordering guarantee, so scan pages and keep the newest. Cap the
+        // scan at MAX_PAGES: test() only needs a representative recent object, and scanning an entire
+        // large bucket would make Flow Test Mode slow/expensive and risk execution timeouts.
+        const MAX_PAGES = 10;
+        let pagesScanned = 0;
         do {
             const response = await s3.send(new ListObjectsV2Command({
                 Bucket: bucket,
@@ -76,8 +80,9 @@ module.exports = {
                     latest = item;
                 }
             }
+            pagesScanned += 1;
             continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
-        } while (continuationToken);
+        } while (continuationToken && pagesScanned < MAX_PAGES);
 
         if (!latest) {
             return null;

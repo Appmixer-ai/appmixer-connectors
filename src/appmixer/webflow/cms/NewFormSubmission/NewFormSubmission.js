@@ -66,7 +66,7 @@ module.exports = {
         if (!submission) {
             throw new Error('No recent form submissions to use as test data.');
         }
-        await context.sendJson(toWebhookShape(submission), 'out');
+        return context.sendJson(toWebhookShape(submission), 'out');
     },
     async registerWebhook(context, siteId, webhookCallbackUrl) {
         // Define the API endpoint and payload for registering a webhook

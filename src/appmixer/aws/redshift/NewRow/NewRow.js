@@ -34,7 +34,7 @@ module.exports = {
                 }
             }
         } catch (error) {
-            throw new context.CancelError('Error executing query: ' + error);
+            throw new context.CancelError('Error executing query: ' + (error.message || error));
         }
     },
     /**
@@ -66,7 +66,7 @@ module.exports = {
         try {
             latestRowResult = await runQuery({ context: context.auth, query: latestRowQuery });
         } catch (error) {
-            throw new context.CancelError('Error executing query: ' + error);
+            throw new context.CancelError('Error executing query: ' + (error.message || error));
         }
 
         if (!latestRowResult.rows.length) {
