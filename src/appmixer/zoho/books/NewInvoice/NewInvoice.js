@@ -78,7 +78,7 @@ module.exports = {
         const { invoices = [] } = await zc.request('GET', '/books/v3/invoices', { params });
 
         if (!invoices.length) {
-            return;
+            throw new Error('No invoices found for the selected organization/status to use as test data.');
         }
 
         return context.sendJson(invoices[0], 'out');
