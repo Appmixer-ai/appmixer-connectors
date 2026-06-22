@@ -30,7 +30,7 @@ Key facts about how the engine calls it:
   cursor. `test()` must not rely on reading state (and must not write it, see Hard rules).
 - `test()` runs inside a `try/catch`. If it **throws**, the error is logged and the chain
   falls through to the log/schema fallbacks. **Throw on "no example available" — never
-  return null or send nothing.**
+  return null, send nothing, or fabricate fake data** (see Hard rule 5).
 
 ## Where `test()` lives
 
@@ -123,7 +123,14 @@ trigger's `test()`).
    must return an item matching the same filters, or the test is misleading.
 4. **Emit exactly one item** via `context.sendJson(item, '<port>')`, shaped **identically** to
    what `tick()`/`receive()` emits. Never use `sendArray`/`sendArrayOutput`.
-5. **Throw on no example** (empty inbox, new channel) so the fallback chain takes over.
+5. **Throw, don't fabricate, when there's no real example.** Two cases: (a) the inbox/channel is
+   empty right now, or (b) — more fundamental — the trigger is webhook-only and the upstream
+   exposes **no API to fetch a representative sample** (e.g. WhatsApp received messages / status
+   updates). In both, `throw new context.CancelError('<why + how to trigger it for real>')`.
+   **Never hand-craft synthetic data** — fake IDs, phone numbers, `wamid.TEST…`, canned message
+   bodies. It makes the test pass while testing nothing and emits data that matches no real run,
+   which is worse than no `test()` at all. (Only exception: Group E timer triggers, whose payload
+   is legitimately *computed* — real dates — not invented.)
 6. **No quota abuse.** Reuse the same lib helpers `tick()` uses so the call goes through the
    same quota manager and rate limiter.
 
@@ -189,7 +196,7 @@ those mean the engine fell back to schema samples because `test()` threw or is m
 |-------|-------------|-------------------|
 | **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`, `asana.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. For SDK-based connectors (`asana`) reuse the same SDK `list`+`findById` calls — the SDK is the shared seam (see "SDK-based connectors" above). |
 | **B** Per-flow webhook | `start()` registers a per-flow webhook (e.g. `calendly`, `shopify`, `xero`, `hubspot`, `microsoft.mail`) | Do NOT register. Add a shared `lib.fetchLatestExample(context, type, properties)` once per connector, fetch newest record via REST, reshape into the webhook payload. |
-| **C** Plugin-based (global URL + `addListener`) | app-level webhook, `plugin.js`/`routes.js` fan out (e.g. `slack`, `whatsapp`, `meta.*`) | Skip `addListener`, fetch one recent matching event via REST, return it in the exact shape `routes.js` puts on the wire. |
+| **C** Plugin-based (global URL + `addListener`) | app-level webhook, `plugin.js`/`routes.js` fan out (e.g. `slack`, `whatsapp`, `meta.*`) | Skip `addListener`, fetch one recent matching event via REST, return it in the exact shape `routes.js` puts on the wire. **If the upstream has no API to fetch such an event** (e.g. WhatsApp received messages / message-status updates), do NOT fabricate one — `throw new context.CancelError(...)` explaining it can only be triggered by a real event (see Hard rule 5). |
 | **D** Generic webhook (`utils.http.Webhook*`) | no schema/upstream | **Do not implement.** Rely on log search or user-provided `payload`; document in the description. |
 | **E** Scheduler/timer (`utils.timers.SchedulerTrigger`) | no external API | Return a synthetic well-formed payload (current/next dates). |
 | **F** Form (`utils.forms.FormTrigger`) | dynamic schema from `properties.fields.ADD` | Walk fields, synthesize a plausible value per `field.type`. |

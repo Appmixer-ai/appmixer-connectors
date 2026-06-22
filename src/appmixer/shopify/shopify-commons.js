@@ -180,5 +180,70 @@ module.exports = {
         if (webhookId) {
             return shopify.webhook.delete(webhookId);
         }
+    },
+
+    /**
+     * Fetch the newest resource record (read-only) and reshape it into the exact
+     * webhook payload `onReceive` emits (full resource object + `webhookTopic`).
+     * Shared by every webhook trigger's `test()` so the emitted shape matches
+     * production byte-for-byte.
+     * @param {Context} context
+     * @param {Object} options
+     * @param {string} options.resource - Shopify resource name (e.g. 'customer', 'order', 'product').
+     * @param {string} options.topic - The webhook topic the trigger registers (e.g. 'customers/create').
+     * @param {Object} [options.params] - List query params (limit/order/status/...).
+     * @returns {Promise<Object|null>} The reshaped webhook payload or null if none exists.
+     */
+    async fetchLatestWebhookExample(context, { resource, topic, params = {} }) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+        const records = await shopify[resource].list({ limit: 1, ...params });
+
+        const record = Array.isArray(records) ? records[0] : null;
+        if (!record) {
+            return null;
+        }
+
+        record.webhookTopic = topic;
+        return record;
+    },
+
+    /**
+     * Reconstruct the minimal delete-webhook payload from the newest existing
+     * resource. Shopify delete webhooks deliver only the resource `id` (plus the
+     * `webhookTopic` added by `onReceive`), so we emit exactly that minimal shape.
+     * @param {Context} context
+     * @param {Object} options
+     * @param {string} options.resource - Shopify resource name (e.g. 'customer').
+     * @param {string} options.topic - The delete webhook topic (e.g. 'customers/delete').
+     * @returns {Promise<Object|null>} `{ id, webhookTopic }` or null if none exists.
+     */
+    async fetchLatestDeleteExample(context, { resource, topic, params = {} }) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+        const listParams = resource === 'order' ? { status: 'any', ...params } : params;
+        const records = await shopify[resource].list({ limit: 1, ...listParams });
+
+        const record = Array.isArray(records) ? records[0] : null;
+        if (!record) {
+            return null;
+        }
+
+        return { id: record.id, webhookTopic: topic };
+    },
+
+    /**
+     * Fetch the newest report (read-only), reusing the same list call `tick()` uses.
+     * Used by NewReport's `test()` to avoid the first-run baseline suppression that
+     * `tick()` performs against component state.
+     * @param {Context} context
+     * @returns {Promise<Object|null>} The newest report or null if none exists.
+     */
+    async fetchLatestReport(context) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+        const reports = await shopify.report.list({ order: 'updated_at DESC', limit: 1 });
+
+        return Array.isArray(reports) ? (reports[0] || null) : null;
     }
 };
