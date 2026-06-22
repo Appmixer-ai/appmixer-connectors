@@ -9,7 +9,7 @@
     },
     "auth": {
         "service": "appmixer:linkedin",
-        "scope": [ "w_member_social" ]
+        "scope": [ "w_member_social", "w_organization_social" ]
     },
     "quota": {
         "manager": "appmixer:linkedin:shares",
@@ -40,6 +40,19 @@
                         "type": "string"
                     },
                     "description": {
+                        "type": "string"
+                    },
+                    "imageUrl": {
+                        "type": "string"
+                    },
+                    "imageFile": {
+                        "type": "string",
+                        "format": "data-url"
+                    },
+                    "authorType": {
+                        "type": "string"
+                    },
+                    "organizationId": {
                         "type": "string"
                     }
                 },
@@ -94,6 +107,38 @@
                         "label": "Description",
                         "index": 6,
                         "when": { "eq": { "specificLink": true } }
+                    },
+                    "imageUrl": {
+                        "type": "text",
+                        "tooltip": "URL of an image to attach to the post. Takes priority over 'Image File' if both are provided. Cannot be used together with 'Share specific link'.",
+                        "label": "Image URL",
+                        "index": 7,
+                        "when": { "eq": { "specificLink": false } }
+                    },
+                    "imageFile": {
+                        "type": "filepicker",
+                        "tooltip": "Upload an image from Appmixer storage to attach to the post. If 'Image URL' is also provided, the URL takes priority. Cannot be used together with 'Share specific link'.",
+                        "label": "Image File",
+                        "index": 8,
+                        "when": { "and": [{ "eq": { "specificLink": false } }, { "empty": "imageUrl" }] }
+                    },
+                    "authorType": {
+                        "type": "select",
+                        "label": "Post As",
+                        "options": [
+                            { "label": "Personal Profile", "value": "PERSONAL" },
+                            { "label": "Organization", "value": "ORGANIZATION" }
+                        ],
+                        "defaultValue": "PERSONAL",
+                        "index": 9,
+                        "tooltip": "Choose whether to post as your personal profile or as an organization page you manage."
+                    },
+                    "organizationId": {
+                        "type": "text",
+                        "tooltip": "The numeric ID of the LinkedIn organization (company page) to post as.",
+                        "label": "Organization ID",
+                        "index": 10,
+                        "when": { "eq": { "authorType": "ORGANIZATION" } }
                     }
                 }
             }
