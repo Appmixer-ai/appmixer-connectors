@@ -95,6 +95,79 @@ module.exports = {
     },
 
     /**
+     * Fetch the most recent record to use as Flow Test Mode example data.
+     * Shared by the webhook triggers' test() methods so the emitted shape matches
+     * what onReceive() forwards in production (snake_case fields + webhookTopic).
+     * Returns null when there is no record to use as an example.
+     * @param {Context} context
+     * @param {string} type - 'checkout' | 'return'
+     * @returns {Promise<Object|null>}
+     */
+    async fetchLatestExample(context, type) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+
+        if (type === 'checkout') {
+            const checkouts = await shopify.checkout.list({ limit: 1 });
+            const checkout = Array.isArray(checkouts) ? checkouts[0] : null;
+            if (!checkout) {
+                return null;
+            }
+            checkout.webhookTopic = 'checkouts/create';
+            return checkout;
+        }
+
+        if (type === 'return') {
+            const returnStatuses = [
+                'return_status:RETURNED',
+                'return_status:IN_PROGRESS',
+                'return_status:RETURN_REQUESTED',
+                'return_status:RETURN_FAILED'
+            ].join(' OR ');
+            const query = `query {
+                orders(first: 1, sortKey: UPDATED_AT, reverse: true, query: "${returnStatuses}") {
+                    edges {
+                        node {
+                            id
+                            returns(first: 1) {
+                                edges {
+                                    node { id name status totalQuantity }
+                                }
+                            }
+                        }
+                    }
+                }
+            }`;
+
+            const result = await shopify.graphql(query);
+            const orderEdges = result && result.orders && result.orders.edges ? result.orders.edges : [];
+            const orderNode = orderEdges.length ? orderEdges[0].node : null;
+            const returns = orderNode && orderNode.returns ? orderNode.returns : null;
+            const returnEdges = returns && returns.edges ? returns.edges : [];
+            const returnNode = returnEdges.length ? returnEdges[0].node : null;
+            if (!returnNode) {
+                return null;
+            }
+
+            const gidToId = gid => {
+                const match = /\/(\d+)$/.exec(gid || '');
+                return match ? Number(match[1]) : gid;
+            };
+
+            return {
+                id: gidToId(returnNode.id),
+                order_id: gidToId(orderNode.id),
+                name: returnNode.name,
+                status: returnNode.status,
+                total_quantity: returnNode.totalQuantity,
+                webhookTopic: 'returns/update'
+            };
+        }
+
+        return null;
+    },
+
+    /**
      * Delete webhook.
      * @param {Context} context
      * @returns {Promise<*>}
