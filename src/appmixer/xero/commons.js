@@ -72,5 +72,34 @@ module.exports = {
                 await lock.unlock();
             }
         }
+    },
+
+    /**
+     * Fetches the most recently updated record from a Xero endpoint to use as a
+     * Flow Test Mode example. Goes through the SAME XeroClient as webhookHandler()
+     * (same auth, endpoint, dataKey and includeArchived/summaryOnly flags) so the
+     * emitted object is byte-for-byte identical to a real webhook delivery — only
+     * the selection differs (newest-first instead of the webhook's IDs).
+     * @param {string} endpoint The Xero endpoint, e.g. '/api.xro/2.0/Contacts'.
+     * @returns {Promise<object>} The newest record.
+     */
+    async fetchLatestExample(context, endpoint) {
+
+        const { tenantId } = context.properties;
+        if (!tenantId) {
+            throw new context.CancelError('Tenant is required to fetch a test example.');
+        }
+
+        const xc = new XeroClient(context, tenantId);
+        const records = await xc.requestPaginated('GET', endpoint, {
+            countLimit: 1,
+            params: { order: 'UpdatedDateUTC DESC', includeArchived: true, summaryOnly: false }
+        });
+
+        if (!records.length) {
+            throw new context.CancelError(`No records found at ${endpoint} to use as test data.`);
+        }
+
+        return records[0];
     }
 };

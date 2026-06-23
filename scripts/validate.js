@@ -87,19 +87,40 @@ function findIgnoreRuleIndex(validatorName, relPath, message) {
     return -1;
 }
 
-function printSuppressed(suppressed, showIgnored) {
+// Returns { present, value } for an optional-value flag. `value` is the token
+// after the flag unless it is missing or looks like another flag (starts with --).
+function parseFlag(argv, flag) {
 
-    if (suppressed.length === 0) {
+    const idx = argv.indexOf(flag);
+    if (idx === -1) {
+        return { present: false, value: null };
+    }
+
+    const next = argv[idx + 1];
+    const value = next && !next.startsWith('--') ? next : null;
+    return { present: true, value };
+}
+
+function printSuppressed(suppressed, showIgnored, filterValidator) {
+
+    let items = suppressed;
+    if (filterValidator) {
+        items = items.filter((item) => item.validator === filterValidator);
+    }
+
+    if (items.length === 0) {
         return;
     }
 
     if (!showIgnored) {
-        console.log(`\n${suppressed.length} report(s) suppressed by ignore-list (run with --show-ignored to see them).`);
+        const scope = filterValidator ? ` for ${filterValidator}` : '';
+        console.log(`\n${items.length} report(s) suppressed by ignore-list${scope} (run with --show-ignored to see them).`);
         return;
     }
 
-    console.log(`\nSuppressed by ignore-list (${suppressed.length}):`);
-    for (const item of suppressed) {
+    const scope = filterValidator ? ` for ${filterValidator}` : '';
+    console.log(`\nSuppressed by ignore-list${scope} (${items.length}):`);
+    for (const item of items) {
         const tag = item.severity === 'warning' ? 'warn' : 'fail';
         console.log(`- (${tag}) ${item.text}`);
         console.log(`    reason: ${item.reason}`);
@@ -189,14 +210,25 @@ Options:
                          unstaged + committed since the base branch). Strict —
                          exits non-zero on any issue. Used by the pre-commit hook.
 
-  --show-suppressed      Print failures that are normally hidden because the
-                         validator is at or under its threshold. Use this when
-                         you want to fix the leftover issues. Does not change
-                         the CI exit status.
+  --show-warnings        Dump individual warning messages. By default a full
+                         run does not print them (the per-validator status line
+                         still shows a "(+N warning(s))" count).
 
-  --show-ignored         List the reports suppressed by the ignore-list
+  --show-suppressed [validator]
+                         Print everything hidden from the default clean output:
+                         failures held under a threshold AND warnings (which are
+                         never printed by default). Use this when you want to fix
+                         the leftover issues. Does not change the CI exit status.
+                         Pass an optional validator name to limit the listing to
+                         that validator, e.g.
+                         --show-suppressed trigger-test-method.
+
+  --show-ignored [validator]
+                         List the reports suppressed by the ignore-list
                          (scripts/validators/_ignore-list.js), with the reason
-                         each is treated as a known false positive.
+                         each is treated as a known false positive. Pass an
+                         optional validator name to limit the listing to that
+                         validator, e.g. --show-ignored makeapicall-standards.
 
   --update-thresholds    When a validator's failure count drops below its
                          current threshold, write the lower number back to
@@ -231,7 +263,15 @@ function parseBaseArg(argv) {
 // Strict, git-diff-scoped run. Returns true when the run failed (caller sets
 // the exit code). Validators run over only the changed files; thresholds are
 // ignored and any failure is a hard fail.
-async function runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef, showIgnored }) {
+async function runChangedMode({
+    validators,
+    bundleFiles,
+    componentFiles,
+    relativePath,
+    baseRef,
+    showIgnored,
+    showIgnoredFilter
+}) {
 
     if (!isGitRepo(REPO_ROOT)) {
         console.error('--changed requires a git repository, but none was found.');
@@ -278,7 +318,7 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
                 const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
                 if (ruleIndex !== -1) {
                     ruleHits[ruleIndex] += 1;
-                    suppressed.push({ severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    suppressed.push({ validator: validator.name, severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
                     return;
                 }
                 failures.push(`[${validator.name}] ${rel}: ${message}`);
@@ -288,7 +328,7 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
                 const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
                 if (ruleIndex !== -1) {
                     ruleHits[ruleIndex] += 1;
-                    suppressed.push({ severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    suppressed.push({ validator: validator.name, severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
                     return;
                 }
                 warnings.push(`[${validator.name}] ${rel}: ${message}`);
@@ -298,7 +338,9 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
         await validator.run(context);
 
         const warnSuffix = warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
-        console.log(`- ${validator.name}: ${failures.length === 0 ? 'OK' : `${failures.length} issue(s)`}${warnSuffix}`);
+        const ignoredCount = suppressed.filter((item) => item.validator === validator.name).length;
+        const ignoredSuffix = ignoredCount > 0 ? ` (+${ignoredCount} ignored)` : '';
+        console.log(`- ${validator.name}: ${failures.length === 0 ? 'OK' : `${failures.length} issue(s)`}${warnSuffix}${ignoredSuffix}`);
 
         for (const failure of failures) {
             console.error(`  - ${failure}`);
@@ -310,7 +352,7 @@ async function runChangedMode({ validators, bundleFiles, componentFiles, relativ
         totalFailures += failures.length;
     }
 
-    printSuppressed(suppressed, showIgnored);
+    printSuppressed(suppressed, showIgnored, showIgnoredFilter);
 
     if (totalFailures > 0) {
         console.error(`\nValidation failed: ${totalFailures} issue(s) in changed files.`);
@@ -330,10 +372,15 @@ async function main() {
 
     const relativePath = makeRelativePath(REPO_ROOT);
     const updateThresholds = process.argv.includes('--update-thresholds');
-    const showSuppressed = process.argv.includes('--show-suppressed');
+    const showSuppressedFlag = parseFlag(process.argv, '--show-suppressed');
+    const showSuppressed = showSuppressedFlag.present;
+    const showSuppressedFilter = showSuppressedFlag.value;
     const changedMode = process.argv.includes('--changed');
     const baseRef = parseBaseArg(process.argv);
-    const showIgnored = process.argv.includes('--show-ignored');
+    const showIgnoredFlag = parseFlag(process.argv, '--show-ignored');
+    const showIgnored = showIgnoredFlag.present;
+    const showIgnoredFilter = showIgnoredFlag.value;
+    const showWarnings = process.argv.includes('--show-warnings');
     const connectorFilter = parseConnectorArg(process.argv);
 
     let bundleFiles = walkFiles(CONNECTORS_ROOT, (filePath) => path.basename(filePath) === 'bundle.json');
@@ -364,7 +411,8 @@ async function main() {
             componentFiles,
             relativePath,
             baseRef,
-            showIgnored
+            showIgnored,
+            showIgnoredFilter
         });
         if (failed) {
             process.exitCode = 1;
@@ -398,7 +446,7 @@ async function main() {
                 const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
                 if (ruleIndex !== -1) {
                     ruleHits[ruleIndex] += 1;
-                    suppressed.push({ severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    suppressed.push({ validator: validator.name, severity: 'failure', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
                     return;
                 }
                 failures.push(`[${validator.name}] ${rel}: ${message}`);
@@ -408,7 +456,7 @@ async function main() {
                 const ruleIndex = findIgnoreRuleIndex(validator.name, rel, message);
                 if (ruleIndex !== -1) {
                     ruleHits[ruleIndex] += 1;
-                    suppressed.push({ severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
+                    suppressed.push({ validator: validator.name, severity: 'warning', text: `[${validator.name}] ${rel}: ${message}`, reason: ignoreRules[ruleIndex].reason });
                     return;
                 }
                 warnings.push(`[${validator.name}] ${rel}: ${message}`);
@@ -444,7 +492,9 @@ async function main() {
         }
 
         const warnSuffix = !connectorFilter && warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
-        console.log(`- ${validator.name}: ${status}${warnSuffix}`);
+        const ignoredCount = suppressed.filter((item) => item.validator === validator.name).length;
+        const ignoredSuffix = !connectorFilter && ignoredCount > 0 ? ` (+${ignoredCount} ignored)` : '';
+        console.log(`- ${validator.name}: ${status}${warnSuffix}${ignoredSuffix}`);
         results.push({ validator, failures, warnings, threshold, regressed });
     }
 
@@ -464,7 +514,7 @@ async function main() {
         const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
         const suppressedSuffix = suppressed.length > 0 ? ` (${suppressed.length} suppressed by ignore-list)` : '';
         console.log(`\nConnector "${connectorFilter}": ${totalFailures} failure(s), ${totalWarnings} warning(s).${suppressedSuffix}`);
-        printSuppressed(suppressed, showIgnored);
+        printSuppressed(suppressed, showIgnored, showIgnoredFilter);
         return;
     }
 
@@ -485,10 +535,12 @@ async function main() {
         return;
     }
 
-    // Warnings — informational only, never fail CI.
+    // Warnings — informational only, never fail CI. They are NOT printed by
+    // default (the per-validator status line already carries a "(+N warning(s))"
+    // suffix); pass --show-warnings to dump the individual messages.
     const totalWarnings = results.reduce((sum, r) => sum + r.warnings.length, 0);
 
-    if (totalWarnings > 0) {
+    if (totalWarnings > 0 && showWarnings) {
         console.log(`\nWarnings (${totalWarnings}):`);
 
         for (const result of results) {
@@ -499,7 +551,7 @@ async function main() {
     }
 
     // Reports suppressed by the ignore-list (known false positives), with reasons.
-    printSuppressed(suppressed, showIgnored);
+    printSuppressed(suppressed, showIgnored, showIgnoredFilter);
 
     // Flag ignore-list rules that matched nothing this run — likely stale. Only on full-repo
     // runs, since --connector deliberately processes a subset and would make most rules "miss".
@@ -514,13 +566,20 @@ async function main() {
         }
     }
 
-    // --show-suppressed: print failures hidden by the threshold so they can be fixed.
+    // --show-suppressed: print everything hidden from the default clean output —
+    // both failures held under a threshold AND warnings (which are never printed by
+    // default) — so they can be fixed. An optional validator name (e.g.
+    // --show-suppressed makeapicall-standards) limits the listing to that validator.
     if (showSuppressed) {
-        const suppressed = results.filter((r) => r.threshold !== null && r.failures.length > 0 && !r.regressed);
+        const matchesFilter = (r) => !showSuppressedFilter || r.validator.name === showSuppressedFilter;
+        const scope = showSuppressedFilter ? ` for ${showSuppressedFilter}` : '';
+
+        const suppressed = results.filter((r) =>
+            r.threshold !== null && r.failures.length > 0 && !r.regressed && matchesFilter(r));
         const totalSuppressed = suppressed.reduce((sum, r) => sum + r.failures.length, 0);
 
         if (totalSuppressed > 0) {
-            console.log(`\nSuppressed failures (${totalSuppressed}) — under threshold, not failing CI:`);
+            console.log(`\nSuppressed failures${scope} (${totalSuppressed}) — under threshold, not failing CI:`);
 
             for (const result of suppressed) {
                 console.log(`\n  ${result.validator.name} (${result.failures.length} of ${result.threshold} allowed):`);
@@ -529,7 +588,22 @@ async function main() {
                 }
             }
         } else {
-            console.log('\nNo suppressed failures — all thresholded validators are clean.');
+            console.log(`\nNo suppressed failures${scope} — all thresholded validators are clean.`);
+        }
+
+        // Warnings are also hidden from the default output — surface them here too.
+        const warned = results.filter((r) => r.warnings.length > 0 && matchesFilter(r));
+        const totalWarned = warned.reduce((sum, r) => sum + r.warnings.length, 0);
+
+        if (totalWarned > 0) {
+            console.log(`\nWarnings${scope} (${totalWarned}) — informational, not failing CI:`);
+
+            for (const result of warned) {
+                console.log(`\n  ${result.validator.name} (${result.warnings.length} warning(s)):`);
+                for (const warning of result.warnings) {
+                    console.log(`  - ${warning}`);
+                }
+            }
         }
     }
 
