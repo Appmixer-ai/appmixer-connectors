@@ -29,18 +29,44 @@ module.exports = {
 
     test: async function(context) {
 
-        // Fetch the newest project through the same REST client/base URL the webhook
-        // lifecycle uses; the list resource matches the schema of the webhook Entity.
-        const response = await this.httpRequest(context, {
-            url: this.getBaseUrl(context) + '/project/projects',
-            method: 'GET',
-            query: { orderBy: 'id desc', pageSize: 1 }
-        });
-        const record = (response.data || [])[0];
-        if (!record) {
-            throw new context.CancelError('No projects found to use as test data.');
+        // Honor the subscription scope (properties.level/objectId) so Test Mode emits an
+        // example the configured trigger would actually deliver. All paths fetch through the
+        // same REST client/base URL the webhook lifecycle uses; the resource matches the
+        // schema of the webhook Entity.
+        const { level, objectId } = context.properties;
+        const baseUrl = this.getBaseUrl(context) + '/project/projects';
+
+        // level=Owner subscribes to every project — the newest one is representative.
+        if (level === 'Owner') {
+            const response = await this.httpRequest(context, {
+                url: baseUrl,
+                method: 'GET',
+                query: { orderBy: 'id desc', pageSize: 1 }
+            });
+            const record = (response.data || [])[0];
+            if (!record) {
+                throw new context.CancelError('No projects found to use as test data.');
+            }
+            return context.sendJson(record, 'out');
         }
-        return context.sendJson(record, 'out');
+
+        // level=Project subscribes to one specific project — fetch exactly that record.
+        if (level === 'Project') {
+            const response = await this.httpRequest(context, {
+                url: `${baseUrl}/${objectId}`,
+                method: 'GET'
+            });
+            if (!response.data) {
+                throw new context.CancelError(`Project ${objectId} not found to use as test data.`);
+            }
+            return context.sendJson(response.data, 'out');
+        }
+
+        // Status/Board narrow delivery to a subset that cannot be reproduced faithfully
+        // with a read-only fetch — throw rather than emit an out-of-scope sample.
+        throw new context.CancelError(
+            `Flow Test Mode cannot sample a "${level}"-scoped subscription read-only. Use level "Owner" or "Project", or trigger it with a real event.`
+        );
     },
 
     httpRequest: async function(context, override = {}) {
