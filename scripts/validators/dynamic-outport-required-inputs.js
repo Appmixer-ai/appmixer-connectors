@@ -17,12 +17,15 @@
 //    `"inputs/in/query"`, or a literal placeholder such as `[]`. Only the
 //    presence of the field (in either form) is enforced.
 //
-// 2. `ignoreAuth=true` query parameter (WARNING)
+// 2. `ignoreAuth=true` query parameter (FAILURE, threshold-gated)
 //    A dynamic outPort `source.url` should usually carry
 //    `ignoreAuth=true` so the Designer can render the dropdown even when
 //    the user's auth account is missing or stale. Absence is not always
 //    wrong (some sources legitimately need an active session), so this
-//    is emitted as a non-failing warning.
+//    used to be a non-failing warning — but the warnings were noisy and
+//    untracked. It is now a threshold-gated failure (ratchet): existing
+//    misses are capped in scripts/validators/.thresholds.json and CI fails
+//    only when the count goes UP, with the floor target at 0.
 //
 // Why
 // ---
@@ -88,16 +91,16 @@ function urlHasIgnoreAuth(url) {
     return /[?&]ignoreAuth=true(?:&|$)/.test(url);
 }
 
-function validateOutPort(componentPath, outPort, portLocation, requiredByPort, addFailure, addWarning) {
+function validateOutPort(componentPath, outPort, portLocation, requiredByPort, addFailure) {
 
     if (!outPort.source) {
         return;
     }
 
-    // Warning: recommend ignoreAuth=true on the dynamic source URL so the
-    // Designer dropdown still loads when auth is missing/stale.
+    // Failure (threshold-gated): recommend ignoreAuth=true on the dynamic source
+    // URL so the Designer dropdown still loads when auth is missing/stale.
     if (outPort.source.url && !urlHasIgnoreAuth(outPort.source.url)) {
-        addWarning(componentPath, `${portLocation} source.url is missing "ignoreAuth=true" — recommended for dynamic dropdowns`);
+        addFailure(componentPath, `${portLocation} source.url is missing "ignoreAuth=true" — recommended for dynamic dropdowns`);
     }
 
     const messages = getMessagesMap(outPort);
@@ -165,7 +168,7 @@ function validateInputSources(componentPath, component, requiredByPort, addFailu
     }
 }
 
-function validateComponent(componentPath, addFailure, addWarning) {
+function validateComponent(componentPath, addFailure) {
 
     if (isMakeApiCallComponent(componentPath)) {
         return;
@@ -192,7 +195,7 @@ function validateComponent(componentPath, addFailure, addWarning) {
         }
 
         const portLocation = `outPorts[${index}](${port.name || index})`;
-        validateOutPort(componentPath, port, portLocation, requiredByPort, addFailure, addWarning);
+        validateOutPort(componentPath, port, portLocation, requiredByPort, addFailure);
     }
 
     validateInputSources(componentPath, component, requiredByPort, addFailure);
@@ -200,10 +203,10 @@ function validateComponent(componentPath, addFailure, addWarning) {
 
 module.exports = {
     name: 'dynamic-outport-required-inputs',
-    description: 'dynamic outPort (with `source`) and self-invoking inspector input sources wire every required inPort field into source.data.messages; warns if ignoreAuth=true missing from outPort source.url',
+    description: 'dynamic outPort (with `source`) and self-invoking inspector input sources wire every required inPort field into source.data.messages; flags missing ignoreAuth=true on outPort source.url (threshold-gated)',
     run(context) {
         for (const componentPath of context.componentFiles) {
-            validateComponent(componentPath, context.addFailure, context.addWarning);
+            validateComponent(componentPath, context.addFailure);
         }
     }
 };

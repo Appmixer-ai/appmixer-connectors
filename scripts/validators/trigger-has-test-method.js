@@ -6,9 +6,14 @@
 // expose a `test(context)` method so Flow Test Mode can emit a realistic item
 // without starting the flow.
 //
-// A component is treated as a trigger when its behavior file defines `tick(context)`
-// or `start(context)` (the polling / webhook lifecycle entry points). Components
-// that have such a method but no `test(context)` are reported.
+// A component is treated as a trigger when EITHER its manifest declares
+// `webhook: true` OR its behavior file defines `tick(context)` / `start(context)`
+// (the polling / listener lifecycle entry points) — AND it has no inPorts (a real
+// trigger emits but never receives on an input port). Webhook triggers frequently
+// handle delivery in `receive(context)` and define neither `tick()` nor `start()`,
+// so the manifest's `webhook: true` flag is the only reliable signal for them;
+// detecting via `start()`/`tick()` alone silently skipped ~24 webhook triggers.
+// Components that are triggers but have no `test(context)` are reported.
 //
 // This validator is THRESHOLD-GATED (ratchet): it is listed in
 // scripts/validators/.thresholds.json with a cap equal to the number of triggers
@@ -31,57 +36,41 @@ function componentName(componentPath) {
 }
 
 // Triggers where test() is intentionally absent. Keyed by the connector-relative
-// path so renames surface as a miss rather than a silent skip. Three reasons:
-//   1. Group D generic webhooks with no schema/upstream, and the up/down monitor
-//      that has no record to fetch.
-//   2. Action components that define start() only for driver/connection lifecycle
-//      (they have inPorts and a receive() that does the work) — not triggers.
-//   3. Message-queue consumers and internal engine-event triggers with no read-only
-//      way to sample a representative item (consuming is destructive / no upstream API).
+// path so renames surface as a miss rather than a silent skip. These are all real
+// triggers (no inPorts) for which there is genuinely no read-only way to sample a
+// representative item. Action components that merely define start()/receive() for
+// connection lifecycle are NOT listed here — they have inPorts and are excluded by
+// the inPorts guard in validateComponent().
 const SKIP = new Set([
-    // 1. Generic webhooks / monitors with no upstream record to fetch.
+    // 1. Generic webhooks / monitors with a user-defined payload and no upstream
+    //    record to fetch (the up/down monitor likewise has nothing to sample).
     'utils/http/DynamicWebhook',
+    'utils/http/WebhookTrigger',
     'utils/http/Uptime',
-    // 2. Action components that define start() for connection lifecycle only.
-    'mongodb/db/CreateDocument',
-    'mongodb/db/DeleteDocument',
-    'mongodb/db/Query',
-    'mongodb/db/UpdateDocument',
-    'rabbitmq/platform/Publish',
-    'rabbitmq/platform/SendToQueue',
-    'kafka/platform/SendMessage',
-    // 3. Message-queue consumers / internal engine events — no read-only sample.
+    // 2. Message-queue consumers / internal engine events — consuming is destructive
+    //    or there is no upstream API to read a representative item.
     'rabbitmq/platform/NewMessage',
     'kafka/platform/NewMessage',
     'system/core/OnAnyFlowComponentError',
-    // 3b. Inbound-only webhooks with no REST endpoint to fetch a past event
-    // (LINE messaging is push/reply only — received messages can't be listed).
+    // 3. Inbound-only webhooks with no REST endpoint to fetch a past event
+    //    (LINE messaging is push/reply only — received messages can't be listed).
     'line/core/NewMessages',
-    // 4. Action components that use start() for lifecycle but have an `in` port and
-    // perform a mutation — not fetchable triggers (no read-only item to sample).
-    'wiz/core/UploadScan',
-    'plivo/sms/SendSMSAndWaitForReply',
-    // 5. Diff/delta-based deletion triggers — a deleted item no longer exists upstream
-    // and there is no read-only endpoint that lists "currently deleted" items, so the
-    // production payload (removed/trashed facet) cannot be reconstructed faithfully.
+    // 4. Diff/delta-based deletion triggers — a deleted item no longer exists upstream
+    //    and there is no read-only endpoint that lists "currently deleted" items, so the
+    //    production payload (removed/trashed facet) cannot be reconstructed faithfully.
     'microsoft/sharepoint/DeletedFile',
     'google/bigquery/DeletedRow',
     'google/drive/DeletedFileOrFolder',
-    // 6. Event with no read-only upstream reachable from the trigger's properties
-    // (beehiiv exposes no publication-wide survey-response list endpoint).
+    // 5. Event with no read-only upstream reachable from the trigger's properties
+    //    (beehiiv exposes no publication-wide survey-response list endpoint).
     'beehiiv/core/SurveyResponseSubmitted',
-    // 7. Engine-internal / control / test-harness components. These have no external
-    // upstream to sample: utils/test/* are E2E-flow harness pieces, utils/storage/*
-    // fire on internal store changes, and utils/controls/* are input-port control
-    // components (not event triggers).
-    'utils/test/AfterAll',
-    'utils/test/CallCount',
+    // 6. Engine-internal trigger components with no external upstream to sample:
+    //    utils/test/Tick is an E2E-flow harness piece and utils/storage/* fire on
+    //    internal store changes.
     'utils/test/Tick',
     'utils/storage/OnItemAdded',
     'utils/storage/OnItemRemoved',
-    'utils/storage/OnItemUpdated',
-    'utils/controls/Counter',
-    'utils/controls/Digest'
+    'utils/storage/OnItemUpdated'
 ]);
 
 const TICK = /(?<![.\w])(?:async\s+)?tick\s*\(\s*context\s*\)/;
@@ -106,8 +95,23 @@ function validateComponent(componentPath, context) {
         return;
     }
 
+    let manifest;
+    try {
+        manifest = JSON.parse(fs.readFileSync(componentPath, 'utf8'));
+    } catch (error) {
+        return;
+    }
+
+    // A real trigger emits but never receives on an input port. Action components
+    // that define start()/receive() for connection lifecycle (and webhook-backed
+    // request/response actions) all have inPorts — exclude them here.
+    const hasInPorts = Array.isArray(manifest.inPorts) && manifest.inPorts.length > 0;
+    if (hasInPorts) {
+        return;
+    }
+
     const source = fs.readFileSync(behaviorPath, 'utf8');
-    const isTrigger = TICK.test(source) || START.test(source);
+    const isTrigger = manifest.webhook === true || TICK.test(source) || START.test(source);
     if (!isTrigger) {
         return;
     }
