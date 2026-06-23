@@ -87,7 +87,7 @@ jobs:
         # `proceed`: only true for an apx-vero-authored PR whose head lives in
         # the apx-vero fork (so we can push the update).
         env:
-          GH_TOKEN: ${{ secrets.CLAUDE_BOT_PAT }}
+          GH_TOKEN: ${{ secrets.VERO_GH_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           # issue_comment AND pull_request_review_comment both populate
           # github.event.comment; pull_request_review populates github.event.review.
@@ -160,7 +160,7 @@ jobs:
           fetch-depth: 0
           # PAT with write access to apx-vero/appmixer-connectors AND
           # pull-requests/issues write on Appmixer-ai/appmixer-connectors.
-          token: ${{ secrets.CLAUDE_BOT_PAT }}
+          token: ${{ secrets.VERO_GH_TOKEN }}
 
       - name: Use Node.js 24.6.0
         if: steps.pr.outputs.proceed == 'true'
@@ -185,17 +185,17 @@ jobs:
         if: steps.pr.outputs.proceed == 'true'
         run: |
           git config --global \
-            url."https://x-access-token:${{ secrets.CLAUDE_BOT_PAT }}@github.com/Appmixer-ai/appmixer-openclaw-agents".insteadOf \
+            url."https://x-access-token:${{ secrets.VERO_GH_TOKEN }}@github.com/Appmixer-ai/appmixer-openclaw-agents".insteadOf \
             "https://github.com/Appmixer-ai/appmixer-openclaw-agents"
 
       - name: Claude address the mention
         if: steps.pr.outputs.proceed == 'true'
         uses: anthropics/claude-code-action@51705da45eecce209d4700538bf8377d5b5fc695 # v1.0.152
         env:
-          GH_TOKEN: ${{ secrets.CLAUDE_BOT_PAT }}
+          GH_TOKEN: ${{ secrets.VERO_GH_TOKEN }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.CLAUDE_BOT_PAT }}
+          github_token: ${{ secrets.VERO_GH_TOKEN }}
           # See claude-issue-to-connectors.yml: apx-vero is read-only on the
           # upstream repo, so the built-in actor write-permission check 404s.
           # We've already gated tightly on event/author above, so skip it.
