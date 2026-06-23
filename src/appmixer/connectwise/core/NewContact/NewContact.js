@@ -27,6 +27,22 @@ module.exports = {
         }
     },
 
+    test: async function(context) {
+
+        // Fetch the newest contact through the same REST client/base URL the webhook
+        // lifecycle uses; the list resource matches the schema of the webhook Entity.
+        const response = await this.httpRequest(context, {
+            url: this.getBaseUrl(context) + '/company/contacts',
+            method: 'GET',
+            query: { orderBy: 'id desc', pageSize: 1 }
+        });
+        const record = (response.data || [])[0];
+        if (!record) {
+            throw new context.CancelError('No contacts found to use as test data.');
+        }
+        return context.sendJson(record, 'out');
+    },
+
     httpRequest: async function(context, override = {}) {
 
         let url = null;
