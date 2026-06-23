@@ -50,6 +50,25 @@ module.exports = {
     Date: SalesforceAPI.Date,
 
     /**
+     * Fetch the single newest record of an sObject via the jsforce SDK, ordered by
+     * CreatedDate descending. Shared by the New* triggers' test() methods so the emitted
+     * record goes through the exact same SDK query path as tick() (minus the `since`
+     * baseline filter, which would suppress output on a fresh poll).
+     * @param {Object} context - Appmixer context object.
+     * @param {string} objectName - Salesforce sObject name (e.g. 'Lead').
+     * @return {Promise<Object|null>} the newest record or null when none exist.
+     */
+    async findLatestSObject(context, objectName) {
+
+        const client = this.getSalesforceAPI(context);
+        const res = await client.sobject(objectName)
+            .find({})
+            .sort({ CreatedDate: -1 })
+            .limit(1);
+        return (Array.isArray(res) && res.length) ? res[0] : null;
+    },
+
+    /**
      * Salesforce has a weird datetime format '2017-04-28T16:18:47.000+0000', but AJV
      * schema validator does not buy that, so let's reformat to ISO.
      * @param {string} date

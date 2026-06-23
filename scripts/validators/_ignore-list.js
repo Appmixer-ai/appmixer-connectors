@@ -43,5 +43,86 @@ module.exports = [
         messageIncludes: 'auth.scope is empty',
         paths: ['microsoft/dynamics/MakeApiCall/component.json'],
         reason: 'Dynamics 365 uses the legacy resource-based OAuth flow (authorize?resource={org url}); the access token is scoped to the org resource, not to granular OAuth scopes. The connector declares scope [] on every component by design, so MakeApiCall matches that convention.'
+    },
+    {
+        validator: 'trigger-test-method',
+        messageIncludes: 'test() should throw when no example is available',
+        paths: [
+            'hubspot/crm/NewContact/component.json',
+            'hubspot/crm/NewDeal/component.json',
+            'hubspot/crm/UpdatedContact/component.json',
+            'hubspot/crm/UpdatedDeal/component.json',
+            'zoho/crm/ContactCreated/component.json',
+            'zoho/crm/ContactUpdated/component.json',
+            'zoho/crm/LeadCreated/component.json',
+            'zoho/crm/LeadUpdated/component.json'
+        ],
+        reason: 'These test() methods delegate the "no example" throw to the connector-shared fetchLatestExample() helper (hubspot BaseSubscriptionComponent / zoho ZohoNotifiable), which throws a CancelError when the upstream returns no record. The validator only scans the test() body for a literal throw, so it reports a false positive; the fallback-on-empty behaviour is present.'
+    },
+    {
+        validator: 'trigger-test-method',
+        messageIncludes: 'test() should throw when no example is available',
+        paths: [
+            'utils/controls/OnStart/component.json',
+            'utils/http/Uptime/component.json',
+            'utils/subflows/OnFlowCall/component.json',
+            'utils/timers/Timer/component.json'
+        ],
+        reason: 'These sourceless triggers have no upstream to be empty: their test() always produces a deterministic/synthetic payload of the production shape (OnStart = start timestamp, Uptime = a single up/down probe result, OnFlowCall = a payload built from the configured input fields, Timer = a computed tick). There is no "no example available" case, so a throw is intentionally absent.'
+    },
+
+    // trigger-has-test-method: triggers where a test() is intentionally NOT implemented
+    // (no read-only way to sample a representative production item). Grouped by reason.
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: [
+            'utils/http/DynamicWebhook/component.json',
+            'utils/http/WebhookTrigger/component.json'
+        ],
+        reason: 'Generic webhooks with a user-defined payload and no upstream record to fetch, so test() cannot emit a representative item.'
+    },
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: [
+            'rabbitmq/platform/NewMessage/component.json',
+            'kafka/platform/NewMessage/component.json',
+            'system/core/OnAnyFlowComponentError/component.json'
+        ],
+        reason: 'Message-queue consumers / internal engine events — consuming is destructive or there is no upstream API to read a representative item.'
+    },
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: ['line/core/NewMessages/component.json'],
+        reason: 'Inbound-only webhook with no REST endpoint to fetch a past event (LINE messaging is push/reply only — received messages cannot be listed).'
+    },
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: [
+            'microsoft/sharepoint/DeletedFile/component.json',
+            'google/bigquery/DeletedRow/component.json',
+            'google/drive/DeletedFileOrFolder/component.json'
+        ],
+        reason: 'Diff/delta-based deletion triggers — a deleted item no longer exists upstream and there is no read-only endpoint that lists "currently deleted" items, so the production payload cannot be reconstructed faithfully.'
+    },
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: ['beehiiv/core/SurveyResponseSubmitted/component.json'],
+        reason: 'Event with no read-only upstream reachable from the trigger\'s properties (beehiiv exposes no publication-wide survey-response list endpoint).'
+    },
+    {
+        validator: 'trigger-has-test-method',
+        messageIncludes: 'missing a test(context) method',
+        paths: [
+            'utils/test/Tick/component.json',
+            'utils/storage/OnItemAdded/component.json',
+            'utils/storage/OnItemRemoved/component.json',
+            'utils/storage/OnItemUpdated/component.json'
+        ],
+        reason: 'Engine-internal triggers with no external upstream to sample: utils/test/Tick is an E2E-flow harness piece and utils/storage/* fire on internal store changes.'
     }
 ];
