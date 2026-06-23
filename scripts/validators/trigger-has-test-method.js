@@ -21,9 +21,12 @@
 // without test()); as triggers gain test() the count drops and the threshold can
 // be ratcheted down with `--update-thresholds`. The target floor is 0.
 //
-// SKIP holds the few triggers where test() is intentionally not implemented
-// (skill "Group D" generic webhooks with a user-defined payload and no upstream
-// record to fetch). These are excluded so the floor stays at 0.
+// Triggers where test() is intentionally absent (generic webhooks with a
+// user-defined payload, deletion/diff triggers, message-queue consumers, engine
+// internals with no read-only upstream to sample) are NOT special-cased here —
+// they are suppressed via scripts/validators/_ignore-list.js with a recorded
+// reason, like every other validator's known deviations. Run
+// `node scripts/validate.js --show-ignored trigger-has-test-method` to see them.
 //
 // See .claude/skills/connector-test-method/SKILL.md ("Trigger groups").
 
@@ -35,59 +38,12 @@ function componentName(componentPath) {
     return path.basename(path.dirname(componentPath));
 }
 
-// Triggers where test() is intentionally absent. Keyed by the connector-relative
-// path so renames surface as a miss rather than a silent skip. These are all real
-// triggers (no inPorts) for which there is genuinely no read-only way to sample a
-// representative item. Action components that merely define start()/receive() for
-// connection lifecycle are NOT listed here — they have inPorts and are excluded by
-// the inPorts guard in validateComponent().
-const SKIP = new Set([
-    // 1. Generic webhooks / monitors with a user-defined payload and no upstream
-    //    record to fetch (the up/down monitor likewise has nothing to sample).
-    'utils/http/DynamicWebhook',
-    'utils/http/WebhookTrigger',
-    'utils/http/Uptime',
-    // 2. Message-queue consumers / internal engine events — consuming is destructive
-    //    or there is no upstream API to read a representative item.
-    'rabbitmq/platform/NewMessage',
-    'kafka/platform/NewMessage',
-    'system/core/OnAnyFlowComponentError',
-    // 3. Inbound-only webhooks with no REST endpoint to fetch a past event
-    //    (LINE messaging is push/reply only — received messages can't be listed).
-    'line/core/NewMessages',
-    // 4. Diff/delta-based deletion triggers — a deleted item no longer exists upstream
-    //    and there is no read-only endpoint that lists "currently deleted" items, so the
-    //    production payload (removed/trashed facet) cannot be reconstructed faithfully.
-    'microsoft/sharepoint/DeletedFile',
-    'google/bigquery/DeletedRow',
-    'google/drive/DeletedFileOrFolder',
-    // 5. Event with no read-only upstream reachable from the trigger's properties
-    //    (beehiiv exposes no publication-wide survey-response list endpoint).
-    'beehiiv/core/SurveyResponseSubmitted',
-    // 6. Engine-internal trigger components with no external upstream to sample:
-    //    utils/test/Tick is an E2E-flow harness piece and utils/storage/* fire on
-    //    internal store changes.
-    'utils/test/Tick',
-    'utils/storage/OnItemAdded',
-    'utils/storage/OnItemRemoved',
-    'utils/storage/OnItemUpdated'
-]);
-
 const TICK = /(?<![.\w])(?:async\s+)?tick\s*\(\s*context\s*\)/;
 const START = /(?<![.\w])(?:async\s+)?start\s*\(\s*context\s*\)/;
 // Accept both the shorthand method form `test(context) {` / `async test(context) {`
 // and the object-property form `test: function (context)` / `test: async function (context)`
 // that many connectors use alongside `start: async function (context)`.
 const TEST_METHOD = /(?<![.\w])(?:async\s+)?test\s*\(\s*context\s*\)\s*\{|(?<![.\w])test\s*:\s*(?:async\s+)?function\s*\(\s*context\s*\)/;
-
-function relativeToConnectors(componentPath) {
-
-    // .../src/appmixer/<connector>/<...>/<Component> -> <connector>/<...>/<Component>
-    const dir = path.dirname(componentPath);
-    const marker = `${path.sep}appmixer${path.sep}`;
-    const idx = dir.indexOf(marker);
-    return idx === -1 ? dir : dir.slice(idx + marker.length);
-}
 
 function validateComponent(componentPath, context) {
 
@@ -119,10 +75,8 @@ function validateComponent(componentPath, context) {
         return;
     }
 
-    if (SKIP.has(relativeToConnectors(componentPath))) {
-        return;
-    }
-
+    // Intentional "no test()" cases are suppressed centrally in _ignore-list.js
+    // (keyed by validator + path), not special-cased here.
     if (!TEST_METHOD.test(source)) {
         context.addFailure(componentPath, `Trigger is missing a test(context) method for Flow Test Mode — see the connector-test-method skill (${name}.js)`);
     }

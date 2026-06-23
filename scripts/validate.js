@@ -215,12 +215,13 @@ Options:
                          still shows a "(+N warning(s))" count).
 
   --show-suppressed [validator]
-                         Print failures that are normally hidden because the
-                         validator is at or under its threshold. Use this when
-                         you want to fix the leftover issues. Does not change
-                         the CI exit status. Pass an optional validator name to
-                         limit the listing to that validator, e.g.
-                         --show-suppressed dynamic-outport-required-inputs.
+                         Print everything hidden from the default clean output:
+                         failures held under a threshold AND warnings (which are
+                         never printed by default). Use this when you want to fix
+                         the leftover issues. Does not change the CI exit status.
+                         Pass an optional validator name to limit the listing to
+                         that validator, e.g.
+                         --show-suppressed trigger-test-method.
 
   --show-ignored [validator]
                          List the reports suppressed by the ignore-list
@@ -337,7 +338,9 @@ async function runChangedMode({
         await validator.run(context);
 
         const warnSuffix = warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
-        console.log(`- ${validator.name}: ${failures.length === 0 ? 'OK' : `${failures.length} issue(s)`}${warnSuffix}`);
+        const ignoredCount = suppressed.filter((item) => item.validator === validator.name).length;
+        const ignoredSuffix = ignoredCount > 0 ? ` (+${ignoredCount} ignored)` : '';
+        console.log(`- ${validator.name}: ${failures.length === 0 ? 'OK' : `${failures.length} issue(s)`}${warnSuffix}${ignoredSuffix}`);
 
         for (const failure of failures) {
             console.error(`  - ${failure}`);
@@ -489,7 +492,9 @@ async function main() {
         }
 
         const warnSuffix = !connectorFilter && warnings.length > 0 ? ` (+${warnings.length} warning(s))` : '';
-        console.log(`- ${validator.name}: ${status}${warnSuffix}`);
+        const ignoredCount = suppressed.filter((item) => item.validator === validator.name).length;
+        const ignoredSuffix = !connectorFilter && ignoredCount > 0 ? ` (+${ignoredCount} ignored)` : '';
+        console.log(`- ${validator.name}: ${status}${warnSuffix}${ignoredSuffix}`);
         results.push({ validator, failures, warnings, threshold, regressed });
     }
 
@@ -561,18 +566,18 @@ async function main() {
         }
     }
 
-    // --show-suppressed: print failures hidden by the threshold so they can be fixed.
-    // An optional validator name (e.g. --show-suppressed makeapicall-standards) limits
-    // the listing to that one validator.
+    // --show-suppressed: print everything hidden from the default clean output —
+    // both failures held under a threshold AND warnings (which are never printed by
+    // default) — so they can be fixed. An optional validator name (e.g.
+    // --show-suppressed makeapicall-standards) limits the listing to that validator.
     if (showSuppressed) {
+        const matchesFilter = (r) => !showSuppressedFilter || r.validator.name === showSuppressedFilter;
+        const scope = showSuppressedFilter ? ` for ${showSuppressedFilter}` : '';
+
         const suppressed = results.filter((r) =>
-            r.threshold !== null &&
-            r.failures.length > 0 &&
-            !r.regressed &&
-            (!showSuppressedFilter || r.validator.name === showSuppressedFilter));
+            r.threshold !== null && r.failures.length > 0 && !r.regressed && matchesFilter(r));
         const totalSuppressed = suppressed.reduce((sum, r) => sum + r.failures.length, 0);
 
-        const scope = showSuppressedFilter ? ` for ${showSuppressedFilter}` : '';
         if (totalSuppressed > 0) {
             console.log(`\nSuppressed failures${scope} (${totalSuppressed}) — under threshold, not failing CI:`);
 
@@ -584,6 +589,21 @@ async function main() {
             }
         } else {
             console.log(`\nNo suppressed failures${scope} — all thresholded validators are clean.`);
+        }
+
+        // Warnings are also hidden from the default output — surface them here too.
+        const warned = results.filter((r) => r.warnings.length > 0 && matchesFilter(r));
+        const totalWarned = warned.reduce((sum, r) => sum + r.warnings.length, 0);
+
+        if (totalWarned > 0) {
+            console.log(`\nWarnings${scope} (${totalWarned}) — informational, not failing CI:`);
+
+            for (const result of warned) {
+                console.log(`\n  ${result.validator.name} (${result.warnings.length} warning(s)):`);
+                for (const warning of result.warnings) {
+                    console.log(`  - ${warning}`);
+                }
+            }
         }
     }
 
