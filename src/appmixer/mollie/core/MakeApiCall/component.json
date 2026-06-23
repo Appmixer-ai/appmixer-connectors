@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.mollie.core.MakeAPICall",
+    "name": "appmixer.mollie.core.MakeApiCall",
     "author": "Appmixer <info@appmixer.com>",
-    "description": "Performs an arbitrary authorized API call. Provides flexibility for advanced integrations and accessing any Mollie API endpoint not covered by other components.",
+    "description": "Performs an arbitrary authorized API call to the Mollie API.",
     "version": "1.0.0",
     "private": false,
     "auth": {
@@ -9,10 +9,7 @@
     },
     "quota": {
         "manager": "appmixer:mollie",
-        "resources": "requests",
-        "scope": {
-            "userId": "{{userId}}"
-        }
+        "resources": "requests"
     },
     "inPorts": [
         {
@@ -20,81 +17,61 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "method": {
-                        "type": "string"
-                    },
-                    "path": {
-                        "type": "string"
-                    },
-                    "headers": {
-                        "type": "string"
-                    },
-                    "parameters": {
-                        "type": "string"
-                    },
-                    "body": {
-                        "type": "string"
-                    }
+                    "url": { "type": "string" },
+                    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+                    "headers": { "type": "string" },
+                    "parameters": { "type": "string" },
+                    "body": { "type": "string" }
                 },
-                "required": [
-                    "path",
-                    "method"
-                ]
+                "required": ["url", "method"]
             },
             "inspector": {
                 "inputs": {
-                    "method": {
-                        "type": "select",
-                        "tooltip": "HTTP method to use.",
-                        "label": "Method",
-                        "index": 0,
-                        "options": [
-                            {
-                                "label": "GET",
-                                "value": "GET"
-                            },
-                            {
-                                "label": "POST",
-                                "value": "POST"
-                            },
-                            {
-                                "label": "PUT",
-                                "value": "PUT"
-                            },
-                            {
-                                "label": "PATCH",
-                                "value": "PATCH"
-                            },
-                            {
-                                "label": "DELETE",
-                                "value": "DELETE"
-                            }
-                        ],
-                        "defaultValue": "GET"
-                    },
-                    "path": {
+                    "url": {
                         "type": "text",
                         "index": 1,
                         "label": "API Endpoint Path",
-                        "tooltip": "Enter the endpoint path (e.g. <code>/v2/payments</code>) or a full URL like <code>https://api.mollie.com/v2/payments?limit=5</code>."
+                        "tooltip": "Enter the API endpoint path relative to <code>https://api.mollie.com/v2</code> (for example <code>/v1/resource</code>) or provide a full URL."
                     },
-                    "headers": {
-                        "type": "text",
-                        "tooltip": "Optional additional headers to send as a JSON object.",
-                        "label": "Headers",
-                        "index": 3
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
                     },
                     "parameters": {
-                        "type": "textarea",
-                        "index": 4,
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
                         "label": "Query Parameters",
-                        "tooltip": "Optional query parameters as a JSON object (e.g. <code>{\"limit\": 10, \"offset\": 0}</code>)."
+                        "index": 3,
+                        "tooltip": "Optional query parameters."
                     },
                     "body": {
                         "type": "textarea",
-                        "tooltip": "Optional JSON request body (for POST/PUT/PATCH).",
-                        "label": "Body",
-                        "index": 5
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Request Headers",
+                        "index": 5,
+                        "tooltip": "Optional additional request headers."
                     }
                 }
             }
@@ -104,22 +81,9 @@
         {
             "name": "out",
             "options": [
-                {
-                    "label": "Status Code",
-                    "value": "status"
-                },
-                {
-                    "label": "Response Headers",
-                    "value": "headers"
-                },
-                {
-                    "label": "Response Body",
-                    "value": "body",
-                    "schema": {
-                        "type": "object",
-                        "properties": {}
-                    }
-                }
+                { "label": "Status Code", "value": "status" },
+                { "label": "Response Headers", "value": "headers" },
+                { "label": "Response Body", "value": "body", "schema": { "type": "object", "properties": {} } }
             ]
         }
     ],
