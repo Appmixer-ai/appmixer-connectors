@@ -43,6 +43,7 @@ const START = /(?<![.\w])(?:async\s+)?start\s*\(\s*context\s*\)/;
 // Accept both the shorthand method form `test(context) {` / `async test(context) {`
 // and the object-property form `test: function (context)` / `test: async function (context)`
 // that many connectors use alongside `start: async function (context)`.
+// eslint-disable-next-line max-len
 const TEST_METHOD = /(?<![.\w])(?:async\s+)?test\s*\(\s*context\s*\)\s*\{|(?<![.\w])test\s*:\s*(?:async\s+)?function\s*\(\s*context\s*\)/;
 
 function validateComponent(componentPath, context) {
