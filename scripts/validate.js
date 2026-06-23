@@ -262,7 +262,15 @@ function parseBaseArg(argv) {
 // Strict, git-diff-scoped run. Returns true when the run failed (caller sets
 // the exit code). Validators run over only the changed files; thresholds are
 // ignored and any failure is a hard fail.
-async function runChangedMode({ validators, bundleFiles, componentFiles, relativePath, baseRef, showIgnored, showIgnoredFilter }) {
+async function runChangedMode({
+    validators,
+    bundleFiles,
+    componentFiles,
+    relativePath,
+    baseRef,
+    showIgnored,
+    showIgnoredFilter
+}) {
 
     if (!isGitRepo(REPO_ROOT)) {
         console.error('--changed requires a git repository, but none was found.');
