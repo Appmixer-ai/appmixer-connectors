@@ -15,7 +15,14 @@ function kvToObj(arr) {
 module.exports = {
     async receive(context) {
 
-        const { companyId, url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
+        const {
+            companyId,
+            url,
+            method,
+            headers: headersKV,
+            parameters: parametersKV,
+            body
+        } = context.messages.in.content;
 
         if (!companyId) {
             throw new context.CancelError('Account Subdomain is required!');
