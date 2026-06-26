@@ -185,5 +185,11 @@ module.exports = [
             'appmixer/vatcomply/service.json'
         ],
         reason: 'No connector-level auth.js — these are keyless public APIs or thin multi-module wrappers where credentials (if any) are supplied per component. There is no stored connector credential for a generic "authorized API call" to attach, so MakeApiCall has nothing to authorize.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: ['appmixer/utils/ai/bundle.json'],
+        reason: 'Internal AI utility module backed by the platform-level OpenAI key (context.config.apiKey), not a per-user connector credential. Exposing a generic "call any OpenAI endpoint" on a shared system key is inappropriate, and the dedicated openai / ai.openai connectors already provide MakeApiCall.'
     }
 ];
