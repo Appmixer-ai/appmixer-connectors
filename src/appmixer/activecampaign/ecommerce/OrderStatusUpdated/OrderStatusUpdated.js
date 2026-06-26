@@ -12,6 +12,7 @@ module.exports = {
         const params = {
             'orders[updated_date]': 'DESC'
         };
+
         if (connectionid) {
             params['filters[connectionid]'] = connectionid;
         }
