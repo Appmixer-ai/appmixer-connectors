@@ -124,5 +124,66 @@ module.exports = [
             'utils/storage/OnItemUpdated/component.json'
         ],
         reason: 'Engine-internal triggers with no external upstream to sample: utils/test/Tick is an E2E-flow harness piece and utils/storage/* fire on internal store changes.'
+    },
+
+    // connector-has-makeapicall: connectors that intentionally ship NO generic
+    // MakeApiCall component because they expose no generic authorized REST
+    // surface to call. Grouped by reason.
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: [
+            'appmixer/mongodb/service.json',
+            'appmixer/mysql/service.json',
+            'appmixer/mssql/service.json',
+            'appmixer/postgres/service.json',
+            'appmixer/redis/service.json',
+            'appmixer/snowflake/service.json'
+        ],
+        reason: 'Database connectors that talk to their engine over a native driver/SQL protocol, not an HTTP REST API. There is no endpoint/method/headers surface for a generic "call any endpoint" helper to target.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: [
+            'appmixer/kafka/service.json',
+            'appmixer/rabbitmq/service.json'
+        ],
+        reason: 'Message brokers consumed/produced over their native wire protocol (AMQP / Kafka), not HTTP. A generic REST MakeApiCall does not apply.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: [
+            'appmixer/utils/service.json',
+            'appmixer/system/service.json'
+        ],
+        reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: ['appmixer/aws/service.json'],
+        reason: 'AWS spans many services (S3, Lambda, SNS, ...) each with its own host and SigV4 request signing; there is no single base URL or generic authorized call a MakeApiCall could expose. Per-service modules wrap the operations instead.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: ['appmixer/evernote/service.json'],
+        reason: 'Evernote authenticates with OAuth 1.0a request signing (HMAC-SHA1) and a Thrift-based API, not a plain Bearer/API-key REST surface, so a generic header-based MakeApiCall cannot sign arbitrary requests.'
+    },
+    {
+        validator: 'connector-has-makeapicall',
+        messageIncludes: 'no MakeApiCall component',
+        paths: [
+            'appmixer/azureCognitiveServices/service.json',
+            'appmixer/deepai/service.json',
+            'appmixer/screenshotapi/service.json',
+            'appmixer/ringring/service.json',
+            'appmixer/exchangeratesapi/service.json',
+            'appmixer/freeforexapi/service.json',
+            'appmixer/vatcomply/service.json'
+        ],
+        reason: 'No connector-level auth.js — these are keyless public APIs or thin multi-module wrappers where credentials (if any) are supplied per component. There is no stored connector credential for a generic "authorized API call" to attach, so MakeApiCall has nothing to authorize.'
     }
 ];

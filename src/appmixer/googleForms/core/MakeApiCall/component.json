@@ -1,13 +1,13 @@
 {
-    "name": "appmixer.googleForms.core.MakeAPICall",
-    "label": "Make API Call",
-    "description": "Performs an arbitrary authorized API call to Google Forms API.",
+    "name": "appmixer.googleForms.core.MakeApiCall",
     "author": "Appmixer <info@appmixer.com>",
+    "description": "Performs an arbitrary authorized API call to the Google Forms API.",
     "version": "1.0.0",
+    "private": false,
     "auth": {
         "service": "appmixer:googleForms",
         "scope": [
-            "https://www.googleapis.com/auth/drive"
+            "https://www.googleapis.com/auth/forms.body"
         ]
     },
     "quota": {
@@ -23,37 +23,48 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "method": {
-                        "type": "string"
-                    },
                     "url": {
                         "type": "string"
                     },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
                     "headers": {
-                        "type": "object"
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
                     },
                     "body": {
-                        "type": [
-                            "object",
-                            "string"
-                        ]
-                    },
-                    "queryParams": {
-                        "type": [
-                            "object",
-                            "string"
-                        ]
+                        "type": "string"
                     }
-                }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
             },
             "inspector": {
                 "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the API endpoint path relative to <code>https://forms.googleapis.com/v1</code> (for example <code>/v1/resource</code>) or provide a full URL."
+                    },
                     "method": {
                         "type": "select",
+                        "index": 2,
                         "label": "HTTP Method",
-                        "tooltip": "The HTTP method to use for the request",
-                        "index": 1,
-                        "required": true,
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
                         "options": [
                             {
                                 "label": "GET",
@@ -77,30 +88,31 @@
                             }
                         ]
                     },
-                    "url": {
-                        "type": "text",
-                        "label": "API Endpoint URL",
-                        "tooltip": "The full URL of the API endpoint (e.g., https://forms.googleapis.com/v1/forms/{formId})",
-                        "index": 2,
-                        "required": true
-                    },
-                    "headers": {
-                        "type": "textarea",
-                        "label": "Headers",
-                        "tooltip": "Additional headers in JSON format (optional). Authorization header is added automatically.",
-                        "index": 3
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Query Parameters",
+                        "index": 3,
+                        "tooltip": "Optional query parameters."
                     },
                     "body": {
                         "type": "textarea",
+                        "index": 4,
                         "label": "Request Body",
-                        "tooltip": "Request body in JSON format (for POST, PUT, PATCH methods)",
-                        "index": 4
+                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
                     },
-                    "queryParams": {
-                        "type": "textarea",
-                        "label": "Query Parameters",
-                        "tooltip": "Query parameters in JSON format (optional)",
-                        "index": 5
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Request Headers",
+                        "index": 5,
+                        "tooltip": "Optional additional request headers."
                     }
                 }
             }
@@ -112,49 +124,18 @@
             "options": [
                 {
                     "label": "Status Code",
-                    "value": "statusCode"
+                    "value": "status"
                 },
                 {
-                    "label": "Headers",
-                    "value": "headers",
-                    "schema": {
-                        "type": "object",
-                        "example": {
-                            "Content-Type": "application/json"
-                        }
-                    }
+                    "label": "Response Headers",
+                    "value": "headers"
                 },
                 {
                     "label": "Response Body",
                     "value": "body",
                     "schema": {
                         "type": "object",
-                        "example": {}
-                    }
-                },
-                {
-                    "label": "Full Response",
-                    "value": "response",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "statusCode": {
-                                "type": "number"
-                            },
-                            "headers": {
-                                "type": "object"
-                            },
-                            "body": {
-                                "type": "object"
-                            }
-                        },
-                        "example": {
-                            "statusCode": 200,
-                            "headers": {
-                                "Content-Type": "application/json"
-                            },
-                            "body": {}
-                        }
+                        "properties": {}
                     }
                 }
             ]
