@@ -93,7 +93,7 @@ function validateComponent(componentPath, addFailure) {
             `component "${name}" has the Find shape (outputType input, notFound port, ` +
             `search input${searchInputs.length > 1 ? 's' : ''} [${searchInputs.join(', ')}]) ` +
             `but is not named Find* — rename it to "Find${name.replace(/^(Get|List)/, '')}" ` +
-            `(Get = single item by id, List = full unfiltered set, Find = filtered search)`
+            '(Get = single item by id, List = full unfiltered set, Find = filtered search)'
         );
     }
 }
