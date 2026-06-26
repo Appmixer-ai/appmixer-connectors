@@ -32,12 +32,17 @@ module.exports = {
             ? url
             : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
+        // Stripe's REST API expects request bodies as application/x-www-form-urlencoded
+        // (nested fields use bracket notation, e.g. metadata[key]=value), not JSON.
+        // context.httpRequest serializes a plain object body according to this
+        // Content-Type, matching how the rest of the Stripe connector calls the API.
+        // A user can still override the Content-Type via the Headers input.
         const requestOptions = {
             method,
             url: targetUrl,
             headers: {
                 'Authorization': `Bearer ${context.auth.apiKey}`,
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 ...extraHeaders
             }
         };
