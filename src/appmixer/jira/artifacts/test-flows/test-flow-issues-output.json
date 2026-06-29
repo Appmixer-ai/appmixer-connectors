@@ -1,8 +1,8 @@
 {
     "name": "E2E Jira - issues-output",
-    "description": "End-to-end test for Jira connector - tests FindIssues and GenerateIssuesOutput components",
+    "description": "End-to-end test for Jira connector - tests the FindIssues component",
     "flow": {
-        "on-start": {
+        "a4ddef93-efcd-425a-8285-8002c6a7aaf0": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 100,
             "y": 200,
@@ -10,13 +10,13 @@
             "version": "1.0.0",
             "config": {}
         },
-        "set-variables": {
+        "88cfe8aa-72f6-45ac-9486-c6c7a0387c45": {
             "type": "appmixer.utils.controls.SetVariable",
             "x": 250,
             "y": 200,
             "source": {
                 "in": {
-                    "on-start": [
+                    "a4ddef93-efcd-425a-8285-8002c6a7aaf0": [
                         "out"
                     ]
                 }
@@ -25,7 +25,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "on-start": {
+                        "a4ddef93-efcd-425a-8285-8002c6a7aaf0": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -53,27 +53,13 @@
                 }
             }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 400,
-            "y": 200,
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {}
-        },
-        "find-issues": {
+        "ff56280e-50ed-4be8-9027-a2811922d6cf": {
             "type": "appmixer.jira.issues.FindIssues",
             "x": 550,
             "y": 200,
             "source": {
                 "in": {
-                    "before-all": [
+                    "88cfe8aa-72f6-45ac-9486-c6c7a0387c45": [
                         "out"
                     ]
                 }
@@ -82,19 +68,19 @@
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "88cfe8aa-72f6-45ac-9486-c6c7a0387c45": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "query": {
                                         "var-query": {
-                                            "variable": "$.set-variables.out.jqlQuery",
+                                            "variable": "$.88cfe8aa-72f6-45ac-9486-c6c7a0387c45.out.jqlQuery",
                                             "functions": []
                                         }
                                     },
                                     "maxResults": {
                                         "var-max-results": {
-                                            "variable": "$.set-variables.out.maxResults",
+                                            "variable": "$.88cfe8aa-72f6-45ac-9486-c6c7a0387c45.out.maxResults",
                                             "functions": []
                                         }
                                     },
@@ -105,7 +91,7 @@
                                     "query": "{{{var-query}}}",
                                     "maxResults": "{{{var-max-results}}}",
                                     "fields": "*navigable",
-                                    "outputType": "array"
+                                    "outputType": "first"
                                 }
                             }
                         }
@@ -113,13 +99,13 @@
                 }
             }
         },
-        "assert-find-issues": {
+        "35d0fbdd-f1ea-40b0-89c3-a13f772fd3ab": {
             "type": "appmixer.utils.test.Assert",
             "x": 700,
             "y": 100,
             "source": {
                 "in": {
-                    "find-issues": [
+                    "ff56280e-50ed-4be8-9027-a2811922d6cf": [
                         "issue"
                     ]
                 }
@@ -128,13 +114,13 @@
             "config": {
                 "transform": {
                     "in": {
-                        "find-issues": {
+                        "ff56280e-50ed-4be8-9027-a2811922d6cf": {
                             "issue": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "check-issues": {
-                                            "variable": "$.find-issues.issue",
+                                            "variable": "$.ff56280e-50ed-4be8-9027-a2811922d6cf.issue.id",
                                             "functions": []
                                         }
                                     }
@@ -155,91 +141,13 @@
                 }
             }
         },
-        "generate-output": {
-            "type": "appmixer.jira.issues.GenerateIssuesOutput",
-            "x": 700,
-            "y": 300,
-            "source": {
-                "in": {
-                    "find-issues": [
-                        "issue"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "properties": {
-                    "sendWholeArray": true
-                },
-                "transform": {
-                    "in": {
-                        "find-issues": {
-                            "issue": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "sendWholeArray": {}
-                                },
-                                "lambda": {
-                                    "sendWholeArray": true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-generate-output": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 850,
-            "y": 300,
-            "source": {
-                "in": {
-                    "generate-output": [
-                        "out"
-                    ]
-                }
-            },
-            "version": "1.0.0",
-            "config": {
-                "transform": {
-                    "in": {
-                        "generate-output": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "check-output": {
-                                            "variable": "$.generate-output.out",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{check-output}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "after-all": {
+        "350ffe1a-5eb5-4d62-98a6-294b1158b2f0": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 1000,
             "y": 200,
             "source": {
                 "in": {
-                    "assert-find-issues": [
-                        "out"
-                    ],
-                    "assert-generate-output": [
+                    "35d0fbdd-f1ea-40b0-89c3-a13f772fd3ab": [
                         "out"
                     ]
                 }
@@ -251,13 +159,13 @@
                 }
             }
         },
-        "process-results": {
+        "621df3ff-2dbe-46ab-b32b-51a368f464fb": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1150,
             "y": 200,
             "source": {
                 "in": {
-                    "after-all": [
+                    "350ffe1a-5eb5-4d62-98a6-294b1158b2f0": [
                         "out"
                     ]
                 }
@@ -270,7 +178,7 @@
                 },
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "350ffe1a-5eb5-4d62-98a6-294b1158b2f0": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -278,7 +186,7 @@
                                     "testCase": {},
                                     "result": {
                                         "result-var": {
-                                            "variable": "$.after-all.out",
+                                            "variable": "$.350ffe1a-5eb5-4d62-98a6-294b1158b2f0.out",
                                             "functions": []
                                         }
                                     }
