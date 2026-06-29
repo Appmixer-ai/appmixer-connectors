@@ -517,6 +517,120 @@ async function getSchemaAndInputs(context, schema, logicalName, isValidFor) {
     return { schema, fieldsInputs };
 }
 
+const API_VERSION = 'v9.2';
+const DEFAULT_LOOKBACK_HOURS = 24;
+
+function getAuthHeaders(context) {
+
+    return {
+        Authorization: `Bearer ${context.auth?.accessToken || context.accessToken}`,
+        accept: 'application/json'
+    };
+}
+
+/**
+ * Resolve the entity descriptor for the generic Object Record triggers. The user
+ * selects any entity via the `objectName` property (same UX as the DynamicEntity /
+ * CreateObjectRecord actions). Mirrors the connector's existing `${objectName}s`
+ * collection-name convention used by the Get/Create/Delete Object Record actions.
+ * @param {Object} context
+ * @param {string} dateField 'createdon' or 'modifiedon'
+ * @return {{ logicalName: string, entitySet: string, dateField: string }}
+ */
+function resolveGenericEntity(context, dateField) {
+
+    const objectName = context.properties.objectName;
+    if (!objectName) {
+        throw new context.CancelError('Object Name is required!');
+    }
+
+    return { logicalName: objectName, entitySet: `${objectName}s`, dateField };
+}
+
+/**
+ * Polling trigger core. Queries the Dataverse OData API for records whose `dateField`
+ * (createdon / modifiedon) is at or after the last seen timestamp, emits the new ones
+ * (deduplicated by primary id) and persists the high-water mark in the component state.
+ * @param {Object} context
+ * @param {Object} entity
+ * @param {string} entity.logicalName e.g. 'contact'
+ * @param {string} entity.entitySet e.g. 'contacts'
+ * @param {string} entity.dateField 'createdon' or 'modifiedon'
+ */
+async function pollEntity(context, { logicalName, entitySet, dateField }) {
+
+    const resource = context.resource || context.auth.resource;
+    const lookbackHours = Number(context.properties.lookbackHours) || DEFAULT_LOOKBACK_HOURS;
+
+    const state = context.state || {};
+    // On the first tick there is no stored timestamp - look back a configurable window
+    // (default 24h) so existing records don't flood the flow.
+    const lastTimestamp = state.lastTimestamp
+        || new Date(Date.now() - lookbackHours * 60 * 60 * 1000).toISOString();
+    const seenIds = new Set(Array.isArray(state.seenIds) ? state.seenIds : []);
+
+    const url = new URL(`${resource}/api/data/${API_VERSION}/${entitySet}`);
+    // `ge` (not `gt`) so records sharing the boundary timestamp are not missed; the
+    // seenIds set below removes the ones already emitted on a previous tick.
+    url.searchParams.append('$filter', `${dateField} ge ${lastTimestamp}`);
+    url.searchParams.append('$orderby', `${dateField} asc`);
+
+    const { data } = await context.httpRequest({ url: url.toString(), headers: getAuthHeaders(context) });
+    const records = data.value || [];
+
+    if (records.length === 0) {
+        // Nothing new - keep the existing high-water mark and seen ids.
+        return;
+    }
+
+    const idField = `${logicalName}id`;
+
+    // New high-water mark = newest timestamp returned (ISO 8601 strings sort lexicographically).
+    let maxTimestamp = lastTimestamp;
+    for (const record of records) {
+        if (record[dateField] && record[dateField] > maxTimestamp) {
+            maxTimestamp = record[dateField];
+        }
+    }
+
+    for (const record of records) {
+        if (seenIds.has(record[idField])) {
+            // Already emitted on an earlier tick (records sitting on the boundary timestamp).
+            continue;
+        }
+        await context.sendJson(record, 'out');
+    }
+
+    // Carry forward only the ids sitting exactly on the new high-water mark - those are the
+    // ones a `ge maxTimestamp` query returns again next tick and must be skipped.
+    const boundaryIds = records
+        .filter(record => record[dateField] === maxTimestamp)
+        .map(record => record[idField]);
+
+    await context.saveState({ lastTimestamp: maxTimestamp, seenIds: boundaryIds });
+}
+
+/**
+ * Fetch the single most-recent record for Flow Test Mode. Uses the same OData endpoint
+ * as pollEntity but ordered newest-first with no state baseline, so the test always
+ * produces one realistic item (or undefined when the entity has no records).
+ * @param {Object} context
+ * @param {Object} entity
+ * @param {string} entity.entitySet
+ * @param {string} entity.dateField
+ * @return {Promise<Object|undefined>}
+ */
+async function fetchLatestRecord(context, { entitySet, dateField }) {
+
+    const resource = context.resource || context.auth.resource;
+    const url = new URL(`${resource}/api/data/${API_VERSION}/${entitySet}`);
+    url.searchParams.append('$orderby', `${dateField} desc`);
+    url.searchParams.append('$top', '1');
+
+    const { data } = await context.httpRequest({ url: url.toString(), headers: getAuthHeaders(context) });
+    return (data.value || [])[0];
+}
+
 function getInputs(item, index) {
 
     const label = `${item.DisplayName?.UserLocalizedLabel?.Label} (${item.LogicalName})`;
@@ -558,5 +672,8 @@ module.exports = {
     getSchemaProperties,
     getInspectorType,
     getGroups,
-    generateInspector
+    generateInspector,
+    resolveGenericEntity,
+    pollEntity,
+    fetchLatestRecord
 };
