@@ -8,6 +8,20 @@ module.exports = {
         const { projectType } = context.properties;
 
         const project = context.messages.in.content;
+
+        if (!project.key) {
+            throw new context.CancelError('Key is required!');
+        }
+        if (!project.name) {
+            throw new context.CancelError('Name is required!');
+        }
+        if (!project.projectTemplateKey) {
+            throw new context.CancelError('Project Template Key is required!');
+        }
+        if (!project.leadAccountId) {
+            throw new context.CancelError('Lead Account ID is required!');
+        }
+
         project.projectTypeKey = projectType;
 
         // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-projects/#api-rest-api-3-project-post

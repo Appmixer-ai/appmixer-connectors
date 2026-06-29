@@ -19,6 +19,12 @@
 
 module.exports = [
     {
+        validator: 'find-naming-by-shape',
+        messageIncludes: 'has the Find shape',
+        paths: ['jira/issues/GetIssueTransitions/component.json'],
+        reason: 'The component already presents as "Find Issue Transitions" via its label; the internal name/folder is kept as GetIssueTransitions to avoid a breaking rename of a published component (it is referenced by existing flows and IssueMetadata.js). Renaming would require a major bundle bump and flow migration, which is intentionally deferred.'
+    },
+    {
         validator: 'dynamic-outport-required-inputs',
         messageIncludes: 'ignoreAuth=true',
         paths: [
