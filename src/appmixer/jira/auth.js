@@ -28,13 +28,17 @@ module.exports = {
 
             authUrl(context) {
 
-                return 'https://auth.atlassian.com/authorize?' +
-                    'audience=api.atlassian.com&' +
-                    `client_id=${encodeURIComponent(context.clientId)}&` +
-                    `redirect_uri=${encodeURIComponent(context.callbackUrl)}&` +
-                    `state=${encodeURIComponent(context.ticket)}&` +
-                    `scope=${encodeURIComponent(context.scope.join(' '))}&` +
-                    'response_type=code&prompt=consent';
+                const params = new URLSearchParams({
+                    audience: 'api.atlassian.com',
+                    client_id: context.clientId,
+                    redirect_uri: context.callbackUrl,
+                    state: context.ticket,
+                    scope: context.scope.join(' '),
+                    response_type: 'code',
+                    prompt: 'consent'
+                });
+
+                return `https://auth.atlassian.com/authorize?${params.toString()}`;
             },
 
             async requestProfileInfo(context) {

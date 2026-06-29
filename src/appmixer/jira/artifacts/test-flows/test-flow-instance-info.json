@@ -1,20 +1,209 @@
 {
-    "name": "E2E Jira - instance-info",
-    "description": "End-to-end test for Jira connector - tests GetInstanceInfo component",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-base-url": [
+                        "out"
+                    ],
+                    "assert-build-number": [
+                        "out"
+                    ],
+                    "assert-server-time": [
+                        "out"
+                    ],
+                    "assert-version": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 700,
+            "y": 250
+        },
+        "assert-base-url": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-instance-info": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{base-url-check}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "base-url-check": {
+                                            "functions": [],
+                                            "variable": "$.get-instance-info.out.baseUrl"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-instance-info": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 100
+        },
+        "assert-build-number": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-instance-info": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{build-number-check}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "build-number-check": {
+                                            "functions": [],
+                                            "variable": "$.get-instance-info.out.buildNumber"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-instance-info": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 400
+        },
+        "assert-server-time": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-instance-info": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{server-time-check}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "server-time-check": {
+                                            "functions": [],
+                                            "variable": "$.get-instance-info.out.serverTime"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-instance-info": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 300
+        },
+        "assert-version": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-instance-info": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{version-check}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "version-check": {
+                                            "functions": [],
+                                            "variable": "$.get-instance-info.out.version"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-instance-info": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 200
         },
         "get-instance-info": {
-            "type": "appmixer.jira.core.GetInstanceInfo",
-            "x": 300,
-            "y": 200,
-            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {},
+                                "modifiers": {},
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "on-start": [
@@ -22,220 +211,45 @@
                     ]
                 }
             },
-            "config": {
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {},
-                                "lambda": {}
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.jira.core.GetInstanceInfo",
+            "x": 300,
+            "y": 200
         },
-        "assert-base-url": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 500,
-            "y": 100,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-instance-info": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-instance-info": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "base-url-check": {
-                                            "variable": "$.get-instance-info.out.baseUrl",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{base-url-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-version": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 500,
-            "y": 200,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-instance-info": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-instance-info": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "version-check": {
-                                            "variable": "$.get-instance-info.out.version",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{version-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-server-time": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 500,
-            "y": 300,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-instance-info": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-instance-info": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "server-time-check": {
-                                            "variable": "$.get-instance-info.out.serverTime",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{server-time-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-build-number": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 500,
-            "y": 400,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-instance-info": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-instance-info": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "build-number-check": {
-                                            "variable": "$.get-instance-info.out.buildNumber",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{build-number-check}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 700,
-            "y": 250,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "assert-base-url": [
-                        "out"
-                    ],
-                    "assert-version": [
-                        "out"
-                    ],
-                    "assert-server-time": [
-                        "out"
-                    ],
-                    "assert-build-number": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            }
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 900,
-            "y": 250,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Jira - instance-info"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -243,36 +257,11 @@
                     ]
                 }
             },
-            "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
-                "transform": {
-                    "in": {
-                        "after-all": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Jira - instance-info",
-                                    "result": "{{{result-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 900,
+            "y": 250
         }
-    }
+    },
+    "name": "E2E Jira - instance-info",
+    "notes": {}
 }

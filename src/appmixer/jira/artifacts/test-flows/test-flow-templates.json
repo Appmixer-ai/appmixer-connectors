@@ -1,58 +1,114 @@
 {
-    "name": "E2E Jira - templates",
-    "description": "End-to-end test for Jira connector - tests ListTemplates component",
+    "err": "{\"message\":\"Access token not found for component list-templates\",\"data\":{\"componentId\":\"list-templates\",\"componentType\":\"appmixer.jira.projects.ListTemplates\"},\"code\":1,\"name\":\"TokenError\",\"stack\":\"TokenError: Access token not found for component list-templates\\n    at TokenHandler.prepareServiceForComponent (/usr/src/appmixer/engine/src/auth/TokenHandler.js:208:19)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async TokenHandler.injectServiceData (/usr/src/appmixer/engine/src/auth/TokenHandler.js:140:29)\\n    at async Factory.init (/usr/src/appmixer/engine/src/component/Factory.js:106:13)\\n    at async /usr/src/appmixer/engine/src/component/Factory.js:341:17\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:252:21)\"}",
     "flow": {
-        "on-start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "set-variables": {
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 250,
-            "y": 200,
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
             "source": {
                 "in": {
-                    "on-start": [
+                    "assert-template-structure": [
+                        "out"
+                    ],
+                    "assert-templates-exist": [
                         "out"
                     ]
                 }
             },
-            "version": "1.0.0",
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 700,
+            "y": 175
+        },
+        "assert-template-structure": {
             "config": {
                 "transform": {
                     "in": {
-                        "on-start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "variables": {}
-                                },
+                        "list-templates": {
+                            "templates": {
                                 "lambda": {
-                                    "variables": {
-                                        "ADD": [
+                                    "expression": {
+                                        "AND": [
                                             {
-                                                "type": "text",
-                                                "name": "projectType",
-                                                "text": "software"
+                                                "assertion": "notEmpty",
+                                                "field": "{{{first-template}}}"
                                             }
                                         ]
                                     }
-                                }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "first-template": {
+                                            "functions": [],
+                                            "variable": "$.list-templates.templates[0].label"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "list-templates": [
+                        "templates"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 250
+        },
+        "assert-templates-exist": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-templates": {
+                            "templates": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{templates-var}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "templates-var": {
+                                            "functions": [],
+                                            "variable": "$.list-templates.templates"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-templates": [
+                        "templates"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 550,
+            "y": 100
         },
         "list-templates": {
-            "type": "appmixer.jira.projects.ListTemplates",
-            "x": 400,
-            "y": 200,
-            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "projectType": "software"
+                }
+            },
             "source": {
                 "in": {
                     "set-variables": [
@@ -60,122 +116,45 @@
                     ]
                 }
             },
-            "config": {
-                "properties": {
-                    "projectType": "software"
-                }
-            }
+            "type": "appmixer.jira.projects.ListTemplates",
+            "x": 400,
+            "y": 200
         },
-        "assert-templates-exist": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 100,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-templates": [
-                        "templates"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-templates": {
-                            "templates": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "templates-var": {
-                                            "variable": "$.list-templates.templates",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{templates-var}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-template-structure": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 550,
-            "y": 250,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "list-templates": [
-                        "templates"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-templates": {
-                            "templates": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "first-template": {
-                                            "variable": "$.list-templates.templates[0].label",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{first-template}}}",
-                                                "assertion": "notEmpty"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 700,
-            "y": 175,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "assert-templates-exist": [
-                        "out"
-                    ],
-                    "assert-template-structure": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            }
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200
         },
         "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 850,
-            "y": 175,
-            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Jira - templates"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
             "source": {
                 "in": {
                     "after-all": [
@@ -183,36 +162,48 @@
                     ]
                 }
             },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 850,
+            "y": 175
+        },
+        "set-variables": {
             "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "on-start": {
                             "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "projectType",
+                                                "text": "software",
+                                                "type": "text"
+                                            }
+                                        ]
                                     }
                                 },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Jira - templates",
-                                    "result": "{{{result-var}}}"
-                                }
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
                             }
                         }
                     }
                 }
-            }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 250,
+            "y": 200
         }
-    }
+    },
+    "name": "E2E Jira - templates",
+    "notes": {}
 }
