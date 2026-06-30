@@ -25,6 +25,12 @@ module.exports = [
         reason: 'The component already presents as "Find Issue Transitions" via its label; the internal name/folder is kept as GetIssueTransitions to avoid a breaking rename of a published component (it is referenced by existing flows and IssueMetadata.js). Renaming would require a major bundle bump and flow migration, which is intentionally deferred.'
     },
     {
+        validator: 'delete-update-shape',
+        messageIncludes: 'must declare at least one required input',
+        paths: ['jira/issues/UpdateIssue/component.json'],
+        reason: 'UpdateIssue builds its whole input inspector dynamically from IssueMetadata (the inPort uses a top-level source transform that returns the issue\'s fields), so the issue id is a metadata-driven field that cannot be enumerated as a static schema.required entry. The id IS required and validated at runtime (throw new context.CancelError in UpdateIssue.js).'
+    },
+    {
         validator: 'dynamic-outport-required-inputs',
         messageIncludes: 'ignoreAuth=true',
         paths: [
