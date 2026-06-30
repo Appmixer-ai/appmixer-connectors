@@ -13,7 +13,8 @@ module.exports = {
             accountNameFromProfileInfo: 'name',
 
             scope: [
-                'offline_access'
+                'offline_access',
+                'read:me'
             ],
 
             pre: function() {
@@ -81,9 +82,25 @@ module.exports = {
                     name = data[0].name;
                 }
 
+                // Fetch the authenticated user's Atlassian accountId (needs the
+                // read:me scope). Stored on profileInfo so components can default
+                // to the connected user — e.g. CreateProject leadAccountId.
+                let accountId;
+                try {
+                    const me = await context.httpRequest({
+                        method: 'GET',
+                        url: 'https://api.atlassian.com/me',
+                        headers: { Authorization: `Bearer ${context.accessToken}` }
+                    });
+                    accountId = me.data && me.data.account_id;
+                } catch (err) {
+                    // read:me not granted / call failed — leave accountId undefined.
+                }
+
                 return {
                     cloudId,
                     name,
+                    accountId,
                     apiUrl: `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/`,
                     updatedAt: new Date()
                 };
