@@ -193,9 +193,15 @@ module.exports = {
      * @param {Object} params - { objectName, since, recordId, limit }
      * @return {Promise<Array>}
      */
-    async getModifiedRecords(context, { objectName, since, recordId, limit = 2000 }) {
+    async getModifiedRecords(context, { objectName, since, recordId, limit = 200 }) {
 
         this.assertSafeIdentifier(objectName, 'object name');
+        // The query below selects all fields via SOQL FIELDS(ALL), which
+        // Salesforce only allows as a *bounded* query: it requires a LIMIT of
+        // at most 200 (and rejects nextRecordsUrl-style pagination). Requesting
+        // more than 200 makes the API reject the query outright, so the limit is
+        // capped at 200 here. Records are ordered newest-first so the most
+        // recent changes in a tick window are never the ones dropped.
         let where = `LastModifiedDate >= ${this.Date.toDateTimeLiteral(since)}`;
         if (recordId) {
             where += ` AND Id = '${this.escapeSoql(recordId)}'`;
