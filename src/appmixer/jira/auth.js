@@ -82,9 +82,11 @@ module.exports = {
                     name = data[0].name;
                 }
 
-                // Fetch the authenticated user's Atlassian accountId (needs the
-                // read:me scope). Stored on profileInfo so components can default
-                // to the connected user — e.g. CreateProject leadAccountId.
+                const apiUrl = `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/`;
+
+                // Fetch the authenticated user's accountId (needs read:me).
+                // Stored on profileInfo so components can default to the connected
+                // user — e.g. CreateProject leadAccountId.
                 let accountId;
                 try {
                     const me = await context.httpRequest({
@@ -101,7 +103,7 @@ module.exports = {
                     cloudId,
                     name,
                     accountId,
-                    apiUrl: `https://api.atlassian.com/ex/jira/${cloudId}/rest/api/3/`,
+                    apiUrl,
                     updatedAt: new Date()
                 };
             },
