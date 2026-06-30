@@ -1,0 +1,158 @@
+{
+    "name": "E2E Epic - Find Patients",
+    "flow": {
+        "3257d34e-e1dd-4539-bbb7-ca017c215d91": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 300,
+            "source": {},
+            "config": {}
+        },
+        "8d8d7b3e-dc90-4b89-99a2-600ba0fd394d": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 300,
+            "source": {
+                "in": {
+                    "3257d34e-e1dd-4539-bbb7-ca017c215d91": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "809aeab8-fe2e-4f77-aa64-bd81f00ccffc": {
+            "type": "appmixer.epic.core.FindPatients",
+            "x": 448,
+            "y": 300,
+            "source": {
+                "in": {
+                    "8d8d7b3e-dc90-4b89-99a2-600ba0fd394d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8d8d7b3e-dc90-4b89-99a2-600ba0fd394d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "family": "Lopez",
+                                    "given": "Camila",
+                                    "birthdate": "1987-09-12",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "fd6ed6c4-401e-422f-aec0-73d98ebfc69e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 300,
+            "source": {
+                "in": {
+                    "809aeab8-fe2e-4f77-aa64-bd81f00ccffc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "809aeab8-fe2e-4f77-aa64-bd81f00ccffc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ac55fbbf-5bcf-43f6-9a1e-5bb6edd4fcca": {
+                                            "functions": [],
+                                            "variable": "$.809aeab8-fe2e-4f77-aa64-bd81f00ccffc.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{ac55fbbf-5bcf-43f6-9a1e-5bb6edd4fcca}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "676fe8b1-3a26-4b3e-82fb-197c15c068bf": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 300,
+            "source": {
+                "in": {
+                    "fd6ed6c4-401e-422f-aec0-73d98ebfc69e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "355701aa-5d9a-48b4-aea0-bec22ec12ab6": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1024,
+            "y": 300,
+            "source": {
+                "in": {
+                    "676fe8b1-3a26-4b3e-82fb-197c15c068bf": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "676fe8b1-3a26-4b3e-82fb-197c15c068bf": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2d44949c-a605-4ccc-91b6-eb354462b0e1": {
+                                            "functions": [],
+                                            "variable": "$.676fe8b1-3a26-4b3e-82fb-197c15c068bf.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Epic - Find Patients",
+                                    "result": "{{{2d44949c-a605-4ccc-91b6-eb354462b0e1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "wizard": {
+        "fields": []
+    }
+}

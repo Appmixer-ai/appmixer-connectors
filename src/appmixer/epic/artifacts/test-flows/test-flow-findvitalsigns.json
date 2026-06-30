@@ -1,0 +1,156 @@
+{
+    "name": "E2E Epic - Find Vital Signs",
+    "flow": {
+        "916cffc4-5a63-403a-ae97-b62df24dfed8": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 300,
+            "source": {},
+            "config": {}
+        },
+        "74696e3c-a644-44da-bb2b-013dceb4d304": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 300,
+            "source": {
+                "in": {
+                    "916cffc4-5a63-403a-ae97-b62df24dfed8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "1f14f154-ce08-4d40-85a7-8b1156f10460": {
+            "type": "appmixer.epic.core.FindVitalSigns",
+            "x": 448,
+            "y": 300,
+            "source": {
+                "in": {
+                    "74696e3c-a644-44da-bb2b-013dceb4d304": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "74696e3c-a644-44da-bb2b-013dceb4d304": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "patient": "erXuFYUfucBZaryVksYEcMg3",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "0a6b0c7f-9b47-4c00-9c7f-0d23991d758e": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 300,
+            "source": {
+                "in": {
+                    "1f14f154-ce08-4d40-85a7-8b1156f10460": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1f14f154-ce08-4d40-85a7-8b1156f10460": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "175a1726-361e-4cf7-adfa-86cd17856f8b": {
+                                            "functions": [],
+                                            "variable": "$.1f14f154-ce08-4d40-85a7-8b1156f10460.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{175a1726-361e-4cf7-adfa-86cd17856f8b}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "35580641-0dca-491d-b173-c0f3dd403a32": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 300,
+            "source": {
+                "in": {
+                    "0a6b0c7f-9b47-4c00-9c7f-0d23991d758e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "83580103-9d10-4c9f-bba5-f5275269b5e8": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1024,
+            "y": 300,
+            "source": {
+                "in": {
+                    "35580641-0dca-491d-b173-c0f3dd403a32": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "35580641-0dca-491d-b173-c0f3dd403a32": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "c65f2e5f-9dab-4b84-9ec9-f975f6c41b6c": {
+                                            "functions": [],
+                                            "variable": "$.35580641-0dca-491d-b173-c0f3dd403a32.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Epic - Find Vital Signs",
+                                    "result": "{{{c65f2e5f-9dab-4b84-9ec9-f975f6c41b6c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "wizard": {
+        "fields": []
+    }
+}

@@ -1,0 +1,156 @@
+{
+    "name": "E2E Epic - Find Diagnostic Reports",
+    "flow": {
+        "7ad178da-2b43-4b7a-8181-b7d0f1d79a25": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 300,
+            "source": {},
+            "config": {}
+        },
+        "0e2bfdc6-b36c-4ff3-8a1d-031c175da519": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 300,
+            "source": {
+                "in": {
+                    "7ad178da-2b43-4b7a-8181-b7d0f1d79a25": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {}
+        },
+        "2d3398cb-abc0-409e-9434-602f87deab92": {
+            "type": "appmixer.epic.core.FindDiagnosticReports",
+            "x": 448,
+            "y": 300,
+            "source": {
+                "in": {
+                    "0e2bfdc6-b36c-4ff3-8a1d-031c175da519": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0e2bfdc6-b36c-4ff3-8a1d-031c175da519": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "patient": "erXuFYUfucBZaryVksYEcMg3",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "2c60f3e6-e5a0-4a98-9129-4f6bc145978c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 640,
+            "y": 300,
+            "source": {
+                "in": {
+                    "2d3398cb-abc0-409e-9434-602f87deab92": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "2d3398cb-abc0-409e-9434-602f87deab92": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "0d3636bd-db7b-4748-b52f-6243f56feaee": {
+                                            "functions": [],
+                                            "variable": "$.2d3398cb-abc0-409e-9434-602f87deab92.out.id"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{0d3636bd-db7b-4748-b52f-6243f56feaee}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "84d65e0c-8785-4278-8456-2a01a09b601a": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 832,
+            "y": 300,
+            "source": {
+                "in": {
+                    "2c60f3e6-e5a0-4a98-9129-4f6bc145978c": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "f371060b-2ebf-4b81-a743-965bb5d94cfc": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1024,
+            "y": 300,
+            "source": {
+                "in": {
+                    "84d65e0c-8785-4278-8456-2a01a09b601a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "84d65e0c-8785-4278-8456-2a01a09b601a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "db44051f-5248-451b-8ea2-a932115bf3c5": {
+                                            "functions": [],
+                                            "variable": "$.84d65e0c-8785-4278-8456-2a01a09b601a.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Epic - Find Diagnostic Reports",
+                                    "result": "{{{db44051f-5248-451b-8ea2-a932115bf3c5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "wizard": {
+        "fields": []
+    }
+}
