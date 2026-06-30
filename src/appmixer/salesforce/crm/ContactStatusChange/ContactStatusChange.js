@@ -41,7 +41,10 @@ module.exports = {
 
     async test(context) {
 
-        const { contactId } = context.properties;
+        const { fieldName, contactId } = context.properties;
+        if (!fieldName) {
+            throw new context.CancelError('Status Field is required!');
+        }
         const record = await commons.getLatestRecord(context, {
             objectName: OBJECT_NAME,
             recordId: contactId

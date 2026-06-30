@@ -35,6 +35,10 @@ module.exports = {
 
     async test(context) {
 
+        const { fieldName } = context.properties;
+        if (!fieldName) {
+            throw new context.CancelError('Status Field is required!');
+        }
         const record = await commons.getLatestRecord(context, { objectName: OBJECT_NAME });
         if (!record) {
             throw new Error('No Account record available to use as test data.');

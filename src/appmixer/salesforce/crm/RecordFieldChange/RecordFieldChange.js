@@ -40,9 +40,12 @@ module.exports = {
 
     async test(context) {
 
-        const { objectName } = context.properties;
+        const { objectName, fieldName } = context.properties;
         if (!objectName) {
             throw new context.CancelError('Object Name is required!');
+        }
+        if (!fieldName) {
+            throw new context.CancelError('Field Name is required!');
         }
         const record = await commons.getLatestRecord(context, { objectName });
         if (!record) {

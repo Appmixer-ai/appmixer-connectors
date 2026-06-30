@@ -108,6 +108,24 @@ module.exports = {
     },
 
     /**
+     * Validate that a value is a safe Salesforce API identifier (object or
+     * field name) before interpolating it into a SOQL query. Salesforce API
+     * names start with a letter and contain only letters, digits and
+     * underscores, so this rejects SOQL injection and relationship paths like
+     * `Owner.Name` (which the diff logic could not handle anyway).
+     * @param {*} value
+     * @param {string} label - human readable name used in the error message
+     * @return {string} the validated identifier
+     */
+    assertSafeIdentifier(value, label) {
+
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(String(value))) {
+            throw new Error(`Invalid ${label}: "${value}". Only Salesforce API names (letters, digits and underscores) are supported.`);
+        }
+        return value;
+    },
+
+    /**
      * Common Salesforce datetime fields present on standard objects. Used to
      * reformat values to ISO before emitting (Salesforce returns a non-ISO
      * datetime format that the AJV schema validator rejects).
@@ -152,6 +170,8 @@ module.exports = {
      */
     async getFieldValueMap(context, { objectName, fieldName, recordId }) {
 
+        this.assertSafeIdentifier(objectName, 'object name');
+        this.assertSafeIdentifier(fieldName, 'field name');
         const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
         const soql = `SELECT Id,${fieldName} FROM ${objectName}${where}`;
         const { data } = await this.api.salesForceRq(context, {
@@ -173,8 +193,9 @@ module.exports = {
      * @param {Object} params - { objectName, since, recordId, limit }
      * @return {Promise<Array>}
      */
-    async getModifiedRecords(context, { objectName, since, recordId, limit = 200 }) {
+    async getModifiedRecords(context, { objectName, since, recordId, limit = 2000 }) {
 
+        this.assertSafeIdentifier(objectName, 'object name');
         let where = `LastModifiedDate >= ${this.Date.toDateTimeLiteral(since)}`;
         if (recordId) {
             where += ` AND Id = '${this.escapeSoql(recordId)}'`;
@@ -198,6 +219,7 @@ module.exports = {
      */
     async getLatestRecord(context, { objectName, recordId }) {
 
+        this.assertSafeIdentifier(objectName, 'object name');
         const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
         const soql = `SELECT FIELDS(ALL) FROM ${objectName}${where} ORDER BY LastModifiedDate DESC LIMIT 1`;
         const { data } = await this.api.salesForceRq(context, {
