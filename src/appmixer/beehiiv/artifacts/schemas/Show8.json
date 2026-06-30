@@ -1,0 +1,122 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "limit": {
+                "type": "integer",
+                "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data",
+            "limit",
+            "page",
+            "total_results",
+            "total_pages"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "description": "A list of the milestones related to this publication's referral program.",
+                "items": {
+                    "type": "object",
+                    "description": "The milestone object.",
+                    "required": [
+                        "id",
+                        "auto_fulfill",
+                        "num_referrals",
+                        "reward"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the milestone."
+                        },
+                        "auto_fulfill": {
+                            "type": "boolean",
+                            "description": "Only available with a promo code reward type. This indicates that an email will automatically be sent when the milestone is reached containing the reward promo code."
+                        },
+                        "num_referrals": {
+                            "type": "integer",
+                            "description": "The number of referrals needed to reach this milestone."
+                        },
+                        "reward": {
+                            "type": "object",
+                            "description": "The reward object.",
+                            "required": [
+                                "id",
+                                "name",
+                                "description",
+                                "image_url",
+                                "type"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "The prefixed ID of the reward."
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "description": "The name given to the reward at creation."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "The description given to the name at creation."
+                                },
+                                "image_url": {
+                                    "type": "string",
+                                    "description": "A URL of an image to be displayed with the reward."
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "description": "What type of reward this is.<br>`physical` - A product which must be sent to the subscriber.<br>`promo_code` - A code that is redeemable for goods or services.",
+                                    "enum": [
+                                        "physical",
+                                        "promo_code",
+                                        "digital",
+                                        "premium_gift"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "limit": {
+                "type": "integer",
+                "description": "The limit placed on the results. If no limit was specified in the request,this defaults to 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                "default": 1
+            },
+            "total_results": {
+                "type": "integer",
+                "description": "The total number of results from all pages."
+            },
+            "total_pages": {
+                "type": "integer",
+                "description": "The total number of pages."
+            }
+        }
+    }
+}

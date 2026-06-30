@@ -1,10 +1,10 @@
 {
     "name": "appmixer.aws.s3.PutObject",
-    "author": "Jimoh Damilola <jimoh@client.io>",
+    "author": "Appmixer <info@appmixer.com>",
     "description": "Upload object to bucket.",
     "private": false,
     "auth": {
-        "service": "appmixer:aws"
+        "service": "appmixer:aws:s3"
     },
     "inPorts": [{
         "name": "in",
@@ -26,8 +26,7 @@
             "required": [
                 "bucket",
                 "key",
-                "fileId",
-                "acl"
+                "fileId"
             ]
         },
         "inspector": {
@@ -61,8 +60,9 @@
                     "type": "select",
                     "label": "Access Control",
                     "index": 4,
-                    "tooltip": "The canned ACL to apply to the object.",
+                    "tooltip": "The canned ACL to apply to the object. Leave empty for buckets with ACLs disabled.",
                     "options": [
+                        { "clearItem": true, "content": "None (use bucket default)" },
                         { "value": "private", "content": "private" },
                         { "value": "public-read", "content": "public-read" },
                         { "value": "public-read-write", "content": "public-read-write" },
@@ -120,12 +120,12 @@
         {
             "name": "object",
             "options": [
-                { "label": "Bucket Name", "value": "Bucket" },
-                { "label": "Object Key", "value": "Key" },
-                { "label": "ETag", "value": "ETag" },
-                { "label": "Object Location", "value": "Location" },
-                { "label": "Content Type", "value": "ContentType" },
-                { "label": "Expiry Date", "value": "Expires" }
+                { "label": "Bucket Name", "value": "Bucket", "schema": { "type": "string", "example": "my-app-data-bucket" } },
+                { "label": "Object Key", "value": "Key", "schema": { "type": "string", "example": "uploads/images/photo.png" } },
+                { "label": "ETag", "value": "ETag", "schema": { "type": "string", "example": "\"d41d8cd98f00b204e9800998ecf8427e\"" } },
+                { "label": "Object Location", "value": "Location", "schema": { "type": "string", "example": "https://my-app-data-bucket.s3.us-east-1.amazonaws.com/uploads/images/photo.png" } },
+                { "label": "Content Type", "value": "ContentType", "schema": { "type": "string", "example": "image/png" } },
+                { "label": "Expiry Date", "value": "Expires", "schema": { "type": "string", "example": "2024-12-31T23:59:59.000Z" } }
             ]
         }
     ],

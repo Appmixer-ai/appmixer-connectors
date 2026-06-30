@@ -6,3 +6,4 @@
 require('./contacts.test.js');
 require('./messages.test.js');
 require('./conversation.test.js');
+require('./channels.test.js');

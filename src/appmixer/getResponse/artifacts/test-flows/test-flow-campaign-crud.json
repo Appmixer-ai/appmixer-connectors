@@ -1,0 +1,346 @@
+{
+    "err": "{\"message\":\"Component properties validation error\",\"error\":{\"componentId\":\"process-results\",\"componentType\":\"appmixer.utils.test.ProcessE2EResults\",\"errors\":[{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"successStoreId\"},\"message\":\"must have required property 'successStoreId'\"},{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"failedStoreId\"},\"message\":\"must have required property 'failedStoreId'\"}]},\"data\":{\"componentId\":\"process-results\",\"componentType\":\"appmixer.utils.test.ProcessE2EResults\",\"errors\":[{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"successStoreId\"},\"message\":\"must have required property 'successStoreId'\"},{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"failedStoreId\"},\"message\":\"must have required property 'failedStoreId'\"}]},\"code\":\"GRID_ERR_VAL_PROPERTIES\",\"name\":\"ValidationFlowError\",\"stack\":\"ValidationFlowError: Component properties validation error\\n    at Factory.validateProperties (/usr/src/appmixer/engine/src/component/Factory.js:536:19)\\n    at Factory.getComponentConfig (/usr/src/appmixer/engine/src/component/Factory.js:470:34)\\n    at /usr/src/appmixer/engine/src/component/Factory.js:343:32\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:264:21)\"}",
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-campaign-created": [
+                        "out"
+                    ],
+                    "assert-campaign-updated": [
+                        "out"
+                    ],
+                    "assert-find-campaigns": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1008,
+            "y": 208
+        },
+        "assert-campaign-created": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{campaign-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "campaign-id": {
+                                            "functions": [],
+                                            "variable": "$.create-campaign.out.campaignId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 672,
+            "y": 208
+        },
+        "assert-campaign-updated": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-campaign": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{updated-campaign-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "updated-campaign-id": {
+                                            "functions": [],
+                                            "variable": "$.update-campaign.out.campaignId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "update-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 512
+        },
+        "assert-find-campaigns": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-campaigns": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{found-campaign-id}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "found-campaign-id": {
+                                            "functions": [],
+                                            "variable": "$.find-campaigns.out.campaignId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "find-campaigns": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 368
+        },
+        "create-campaign": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "name": "e2e-campaign-{{{f8d81d4d-883f-41ea-9937-3d599c8e90f9}}}"
+                                },
+                                "modifiers": {
+                                    "name": {
+                                        "f8d81d4d-883f-41ea-9937-3d599c8e90f9": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.getResponse.core.CreateCampaign",
+            "x": 208,
+            "y": 208
+        },
+        "delete-campaign": {
+            "config": {
+                "properties": {
+                    "account": "6a16f2f73288994bf30a0be8"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "campaignId": "{{{var-campaign-id}}}"
+                                },
+                                "modifiers": {
+                                    "campaignId": {
+                                        "var-campaign-id": {
+                                            "functions": [],
+                                            "variable": "$.create-campaign.out.campaignId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.getResponse.core.DeleteCampaign",
+            "x": 1200,
+            "y": 208
+        },
+        "find-campaigns": {
+            "config": {
+                "properties": {
+                    "account": "6a16f2f73288994bf30a0be8"
+                },
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "first"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.getResponse.core.FindCampaigns",
+            "x": 416,
+            "y": 384
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 48,
+            "y": 208
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-campaign": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E GetResponse - campaign-crud"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1392,
+            "y": 208
+        },
+        "update-campaign": {
+            "config": {
+                "properties": {
+                    "account": "6a16f2f73288994bf30a0be8"
+                },
+                "transform": {
+                    "in": {
+                        "create-campaign": {
+                            "out": {
+                                "lambda": {
+                                    "campaignId": "{{{var-campaign-id}}}",
+                                    "languageCode": "EN"
+                                },
+                                "modifiers": {
+                                    "campaignId": {
+                                        "var-campaign-id": {
+                                            "functions": [],
+                                            "variable": "$.create-campaign.out.campaignId"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-campaign": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.getResponse.core.UpdateCampaign",
+            "x": 416,
+            "y": 512
+        }
+    },
+    "name": "E2E GetResponse - campaign-crud",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

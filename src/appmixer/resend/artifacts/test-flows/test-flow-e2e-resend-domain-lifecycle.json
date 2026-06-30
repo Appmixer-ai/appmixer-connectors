@@ -1,0 +1,650 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "domainName",
+                                                "text": "e2e-test-domain.example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-domain": {
+            "type": "appmixer.resend.core.CreateDomain",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "domain": {
+                                        "var-domain-name": {
+                                            "variable": "$.set-variables.out.domainName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "domain": "{{{var-domain-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1680,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.create-domain.out.id",
+                                            "functions": []
+                                        },
+                                        "field-create-domain": {
+                                            "variable": "$.create-domain.out.domain",
+                                            "functions": []
+                                        },
+                                        "expected-domain": {
+                                            "variable": "$.set-variables.out.domainName",
+                                            "functions": []
+                                        },
+                                        "8689a74b-bb53-4dd2-8fa1-379ef959acb8": {
+                                            "variable": "$.create-domain.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-create-id}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{8689a74b-bb53-4dd2-8fa1-379ef959acb8}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-domain": {
+            "type": "appmixer.resend.core.GetDomain",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-domain-id": {
+                                            "variable": "$.create-domain.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-domain-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1680,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-id": {
+                                            "variable": "$.get-domain.out.id",
+                                            "functions": []
+                                        },
+                                        "dd064116-6837-45f0-956d-24a601773bb4": {
+                                            "variable": "$.get-domain.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-get-id}}}"
+                                            },
+                                            {
+                                                "type": "string",
+                                                "expected": "pending",
+                                                "assertion": "equal",
+                                                "field": "{{{dd064116-6837-45f0-956d-24a601773bb4}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-domains": {
+            "type": "appmixer.resend.core.ListDomains",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1680,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-domains": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-domains": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-list-result": {
+                                            "variable": "$.list-domains.out",
+                                            "functions": []
+                                        },
+                                        "2627531d-d20f-46fa-a622-da91990da82b": {
+                                            "variable": "$.list-domains.out.count",
+                                            "functions": []
+                                        },
+                                        "26c164db-3dee-47b7-955f-079df6b6093e": {
+                                            "variable": "$.list-domains.out.result",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name == 'e2e-test-domain.example.com')].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "36f858b4-66d5-4b19-9f85-114b978be263": {
+                                            "variable": "$.set-variables.out.domainName",
+                                            "functions": []
+                                        },
+                                        "5cc7ceac-50c8-4a6c-9317-a8cb4203a917": {
+                                            "variable": "$.list-domains.out.count",
+                                            "functions": []
+                                        },
+                                        "09ae4557-07b1-4823-a08c-efd83d9dece4": {
+                                            "variable": "$.list-domains.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "number",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{5cc7ceac-50c8-4a6c-9317-a8cb4203a917}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{09ae4557-07b1-4823-a08c-efd83d9dece4}}}",
+                                                "type": "array"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-domain": {
+            "type": "appmixer.resend.core.UpdateDomain",
+            "x": 1024,
+            "y": 416,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-domains": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-domains": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-update-id": {
+                                            "variable": "$.create-domain.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "open_tracking": {},
+                                    "click_tracking": {}
+                                },
+                                "lambda": {
+                                    "id": "{{{var-update-id}}}",
+                                    "open_tracking": true,
+                                    "click_tracking": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "verify-domain": {
+            "type": "appmixer.resend.core.VerifyDomain",
+            "x": 1312,
+            "y": 624,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-verify-id": {
+                                            "variable": "$.create-domain.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-verify-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-verify": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1680,
+            "y": 624,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "verify-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "verify-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-verify-id": {
+                                            "variable": "$.verify-domain.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-verify-id}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1872,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ],
+                    "assert-list": [
+                        "out"
+                    ],
+                    "assert-verify": [
+                        "out"
+                    ],
+                    "9b561e99-b749-4c21-a590-25eeec471714": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-domain": {
+            "type": "appmixer.resend.core.DeleteDomain",
+            "x": 2064,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "var-delete-id": {
+                                            "variable": "$.create-domain.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{var-delete-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2256,
+            "y": 272,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Resend - Domain Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c4690f05-27e2-4328-bfab-3b2b97a7b6c2": {
+            "type": "appmixer.resend.core.GetDomain",
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-domain": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1264,
+            "y": 416,
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-domain": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "c6e3216a-0978-4395-acf7-832dac5a8380": {
+                                            "variable": "$.get-domain.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{c6e3216a-0978-4395-acf7-832dac5a8380}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9b561e99-b749-4c21-a590-25eeec471714": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "c4690f05-27e2-4328-bfab-3b2b97a7b6c2": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1680,
+            "y": 416,
+            "config": {
+                "transform": {
+                    "in": {
+                        "c4690f05-27e2-4328-bfab-3b2b97a7b6c2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "5f949584-eb4f-409b-aff9-150960a35bce": {
+                                            "variable": "$.c4690f05-27e2-4328-bfab-3b2b97a7b6c2.out.domain",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[?(@.name == 'e2e-test-domain.example.com')].name"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{5f949584-eb4f-409b-aff9-150960a35bce}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Resend - Domain Lifecycle",
+    "type": "automation"
+}

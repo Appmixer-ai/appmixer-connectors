@@ -1,0 +1,427 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 48,
+            "y": 208,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 208,
+            "y": 208,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "projectName",
+                                                "text": "E2E Test Archive Project"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-project": {
+            "type": "appmixer.todoist.core.CreateProject",
+            "x": 400,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-name": {
+                                            "variable": "$.set-variables.out.projectName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "color": {},
+                                    "isFavorite": {},
+                                    "viewStyle": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{var-name}}}",
+                                    "color": "blue",
+                                    "isFavorite": true,
+                                    "viewStyle": "list"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "archive-project": {
+            "type": "appmixer.todoist.core.ArchiveProject",
+            "x": 608,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-project": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-project": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "var-project-id": {
+                                            "variable": "$.create-project.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{var-project-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-project-archived": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "archive-project": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "archive-project": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-archived": {
+                                            "variable": "$.archive-project.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-archived}}}",
+                                                "type": "array"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "unarchive-project": {
+            "type": "appmixer.todoist.core.UnarchiveProject",
+            "x": 864,
+            "y": 96,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "archive-project": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "archive-project": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "f28b9ffe-b452-4c33-8a5a-de413388ea3c": {
+                                            "variable": "$.create-project.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{f28b9ffe-b452-4c33-8a5a-de413388ea3c}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-project-unarchived": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 96,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "unarchive-project": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "unarchive-project": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-unarchived": {
+                                            "variable": "$.unarchive-project.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-unarchived}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-collaborators": {
+            "type": "appmixer.todoist.core.GetProjectCollaborators",
+            "x": 864,
+            "y": 320,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "archive-project": {
+                            "out": {
+                                "lambda": {
+                                    "projectId": "{{{var-project-id}}}",
+                                    "outputType": "array"
+                                },
+                                "modifiers": {
+                                    "projectId": {
+                                        "var-project-id": {
+                                            "variable": "$.create-project.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "archive-project": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "assert-collaborators": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-collaborators": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-collaborators": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "1b8b9dfa-0b48-4b2b-ba83-7f433243ccb8": {
+                                            "variable": "$.get-collaborators.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{1b8b9dfa-0b48-4b2b-ba83-7f433243ccb8}}}",
+                                                "type": "array"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1456,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-project-archived": [
+                        "out"
+                    ],
+                    "assert-project-unarchived": [
+                        "out"
+                    ],
+                    "assert-collaborators": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-project": {
+            "type": "appmixer.todoist.core.DeleteProject",
+            "x": 1632,
+            "y": 208,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "projectId": {
+                                        "var-project-id": {
+                                            "variable": "$.create-project.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "projectId": "{{{var-project-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1808,
+            "y": 208,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-project": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-project": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Todoist - project-archive",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Todoist - project-archive",
+    "type": "automation",
+    "notes": {}
+}

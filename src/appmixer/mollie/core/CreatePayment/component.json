@@ -1,0 +1,266 @@
+{
+    "name": "appmixer.mollie.core.CreatePayment",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Creates a new payment.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:mollie"
+    },
+    "quota": {
+        "manager": "appmixer:mollie",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "string"
+                    },
+                    "redirectUrl": {
+                        "type": "string"
+                    },
+                    "cancelUrl": {
+                        "type": "string"
+                    },
+                    "webhookUrl": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": "string",
+                        "enum": ["en_US", "en_GB", "nl_NL", "nl_BE", "de_DE", "de_AT", "de_CH", "fr_FR", "fr_BE", "es_ES", "ca_ES", "pt_PT", "it_IT", "nb_NO", "sv_SE", "fi_FI", "da_DK", "is_IS", "hu_HU", "pl_PL", "lv_LV", "lt_LT"]
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": ["alma", "applepay", "bacs", "bancomatpay", "bancontact", "banktransfer", "belfius", "billie", "bizum", "blik", "creditcard", "directdebit", "eps", "giftcard", "ideal", "in3", "kbc", "klarna", "mbway", "mobilepay", "multibanco", "mybank", "paybybank", "payconiq", "paypal", "paysafecard", "pointofsale", "przelewy24", "riverty", "satispay", "swish", "trustly", "twint", "vipps", "voucher"]
+                    },
+                    "metadata": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "description",
+                    "amount",
+                    "currency",
+                    "redirectUrl"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "description": {
+                        "type": "text",
+                        "label": "Description",
+                        "tooltip": "The description of the payment shown to your customer on their card or bank statement. Maximum 255 characters.",
+                        "index": 1
+                    },
+                    "amount": {
+                        "type": "text",
+                        "label": "Amount",
+                        "tooltip": "The payment amount as a decimal string, e.g. '10.00'",
+                        "index": 2
+                    },
+                    "currency": {
+                        "type": "text",
+                        "label": "Currency",
+                        "tooltip": "Three-character ISO 4217 currency code, e.g. 'EUR', 'USD'",
+                        "index": 3
+                    },
+                    "redirectUrl": {
+                        "type": "text",
+                        "label": "Redirect URL",
+                        "tooltip": "The URL your customer will be redirected to after completing the payment",
+                        "index": 4
+                    },
+                    "cancelUrl": {
+                        "type": "text",
+                        "label": "Cancel URL",
+                        "tooltip": "The URL your customer will be redirected to when they cancel the payment",
+                        "index": 5
+                    },
+                    "webhookUrl": {
+                        "type": "text",
+                        "label": "Webhook URL",
+                        "tooltip": "The webhook URL where payment status updates will be sent",
+                        "index": 6
+                    },
+                    "locale": {
+                        "type": "select",
+                        "label": "Locale",
+                        "tooltip": "The language to be used in the hosted payment pages. Setting this improves conversion rates.",
+                        "index": 7,
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            { "label": "English (US)", "value": "en_US" },
+                            { "label": "English (GB)", "value": "en_GB" },
+                            { "label": "Dutch (NL)", "value": "nl_NL" },
+                            { "label": "Dutch (BE)", "value": "nl_BE" },
+                            { "label": "German (DE)", "value": "de_DE" },
+                            { "label": "German (AT)", "value": "de_AT" },
+                            { "label": "German (CH)", "value": "de_CH" },
+                            { "label": "French (FR)", "value": "fr_FR" },
+                            { "label": "French (BE)", "value": "fr_BE" },
+                            { "label": "Spanish (ES)", "value": "es_ES" },
+                            { "label": "Catalan (ES)", "value": "ca_ES" },
+                            { "label": "Portuguese (PT)", "value": "pt_PT" },
+                            { "label": "Italian (IT)", "value": "it_IT" },
+                            { "label": "Norwegian (NO)", "value": "nb_NO" },
+                            { "label": "Swedish (SE)", "value": "sv_SE" },
+                            { "label": "Finnish (FI)", "value": "fi_FI" },
+                            { "label": "Danish (DK)", "value": "da_DK" },
+                            { "label": "Icelandic (IS)", "value": "is_IS" },
+                            { "label": "Hungarian (HU)", "value": "hu_HU" },
+                            { "label": "Polish (PL)", "value": "pl_PL" },
+                            { "label": "Latvian (LV)", "value": "lv_LV" },
+                            { "label": "Lithuanian (LT)", "value": "lt_LT" }
+                        ]
+                    },
+                    "method": {
+                        "type": "select",
+                        "label": "Payment Method",
+                        "tooltip": "Choose a specific payment method to skip the payment method selection screen, or leave empty to show all available methods",
+                        "index": 8,
+                        "options": [
+                            { "clearItem": true, "content": "-- Clear selection --" },
+                            { "label": "Credit Card", "value": "creditcard" },
+                            { "label": "PayPal", "value": "paypal" },
+                            { "label": "iDEAL", "value": "ideal" },
+                            { "label": "Bancontact", "value": "bancontact" },
+                            { "label": "Bank Transfer", "value": "banktransfer" },
+                            { "label": "SEPA Direct Debit", "value": "directdebit" },
+                            { "label": "Apple Pay", "value": "applepay" },
+                            { "label": "Klarna Pay Later", "value": "klarna" },
+                            { "label": "Sofort", "value": "directdebit" },
+                            { "label": "Gift Card", "value": "giftcard" },
+                            { "label": "KBC/CBC Payment Button", "value": "kbc" },
+                            { "label": "Belfius Pay Button", "value": "belfius" }
+                        ]
+                    },
+                    "metadata": {
+                        "type": "text",
+                        "label": "Metadata",
+                        "tooltip": "Custom data as JSON string that will be saved alongside the payment (optional, max ~1kB)",
+                        "index": 9
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Resource",
+                    "value": "resource",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Payment ID",
+                    "value": "id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Mode",
+                    "value": "mode",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Created At",
+                    "value": "createdAt",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Payment Amount",
+                    "value": "amount",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "title": "Value"
+                            },
+                            "currency": {
+                                "type": "string",
+                                "title": "Currency"
+                            }
+                        },
+                        "example": {
+                            "value": "25.00",
+                            "currency": "EUR"
+                        }
+                    }
+                },
+                {
+                    "label": "Description",
+                    "value": "description",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Method",
+                    "value": "method",
+                    "schema": {
+                        "type": [
+                            "null",
+                            "string"
+                        ]
+                    }
+                },
+                {
+                    "label": "Metadata",
+                    "value": "metadata",
+                    "schema": {
+                        "type": "object"
+                    }
+                },
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Is Cancelable",
+                    "value": "isCancelable",
+                    "schema": {
+                        "type": "boolean"
+                    }
+                },
+                {
+                    "label": "Expires At",
+                    "value": "expiresAt",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Checkout URL",
+                    "value": "_links",
+                    "schema": {
+                        "type": "object"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI2LjAuMywgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxvZ29fLV8yMDIyIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiCgkgeT0iMHB4IiB2aWV3Qm94PSIwIDAgOTM1LjcgNDUzIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA5MzUuNyA0NTM7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4KCS5zdDB7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7fQo8L3N0eWxlPgo8cGF0aCBjbGFzcz0ic3QwIiBkPSJNNzQxLjMsMjIwLjhjMTQuNywwLDI3LjksOS43LDMyLjUsMjMuNGgtNjQuOUM3MTMuNSwyMzAuNCw3MjYuNiwyMjAuOCw3NDEuMywyMjAuOEw3NDEuMywyMjAuOHogTTgwNi40LDI1NgoJYzAtMTcuMS02LjctMzMuMi0xOC43LTQ1LjRjLTEyLjEtMTIuMi0yOC4xLTE5LTQ1LjEtMTljLTAuMywwLTAuNiwwLTAuOCwwYy0xNy42LDAuMi0zNC4zLDcuMi00Ni44LDE5LjcKCWMtMTIuNSwxMi41LTE5LjUsMjkuMS0xOS43LDQ2LjhjLTAuMiwxOC4xLDYuNywzNS4xLDE5LjUsNDguMWMxMi44LDEzLDI5LjgsMjAuMSw0Ny44LDIwLjFoMC4xYzIzLjcsMCw0NS45LTEyLjcsNTgtMzNsMS41LTIuNgoJbC0yNi42LTEzLjFsLTEuMywyLjJjLTYuNywxMS0xOC4yLDE3LjUtMzEsMTcuNWMtMTYuNCwwLTMwLjUtMTAuOS0zNC45LTI2LjVoOThMODA2LjQsMjU2TDgwNi40LDI1Nkw4MDYuNCwyNTZ6IE02MzkuNywxNjguNgoJYy0xMS42LDAtMjEtOS40LTIxLTIxczkuNC0yMSwyMS0yMXMyMSw5LjQsMjEsMjFDNjYwLjgsMTU5LjIsNjUxLjMsMTY4LjYsNjM5LjcsMTY4LjYgTTYyMy42LDMyMy42aDMyLjJWMTk0LjNoLTMyLjJWMzIzLjZ6CgkgTTU2MiwxMjkuNGgzMi4ydjE5NC4zSDU2MlYxMjkuNHogTTUwMC40LDMyMy42aDMyLjJWMTI5LjRoLTMyLjJWMzIzLjZ6IE00MTUuNywyOTQuNGMtMTkuNSwwLTM1LjQtMTUuOS0zNS40LTM1LjQKCXMxNS45LTM1LjQsMzUuNC0zNS40czM1LjQsMTUuOSwzNS40LDM1LjRDNDUxLjEsMjc4LjUsNDM1LjIsMjk0LjQsNDE1LjcsMjk0LjRMNDE1LjcsMjk0LjR6IE00MTUuNywxOTEuNQoJYy0zNy4yLDAtNjcuNCwzMC4zLTY3LjQsNjcuNHMzMC4zLDY3LjQsNjcuNCw2Ny40czY3LjQtMzAuMyw2Ny40LTY3LjRTNDUyLjksMTkxLjUsNDE1LjcsMTkxLjVMNDE1LjcsMTkxLjVMNDE1LjcsMTkxLjV6CgkgTTI3OC4yLDE5MS43Yy0xLjgtMC4xLTMuNC0wLjItNS4yLTAuMmMtMTYuMiwwLTMxLjYsNi42LTQyLjcsMTguNGMtMTEuMS0xMS43LTI2LjQtMTguNC00Mi41LTE4LjRjLTMyLjIsMC01OC41LDI2LjItNTguNSw1OC40Cgl2NzMuN2gzMS41di03Mi44YzAtMTMuNCwxMS0yNS43LDIzLjktMjdjMC45LTAuMSwxLjgtMC4xLDIuNy0wLjFjMTQuNiwwLDI2LjUsMTEuOSwyNi41LDI2LjV2NzMuNWgzMi4ydi03Mi45CgljMC0xMy4zLDEwLjktMjUuNiwyMy45LTI2LjljMC45LTAuMSwxLjgtMC4xLDIuNy0wLjFjMTQuNiwwLDI2LjUsMTEuOCwyNi42LDI2LjN2NzMuN2gzMi4ydi03Mi44YzAtMTQuOC01LjUtMjktMTUuMy00MAoJQzMwNi40LDE5OS44LDI5Mi45LDE5MywyNzguMiwxOTEuNyIvPgo8L3N2Zz4K"
+}

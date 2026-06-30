@@ -1,6 +1,6 @@
 'use strict';
 
-const { webhookHandler } = require('../../commons');
+const { webhookHandler, fetchLatestExample } = require('../../commons');
 const ENTITY_NAME = 'Customer';
 
 module.exports = {
@@ -26,5 +26,11 @@ module.exports = {
     receive: function(context) {
 
         return webhookHandler(context, ENTITY_NAME);
+    },
+
+    test: async function(context) {
+
+        const record = await fetchLatestExample(context, ENTITY_NAME, 'MetaData.CreateTime');
+        return context.sendJson(record, 'out');
     }
 };

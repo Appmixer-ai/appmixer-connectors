@@ -24,16 +24,32 @@ module.exports = {
             throw new context.CancelError('Message body is required.');
         }
 
-        const requestData = {
-            to: Array.isArray(to) ? to : to.split(',').map(email => email.trim())
+        const requestData = {};
+        const normalizeListInput = value => {
+            if (!value) {
+                return [];
+            }
+
+            const values = Array.isArray(value)
+                ? value
+                : value.split(',').map(item => item.trim());
+
+            return values.filter(item => item && item.length > 0);
         };
 
-        if (cc) {
-            requestData.cc = Array.isArray(cc) ? cc : cc.split(',').map(email => email.trim());
+        const normalizedTo = normalizeListInput(to);
+        if (normalizedTo.length > 0) {
+            requestData.to = normalizedTo;
         }
 
-        if (bcc) {
-            requestData.bcc = Array.isArray(bcc) ? bcc : bcc.split(',').map(email => email.trim());
+        const normalizedCc = normalizeListInput(cc);
+        if (normalizedCc.length > 0) {
+            requestData.cc = normalizedCc;
+        }
+
+        const normalizedBcc = normalizeListInput(bcc);
+        if (normalizedBcc.length > 0) {
+            requestData.bcc = normalizedBcc;
         }
 
         if (subject) requestData.subject = subject;
@@ -43,11 +59,15 @@ module.exports = {
         if (senderName) requestData.sender_name = senderName;
         if (tags || archive !== undefined) {
             requestData.options = {};
-            if (tags) {
-                requestData.options.tag_ids = Array.isArray(tags) ? tags : tags.split(',').map(id => id.trim());
+            const normalizedTags = normalizeListInput(tags);
+            if (normalizedTags.length > 0) {
+                requestData.options.tag_ids = normalizedTags;
             }
             if (archive !== undefined) {
                 requestData.options.archive = archive;
+            }
+            if (Object.keys(requestData.options).length === 0) {
+                delete requestData.options;
             }
         }
 

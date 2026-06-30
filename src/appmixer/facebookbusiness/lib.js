@@ -4,7 +4,39 @@ const workerpool = require('workerpool');
 
 const pool = workerpool.pool(__dirname + '/prepareMembers.js');
 
+function getCacheKey(obj) {
+    return crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex');
+}
+
+async function callEndpointCached(context, url) {
+
+    let lock;
+    try {
+        const key = getCacheKey({ url, token: context.auth.accessToken });
+        lock = await context.lock(key);
+
+        const cached = await context.staticCache.get(key);
+        if (cached) {
+            return { data: cached };
+        }
+
+        const { data } = await context.httpRequest.get(url);
+
+        await context.staticCache.set(
+            key,
+            data,
+            context.config.listCacheTTL || (2 * 60 * 1000) // 120s
+        );
+
+        return { data };
+    } finally {
+        lock?.unlock();
+    }
+}
+
 module.exports = {
+
+    callEndpointCached,
 
     async sendCSVAudienceToFacebook(context, method, operation) {
 
@@ -307,7 +339,7 @@ async function sendBatchToFacebook(
         access_token: context.auth.accessToken
     };
 
-    const url = `https://graph.facebook.com/v20.0/${audienceId}/${operation}`;
+    const url = `https://graph.facebook.com/v25.0/${audienceId}/${operation}`;
 
     await context.log({
         step: 'batch',

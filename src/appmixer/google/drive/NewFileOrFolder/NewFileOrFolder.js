@@ -6,14 +6,22 @@ function isNewFileOrFolder(change) {
     const file = change.file;
     if (!file) return false;
 
-    return change.changeType === 'file' &&
-    !change.removed &&  // exclude removed files
-    !file.trashed &&  // exclude trashed files
-    new Date(file.createdTime) >= new Date(file.modifiedTime) &&  // exclude updates to a file
-    new Date(file.createdTime) >= new Date(file.viewedByMeTime);  // exclude visiting a folder/file.
+    if (change.changeType !== 'file') return false;
+    if (change.removed) return false;
+    if (file.trashed) return false;
+
+    const created = new Date(file.createdTime).getTime();
+    const modified = new Date(file.modifiedTime).getTime();
+    const viewed = file.viewedByMeTime ? new Date(file.viewedByMeTime).getTime() : 0;
+
+    if (isNaN(created) || isNaN(modified)) return false;
+
+    return created >= modified && created >= viewed;
 }
 
 module.exports = {
+
+    isNewFileOrFolder,
 
     async start(context) {
 
@@ -57,5 +65,21 @@ module.exports = {
                 return lib.registerWebhook(context);
             }
         }
+    },
+
+    // Flow Test Mode: emit one realistic newly-created file/folder without registering a
+    // webhook. Read-only — lists files newest-first by createdTime via the shared helper,
+    // honoring the same folder/fileTypesRestriction filters and the same isNewFileOrFolder
+    // predicate receive() applies, and emits the file in the identical output shape.
+    async test(context) {
+
+        const example = await lib.fetchLatestExampleFile(context, {
+            orderBy: 'createdTime desc',
+            filter: isNewFileOrFolder
+        });
+        if (!example) {
+            throw new Error('No matching files or folders to use as test data.');
+        }
+        return context.sendJson(example, 'out');
     }
 };

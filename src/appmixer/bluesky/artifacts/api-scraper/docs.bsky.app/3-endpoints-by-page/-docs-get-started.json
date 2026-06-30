@@ -1,0 +1,136 @@
+[
+  {
+    "method": "POST",
+    "path": "/xrpc/com.atproto.server.createSession",
+    "operationId": "createSession",
+    "description": "Create an authentication session with your username and password. Returns session object containing access and refresh JWT tokens.",
+    "parameters": [],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "description": "The user's handle or DID (e.g. handle.example.com)"
+              },
+              "password": {
+                "type": "string",
+                "description": "The user's password"
+              }
+            },
+            "required": [
+              "identifier",
+              "password"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Session created successfully",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accessJwt": {
+                  "type": "string",
+                  "description": "An access token used to authenticate requests, expires after a few minutes"
+                },
+                "refreshJwt": {
+                  "type": "string",
+                  "description": "A refresh token that lasts longer and is used only to update the session with a new access token"
+                }
+              },
+              "required": [
+                "accessJwt",
+                "refreshJwt"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "_sourceUrl": "https://docs.bsky.app/docs/get-started"
+  },
+  {
+    "method": "POST",
+    "path": "/xrpc/com.atproto.repo.createRecord",
+    "operationId": "createRecord",
+    "description": "Create a new record in a repository. Used to create posts and other record types. Returns the URI and CID of the created record.",
+    "parameters": [],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repo": {
+                "type": "string",
+                "description": "The handle or DID of the repository (e.g. your Bluesky handle)"
+              },
+              "collection": {
+                "type": "string",
+                "description": "The NSID of the record collection (e.g. app.bsky.feed.post)"
+              },
+              "record": {
+                "type": "object",
+                "description": "The record object to create",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text content of the post"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The ISO 8601 datetime when the post was created"
+                  }
+                },
+                "required": [
+                  "text",
+                  "createdAt"
+                ]
+              }
+            },
+            "required": [
+              "repo",
+              "collection",
+              "record"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Record created successfully",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "description": "The AT URI of the created record (e.g. at://did:plc:abc123..../app.bsky.feed.post/xyz...)"
+                },
+                "cid": {
+                  "type": "string",
+                  "description": "The CID (content identifier, a hash of the content) of the created record"
+                }
+              },
+              "required": [
+                "uri",
+                "cid"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "_sourceUrl": "https://docs.bsky.app/docs/get-started"
+  }
+]

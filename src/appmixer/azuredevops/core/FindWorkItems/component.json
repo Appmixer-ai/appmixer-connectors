@@ -1,0 +1,98 @@
+{
+    "name": "appmixer.azuredevops.core.FindWorkItems",
+    "label": "Find Work Items",
+    "description": "Search for work items in Azure DevOps using a WIQL (Work Item Query Language) query. Returns a maximum of 200 work items.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:azuredevops"
+    },
+    "quota": {
+        "manager": "appmixer:azuredevops",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "organization": {
+                        "type": "string"
+                    },
+                    "project": {
+                        "type": "string"
+                    },
+                    "wiqlQuery": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": ["organization", "project", "wiqlQuery"]
+            },
+            "inspector": {
+                "inputs": {
+                    "organization": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Organization",
+                        "tooltip": "The name of your Azure DevOps organization (e.g. <b>mycompany</b> from <i>https://dev.azure.com/mycompany</i>)."
+                    },
+                    "project": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Project",
+                        "tooltip": "The name or ID of the Azure DevOps project to search within."
+                    },
+                    "wiqlQuery": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "WIQL Query",
+                        "tooltip": "A Work Item Query Language (WIQL) query to find work items. Example: <br><b>SELECT [System.Id], [System.Title], [System.State] FROM WorkItems WHERE [System.WorkItemType] = 'Bug' AND [System.State] != 'Closed' ORDER BY [System.ChangedDate] DESC</b>"
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether to receive the result set as one complete list, the first item only, one item at a time, or stream to a CSV file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/azuredevops/core/FindWorkItems?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/organization": "dummy",
+                        "in/project": "dummy",
+                        "in/wiqlQuery": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyBpZD0iZjQzMzc1MDYtNWQ5NS00ZTgwLWI3Y2EtNjg0OThjNmUwMDhlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOCAxOCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJiYTQyMDI3Ny03MDBlLTQyY2MtOWRlOS01Mzg4YTVjMTZlNTQiIHgxPSI5IiB5MT0iMTYuOTciIHgyPSI5IiB5Mj0iMS4wMyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzAwNzhkNCIvPjxzdG9wIG9mZnNldD0iMC4xNiIgc3RvcC1jb2xvcj0iIzEzODBkYSIvPjxzdG9wIG9mZnNldD0iMC41MyIgc3RvcC1jb2xvcj0iIzNjOTFlNSIvPjxzdG9wIG9mZnNldD0iMC44MiIgc3RvcC1jb2xvcj0iIzU1OWNlYyIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzVlYTBlZiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjx0aXRsZT5JY29uLWRldm9wcy0yNjE8L3RpdGxlPjxwYXRoIGlkPSJhOTFmMGNhNC04ZmI3LTQwMTktOWMwOS0wYTUyZTJjMDU3NTQiIGQ9Ik0xNyw0djkuNzRsLTQsMy4yOC02LjItMi4yNlYxN0wzLjI5LDEyLjQxbDEwLjIzLjhWNC40NFptLTMuNDEuNDlMNy44NSwxVjMuMjlMMi41OCw0Ljg0LDEsNi44N3Y0LjYxbDIuMjYsMVY2LjU3WiIgZmlsbD0idXJsKCNiYTQyMDI3Ny03MDBlLTQyY2MtOWRlOS01Mzg4YTVjMTZlNTQpIi8+PC9zdmc+"
+}

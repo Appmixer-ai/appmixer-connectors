@@ -1,0 +1,408 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": -112,
+            "y": 192,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 256,
+            "y": 192,
+            "version": "1.0.0",
+            "config": {},
+            "source": {
+                "in": {
+                    "98b28ed7-0d1b-4ad6-ae76-efceaa755b0e": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "upload-file": {
+            "type": "appmixer.box.core.UploadFile",
+            "x": 464,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileName": {
+                                        "c178b9a7-179a-4578-93b7-2e51cb2d81f3": {
+                                            "variable": "$.98b28ed7-0d1b-4ad6-ae76-efceaa755b0e.out.testFileName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {}
+                                },
+                                "lambda": {
+                                    "fileName": "{{{c178b9a7-179a-4578-93b7-2e51cb2d81f3}}}",
+                                    "fileId": "f2353cb0-23a1-48a5-9ead-f522cf3e29ff"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "lock-file": {
+            "type": "appmixer.box.core.LockFile",
+            "x": 672,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "upload-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "upload-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "7899d75e-ff18-48ca-abf1-d566b2a86053": {
+                                            "variable": "$.upload-file.out.entries.0.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{7899d75e-ff18-48ca-abf1-d566b2a86053}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-lock": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "lock-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "lock-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "lock-check": {
+                                            "variable": "$.lock-file.out.lock.id",
+                                            "functions": []
+                                        },
+                                        "9dfb9365-4a7a-43c5-a1b2-1dc75d482b5b": {
+                                            "variable": "$.lock-file.out.lock",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.type"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "lock",
+                                                "assertion": "equal",
+                                                "field": "{{{9dfb9365-4a7a-43c5-a1b2-1dc75d482b5b}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "unlock-file": {
+            "type": "appmixer.box.core.UnlockFile",
+            "x": 912,
+            "y": 32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "lock-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "lock-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "6e1c1bc4-b796-4546-92bf-1aef688b3ee9": {
+                                            "variable": "$.upload-file.out.entries.0.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{6e1c1bc4-b796-4546-92bf-1aef688b3ee9}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-unlock": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "unlock-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "unlock-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "lock-null-check": {
+                                            "variable": "$.unlock-file.out.lock",
+                                            "functions": []
+                                        },
+                                        "4a9cb1ce-d262-4c3b-8a7a-7f6e94edd081": {
+                                            "variable": "$.unlock-file.out.id",
+                                            "functions": []
+                                        },
+                                        "deae5c13-b1af-43b5-9d0b-c9f3ed9881d0": {
+                                            "variable": "$.unlock-file.out.lock",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "{{{6b18e96f-b074-4148-9977-e555f2f46c0b}}}",
+                                                            "modifiers": {
+                                                                "6b18e96f-b074-4148-9977-e555f2f46c0b": {
+                                                                    "variable": "$.unlock-file.out.lock",
+                                                                    "functions": []
+                                                                }
+                                                            }
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "regex": "null",
+                                                "assertion": "regex",
+                                                "field": "{{{deae5c13-b1af-43b5-9d0b-c9f3ed9881d0}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1344,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-unlock": [
+                        "out"
+                    ],
+                    "assert-lock": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-file": {
+            "type": "appmixer.box.core.DeleteFile",
+            "x": 1568,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "b7cae77c-d135-458e-aa9a-000d1ed98466": {
+                                            "variable": "$.upload-file.out.entries.0.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{b7cae77c-d135-458e-aa9a-000d1ed98466}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1840,
+            "y": 192,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "51e304fc-2fb8-4c5f-884e-ce82546a24c5": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    },
+                                    "testCase": {
+                                        "07e2ce0e-9e4c-4159-bfca-e1ba941f07b8": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{51e304fc-2fb8-4c5f-884e-ce82546a24c5}}}",
+                                    "testCase": "{{{07e2ce0e-9e4c-4159-bfca-e1ba941f07b8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "98b28ed7-0d1b-4ad6-ae76-efceaa755b0e": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 96,
+            "y": 192,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "87bdb5a8-e5f1-44d7-8acc-ea9c9296c59d": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_random"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "testFileName",
+                                                "text": "TestFileLocking{{{87bdb5a8-e5f1-44d7-8acc-ea9c9296c59d}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Box - file-locking",
+    "type": "automation"
+}

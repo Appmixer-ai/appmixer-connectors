@@ -1,5 +1,7 @@
 'use strict';
-const commons = require('../../aws-commons');
+
+const { ListBucketsCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * List all buckets.
@@ -11,9 +13,10 @@ module.exports = {
 
         const { sendWholeArray } = context.properties;
 
-        const { s3 } = commons.init(context);
+        const { s3 } = lib.init(context);
         try {
-            const { Buckets } = await s3.listBuckets().promise();
+            const response = await s3.send(new ListBucketsCommand({}));
+            const Buckets = response.Buckets || [];
 
             if (sendWholeArray) {
                 return context.sendJson(Buckets, 'bucket');
@@ -29,7 +32,8 @@ module.exports = {
                 // When used as a source, return an empty array on error or insufficient permissions.
                 return context.sendJson([], 'bucket');
             }
-            throw err;
+
+            throw err?.message || err;
         }
     },
 

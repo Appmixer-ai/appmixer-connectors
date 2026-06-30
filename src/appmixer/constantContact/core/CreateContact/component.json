@@ -1,0 +1,468 @@
+{
+    "name": "appmixer.constantContact.core.CreateContact",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new contact.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:constantContact"
+    },
+    "quota": {
+        "manager": "appmixer:constantContact",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "email_address": {
+                        "type": "string"
+                    },                  
+                    "permission_to_send": {
+                        "type": "string"
+                    },  
+                    "first_name": {
+                        "type": "string",
+                        "title": "First Name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "title": "Last Name"
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "title": "Company Name"
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "title": "Job Title"
+                    },
+                    "list_memberships": {
+                        "type": ["array", "string"],
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "List Memberships"
+                    },
+                    "tags": {
+                        "type": ["array", "string"],
+                        "items": {
+                            "type": "string"
+                        },
+                        "title": "Tags"
+                    },
+                    "create_source": {
+                        "type": "string",
+                        "title": "Create Source"
+                    }
+                },
+                "required": [
+                    "email_address",
+                    "permission_to_send",
+                    "create_source"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "email_address": {
+                        "type": "text",
+                        "label": "Email Address",
+                        "tooltip": "Email address of the contact.",
+                        "index": 1
+                    },
+                    "permission_to_send": {
+                        "type": "select",
+                        "label": "Permission To Send",
+                        "tooltip": "Identifies the type of permission that the Constant Contact account has been granted to send email to the contact.",
+                        "options": [
+                            {
+                                "label": "Explicit",
+                                "value": "explicit"
+                            },
+                            {
+                                "label": "Implicit",
+                                "value": "implicit"
+                            },
+                            {
+                                "label": "Pending Confirmation",
+                                "value": "pending_confirmation"
+                            },
+                            {
+                                "label": "Unsubscribed",
+                                "value": "unsubscribed"
+                            },
+                            {
+                                "label": "Temporary Hold",
+                                "value": "temp_hold"
+                            },
+                            {
+                                "label": "Not Set",
+                                "value": "not_set"
+                            }
+                        ],
+                        "index": 1
+                    },
+                    "first_name": {
+                        "type": "text",
+                        "tooltip": "First name of the contact.",
+                        "label": "First Name",
+                        "index": 2
+                    },
+                    "last_name": {
+                        "type": "text",
+                        "tooltip": "Last name of the contact.",
+                        "label": "Last Name",
+                        "index": 3
+                    },
+                    "company_name": {
+                        "type": "text",
+                        "tooltip": "Company name.",
+                        "label": "Company Name",
+                        "index": 4
+                    },
+                    "job_title": {
+                        "type": "text",
+                        "tooltip": "Job title.",
+                        "label": "Job Title",
+                        "index": 5
+                    },
+                    "list_memberships": {
+                        "type": "multiselect",
+                        "tooltip": "List IDs to subscribe the contact to.",
+                        "label": "List Memberships",
+                        "index": 6,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/FindContactLists?outPort=out",
+                            "data": {
+                                "transform": "./FindContactLists#listsToSelectArray"
+                            }
+                        }
+                    },
+                    "tags": {
+                        "type": "multiselect",
+                        "tooltip": "Tags to apply to the contact.",
+                        "label": "Tags",
+                        "index": 7,
+                        "source": {
+                            "url": "/component/appmixer/constantContact/core/ListTags?outPort=out",
+                            "data": {
+                                "transform": "./ListTags#tagsToSelectArray"
+                            }
+                        }
+                    },
+                    "create_source": {
+                        "type": "select",
+                        "tooltip": "Source of the create operation.",
+                        "label": "Create Source",
+                        "options": [
+                            {
+                                "label": "Account",
+                                "value": "Account"
+                            },
+                            {
+                                "label": "Contact",
+                                "value": "Contact"
+                            }
+                        ],
+                        "index": 8
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Contact ID",
+                    "value": "contact_id",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Email Address",
+                    "value": "email_address",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "address": {
+                                "type": "string",
+                                "title": "Email Address.Address"
+                            },
+                            "permission_to_send": {
+                                "type": "string",
+                                "title": "Email Address.Permission To Send"
+                            }
+                        },
+                        "example": {
+                            "address": "sarah.johnson@example.com",
+                            "permission_to_send": "explicit"
+                        }
+                    }
+                },
+                {
+                    "label": "First Name",
+                    "value": "first_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Last Name",
+                    "value": "last_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Job Title",
+                    "value": "job_title",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Company Name",
+                    "value": "company_name",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Create Source",
+                    "value": "create_source",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Birthday Month",
+                    "value": "birthday_month",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Birthday Day",
+                    "value": "birthday_day",
+                    "schema": {
+                        "type": "number"
+                    }
+                },
+                {
+                    "label": "Anniversary",
+                    "value": "anniversary",
+                    "schema": {
+                        "type": "string"
+                    }
+                },
+                {
+                    "label": "Custom Fields",
+                    "value": "custom_fields",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "custom_field_id": {
+                                    "type": "string",
+                                    "title": "Custom Fields.Custom Field Id"
+                                },
+                                "value": {
+                                    "type": "string",
+                                    "title": "Custom Fields.Value"
+                                },
+                                "choice_ids": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "title": "Custom Fields.Choice Ids"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "custom_field_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                                "value": "Gold Tier",
+                                "choice_ids": ["c1d2e3f4-a5b6-7890-cdef-ab1234567890"]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "label": "Phone Numbers",
+                    "value": "phone_numbers",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "phone_number": {
+                                    "type": "string",
+                                    "title": "Phone Numbers.Phone Number"
+                                },
+                                "kind": {
+                                    "type": "string",
+                                    "title": "Phone Numbers.Kind"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "phone_number": "+15551234567",
+                                "kind": "home"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "label": "Street Addresses",
+                    "value": "street_addresses",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Kind"
+                                },
+                                "street": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Street"
+                                },
+                                "city": {
+                                    "type": "string",
+                                    "title": "Street Addresses.City"
+                                },
+                                "state": {
+                                    "type": "string",
+                                    "title": "Street Addresses.State"
+                                },
+                                "postal_code": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Postal Code"
+                                },
+                                "country": {
+                                    "type": "string",
+                                    "title": "Street Addresses.Country"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "kind": "home",
+                                "street": "123 Elm Street",
+                                "city": "Austin",
+                                "state": "TX",
+                                "postal_code": "78701",
+                                "country": "US"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "label": "List Memberships",
+                    "value": "list_memberships",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "label": "Taggings",
+                    "value": "taggings",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                {
+                    "label": "Notes",
+                    "value": "notes",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "note_id": {
+                                    "type": "string",
+                                    "title": "Notes.Note Id"
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "title": "Notes.Created At"
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "title": "Notes.Content"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "note_id": "d4e5f6a7-b8c9-0123-d456-e78901234567",
+                                "created_at": "2026-01-15T10:30:00Z",
+                                "content": "Spoke with contact about upgrading subscription plan."
+                            }
+                        ]
+                    }
+                },
+                {
+                    "label": "Sms Channel",
+                    "value": "sms_channel",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "full_sms_address": {
+                                "type": "string",
+                                "title": "Sms Channel.Full Sms Address"
+                            },
+                            "sms_channel_consents": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sms_consent_permission": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Sms Consent Permission"
+                                        },
+                                        "consent_type": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Consent Type"
+                                        },
+                                        "consent_medium_details": {
+                                            "type": "string",
+                                            "title": "Sms Channel.Sms Channel Consents.Consent Medium Details"
+                                        }
+                                    }
+                                },
+                                "title": "Sms Channel.Sms Channel Consents"
+                            }
+                        },
+                        "example": {
+                            "full_sms_address": "+15559876543",
+                            "sms_channel_consents": [
+                                {
+                                    "sms_consent_permission": "explicit",
+                                    "consent_type": "promotional",
+                                    "consent_medium_details": "Web form opt-in"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCIgdmlld0JveD0iMCAwIDQyLjUgNDIuNiIgc3R5bGU9ImVuYWJsZS1iYWNrZ3JvdW5kOm5ldyAwIDAgNDIuNSA0Mi42OyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CiA8c3R5bGUgdHlwZT0idGV4dC9jc3MiPgogIC5zdDB7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7ZmlsbDojRkY5RTFBO30KCS5zdDF7ZmlsbC1ydWxlOmV2ZW5vZGQ7Y2xpcC1ydWxlOmV2ZW5vZGQ7ZmlsbDojMTg1NkVEO30KIDwvc3R5bGU+CiA8Zz4KICA8Zz4KICAgPHBhdGggY2xhc3M9InN0MCIgZD0iTTI3LjQsMTcuNWMwLjQsMS4xLDEuNCwxLjgsMi42LDEuOGMwLjMsMCwwLjYtMC4xLDAuOS0wLjJjMS40LTAuNSwyLjItMi4xLDEuNy0zLjVjLTAuOS0yLjUtMi44LTQuNS01LjQtNS43CgkJCWMtMS40LTAuNi0zLDAtMy43LDEuNGMtMC42LDEuNCwwLDMsMS40LDMuN0MyNi4yLDE1LjUsMjcuMSwxNi40LDI3LjQsMTcuNXoiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0yNi41LDAuMWMtMS41LTAuMy0yLjksMC43LTMuMiwyLjJjLTAuMywxLjUsMC43LDIuOSwyLjIsMy4yQzMxLjcsNi44LDM2LDEwLjksMzcsMTcKCQkJYzAuMiwxLjQsMS40LDIuMywyLjcsMi4zYzAuMiwwLDAuMywwLDAuNS0wLjFjMS41LTAuMywyLjUtMS43LDIuMy0zLjJDNDEsNy43LDM1LDEuNywyNi41LDAuMXoiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0xOS41LDI3LjdjLTIuNSwwLTQuNi0yLTQuNi00LjZjMC0yLjUsMi00LjYsNC42LTQuNmMxLjUsMCwyLjgtMS4yLDIuOC0yLjhjMC0xLjUtMS4yLTIuOC0yLjgtMi44CgkJCWMtNS42LDAtMTAuMSw0LjUtMTAuMSwxMC4xczQuNSwxMC4xLDEwLjEsMTAuMWM1LjYsMCwxMC4xLTQuNSwxMC4xLTEwLjFjMC0xLjUtMS4yLTIuOC0yLjgtMi44Yy0xLjUsMC0yLjgsMS4yLTIuOCwyLjgKCQkJQzI0LjEsMjUuNiwyMiwyNy43LDE5LjUsMjcuN3oiPgogICA8L3BhdGg+CiAgIDxwYXRoIGNsYXNzPSJzdDEiIGQ9Ik0zNi4yLDIwLjNjLTEuNSwwLTIuOCwxLjItMi44LDIuOGMwLDcuNy02LjMsMTQtMTQsMTRzLTE0LTYuMy0xNC0xNGMwLTcuNyw2LjMtMTQsMTQtMTQKCQkJYzEuNSwwLDIuOC0xLjIsMi44LTIuOGMwLTEuNS0xLjItMi44LTIuOC0yLjhDOC44LDMuNiwwLDEyLjQsMCwyMy4xYzAsMTAuNyw4LjgsMTkuNSwxOS41LDE5LjVjMTAuNywwLDE5LjUtOC44LDE5LjUtMTkuNQoJCQlDMzguOSwyMS42LDM3LjcsMjAuMywzNi4yLDIwLjN6Ij4KICAgPC9wYXRoPgogIDwvZz4KIDwvZz4KPC9zdmc+"
+}

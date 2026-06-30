@@ -1,0 +1,524 @@
+{
+    "flow": {
+        "2fb58bc4-99c1-4960-9325-244397f4e6ca": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 0,
+            "y": 0,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "26c533cd-b7c6-4ba0-b068-e783fc26855a": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 208,
+            "y": 0,
+            "source": {
+                "in": {
+                    "2fb58bc4-99c1-4960-9325-244397f4e6ca": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "2fb58bc4-99c1-4960-9325-244397f4e6ca": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "documentData",
+                                                "text": "E2E Test Document: This is a sample document for testing raw document operations in RagieAI."
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "documentName",
+                                                "text": "E2E Test Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedData",
+                                                "text": "E2E Test Document Updated: This is the updated content for testing document updates."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f303a566-48d1-4422-a130-a22c1297a0e2": {
+            "type": "appmixer.ragieai.core.CreateDocumentRaw",
+            "x": 400,
+            "y": 0,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "26c533cd-b7c6-4ba0-b068-e783fc26855a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "26c533cd-b7c6-4ba0-b068-e783fc26855a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-name": {
+                                            "variable": "$.26c533cd-b7c6-4ba0-b068-e783fc26855a.out.documentName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "data": {
+                                        "ed41201e-31df-41b5-ac74-89cc56c121a3": {
+                                            "variable": "$.26c533cd-b7c6-4ba0-b068-e783fc26855a.out.documentData",
+                                            "functions": []
+                                        }
+                                    },
+                                    "metadata": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{var-name}}}",
+                                    "data": "{{{ed41201e-31df-41b5-ac74-89cc56c121a3}}}",
+                                    "metadata": "{\"foo\":1}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "1d41383a-b25a-4773-8ce8-56148b65abe7": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 0,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f303a566-48d1-4422-a130-a22c1297a0e2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f303a566-48d1-4422-a130-a22c1297a0e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-id": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.id",
+                                            "functions": []
+                                        },
+                                        "check-status": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-id}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-status}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a3cfc0df-e86d-4a02-996a-4441068ce936": {
+            "type": "appmixer.ragieai.core.GetDocument",
+            "x": 592,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f303a566-48d1-4422-a130-a22c1297a0e2": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f303a566-48d1-4422-a130-a22c1297a0e2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "efbfa8f0-5c86-4454-a39e-7da5b1cca46d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 128,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a3cfc0df-e86d-4a02-996a-4441068ce936": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3cfc0df-e86d-4a02-996a-4441068ce936": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-name": {
+                                            "variable": "$.a3cfc0df-e86d-4a02-996a-4441068ce936.out.name",
+                                            "functions": []
+                                        },
+                                        "check-status": {
+                                            "variable": "$.a3cfc0df-e86d-4a02-996a-4441068ce936.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{check-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Document"
+                                            },
+                                            {
+                                                "field": "{{{check-status}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "36825b1e-d42b-416a-9aed-3cdcb888df08": {
+            "type": "appmixer.ragieai.core.UpdateDocumentRaw",
+            "x": 784,
+            "y": 256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "a3cfc0df-e86d-4a02-996a-4441068ce936": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3cfc0df-e86d-4a02-996a-4441068ce936": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "data": {
+                                        "var-updated-data": {
+                                            "variable": "$.26c533cd-b7c6-4ba0-b068-e783fc26855a.out.updatedData",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}",
+                                    "data": "{{{var-updated-data}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "1c6c6756-276f-4d7a-b7ca-2e7c6667744f": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 256,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36825b1e-d42b-416a-9aed-3cdcb888df08": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36825b1e-d42b-416a-9aed-3cdcb888df08": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "check-status": {
+                                            "variable": "$.36825b1e-d42b-416a-9aed-3cdcb888df08.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{check-status}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "a3cfc0df-e86d-4a02-996a-4441068ce936-content": {
+            "type": "appmixer.ragieai.core.GetDocumentContent",
+            "x": 976,
+            "y": 416,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "36825b1e-d42b-416a-9aed-3cdcb888df08": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "36825b1e-d42b-416a-9aed-3cdcb888df08": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "mediaType": {},
+                                    "download": {},
+                                    "documentId": {
+                                        "1f950b78-81a0-4333-9c70-9421894156dd": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "mediaType": "text/plain",
+                                    "download": false,
+                                    "documentId": "{{{1f950b78-81a0-4333-9c70-9421894156dd}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "684e8727-5090-4a54-b764-85762546af4b": {
+            "type": "appmixer.ragieai.core.DeleteDocument",
+            "x": 1536,
+            "y": 0,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "644ea873-6ac8-42cb-b66c-67ad7c193465": {
+                            "out": {
+                                "lambda": {
+                                    "documentId": "{{{var-doc-id}}}"
+                                },
+                                "modifiers": {
+                                    "documentId": {
+                                        "var-doc-id": {
+                                            "variable": "$.f303a566-48d1-4422-a130-a22c1297a0e2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "644ea873-6ac8-42cb-b66c-67ad7c193465": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "644ea873-6ac8-42cb-b66c-67ad7c193465": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1344,
+            "y": 0,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1d41383a-b25a-4773-8ce8-56148b65abe7": [
+                        "out"
+                    ],
+                    "efbfa8f0-5c86-4454-a39e-7da5b1cca46d": [
+                        "out"
+                    ],
+                    "1c6c6756-276f-4d7a-b7ca-2e7c6667744f": [
+                        "out"
+                    ],
+                    "1375d6d9-6c91-43b1-8135-de701472659a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "caeebae4-1f6d-4668-af90-335ef87f2231": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 0,
+            "version": "1.0.1",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "684e8727-5090-4a54-b764-85762546af4b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.644ea873-6ac8-42cb-b66c-67ad7c193465.out",
+                                            "functions": []
+                                        }
+                                    },
+                                    "testCase": {
+                                        "cf90c453-9208-4b80-a57a-44fbc0734ae5": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{cf90c453-9208-4b80-a57a-44fbc0734ae5}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "684e8727-5090-4a54-b764-85762546af4b": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "1375d6d9-6c91-43b1-8135-de701472659a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 416,
+            "config": {
+                "transform": {
+                    "in": {
+                        "a3cfc0df-e86d-4a02-996a-4441068ce936-content": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b2164c95-fcba-4856-8613-97832507dcf2": {
+                                            "variable": "$.a3cfc0df-e86d-4a02-996a-4441068ce936-content.out.content",
+                                            "functions": []
+                                        },
+                                        "23b5b410-6b04-4355-91e7-b73b92fea629": {
+                                            "variable": "$.26c533cd-b7c6-4ba0-b068-e783fc26855a.out.updatedData",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "equal",
+                                                "field": "{{{b2164c95-fcba-4856-8613-97832507dcf2}}}",
+                                                "expected": "{{{23b5b410-6b04-4355-91e7-b73b92fea629}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "a3cfc0df-e86d-4a02-996a-4441068ce936-content": [
+                        "out"
+                    ]
+                }
+            }
+        }
+    },
+    "name": "E2E Ragieai - raw document operations",
+    "type": "automation"
+}

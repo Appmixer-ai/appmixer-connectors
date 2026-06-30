@@ -1,0 +1,147 @@
+[
+  {
+    "method": "POST",
+    "path": "/xrpc/com.atproto.server.createSession",
+    "operationId": "createSession",
+    "description": "Creates an authenticated session, returning access and refresh tokens for use with other API calls.",
+    "parameters": [],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "description": "The Bluesky account handle (e.g. example.bsky.social)"
+              },
+              "password": {
+                "type": "string",
+                "description": "The Bluesky app password for the account"
+              }
+            },
+            "required": [
+              "identifier",
+              "password"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Session created successfully",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accessJwt": {
+                  "type": "string",
+                  "description": "Short-lived access token used to authenticate API requests"
+                },
+                "refreshJwt": {
+                  "type": "string",
+                  "description": "Longer-lived refresh token used to obtain a new access token"
+                },
+                "did": {
+                  "type": "string",
+                  "description": "The decentralized identifier (DID) for the authenticated user"
+                },
+                "handle": {
+                  "type": "string",
+                  "description": "The Bluesky handle for the authenticated user"
+                }
+              },
+              "required": [
+                "accessJwt",
+                "refreshJwt",
+                "did",
+                "handle"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "_sourceUrl": "https://docs.bsky.app/blog/create-post"
+  },
+  {
+    "method": "POST",
+    "path": "/xrpc/com.atproto.repo.createRecord",
+    "operationId": "createRecord",
+    "description": "Creates a new record in a repository collection. Used to publish posts (app.bsky.feed.post) and other record types.",
+    "parameters": [],
+    "requestBody": {
+      "content": {
+        "application/json": {
+          "schema": {
+            "type": "object",
+            "properties": {
+              "repo": {
+                "type": "string",
+                "description": "The DID or handle of the repository/account to create the record in"
+              },
+              "collection": {
+                "type": "string",
+                "description": "The Lexicon schema collection namespace for the record type (e.g. app.bsky.feed.post)"
+              },
+              "record": {
+                "type": "object",
+                "description": "The record object to store. Schema depends on the collection type.",
+                "properties": {
+                  "$type": {
+                    "type": "string",
+                    "description": "The Lexicon type identifier for the record (e.g. app.bsky.feed.post)"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The text content of the post"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "ISO 8601 timestamp of when the post was created, preferably with trailing Z (e.g. 2023-08-07T05:31:12.156888Z)"
+                  }
+                },
+                "required": [
+                  "$type",
+                  "text",
+                  "createdAt"
+                ]
+              }
+            },
+            "required": [
+              "repo",
+              "collection",
+              "record"
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "200": {
+        "description": "Record created successfully",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "uri": {
+                  "type": "string",
+                  "description": "The AT URI of the newly created record"
+                },
+                "cid": {
+                  "type": "string",
+                  "description": "The content identifier (CID) of the newly created record"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "_sourceUrl": "https://docs.bsky.app/blog/create-post"
+  }
+]

@@ -1,6 +1,15 @@
 const CloudflareAPI = require('../../CloudflareAPI');
-const lib = require('../lib');
+const lib = require('../../lib');
 const crypto = require('crypto');
+
+const getLockConfiguration = (context) => {
+
+    return {
+        retryDelay: parseInt(context.config.uploadLockRetryDelay, 10) || 5000,
+        ttl: parseInt(context.config.uploadLockTtl, 10) || 15 * 60 * 1000,
+        maxRetryCount: parseInt(context.config.uploadLockMaxRetryCount, 10) || 60
+    };
+};
 
 module.exports = {
     async receive(context) {
@@ -16,7 +25,6 @@ module.exports = {
             throw new context.CancelError('TTL is required');
         }
 
-
         if (ips.length === 0) {
             return context.sendJson([], 'out');
         }
@@ -24,68 +32,82 @@ module.exports = {
         const parsedIps = lib.parseIPs(ips);
         const client = new CloudflareAPI({ zoneId, token: apiToken });
 
-        let ruleset = (await client.listZoneRulesets(context))
-            .find(ruleset => ruleset.kind === 'zone' && ruleset.phase === 'http_request_firewall_custom');
+        let lock;
+        try {
 
-        let resultRules = []; // all affected rules - created or updated
-        if (!ruleset) {
-            const data = await client.createRulesetAndBlockRule(context, [lib.getBlockRule(1, parsedIps)]);
-            ruleset = data?.result;
-            resultRules = data?.result?.rules || [];
-        } else {
-            const { result: { rules = [] } } = await client.getRules(context, ruleset.id);
-            resultRules = rules;
+            // https://docs.appmixer.com/6.0/v4.1/component-definition/behaviour#async-context.lock-lockname-options
+            lock = await context.lock(context.componentId, getLockConfiguration(context));
 
-            const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(parsedIps, rules);
+            let ruleset = (await client.listZoneRulesets(context))
+                .find(ruleset => ruleset.kind === 'zone' && ruleset.phase === 'http_request_firewall_custom');
 
-            const promises = rulesToUpdate.map(rule => {
-                return rule.id ?
-                    client.updateBlockRule(context, ruleset.id, rule) :
-                    client.createBlockRule(context, { rulesetId: ruleset.id, rule });
-            });
+            let resultRules = []; // all affected rules - created or updated
+            if (!ruleset) {
+                const data = await client.createRulesetAndBlockRule(
+                    context,
+                    [lib.initializeBlockRule(context, 1, parsedIps)]
+                );
+                ruleset = data?.result;
+                resultRules = data?.result?.rules || [];
+            } else {
+                const { result: { rules = [] } } = await client.getRules(context, ruleset.id);
+                resultRules = rules;
 
-            (await Promise.allSettled(promises)).forEach(result => {
-                updatedOrCreatedRules = result?.value?.result?.rules || [];
-                updatedOrCreatedRules.forEach(rule => {
-                    const index = resultRules.findIndex(r => r.id === rule.id);
-                    if (index !== -1) {
-                        resultRules[index] = rule;
-                    } else {
-                        resultRules.push(rule);
-                    }
+                const rulesToUpdate = lib.prepareRulesForCreateOrUpdate(context, parsedIps, rules);
+
+                const promises = rulesToUpdate.map(rule => {
+                    return rule.id ?
+                        client.updateBlockRule(context, ruleset.id, rule) :
+                        client.createBlockRule(context, { rulesetId: ruleset.id, rule });
                 });
-            });
+
+                (await Promise.allSettled(promises)).forEach(result => {
+                    const updatedOrCreatedRules = result?.value?.result?.rules || [];
+                    updatedOrCreatedRules.forEach(rule => {
+                        const index = resultRules.findIndex(r => r.id === rule.id);
+                        if (index !== -1) {
+                            resultRules[index] = rule;
+                        } else {
+                            resultRules.push(rule);
+                        }
+                    });
+                });
+            }
+
+            const updatedIps = lib.findIpsInRules(resultRules, parsedIps);
+            const updatedIpsArray = Object.entries(updatedIps).map(([ip, { id }]) => ({ ip, ruleId: id }));
+
+            if (updatedIpsArray.length) {
+
+                const removeAfter = new Date().getTime() + ttl * 1000;
+                const dbItems = updatedIpsArray.map(item => {
+                    const { ip, ruleId } = item;
+                    return {
+                        id: crypto.randomUUID(),
+                        ip,
+                        ruleId,
+                        rulesetId: ruleset.id,
+                        zoneId,
+                        removeAfter,
+                        auth: {
+                            token: apiToken
+                        }
+                    };
+                });
+
+                await context.callAppmixer({
+                    endPoint: '/plugins/appmixer/cloudflareWAF/block-ip-rules',
+                    method: 'POST',
+                    body: { items: dbItems }
+                });
+            }
+
+            return context.sendJson(updatedIpsArray, 'out');
+        } finally {
+            if (lock) {
+                await lock.unlock();
+            }
         }
-
-        const updatedIps = lib.findIpsInRules(resultRules, parsedIps);
-        const updatedIpsArray = Object.entries(updatedIps).map(([ip, { id }]) => ({ ip, ruleId: id }));
-
-        if (ttl && updatedIpsArray.length) {
-
-            const removeAfter = new Date().getTime() + ttl * 1000;
-            const dbItems = updatedIpsArray.map(item => {
-                const { ip, ruleId } = item;
-                return {
-                    id: crypto.randomUUID(),
-                    ip,
-                    ruleId,
-                    rulesetId: ruleset.id,
-                    zoneId,
-                    removeAfter,
-                    auth: {
-                        token: apiToken
-                    }
-                };
-            });
-
-            await context.callAppmixer({
-                endPoint: '/plugins/appmixer/cloudflareWAF/block-ip-rules',
-                method: 'POST',
-                body: { items: dbItems }
-            });
-        }
-
-        return context.sendJson(updatedIpsArray, 'out');
 
     }
 };

@@ -1,0 +1,456 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 32,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 224,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "apiKeyName",
+                                                "toggle": false,
+                                                "text": "E2E Test Key"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "apiKeyNameWithDomainID",
+                                                "toggle": false,
+                                                "text": "E2E Test Key With Domain ID"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "domainID",
+                                                "text": "4e741cda-782b-45a2-ba80-b4a8ff078e3c"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-api-key": {
+            "type": "appmixer.resend.core.CreateApiKey",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-key-name": {
+                                            "variable": "$.set-variables.out.apiKeyName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "permission": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{var-key-name}}}",
+                                    "permission": "sending_access"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-api-key": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-api-key": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.create-api-key.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-create-id}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-api-keys": {
+            "type": "appmixer.resend.core.ListApiKeys",
+            "x": 640,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-api-key": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-api-key": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 176,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "list-api-keys": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-api-keys": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-list-result": {
+                                            "variable": "$.list-api-keys.out",
+                                            "functions": []
+                                        },
+                                        "bb117ee3-5031-435e-a72c-4749bb2b3295": {
+                                            "variable": "$.list-api-keys.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "object",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-list-result}}}"
+                                            },
+                                            {
+                                                "type": "number",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{bb117ee3-5031-435e-a72c-4749bb2b3295}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-list": [
+                        "out"
+                    ],
+                    "f035187a-fbe3-44cb-9aee-ee5fed973d19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-api-key": {
+            "type": "appmixer.resend.core.DeleteApiKey",
+            "x": 1376,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "var-key-id": {
+                                            "variable": "$.create-api-key.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "key": "{{{var-key-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1756,
+            "y": 16,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "56687276-65e8-4a38-9eeb-0b027b8f00e5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-api-key": {},
+                        "56687276-65e8-4a38-9eeb-0b027b8f00e5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    },
+                                    "testCase": {
+                                        "04e9e4db-1b11-4ac7-b7bd-353d6d060ad6": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{04e9e4db-1b11-4ac7-b7bd-353d6d060ad6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f4ac03f2-854f-4aea-b6ed-b17a13470959": {
+            "type": "appmixer.resend.core.CreateApiKey",
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 448,
+            "y": -176,
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "permission": {},
+                                    "domain_id": {
+                                        "0df2c0a1-a387-4986-8456-1e28261fa22c": {
+                                            "variable": "$.set-variables.out.domainID",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "8fdebc8e-1157-4299-935c-3610e128b064": {
+                                            "variable": "$.set-variables.out.apiKeyNameWithDomainID",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "permission": "full_access",
+                                    "domain_id": "{{{0df2c0a1-a387-4986-8456-1e28261fa22c}}}",
+                                    "name": "{{{8fdebc8e-1157-4299-935c-3610e128b064}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "Create API Key wiith DomainID"
+        },
+        "f035187a-fbe3-44cb-9aee-ee5fed973d19": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "f4ac03f2-854f-4aea-b6ed-b17a13470959": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 896,
+            "y": -176,
+            "config": {
+                "transform": {
+                    "in": {
+                        "f4ac03f2-854f-4aea-b6ed-b17a13470959": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "b63f7dc5-affb-4d32-aaa4-6b2ddd3a03d4": {
+                                            "variable": "$.f4ac03f2-854f-4aea-b6ed-b17a13470959.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{b63f7dc5-affb-4d32-aaa4-6b2ddd3a03d4}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "56687276-65e8-4a38-9eeb-0b027b8f00e5": {
+            "type": "appmixer.resend.core.DeleteApiKey",
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-api-key": [
+                        "out"
+                    ]
+                }
+            },
+            "x": 1552,
+            "y": 16,
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-api-key": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "key": {
+                                        "4cb3732d-a3ed-4f55-abb9-1249243c73a4": {
+                                            "variable": "$.f4ac03f2-854f-4aea-b6ed-b17a13470959.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "key": "{{{4cb3732d-a3ed-4f55-abb9-1249243c73a4}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Resend - API Key Lifecycle",
+    "type": "automation"
+}

@@ -12,6 +12,32 @@ This repository contains the officially maintained connectors for Appmixer. They
 ## Getting Started
 To learn how to create custom connectors, refer to our comprehensive guide: [Creating Custom Connectors](https://docs.appmixer.com/getting-started/custom-connectors).
 
+## AI & Development Instructions
+
+Comprehensive development guidelines for both humans and AI assistants (Copilot, Claude, CodeRabbit, etc.) are maintained in `.github/instructions/`. These cover connector structure, authentication, component types, best practices, and testing.
+
+The files are numbered for reading order:
+
+| File | Topic |
+|------|-------|
+| `00-overview.md` | Project structure overview |
+| `01-connectors.md` | Connector configuration (service.json, bundle.json, quota.js) |
+| `02-authentication.md` | Auth types (API key, OAuth 2.0) |
+| `03-plugins.md` | Plugins, routes, and jobs |
+| `04-components.md` | Component overview |
+| `05-component-config.md` | component.json schema and configuration |
+| `06-component-behavior.md` | Component behavior (JavaScript) |
+| `07-component-types.md` | Action & trigger component patterns |
+| `08-best-practices.md` | Code style, development, and AI guidelines |
+| `09-testing.md` | Unit tests and E2E test flows |
+| `10-agent-instructions.md` | Instructions for AI agents |
+
+A combined version is auto-generated at `.github/copilot-instructions.md` — do not edit it directly. To rebuild after editing instruction files:
+
+```sh
+node scripts/build-instructions.js
+```
+
 ## Contribution Guidelines
 We welcome contributions from the community! To contribute:
 1. Fork the repository.

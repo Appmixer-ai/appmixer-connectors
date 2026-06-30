@@ -1,0 +1,115 @@
+{
+    "name": "appmixer.vapi.core.FindSquads",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search and retrieve squads from your Vapi account. Returns a list of squads that match the specified criteria. This component will return a maximum of 1000 records.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:vapi"
+    },
+    "quota": {
+        "manager": "appmixer:vapi",
+        "resources": "vapi.api",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "createdAtGt": {
+                        "type": "string"
+                    },
+                    "createdAtLt": {
+                        "type": "string"
+                    },
+                    "updatedAtGt": {
+                        "type": "string"
+                    },
+                    "updatedAtLt": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "createdAtGt": {
+                        "type": "date-time",
+                        "tooltip": "Filter squads created after this timestamp (ISO 8601 format).",
+                        "label": "Created At Greater Than",
+                        "index": 0
+                    },
+                    "createdAtLt": {
+                        "type": "date-time",
+                        "tooltip": "Filter squads created before this timestamp (ISO 8601 format).",
+                        "label": "Created At Less Than",
+                        "index": 1
+                    },
+                    "updatedAtGt": {
+                        "type": "date-time",
+                        "tooltip": "Filter squads updated after this timestamp (ISO 8601 format).",
+                        "label": "Updated At Greater Than",
+                        "index": 2
+                    },
+                    "updatedAtLt": {
+                        "type": "date-time",
+                        "tooltip": "Filter squads updated before this timestamp (ISO 8601 format).",
+                        "label": "Updated At Less Than",
+                        "index": 3
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/vapi/core/FindSquads?outPort=out",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDEgMC04LTMuNTktOC04czMuNTktOCA4LTggOCAzLjU5IDggOC0zLjU5IDgtOCA4eiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik0xMiA2Yy0zLjMxIDAtNiAyLjY5LTYgNnMyLjY5IDYgNiA2IDYtMi42OSA2LTYtMi42OS02LTYtNnptMCA4Yy0xLjEgMC0yLS45LTItMnMuOS0yIDItMiAyIC45IDIgMi0uOSAyLTIgMnoiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L3N2Zz4K"
+}

@@ -36,19 +36,22 @@ module.exports = {
      * Generates output port options based on input variables.
      *
      * @param {Context} context
-     * @param {string} outputType
+     * @param variablesArray
      */
     generateOutputPortOptions(context, variablesArray) {
 
         const options = [];
         variablesArray.forEach(variable => {
             const { name, type } = variable;
-            options.push({
-                label: name,
-                value: name,
-                type
-            });
+            if (name) {
+                options.push({
+                    label: name,
+                    value: name,
+                    type
+                });
+            }
         });
+
         // Send the options as output
         return context.sendJson(options, 'out');
     }

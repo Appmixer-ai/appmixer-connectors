@@ -1,0 +1,110 @@
+{
+    "name": "appmixer.logscale.core.SendEvents",
+    "description": "Send multiple events to CrowdStrike Falcon LogScale via the HTTP Event Collector ingestion API.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:logscale"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "events": {
+                        "type": "string"
+                    },
+                    "source": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "repository": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "events"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "events": {
+                        "type": "textarea",
+                        "label": "Events",
+                        "index": 1,
+                        "tooltip": "Batch payload as a JSON array or newline-delimited JSON objects. Lines can be full HEC objects or plain event values wrapped as JSON. Example: [{\"event\": \"login\", \"user\": \"john\"}, {\"event\": \"logout\", \"user\": \"jane\"}] or one per line."
+                    },
+                    "source": {
+                        "type": "text",
+                        "label": "Source",
+                        "index": 2,
+                        "tooltip": "Optional default origin designation applied to entries that do not already define source. Example: \"prod-server-01\" or \"application-logs\"."
+                    },
+                    "type": {
+                        "type": "text",
+                        "label": "Type",
+                        "index": 3,
+                        "tooltip": "Optional default parser or sourcetype value applied to entries that do not already define sourcetype. Example: \"json\", \"syslog\", \"apache_access\", or \"csv\"."
+                    },
+                    "repository": {
+                        "type": "text",
+                        "label": "Repository",
+                        "index": 4,
+                        "tooltip": "Optional default repository name applied to entries that do not already define index. Example: \"default\", \"security-logs\", or \"application-events\"."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Status Code",
+                    "value": "status",
+                    "schema": {
+                        "type": "integer",
+                        "example": 200
+                    }
+                },
+                {
+                    "label": "Response Headers",
+                    "value": "headers",
+                    "schema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "label": "Events Count",
+                    "value": "eventsCount",
+                    "schema": {
+                        "type": "integer",
+                        "example": 10
+                    }
+                },
+                {
+                    "label": "Request Body",
+                    "value": "requestBody",
+                    "schema": {
+                        "type": "string",
+                        "example": "{\"event\":\"login\",\"source\":\"prod-server-01\"}"
+                    }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSI+CjxwYXRoIGQ9Ik0yOC44ODE2IDE5LjIwNTZDMjguMjIyNCAxOS4xNDA5IDI3LjA1MjEgMTguOTc5NSAyNS41ODc5IDE5LjcxMTFDMjQuMTI0NSAyMC40NDM1IDIzLjU0ODEgMjAuNDc1IDIyLjgyOTggMjAuMzk4OEMyMy4wNDA5IDIwLjc4MTcgMjMuNDY4OSAyMS4zMDcyIDI0LjgxNDYgMjEuNDAxMUMyNi4xNTk0IDIxLjQ5NSAyNi44MDMgMjEuNTM2NSAyNi4wOTU0IDIzLjE5OTJDMjYuMTExMSAyMi42OTY1IDI1Ljk5MzUgMjEuNzI2MSAyNC42NTcyIDIxLjg5NjZDMjMuMzIyMiAyMi4wNjY2IDIzLjAxMDEgMjMuMjU4OSAyNC40NDI1IDIzLjg1MzdDMjMuOTc3IDIzLjk0NjIgMjIuOTg5NSAyNC4wMDE0IDIyLjI4NDIgMjIuMTcyM0MyMS43OTU5IDIyLjM4MjkgMjEuMDQyMyAyMi44MDQ5IDE5LjY3NjUgMjEuNzU4OUMyMC4xNTIzIDIxLjkzMDMgMjAuNzQxMyAyMS45NDA4IDIwLjc0MTMgMjEuOTQwOEMxOS41Mjg0IDIxLjM2NjkgMTguMzcxIDIwLjI5OTkgMTcuNjI4NiAxOS4yOTEzQzE4LjIxNjcgMTkuNzI2MSAxOC44NjYxIDIwLjE1ODIgMTkuNTIyNiAyMC4yMzk4QzE4Ljc0NjcgMTkuMzAxMyAxNi45NTI5IDE3LjQyNTMgMTQuNzU4NCAxNS40OTY4QzE2LjE2OTMgMTYuNDEwNyAxNy44NzI0IDE3Ljg1NTUgMjAuNjU4NiAxNy41MzFDMjMuNDQ1MiAxNy4yMDU2IDI1LjMxODIgMTYuNTcyOSAyOC44ODE2IDE5LjIwNTZaTTE3LjAxMSAxOC43MjM0QzE1LjI2MzMgMTcuOTczMSAxNC44ODg5IDE3LjgyMTQgMTIuNjQyNSAxNy4yNTU3QzEwLjM5NTcgMTYuNjg5NiA4LjE4NTUyIDE1LjUxMTkgNi43MDgzNCAxMy42NzM3QzcuNzUwMzcgMTQuNDMwMyA5Ljg3NzM2IDE1Ljk1MzEgMTIuMDYxNiAxNS43ODgxQzExLjcyOTMgMTUuMzA1OSAxMS4xMTcxIDE0LjkzMDMgMTAuMzg1NCAxNC41NTE1QzExLjIxMzIgMTQuNzQ4IDEzLjcxMTkgMTUuMzgxNSAxNy4wMTEgMTguNzIzNFpNMTMuMzgxNCAxMi4wNjYxQzExLjUzMjUgOS40NzQ0OSA5LjA4MjY1IDguNjgyMzMgNy4xODQxOSA3LjM5ODM3QzEuNDA2NTIgMy44MTc2OSAwLjI1OTM4OSAxLjA2MDYyIDAgMEMzLjYyOTIxIDMuOTMzOTIgNi4zODU0NSA1LjQ3NzIyIDguMjYyODkgNi43MDU1N0MxMi4xMTc5IDkuMTQzNTggMTIuOTMwNiAxMC43ODQ0IDEzLjM4MTQgMTIuMDY2MVpNMTMuODEzNCAxNC4yNDY2QzEyLjAzMjUgMTIuMTA3MSA5LjU1ODQ5IDExLjM1NzQgOC4wOTQ3MyAxMC41NTc5QzIuODA5OSA3Ljc4NjcgMS41ODE4MyA1LjU2NzkyIDEuMzQxNjcgNC41NTc4OUMzLjk4NzQ0IDcuMzU1NTIgNi45Mjk3MiA4LjgyNjgxIDguNjUxNTMgOS43ODM1MUMxMi4zODU4IDExLjc3MDMgMTMuMzM4OSAxMy4xNjE4IDEzLjgxMzQgMTQuMjQ2NlpNMTcuMzMzIDguMzEyMjJDMjYuNDUxNCAxMC44MzM2IDI1Ljc2MjMgMTIuMjIyNCAyNS4xMDA0IDEzLjgxODZDMjQuNjEwMiAxNC45NzU0IDI1LjE3NiAxNS4xMDQ4IDI1LjQwNDUgMTUuMTkxOUMyNi41NjgyIDE1LjYzMjIgMjkuNjQxNSAxNi4xOTkyIDI5LjQ1MDEgMTcuNDg4MkMyOS44MDkyIDE3Ljg0MzIgMzEuMTM3NCAxOS4yNjEyIDMwLjU4MTUgMjAuMjQ1N0MzMC4xMDQ0IDE5LjQ3MzEgMjcuOTExNiAxNy40Njg2IDI1LjI1ODIgMTcuMDU1NkMyMi42MDQ5IDE2LjY0MzYgMjAuMTg1OCAxNy41MzM3IDE4LjE4NjMgMTYuMjE4M0MxNi40ODk2IDE1LjAwNTkgMTYuMjE3MiAxNC41NDc5IDE0LjUwNzUgMTEuNzcyNkMxMy43NCAxMC41MjY5IDEzLjU5MiA5LjM5MzM2IDEwLjk4NjUgNy4yODQ4OEM4LjM4MDk2IDUuMTc2NCA1Ljk0MjI1IDQuMDUyNDIgNC45MTk0NSAwLjkxMTU3OEM3LjE1OTE0IDMuNjQwMzkgMTAuMDU0IDYuMjQ3MDQgMTcuMzMzIDguMzEyMjJaTTI3LjgzODcgMTYuNzgwM0MyNy44Mzg3IDE2Ljc4MDMgMjguNTc3MSAxNy4xNDEzIDI5LjE2NDMgMTcuNzc3NkMyOS4xNDk1IDE3LjI3NzYgMjkuMjE5MyAxNi45ODczIDI3LjgzODcgMTYuNzgwM1oiIGZpbGw9IiNhZDQxNDEiLz4KPC9zdmc+"
+}

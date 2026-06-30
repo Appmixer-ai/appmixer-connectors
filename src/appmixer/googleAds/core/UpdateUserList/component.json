@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.googleAds.core.UpdateUserList",
+    "description": "Updates properties of an existing Customer Match user list (name, description, membership life span, integration code, etc.).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:googleAds",
+        "scope": [
+            "https://www.googleapis.com/auth/adwords"
+        ]
+    },
+    "quota": {
+        "manager": "appmixer:googleAds",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string"
+                    },
+                    "loginCustomerId": {
+                        "type": "string"
+                    },
+                    "userListId": {
+                        "type": "string"
+                    },
+                    "userListResourceName": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "membershipLifeSpan": {
+                        "type": "integer"
+                    },
+                    "integrationCode": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "customerId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "customerId": {
+                        "type": "text",
+                        "label": "Customer ID",
+                        "index": 1
+                    },
+                    "loginCustomerId": {
+                        "type": "text",
+                        "label": "Login Customer ID",
+                        "tooltip": "The Google Ads Manager Account (MCC) ID. Required when accessing accounts managed through an MCC hierarchy. Format: 10-digit number, e.g. 1234567890. See https://developers.google.com/google-ads/api/docs/concepts/call-structure#login-customer-id",
+                        "index": 2
+                    },
+                    "userListId": {
+                        "type": "text",
+                        "label": "User List ID",
+                        "tooltip": "Numeric ID of the Customer Match user list. Use either User List ID or User List Resource Name.",
+                        "index": 3
+                    },
+                    "userListResourceName": {
+                        "type": "text",
+                        "label": "User List Resource Name",
+                        "tooltip": "Full resource name, e.g. customers/123/userLists/456. Use either this or User List ID.",
+                        "index": 4
+                    },
+                    "name": {
+                        "type": "text",
+                        "label": "Name",
+                        "tooltip": "New name for the user list. Must be unique per customer.",
+                        "index": 5
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "New description for the user list.",
+                        "index": 6
+                    },
+                    "membershipLifeSpan": {
+                        "type": "number",
+                        "label": "Membership Life Span (days)",
+                        "tooltip": "Number of days a user's cookie stays on the list (0-540, or 10000 for no expiration for CRM lists).",
+                        "index": 7
+                    },
+                    "integrationCode": {
+                        "type": "text",
+                        "label": "Integration Code",
+                        "tooltip": "ID from external system for correlation with Google Ads.",
+                        "index": 8
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "example": {
+                    "resourceName": "customers/1234567890/userLists/9876543210",
+                    "id": "9876543210",
+                    "name": "High-Value Customers Q3",
+                    "description": "Customers who made purchases over $500 in Q3",
+                    "type": "CRM_BASED",
+                    "membershipStatus": "OPEN",
+                    "membershipLifeSpan": "30",
+                    "integrationCode": "crm-segment-42"
+                },
+                "properties": {
+                    "resourceName": {
+                        "type": "string",
+                        "title": "Resource Name"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "membershipStatus": {
+                        "type": "string",
+                        "title": "Membership Status"
+                    },
+                    "membershipLifeSpan": {
+                        "type": "string",
+                        "title": "Membership Life Span"
+                    },
+                    "integrationCode": {
+                        "type": "string",
+                        "title": "Integration Code"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjMwIiBwcmVzZXJ2ZVJhdGlvPSJ4TWlkWU1pZCI+PHBhdGggZmlsbD0iI0ZCQkMwNCIgZD0iTTUuODg4IDE2Ni40MDUgOTAuODggMjAuOWMxMC43OTYgNi4zNTYgNjUuMjM2IDM2LjQ4NCA3NC4wMjggNDIuMjE0TDc5LjkxNiAyMDguNjI3Yy05LjI5NSAxMi4yOC04NS44MDQtMjMuNTg3LTc0LjAyOC00Mi4yM3oiLz48cGF0aCBmaWxsPSIjNDI4NUY0IiBkPSJNMjUwLjA4NCAxNjYuNDAyIDE2NS4wOTIgMjAuOTA2QzE1My4yMSAxLjEzMiAxMjcuNjItNi4wNTQgMTA2LjYwMSA1LjYyNVM3OS4xODIgNDIuNDYyIDkxLjA2NCA2My4xMTlsODQuOTkyIDE0NS41MTRjMTEuODgyIDE5Ljc2NSAzNy40NzMgMjYuOTUgNTguNDkyIDE1LjI3MiAyMC4xLTExLjY4IDI3LjQxOC0zNy43MyAxNS41MzYtNTcuNDg2eiIvPjxlbGxpcHNlIGN4PSI0Mi42NjQiIGN5PSIxODcuOTI0IiBmaWxsPSIjMzRBODUzIiByeD0iNDIuNjY0IiByeT0iNDEuNjA0Ii8+PC9zdmc+"
+}

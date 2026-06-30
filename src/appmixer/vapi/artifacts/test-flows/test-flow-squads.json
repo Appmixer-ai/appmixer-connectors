@@ -1,0 +1,900 @@
+{
+    "name": "E2E Vapi - CRUD Operations - assistants, squads",
+    "flow": {
+        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 336,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0"
+        },
+        "27fe7676-6028-43d0-b16f-368cc2d8d0d6": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 496,
+            "y": 320,
+            "source": {
+                "in": {
+                    "fbb75e69-59ee-4f2e-a7e8-212e903ce201": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "fbb75e69-59ee-4f2e-a7e8-212e903ce201": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "squadName",
+                                                "text": "E2E Test Squad"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedSquadName",
+                                                "text": "E2E Test Squad Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 656,
+            "y": 320,
+            "source": {
+                "in": {
+                    "27fe7676-6028-43d0-b16f-368cc2d8d0d6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "create-squad": {
+            "type": "appmixer.vapi.core.CreateSquad",
+            "x": 816,
+            "y": 320,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "b44d6d2c-bebe-4467-87bf-de081a7c4927": {
+                                            "variable": "$.27fe7676-6028-43d0-b16f-368cc2d8d0d6.out.squadName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "assistantId": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{b44d6d2c-bebe-4467-87bf-de081a7c4927}}}",
+                                    "assistantId": "437d851c-26a8-4732-8cde-06fc82ab2195"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1056,
+            "y": 64,
+            "source": {
+                "in": {
+                    "create-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e6b50e1d-b4c1-48eb-b1a0-b56db39852c6": {
+                                            "variable": "$.create-squad.out.name",
+                                            "functions": []
+                                        },
+                                        "bfc2959f-923b-4c52-b5af-87a417442261": {
+                                            "variable": "$.27fe7676-6028-43d0-b16f-368cc2d8d0d6.out.squadName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{e6b50e1d-b4c1-48eb-b1a0-b56db39852c6}}}",
+                                                "expected": "{{{bfc2959f-923b-4c52-b5af-87a417442261}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-squad": {
+            "type": "appmixer.vapi.core.GetSquad",
+            "x": 976,
+            "y": 320,
+            "source": {
+                "in": {
+                    "create-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {
+                                        "67e92e52-fd2c-4249-a3ad-ba3c0e485531": {
+                                            "variable": "$.create-squad.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "squadId": "{{{67e92e52-fd2c-4249-a3ad-ba3c0e485531}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1136,
+            "y": 192,
+            "source": {
+                "in": {
+                    "get-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4635969e-b06d-4162-bbac-602e865907eb": {
+                                            "variable": "$.27fe7676-6028-43d0-b16f-368cc2d8d0d6.out.squadName",
+                                            "functions": []
+                                        },
+                                        "be4a92a8-c144-431a-aae5-a6f464a73bf3": {
+                                            "variable": "$.get-squad.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "{{{4635969e-b06d-4162-bbac-602e865907eb}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{be4a92a8-c144-431a-aae5-a6f464a73bf3}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "list-squads": {
+            "type": "appmixer.vapi.core.ListSquads",
+            "x": 1136,
+            "y": 320,
+            "source": {
+                "in": {
+                    "get-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-list-squads": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1296,
+            "y": 192,
+            "source": {
+                "in": {
+                    "list-squads": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-squads": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "f958b223-4a0c-4d96-806e-3e9313b56a42": {
+                                            "variable": "$.list-squads.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{f958b223-4a0c-4d96-806e-3e9313b56a42}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-squad": {
+            "type": "appmixer.vapi.core.UpdateSquad",
+            "x": 1296,
+            "y": 320,
+            "source": {
+                "in": {
+                    "list-squads": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-squads": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {
+                                        "9e31cb38-3719-41ac-b953-6691d155bce7": {
+                                            "variable": "$.create-squad.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "8ba6793c-b05d-4f72-9696-ef94dab381fc": {
+                                            "variable": "$.27fe7676-6028-43d0-b16f-368cc2d8d0d6.out.updatedSquadName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "members": {}
+                                },
+                                "lambda": {
+                                    "squadId": "{{{9e31cb38-3719-41ac-b953-6691d155bce7}}}",
+                                    "name": "{{{8ba6793c-b05d-4f72-9696-ef94dab381fc}}}",
+                                    "members": "[{}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-updated-squad": {
+            "type": "appmixer.vapi.core.GetSquad",
+            "x": 1456,
+            "y": 320,
+            "source": {
+                "in": {
+                    "update-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {
+                                        "0d3e577d-16c2-4ec8-ba23-803763b02bac": {
+                                            "variable": "$.get-squad.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "squadId": "{{{0d3e577d-16c2-4ec8-ba23-803763b02bac}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-updated-squad": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1616,
+            "y": 192,
+            "source": {
+                "in": {
+                    "get-updated-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-updated-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6ad04537-1741-4603-9903-7cf941d35d38": {
+                                            "variable": "$.get-updated-squad.out.name",
+                                            "functions": []
+                                        },
+                                        "99f65c46-c9ce-41ab-90c1-c58bca34a041": {
+                                            "variable": "$.27fe7676-6028-43d0-b16f-368cc2d8d0d6.out.updatedSquadName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{6ad04537-1741-4603-9903-7cf941d35d38}}}",
+                                                "expected": "{{{99f65c46-c9ce-41ab-90c1-c58bca34a041}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-squad": {
+            "type": "appmixer.vapi.core.DeleteSquad",
+            "x": 1616,
+            "y": 320,
+            "source": {
+                "in": {
+                    "get-updated-squad": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-updated-squad": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "squadId": {
+                                        "57944773-bf5a-4baf-a941-79c50df58ad8": {
+                                            "variable": "$.get-updated-squad.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "squadId": "{{{57944773-bf5a-4baf-a941-79c50df58ad8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1920,
+            "y": 336,
+            "source": {
+                "in": {
+                    "assert-get-updated-squad": [
+                        "out"
+                    ],
+                    "assert-list-squads": [
+                        "out"
+                    ],
+                    "assert-get-squad": [
+                        "out"
+                    ],
+                    "assert-create-squad": [
+                        "out"
+                    ],
+                    "update-squad": [
+                        "out"
+                    ],
+                    "delete-squad": [
+                        "out"
+                    ],
+                    "12e98964-20c5-412d-8d82-5edd34c1159a": [
+                        "out"
+                    ],
+                    "925ad3ba-4a95-4c6a-a3c5-9372faacd9f1": [
+                        "out"
+                    ],
+                    "8e7ffb74-b5a1-4b2d-b0d8-14dbe7c68089": [
+                        "out"
+                    ],
+                    "8d09aeae-dcb0-4614-abeb-c96cff70df2a": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "e0c5d708-7014-4766-87b3-73dd3d528f5c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 2096,
+            "y": 336,
+            "source": {
+                "in": {
+                    "e2051970-21f2-4a3e-9cf5-3afc253a478b": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.1",
+            "config": {
+                "transform": {
+                    "in": {
+                        "e2051970-21f2-4a3e-9cf5-3afc253a478b": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "661a2f77-19b7-4dbd-9f30-7ff556d65c4a": {
+                                            "variable": "$.e2051970-21f2-4a3e-9cf5-3afc253a478b.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Vapi - Squad CRUD Operations",
+                                    "result": "{{{661a2f77-19b7-4dbd-9f30-7ff556d65c4a}}}"
+                                }
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "successStoreId": "6964e1f7ca7f0d7073c72bc0",
+                    "failedStoreId": "6964e1ea98fd4bc3eba41961"
+                }
+            }
+        },
+        "4ee033a2-4de5-4022-8147-851e13aa855f": {
+            "type": "appmixer.vapi.core.FindAssistants",
+            "x": 864,
+            "y": 512,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {},
+                                    "updatedAtGt": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array",
+                                    "updatedAtGt": "3025-01-27T14:30:00"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "414e2bcb-e711-44f9-99ec-ce0d6c6a2a47": {
+            "type": "appmixer.vapi.core.FindSquads",
+            "x": 864,
+            "y": 640,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {},
+                                    "updatedAtGt": {}
+                                },
+                                "lambda": {
+                                    "outputType": "array",
+                                    "updatedAtGt": "2033-01-10T23:00:00.000Z"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "12e98964-20c5-412d-8d82-5edd34c1159a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1056,
+            "y": 512,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4ee033a2-4de5-4022-8147-851e13aa855f": {
+                            "notFound": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {}
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "expected": "1",
+                                                "assertion": "equal",
+                                                "field": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "4ee033a2-4de5-4022-8147-851e13aa855f": [
+                        "notFound"
+                    ]
+                }
+            }
+        },
+        "925ad3ba-4a95-4c6a-a3c5-9372faacd9f1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1088,
+            "y": 656,
+            "source": {
+                "in": {
+                    "414e2bcb-e711-44f9-99ec-ce0d6c6a2a47": [
+                        "notFound"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "414e2bcb-e711-44f9-99ec-ce0d6c6a2a47": {
+                            "notFound": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {}
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "1",
+                                                "expected": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "4444d715-d721-4377-9500-f0635ae06492": {
+            "type": "appmixer.vapi.core.CreateAssistant",
+            "x": 736,
+            "y": 96,
+            "source": {
+                "in": {
+                    "22d27632-f226-48e3-ac14-dcfe271c5a52": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "22d27632-f226-48e3-ac14-dcfe271c5a52": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "3bd24b21-5cad-4c87-9fd2-88a4bc10d1cf": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "firstMessage": {},
+                                    "model": {},
+                                    "voice": {}
+                                },
+                                "lambda": {
+                                    "name": "Appmixer Voice {{{3bd24b21-5cad-4c87-9fd2-88a4bc10d1cf}}}",
+                                    "firstMessage": "Hello guys",
+                                    "model": "{\"model\":\"gpt-4o\",\"provider\":\"openai\",\"temperature\":0.5,\"messages\":[{\"role\":\"system\",\"content\":\"# Appointment Scheduling Agent Prompt\\n\\n## Identity & Purpose\\n\\nYou are George, an appointment scheduling voice assistant for Wellness Partners, a multi-specialty health clinic. Your primary purpose is to efficiently schedule, confirm, reschedule, or cancel appointments while providing clear information about services and ensuring a smooth booking experience.\\n\\n## Voice & Persona\\n\\n### Personality\\n- Sound friendly, organized, and efficient\\n- Project a helpful and patient demeanor, especially with elderly or confused callers\\n- Maintain a warm but professional tone throughout the conversation\\n- Convey confidence and competence in managing the scheduling system\\n\\n### Speech Characteristics\\n- Use clear, concise language with natural contractions\\n- Speak at a measured pace, especially when confirming dates and times\\n- Include occasional conversational elements like \\\"Let me check that for you\\\" or \\\"Just a moment while I look at the schedule\\\"\\n- Pronounce medical terms and provider names correctly and clearly\\n\\n## Conversation Flow\\n\\n### Introduction\\nStart with: \\\"Thank you for calling Wellness Partners. This is George, your scheduling assistant. How may I help you today?\\\"\\n\\nIf they immediately mention an appointment need: \\\"I'd be happy to help you with scheduling. Let me get some information from you so we can find the right appointment.\\\"\\n\\n### Appointment Type Determination\\n1. Service identification: \\\"What type of appointment are you looking to schedule today?\\\"\\n2. Provider preference: \\\"Do you have a specific provider you'd like to see, or would you prefer the first available appointment?\\\"\\n3. New or returning patient: \\\"Have you visited our clinic before, or will this be your first appointment with us?\\\"\\n4. Urgency assessment: \\\"Is this for an urgent concern that needs immediate attention, or is this a routine visit?\\\"\\n\\n### Scheduling Process\\n1. Collect patient information:\\n   - For new patients: \\\"I'll need to collect some basic information. Could I have your full name, date of birth, and a phone number where we can reach you?\\\"\\n   - For returning patients: \\\"To access your record, may I have your full name and date of birth?\\\"\\n\\n2. Offer available times:\\n   - \\\"For [appointment type] with [provider], I have availability on [date] at [time], or [date] at [time]. Would either of those times work for you?\\\"\\n   - If no suitable time: \\\"I don't see availability that matches your preference. Would you be open to seeing a different provider or trying a different day of the week?\\\"\\n\\n3. Confirm selection:\\n   - \\\"Great, I've reserved [appointment type] with [provider] on [day], [date] at [time]. Does that work for you?\\\"\\n\\n4. Provide preparation instructions:\\n   - \\\"For this appointment, please arrive 15 minutes early to complete any necessary paperwork. Also, please bring [required items].\\\"\\n\\n### Confirmation and Wrap-up\\n1. Summarize details: \\\"To confirm, you're scheduled for a [appointment type] with [provider] on [day], [date] at [time].\\\"\\n2. Set expectations: \\\"The appointment will last approximately [duration]. Please remember to [specific instructions].\\\"\\n3. Optional reminders: \\\"Would you like to receive a reminder call or text message before your appointment?\\\"\\n4. Close politely: \\\"Thank you for scheduling with Wellness Partners. Is there anything else I can help you with today?\\\"\\n\\n## Response Guidelines\\n\\n- Keep responses concise and focused on scheduling information\\n- Use explicit confirmation for dates, times, and names: \\\"That's an appointment on Wednesday, February 15th at 2:30 PM with Dr. Chen. Is that correct?\\\"\\n- Ask only one question at a time\\n- Use phonetic spelling for verification when needed: \\\"That's C-H-E-N, like Charlie-Hotel-Echo-November\\\"\\n- Provide clear time estimates for appointments and arrival times\\n\\n## Scenario Handling\\n\\n### For New Patient Scheduling\\n1. Explain first visit procedures: \\\"Since this is your first visit, please arrive 20 minutes before your appointment to complete new patient forms.\\\"\\n2. Collect necessary information: \\\"I'll need your full name, date of birth, contact information, and a brief reason for your visit.\\\"\\n3. Explain insurance verification: \\\"Please bring your insurance card and photo ID to your appointment so we can verify your coverage.\\\"\\n4. Set clear expectations: \\\"Your first appointment will be approximately [duration] and will include [typical first visit procedures].\\\"\\n\\n### For Urgent Appointment Requests\\n1. Assess level of urgency: \\\"Could you briefly describe your symptoms so I can determine the appropriate scheduling priority?\\\"\\n2. For true emergencies: \\\"Based on what you're describing, you should seek immediate medical attention. Would you like me to connect you with our triage nurse, or would you prefer I provide directions to the nearest emergency facility?\\\"\\n3. For same-day needs: \\\"Let me check for any same-day appointments. We keep several slots open for urgent care needs.\\\"\\n4. For urgent but not emergency situations: \\\"I can offer you our next urgent care slot on [date/time], or if you prefer to see your regular provider, their next available appointment is [date/time].\\\"\\n\\n### For Rescheduling Requests\\n1. Locate the existing appointment: \\\"I'll need to find your current appointment first. Could you confirm your name and date of birth?\\\"\\n2. Verify appointment details: \\\"I see you're currently scheduled for [current appointment details]. Is this the appointment you'd like to reschedule?\\\"\\n3. Offer alternatives: \\\"I can offer you these alternative times: [provide 2-3 options].\\\"\\n4. Confirm cancellation of old appointment: \\\"I'll cancel your original appointment on [date/time] and reschedule you for [new date/time]. You'll receive a confirmation of this change.\\\"\\n\\n### For Insurance and Payment Questions\\n1. Provide general coverage information: \\\"Wellness Partners accepts most major insurance plans, including [list common accepted plans].\\\"\\n2. For specific coverage questions: \\\"For specific questions about your coverage and potential out-of-pocket costs, I recommend contacting your insurance provider directly using the number on your insurance card.\\\"\\n3. Explain payment expectations: \\\"We collect copayments at the time of service, and any additional costs will be billed after your insurance processes the claim.\\\"\\n4. For self-pay patients: \\\"For patients without insurance, we offer a self-pay rate of [rate] for [service type]. Payment is expected at the time of service.\\\"\\n\\n## Knowledge Base\\n\\n### Appointment Types\\n- Primary Care: Annual physicals, illness visits, follow-ups (30-60 minutes)\\n- Specialist Consultations: Initial visits and follow-ups with specialists (45-60 minutes)\\n- Diagnostic Services: Lab work, imaging, testing (varies by service, 15-90 minutes)\\n- Wellness Services: Nutrition counseling, physical therapy, mental health (45-60 minutes)\\n- Urgent Care: Same-day appointments for non-emergency acute issues (30 minutes)\\n\\n### Provider Information\\n- Wellness Partners has 15 providers across various specialties\\n- Primary care hours: Monday-Friday 8am-5pm, Saturday 9am-12pm\\n- Specialist hours vary by department\\n- Some providers only work on certain days of the week\\n- New patient appointments are generally longer than follow-up visits\\n\\n### Preparation Requirements\\n- Primary Care: No special preparation for most visits; fasting for annual physicals with lab work\\n- Specialist: Varies by specialty, provide specific instructions based on visit type\\n- Diagnostic: Specific preparation instructions based on test type (fasting, medication adjustments, etc.)\\n- All Appointments: Insurance card, photo ID, list of current medications, copayment\\n\\n### Policies\\n- New patients should arrive 20 minutes early to complete paperwork\\n- Returning patients should arrive 15 minutes before appointment time\\n- 24-hour notice required for cancellations to avoid $50 late cancellation fee\\n- 15-minute grace period for late arrivals before appointment may need rescheduling\\n- Insurance verification performed prior to appointment when possible\\n\\n## Response Refinement\\n\\n- When discussing available times, offer no more than 2-3 options initially to avoid overwhelming the caller\\n- For appointments that require preparation: \\\"This appointment requires some special preparation. You'll need to [specific instructions]. Would you like me to email these instructions to you as well?\\\"\\n- When confirming complex information: \\\"Let me make sure I have everything correct. You're [summary of all details]. Have I understood everything correctly?\\\"\\n\\n## Call Management\\n\\n- If you need time to check schedules: \\\"I'm checking our availability for [appointment type]. This will take just a moment.\\\"\\n- If there are technical difficulties with the scheduling system: \\\"I apologize, but I'm experiencing a brief delay with our scheduling system. Could you bear with me for a moment while I resolve this?\\\"\\n- If the caller has multiple complex scheduling needs: \\\"I understand you have several appointments to schedule. Let's handle them one at a time to ensure everything is booked correctly.\\\"\\n\\nRemember that your ultimate goal is to match patients with the appropriate care as efficiently as possible while ensuring they have all the information they need for a successful appointment. Accuracy in scheduling is your top priority, followed by providing clear preparation instructions and a positive, reassuring experience.\"}]}",
+                                    "voice": "{\"voiceId\":\"Elliot\",\"provider\":\"vapi\"}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "4e49c6af-5e70-41e3-84aa-6b4a8bb324be": {
+            "type": "appmixer.vapi.core.GetAssistant",
+            "x": 928,
+            "y": -48,
+            "source": {
+                "in": {
+                    "4444d715-d721-4377-9500-f0635ae06492": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4444d715-d721-4377-9500-f0635ae06492": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "eb340b96-5b3b-40a8-9440-19a4f33aae3b": {
+                                            "variable": "$.4444d715-d721-4377-9500-f0635ae06492.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{eb340b96-5b3b-40a8-9440-19a4f33aae3b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e5752d41-2f59-4721-be1a-fc5858816a85": {
+            "type": "appmixer.vapi.core.DeleteAssistant",
+            "x": 1168,
+            "y": -64,
+            "source": {
+                "in": {
+                    "4e49c6af-5e70-41e3-84aa-6b4a8bb324be": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4e49c6af-5e70-41e3-84aa-6b4a8bb324be": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "assistantId": {
+                                        "ac1ff946-4e47-4e66-a522-44f5f6d809ac": {
+                                            "variable": "$.4e49c6af-5e70-41e3-84aa-6b4a8bb324be.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "assistantId": "{{{ac1ff946-4e47-4e66-a522-44f5f6d809ac}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8e7ffb74-b5a1-4b2d-b0d8-14dbe7c68089": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 880,
+            "y": -144,
+            "source": {
+                "in": {
+                    "4444d715-d721-4377-9500-f0635ae06492": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4444d715-d721-4377-9500-f0635ae06492": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7163c485-7b12-41c0-9eb5-d966ff95814f": {
+                                            "variable": "$.4444d715-d721-4377-9500-f0635ae06492.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "regex": "^Appmixer Voice",
+                                                "assertion": "regex",
+                                                "field": "{{{7163c485-7b12-41c0-9eb5-d966ff95814f}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "8d09aeae-dcb0-4614-abeb-c96cff70df2a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": -160,
+            "source": {
+                "in": {
+                    "4e49c6af-5e70-41e3-84aa-6b4a8bb324be": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "4e49c6af-5e70-41e3-84aa-6b4a8bb324be": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "4cd7efb4-545d-4c53-a13d-e72b450bbc4d": {
+                                            "variable": "$.4e49c6af-5e70-41e3-84aa-6b4a8bb324be.out.name",
+                                            "functions": []
+                                        },
+                                        "d221340d-920d-48b8-bca8-152314c5b39f": {
+                                            "variable": "$.4444d715-d721-4377-9500-f0635ae06492.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{4cd7efb4-545d-4c53-a13d-e72b450bbc4d}}}",
+                                                "expected": "{{{d221340d-920d-48b8-bca8-152314c5b39f}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

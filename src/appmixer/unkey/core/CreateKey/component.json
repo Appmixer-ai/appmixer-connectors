@@ -1,0 +1,161 @@
+{
+    "name": "appmixer.unkey.core.CreateKey",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new API key in Unkey. You can specify properties like prefix, metadata, rate limits, and expiration.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:unkey"
+    },
+    "quota": {
+        "manager": "appmixer:unkey",
+        "resources": "keys.create",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "apiId": {
+                        "type": "string"
+                    },
+                    "prefix": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "byteLength": {
+                        "type": "integer"
+                    },
+                    "externalId": {
+                        "type": "string"
+                    },
+                    "meta": {
+                        "type": "string"
+                    },
+                    "roles": {
+                        "type": "string"
+                    },
+                    "permissions": {
+                        "type": "string"
+                    },
+                    "expires": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "ratelimits": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "recoverable": {
+                        "type": "boolean"
+                    },
+                    "credits": {
+                        "type": "string"
+                    }
+                },
+                "required": ["apiId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "apiId": {
+                        "type": "text",
+                        "label": "API ID",
+                        "index": 1,
+                        "tooltip": "The ID of the API this key belongs to"
+                    },
+                    "prefix": {
+                        "type": "text",
+                        "label": "Key Prefix",
+                        "index": 2,
+                        "tooltip": "Optional prefix for the key (e.g., 'sk')"
+                    },
+                    "name": {
+                        "type": "text",
+                        "label": "Key Name",
+                        "index": 3,
+                        "tooltip": "A name to identify the key"
+                    },
+                    "byteLength": {
+                        "type": "number",
+                        "label": "Byte Length",
+                        "index": 4,
+                        "tooltip": "Length of the key in bytes (16-255, default: 16). Higher values increase security."
+                    },
+                    "externalId": {
+                        "type": "text",
+                        "label": "External ID",
+                        "index": 5,
+                        "tooltip": "Your system's identifier for the user/entity. Returned during verification for user identification."
+                    },
+                    "meta": {
+                        "type": "textarea",
+                        "label": "Metadata (JSON)",
+                        "index": 6,
+                        "tooltip": "JSON object with custom metadata returned during verification. Avoid sensitive data."
+                    },
+                    "roles": {
+                        "type": "textarea",
+                        "label": "Roles (JSON array)",
+                        "index": 7,
+                        "tooltip": "JSON array of role names to assign (e.g., [\"admin\", \"editor\"]). Roles must exist in workspace."
+                    },
+                    "permissions": {
+                        "type": "textarea",
+                        "label": "Permissions (JSON array)",
+                        "index": 8,
+                        "tooltip": "JSON array of permissions (e.g., [\"documents.read\", \"documents.write\"]). Supports wildcards."
+                    },
+                    "expires": {
+                        "type": "date-time",
+                        "label": "Expires",
+                        "index": 9,
+                        "tooltip": "Date and time when the key will expire. Omit for permanent keys."
+                    },
+                    "ratelimits": {
+                        "type": "textarea",
+                        "label": "Rate Limits (JSON array)",
+                        "index": 10,
+                        "tooltip": "JSON array of rate limit objects with name, limit, duration (ms), and autoApply fields."
+                    },
+                    "credits": {
+                        "type": "textarea",
+                        "label": "Credits (JSON)",
+                        "index": 11,
+                        "tooltip": "JSON object for usage-based limits with 'remaining' (required) and 'refill' (optional) fields. Controls total usage with global consistency."
+                    },
+                    "enabled": {
+                        "type": "toggle",
+                        "label": "Enabled",
+                        "index": 12,
+                        "defaultValue": true,
+                        "tooltip": "Whether the key is active immediately upon creation"
+                    },
+                    "recoverable": {
+                        "type": "toggle",
+                        "label": "Recoverable",
+                        "index": 13,
+                        "defaultValue": false,
+                        "tooltip": "Store plaintext key in encrypted vault for later retrieval. Only enable if absolutely necessary."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Key ID", "value": "keyId" },
+                { "label": "Key", "value": "key" }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMiIgZmlsbD0iIzAwMDAwMCIvPgogIDxwYXRoIGQ9Ik0yMCAzMkgzMk00NCAzMkg1Mk0zMiAyMFYzMk0zMiAzMlY0NCIgc3Ryb2tlPSIjRkZGRkZGIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjYiIGZpbGw9IiNGRkZGRkYiLz4KPC9zdmc+"
+}

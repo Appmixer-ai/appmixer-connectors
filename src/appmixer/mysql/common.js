@@ -1,4 +1,5 @@
 'use strict';
+
 const mysql = require('mysql');
 const EventEmitter = require('events');
 
@@ -85,9 +86,75 @@ async function createConnection(context) {
     return conn;
 }
 
+/**
+ * Validates that a SQL query starts with SELECT or WITH (for CTEs).
+ * Multiple statements are blocked by MySQL driver default (multipleStatements: false).
+ * @param {string} query - The SQL query to validate
+ * @throws {Error} If the query doesn't start with SELECT or WITH
+ */
+function validateQuery(query) {
+    if (!/^\s*(select|with)\s/i.test(query)) {
+        throw new Error('Only SELECT or WITH queries are allowed');
+    }
+}
+
 async function runQuery(conn, query, params) {
 
     return await conn.query(query, params).stream({ highWaterMark: 10 });
+}
+
+/**
+ * Read-only helper shared by trigger test() methods (Flow Test Mode).
+ *
+ * Runs the SAME validated SELECT path tick()/start() use (createConnection + validateQuery +
+ * runQuery + StreamProcessor), but collects rows into a local array instead of writing them to
+ * the data store. It does NOT touch component/flow/service state, register webhooks or mutate
+ * anything remote. It returns the "newest" row from the result set, picked by the configured
+ * idField (highest numeric id, falling back to string comparison), so the emitted example
+ * matches what the trigger would eventually deliver via receive().
+ *
+ * @param {Object} context - The component context (auth + properties available).
+ * @param {string} query - The user-supplied SELECT query.
+ * @param {Array} params - Query parameters (e.g. [0] to fetch all rows since epoch).
+ * @param {string} idField - The unique field used to order/identify rows.
+ * @returns {Promise<Object|null>} The newest row, or null if the result set is empty.
+ */
+async function fetchLatestRow(context, query, params, idField) {
+
+    let conn;
+    let latest = null;
+
+    const isNewer = (candidate, current) => {
+        if (current === null) return true;
+        const a = candidate[idField];
+        const b = current[idField];
+        const numA = Number(a);
+        const numB = Number(b);
+        if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
+            return numA > numB;
+        }
+        return String(a) > String(b);
+    };
+
+    try {
+        validateQuery(query);
+        conn = await createConnection(context);
+        const stream = await runQuery(conn, query, params);
+        const concurrency = parseInt(context.config.concurrency, 10) || 100;
+
+        const streamProcessor = new StreamProcessor(context);
+        await streamProcessor.processStream(conn, stream, async (row) => {
+            if (isNewer(row, latest)) {
+                latest = row;
+            }
+        }, concurrency);
+    } finally {
+        if (conn) {
+            conn.end();
+        }
+    }
+
+    return latest;
 }
 
 module.exports = {
@@ -100,6 +167,7 @@ module.exports = {
 
             let conn;
             try {
+                validateQuery(query);
                 conn = await createConnection(context);
                 const stream = await runQuery(conn, query, params);
                 const concurrency = parseInt(context.config.concurrency, 10) || 100;
@@ -151,5 +219,7 @@ module.exports = {
         return returnStoreId;
     },
 
-    runQuery
+    runQuery,
+    validateQuery,
+    fetchLatestRow
 };

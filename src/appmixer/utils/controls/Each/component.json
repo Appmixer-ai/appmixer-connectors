@@ -2,7 +2,7 @@
   "name": "appmixer.utils.controls.Each",
   "author": "David Durman <david@client.io>",
   "description": "Loops over the incoming list and outputs a new message for each item.",
-  "version": "1.4.5",
+  "version": "1.4.8",
   "private": false,
   "inPorts": [
     {
@@ -10,6 +10,11 @@
       "maxConnections": 1,
       "schema": {
         "properties": {
+          "delay": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 60000
+          },
           "list": {
             "oneOf": [
               {
@@ -33,6 +38,15 @@
             "label": "Field",
             "index": 1,
             "tooltip": "Select list you want to iterate."
+          },
+          "delay": {
+            "type": "number",
+            "group": "transformation",
+            "label": "Delay",
+            "index": 2,
+            "min": 0,
+            "max": 60000,
+            "tooltip": "Delay between items in milliseconds."
           }
         },
         "groups": {
@@ -47,7 +61,7 @@
     {
       "name": "item",
       "source": {
-        "url": "/component/appmixer/utils/controls/Each?outPort=item",
+        "url": "/component/appmixer/utils/controls/Each?outPort=item&ignoreAuth=true",
         "data": {
           "properties": {
             "buildOutPortOptions": true
@@ -65,11 +79,19 @@
       "options": [
         {
           "label": "Items Count",
-          "value": "count"
+          "value": "count",
+          "schema": {
+            "type": "integer",
+            "example": 3
+          }
         },
         {
           "label": "Correlation ID",
-          "value": "correlationId"
+          "value": "correlationId",
+          "schema": {
+            "type": "string",
+            "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          }
         }
       ]
     }

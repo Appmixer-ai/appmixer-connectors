@@ -1,0 +1,544 @@
+{
+    "err": "{\"message\":\"Component transformation validation error\",\"error\":[{\"message\":\"Validation error in transformation. Out port out on input in from component set-variables\",\"error\":\"{\\\"set-variables\\\":[{\\\"instancePath\\\":\\\"\\\",\\\"schemaPath\\\":\\\"#/additionalProperties\\\",\\\"keyword\\\":\\\"additionalProperties\\\",\\\"params\\\":{\\\"additionalProperty\\\":\\\"developerToken\\\"},\\\"message\\\":\\\"must NOT have additional properties\\\"}]}\"}],\"data\":[{\"message\":\"Validation error in transformation. Out port out on input in from component set-variables\",\"error\":\"{\\\"set-variables\\\":[{\\\"instancePath\\\":\\\"\\\",\\\"schemaPath\\\":\\\"#/additionalProperties\\\",\\\"keyword\\\":\\\"additionalProperties\\\",\\\"params\\\":{\\\"additionalProperty\\\":\\\"developerToken\\\"},\\\"message\\\":\\\"must NOT have additional properties\\\"}]}\"}],\"code\":\"GRID_ERR_PORT_TRANSFORMATION\",\"name\":\"ValidationFlowError\",\"stack\":\"ValidationFlowError: Component transformation validation error\\n    at Factory.validatePortTransformation (/usr/src/appmixer/engine/src/component/Factory.js:511:19)\\n    at /usr/src/appmixer/engine/src/component/Factory.js:314:29\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:266:21)\"}",
+    "flow": {
+        "add-user": {
+            "config": {
+                "properties": {
+                    "account": "69d7a23d29a0909d3763ba80"
+                },
+                "transform": {
+                    "in": {
+                        "get-user-list": {
+                            "out": {
+                                "lambda": {
+                                    "adPersonalizationConsent": "GRANTED",
+                                    "adUserDataConsent": "GRANTED",
+                                    "customerId": "{{{var-customer-id-add}}}",
+                                    "email": "{{{var-test-email}}}",
+                                    "operation": "create",
+                                    "userListId": "{{{var-user-list-id-add}}}"
+                                },
+                                "modifiers": {
+                                    "adPersonalizationConsent": {},
+                                    "adUserDataConsent": {},
+                                    "customerId": {
+                                        "var-customer-id-add": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.customerId"
+                                        }
+                                    },
+                                    "email": {
+                                        "var-test-email": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.testEmail"
+                                        }
+                                    },
+                                    "operation": {},
+                                    "userListId": {
+                                        "var-user-list-id-add": {
+                                            "functions": [],
+                                            "variable": "$.find-user-lists.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.AddUserToUserList",
+            "x": 1024,
+            "y": 400
+        },
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-add-user": [
+                        "out"
+                    ],
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 208
+        },
+        "assert-add-user": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "add-user": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{add-resource-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "add-resource-name": {
+                                            "functions": [],
+                                            "variable": "$.add-user.out.userListResourceName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "add-user": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 400
+        },
+        "assert-create": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{create-resource-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "create-resource-name": {
+                                            "functions": [],
+                                            "variable": "$.create-user-list.out.resourceName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16
+        },
+        "assert-find": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-user-lists": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Audience",
+                                                "field": "{{{find-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "find-name": {
+                                            "functions": [],
+                                            "variable": "$.find-user-lists.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "find-user-lists": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144
+        },
+        "assert-get": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-user-list": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "expected": "E2E Test Audience",
+                                                "field": "{{{get-name}}}"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "get-name": {
+                                            "functions": [],
+                                            "variable": "$.get-user-list.out.name"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "get-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272
+        },
+        "create-user-list": {
+            "config": {
+                "properties": {
+                    "account": "69d7a23d29a0909d3763ba80"
+                },
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id}}}",
+                                    "description": "E2E test user list - safe to delete",
+                                    "membershipLifeSpan": 30,
+                                    "name": "{{{var-user-list-name}}}"
+                                },
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.customerId"
+                                        }
+                                    },
+                                    "description": {},
+                                    "membershipLifeSpan": {},
+                                    "name": {
+                                        "var-user-list-name": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.userListName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.CreateUserList",
+            "x": 448,
+            "y": 16
+        },
+        "delete-user-list": {
+            "config": {
+                "properties": {
+                    "account": "69d7a23d29a0909d3763ba80"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-del}}}",
+                                    "userListId": "{{{var-user-list-id-del}}}"
+                                },
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-del": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.customerId"
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-user-list-id-del": {
+                                            "functions": [],
+                                            "variable": "$.find-user-lists.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.DeleteUserList",
+            "x": 1584,
+            "y": 208
+        },
+        "find-user-lists": {
+            "config": {
+                "properties": {
+                    "account": "69d7a23d29a0909d3763ba80"
+                },
+                "transform": {
+                    "in": {
+                        "create-user-list": {
+                            "out": {
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-find}}}",
+                                    "outputType": "first",
+                                    "searchQuery": "SELECT user_list.id, user_list.name, user_list.resource_name FROM user_list WHERE user_list.name = '{{{a8e06f05-08ee-4e59-8796-60bdd45ea9ad}}}'"
+                                },
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-find": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.customerId"
+                                        }
+                                    },
+                                    "outputType": {},
+                                    "searchQuery": {
+                                        "a8e06f05-08ee-4e59-8796-60bdd45ea9ad": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.userListName"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "create-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.FindUserLists",
+            "x": 640,
+            "y": 144
+        },
+        "get-user-list": {
+            "config": {
+                "properties": {
+                    "account": "69d7a23d29a0909d3763ba80"
+                },
+                "transform": {
+                    "in": {
+                        "find-user-lists": {
+                            "out": {
+                                "lambda": {
+                                    "customerId": "{{{var-customer-id-get}}}",
+                                    "userListId": "{{{var-user-list-id-get}}}"
+                                },
+                                "modifiers": {
+                                    "customerId": {
+                                        "var-customer-id-get": {
+                                            "functions": [],
+                                            "variable": "$.set-variables.out.customerId"
+                                        }
+                                    },
+                                    "userListId": {
+                                        "var-user-list-id-get": {
+                                            "functions": [],
+                                            "variable": "$.find-user-lists.out.id"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "find-user-lists": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.GetUserList",
+            "x": 832,
+            "y": 256
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-user-list": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmier.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E Google Ads - User List CRUD"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "delete-user-list": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 208
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "customerId",
+                                                "text": "8856263535",
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "userListName",
+                                                "text": "E2E Test Audience - {{{4923f55b-3b3a-4007-95bc-f91cf4030e82}}}",
+                                                "toggle": false,
+                                                "type": "text"
+                                            },
+                                            {
+                                                "name": "testEmail",
+                                                "text": "e2e-test-user@example.com",
+                                                "toggle": false,
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {
+                                        "4923f55b-3b3a-4007-95bc-f91cf4030e82": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
+        }
+    },
+    "name": "E2E Google Ads - User List CRUD",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

@@ -13,6 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Full history so validate:changed can resolve merge-base against the base branch.
+        fetch-depth: 0
     - name: Use Node.js 24.6.0
       uses: actions/setup-node@v4
       with:
@@ -20,14 +23,23 @@ jobs:
         cache: 'npm'
     - name: Install dependencies
       run: npm ci
-    - name: Cache node_modules for connectors
+    - name: Cache node_modules for connectors and examples
       uses: actions/cache@v4
       with:
-        path: src/appmixer/**/node_modules
-        key: ${{ runner.os }}-connector-npm-${{ hashFiles('src/appmixer/**/package.json') }}
+        path: |
+          src/appmixer/**/node_modules
+          src/examples/**/node_modules
+        key: ${{ runner.os }}-connector-npm-${{ hashFiles('src/appmixer/**/package.json', 'src/examples/**/package.json') }}
     - name: Install connector dependencies
       run: node ./scripts/npm_install.js
     - name: Run lint
       run: npm run lint
+    # Gate PRs on the files they actually change (strict) — a PR no longer fails for unrelated repo-wide debt.
+    - name: Run validate (changed files, strict)
+      run: node scripts/validate.js --changed --base origin/${{ github.base_ref }}
+    # Whole-repo ratchet kept as an informational signal only (does not block the PR).
+    - name: Run validate (whole repo, ratcheted — informational)
+      run: npm run validate
+      continue-on-error: true
     - name: Run unit tests
       run: npm run test-unit

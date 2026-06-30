@@ -1,3 +1,5 @@
+<!-- DO NOT EDIT — generated from .github/instructions/* by scripts/build-instructions.js -->
+
 # Appmixer Development & Component Creation Guidelines
 
 ## Overview
@@ -138,6 +140,8 @@ Contains bundle metadata and version history.
 }
 ```
 
+**IMPORTANT - Single Version Rule**: For unreleased connectors (new connectors being developed), the bundle.json must have only ONE version entry (typically 1.0.0). Do NOT pre-create multiple version entries (e.g., 1.0.0, 1.1.0, 1.2.0) before the connector is released. New versions should only be added when actual releases occur, not during initial development.
+
 ### quota.js
 
 Defines rate limiting rules to prevent API quota violations.
@@ -271,7 +275,7 @@ module.exports = {
         },
         validate: async context => {
             const credentials = `${context.apiKey}:X`;
-            const encoded = (new Buffer(credentials)).toString('base64');
+            const encoded = Buffer.from(credentials).toString('base64');
             await context.httpRequest({
                 method: 'GET',
                 url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
@@ -288,6 +292,60 @@ module.exports = {
 ### OAuth 2.0 Authentication
 
 For services using OAuth 2.0 flow.
+
+> ⚠️ **Breaking Change Warning — OAuth Scopes**
+>
+> Adding new OAuth scopes to an existing connector is a **breaking change**. Existing users will need to re-authenticate to grant the new permissions. This must be reflected in the connector's `bundle.json`:
+> - Bump the **major** version (e.g. `2.2.0` → `3.0.0`)
+> - Document the scope change clearly in the changelog entry
+> - Include a note in the PR description warning reviewers that existing users will be asked to re-authenticate
+>
+> Example `bundle.json` changelog entry:
+> ```json
+> "3.0.0": [
+>     "BREAKING: Added w_organization_social OAuth scope to support posting as an organization page. Existing users must re-authenticate."
+> ]
+> ```
+
+#### Simplified URL-Based Format
+
+For services with standard OAuth 2.0 endpoints, you can use a simplified URL-based format where URLs are provided as strings instead of functions:
+
+**Example (ClickUp)**:
+```javascript
+module.exports = {
+    type: 'oauth2',
+
+    definition: () => {
+        return {
+            scope: [],
+
+            authUrl: 'https://app.clickup.com/api',
+
+            requestAccessToken: 'https://api.clickup.com/api/v2/oauth/token',
+
+            requestProfileInfo: 'https://api.clickup.com/api/v2/user',
+
+            accountNameFromProfileInfo: 'user.username',
+
+            validateAccessToken: 'https://api.clickup.com/api/v2/user'
+        };
+    }
+};
+```
+
+**Key Differences from Function-Based Format**:
+- `authUrl`: String URL instead of function - Appmixer handles OAuth parameters automatically
+- `requestAccessToken`: String URL instead of async function - Appmixer handles the token exchange
+- `requestProfileInfo`: String URL instead of async function - Appmixer makes GET request with Bearer token
+- `accountNameFromProfileInfo`: Dot-notation path to extract account name from profile response (e.g., `'user.username'`)
+- `validateAccessToken`: String URL instead of async function - Appmixer makes GET request to validate token
+
+This format is simpler and works when the service follows standard OAuth 2.0 conventions. Use the function-based format (below) when you need custom logic for token handling or non-standard endpoints.
+
+#### Function-Based Format
+
+For services that require custom OAuth logic or have non-standard endpoints:
 
 **Generic Example**:
 ```javascript
@@ -721,6 +779,115 @@ Ensure `inPorts[0].schema.properties.<input_name>.type` and `inPorts[0].inspecto
 - `integer` → `number`
 - `boolean` → `toggle`
 
+### Output Port Schema Definition
+
+Each output port can define its output structure using **either** `schema` or `options`, but **not both**:
+
+- **`schema`** (PREFERRED): Use JSON Schema to define the structure of output data. Provides type information, validation, and nested object/array support.
+- **`options`**: Use an array of label/value pairs to define available output fields. Simpler but less structured — use only when fields are flat and you don't need typed schemas.
+
+**IMPORTANT**: Always prefer `schema` (JSON Schema) over `options`. Use `options` only for legacy components or when dynamically generating a flat list of fields. You cannot have both `schema` and `options` at the root level of an output port. Choose one approach:
+
+```json
+// PREFERRED - using schema (JSON Schema)
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID", "example": "abc123" },
+                "name": { "type": "string", "title": "Name", "example": "Acme Inc." }
+            }
+        }
+    }
+]
+
+// ALTERNATIVE - using options (flat list only, no nested types)
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "abc123" } },
+            { "label": "Name", "value": "name", "schema": { "type": "string", "example": "Acme Inc." } }
+        ]
+    }
+]
+
+// INCORRECT - both schema and options
+"outPorts": [
+    {
+        "name": "out",
+        "schema": { ... },
+        "options": [ ... ]  // ERROR: Cannot have both
+    }
+]
+```
+
+### Output Port Examples (variable picker preview)
+
+Output port fields should include `example` values so users see realistic sample data in the variable picker UI when wiring downstream components.
+
+**Rules:**
+
+1. **Use `example` (singular), NOT `examples` (array).** Appmixer reads `example`; the JSON Schema `examples: [...]` array is not rendered.
+2. **In JSON Schema format**: put `example` on each leaf property inside `schema.properties[key]`. This is the preferred form.
+3. **In options format**: put `example` inside the per-option `schema` object: `options[k].schema.example`.
+4. **Falsy values render correctly** (`0`, `false`, `""`) — don't omit them out of concern they won't show.
+5. **Choose realistic sample values** that match the actual API response (real ID format, real date, etc.), not placeholders like `"string"` or `"value"`.
+6. **Do NOT use `description`** on output port properties. Use `title` for the human-readable label; `description` is not rendered by the variable picker and only adds noise. Tooltips/help text belong on input port inspectors, not on outputs.
+
+**JSON Schema format (PREFERRED):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "id": { "type": "string", "title": "ID", "example": "1001" },
+                "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                "completed": { "type": "boolean", "title": "Completed", "example": false },
+                "priority": { "type": "integer", "title": "Priority", "example": 0 },
+                "created_at": { "type": "string", "format": "date-time", "title": "Created", "example": "2025-01-15T10:30:00Z" },
+                "tags": {
+                    "type": "array",
+                    "title": "Tags",
+                    "items": { "type": "string" },
+                    "example": ["urgent", "shopping"]
+                },
+                "assignee": {
+                    "type": "object",
+                    "title": "Assignee",
+                    "properties": {
+                        "id": { "type": "string", "example": "u-42" },
+                        "name": { "type": "string", "example": "Jane Doe" }
+                    }
+                }
+            }
+        }
+    }
+]
+```
+
+**Options format (only when you cannot use JSON Schema):**
+
+```json
+"outPorts": [
+    {
+        "name": "out",
+        "options": [
+            { "label": "ID", "value": "id", "schema": { "type": "string", "example": "1001" } },
+            { "label": "Title", "value": "title", "schema": { "type": "string", "example": "Buy groceries" } },
+            { "label": "Completed", "value": "completed", "schema": { "type": "boolean", "example": false } }
+        ]
+    }
+]
+```
+
+**Background:** Until recently, `schema.example` on JSON Schema output ports was not rendered in the variable picker — only `options[k].schema.example` worked. That bug was fixed (see Appmixer-ai/appmixer-core#3734), so JSON Schema with per-property `example` is now the recommended approach.
+
 ---
 
 # Part 6: Component Behavior (JavaScript)
@@ -884,6 +1051,7 @@ Action components perform operations when triggered by input data. They don't ru
                     },
                     "messages": {
                         "in/outputType": "inputs/in/outputType"
+                        // Fake any other required inputs here if needed
                     }
                 }
             }
@@ -915,6 +1083,8 @@ module.exports = {
         if (context.properties.generateOutputPortOptions) {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'tasks' });
         }
+
+        // any required inputs validation can be done here
 
         let url = 'https://api.service.com/tasks';
         const params = {};
@@ -1039,6 +1209,40 @@ const toCsv = (array) => {
 };
 ```
 
+### outputType Helper Functions (REQUIRED)
+
+Components with `outputType` (Find/List) **MUST** use standardized lib.js helpers.
+
+**Required functions in connector's lib.js:**
+- `sendArrayOutput({ context, outputPortName = 'out', outputType, records })` - handles all output types
+- `getOutputPortOptions(context, outputType, schema, { label })` - dynamic output schema
+
+**Canonical implementation:** Copy from `appmixer-cli/src/ai/src/templates/libs/lib.js`
+
+**Required behavior pattern:**
+```javascript
+const lib = require('../../lib');
+
+module.exports = {
+    async receive(context) {
+        const { outputType } = context.messages.in.content;
+
+        if (context.properties.generateOutputPortOptions) {
+            return lib.getOutputPortOptions(context, outputType, SCHEMA, { label: 'Items' });
+        }
+
+        const records = await fetchData();
+        return lib.sendArrayOutput({ context, outputType, records });
+    }
+};
+```
+
+**Critical rules:**
+- For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
+- Never use `records` or custom field names for consistency
+- lib.js MUST exist in connector root if component has outputType
+- Run `npm run validate-outputtype` to check compliance
+
 ### List (Items) Components
 
 **Purpose**: Retrieve all items of a specific type. Use when the service doesn't provide filter/search options.
@@ -1112,6 +1316,7 @@ const toCsv = (array) => {
                     },
                     "messages": {
                         "in/outputType": "inputs/in/outputType"
+                        // Fake any other required inputs here if needed
                     }
                 }
             }
@@ -1162,13 +1367,16 @@ const toCsv = (array) => {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Description", "value": "description" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "description": { "type": "string", "title": "Description", "example": "Milk, eggs, bread" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1264,12 +1472,15 @@ module.exports = {
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Status", "value": "status" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "status": { "type": "string", "title": "Status", "example": "open" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1378,11 +1589,14 @@ Trigger components monitor for events and start workflows when conditions are me
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Task ID", "value": "id" },
-                { "label": "Title", "value": "title" },
-                { "label": "Created Date", "value": "created_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
+                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1506,11 +1720,14 @@ Webhook triggers receive HTTP callbacks from external services. They require lif
     "outPorts": [
         {
             "name": "out",
-            "options": [
-                { "label": "Contact ID", "value": "id" },
-                { "label": "Email", "value": "email" },
-                { "label": "Updated Date", "value": "updated_at" }
-            ]
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Contact ID", "example": "c-1001" },
+                    "email": { "type": "string", "title": "Email", "example": "jane@example.com" },
+                    "updated_at": { "type": "string", "format": "date-time", "title": "Updated Date", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
         }
     ]
 }
@@ -1584,6 +1801,115 @@ module.exports = {
     }
 };
 ```
+
+#### 2b. Plugin-based Triggers (shared global endpoint + `addListener`)
+
+When the upstream service requires a **single global webhook callback URL per app** (Meta WhatsApp, Slack Events API, Stripe Webhooks at the app level), the per-trigger `getWebhookUrl()` pattern in section 2 does NOT work — you can only register one URL on the upstream service, and Appmixer issues a different URL per trigger instance. The right pattern is a **connector-level plugin** that owns one endpoint and fans out events to many subscribed trigger instances.
+
+**Architecture**
+
+```
+External service → ONE global URL → /plugins/<vendor>/<service>/<path>
+                                          │
+                                          │  parse + HMAC-verify → triggerListeners
+                                          ▼
+                              Trigger instances (one per flow)
+                                start():    addListener(eventName, params)
+                                stop():     removeListener(eventName)
+                                receive():  context.messages.webhook.content.data
+```
+
+**Required files at the connector root**
+
+`plugin.js` — executed once when the connector is installed onto the Appmixer server:
+
+```javascript
+'use strict';
+module.exports = async context => {
+    require('./routes')(context);
+};
+```
+
+`routes.js` — registers the HTTP endpoint and the listener-added validator:
+
+```javascript
+'use strict';
+
+module.exports = async context => {
+
+    // Runs every time a trigger calls context.addListener().
+    context.onListenerAdded(async listener => {
+        // listener.eventName, listener.params  — mutable; throw to reject.
+    });
+
+    context.http.router.register({
+        method: 'POST',
+        path: '/events',                        // → /plugins/<vendor>/<service>/events
+        options: {
+            auth: false,
+            handler: async (req, h) => {
+                if (!isValidSignature(context, req)) return h.response().code(401);
+                await context.triggerListeners({
+                    eventName: extractEventName(req.payload),
+                    payload: extractEventBody(req.payload),
+                    filter: listener => listener.params.userId === extractUserId(req.payload)
+                });
+                return {};
+            }
+        }
+    });
+};
+```
+
+The endpoint URL is `<API_BASE>/plugins/<vendor>/<service>/<path>` — derived from the connector's directory path. **No `context.getWebhookUrl()` is involved** — the admin configures this single URL on the upstream service once.
+
+**Trigger component pattern**
+
+```javascript
+'use strict';
+module.exports = {
+
+    async start(context) {
+        await context.addListener(`channel:${context.properties.channelId}`, {
+            userId: context.profileInfo.userId,
+            accessToken: context.auth.accessToken
+        });
+    },
+
+    async stop(context) {
+        await context.removeListener(`channel:${context.properties.channelId}`);
+    },
+
+    async receive(context) {
+        if (!context.messages.webhook) return;
+        const data = context.messages.webhook.content.data;     // from triggerListeners()
+        await context.sendJson(data, 'out');
+    }
+};
+```
+
+**Key APIs**
+
+| API | Where | Purpose |
+|---|---|---|
+| `context.http.router.register({ method, path, options })` | `routes.js` | Mount an HTTP route under `/plugins/<vendor>/<service>` |
+| `context.onListenerAdded(cb)` | `routes.js` | Hook fired when a trigger calls `addListener` — validate / transform `listener.params` |
+| `context.triggerListeners({ eventName, payload, filter })` | inside route handler | Fan event out to subscribed listeners |
+| `context.addListener(eventName, params)` | trigger `start()` | Register this instance |
+| `context.removeListener(eventName)` | trigger `stop()` | Unregister |
+| `context.messages.webhook.content.data` | trigger `receive()` | The payload from `triggerListeners` |
+
+**When to use this pattern (vs. section 2's per-trigger webhook URL)**
+
+- Upstream service allows **only one callback URL per app** (Meta App, Slack App, GitHub App)
+- Events fan out to many tenants; routing happens server-side
+- HMAC signature verification of the **app's** secret should be centralized
+- Multiple trigger types share the same upstream stream
+
+**Reference implementations**
+
+- `src/appmixer/slack/plugin.js` + `routes.js` + `list/NewChannelMessageRT/NewChannelMessageRT.js`
+- `src/appmixer/whatsapp/plugin.js` + `routes.js` + `notifications/NewMessage/NewMessage.js`
 
 #### 3. Hybrid Triggers (`webhook: true` + `tick: true`)
 
@@ -1757,6 +2083,38 @@ async receive(context) {
 ```
 
 #### Dynamic Output Port Schema
+
+When using `source` to dynamically populate field options or output port schemas, the `data` object can contain either `messages` or `properties` depending on the target component's input type:
+
+- **Use `messages`**: When the target component has `inPorts` (action components)
+- **Use `properties`**: When the target component uses `properties` instead of `inPorts` (trigger components)
+
+**IMPORTANT**: All **required** fields of the target component MUST be defined. You can use dummy data for fields that aren't needed for the specific call, but every required field must have a value.
+
+**Example with `messages`** (target component has `inPorts`):
+```json
+{
+    "inspector": {
+        "inputs": {
+            "folderId": {
+                "type": "text",
+                "label": "Folder ID",
+                "source": {
+                    "url": "/component/appmixer/clickup/core/ListFolders?outPort=out",
+                    "data": {
+                        "messages": {
+                            "in/spaceId": "inputs/in/spaceId"
+                        },
+                        "transform": "./ListFolders#toSelectArray"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Example with `properties`** (target component uses `properties`):
 ```json
 {
     "outPorts": [
@@ -1775,6 +2133,140 @@ async receive(context) {
     ]
 }
 ```
+
+**Using `variableFetch` / `isSource` for Dynamic Source Calls**
+
+When a component is used as a dynamic data source (via `source` URL in inspector), four rules apply: **inspector field is `text`**, **dependencies are optional**, **error suppression**, and **response caching**.
+
+**Rule 1 — Inspector field type is `text`, never `select`.**
+The dropdown source can fail (auth not yet established, dependency input empty, API down). When that happens the user MUST be able to type the value manually. `select` constrains the field to dropdown options only and traps the user when the source returns `[]`. Use `type: "text"` with the `source` block — Appmixer renders this as a typeahead/autocomplete: user can pick from the loaded options OR type any value.
+
+```jsonc
+"phoneNumberId": {
+    "type": "text",          // NOT "select"
+    "label": "Phone Number",
+    "tooltip": "Pick a phone number, or type the Phone Number ID directly.",
+    "source": {
+        "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+        "data": {
+            "properties": { "isSource": true },
+            "transform": "./ListFoo#toSelectArray"
+        }
+    }
+}
+```
+
+**Rule 2 — Dependency inputs are optional.**
+When a dropdown depends on another input (e.g. `phoneNumberId` dropdown depends on `businessAccountId`), the dependency itself must NOT be in `schema.required[]`. Reason: the inspector evaluates required-input checks at design time on the host component; if a hard-required dependency is empty, the dropdown call never fires and the user sees no options AND no way to recover. Keeping the dependency optional means:
+
+- The dropdown source is still called when the dependency is empty
+- The source component handles missing input gracefully (returns `[]`)
+- The user can still type the target value manually
+- Runtime validation of the dependency happens at `receive()` time on the host component — set the actual requirement check there, not in `schema.required`.
+
+```jsonc
+"schema": {
+    "properties": {
+        "businessAccountId": { "type": "string" },
+        "phoneNumberId":     { "type": "string" }
+    },
+    "required": ["phoneNumberId"]   // NOT businessAccountId — it's a dropdown helper, not a hard requirement
+}
+```
+
+**Rule 3 & 4 — Error suppression and response caching** are covered below.
+
+The convention is to pass a sentinel property in `source.data.properties` so the component knows it is being called from the inspector, not from a live flow. Two property names are in use — use whichever is already established in the connector, and be consistent within a connector:
+
+| Property | Used in |
+|---|---|
+| `isSource: true` | monday, facebookbusiness — **preferred** |
+| `variableFetch: true` | microsoft (onedrive, teams, …) — legacy |
+
+> **Prefer `isSource` for new connectors. Do not mix both names in the same connector.**
+
+**component.json** — add the sentinel to every `source.data.properties` block that uses a `transform`. Do NOT add it to `generateOutputPortOptions` sources.
+
+```json
+"source": {
+    "url": "/component/appmixer/<connector>/core/ListFoo?outPort=out",
+    "data": {
+        "properties": { "variableFetch": true },
+        "transform": "./ListFoo#toSelectArray"
+    }
+}
+```
+
+**Error suppression** — when the sentinel is set, catch errors and return an empty response instead of throwing. This prevents irrelevant error popups in the UI:
+
+```javascript
+async receive(context) {
+    try {
+        const drives = await listItems(context, 'me/drives?');
+        return context.sendJson({ drives }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ drives: [] }, 'out');
+        }
+        context.log({ stage: 'Error', err });
+        throw new Error(err);
+    }
+},
+```
+
+**Response caching** — dynamic source calls happen every time the user opens a dropdown. To avoid hammering the API, cache the response using `context.staticCache` + `context.lock`. Put `callEndpointCached` in the connector's `lib.js` and call it only when the sentinel is set:
+
+```javascript
+// lib.js
+const crypto = require('crypto');
+
+function getCacheKey(obj) {
+    return crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex');
+}
+
+async function callEndpointCached(context, url) {
+    let lock;
+    try {
+        const key = getCacheKey({ url, token: context.auth.accessToken });
+        lock = await context.lock(key);
+        const cached = await context.staticCache.get(key);
+        if (cached) return { data: cached };
+        const { data } = await context.httpRequest.get(url);
+        await context.staticCache.set(key, data, context.config.listCacheTTL || (2 * 60 * 1000)); // 120s default
+        return { data };
+    } finally {
+        lock?.unlock();
+    }
+}
+
+module.exports = { callEndpointCached };
+```
+
+```javascript
+// ListFoo.js
+const { callEndpointCached } = require('../../lib');
+
+async receive(context) {
+    try {
+        const url = `https://api.example.com/foo?token=${context.auth.accessToken}`;
+        const { data } = context.properties.variableFetch
+            ? await callEndpointCached(context, url)
+            : await context.httpRequest.get(url);
+        return context.sendJson({ items: data.items }, 'out');
+    } catch (err) {
+        if (context.properties.variableFetch) {
+            return context.sendJson({ items: [] }, 'out');
+        }
+        throw err;
+    }
+},
+```
+
+Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint. TTL is configurable via `context.config.listCacheTTL` (default 120 s).
+
+**Reference implementations:**
+- Error suppression only: `src/appmixer/microsoft/onedrive/ListSites/ListSites.js`
+- Caching + error suppression: `src/appmixer/facebookbusiness/marketing/GetAdAccounts/GetAdAccounts.js` + `facebookbusiness/lib.js`
 
 ---
 
@@ -1818,6 +2310,11 @@ Behavior JS file MUST follow these rules:
 Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 
 ### Critical Restrictions for AI Code Generation
+
+- **OAuth Scope Changes are Breaking Changes**: NEVER add new OAuth scopes to an existing connector's `component.json` `auth.scope` array without treating it as a **major** version bump. Adding a scope forces all existing users to re-authenticate. Always:
+  - Bump the connector `bundle.json` to the next major version (e.g. `2.x.x` → `3.0.0`)
+  - Add a `BREAKING:` prefix to the changelog entry describing the scope addition
+  - Note in the PR description that existing users must re-authenticate
 
 - **Pagination Fields**: NEVER generate `limit` or `offset` fields in Find or List component inputs. Appmixer does not support these pagination controls. Instead, use the maximum available page size from the external API and mention the limit in the component description.
 
@@ -1901,6 +2398,129 @@ Intended for AI assistance like Copilot, CodeRabbit, Claude, etc.
 - **Locking**: Use locking mechanisms for shared resources
 - **Batching**: Batch API calls when possible to reduce requests
 
+#### Cache TTL using staticCache
+
+When caching data (e.g., folder structures, user lists, property definitions), use `context.staticCache` with a TTL (Time-To-Live) to ensure the cache is refreshed periodically:
+
+```javascript
+const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+async tick(context) {
+    const cacheKey = `myconnector_data_${context.componentId}`;
+    let cachedData = await context.staticCache.get(cacheKey);
+
+    if (!cachedData) {
+        // Cache miss - fetch fresh data
+        cachedData = await fetchData(context);
+        // staticCache handles expiration automatically
+        await context.staticCache.set(cacheKey, cachedData, CACHE_TTL_MS);
+    }
+
+    // ... rest of tick logic using cachedData
+}
+```
+
+**Best practices for staticCache**:
+- Use descriptive cache keys with connector name prefix (e.g., `hubspot_properties_contacts`)
+- Include relevant identifiers in the key (e.g., user ID, folder ID) to avoid cache collisions
+- Use TTL between 10-60 minutes depending on how frequently the data changes
+- Combine with `context.lock()` when the fetch operation is expensive (see locking section below)
+
+**Example with lock** (from hubspot/commons.js):
+```javascript
+async getObjectProperties(context, objectType) {
+    const cacheKey = `hubspot_properties_${objectType}`;
+    let lock;
+    try {
+        lock = await context.lock(cacheKey);
+        const cached = await context.staticCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Fetch data from API
+        const { data } = await context.httpRequest({ /* ... */ });
+
+        // Cache with 1 minute TTL
+        await context.staticCache.set(cacheKey, data, 60 * 1000);
+        return data;
+    } finally {
+        await lock?.unlock();
+    }
+}
+```
+
+**Why staticCache is preferred over state-based caching**: `staticCache` provides built-in TTL support, handles expiration automatically, and is shared across component instances. State-based caching requires manual timestamp tracking and persists in the database unnecessarily.
+
+#### Locking for Long-Running Tick Operations
+
+When a `tick()` function may take a long time to execute (e.g., fetching nested folder structures), use a lock to prevent concurrent execution:
+
+```javascript
+async tick(context) {
+    let lock;
+    try {
+        lock = await context.lock(context.componentId, {
+            ttl: 5 * 60 * 1000, // 5 minute lock TTL
+            maxRetryCount: 0    // Don't wait, skip if already running
+        });
+    } catch (e) {
+        // Another tick is already running, skip this one
+        return;
+    }
+
+    try {
+        // ... long-running tick logic
+    } finally {
+        lock?.unlock();
+    }
+}
+```
+
+**Why locking is important**: The Appmixer engine calls `tick()` at regular intervals (default: 60 seconds). If a tick operation takes longer than the interval, multiple concurrent tick executions can overwhelm external APIs and cause race conditions.
+
+#### Batching Recursive API Calls
+
+When fetching hierarchical data (e.g., recursive folder structures), use batched concurrent requests instead of sequential recursive calls:
+
+```javascript
+// ❌ BAD: Sequential recursive calls - slow and can timeout
+async function getSubfoldersRecursive(context, folderId, result = []) {
+    const { data } = await context.httpRequest({ /* ... */ });
+    for (const folder of data.files) {
+        result.push(folder.id);
+        await getSubfoldersRecursive(context, folder.id, result); // Sequential!
+    }
+    return result;
+}
+
+// ✅ GOOD: Batched breadth-first traversal - faster and more reliable
+async function getSubfolders(context, rootFolderId) {
+    const allFolderIds = [];
+    let foldersToProcess = [rootFolderId];
+
+    while (foldersToProcess.length > 0) {
+        // Process in batches of 10 to avoid overwhelming the API
+        const batch = foldersToProcess.splice(0, 10);
+
+        const batchResults = await Promise.all(
+            batch.map(parentId => context.httpRequest({ /* ... */ }))
+        );
+
+        for (const { data } of batchResults) {
+            for (const folder of (data.files || [])) {
+                allFolderIds.push(folder.id);
+                foldersToProcess.push(folder.id);
+            }
+        }
+    }
+
+    return allFolderIds;
+}
+```
+
+**Why batching is important**: Deep recursive folder structures with hundreds of subfolders can take minutes to traverse sequentially. Batched concurrent requests significantly reduce total execution time and are less likely to timeout.
+    
 ### Common Patterns
 
 #### When Adding New Field to component.json
@@ -1961,7 +2581,7 @@ Use `source` property to populate field options dynamically:
 ##### file output components
 - use `context.saveFileStream()` in behavior JS
 - must return `fileId` in output message
-- should return additional info like `fileSize`, `prompt`, etc. See component.json `outPorts.options` for more details
+- should return additional info like `fileSize`, `prompt`, etc. — define these as fields in the `outPorts.schema.properties` (JSON Schema), each with a realistic `example`. See `05-component-config.md` § "Output Port Examples" for the canonical pattern.
 
 Examples:
 
@@ -1982,14 +2602,17 @@ return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.lengt
 ### Unit Tests
 
 - Use `mocha` for unit tests
-- Place tests in `test/unit` directory
+- Place tests in `src/appmixer/<connector_name>/artifacts/test/` directory (colocated with connector source)
 - Use `assert` from Node.js for assertions
+- Name test files with `.test.js` extension (e.g., `AIAgent.test.js`)
 
 When working on a single connector, you can run tests with:
 
 ```bash
-npm run test-unit -- test/<connector_name>
+npm run test-unit -- src/appmixer/<connector_name>/artifacts/test/*.test.js
 ```
+
+The test suite automatically discovers and runs all test files in the `artifacts/test/` directories across all connectors.
 
 ### End-to-End (E2E) Test Flows
 
@@ -2068,11 +2691,7 @@ Every E2E test flow MUST include these components in sequence:
     - First component in the flow
     - No configuration needed
 
-2. **BeforeAll** (`appmixer.utils.test.BeforeAll`) - Optional
-    - Setup operations before tests run
-    - Connects to OnStart output
-
-3. **Your Components Under Test**
+2. **Your Components Under Test**
     - The actual connector components being tested
     - Should test main CRUD operations (Create, Read, Update, Delete)
     - Chain components to test realistic workflows
@@ -2145,6 +2764,91 @@ The ProcessE2EResults component is REQUIRED and must be configured with:
 - `recipients`: Email address for test result notifications
 - `testCase`: Human-readable test name (e.g., "Google Docs E2E")
 - `result`: Variable reference to AfterAll component output
+
+#### Modifier Functions (Prefer Over CodeBlock)
+
+Appmixer transforms support **modifier functions** in the `functions` array of a variable reference. These run natively in the engine without needing a CodeBlock component. **Always prefer modifiers over CodeBlock** — they are simpler, faster, and don't have the `result` wrapping issue.
+
+| Function | Description | Parameters |
+|----------|-------------|------------|
+| `g_uuid4` | Generate UUID v4 | none |
+| `g_timestamp` | Current Unix timestamp (ms) | none |
+| `g_now` | Current ISO 8601 date | none |
+| `g_addTimeSpan` | Add time to a date | `hashParams: { days: {value: N}, hours: {value: N}, minutes: {value: N} }` |
+| `g_random` | Random number (0-1) | none |
+| `g_flowName` | Current flow name | none |
+| `g_flowId` | Current flow ID | none |
+| `g_userId` | Current user ID | none |
+| `g_jsonPath` | Extract from JSON via JSONPath | `params: [{value: "$.path"}]` |
+| `g_regex` | Regex matching | `params` for pattern, `hashParams` for flags |
+| `g_first` | First element of array | none |
+| `g_last` | Last element of array | none |
+| `g_length` | Length of string/array | none |
+| `g_javascript` | Run arbitrary JS code | `params: [{value: "code"}]` |
+| `g_stringify` | Object to JSON string | none |
+| `g_split` | Split string by delimiter | `params: [{value: "delimiter"}]` |
+| `g_add` | Addition | `params: [{value: N}]` |
+| `g_mul` | Multiplication | `params: [{value: N}]` |
+| `g_floor` | Floor rounding | none |
+| `g_greaterThan` | Comparison (greater than) | `params: [{value: N}]` |
+
+**Common E2E patterns using modifiers:**
+
+**Unique email per run** (instead of CodeBlock):
+```json
+"email": {
+    "email-var": {
+        "variable": "$.set-variables.out.emailPrefix",
+        "functions": []
+    },
+    "ts-var": {
+        "variable": "$.on-start.out.started",
+        "functions": [{ "name": "g_timestamp" }]
+    }
+}
+```
+With lambda: `"email": "{{{email-var}}}-{{{ts-var}}}@appmixer-test.com"`
+
+**Future date** (instead of CodeBlock):
+```json
+"startTime": {
+    "start-var": {
+        "variable": "$.on-start.out.started",
+        "functions": [
+            { "name": "g_now" },
+            { "name": "g_addTimeSpan", "hashParams": { "days": {"value": 14} } }
+        ]
+    }
+}
+```
+
+**UUID as unique identifier**:
+```json
+"uniqueName": {
+    "name-var": {
+        "variable": "$.set-variables.out.baseName",
+        "functions": [{ "name": "g_uuid4" }]
+    }
+}
+```
+With lambda: `"uniqueName": "E2E-{{{name-var}}}"`
+
+**When to use CodeBlock instead:**
+Use CodeBlock only when modifiers can't express the logic: complex string formatting requiring multiple transformations chained, conditional logic (if/else), math beyond simple add/multiply, parsing complex nested structures.
+
+**CodeBlock gotchas:**
+- Output wraps the return value under `result` field. Access via `$.code-block-id.out.result`. Deep access like `$.code-block-id.out.result.field` does NOT work — return simple strings/numbers.
+- Code runs in `isolated-vm`. Bare `return` statements are illegal. Use expressions directly (e.g. `'value-' + Date.now()`) or IIFEs.
+
+#### Deterministic Test Design
+
+Tests must pass on repeated runs without input changes:
+
+- **Unique inputs**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers (e.g. `e2e-{{{ts-var}}}@test.com`). Prefer modifiers over CodeBlock.
+- **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
+- **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
+- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: add a CodeBlock delay (`await new Promise(r => setTimeout(r, 5000))`).
+- **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
 
 #### Component Configuration Pattern
 
@@ -2249,6 +2953,240 @@ Assert components validate outputs using expressions:
 - `notEmpty`: Checks that a field is not empty/null/undefined
 - `regex`: Regular expression pattern match (e.g., field matches pattern "^[0-9]+$")
 
+#### Critical Variable Mapping Rules
+
+These rules are **CRITICAL** and must be followed exactly. Failure to follow these rules will cause test flows to fail silently.
+
+**1. Lambda Values MUST Reference Modifiers with `{{{variable-id}}}` Pattern**
+
+When a modifier defines a variable mapping, the lambda value MUST use the corresponding `{{{variable-id}}}` pattern (for example, `{{{check-var}}}`) - NEVER use an empty string.
+
+**WRONG:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-1": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": ""  // WRONG! This ignores the modifier
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "taskId": {
+        "var-task-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "taskId": "{{{var-task-id}}}"  // CORRECT! References the modifier
+}
+```
+
+**2. Assert `field` Property MUST Use Variable Reference**
+
+The `field` property in Assert expressions must ALWAYS use `{{{uuid}}}` pattern that references a modifier. Never leave it empty.
+
+**WRONG:**
+```json
+"modifiers": {
+    "expression": {
+        "check-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "",  // WRONG! Empty field ignores the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**CORRECT:**
+```json
+"modifiers": {
+    "expression": {
+        "field-id": {
+            "variable": "$.create-task.out.id",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-id}}}",  // CORRECT! References the modifier
+            "assertion": "notEmpty"
+        }]
+    }
+}
+```
+
+**3. Assert `expected` Property for Dynamic Values**
+
+For `equal` assertions comparing dynamic values (from SetVariable or component outputs), BOTH `field` AND `expected` must use variable references.
+
+**CORRECT PATTERN for comparing component output to SetVariable:**
+```json
+"modifiers": {
+    "expression": {
+        "field-content": {
+            "variable": "$.get-task.out.content",
+            "functions": []
+        },
+        "expected-content": {
+            "variable": "$.set-variables.out.taskContent",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "expression": {
+        "AND": [{
+            "field": "{{{field-content}}}",
+            "assertion": "equal",
+            "expected": "{{{expected-content}}}"
+        }]
+    }
+}
+```
+
+**4. SetVariable Component Best Practices**
+
+- Place SetVariable component early in flow (immediately after OnStart)
+- Define ALL values that will be used in Assert comparisons
+- Use descriptive variable names (e.g., `taskContent`, `updatedTaskContent`)
+- For unique test data, use `{{{g_timestamp()}}}` or `{{{g_now()}}}` functions
+
+**Example SetVariable Configuration:**
+```json
+"set-variables": {
+    "type": "appmixer.utils.controls.SetVariable",
+    "source": {"in": {"on-start": ["out"]}},
+    "config": {
+        "transform": {
+            "in": {
+                "on-start": {
+                    "out": {
+                        "type": "json2new",
+                        "modifiers": {"variables": {}},
+                        "lambda": {
+                            "variables": {
+                                "ADD": [
+                                    {"type": "text", "name": "taskContent", "text": "E2E Test Task"},
+                                    {"type": "text", "name": "updatedContent", "text": "E2E Test Task Updated"}
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**5. Component Dependencies and Source Connections**
+
+Components that need data from another component MUST have that component in their `source.in`. The source component's output is accessed via `$.component-id.out.fieldName`.
+
+**WRONG - GetTask sources from wrong component:**
+```json
+"get-task": {
+    "source": {"in": {"before-all": ["out"]}},  // WRONG! Can't access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This won't work!
+        }
+    }
+}
+```
+
+**CORRECT - GetTask sources from CreateTask:**
+```json
+"get-task": {
+    "source": {"in": {"create-task": ["out"]}},  // CORRECT! Can access create-task.out
+    "config": {
+        "modifiers": {
+            "taskId": {"var-1": {"variable": "$.create-task.out.id"}}  // This works!
+        }
+    }
+}
+```
+
+**6. ProcessE2EResults `result` Field**
+
+The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out`. Never leave it empty.
+
+**CORRECT:**
+```json
+"modifiers": {
+    "result": {
+        "result-var": {
+            "variable": "$.after-all.out",
+            "functions": []
+        }
+    }
+},
+"lambda": {
+    "recipients": "test@appmixer.ai",
+    "testCase": "E2E Connector - feature",
+    "result": "{{{result-var}}}"
+}
+```
+
+**7. AfterAll Must Receive ALL Assert Outputs - CRITICAL**
+
+**EVERY** Assert component in the flow MUST have its output connected to the AfterAll component's `source.in`. This is **CRITICAL** - missing any Assert connection will cause that assertion's result to be lost and not included in the test report.
+
+**Common Mistake**: Assert components that are in the middle of the flow (not at the end) are often forgotten. Even if an Assert flows to another component first, it MUST ALSO connect to AfterAll.
+
+**WRONG - Missing assert-create connection:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-get": ["out"],
+            "assert-update": ["out"]
+            // WRONG! assert-create is missing - its result will be lost!
+        }
+    }
+}
+```
+
+**CORRECT - All Asserts connected:**
+```json
+"after-all": {
+    "source": {
+        "in": {
+            "assert-create": ["out"],   // First assert
+            "assert-get": ["out"],      // Second assert
+            "assert-update": ["out"],   // Third assert
+            "assert-list": ["out"]      // Fourth assert - ALL included!
+        }
+    }
+}
+```
+
+**Verification Checklist**: Before finalizing any test flow:
+1. Count the number of Assert components in the flow
+2. Count the number of Assert connections in AfterAll's `source.in`
+3. These numbers MUST match exactly
+4. If counts don't match, the missing Assert results will not appear in the test report, causing silent test failures.
+
 #### Best Practices for Test Flows
 
 1. **Multiple Smaller Flows**
@@ -2297,10 +3235,31 @@ Assert components validate outputs using expressions:
     - Use AfterAll to ensure cleanup runs after all assertions
     - Connect cleanup components properly
 
-8. **Component Coordinates**
-    - Use x/y coordinates for visual layout
-    - Space components horizontally (200-300px apart)
-    - Arrange vertically for parallel branches (especially for multiple Assert components)
+8. **Component Coordinates and Layout**
+    - **Horizontal spacing**: Use **192px** between sequentially connected components on the x-axis
+    - **Vertical spacing**: Use **128px** between parallel rows/branches on the y-axis
+    - **Starting position**: OnStart at `x: 64, y: 16`
+    - **Diagonal staircase pattern**: When operations branch off sequentially (Create → Get → Update → ...), each subsequent action moves **+192px right** and **+128px down**, forming a diagonal:
+      ```
+      on-start (64,16) → set-variables (272,16) → create (464,16)
+                                                       ↓
+                                                   get (656,144)
+                                                       ↓
+                                                   update (848,272)
+                                                       ↓
+                                                   get-content (1040,400)
+      ```
+    - **Assert column**: All Assert components are **right-aligned at a fixed x position** (e.g., `x: 1200`), each at the **same y as its corresponding action**:
+      ```
+      create (464,16)          →  assert-create (1200,16)
+      get (656,144)            →  assert-get (1200,144)
+      update (848,272)         →  assert-update (1200,272)
+      get-content (1040,400)   →  assert-get-content (1200,400)
+      ```
+    - **Tail chain (AfterAll → Cleanup → ProcessResults)**: Place on a **horizontal line** at approximately the vertical center of the flow (e.g., `y: 144`), spaced ~192px apart after the assert column:
+      ```
+      after-all (1392,144) → delete (1616,144) → process-results (1792,144)
+      ```
 
 9. **Naming Conventions**
     - Use descriptive component IDs: `create-document`, `assert-content-exists`
@@ -2316,16 +3275,16 @@ Assert components validate outputs using expressions:
     "flow": {
         "start": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 64,
+            "y": 16,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "create-item": {
             "type": "appmixer.service.core.CreateItem",
-            "x": 300,
-            "y": 200,
+            "x": 256,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2352,8 +3311,8 @@ Assert components validate outputs using expressions:
         },
         "get-item": {
             "type": "appmixer.service.core.GetItem",
-            "x": 500,
-            "y": 200,
+            "x": 448,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2385,8 +3344,8 @@ Assert components validate outputs using expressions:
         },
         "assert-item": {
             "type": "appmixer.utils.test.Assert",
-            "x": 700,
-            "y": 200,
+            "x": 832,
+            "y": 144,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2426,8 +3385,8 @@ Assert components validate outputs using expressions:
         },
         "after-all": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 900,
-            "y": 200,
+            "x": 1024,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2442,8 +3401,8 @@ Assert components validate outputs using expressions:
         },
         "delete-item": {
             "type": "appmixer.service.core.DeleteItem",
-            "x": 1100,
-            "y": 200,
+            "x": 1216,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2475,8 +3434,8 @@ Assert components validate outputs using expressions:
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1300,
-            "y": 200,
+            "x": 1408,
+            "y": 80,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2576,8 +3535,10 @@ Assert components validate outputs using expressions:
     - ✅ Verify all `required` fields from schema are populated
 
 3. **Wrong Variable References**
-    - ❌ `$.component.out` (missing field name)
+    - ❌ `$.component.out` — Raw Output, forbidden. Always include a field name.
+    - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
     - ✅ `$.component-id.out.fieldName`
+    - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults
@@ -2602,3 +3563,28 @@ Good examples to reference:
 - `src/appmixer/hubspot/test-flow-create-deal.json` - CRM operations
 
 ---
+
+# Development instructions for Agents
+## Updating copilot-instructions.md with New Learnings
+
+As you work on the codebase, you will discover important information, edge cases, and best practices that aren't yet documented:
+
+1. **Capture insights**: When you encounter something non-obvious (e.g., a gotcha, a useful tip, an undocumented behavior), note it
+2. **Update this file**: Add the information to the appropriate section in copilot-instructions.md
+3. **Be concise**: Keep additions brief and actionable
+4. **Include context**: Explain *why* the information matters, not just *what* it is
+
+### Example Additions
+
+Instead of:
+> "The email quota endpoint sometimes times out"
+
+Write:
+> "The email quota endpoint can timeout if the database is under heavy load. If you see timeout errors in tests, increase the Prisma query timeout in `.env` or check for long-running queries in `npx prisma studio`"
+
+Commit these updates as documentation improvements:
+```
+docs(agents): add note about email quota endpoint timeouts
+
+Updates copilot-instructions.md with debugging guidance for common timeout issues.
+```

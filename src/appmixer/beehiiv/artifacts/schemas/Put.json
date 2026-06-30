@@ -1,0 +1,104 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            },
+            "subscriptions": {
+                "type": "array",
+                "description": "An array of objects representing the subscriptions to be updated (max 1000).",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "subscription_id"
+                    ],
+                    "properties": {
+                        "subscription_id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the subscription."
+                        },
+                        "tier": {
+                            "type": "string",
+                            "description": "The Tier of the Subscription (not required)",
+                            "enum": [
+                                "free",
+                                "premium"
+                            ]
+                        },
+                        "stripe_customer_id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the Stripe customer."
+                        },
+                        "unsubscribe": {
+                            "type": "boolean",
+                            "description": "A boolean value specifying whether to unsubscribe this subscription from the publication (not required)"
+                        },
+                        "custom_fields": {
+                            "type": "array",
+                            "description": "An array of custom field objects to update",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "The display value of the custom field"
+                                    },
+                                    "value": {
+                                        "oneOf": [
+                                            {
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "number",
+                                                "format": "double"
+                                            },
+                                            {
+                                                "type": "boolean"
+                                            },
+                                            {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "delete": {
+                                        "type": "boolean",
+                                        "description": "A boolean value to specify whether to delete this custom field entry from the subscription"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "object",
+                "properties": {
+                    "subscription_update_id": {
+                        "type": "string",
+                        "description": "The ID of the Subscription Update object responsible for handling the update job"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,191 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "pollId": {
+                "type": "string",
+                "description": "The prefixed ID of the poll object"
+            },
+            "expand[]": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": [
+                        "stats",
+                        "poll_responses",
+                        "trivia_answer"
+                    ]
+                },
+                "description": "Optionally expand the response to include additional data.<br> `stats` - Returns aggregate vote counts per choice and total completions.<br> `poll_responses` - Returns up to 10 most recent subscriber responses. Use /polls/{pollId}/responses for paginated access to all responses.<br> `trivia_answer` - Returns the correct answer for trivia-type polls."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId",
+            "pollId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data"
+        ],
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "question",
+                    "poll_type",
+                    "status",
+                    "created_at",
+                    "poll_choices"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The prefixed ID of the poll."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "The name of the poll."
+                    },
+                    "question": {
+                        "type": "string",
+                        "description": "The poll question text."
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "An optional description of the poll."
+                    },
+                    "poll_type": {
+                        "type": "string",
+                        "enum": [
+                            "voting",
+                            "trivia"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "published"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "description": "The time the poll was created. Measured in seconds since the Unix epoch."
+                    },
+                    "poll_choices": {
+                        "type": "array",
+                        "description": "The available choices for this poll.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "label"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "The unique identifier of the poll choice."
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "description": "The text label for this choice."
+                                }
+                            }
+                        }
+                    },
+                    "trivia_answer": {
+                        "type": "string",
+                        "description": "The correct answer for trivia-type polls. Only included when `expand[]=trivia_answer` is specified and the poll is of type trivia."
+                    },
+                    "stats": {
+                        "type": "object",
+                        "required": [
+                            "completions",
+                            "vote_counts"
+                        ],
+                        "properties": {
+                            "completions": {
+                                "type": "integer",
+                                "description": "The total number of responses to this poll."
+                            },
+                            "vote_counts": {
+                                "type": "object",
+                                "description": "A map of poll choice labels to the number of votes each choice received.",
+                                "additionalProperties": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    },
+                    "total_responses": {
+                        "type": "integer",
+                        "description": "Total number of responses to this poll. Only included when `expand[]=poll_responses` is specified."
+                    },
+                    "poll_responses": {
+                        "type": "array",
+                        "description": "Up to 10 most recent subscriber responses. Only included when `expand[]=poll_responses` is specified. Use /polls/{pollId}/responses for paginated access to all responses.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "id",
+                                "subscription_id",
+                                "poll_choice_id",
+                                "created_at"
+                            ],
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "The unique identifier of the poll response."
+                                },
+                                "subscription_id": {
+                                    "type": "integer",
+                                    "description": "The ID of the subscription that responded."
+                                },
+                                "poll_choice_id": {
+                                    "type": "string",
+                                    "description": "The UUID of the poll choice selected."
+                                },
+                                "poll_choice_label": {
+                                    "type": "string",
+                                    "description": "The text label of the poll choice selected."
+                                },
+                                "created_at": {
+                                    "type": "integer",
+                                    "description": "The time the response was created. Measured in seconds since the Unix epoch."
+                                },
+                                "extended_feedback": {
+                                    "type": "string",
+                                    "description": "Optional extended feedback provided by the subscriber."
+                                },
+                                "post_id": {
+                                    "type": "string",
+                                    "description": "The prefixed ID of the post where the response was collected. Only included when `expand[]=post` is specified."
+                                },
+                                "post_title": {
+                                    "type": "string",
+                                    "description": "The title of the post where the response was collected. Only included when `expand[]=post` is specified."
+                                },
+                                "post_publish_date": {
+                                    "type": "integer",
+                                    "description": "The scheduled publication date of the post where the response was collected. Measured in seconds since the Unix epoch. Only included when `expand[]=post` is specified. Null if the post is not yet scheduled."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

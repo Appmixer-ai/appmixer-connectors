@@ -1,0 +1,663 @@
+{
+    "actions": [
+        {
+            "title": "Find Contacts",
+            "description": "Search and list contacts. Returns an array of contacts. Constant Contact paginates responses; retrieve the maximum available per page internally and follow next links as needed.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contacts/getContacts",
+            "endpointUrl": "/v3/contacts",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "GET",
+            "sampleResponse": {
+                "contacts": [
+                    {
+                        "contact_id": "3f9a9e10-6b8d-11ee-8c99-fa163e8f9c2a",
+                        "email_address": {
+                            "address": "jane.doe@example.com",
+                            "permission_to_send": "implicit",
+                            "created_at": "2024-01-15T13:43:12Z",
+                            "updated_at": "2024-05-10T09:22:11Z"
+                        },
+                        "first_name": "Jane",
+                        "last_name": "Doe",
+                        "job_title": "Marketing Manager",
+                        "company_name": "Example Inc.",
+                        "list_memberships": [
+                            "f2a1c0e0-1234-5678-9abc-112233445566"
+                        ],
+                        "tags": [
+                            "vip",
+                            "newsletter"
+                        ],
+                        "create_source": "Account",
+                        "created_at": "2024-01-15T13:43:12Z",
+                        "updated_at": "2024-05-10T09:22:11Z"
+                    }
+                ],
+                "links": {
+                    "next": "https://api.cc.email/v3/contacts?cursor=eyJwIjoxfQ=="
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Query parameters to filter contacts. Do not include limit/offset; the integration should handle pagination internally.",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "description": "Filter by an exact email address."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by subscription status. Common values: all, subscribed, unsubscribed, not_set, archived.",
+                        "enum": [
+                            "all",
+                            "subscribed",
+                            "unsubscribed",
+                            "not_set",
+                            "archived"
+                        ]
+                    },
+                    "listId": {
+                        "type": "string",
+                        "description": "Filter by contacts that are members of the specified list ID."
+                    },
+                    "createdAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return contacts created after this ISO 8601 timestamp."
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return contacts updated after this ISO 8601 timestamp."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "contacts"
+            }
+        },
+        {
+            "title": "Get Contact",
+            "description": "Retrieve a specific contact by its unique ID.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contacts/getContact",
+            "endpointUrl": "/v3/contacts/{contactId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "GET",
+            "sampleResponse": {
+                "contact_id": "3f9a9e10-6b8d-11ee-8c99-fa163e8f9c2a",
+                "email_address": {
+                    "address": "jane.doe@example.com",
+                    "permission_to_send": "implicit",
+                    "created_at": "2024-01-15T13:43:12Z",
+                    "updated_at": "2024-05-10T09:22:11Z"
+                },
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "job_title": "Marketing Manager",
+                "company_name": "Example Inc.",
+                "list_memberships": [
+                    "f2a1c0e0-1234-5678-9abc-112233445566"
+                ],
+                "tags": [
+                    "vip",
+                    "newsletter"
+                ],
+                "create_source": "Account",
+                "created_at": "2024-01-15T13:43:12Z",
+                "updated_at": "2024-05-10T09:22:11Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter to identify the contact.",
+                "properties": {
+                    "contactId": {
+                        "type": "string",
+                        "description": "The unique ID of the contact to retrieve."
+                    }
+                },
+                "required": [
+                    "contactId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Contact",
+            "description": "Create a new contact. At minimum, provide an email address and a create source.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contacts/createContact",
+            "endpointUrl": "/v3/contacts",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "POST",
+            "sampleResponse": {
+                "contact_id": "7a3f21c0-8f0a-11ee-9a84-fa163e8f9c2a",
+                "email_address": {
+                    "address": "john.smith@example.com",
+                    "permission_to_send": "explicit",
+                    "created_at": "2025-01-02T10:10:10Z",
+                    "updated_at": "2025-01-02T10:10:10Z"
+                },
+                "first_name": "John",
+                "last_name": "Smith",
+                "list_memberships": [
+                    "f2a1c0e0-1234-5678-9abc-112233445566"
+                ],
+                "create_source": "Account",
+                "created_at": "2025-01-02T10:10:10Z",
+                "updated_at": "2025-01-02T10:10:10Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Request body for creating a contact.",
+                "properties": {
+                    "email_address": {
+                        "type": "object",
+                        "description": "Email address object for the contact.",
+                        "properties": {
+                            "address": {
+                                "type": "string",
+                                "description": "Email address (required)."
+                            },
+                            "permission_to_send": {
+                                "type": "string",
+                                "description": "Permission level for sending. Common values: explicit, implicit, not_set.",
+                                "enum": [
+                                    "explicit",
+                                    "implicit",
+                                    "not_set"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "address"
+                        ]
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "description": "First name of the contact."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "Last name of the contact."
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Company name."
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "description": "Job title."
+                    },
+                    "list_memberships": {
+                        "type": "array",
+                        "description": "Array of list IDs to subscribe the contact to.",
+                        "items": {
+                            "type": "string",
+                            "description": "List ID"
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "Tags to apply to the contact.",
+                        "items": {
+                            "type": "string",
+                            "description": "Tag value"
+                        }
+                    },
+                    "create_source": {
+                        "type": "string",
+                        "description": "Source of the create operation.",
+                        "enum": [
+                            "Account",
+                            "Contact"
+                        ]
+                    }
+                },
+                "required": [
+                    "email_address",
+                    "create_source"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Contact",
+            "description": "Update an existing contact by ID. Provide the fields to update and an update source.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contacts/putContact",
+            "endpointUrl": "/v3/contacts/{contactId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "PUT",
+            "sampleResponse": {
+                "contact_id": "3f9a9e10-6b8d-11ee-8c99-fa163e8f9c2a",
+                "email_address": {
+                    "address": "jane.doe@example.com",
+                    "permission_to_send": "explicit",
+                    "created_at": "2024-01-15T13:43:12Z",
+                    "updated_at": "2025-02-10T11:05:33Z"
+                },
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "list_memberships": [
+                    "f2a1c0e0-1234-5678-9abc-112233445566",
+                    "11aa22bb-3333-4444-5555-666677778888"
+                ],
+                "update_source": "Account",
+                "updated_at": "2025-02-10T11:05:33Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter and request body fields for updating a contact.",
+                "properties": {
+                    "contactId": {
+                        "type": "string",
+                        "description": "The unique ID of the contact to update."
+                    },
+                    "email_address": {
+                        "type": "object",
+                        "description": "Email address object for the contact.",
+                        "properties": {
+                            "address": {
+                                "type": "string",
+                                "description": "Email address."
+                            },
+                            "permission_to_send": {
+                                "type": "string",
+                                "description": "Permission level for sending. Common values: explicit, implicit, not_set.",
+                                "enum": [
+                                    "explicit",
+                                    "implicit",
+                                    "not_set"
+                                ]
+                            }
+                        }
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "description": "First name of the contact."
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "description": "Last name of the contact."
+                    },
+                    "company_name": {
+                        "type": "string",
+                        "description": "Company name."
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "description": "Job title."
+                    },
+                    "list_memberships": {
+                        "type": "array",
+                        "description": "Array of list IDs to set as this contact's memberships (replaces existing).",
+                        "items": {
+                            "type": "string",
+                            "description": "List ID"
+                        }
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "Tags to set for the contact.",
+                        "items": {
+                            "type": "string",
+                            "description": "Tag value"
+                        }
+                    },
+                    "update_source": {
+                        "type": "string",
+                        "description": "Source of the update operation.",
+                        "enum": [
+                            "Account",
+                            "Contact"
+                        ]
+                    }
+                },
+                "required": [
+                    "contactId",
+                    "update_source"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Contact",
+            "description": "Delete a contact by ID. Returns 204 No Content on success.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contacts/deleteContact",
+            "endpointUrl": "/v3/contacts/{contactId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter to identify the contact to delete.",
+                "properties": {
+                    "contactId": {
+                        "type": "string",
+                        "description": "The unique ID of the contact to delete."
+                    }
+                },
+                "required": [
+                    "contactId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Contact Lists",
+            "description": "List contact lists. Returns an array of lists.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contact_Lists/getContactLists",
+            "endpointUrl": "/v3/contact_lists",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "GET",
+            "sampleResponse": {
+                "lists": [
+                    {
+                        "list_id": "f2a1c0e0-1234-5678-9abc-112233445566",
+                        "name": "Newsletter Subscribers",
+                        "favorite": false,
+                        "membership_count": 1542,
+                        "created_at": "2023-08-01T12:00:00Z",
+                        "updated_at": "2025-01-02T09:30:00Z",
+                        "type": "standard"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Optional filters for listing contact lists.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Filter lists by name (case-insensitive contains match)."
+                    },
+                    "favorite": {
+                        "type": "boolean",
+                        "description": "Filter by whether the list is marked as favorite."
+                    },
+                    "includeCount": {
+                        "type": "boolean",
+                        "description": "If true, include membership_count in results (may affect performance)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "lists"
+            }
+        },
+        {
+            "title": "Create Contact List",
+            "description": "Create a new contact list.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contact_Lists/createList",
+            "endpointUrl": "/v3/contact_lists",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "POST",
+            "sampleResponse": {
+                "list_id": "aa11bb22-3333-4444-5555-666677778888",
+                "name": "Event Attendees",
+                "favorite": true,
+                "membership_count": 0,
+                "created_at": "2025-02-12T08:00:00Z",
+                "updated_at": "2025-02-12T08:00:00Z",
+                "type": "standard"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Request body for creating a contact list.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the contact list."
+                    },
+                    "favorite": {
+                        "type": "boolean",
+                        "description": "Mark the list as a favorite."
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Update Contact List",
+            "description": "Update an existing contact list by ID.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contact_Lists/putList",
+            "endpointUrl": "/v3/contact_lists/{listId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "PUT",
+            "sampleResponse": {
+                "list_id": "f2a1c0e0-1234-5678-9abc-112233445566",
+                "name": "Newsletter Subscribers (Updated)",
+                "favorite": true,
+                "membership_count": 1547,
+                "created_at": "2023-08-01T12:00:00Z",
+                "updated_at": "2025-02-12T09:10:00Z",
+                "type": "standard"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter and fields to update for the contact list.",
+                "properties": {
+                    "listId": {
+                        "type": "string",
+                        "description": "The unique ID of the contact list to update."
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "New name for the list."
+                    },
+                    "favorite": {
+                        "type": "boolean",
+                        "description": "Whether the list is a favorite."
+                    }
+                },
+                "required": [
+                    "listId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Contact List",
+            "description": "Delete a contact list by ID. Returns 204 No Content on success.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Contact_Lists/deleteList",
+            "endpointUrl": "/v3/contact_lists/{listId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter to identify the contact list to delete.",
+                "properties": {
+                    "listId": {
+                        "type": "string",
+                        "description": "The unique ID of the contact list to delete."
+                    }
+                },
+                "required": [
+                    "listId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Find Email Campaigns",
+            "description": "Search and list email campaigns. Returns an array of campaigns.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Email_Campaigns/listEmailCampaigns",
+            "endpointUrl": "/v3/email_campaigns",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "GET",
+            "sampleResponse": {
+                "campaigns": [
+                    {
+                        "campaign_id": "c1002aa1-7e21-4c3a-8b60-1c0f93b2b0a1",
+                        "name": "February Newsletter",
+                        "status": "DRAFT",
+                        "created_at": "2025-02-01T10:00:00Z",
+                        "updated_at": "2025-02-05T15:30:00Z"
+                    }
+                ]
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Optional filters for listing email campaigns.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Filter by campaign name (case-insensitive contains match)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by campaign status.",
+                        "enum": [
+                            "DRAFT",
+                            "SCHEDULED",
+                            "RUNNING",
+                            "SENT",
+                            "DELETED"
+                        ]
+                    },
+                    "updatedAfter": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Return campaigns updated after this ISO 8601 timestamp."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "campaigns"
+            }
+        },
+        {
+            "title": "Create Email Campaign",
+            "description": "Create a new email campaign with primary activity details.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Email_Campaigns/createEmailCampaign",
+            "endpointUrl": "/v3/email_campaigns",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "POST",
+            "sampleResponse": {
+                "campaign_id": "c1002aa1-7e21-4c3a-8b60-1c0f93b2b0a1",
+                "name": "Spring Sale",
+                "status": "DRAFT",
+                "created_at": "2025-02-12T10:00:00Z",
+                "updated_at": "2025-02-12T10:00:00Z"
+            },
+            "inputSchema": {
+                "type": "object",
+                "description": "Request body for creating an email campaign. Some properties may require additional configuration via campaign activities endpoints.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Human-readable name for the campaign."
+                    },
+                    "subject": {
+                        "type": "string",
+                        "description": "Email subject line for the primary activity."
+                    },
+                    "from_name": {
+                        "type": "string",
+                        "description": "From name for the email."
+                    },
+                    "from_email": {
+                        "type": "string",
+                        "description": "From email address."
+                    },
+                    "reply_to_email": {
+                        "type": "string",
+                        "description": "Reply-to email address."
+                    },
+                    "html_content": {
+                        "type": "string",
+                        "description": "HTML body content."
+                    },
+                    "text_content": {
+                        "type": "string",
+                        "description": "Plain text body content."
+                    },
+                    "list_ids": {
+                        "type": "array",
+                        "description": "Target list IDs for the campaign audience (scheduling/sending may require separate endpoints).",
+                        "items": {
+                            "type": "string",
+                            "description": "List ID"
+                        }
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Delete Email Campaign",
+            "description": "Delete an email campaign by ID. Returns 204 No Content on success.",
+            "type": "action",
+            "documentation": "https://v3.developer.constantcontact.com/api_reference/index.html#!/Email_Campaigns/deleteEmailCampaign",
+            "endpointUrl": "/v3/email_campaigns/{campaignId}",
+            "apiBaseUrl": "https://api.cc.email",
+            "method": "DELETE",
+            "sampleResponse": {},
+            "inputSchema": {
+                "type": "object",
+                "description": "Path parameter to identify the campaign to delete.",
+                "properties": {
+                    "campaignId": {
+                        "type": "string",
+                        "description": "The unique ID of the email campaign to delete."
+                    }
+                },
+                "required": [
+                    "campaignId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "oauth2",
+        "authUrl": "https://authz.constantcontact.com/oauth2/default/v1/authorize",
+        "tokenUrl": "https://authz.constantcontact.com/oauth2/default/v1/token",
+        "profileInfoUrl": "https://api.cc.email/v3/account/summary"
+    },
+    "serviceJson": {
+        "name": "appmixer.constantContact",
+        "label": "Constant Contact",
+        "category": "applications",
+        "description": "Constant Contact v3 REST API for managing contacts, lists, and email campaigns.",
+        "version": "1.0.0",
+        "icon": "https://cdn.appmixer.com/icons/constant-contact.svg"
+    }
+}

@@ -1,0 +1,195 @@
+{
+    "name": "appmixer.axiom.datasets.IngestData",
+    "label": "Ingest Data",
+    "description": "Ingest data into a dataset. Supports JSON, NDJSON, and CSV formats.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:axiom"
+    },
+    "quota": {
+        "manager": "appmixer:axiom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "datasetName": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "string"
+                    },
+                    "dataFormat": {
+                        "type": "string",
+                        "enum": [
+                            "json",
+                            "ndjson",
+                            "csv"
+                        ],
+                        "default": "json"
+                    },
+                    "timestampField": {
+                        "type": "string"
+                    },
+                    "timestampFormat": {
+                        "type": "string"
+                    },
+                    "csvDelimiter": {
+                        "type": "string"
+                    },
+                    "csvFields": {
+                        "type": "string"
+                    },
+                    "eventLabels": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "datasetName",
+                    "data"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "datasetName": {
+                        "type": "text",
+                        "label": "Dataset Name",
+                        "index": 1,
+                        "tooltip": "The unique name of the dataset to ingest data into"
+                    },
+                    "data": {
+                        "type": "textarea",
+                        "label": "Data",
+                        "index": 2,
+                        "tooltip": "The data to ingest. Can be JSON, NDJSON, or CSV format. Example: <code>[{\"message\":\"test event 1\",\"level\":\"info\"},{\"message\":\"test event 2\",\"level\":\"warning\"}]</code>"
+                    },
+                    "dataFormat": {
+                        "type": "select",
+                        "label": "Data Format",
+                        "index": 3,
+                        "defaultValue": "json",
+                        "tooltip": "The format of the data being ingested",
+                        "options": [
+                            {
+                                "label": "JSON",
+                                "value": "json"
+                            },
+                            {
+                                "label": "NDJSON",
+                                "value": "ndjson"
+                            },
+                            {
+                                "label": "CSV",
+                                "value": "csv"
+                            }
+                        ]
+                    },
+                    "timestampField": {
+                        "type": "text",
+                        "label": "Timestamp Field",
+                        "index": 4,
+                        "tooltip": "The name of the field to use as the timestamp. If not specified, the current time will be used"
+                    },
+                    "timestampFormat": {
+                        "type": "text",
+                        "label": "Timestamp Format",
+                        "index": 5,
+                        "tooltip": "The date-time format of the timestamp field using Go time format (e.g. 'Mon Jan 2 15:04:05 -0700 MST 2006')"
+                    },
+                    "csvDelimiter": {
+                        "type": "text",
+                        "label": "CSV Delimiter",
+                        "index": 6,
+                        "tooltip": "The delimiter to use when parsing CSV data. Defaults to comma (,)"
+                    },
+                    "csvFields": {
+                        "type": "text",
+                        "label": "CSV Fields",
+                        "index": 7,
+                        "tooltip": "Comma-separated list of field names for CSV. If not specified, the first line is used as field names"
+                    },
+                    "eventLabels": {
+                        "type": "textarea",
+                        "label": "Event Labels",
+                        "index": 8,
+                        "tooltip": "A JSON object with additional labels to add to all events in the request (e.g. {\"environment\": \"production\"})"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Ingested",
+                    "value": "ingested",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 100
+                },
+                {
+                    "label": "Failed",
+                    "value": "failed",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 0
+                },
+                {
+                    "label": "Processed Bytes",
+                    "value": "processedBytes",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 52480
+                },
+                {
+                    "label": "Blocks Created",
+                    "value": "blocksCreated",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 1
+                },
+                {
+                    "label": "WAL Length",
+                    "value": "walLength",
+                    "schema": {
+                        "type": "integer"
+                    },
+                    "example": 0
+                },
+                {
+                    "label": "Failures",
+                    "value": "failures",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                },
+                                "timestamp": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "example": []
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iOCIgZmlsbD0iIzAwMDAwMCIvPgo8cGF0aCBkPSJNMzIgMTZMMTYgNDhINDhMMzIgMTZaIiBmaWxsPSIjRkZGRkZGIi8+CjxwYXRoIGQ9Ik0zMiAyNEwyNCA0MEg0MEwzMiAyNFoiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+Cg=="
+}

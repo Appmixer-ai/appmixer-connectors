@@ -108,7 +108,7 @@ module.exports = class CSVProcessor {
             await this.loadHeaders();
             const headerIdx = this.getHeaderIndex(options.positioningColumn);
             idx = positioningMethod === 'beforeColumn' ? headerIdx : headerIdx + 1;
-        } else if (options.index) {
+        } else if (typeof options.index === 'number') {
             idx = options.index;
         } else {
             throw new Error('No position specified for the new column');
@@ -201,8 +201,8 @@ module.exports = class CSVProcessor {
                 }
             } else {
                 if (passesIndexFilter(idx, indexes)) {
-                    const values = Array.isArray(indexedValues) ? indexedValues : [indexedValues];
-                    values.forEach(val => {
+                    const indexedValuesArray = Array.isArray(indexedValues) ? indexedValues : [indexedValues];
+                    indexedValuesArray.forEach(val => {
                         Object.entries(val).forEach(([key, value]) => {
                             row[key] = value;
                         });
@@ -264,6 +264,18 @@ module.exports = class CSVProcessor {
         return new Promise((resolve, reject) => {
             const rows = [];
             let idx = 0;
+            let settled = false;
+
+            const settle = (err) => {
+                if (settled) return;
+                settled = true;
+                lock.unlock();
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            };
 
             readStream.on('data', row => {
                 try {
@@ -292,14 +304,11 @@ module.exports = class CSVProcessor {
                     readStream.destroy(err);
                 }
             }).on('error', err => {
-                lock.unlock();
-                reject(err);
+                settle(err);
             }).on('close', () => {
-                lock.unlock();
-                resolve(rows);
+                settle();
             }).on('end', () => {
-                lock.unlock();
-                resolve(rows);
+                settle();
             });
         });
     }
@@ -339,16 +348,15 @@ module.exports = class CSVProcessor {
                 try {
                     const newRow = closure(index, row);
                     if (newRow) {
-                        writeStream.write(newRow.join(this.delimiter) + '\n');
+                        writeStream.write(this.formatRow(newRow));
                     }
                     index = index + 1;
                 } catch (err) {
                     writeStream.destroy(err);
                 }
-            }).on('close', (err) => {
-                if (err) {
-                    writeStream.destroy(err);
-                }
+            }).on('close', () => {
+                // Note: close event does not pass an error argument
+                // Errors are handled by the 'error' event
             }).on('error', (err) => {
                 writeStream.destroy(err);
             }).on('end', async () => {
@@ -370,55 +378,80 @@ module.exports = class CSVProcessor {
     async addRows({ rows }) {
 
         const config = this.context.config;
+        const defaultTtl = 180000; // Default and minimum  TTL is 3 minutes
+        const extendThreshold = 40000; // Extend the lock when less than 40 seconds left
+        const timeout = 30000; // Run a check every 30 seconds to see if the lock is about to expire
+
         const lock = await this.context.lock(this.fileId, {
-            ttl: parseInt(config.lockTTL, 10) || 60000 // Default 1 minute TTL
+            ttl: Math.max(parseInt(config.lockTTL, 10) || defaultTtl, defaultTtl)
         });
 
         let readStream;
         let writeStream;
         let lockExtendInterval;
+        let destroyed = false;
 
-        const destroy = function() {
+        const destroy = () => {
+            if (destroyed) return;
+            destroyed = true;
 
+            if (lockExtendInterval) clearInterval(lockExtendInterval);
             if (readStream) readStream.destroy();
             if (writeStream) writeStream.destroy();
-            if (lockExtendInterval) clearInterval(lockExtendInterval);
             if (lock) lock.unlock();
         };
 
         try {
-
-            const lockExtendTime = parseInt(config.lockExtendTime, 10) || 1000 * 60 * 1;
-            const max = Math.ceil((1000 * 60 * 22) / lockExtendTime); // max execution time 23 minutes
-            let i = 0;
-
-            // Extend the lock every 59 seconds up to 22 minutes
-            lockExtendInterval = setInterval(async () => {
-                i++;
-                if (i > max) {
-                    destroy();
-                    throw new Error('Lock extend failed. Max attempts reached.');
-                }
-                await lock.extend(lockExtendTime);
-            }, config.lockExtendInterval || 59000);
-
+            const lockExtendTime = Math.max(parseInt(config.lockExtendTime, 10) || defaultTtl, defaultTtl);
+            // max execution time 23 minutes0
+            const max = Math.ceil((1000 * 60 * 23) / (lockExtendTime - extendThreshold));
             // We're not interested in the data, we just need to read the first row to get the headers and the last line.
+
             readStream = await this.context.getFileReadStream(this.fileId);
             writeStream = new PassThrough();
-
             let firstRowRead = true;
+
             let lastLine = null;
             const promise = new Promise((resolve, reject) => {
+                let i = 0;
+                lockExtendInterval = setInterval(async () => {
+
+                    if (i > max) {
+                        destroy();
+                        reject(new Error('Lock extend failed. Max attempts reached.'));
+                        return;
+                    }
+                    try {
+                        if (lock.expiration && lock.expiration - Date.now().valueOf() < extendThreshold) {
+                            await lock.extend(lockExtendTime);
+                            i++;
+                        }
+                    } catch (err) {
+                        destroy();
+                        reject(new Error('Lock extend failed: ' + err.message));
+                    }
+                }, timeout); // Every 30 seconds
 
                 // Reading all data because we need to always check the last line. And sometimes the first line for headers.
                 readStream.on('data', (data) => {
+                    // Skip undefined or null data chunks to prevent charCodeAt errors
+                    if (data === undefined || data === null) {
+                        return;
+                    }
+
                     // Read the first row to get the headers. Only if we use headers.
                     if (firstRowRead && this.withHeaders) {
                         firstRowRead = false;
                         try {
-                            this.header = parse(data, { delimiter: this.delimiter })[0];
+                            const dataStr = typeof data === 'string' ? data : data.toString();
+                            if (!dataStr || dataStr.trim() === '') {
+                                reject(new this.context.CancelError('Cannot read headers: CSV file appears to be empty or contains only whitespace.'));
+                                return;
+                            }
+                            this.header = parse(dataStr, { delimiter: this.delimiter })[0];
                         } catch (error) {
-                            reject(new this.context.CancelError('Error reading headers', error));
+                            reject(new this.context.CancelError('Error reading headers: ' + error.message));
+                            return;
                         }
                     }
 
@@ -429,16 +462,26 @@ module.exports = class CSVProcessor {
 
                 readStream.on('end', () => {
                     // If there is no empty line at the end of the file, add one
-                    if (!lastLine.toString().endsWith('\n')) {
+                    if (lastLine && !lastLine.toString().endsWith('\n')) {
                         writeStream.write('\n');
                     }
+
+                    // Handle empty file or file with no data rows
+                    if (this.withHeaders && !this.header) {
+                        reject(new this.context.CancelError('Cannot add rows: CSV file is empty or headers could not be read.'));
+                        return;
+                    }
+
                     const rowsToAdd = this.withHeaders ? this.addHeaders(rows, this.getHeaders()) : rows;
                     // Append new rows to the end of the file
                     this.writeRows(writeStream, rowsToAdd);
 
                     // If all the new rows are empty, warn the user.
                     if (rowsToAdd.every(row => row.every(cell => !cell))) {
-                        this.context.log({ warning: 'Empty rows added', details: 'Please make sure you are adding the correct data and using the correct delimiter.' });
+                        this.context.log({
+                            warning: 'Empty rows added',
+                            details: 'Please make sure you are adding the correct data and using the correct delimiter.'
+                        });
                     }
                 });
 
@@ -459,13 +502,33 @@ module.exports = class CSVProcessor {
         } finally {
             destroy();
         }
+
+    }
+
+    /**
+     * Escape a cell value for CSV output.
+     * Wraps the value in quotes if it contains the delimiter, quotes, or newlines.
+     * @param {*} value
+     * @returns {string}
+     * @protected
+     */
+    escapeCell(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const str = String(value);
+        // If the value contains delimiter, double quotes, or newlines, wrap in quotes and escape existing quotes
+        if (str.includes(this.delimiter) || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+            return '"' + str.replace(/"/g, '""') + '"';
+        }
+        return str;
     }
 
     formatRow(rowData) {
         if (!Array.isArray(rowData)) {
             throw new Error('Unexpected row data format: ' + JSON.stringify(rowData));
         }
-        return rowData.join(this.delimiter) + '\n';
+        return rowData.map(cell => this.escapeCell(cell)).join(this.delimiter) + '\n';
     }
 
     writeRows(writeStream, rows) {
@@ -495,6 +558,7 @@ module.exports = class CSVProcessor {
                 this.chunkSize = chunkSize;
                 this.buffer = Buffer.alloc(0);
             }
+
             _transform(chunk, encoding, callback) {
                 this.buffer = Buffer.concat([this.buffer, Buffer.from(chunk)]);
                 while (this.buffer.length >= this.chunkSize) {
@@ -503,6 +567,7 @@ module.exports = class CSVProcessor {
                 }
                 callback();
             }
+
             _flush(callback) {
                 if (this.buffer.length > 0) {
                     this.push(this.buffer);
@@ -510,6 +575,7 @@ module.exports = class CSVProcessor {
                 callback();
             }
         }
+
         const chunkedStream = new ChunkedStream(SAFE_CSV_STREAM_CHUNK_SIZE);
         const autoDetectDecoderStream = new AutoDetectDecoderStream();
         const csvReadableStream = new CsvReadableStream({
@@ -519,14 +585,18 @@ module.exports = class CSVProcessor {
             trim: true
         });
 
-        return pipeline(
+        const resultStream = pipeline(
             readStream, // Read stream from GridFS
             chunkedStream, // Chunked stream to split data into smaller chunks
             autoDetectDecoderStream, // Auto-detect encoding
             csvReadableStream, // CSV reader stream
             (err) => {
+                if (err) {
+                    resultStream.destroy(err);
+                }
             }
         );
+        return resultStream;
     }
 
     /**

@@ -6,16 +6,6 @@ const subscriptionType = 'deal.creation';
 
 class NewDeal extends BaseSubscriptionComponent {
 
-    getSubscriptions() {
-
-        return [{
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType: this.subscriptionType
-            }
-        }];
-    }
-
     async receive(context) {
 
         this.configureHubspot(context);
@@ -68,9 +58,27 @@ class NewDeal extends BaseSubscriptionComponent {
             properties: propertiesToReturn
         });
 
-        await context.sendArray(data.results, 'deal');
+        const { pipeline: filterPipeline } = context.properties;
+
+        let results = data.results;
+        if (filterPipeline) {
+            results = results.filter(deal => deal.properties?.pipeline === filterPipeline);
+        }
+
+        await context.sendArray(results, 'deal');
 
         return context.response();
+    }
+
+    async test(context) {
+
+        const { pipeline: filterPipeline } = context.properties;
+        const filters = [];
+        if (filterPipeline) {
+            filters.push({ propertyName: 'pipeline', operator: 'EQ', value: filterPipeline });
+        }
+        const record = await this.fetchLatestExample(context, 'deals', { filters });
+        return context.sendJson(record, 'deal');
     }
 }
 

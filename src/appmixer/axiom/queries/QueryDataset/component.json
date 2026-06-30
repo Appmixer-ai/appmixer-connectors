@@ -1,0 +1,147 @@
+{
+    "name": "appmixer.axiom.queries.QueryDataset",
+    "label": "Query Dataset",
+    "description": "Execute a query against an Axiom dataset. Returns events matching filter criteria.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:axiom"
+    },
+    "quota": {
+        "manager": "appmixer:axiom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "datasetName": {
+                        "type": "string"
+                    },
+                    "startTime": {
+                        "type": "string"
+                    },
+                    "endTime": {
+                        "type": "string"
+                    },
+                    "resolution": {
+                        "type": "string"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    },
+                    "filterField": {
+                        "type": "string"
+                    },
+                    "filterValue": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "datasetName",
+                    "startTime",
+                    "endTime",
+                    "resolution"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "datasetName": {
+                        "type": "text",
+                        "label": "Dataset Name",
+                        "index": 1,
+                        "tooltip": "The name of the dataset to query"
+                    },
+                    "startTime": {
+                        "type": "text",
+                        "label": "Start Time",
+                        "index": 2,
+                        "tooltip": "Start time in RFC3339 format or relative expression (e.g., 'now-1h', 'now-1d')"
+                    },
+                    "endTime": {
+                        "type": "text",
+                        "label": "End Time",
+                        "index": 3,
+                        "tooltip": "End time in RFC3339 format or relative expression (e.g., 'now')"
+                    },
+                    "resolution": {
+                        "type": "text",
+                        "label": "Resolution",
+                        "index": 4,
+                        "tooltip": "Time resolution in seconds. Use 'auto' or a number (query range /100 to /1000)"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "label": "Limit",
+                        "index": 5,
+                        "tooltip": "Maximum number of events to return (default 1000, max 50000)"
+                    },
+                    "filterField": {
+                        "type": "text",
+                        "label": "Filter Field",
+                        "index": 6,
+                        "tooltip": "Optional field name to filter on"
+                    },
+                    "filterValue": {
+                        "type": "text",
+                        "label": "Filter Value",
+                        "index": 7,
+                        "tooltip": "Optional value to match in the filter field"
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                {
+                    "label": "Matches",
+                    "value": "matches",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "_rowId": { "type": "string" },
+                                "_time": { "type": "string" },
+                                "_sysTime": { "type": "string" },
+                                "data": { "type": "object" }
+                            }
+                        }
+                    },
+                    "example": [{ "_rowId": "abc123", "_time": "2024-01-15T10:30:00Z", "_sysTime": "2024-01-15T10:30:01Z", "data": { "message": "Request completed" } }]
+                },
+                {
+                    "label": "Status",
+                    "value": "status",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "rowsMatched": { "type": "integer" },
+                            "rowsExamined": { "type": "integer" },
+                            "blocksExamined": { "type": "integer" },
+                            "elapsedTime": { "type": "integer" }
+                        }
+                    },
+                    "example": { "rowsMatched": 42, "rowsExamined": 1000, "blocksExamined": 5, "elapsedTime": 150 }
+                },
+                {
+                    "label": "Buckets",
+                    "value": "buckets",
+                    "schema": {
+                        "type": "object"
+                    },
+                    "example": {}
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iOCIgZmlsbD0iIzAwMDAwMCIvPgo8cGF0aCBkPSJNMzIgMTZMMTYgNDhINDhMMzIgMTZaIiBmaWxsPSIjRkZGRkZGIi8+CjxwYXRoIGQ9Ik0zMiAyNEwyNCA0MEg0MEwzMiAyNFoiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+Cg=="
+}

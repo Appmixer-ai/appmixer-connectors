@@ -1,4 +1,4 @@
-const wafJobs = require('./jobs.waf');
+const lib = require('./lib');
 
 module.exports = async (context) => {
 
@@ -13,7 +13,7 @@ module.exports = async (context) => {
             await context.log('trace', '[Cloudflare WAF] rule delete job started.');
 
             try {
-                await wafJobs.deleteExpireIps(context);
+                await lib.deleteExpireIps(context);
             } finally {
                 lock.unlock();
                 await context.log('trace', '[Cloudflare WAF] rule delete job finished. Lock unlocked.');

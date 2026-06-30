@@ -1,0 +1,644 @@
+{
+    "actions": [
+        {
+            "title": "Create Payment",
+            "description": "Creates a new payment with Mollie. This is the core functionality for processing payments.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payments-api/create-payment",
+            "endpointUrl": "https://api.mollie.com/v2/payments",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "payment",
+                "id": "tr_7UhSN1zuXS",
+                "mode": "test",
+                "createdAt": "2023-06-25T09:44:37+00:00",
+                "amount": {
+                    "value": "10.00",
+                    "currency": "EUR"
+                },
+                "description": "Order #12345",
+                "method": "ideal",
+                "status": "open",
+                "isCancelable": false,
+                "metadata": {
+                    "orderId": "12345"
+                },
+                "locale": "nl_NL",
+                "countryCode": "NL",
+                "profileId": "pfl_3RkSN1zuWE",
+                "sequenceType": "oneoff",
+                "redirectUrl": "https://example.org/return",
+                "webhookUrl": "https://example.org/webhook",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS",
+                        "type": "application/hal+json"
+                    },
+                    "checkout": {
+                        "href": "https://www.mollie.com/payscreen/select-method/7UhSN1zuXS",
+                        "type": "text/html"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "amount": {
+                        "type": "object",
+                        "description": "The amount to charge the customer.",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "ISO 4217 currency code, e.g. EUR, USD."
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Amount as a string with 2 decimals, e.g. \"10.00\"."
+                            }
+                        },
+                        "required": [
+                            "currency",
+                            "value"
+                        ]
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "A description of the payment. This will be shown to the consumer and on statements."
+                    },
+                    "redirectUrl": {
+                        "type": "string",
+                        "description": "The URL the customer will be redirected to after the payment process."
+                    },
+                    "webhookUrl": {
+                        "type": "string",
+                        "description": "Set the webhook URL where Mollie will send payment status updates."
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Preferred payment method. If omitted, the customer can choose.",
+                        "enum": [
+                            "bancontact",
+                            "banktransfer",
+                            "belfius",
+                            "creditcard",
+                            "directdebit",
+                            "eps",
+                            "giftcard",
+                            "giropay",
+                            "ideal",
+                            "kbc",
+                            "klarnapaylater",
+                            "klarnasliceit",
+                            "mybank",
+                            "paypal",
+                            "paysafecard",
+                            "przelewy24",
+                            "sofort",
+                            "trustly"
+                        ]
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary data you can attach to the payment (for your internal reference)."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "Locale to be used in the hosted payment pages, e.g. nl_NL, en_US."
+                    },
+                    "sequenceType": {
+                        "type": "string",
+                        "description": "Indicates the type of payment for recurring: oneoff, first or recurring.",
+                        "enum": [
+                            "oneoff",
+                            "first",
+                            "recurring"
+                        ]
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "description": "ID of the customer for which the payment is created (required for recurring)."
+                    },
+                    "mandateId": {
+                        "type": "string",
+                        "description": "ID of the mandate to use for recurring/direct debit payments."
+                    },
+                    "profileId": {
+                        "type": "string",
+                        "description": "Use this profile to create the payment (for partners/multi-profile setups)."
+                    },
+                    "applicationFee": {
+                        "type": "object",
+                        "description": "Application fee details for Mollie Connect apps.",
+                        "properties": {
+                            "amount": {
+                                "type": "object",
+                                "description": "Application fee amount to charge.",
+                                "properties": {
+                                    "currency": {
+                                        "type": "string",
+                                        "description": "Currency of the fee."
+                                    },
+                                    "value": {
+                                        "type": "string",
+                                        "description": "Fee amount as a string with 2 decimals."
+                                    }
+                                },
+                                "required": [
+                                    "currency",
+                                    "value"
+                                ]
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Description for the application fee."
+                            }
+                        }
+                    }
+                },
+                "required": [
+                    "amount",
+                    "description",
+                    "redirectUrl"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Payment",
+            "description": "Retrieves a specific payment by its payment ID. Essential for checking payment status and details.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payments-api/get-payment",
+            "endpointUrl": "https://api.mollie.com/v2/payments/{paymentId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "payment",
+                "id": "tr_7UhSN1zuXS",
+                "mode": "test",
+                "createdAt": "2023-06-25T09:44:37+00:00",
+                "amount": {
+                    "value": "10.00",
+                    "currency": "EUR"
+                },
+                "description": "Order #12345",
+                "method": "ideal",
+                "status": "paid",
+                "paidAt": "2023-06-25T09:46:12+00:00",
+                "isCancelable": false,
+                "metadata": {
+                    "orderId": "12345"
+                },
+                "locale": "nl_NL",
+                "countryCode": "NL",
+                "profileId": "pfl_3RkSN1zuWE",
+                "sequenceType": "oneoff",
+                "redirectUrl": "https://example.org/return",
+                "webhookUrl": "https://example.org/webhook",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "paymentId": {
+                        "type": "string",
+                        "description": "The ID of the payment to retrieve (e.g., tr_7UhSN1zuXS)."
+                    }
+                },
+                "required": [
+                    "paymentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Payments",
+            "description": "Retrieves all payments created with the current website profile. Supports internal pagination. Returns array inside _embedded.payments.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/payments-api/list-payments",
+            "endpointUrl": "https://api.mollie.com/v2/payments",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 2,
+                "_embedded": {
+                    "payments": [
+                        {
+                            "resource": "payment",
+                            "id": "tr_7UhSN1zuXS",
+                            "amount": {
+                                "value": "10.00",
+                                "currency": "EUR"
+                            },
+                            "description": "Order #12345",
+                            "status": "paid",
+                            "_links": {
+                                "self": {
+                                    "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS",
+                                    "type": "application/hal+json"
+                                }
+                            }
+                        },
+                        {
+                            "resource": "payment",
+                            "id": "tr_gj2x8VqS8M",
+                            "amount": {
+                                "value": "25.50",
+                                "currency": "EUR"
+                            },
+                            "description": "Order #12346",
+                            "status": "open",
+                            "_links": {
+                                "self": {
+                                    "href": "https://api.mollie.com/v2/payments/tr_gj2x8VqS8M",
+                                    "type": "application/hal+json"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/payments",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (partners/multi-profile)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set true to list test mode payments (if your key supports it)."
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by payment status.",
+                        "enum": [
+                            "open",
+                            "pending",
+                            "authorized",
+                            "paid",
+                            "canceled",
+                            "expired",
+                            "failed"
+                        ]
+                    },
+                    "method": {
+                        "type": "string",
+                        "description": "Filter by payment method.",
+                        "enum": [
+                            "bancontact",
+                            "banktransfer",
+                            "belfius",
+                            "creditcard",
+                            "directdebit",
+                            "eps",
+                            "giftcard",
+                            "giropay",
+                            "ideal",
+                            "kbc",
+                            "klarnapaylater",
+                            "klarnasliceit",
+                            "mybank",
+                            "paypal",
+                            "paysafecard",
+                            "przelewy24",
+                            "sofort",
+                            "trustly"
+                        ]
+                    },
+                    "sequenceType": {
+                        "type": "string",
+                        "description": "Filter by sequence type.",
+                        "enum": [
+                            "oneoff",
+                            "first",
+                            "recurring"
+                        ]
+                    },
+                    "customerId": {
+                        "type": "string",
+                        "description": "Filter payments created for a specific customer."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.payments"
+            }
+        },
+        {
+            "title": "Create Payment Refund",
+            "description": "Creates a refund for a specific payment. Critical for handling returns and customer service.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/refunds-api/create-refund",
+            "endpointUrl": "https://api.mollie.com/v2/payments/{paymentId}/refunds",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "refund",
+                "id": "re_4qqhO89gsT",
+                "amount": {
+                    "value": "5.00",
+                    "currency": "EUR"
+                },
+                "status": "pending",
+                "createdAt": "2023-06-25T10:12:00+00:00",
+                "description": "Refund for Order #12345",
+                "metadata": {
+                    "reason": "Returned item"
+                },
+                "paymentId": "tr_7UhSN1zuXS",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/refunds/re_4qqhO89gsT",
+                        "type": "application/hal+json"
+                    },
+                    "payment": {
+                        "href": "https://api.mollie.com/v2/payments/tr_7UhSN1zuXS",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "paymentId": {
+                        "type": "string",
+                        "description": "The ID of the original payment to refund (e.g., tr_7UhSN1zuXS)."
+                    },
+                    "amount": {
+                        "type": "object",
+                        "description": "Amount to refund. Omit to refund full amount.",
+                        "properties": {
+                            "currency": {
+                                "type": "string",
+                                "description": "ISO 4217 currency code of the refund amount."
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Refund amount as a string with 2 decimals, e.g. \"5.00\"."
+                            }
+                        },
+                        "required": []
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Optional description for the refund."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary data you can attach to the refund."
+                    }
+                },
+                "required": [
+                    "paymentId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Create Customer",
+            "description": "Creates a simple minimal representation of a customer. Required for managing customer accounts and recurring payments.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/create-customer",
+            "endpointUrl": "https://api.mollie.com/v2/customers",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "POST",
+            "sampleResponse": {
+                "resource": "customer",
+                "id": "cst_4qqhO89gsT",
+                "mode": "test",
+                "name": "John Doe",
+                "email": "john.doe@example.org",
+                "locale": "en_US",
+                "metadata": {
+                    "crmId": "A-001"
+                },
+                "createdAt": "2023-06-25T08:00:00+00:00",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers/cst_4qqhO89gsT",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Full name of the customer."
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "Email address of the customer."
+                    },
+                    "locale": {
+                        "type": "string",
+                        "description": "Customer locale, e.g. nl_NL, en_US."
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "description": "Arbitrary data you can attach to the customer."
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "Get Customer",
+            "description": "Retrieve a single customer by its ID. Essential for customer management workflows.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/get-customer",
+            "endpointUrl": "https://api.mollie.com/v2/customers/{customerId}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "resource": "customer",
+                "id": "cst_4qqhO89gsT",
+                "mode": "test",
+                "name": "John Doe",
+                "email": "john.doe@example.org",
+                "locale": "en_US",
+                "metadata": {
+                    "crmId": "A-001"
+                },
+                "createdAt": "2023-06-25T08:00:00+00:00",
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers/cst_4qqhO89gsT",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "customerId": {
+                        "type": "string",
+                        "description": "The ID of the customer to retrieve (e.g., cst_4qqhO89gsT)."
+                    }
+                },
+                "required": [
+                    "customerId"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        },
+        {
+            "title": "List Customers",
+            "description": "Retrieve a list of all customers. Supports internal pagination and basic filtering. Returns array inside _embedded.customers.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/v2/customers-api/list-customers",
+            "endpointUrl": "https://api.mollie.com/v2/customers",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET",
+            "sampleResponse": {
+                "count": 2,
+                "_embedded": {
+                    "customers": [
+                        {
+                            "resource": "customer",
+                            "id": "cst_4qqhO89gsT",
+                            "name": "John Doe",
+                            "email": "john.doe@example.org",
+                            "createdAt": "2023-06-25T08:00:00+00:00",
+                            "_links": {
+                                "self": {
+                                    "href": "https://api.mollie.com/v2/customers/cst_4qqhO89gsT",
+                                    "type": "application/hal+json"
+                                }
+                            }
+                        },
+                        {
+                            "resource": "customer",
+                            "id": "cst_P9aXk5gH2S",
+                            "name": "Jane Smith",
+                            "email": "jane.smith@example.org",
+                            "createdAt": "2023-06-26T10:10:00+00:00",
+                            "_links": {
+                                "self": {
+                                    "href": "https://api.mollie.com/v2/customers/cst_P9aXk5gH2S",
+                                    "type": "application/hal+json"
+                                }
+                            }
+                        }
+                    ]
+                },
+                "_links": {
+                    "self": {
+                        "href": "https://api.mollie.com/v2/customers",
+                        "type": "application/hal+json"
+                    }
+                }
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "profileId": {
+                        "type": "string",
+                        "description": "Filter by profile ID (partners/multi-profile)."
+                    },
+                    "testmode": {
+                        "type": "boolean",
+                        "description": "Set true to list test mode customers (if your key supports it)."
+                    }
+                }
+            },
+            "outputType": {
+                "outputType": "array",
+                "arrayPropertyValue": "_embedded.customers"
+            }
+        },
+        {
+            "title": "Make API Call",
+            "description": "Performs an arbitrary authorized API call. Provides flexibility for advanced integrations and accessing any Mollie API endpoint not covered by other components.",
+            "type": "action",
+            "documentation": "https://docs.mollie.com/reference/overview",
+            "endpointUrl": "https://api.mollie.com{path}",
+            "apiBaseUrl": "https://api.mollie.com",
+            "method": "GET|POST|PUT|PATCH|DELETE",
+            "sampleResponse": {
+                "example": "Response depends on the endpoint you call."
+            },
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "description": "HTTP method to use.",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Request path beginning with /v2, e.g., /v2/payments."
+                    },
+                    "query": {
+                        "type": "object",
+                        "description": "Optional query string parameters object.",
+                        "additionalProperties": true
+                    },
+                    "headers": {
+                        "type": "object",
+                        "description": "Optional additional headers to send.",
+                        "additionalProperties": true
+                    },
+                    "body": {
+                        "type": "object",
+                        "description": "Optional JSON request body (for POST/PUT/PATCH).",
+                        "additionalProperties": true
+                    }
+                },
+                "required": [
+                    "method",
+                    "path"
+                ]
+            },
+            "outputType": {
+                "outputType": "object"
+            }
+        }
+    ],
+    "authentication": {
+        "type": "apiKey",
+        "profileInfoUrl": "https://api.mollie.com/v2/profiles/me"
+    },
+    "serviceJson": {
+        "name": "appmixer.mollie",
+        "label": "Mollie",
+        "category": "applications",
+        "description": "Mollie Payments API integration for creating and managing payments, refunds, and customers.",
+        "version": "1.0.0",
+        "icon": "https://www.mollie.com/assets/favicon/safari-pinned-tab.svg"
+    }
+}

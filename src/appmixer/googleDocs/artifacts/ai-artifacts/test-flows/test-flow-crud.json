@@ -1,0 +1,459 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 48,
+            "y": 112,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 224,
+            "y": 112,
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "documentTitle",
+                                                "text": "E2E Test Document"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "documentContent",
+                                                "text": "This is test content for the E2E test flow."
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "before-all": {
+            "type": "appmixer.utils.test.BeforeAll",
+            "x": 432,
+            "y": 112,
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-document": {
+            "type": "appmixer.googleDocs.core.CreateDocument",
+            "x": 608,
+            "y": 112,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "before-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "title": {
+                                        "05eb8423-e8bc-44ad-ada3-e36c3b2fa751": {
+                                            "variable": "$.set-variables.out.documentTitle",
+                                            "functions": []
+                                        }
+                                    },
+                                    "content": {
+                                        "content-var": {
+                                            "variable": "$.set-variables.out.documentContent",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "title": "{{{05eb8423-e8bc-44ad-ada3-e36c3b2fa751}}}",
+                                    "content": "test content "
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-document-created": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1072,
+            "y": 112,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "doc-id-check": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        },
+                                        "76c30446-7f69-444a-8559-c1fc02e1928c": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        },
+                                        "850d4e46-9097-4070-8cda-b17286717ab7": {
+                                            "variable": "$.create-document.out.title",
+                                            "functions": []
+                                        },
+                                        "960be2fe-1f81-46fe-a936-7b2010c1f544": {
+                                            "variable": "$.set-variables.out.documentTitle",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{76c30446-7f69-444a-8559-c1fc02e1928c}}}"
+                                            },
+                                            {
+                                                "expected": "{{{960be2fe-1f81-46fe-a936-7b2010c1f544}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{850d4e46-9097-4070-8cda-b17286717ab7}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "download-document": {
+            "type": "appmixer.googleDocs.core.DownloadDocument",
+            "x": 864,
+            "y": -32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "1b13ac90-85f3-480f-b5fe-5d333af47cc4": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "mimeType": {}
+                                },
+                                "lambda": {
+                                    "documentId": "{{{1b13ac90-85f3-480f-b5fe-5d333af47cc4}}}",
+                                    "mimeType": "application/pdf"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-document-downloaded": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1072,
+            "y": -32,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "download-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "download-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "file-id-check": {
+                                            "variable": "$.download-document.out.fileId",
+                                            "functions": []
+                                        },
+                                        "2a3ab83e-2a59-4bcb-9017-f105d76fe27d": {
+                                            "variable": "$.download-document.out.fileId",
+                                            "functions": []
+                                        },
+                                        "9889a9b7-54ce-4a5a-8cb1-20740924ae4a": {
+                                            "variable": "$.download-document.out.fileName",
+                                            "functions": []
+                                        },
+                                        "0af97787-7917-47e3-8798-6cb9c660ed5e": {
+                                            "variable": "$.create-document.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{2a3ab83e-2a59-4bcb-9017-f105d76fe27d}}}"
+                                            },
+                                            {
+                                                "expected": "{{{0af97787-7917-47e3-8798-6cb9c660ed5e}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{9889a9b7-54ce-4a5a-8cb1-20740924ae4a}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1280,
+            "y": 112,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-document-downloaded": [
+                        "out"
+                    ],
+                    "assert-document-created": [
+                        "out"
+                    ],
+                    "359838d6-5237-466f-9cb3-8989a62c0dfe": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-document": {
+            "type": "appmixer.googleDocs.core.DeleteDocument",
+            "x": 1504,
+            "y": 112,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "documentId": {
+                                        "bc83e64e-94dd-4887-8292-b51d74dbe20b": {
+                                            "variable": "$.create-document.out.documentId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "documentId": "{{{bc83e64e-94dd-4887-8292-b51d74dbe20b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1696,
+            "y": 112,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-document": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-document": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2bad77be-bae1-4497-ae79-409fe765a35e": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E GoogleDocs - crud",
+                                    "result": "{{{2bad77be-bae1-4497-ae79-409fe765a35e}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "98cba38e-28f7-4af0-bdd3-71c541755b74": {
+            "type": "appmixer.googleDocs.core.NewDocument",
+            "x": 624,
+            "y": 400,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "recursive": true
+                }
+            }
+        },
+        "ae20a52d-2cdf-456e-8207-8b65b920cd71": {
+            "type": "appmixer.utils.test.Join",
+            "x": 864,
+            "y": 272,
+            "source": {
+                "in": {
+                    "98cba38e-28f7-4af0-bdd3-71c541755b74": [
+                        "out"
+                    ]
+                },
+                "join": {
+                    "create-document": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0"
+        },
+        "359838d6-5237-466f-9cb3-8989a62c0dfe": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1072,
+            "y": 272,
+            "source": {
+                "in": {
+                    "ae20a52d-2cdf-456e-8207-8b65b920cd71": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ae20a52d-2cdf-456e-8207-8b65b920cd71": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d25c6dd3-d376-4751-9199-954a56aca744": {
+                                            "variable": "$.98cba38e-28f7-4af0-bdd3-71c541755b74.out.id",
+                                            "functions": []
+                                        },
+                                        "42eb6ce5-0e1a-4c14-9012-9063cfd4cb4a": {
+                                            "variable": "$.98cba38e-28f7-4af0-bdd3-71c541755b74.out.name",
+                                            "functions": []
+                                        },
+                                        "545ceed0-c525-469b-b8ce-3acfd7303609": {
+                                            "variable": "$.create-document.out.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "assertion": "notEmpty",
+                                                "field": "{{{d25c6dd3-d376-4751-9199-954a56aca744}}}"
+                                            },
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{545ceed0-c525-469b-b8ce-3acfd7303609}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{42eb6ce5-0e1a-4c14-9012-9063cfd4cb4a}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E GoogleDocs - crud",
+    "type": "automation",
+    "notes": {}
+}

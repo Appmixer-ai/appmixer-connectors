@@ -1,26 +1,62 @@
 'use strict';
 
+function kvToObj(arr) {
+    if (!arr || !Array.isArray(arr)) return {};
+    const out = {};
+    for (const row of arr) {
+        if (!row || typeof row !== 'object') continue;
+        const key = row.key;
+        if (typeof key !== 'string' || key.length === 0) continue;
+        out[key] = row.value;
+    }
+    return out;
+}
+
+
 module.exports = {
 
     async receive(context) {
 
-        const { url, method, body } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
+
+        const extraHeaders = kvToObj(headersKV);
+        const queryParams = kvToObj(parametersKV);
+
+        let parsedBody;
+        if (body) {
+            try {
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
+        }
+
+        const resourceBase = context.resource || context.auth.resource || '';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${resourceBase}${url.startsWith('/') ? url : '/' + url}`;
 
         const options = {
             method,
-            url: (context.resource || context.auth.resource) + url,
+            url: targetUrl,
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${context.accessToken || context.auth?.accessToken}`
-            },
-            data: body
+                Authorization: `Bearer ${context.accessToken || context.auth?.accessToken}`,
+                ...extraHeaders
+            }
         };
 
-        await context.log({ step: 'Making request', options });
+        if (parsedBody !== undefined) {
+            options.data = parsedBody;
+        }
+
+        if (Object.keys(queryParams).length > 0) {
+            options.params = queryParams;
+        }
+
 
         try {
             const { data, status, statusText } = await context.httpRequest(options);
-
             return context.sendJson({ response: data, status, statusText }, 'out');
         } catch (error) {
             // If Axios throws an error, the response is in error.response.data.

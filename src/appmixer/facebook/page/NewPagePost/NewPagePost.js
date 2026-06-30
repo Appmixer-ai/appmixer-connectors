@@ -1,64 +1,86 @@
 'use strict';
-const graph = require('fbgraph');
-const Promise = require('bluebird');
-const CursorPaging = require('../../lib').CursorPaging;
+
+const { FacebookClient } = require('../../lib');
 
 /**
- * Process posts to find newly added.
- * @param {Set} knownPosts
- * @param {Set} actualPosts
- * @param {Set} newPosts
- * @param {Object} post
+ * Resolve the page access token + name and build a client scoped to the page.
+ * Shared by tick() and test() so both issue the same authenticated requests.
  */
-function processPosts(knownPosts, actualPosts, newPosts, post) {
+async function getPageClient(context, pageId) {
 
-    if (knownPosts && !knownPosts.has(post['id'])) {
-        newPosts.add(post);
-    }
-    actualPosts.add(post['id']);
+    const client = new FacebookClient(context);
+    const pageDetails = await client.get(`/${pageId}`, { fields: 'access_token,name' });
+    client.setAccessToken(pageDetails.access_token);
+    return { client, pageDetails };
 }
 
 /**
- * Component which triggers whenever new post is added
- * @extends {Component}
+ * Map a raw feed post into the output shape this trigger emits.
+ * Shared by tick() and test() so the emitted object is byte-for-byte identical.
+ */
+function mapPost(post, pageDetails, pageId) {
+
+    return {
+        ...post,
+        pageName: pageDetails.name,
+        pageId
+    };
+}
+
+/**
+ * Trigger that fires whenever a new post is created on a page.
  */
 module.exports = {
 
     async tick(context) {
 
-        let since = parseInt((new Date().getTime() / 1000).toFixed(0));
+        const { pageId } = context.properties;
+        const since = Math.floor(Date.now() / 1000);
 
-        graph.setVersion('3.2');
-        let client = graph.setAccessToken(context.auth.accessToken);
-        let { pageId } = context.properties;
-        let get = Promise.promisify(client.get, { context: client });
+        const { client, pageDetails } = await getPageClient(context, pageId);
 
-        let pageDetails = await get(`/${pageId}`, { fields: 'access_token, name' });
+        const posts = await client.fetchAll(`/${pageId}/feed`, {
+            since: context.state.since || since,
+            fields: 'id,message,created_time'
+        });
 
-        client.setAccessToken(pageDetails['access_token']);
+        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
+        const actual = new Set();
+        const diff = [];
 
-        let paging = new CursorPaging(get);
-        let posts = await paging.fetch(`/${pageId}/feed?since=${context.state.since || since}`);
+        for (const post of posts) {
+            if (known && !known.has(post.id)) {
+                diff.push(post);
+            }
+            actual.add(post.id);
+        }
 
-        let known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
-        let actual = new Set();
-        let diff = new Set();
-
-        posts.forEach(processPosts.bind(null, known, actual, diff));
-
-        if (diff.size) {
-            await Promise.map(diff, post => {
-                return context.sendJson(
-                    Object.assign(
-                        post,
-                        {
-                            pageName: pageDetails['name'],
-                            pageId: pageId
-                        }),
-                    'post');
-            });
+        for (const post of diff) {
+            await context.sendJson(mapPost(post, pageDetails, pageId), 'post');
         }
 
         await context.saveState({ known: Array.from(actual), since });
+    },
+
+    async test(context) {
+
+        const { pageId } = context.properties;
+
+        // Read-only, no state: fetch the newest post directly (the /feed endpoint returns
+        // posts newest-first) WITHOUT the since/known baseline that tick() uses to suppress
+        // the first poll, so Flow Test Mode gets a real, fetchable item.
+        const { client, pageDetails } = await getPageClient(context, pageId);
+
+        const { data } = await client.get(`/${pageId}/feed`, {
+            fields: 'id,message,created_time',
+            limit: 1
+        });
+
+        const post = (data || [])[0];
+        if (!post) {
+            throw new Error('No posts on the page to use as test data.');
+        }
+
+        return context.sendJson(mapPost(post, pageDetails, pageId), 'post');
     }
 };

@@ -4,8 +4,8 @@ const assert = require('assert');
 const sinon = require('sinon');
 const testUtils = require('../../../../../../test/utils');
 
-// Load commons so we can stub its methods before loading components.
-const commons = require('../../../aws-commons');
+// Load lib so we can stub its methods before loading components.
+const lib = require('../../lib');
 
 // Components under test.
 const NewObject = require('../../NewObject/NewObject');
@@ -21,8 +21,8 @@ describe('AWS S3 trigger components registerWebhook integration', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.properties = { bucket: 'my-bucket', region: 'us-east-1' };
-        registerStub = sinon.stub(commons, 'registerWebhook').resolves();
-        unregisterStub = sinon.stub(commons, 'unregisterWebhook').resolves();
+        registerStub = sinon.stub(lib, 'registerWebhook').resolves();
+        unregisterStub = sinon.stub(lib, 'unregisterWebhook').resolves();
     });
 
     afterEach(() => {

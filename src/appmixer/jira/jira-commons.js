@@ -90,6 +90,46 @@ module.exports = {
         actualItems.add(item['id']);
     },
 
+    // Fetch the single newest issue (sorted by `created`/`updated` desc), honoring an
+    // optional project filter. Shared by the issue triggers' test() (Flow Test Mode):
+    // it reuses the same search request + fields tick() uses, but without the
+    // `created/updated > now` baseline that suppresses output on a fresh flow.
+    async fetchLatestIssue(context, { project, orderBy = 'created' } = {}) {
+
+        const { profileInfo: { apiUrl }, auth } = context;
+        let jql = project ? `project = "${project}" ` : '';
+        jql += `ORDER BY ${orderBy} DESC`;
+
+        const issues = await this.getAPINoPagination({
+            endpoint: `${apiUrl}search/jql`,
+            credentials: auth,
+            key: 'issues',
+            params: { maxResults: 1, jql, fields: '*navigable' }
+        });
+        return (Array.isArray(issues) ? issues : [])[0] || null;
+    },
+
+    // Fetch one project via the same project/search request the project triggers use.
+    async fetchLatestProject(context) {
+
+        const { profileInfo: { apiUrl }, auth } = context;
+        const projects = await this.pager({
+            endpoint: `${apiUrl}project/search`,
+            credentials: auth,
+            key: 'values',
+            params: { maxResults: 100 }
+        });
+        return (Array.isArray(projects) ? projects : [])[0] || null;
+    },
+
+    // The webhook triggers' receive() emits data[key] with a `webhookEvent` field
+    // added (see executeWebhookRequest); their test() reshapes a REST record the
+    // same way.
+    toWebhookShape(record, webhookEvent) {
+
+        return { ...record, webhookEvent };
+    },
+
     buildDocType(data) {
 
         return {
@@ -119,7 +159,7 @@ module.exports = {
         };
 
         Object.keys(fields).forEach((key, index) => {
-            if (excludeFields.includes(key) || key.includes('customfield_')) {
+            if (excludeFields.includes(key)) {
                 return;
             }
 
@@ -140,7 +180,10 @@ module.exports = {
 
             if (Array.isArray(allowedValues)) {
                 inspector.inputs[key].type = 'select';
-                inspector.inputs[key].options = allowedValues.map(value => ({ content: value.name, value: value.id }));
+                inspector.inputs[key].options = allowedValues.map(v => ({
+                    content: v.name || v.value || v.id,
+                    value: v.id
+                }));
             }
 
             if (schema.type === 'array') {
@@ -154,7 +197,7 @@ module.exports = {
                 inspector.inputs[key].type = 'multiselect';
             }
 
-            if (schema.type === 'date') {
+            if (schema.type === 'date' || schema.type === 'datetime') {
                 inspector.inputs[key].type = 'date-time';
             }
 
@@ -170,6 +213,37 @@ module.exports = {
         });
 
         return inspector;
+    },
+
+    formatCustomFields(issueInfo, fieldMeta) {
+
+        Object.keys(issueInfo).forEach(key => {
+            if (!key.startsWith('customfield_')) return;
+
+            const value = issueInfo[key];
+            if (value === undefined || value === null || value === '') {
+                delete issueInfo[key];
+                return;
+            }
+
+            const meta = fieldMeta[key];
+            if (!meta || !meta.schema) return;
+
+            const { schema } = meta;
+            const hasAllowedValues = Array.isArray(meta.allowedValues) && meta.allowedValues.length > 0;
+
+            if (schema.type === 'array') {
+                if (Array.isArray(value)) {
+                    if (schema.items === 'option' || (hasAllowedValues && schema.items !== 'string')) {
+                        issueInfo[key] = value.map(v => ({ id: v }));
+                    }
+                }
+            } else if (schema.type === 'option' || schema.type === 'user' || hasAllowedValues) {
+                issueInfo[key] = { id: value };
+            } else if (schema.type === 'number') {
+                issueInfo[key] = Number(value);
+            }
+        });
     },
 
     async executeWebhookRequest(context, options) {

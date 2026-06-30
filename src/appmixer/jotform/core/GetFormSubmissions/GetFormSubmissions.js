@@ -1,5 +1,25 @@
 'use strict';
 
+/**
+ * Normalize a single answer item. If the `answer` field is an object keyed by
+ * numeric strings (e.g. matrix fields: { "1": [...], "2": [...] }), convert it
+ * to an ordered array so it can be iterated in a flow.
+ */
+function normalizeAnswerItem(item) {
+    if (!item || typeof item !== 'object') return item;
+    const answer = item.answer;
+    if (answer && typeof answer === 'object' && !Array.isArray(answer)) {
+        const keys = Object.keys(answer);
+        if (keys.length > 0 && keys.every(k => /^\d+$/.test(k))) {
+            return {
+                ...item,
+                answer: keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => answer[k])
+            };
+        }
+    }
+    return item;
+}
+
 const dependencies = {
     'jsonata': require('jsonata')
 };
@@ -60,7 +80,7 @@ module.exports = {
         // Transform each submission to convert answers from object to array
         result = result.map(submission => ({
             ...submission,
-            answers: Object.values(submission.answers || {})
+            answersList: Object.values(submission.answers || {}).map(normalizeAnswerItem)
         }));
 
         if (context.messages.in.content.xConnectorOutputType === 'object') {
@@ -181,73 +201,97 @@ module.exports = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'id': {
-                        'type': 'string'
-                    },
-                    'form_id': {
-                        'type': 'string'
-                    },
-                    'ip': {
-                        'type': 'string'
-                    },
-                    'created_at': {
-                        'type': 'string'
-                    },
-                    'updated_at': {
-                        'type': 'string'
-                    },
-                    'status': {
-                        'type': 'string'
-                    },
-                    'new': {
-                        'type': 'string'
-                    },
+                    'id': { 'type': 'string', 'example': '6328482234222812384' },
+                    'form_id': { 'type': 'string', 'example': '242678198603467' },
+                    'ip': { 'type': 'string', 'example': '193.179.66.224' },
+                    'created_at': { 'type': 'string', 'example': '2025-09-04 22:23:43' },
+                    'updated_at': { 'type': 'string' },
+                    'status': { 'type': 'string', 'example': 'ACTIVE' },
+                    'new': { 'type': 'string', 'example': '1' },
                     'answers': {
-                        'type': 'array'
+                        'type': 'object'
                     },
-                    'workflowStatus': {
-                        'type': 'string'
-                    }
+                    'answersList': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object',
+                            'properties': {
+                                'name': { 'type': 'string', 'example': 'phoneNumber5' },
+                                'order': { 'type': 'string', 'example': '5' },
+                                'text': { 'type': 'string', 'example': 'Phone Number' },
+                                'type': { 'type': 'string', 'example': 'control_phone' },
+                                'sublabels': {
+                                    'type': 'object',
+                                    'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
+                                },
+                                'answer': {
+                                    'examples': [
+                                        'Internet',
+                                        { 'first': 'FULL NAME', 'last': 'LAST NAME' },
+                                        [['me', 'there', '123456'], ['', '', '']]
+                                    ]
+                                },
+                                'prettyFormat': {
+                                    'type': 'string',
+                                    'example': 'FULL NAME LAST NAME'
+                                }
+                            }
+                        }
+                    },
+                    'workflowStatus': { 'type': 'string', 'example': 'Approve' }
                 }
             }
         }
     }],
 
-    objectOutputOptions: [{
-        'label': 'Id',
-        'value': 'id'
-    },
-    {
-        'label': 'Form Id',
-        'value': 'form_id'
-    },
-    {
-        'label': 'Ip',
-        'value': 'ip'
-    },
-    {
-        'label': 'Created At',
-        'value': 'created_at'
-    },
-    {
-        'label': 'Updated At',
-        'value': 'updated_at'
-    },
-    {
-        'label': 'Status',
-        'value': 'status'
-    },
-    {
-        'label': 'New',
-        'value': 'new'
-    },
-    {
-        'label': 'Answers',
-        'value': 'answers'
-    },
-    {
-        'label': 'Workflow Status',
-        'value': 'workflowStatus'
-    }
+    objectOutputOptions: [
+        { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '6328482234222812384' } },
+        { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+        { 'label': 'Ip', 'value': 'ip', 'schema': { 'type': 'string', 'example': '193.179.66.224' } },
+        {
+            'label': 'Created At',
+            'value': 'created_at',
+            'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' }
+        },
+        { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string' } },
+        { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ACTIVE' } },
+        { 'label': 'New', 'value': 'new', 'schema': { 'type': 'string', 'example': '1' } },
+        {
+            'label': 'Answers',
+            'value': 'answers',
+            'schema': { 'type': 'object' }
+        },
+        {
+            'label': 'Answers List',
+            'value': 'answersList',
+            'schema': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'name': { 'type': 'string', 'example': 'phoneNumber5' },
+                        'order': { 'type': 'string', 'example': '5' },
+                        'text': { 'type': 'string', 'example': 'Phone Number' },
+                        'type': { 'type': 'string', 'example': 'control_phone' },
+                        'sublabels': {
+                            'type': 'object',
+                            'example': { 'area': 'Area Code', 'phone': 'Phone Number' }
+                        },
+                        'answer': {
+                            'examples': [
+                                'Internet',
+                                { 'first': 'FULL NAME', 'last': 'LAST NAME' },
+                                [['me', 'there', '123456'], ['', '', '']]
+                            ]
+                        },
+                        'prettyFormat': {
+                            'type': 'string',
+                            'example': 'FULL NAME LAST NAME'
+                        }
+                    }
+                }
+            }
+        },
+        { 'label': 'Workflow Status', 'value': 'workflowStatus', 'schema': { 'type': 'string', 'example': 'Approve' } }
     ]
 };

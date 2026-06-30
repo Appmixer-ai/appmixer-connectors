@@ -1,0 +1,89 @@
+{
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "publicationId": {
+                "type": "string",
+                "description": "The prefixed ID of the publication object"
+            },
+            "limit": {
+                "type": "integer",
+                "description": "A limit on the number of objects to be returned. The limit can range between 1 and 100, and the default is 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "Pagination returns the results in pages. Each page contains the number of results specified by the `limit` (default: 10).<br>If not specified, results 1-10 from page 1 will be returned."
+            },
+            "order": {
+                "type": "string",
+                "description": "The direction of the request. Defaults to `asc`.",
+                "enum": [
+                    "asc",
+                    "desc"
+                ],
+                "default": "asc"
+            },
+            "order_by": {
+                "type": "string",
+                "description": "The field to order by. Defaults to `created`."
+            },
+            "Authorization": {
+                "type": "string",
+                "description": "Bearer authentication"
+            }
+        },
+        "required": [
+            "publicationId"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "required": [
+            "data",
+            "limit",
+            "page",
+            "total_results",
+            "total_pages"
+        ],
+        "properties": {
+            "data": {
+                "type": "array",
+                "description": "A list of post templates available for this publication.",
+                "items": {
+                    "type": "object",
+                    "required": [
+                        "id",
+                        "name"
+                    ],
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "The prefixed ID of the post template."
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the post template."
+                        }
+                    }
+                }
+            },
+            "limit": {
+                "type": "integer",
+                "description": "The limit placed on the results. If no limit was specified in the request, this defaults to 10."
+            },
+            "page": {
+                "type": "integer",
+                "description": "The page number the results are from. If no page was specified in the request, this defaults to page 1.",
+                "default": 1
+            },
+            "total_results": {
+                "type": "integer",
+                "description": "The total number of results from all pages."
+            },
+            "total_pages": {
+                "type": "integer",
+                "description": "The total number of pages."
+            }
+        }
+    }
+}

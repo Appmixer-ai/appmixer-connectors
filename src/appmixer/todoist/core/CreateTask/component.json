@@ -1,0 +1,428 @@
+{
+    "name": "appmixer.todoist.core.CreateTask",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Create a new task in Todoist.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:todoist"
+    },
+    "quota": {
+        "manager": "appmixer:todoist",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "sectionId": {
+                        "type": "string"
+                    },
+                    "parentId": {
+                        "type": "string"
+                    },
+                    "order": {
+                        "type": "number"
+                    },
+                    "labels": {
+                        "type": "string"
+                    },
+                    "priority": {
+                        "type": "number"
+                    },
+                    "dueString": {
+                        "type": "string"
+                    },
+                    "dueDate": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "dueDatetime": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "dueLang": {
+                        "type": "string"
+                    },
+                    "assigneeId": {
+                        "type": "string"
+                    },
+                    "duration": {
+                        "type": "number"
+                    },
+                    "durationUnit": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "content"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "content": {
+                        "type": "text",
+                        "label": "Content",
+                        "tooltip": "The content of the task. This value may contain markdown-formatted text and hyperlinks.",
+                        "index": 1
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "tooltip": "A description for the task. This value may contain markdown-formatted text and hyperlinks.",
+                        "index": 2
+                    },
+                    "projectId": {
+                        "type": "select",
+                        "label": "Project",
+                        "tooltip": "The project to add the task to. Defaults to the user's Inbox project.",
+                        "index": 3,
+                        "source": {
+                            "url": "/component/appmixer/todoist/core/ListProjectsSelect?outPort=out",
+                            "data": {
+                                "transform": "./transformers#projectsToSelectArray"
+                            }
+                        }
+                    },
+                    "sectionId": {
+                        "type": "text",
+                        "label": "Section",
+                        "tooltip": "The section to add the task to.",
+                        "index": 4,
+                        "source": {
+                            "url": "/component/appmixer/todoist/core/ListSectionsSelect?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "projectId": "properties/projectId"
+                                },
+                                "transform": "./transformers#sectionsToSelectArray"
+                            }
+                        }
+                    },
+                    "parentId": {
+                        "type": "text",
+                        "label": "Parent Task ID",
+                        "tooltip": "The parent task ID to create a subtask under.",
+                        "index": 5
+                    },
+                    "order": {
+                        "type": "number",
+                        "label": "Order",
+                        "tooltip": "The order of the task. Defines the position of the task among all the tasks with the same parent.",
+                        "index": 6
+                    },
+                    "labels": {
+                        "type": "text",
+                        "label": "Labels",
+                        "tooltip": "Comma-separated list of label names to add to the task.",
+                        "index": 7
+                    },
+                    "priority": {
+                        "type": "select",
+                        "label": "Priority",
+                        "tooltip": "The priority of the task.",
+                        "index": 8,
+                        "options": [
+                            {
+                                "label": "Priority 1 (Highest)",
+                                "value": 4
+                            },
+                            {
+                                "label": "Priority 2",
+                                "value": 3
+                            },
+                            {
+                                "label": "Priority 3",
+                                "value": 2
+                            },
+                            {
+                                "label": "Priority 4 (Lowest)",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "dueString": {
+                        "type": "text",
+                        "label": "Due String",
+                        "tooltip": "Human-readable due date, e.g., 'tomorrow at 12:00' or 'every Friday'.",
+                        "index": 9
+                    },
+                    "dueDate": {
+                        "type": "date-time",
+                        "label": "Due Date",
+                        "tooltip": "Specific date for the task in YYYY-MM-DD format.",
+                        "index": 10,
+                        "config": {
+                            "enableTime": false
+                        }
+                    },
+                    "dueDatetime": {
+                        "type": "date-time",
+                        "label": "Due Datetime",
+                        "tooltip": "Specific date and time for the task.",
+                        "index": 11
+                    },
+                    "dueLang": {
+                        "type": "select",
+                        "label": "Due Language",
+                        "tooltip": "2-letter code specifying language for parsing due_string.",
+                        "index": 12,
+                        "options": [
+                            {
+                                "label": "English",
+                                "value": "en"
+                            },
+                            {
+                                "label": "Danish",
+                                "value": "da"
+                            },
+                            {
+                                "label": "German",
+                                "value": "de"
+                            },
+                            {
+                                "label": "Spanish",
+                                "value": "es"
+                            },
+                            {
+                                "label": "French",
+                                "value": "fr"
+                            },
+                            {
+                                "label": "Italian",
+                                "value": "it"
+                            },
+                            {
+                                "label": "Japanese",
+                                "value": "ja"
+                            },
+                            {
+                                "label": "Korean",
+                                "value": "ko"
+                            },
+                            {
+                                "label": "Dutch",
+                                "value": "nl"
+                            },
+                            {
+                                "label": "Polish",
+                                "value": "pl"
+                            },
+                            {
+                                "label": "Portuguese",
+                                "value": "pt"
+                            },
+                            {
+                                "label": "Russian",
+                                "value": "ru"
+                            },
+                            {
+                                "label": "Swedish",
+                                "value": "sv"
+                            },
+                            {
+                                "label": "Turkish",
+                                "value": "tr"
+                            },
+                            {
+                                "label": "Chinese",
+                                "value": "zh"
+                            }
+                        ]
+                    },
+                    "assigneeId": {
+                        "type": "text",
+                        "label": "Assignee ID",
+                        "tooltip": "The ID of the user to assign the task to.",
+                        "index": 13
+                    },
+                    "duration": {
+                        "type": "number",
+                        "label": "Duration",
+                        "tooltip": "A positive integer for the amount of duration_unit the task will take.",
+                        "index": 14
+                    },
+                    "durationUnit": {
+                        "type": "select",
+                        "label": "Duration Unit",
+                        "tooltip": "The unit of time for the duration.",
+                        "index": 15,
+                        "options": [
+                            {
+                                "label": "Minutes",
+                                "value": "minute"
+                            },
+                            {
+                                "label": "Days",
+                                "value": "day"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "ID"
+                    },
+                    "assigner_id": {
+                        "type": "string",
+                        "title": "Assigner ID"
+                    },
+                    "assignee_id": {
+                        "type": "string",
+                        "title": "Assignee ID"
+                    },
+                    "project_id": {
+                        "type": "string",
+                        "title": "Project ID"
+                    },
+                    "section_id": {
+                        "type": "string",
+                        "title": "Section ID"
+                    },
+                    "parent_id": {
+                        "type": "string",
+                        "title": "Parent ID"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "title": "Order"
+                    },
+                    "content": {
+                        "type": "string",
+                        "title": "Content"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    },
+                    "is_completed": {
+                        "type": "boolean",
+                        "title": "Is Completed"
+                    },
+                    "labels": {
+                        "type": "array",
+                        "title": "Labels",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "title": "Priority"
+                    },
+                    "comment_count": {
+                        "type": "integer",
+                        "title": "Comment Count"
+                    },
+                    "creator_id": {
+                        "type": "string",
+                        "title": "Creator ID"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "title": "Created At"
+                    },
+                    "due": {
+                        "type": "object",
+                        "title": "Due",
+                        "properties": {
+                            "date": {
+                                "type": "string",
+                                "title": "Due Date"
+                            },
+                            "string": {
+                                "type": "string",
+                                "title": "Due String"
+                            },
+                            "is_recurring": {
+                                "type": "boolean",
+                                "title": "Due Is Recurring"
+                            },
+                            "datetime": {
+                                "type": "string",
+                                "title": "Due Datetime"
+                            },
+                            "timezone": {
+                                "type": "string",
+                                "title": "Due Timezone"
+                            }
+                        }
+                    },
+                    "duration": {
+                        "type": "object",
+                        "title": "Duration",
+                        "properties": {
+                            "amount": {
+                                "type": "integer",
+                                "title": "Duration Amount"
+                            },
+                            "unit": {
+                                "type": "string",
+                                "title": "Duration Unit"
+                            }
+                        }
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "URL"
+                    }
+                },
+                "example": {
+                    "id": "9907445074",
+                    "assigner_id": "51203487",
+                    "assignee_id": "57023439",
+                    "project_id": "2365437921",
+                    "section_id": "174838504",
+                    "parent_id": "9907445073",
+                    "order": 1,
+                    "content": "Review quarterly report",
+                    "description": "Check all sections before submission",
+                    "is_completed": false,
+                    "labels": [
+                        "work",
+                        "important"
+                    ],
+                    "priority": 2,
+                    "comment_count": 0,
+                    "creator_id": "57023438",
+                    "created_at": "2026-01-12T07:57:25Z",
+                    "due": {
+                        "date": "2026-01-15",
+                        "string": "tomorrow at 10am",
+                        "is_recurring": false,
+                        "datetime": "2026-01-15T10:00:00",
+                        "timezone": "America/New_York"
+                    },
+                    "duration": {
+                        "amount": 30,
+                        "unit": "minute"
+                    },
+                    "url": "https://app.todoist.com/app/task/9907445074"
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGcgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI0U0NDMzMiIgZD0iTTUyLjUgMGgtNDVBNy41MiA3LjUyIDAgMCAwIDAgNy41djQ1QzAgNTYuNjI1IDMuMzc0IDYwIDcuNSA2MGg0NWM0LjEyNiAwIDcuNS0zLjM3NSA3LjUtNy41di00NUM2MCAzLjM3NSA1Ni42MjYgMCA1Mi41IDAiLz48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIuMTIxIDI5LjU4MmMxLS42NzMgMjIuNDY5LTE1LjA1NSAyMi45Ni0xNS4zODguNDktLjMyOS41MTgtMS4zNDEtLjAzNi0xLjcwNy0uNTUtLjM2NS0xLjU5My0xLjA1Ni0xLjk4LTEuMzIxYTEuNTkgMS41OSAwIDAgMC0xLjc3MS4wMjVBMjYzOTEgMjYzOTEgMCAwIDEgMTIuMDYyIDI0LjA2Yy0uNzM3LjQ4Ni0xLjY0Mi40OTQtMi4zNzMgMEwwIDE3LjUwN3Y1LjU3YzIuMzU2IDEuNjAxIDguMjIyIDUuNTc2IDkuNjQyIDYuNTEyLjg0OC41NTUgMS42Ni41NDMgMi40ODEtLjAwNyIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMi4xMjEgMzkuMTI4YzEtLjY3MyAyMi40NjktMTUuMDU1IDIyLjk2LTE1LjM4OS40OS0uMzI5LjUxOC0xLjM0LS4wMzYtMS43MDdhMjM0IDIzNCAwIDAgMS0xLjk4LTEuMzIgMS41OSAxLjU5IDAgMCAwLTEuNzcxLjAyNGMtLjI3NS4xODUtMTguNjIgMTIuNDY3LTE5LjIzMiAxMi44Ny0uNzM3LjQ4Ni0xLjY0Mi40OTQtMi4zNzMgMEwwIDI3LjA1MnY1LjU3YzIuMzU2IDEuNjAyIDguMjIyIDUuNTc2IDkuNjQyIDYuNTEyLjg0OC41NTYgMS42Ni41NDMgMi40ODEtLjAwNiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMi4xMjEgNDguNjc0YzEtLjY3MyAyMi40NjktMTUuMDU2IDIyLjk2LTE1LjM5LjQ5LS4zMjguNTE4LTEuMzQtLjAzNi0xLjcwNy0uNTUtLjM2My0xLjU5My0xLjA1NS0xLjk4LTEuMzJhMS41OSAxLjU5IDAgMCAwLTEuNzcxLjAyNGMtLjI3NS4xODUtMTguNjIgMTIuNDY3LTE5LjIzMiAxMi44Ny0uNzM3LjQ4Ni0xLjY0Mi40OTUtMi4zNzMgMEwwIDM2LjU5OHY1LjU3MWMyLjM1NiAxLjYwMSA4LjIyMiA1LjU3NiA5LjY0MiA2LjUxMi44NDguNTU1IDEuNjYuNTQzIDIuNDgxLS4wMDYiLz48L2c+PC9zdmc+"
+}

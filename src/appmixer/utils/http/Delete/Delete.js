@@ -9,7 +9,7 @@ module.exports = {
 
     receive(context) {
 
-        return request('DELETE', context.messages.in.content)
+        return request(context, 'DELETE', context.messages.in.content)
             .then(response  => {
                 return context.sendJson(response , 'response');
             });

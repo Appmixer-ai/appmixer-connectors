@@ -1,5 +1,7 @@
 'use strict';
-const commons = require('../../aws-commons');
+
+const { GetObjectCommand } = require('@aws-sdk/client-s3');
+const lib = require('../lib');
 
 /**
  * Deletes bucket.
@@ -18,10 +20,30 @@ module.exports = {
             throw new context.CancelError('Object Key is required');
         }
 
-
-        const { s3 } = commons.init(context);
-        const response = await s3.getObject({ Bucket: bucket, Key: key }).promise();
-        const object = Object.assign({ Bucket: bucket, Key: key }, response);
-        return context.sendJson(object, 'object');
+        const { s3 } = lib.init(context);
+        try {
+            const response = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+            let bodyBuffer = null;
+            if (response.Body) {
+                // AWS SDK v3 returns a stream, so we need to read it into a Buffer for backward compatibility
+                const chunks = [];
+                for await (const chunk of response.Body) {
+                    chunks.push(chunk);
+                }
+                bodyBuffer = Buffer.concat(chunks);
+            }
+            const object = {
+                Bucket: bucket,
+                Key: key,
+                ...response,
+                Body: bodyBuffer ? bodyBuffer.toJSON() : null
+            };
+            return context.sendJson(object, 'object');
+        } catch (error) {
+            // Re-throw with just the error message. Otherwise a
+            // [unable to serialize, circular reference is too complex to analyze]
+            // error is thrown.
+            throw new Error(error.message);
+        }
     }
 };

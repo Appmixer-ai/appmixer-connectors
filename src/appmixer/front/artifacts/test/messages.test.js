@@ -52,5 +52,50 @@ describe('Front Messages Tests', () => {
             assert(ReplyMessage, 'ReplyMessage component should exist');
             assert(typeof ReplyMessage.receive === 'function', 'ReplyMessage should have receive method');
         });
+
+        it('should send reply when to is not provided', async () => {
+            context.messages = {
+                in: {
+                    content: {
+                        conversationId: 'cnv_1hquk65c',
+                        body: 'E2E Test Reply'
+                    }
+                }
+            };
+
+            context.httpRequest.resolves({ data: { id: 'msg_123' } });
+
+            await ReplyMessage.receive(context);
+
+            assert.strictEqual(context.httpRequest.calledOnce, true);
+            const request = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(request.method, 'POST');
+            assert.strictEqual(request.url, 'https://api2.frontapp.com/conversations/cnv_1hquk65c/messages');
+            assert.deepStrictEqual(request.data, { body: 'E2E Test Reply' });
+            assert.strictEqual(context.sendJson.calledWith({ id: 'msg_123' }, 'out'), true);
+        });
+
+        it('should ignore empty string recipients', async () => {
+            context.messages = {
+                in: {
+                    content: {
+                        conversationId: 'cnv_1hquk65c',
+                        body: 'E2E Test Reply',
+                        to: '',
+                        cc: ' , ',
+                        bcc: '   '
+                    }
+                }
+            };
+
+            context.httpRequest.resolves({ data: { id: 'msg_124' } });
+
+            await ReplyMessage.receive(context);
+
+            assert.strictEqual(context.httpRequest.calledOnce, true);
+            const request = context.httpRequest.firstCall.args[0];
+            assert.deepStrictEqual(request.data, { body: 'E2E Test Reply' });
+            assert.strictEqual(context.sendJson.calledWith({ id: 'msg_124' }, 'out'), true);
+        });
     });
 });

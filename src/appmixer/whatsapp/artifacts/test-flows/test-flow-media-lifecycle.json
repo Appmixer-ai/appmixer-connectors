@@ -1,0 +1,445 @@
+{
+    "name": "E2E Whatsapp - Media Lifecycle",
+    "description": "End-to-end test for WhatsApp connector - tests media upload, URL retrieval, download, and deletion lifecycle",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "phoneNumberId",
+                                                "text": "{{E2E_PHONE_NUMBER_ID}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "fileId",
+                                                "text": "{{E2E_FILE_ID}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "mimeType",
+                                                "text": "image/jpeg"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "downloadFileName",
+                                                "text": "e2e-downloaded-media.jpg"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "upload-media": {
+            "type": "appmixer.whatsapp.media.UploadMedia",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "phoneNumberId": {
+                                        "var-phone-number-id": {
+                                            "variable": "$.set-variables.out.phoneNumberId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileId": {
+                                        "var-file-id": {
+                                            "variable": "$.set-variables.out.fileId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "mimeType": {
+                                        "var-mime-type": {
+                                            "variable": "$.set-variables.out.mimeType",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "phoneNumberId": "{{{var-phone-number-id}}}",
+                                    "fileId": "{{{var-file-id}}}",
+                                    "mimeType": "{{{var-mime-type}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-upload": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "upload-media": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "upload-media": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-media-id": {
+                                            "variable": "$.upload-media.out.mediaId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-media-id}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-media-url": {
+            "type": "appmixer.whatsapp.media.GetMediaURL",
+            "x": 640,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "upload-media": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "upload-media": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "mediaId": {
+                                        "var-media-id": {
+                                            "variable": "$.upload-media.out.mediaId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "mediaId": "{{{var-media-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-media-url": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-media-url": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-media-url": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-url": {
+                                            "variable": "$.get-media-url.out.url",
+                                            "functions": []
+                                        },
+                                        "field-mime-type": {
+                                            "variable": "$.get-media-url.out.mimeType",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-url}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-mime-type}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "download-media": {
+            "type": "appmixer.whatsapp.media.DownloadMedia",
+            "x": 832,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-media-url": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-media-url": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "mediaId": {
+                                        "var-media-id-dl": {
+                                            "variable": "$.upload-media.out.mediaId",
+                                            "functions": []
+                                        }
+                                    },
+                                    "fileName": {
+                                        "var-file-name": {
+                                            "variable": "$.set-variables.out.downloadFileName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "mediaId": "{{{var-media-id-dl}}}",
+                                    "fileName": "{{{var-file-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-download": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "download-media": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "download-media": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-file-id": {
+                                            "variable": "$.download-media.out.fileId",
+                                            "functions": []
+                                        },
+                                        "field-file-name": {
+                                            "variable": "$.download-media.out.fileName",
+                                            "functions": []
+                                        },
+                                        "field-dl-mime-type": {
+                                            "variable": "$.download-media.out.mimeType",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-file-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-file-name}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-dl-mime-type}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-upload": [
+                        "out"
+                    ],
+                    "assert-get-media-url": [
+                        "out"
+                    ],
+                    "assert-download": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-media": {
+            "type": "appmixer.whatsapp.media.DeleteMedia",
+            "x": 1584,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "mediaId": {
+                                        "var-media-id-del": {
+                                            "variable": "$.upload-media.out.mediaId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "mediaId": "{{{var-media-id-del}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-media": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64f6f1f9193228000754082f",
+                    "failedStoreId": "64f6f1f0193228000754082e"
+                },
+                "transform": {
+                    "in": {
+                        "delete-media": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Whatsapp - Media Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

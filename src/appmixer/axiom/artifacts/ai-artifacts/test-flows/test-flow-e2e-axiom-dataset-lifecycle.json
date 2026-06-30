@@ -1,0 +1,420 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {
+                                        "e4a0a1d2-0797-40e4-b7ae-1c3dd2cd9e2a": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_timestamp"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "datasetName",
+                                                "text": "e2e-test-dataset-{{{e4a0a1d2-0797-40e4-b7ae-1c3dd2cd9e2a}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "datasetDescription",
+                                                "toggle": false,
+                                                "text": "E2E Test Dataset Description"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedDescription",
+                                                "toggle": false,
+                                                "text": "E2E Test Dataset Description Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-dataset": {
+            "type": "appmixer.axiom.datasets.CreateDataset",
+            "x": 496,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-dataset-name": {
+                                            "variable": "$.set-variables.out.datasetName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "var-dataset-description": {
+                                            "variable": "$.set-variables.out.datasetDescription",
+                                            "functions": []
+                                        }
+                                    },
+                                    "kind": {},
+                                    "retentionDays": {},
+                                    "useRetentionPeriod": {}
+                                },
+                                "lambda": {
+                                    "name": "{{{var-dataset-name}}}",
+                                    "description": "{{{var-dataset-description}}}",
+                                    "kind": "axiom:events:v1",
+                                    "retentionDays": 10,
+                                    "useRetentionPeriod": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-create-id": {
+                                            "variable": "$.create-dataset.out.id",
+                                            "functions": []
+                                        },
+                                        "b9d4309e-5b8e-4f2a-b5fc-877db8b47b9b": {
+                                            "variable": "$.create-dataset.out.name",
+                                            "functions": []
+                                        },
+                                        "7e24c41a-ecde-4382-8fc0-f575ca2bdbba": {
+                                            "variable": "$.set-variables.out.datasetName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{field-create-id}}}",
+                                                "type": "string"
+                                            },
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{7e24c41a-ecde-4382-8fc0-f575ca2bdbba}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{b9d4309e-5b8e-4f2a-b5fc-877db8b47b9b}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-dataset": {
+            "type": "appmixer.axiom.datasets.GetDataset",
+            "x": 944,
+            "y": 272,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-dataset": {
+                            "out": {
+                                "lambda": {
+                                    "datasetId": "{{{var-dataset-id}}}"
+                                },
+                                "modifiers": {
+                                    "datasetId": {
+                                        "var-dataset-id": {
+                                            "variable": "$.create-dataset.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "update-dataset": [
+                        "out"
+                    ]
+                }
+            }
+        },
+        "assert-get": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1152,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-get-description": {
+                                            "variable": "$.get-dataset.out.description",
+                                            "functions": []
+                                        },
+                                        "fd3bdfc2-a4b7-4311-802a-b41d1aa06607": {
+                                            "variable": "$.set-variables.out.updatedDescription",
+                                            "functions": []
+                                        },
+                                        "69f37609-4a30-4293-9b34-c82d2c1b9c7c": {
+                                            "variable": "$.get-dataset.out.name",
+                                            "functions": []
+                                        },
+                                        "c75fa963-b68e-410a-9ee2-8b29d92fe1fb": {
+                                            "variable": "$.set-variables.out.datasetName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "type": "string",
+                                                "expected": "{{{fd3bdfc2-a4b7-4311-802a-b41d1aa06607}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{field-get-description}}}"
+                                            },
+                                            {
+                                                "expected": "{{{c75fa963-b68e-410a-9ee2-8b29d92fe1fb}}}",
+                                                "assertion": "equal",
+                                                "field": "{{{69f37609-4a30-4293-9b34-c82d2c1b9c7c}}}",
+                                                "type": "string"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-dataset": {
+            "type": "appmixer.axiom.datasets.UpdateDataset",
+            "x": 736,
+            "y": 160,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "datasetId": {
+                                        "25d61200-f000-4a93-9611-03ce07cdfc60": {
+                                            "variable": "$.create-dataset.out.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "description": {
+                                        "26707df2-f58e-4dc7-9e4d-72119a9965eb": {
+                                            "variable": "$.set-variables.out.updatedDescription",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "datasetId": "{{{25d61200-f000-4a93-9611-03ce07cdfc60}}}",
+                                    "description": "{{{26707df2-f58e-4dc7-9e4d-72119a9965eb}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1360,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-get": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-dataset": {
+            "type": "appmixer.axiom.datasets.DeleteDataset",
+            "x": 1568,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "datasetId": {
+                                        "var-delete-dataset-id": {
+                                            "variable": "$.create-dataset.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "datasetId": "{{{var-delete-dataset-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1808,
+            "y": 16,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-dataset": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "delete-dataset": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    },
+                                    "testCase": {
+                                        "9631051e-75dc-4a82-a5c5-c1e7ff88e082": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "{{{9631051e-75dc-4a82-a5c5-c1e7ff88e082}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Axiom - Dataset Lifecycle",
+    "notes": {},
+    "type": "automation"
+}

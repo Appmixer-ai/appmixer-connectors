@@ -1,0 +1,396 @@
+{
+    "flow": {
+        "start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 100,
+            "y": 200,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "create-folder": {
+            "type": "appmixer.dropbox.files.CreateFolder",
+            "x": 300,
+            "y": 200,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "path": {},
+                                    "autorename": {}
+                                },
+                                "lambda": {
+                                    "path": "/E2E-Test-Folder",
+                                    "autorename": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-folder-created": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 500,
+            "y": 100,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-folder": [
+                        "newFolder"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-folder": {
+                            "newFolder": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "path-check": {
+                                            "variable": "$.create-folder.newFolder.path_display",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{path-check}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-text-file": {
+            "type": "appmixer.dropbox.files.CreateTextFile",
+            "x": 500,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-folder": [
+                        "newFolder"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-folder": {
+                            "newFolder": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "path": {
+                                        "folder-path": {
+                                            "variable": "$.create-folder.newFolder.path_display",
+                                            "functions": []
+                                        }
+                                    },
+                                    "text": {},
+                                    "autorename": {}
+                                },
+                                "lambda": {
+                                    "path": "{{{folder-path}}}/test-file.txt",
+                                    "text": "This is a test file for E2E testing.",
+                                    "autorename": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-file-created": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 700,
+            "y": 250,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-text-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-text-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-check": {
+                                            "variable": "$.create-text-file.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "test-file.txt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-file-metadata": {
+            "type": "appmixer.dropbox.files.GetFileMetadata",
+            "x": 700,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-text-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-text-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "path": {
+                                        "file-path": {
+                                            "variable": "$.create-text-file.out.path_display",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "path": "{{{file-path}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-metadata-retrieved": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 400,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-file-metadata": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-file-metadata": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "tag-check": {
+                                            "variable": "$.get-file-metadata.out[\".tag\"]",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{tag-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "file"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "rename-file": {
+            "type": "appmixer.dropbox.files.RenameFile",
+            "x": 700,
+            "y": 550,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-text-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-text-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "path": {
+                                        "file-path": {
+                                            "variable": "$.create-text-file.out.path_display",
+                                            "functions": []
+                                        }
+                                    },
+                                    "newName": {}
+                                },
+                                "lambda": {
+                                    "path": "{{{file-path}}}",
+                                    "newName": "renamed-test-file.txt"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-file-renamed": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 900,
+            "y": 550,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "rename-file": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "rename-file": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "name-check": {
+                                            "variable": "$.rename-file.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{name-check}}}",
+                                                "assertion": "equal",
+                                                "expected": "renamed-test-file.txt"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1100,
+            "y": 325,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-folder-created": [
+                        "out"
+                    ],
+                    "assert-file-created": [
+                        "out"
+                    ],
+                    "assert-metadata-retrieved": [
+                        "out"
+                    ],
+                    "assert-file-renamed": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1300,
+            "y": 325,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Dropbox - crud",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "name": "E2E Dropbox - crud",
+    "type": "automation",
+    "notes": {}
+}
