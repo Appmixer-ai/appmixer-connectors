@@ -191,5 +191,29 @@ module.exports = [
         messageIncludes: 'no MakeApiCall component',
         paths: ['appmixer/utils/ai/bundle.json'],
         reason: 'Internal AI utility module backed by the platform-level OpenAI key (context.config.apiKey), not a per-user connector credential. Exposing a generic "call any OpenAI endpoint" on a shared system key is inappropriate, and the dedicated openai / ai.openai connectors already provide MakeApiCall.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: [
+            'google/calendar/DeleteEvent/component.json',
+            'google/calendar/DeleteCalendar/component.json'
+        ],
+        reason: 'Pre-existing components (predate the delete-shape standard). They emit the deleted id on a "deleted" port; switching to context.sendJson({}, \'out\') would change the output contract and break existing user flows that read that port. Deferred to a future major version of the connector.'
+    },
+    {
+        validator: 'delete-update-shape',
+        messageIncludes: 'single output port named "out"',
+        paths: [
+            'google/calendar/DeleteEvent/component.json',
+            'google/calendar/DeleteCalendar/component.json'
+        ],
+        reason: 'Pre-existing components (predate the delete-shape standard). Renaming the "deleted" output port to "out" is a breaking change for existing flows wired to that port, so it is deferred to a future major version of the connector.'
+    },
+    {
+        validator: 'find-component-standards',
+        messageIncludes: 'must declare an "outputType" input',
+        paths: ['google/calendar/FindEvent/component.json'],
+        reason: 'Pre-existing component (predates the Find outputType standard). It emits one message per matching event on "out" plus a "notFound" port; adding an outputType input would change its output shape and break existing flows, so it is deferred to a future major version of the connector.'
     }
 ];

@@ -34,7 +34,10 @@ async function getEvents(context, { calendarId, updatedMin, nextPageToken } = {}
 // happened after the baseline.
 function isDeleted(item, since) {
 
-    return item.status === 'cancelled' && item.updated > since;
+    // Compare parsed timestamps (ms) rather than RFC3339 strings: Google may return
+    // timestamps with a timezone offset or different sub-second precision, for which
+    // lexicographic ordering does not match chronological ordering.
+    return item.status === 'cancelled' && new Date(item.updated).getTime() > new Date(since).getTime();
 }
 
 /**

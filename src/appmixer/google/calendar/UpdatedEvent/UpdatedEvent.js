@@ -35,7 +35,11 @@ async function getEvents(context, { calendarId, updatedMin, nextPageToken } = {}
 // the job of the NewEvent trigger - from also firing here.
 function isUpdated(item, since) {
 
-    return item.updated > since && item.created <= since;
+    // Compare parsed timestamps (ms) rather than RFC3339 strings: Google may return
+    // timestamps with a timezone offset or different sub-second precision, for which
+    // lexicographic ordering does not match chronological ordering.
+    const sinceMs = new Date(since).getTime();
+    return new Date(item.updated).getTime() > sinceMs && new Date(item.created).getTime() <= sinceMs;
 }
 
 /**
