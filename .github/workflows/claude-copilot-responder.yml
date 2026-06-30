@@ -18,8 +18,8 @@ name: Claude Copilot Responder (auto-address Copilot review)
 # push, our push can trigger a fresh Copilot review -> a fresh run here. That is
 # intended (Copilot found new issues), and it self-terminates: once Claude has
 # nothing actionable left it makes no push, so Copilot has nothing new to react
-# to. If you want a hard stop, lower `max-iterations` style guarding by labeling
-# (see the "Guard" note in the resolve step).
+# to. There is also a hard stop: the Resolve step counts the Copilot reviews
+# already on the PR and skips once that exceeds MAX_ROUNDS (default 5).
 #
 # Testing: use "Run workflow" (workflow_dispatch) with a PR number (and an
 # optional explicit review id). Without a review id we pick that PR's latest
@@ -114,8 +114,8 @@ jobs:
             ROUNDS=$(gh api --paginate "repos/$REPO/pulls/$NUM/reviews" \
               --jq '[.[] | select((.user.login // "" | ascii_downcase) | contains("copilot"))] | length' \
               | awk '{s+=$1} END {print s+0}')
-            if [ "$ROUNDS" -gt "$MAX_ROUNDS" ]; then
-              echo "PR #$NUM has $ROUNDS Copilot reviews (> MAX_ROUNDS=$MAX_ROUNDS) — iteration cap reached, skipping."
+            if [ "$ROUNDS" -gt "${MAX_ROUNDS:-5}" ]; then
+              echo "PR #$NUM has $ROUNDS Copilot reviews (> MAX_ROUNDS=${MAX_ROUNDS:-5}) — iteration cap reached, skipping."
               PROCEED=false
             fi
           fi
