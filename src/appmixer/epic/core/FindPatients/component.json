@@ -1,0 +1,86 @@
+{
+    "name": "appmixer.epic.core.FindPatients",
+    "label": "Find Patients",
+    "description": "Search for patients in Epic by demographics (name, birth date) or by an MRN/identifier. Provide at least one search criterion. Returns up to one page of results (Epic's default page size).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:epic"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "family": { "type": "string" },
+                    "given": { "type": "string" },
+                    "birthdate": { "type": "string", "format": "date" },
+                    "identifier": { "type": "string" },
+                    "outputType": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "family": {
+                        "type": "text",
+                        "label": "Family Name",
+                        "index": 1,
+                        "tooltip": "The patient's family (last) name."
+                    },
+                    "given": {
+                        "type": "text",
+                        "label": "Given Name",
+                        "index": 2,
+                        "tooltip": "The patient's given (first) name."
+                    },
+                    "birthdate": {
+                        "type": "date-time",
+                        "label": "Birth Date",
+                        "index": 3,
+                        "config": { "enableTime": false },
+                        "tooltip": "The patient's date of birth."
+                    },
+                    "identifier": {
+                        "type": "text",
+                        "label": "Identifier (MRN)",
+                        "index": 4,
+                        "tooltip": "An identifier such as the medical record number, optionally as system|value."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/epic/core/FindPatients?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ]
+}

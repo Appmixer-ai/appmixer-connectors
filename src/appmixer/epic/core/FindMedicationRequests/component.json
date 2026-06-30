@@ -1,0 +1,66 @@
+{
+    "name": "appmixer.epic.core.FindMedicationRequests",
+    "label": "Find Medication Requests",
+    "description": "Retrieve the medication orders (prescriptions) for a patient in Epic. Returns up to one page of results (Epic's default page size).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:epic"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "patient": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["patient"]
+            },
+            "inspector": {
+                "inputs": {
+                    "patient": {
+                        "type": "text",
+                        "label": "Patient ID",
+                        "index": 1,
+                        "tooltip": "The FHIR ID of the patient. Use Find Patients to look it up."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/epic/core/FindMedicationRequests?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/patient": "any",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ]
+}
