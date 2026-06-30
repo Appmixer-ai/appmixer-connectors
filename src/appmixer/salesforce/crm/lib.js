@@ -97,6 +97,164 @@ module.exports = {
         return record;
     },
 
+    /**
+     * Escape a value so it can be safely embedded in a SOQL string literal.
+     * @param {*} value
+     * @return {string}
+     */
+    escapeSoql(value) {
+
+        return String(value).replace(/'/g, '\\\'');
+    },
+
+    /**
+     * Common Salesforce datetime fields present on standard objects. Used to
+     * reformat values to ISO before emitting (Salesforce returns a non-ISO
+     * datetime format that the AJV schema validator rejects).
+     */
+    COMMON_DATE_FIELDS: [
+        'CreatedDate',
+        'LastModifiedDate',
+        'SystemModstamp',
+        'LastViewedDate',
+        'LastReferencedDate',
+        'LastActivityDate',
+        'EmailBouncedDate',
+        'LastCURequestDate',
+        'LastCUUpdateDate',
+        'CloseDate',
+        'ConvertedDate'
+    ],
+
+    /**
+     * Reformat the common Salesforce datetime fields of a record to ISO. Only
+     * fields actually present (and truthy) on the record are touched.
+     * @param {Object} record
+     * @return {Object} record
+     */
+    formatSalesforceDates(record) {
+
+        this.COMMON_DATE_FIELDS.forEach(field => {
+            if (record[field]) {
+                record[field] = this.formatDate(record[field]);
+            }
+        });
+        return record;
+    },
+
+    /**
+     * Build the initial { recordId: fieldValue } map of a monitored field, used
+     * by a status/field-change trigger's start() to seed known state.
+     * Optionally scoped to a single record.
+     * @param {Object} context
+     * @param {Object} params - { objectName, fieldName, recordId }
+     * @return {Promise<Object>}
+     */
+    async getFieldValueMap(context, { objectName, fieldName, recordId }) {
+
+        const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
+        const soql = `SELECT Id,${fieldName} FROM ${objectName}${where}`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        const map = {};
+        ((data && data.records) || []).forEach(record => {
+            map[record['Id']] = record[fieldName];
+        });
+        return map;
+    },
+
+    /**
+     * Fetch full records of an object modified since the given date, newest
+     * first. Optionally scoped to a single record.
+     * @param {Object} context
+     * @param {Object} params - { objectName, since, recordId, limit }
+     * @return {Promise<Array>}
+     */
+    async getModifiedRecords(context, { objectName, since, recordId, limit = 200 }) {
+
+        let where = `LastModifiedDate >= ${this.Date.toDateTimeLiteral(since)}`;
+        if (recordId) {
+            where += ` AND Id = '${this.escapeSoql(recordId)}'`;
+        }
+        const soql = `SELECT FIELDS(ALL) FROM ${objectName} WHERE ${where} ORDER BY LastModifiedDate DESC LIMIT ${limit}`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        return (data && data.records) || [];
+    },
+
+    /**
+     * Fetch the single most recently modified record of an object. Optionally
+     * scoped to a single record. Used by trigger test() methods to emit one
+     * realistic item for Flow Test Mode.
+     * @param {Object} context
+     * @param {Object} params - { objectName, recordId }
+     * @return {Promise<Object|null>}
+     */
+    async getLatestRecord(context, { objectName, recordId }) {
+
+        const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
+        const soql = `SELECT FIELDS(ALL) FROM ${objectName}${where} ORDER BY LastModifiedDate DESC LIMIT 1`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        return ((data && data.records) || [])[0] || null;
+    },
+
+    /**
+     * Shared start() for status/field-change triggers: seed the known value of
+     * the monitored field for every (optionally a single) record.
+     */
+    async runFieldChangeStart(context, { objectName, fieldName, recordId }) {
+
+        const known = await this.getFieldValueMap(context, { objectName, fieldName, recordId });
+        await context.saveState({ known });
+    },
+
+    /**
+     * Shared tick() for status/field-change triggers: emit each modified record
+     * whose monitored field value changed since the previous tick.
+     */
+    async runFieldChangeTick(context, { objectName, fieldName, recordId, outputPortName }) {
+
+        const since = new Date();
+        const lastSince = context.state.since || since;
+
+        const records = await this.getModifiedRecords(context, {
+            objectName,
+            since: lastSince,
+            recordId
+        });
+
+        const known = context.state.known || {};
+        const newKnown = { ...known };
+        const triggered = [];
+
+        records.forEach(record => {
+            const id = record['Id'];
+            const prev = known[id];
+            const curr = record[fieldName];
+            // Only emit when we knew a previous value and it actually changed.
+            if (prev !== undefined && prev !== curr) {
+                triggered.push(record);
+            }
+            newKnown[id] = curr;
+        });
+
+        await Promise.all(triggered.map(record => {
+            return context.sendJson(this.formatSalesforceDates(record), outputPortName);
+        }));
+
+        await context.saveState({ known: newKnown, since });
+    },
+
     // API
     api: {
         async getObjectFields(context, { objectName, cache = false }) {
