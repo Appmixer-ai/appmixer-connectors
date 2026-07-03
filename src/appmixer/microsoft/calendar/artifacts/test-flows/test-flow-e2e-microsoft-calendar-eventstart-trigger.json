@@ -51,21 +51,10 @@
                 "onError": "stopFlow"
             }
         },
-        "6df718d0-c2dc-4691-a109-cb5481f65512": {
-            "type": "appmixer.microsoft.calendar.EventStart",
-            "label": "EventStart (trigger under test)",
-            "x": 48,
-            "y": 480,
-            "source": {},
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "9b7fa113-61a0-4460-ab04-c889e1c56e0f": {
-            "type": "appmixer.microsoft.calendar.CreateEvent",
-            "label": "CreateEvent (test data)",
-            "x": 464,
+        "3fbb1c65-8f6e-4f5a-9d2b-6a0c47e91d3a": {
+            "type": "appmixer.utils.timers.Wait",
+            "label": "Wait (let the trigger start ticking)",
+            "x": 432,
             "y": 32,
             "source": {
                 "in": {
@@ -78,6 +67,48 @@
                 "transform": {
                     "in": {
                         "556f5c20-b92f-4d15-8732-2458800ec4e5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6df718d0-c2dc-4691-a109-cb5481f65512": {
+            "type": "appmixer.microsoft.calendar.EventStart",
+            "label": "EventStart (trigger under test)",
+            "x": 48,
+            "y": 320,
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9b7fa113-61a0-4460-ab04-c889e1c56e0f": {
+            "type": "appmixer.microsoft.calendar.CreateEvent",
+            "label": "CreateEvent (test data, event starting now)",
+            "x": 608,
+            "y": 32,
+            "source": {
+                "in": {
+                    "3fbb1c65-8f6e-4f5a-9d2b-6a0c47e91d3a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "556f5c20-b92f-4d15-8732-2458800ec4e5": {},
+                        "3fbb1c65-8f6e-4f5a-9d2b-6a0c47e91d3a": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -94,7 +125,11 @@
                                     "start": {
                                         "var-start": {
                                             "variable": "$.6d8abfc7-d49c-401d-8d4b-a2cc601162b4.out.started",
-                                            "functions": []
+                                            "functions": [
+                                                {
+                                                    "name": "g_now"
+                                                }
+                                            ]
                                         }
                                     },
                                     "end": {
@@ -132,11 +167,57 @@
             },
             "version": "1.0.1"
         },
+        "b2d74a90-5c1e-4f3b-8a6d-91e0c25f7b48": {
+            "type": "appmixer.utils.test.Assert",
+            "label": "Assert: test event created",
+            "x": 816,
+            "y": 32,
+            "source": {
+                "in": {
+                    "9b7fa113-61a0-4460-ab04-c889e1c56e0f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9b7fa113-61a0-4460-ab04-c889e1c56e0f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "v-id": {
+                                            "variable": "$.9b7fa113-61a0-4460-ab04-c889e1c56e0f.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{v-id}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
         "5eb82eaa-7eee-4e94-ad4d-08b97be1f9b7": {
             "type": "appmixer.utils.test.Assert",
-            "label": "Assert: EventStart fired for the ongoing event",
-            "x": 1088,
-            "y": 480,
+            "label": "Assert: EventStart trigger fired with event id",
+            "x": 816,
+            "y": 320,
             "source": {
                 "in": {
                     "6df718d0-c2dc-4691-a109-cb5481f65512": [
@@ -181,7 +262,7 @@
         "7bf8c434-a57e-4bb5-9840-e7e3c2861687": {
             "type": "appmixer.microsoft.calendar.DeleteEvent",
             "label": "DeleteEvent (cleanup)",
-            "x": 1296,
+            "x": 816,
             "y": 480,
             "source": {
                 "in": {
@@ -219,10 +300,13 @@
         },
         "8442deba-ab93-4b92-8f60-3b92269e4163": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1712,
+            "x": 1072,
             "y": 176,
             "source": {
                 "in": {
+                    "b2d74a90-5c1e-4f3b-8a6d-91e0c25f7b48": [
+                        "out"
+                    ],
                     "5eb82eaa-7eee-4e94-ad4d-08b97be1f9b7": [
                         "out"
                     ],
@@ -243,7 +327,7 @@
         },
         "00332b11-dd87-4874-a14d-3d3071dc8951": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1920,
+            "x": 1264,
             "y": 176,
             "source": {
                 "in": {
@@ -288,5 +372,8 @@
     },
     "name": "E2E MS Calendar - EventStart trigger",
     "type": "automation",
-    "notes": {}
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
 }
