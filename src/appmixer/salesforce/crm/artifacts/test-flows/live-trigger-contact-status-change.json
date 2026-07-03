@@ -1,0 +1,136 @@
+{
+    "name": "LIVE Salesforce - ContactStatusChange trigger (tick test)",
+    "description": "HELPER (manual live tick test, not auto-run). Verifies the ContactStatusChange trigger fires when the monitored field (Title here, standing in for a custom Status field) changes on any Contact: start the flow, wait ~1 tick (baseline seeds the known value per Contact), change an existing Contact's Title in the same org, then the next tick emits the Contact -> Assert(Id & Title notEmpty). Contact ID left empty to monitor every Contact. Not auto-runnable (needs the external field change between ticks).",
+    "type": "automation",
+    "notes": {},
+    "flow": {
+        "contact-status": {
+            "type": "appmixer.salesforce.crm.ContactStatusChange",
+            "x": 256,
+            "y": 192,
+            "version": "1.1.2",
+            "source": {},
+            "config": {
+                "properties": {
+                    "fieldName": "Title"
+                }
+            }
+        },
+        "assert-status": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 448,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "contact-status": [
+                        "contact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "contact-status": {
+                            "contact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-id": {
+                                            "variable": "$.contact-status.contact.Id",
+                                            "functions": []
+                                        },
+                                        "field-title": {
+                                            "variable": "$.contact-status.contact.Title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-title}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 640,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-status": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 832,
+            "y": 192,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {
+                                        "var-tc": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_flowName"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "result": {
+                                        "var-res": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "{{{var-tc}}}",
+                                    "result": "{{{var-res}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
