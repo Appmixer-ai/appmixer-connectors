@@ -1,30 +1,86 @@
 'use strict';
 
+const FormData = require('form-data');
 const componentTool = require('../tool');
 const agentModule = require('../agent');
 const memory = require('../memory');
 const lib = require('../lib');
 
+function getKnowledgebaseApiUrl(context) {
+    const base = context.config.knowledgebaseApi || 'https://charismatic-charisma-production.up.railway.app';
+    return base.replace(/\/$/, '');
+}
+
+async function ingestFile(context, kbFileId) {
+    const fileInfo = await context.getFileInfo(kbFileId);
+    const content = await context.loadFile(kbFileId);
+
+    const form = new FormData();
+    form.append('file', content, {
+        filename: fileInfo.filename,
+        contentType: fileInfo.contentType || 'application/octet-stream'
+    });
+    form.append('docId', kbFileId);
+
+    await context.httpRequest({
+        url: `${getKnowledgebaseApiUrl(context)}/knowledgebases/${context.componentId}/ingest`,
+        method: 'POST',
+        data: form,
+        headers: form.getHeaders()
+    });
+
+    await context.log({ step: 'knowledgebase-ingest', fileId: kbFileId, filename: fileInfo.filename });
+}
+
+async function retrieveChunks(context, prompt, topK = 10) {
+    const { data } = await context.httpRequest({
+        url: `${getKnowledgebaseApiUrl(context)}/knowledgebases/${context.componentId}/retrieve`,
+        method: 'POST',
+        data: { input: prompt, topK }
+    });
+    return data?.results || [];
+}
+
+async function deleteKnowledgebase(context) {
+    await context.httpRequest({
+        url: `${getKnowledgebaseApiUrl(context)}/knowledgebases/${context.componentId}`,
+        method: 'DELETE'
+    });
+    await context.log({ step: 'knowledgebase-delete', knowledgebaseId: context.componentId });
+}
+
+function getKbFileIds(context) {
+    return ((context.properties.knowledgebase?.ADD) || [])
+        .map(item => item?.fileId || null)
+        .filter(Boolean);
+}
 
 module.exports = {
 
-    /**
-     * Appmixer start lifecycle: collect and cache tool definitions from the flow graph.
-     */
-    start: async function(context) {
-
-        await componentTool.collectComponentTools(context);
+    stop: async function(context) {
+        const kbFileIds = getKbFileIds(context);
+        if (kbFileIds.length > 0) {
+            try {
+                await deleteKnowledgebase(context);
+            } catch (err) {
+                await context.log({ step: 'knowledgebase-delete-error', error: err.message });
+            }
+        }
     },
 
-    /**
-     * Appmixer receive lifecycle: orchestrate a full agent turn.
-     *
-     * 1. Rebuild tool definitions from cached manifests + live flowDescriptor
-     * 2. Load agent memory for the thread
-     * 3. Run the agentic loop
-     * 4. Save new messages and updated memory back to the store
-     * 5. Emit the answer
-     */
+    start: async function(context) {
+        await componentTool.collectComponentTools(context);
+
+        const kbFileIds = getKbFileIds(context);
+        for (const fileId of kbFileIds) {
+            try {
+                await ingestFile(context, fileId);
+            } catch (err) {
+                await context.log({ step: 'knowledgebase-ingest-error', fileId, error: err.message });
+            }
+        }
+    },
+
     receive: async function(context) {
 
         await lib.publishChatProgressEvent(context, 'start', 'Thinking...');
@@ -36,8 +92,6 @@ module.exports = {
             throw new context.CancelError('Prompt is required');
         }
 
-        // Rebuild tool definitions on every receive() so "Model Defined Parameter" field
-        // markings are always evaluated against the current flow configuration.
         const componentToolsDef = await componentTool.buildComponentToolDefs(context);
 
         let memoryData = {};
@@ -45,11 +99,30 @@ module.exports = {
             memoryData = await memory.loadMemory(context, storeId, threadId);
         }
 
+        let instructions = context.properties.instructions || 'You are a helpful assistant.';
+
+        const kbFileIds = getKbFileIds(context);
+        if (kbFileIds.length > 0) {
+            const chunks = await retrieveChunks(context, prompt);
+            if (chunks.length > 0) {
+                const contextBlock = chunks
+                    .map(c => `[Source: ${c.doc}]\n${c.text}`)
+                    .join('\n\n---\n\n');
+                instructions += `\n\n## Knowledgebase\n\n
+                    Answer using the retrieved context below.
+                    If the answer is not in the context, say so.
+                    If the answer is in the context,
+                    do not mention that you used the knowledgebase as a context,
+                    just answer directly with the information provided.\n\n
+                    ${contextBlock}`;
+            }
+        }
+
         const agentTimeStart = Date.now();
 
         const response = await agentModule.agent(
             context,
-            context.properties.instructions || 'You are a helpful assistant.',
+            instructions,
             prompt,
             fileId,
             componentToolsDef,
@@ -61,7 +134,6 @@ module.exports = {
         if (threadId) {
             const newMessages = response.messages;
             await memory.appendMessages(context, storeId, threadId, newMessages);
-
             memoryData.messages = memoryData.messages.concat(newMessages);
             await memory.saveMemory(context, storeId, threadId, memoryData);
         }
