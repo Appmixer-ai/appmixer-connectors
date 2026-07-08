@@ -87,13 +87,23 @@ async function buildUserContent(context, prompt, fileId) {
  *
  * Returns { messages, answer }.
  */
-async function agent(context, instructions, prompt, fileId, componentToolsDef, memory) {
+// langfuse is optionally passed in from the caller when it already owns the trace.
+// When provided the agent span already exists as the active context — just run().
+// When absent, agent() creates its own tracer and wraps run() in runWithAgentSpan().
+async function agent(context, instructions, prompt, fileId, componentToolsDef, memory, langfuse = {}) {
 
     const model = provider.createModel(context);
     const isStream = !!context.properties.stream;
     const maxSteps = context.config.AI_AGENT_MAX_ATTEMPTS || AI_AGENT_MAX_ATTEMPTS;
 
-    const { provider: telemetryProvider, tracer: otelTracer, otelApi } = tracer.createLangfuseTracer(context);
+    const {
+        provider: telemetryProvider,
+        tracer: otelTracer,
+        otelApi
+    } = langfuse.tracer
+        ? { provider: langfuse.provider, tracer: langfuse.tracer, otelApi: langfuse.otelApi }
+        : tracer.createLangfuseTracer(context);
+
     const threadId = context.messages?.in?.content?.threadId;
 
     // Non-streaming path still uses SDK auto-telemetry (disabled for streaming below).
@@ -160,11 +170,13 @@ async function agent(context, instructions, prompt, fileId, componentToolsDef, m
         }
     };
 
-    if (telemetryProvider && otelTracer && otelApi) {
+    if (!langfuse.tracer && telemetryProvider && otelTracer && otelApi) {
+        // Caller has no active trace — own the agent span lifecycle here.
         await runWithAgentSpan(context, otelTracer, otelApi, telemetryProvider, prompt, threadId, run,
             () => finalText,
             async () => context.stateGet('usage'));
     } else {
+        // Caller already established the agent span in the active context — just run.
         await run();
     }
 
