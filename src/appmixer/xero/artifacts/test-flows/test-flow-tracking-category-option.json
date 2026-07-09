@@ -1,320 +1,325 @@
 {
-    "err": "{\"message\":\"Access token not found for component list-categories\",\"data\":{\"componentId\":\"list-categories\",\"componentType\":\"appmixer.xero.accounting.ListTrackingCategories\"},\"code\":1,\"name\":\"TokenError\",\"stack\":\"TokenError: Access token not found for component list-categories\\n    at TokenHandler.prepareServiceForComponent (/usr/src/appmixer/engine/src/auth/TokenHandler.js:208:19)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\\n    at async TokenHandler.injectServiceData (/usr/src/appmixer/engine/src/auth/TokenHandler.js:140:29)\\n    at async Factory.init (/usr/src/appmixer/engine/src/component/Factory.js:106:13)\\n    at async /usr/src/appmixer/engine/src/component/Factory.js:350:17\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:268:21)\"}",
+    "name": "E2E Xero - Create Tracking Category Option",
     "flow": {
-        "after-all": {
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            },
+        "ac78b25d-ace9-46e3-afcd-b28ea29410bd": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 336,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "41e84da4-223a-42f2-9d37-43e504b36f9e": {
+            "type": "appmixer.xero.accounting.ListTenants",
+            "x": 512,
+            "y": 320,
             "source": {
                 "in": {
-                    "assert-create": [
+                    "ac78b25d-ace9-46e3-afcd-b28ea29410bd": [
                         "out"
                     ]
                 }
             },
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1152,
-            "y": 112
-        },
-        "assert-create": {
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "transform": {
                     "in": {
-                        "create-option": {
+                        "ac78b25d-ace9-46e3-afcd-b28ea29410bd": {
                             "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "outputType": "item"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "List Tenants"
+        },
+        "b9f325f3-837e-45f8-9c1e-60e4797bde03": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "41e84da4-223a-42f2-9d37-43e504b36f9e": [
+                        "tenants"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "41e84da4-223a-42f2-9d37-43e504b36f9e": {
+                            "tenants": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "tenantId",
+                                                "text": "{{{fd28319f-0462-4c72-b8bd-3489be8d1408}}}"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "optionName",
+                                                "text": "E2E Option"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {
+                                        "fd28319f-0462-4c72-b8bd-3489be8d1408": {
+                                            "functions": [],
+                                            "variable": "$.41e84da4-223a-42f2-9d37-43e504b36f9e.tenants.tenantId"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e41a07e8-8711-4b9b-8823-064da9db2114": {
+            "type": "appmixer.xero.accounting.ListTrackingCategories",
+            "x": 864,
+            "y": 320,
+            "source": {
+                "in": {
+                    "b9f325f3-837e-45f8-9c1e-60e4797bde03": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b9f325f3-837e-45f8-9c1e-60e4797bde03": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "tenantId": "{{{c4ebff94-48eb-4225-b14a-783e63e06c82}}}",
+                                    "outputType": "item"
+                                },
+                                "modifiers": {
+                                    "tenantId": {
+                                        "c4ebff94-48eb-4225-b14a-783e63e06c82": {
+                                            "functions": [],
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.tenantId"
+                                        }
+                                    },
+                                    "outputType": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "List Tracking Categories (pick one)"
+        },
+        "cc10b5d9-10a2-4a55-b207-08db9a9dfe2c": {
+            "type": "appmixer.xero.accounting.CreateTrackingCategoryOption",
+            "x": 1040,
+            "y": 320,
+            "source": {
+                "in": {
+                    "e41a07e8-8711-4b9b-8823-064da9db2114": [
+                        "trackingCategories"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e41a07e8-8711-4b9b-8823-064da9db2114": {
+                            "trackingCategories": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "tenantId": "{{{93a95770-54ca-4eb0-9439-7a24d43e9dfc}}}",
+                                    "trackingCategoryId": "{{{99e33545-6d2d-4e2d-b87a-f8f9323e6354}}}",
+                                    "name": "{{{38041722-d893-49f8-b4aa-343d24ff565b}}}"
+                                },
+                                "modifiers": {
+                                    "tenantId": {
+                                        "93a95770-54ca-4eb0-9439-7a24d43e9dfc": {
+                                            "functions": [],
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.tenantId"
+                                        }
+                                    },
+                                    "trackingCategoryId": {
+                                        "99e33545-6d2d-4e2d-b87a-f8f9323e6354": {
+                                            "functions": [],
+                                            "variable": "$.e41a07e8-8711-4b9b-8823-064da9db2114.trackingCategories.TrackingCategoryID"
+                                        }
+                                    },
+                                    "name": {
+                                        "38041722-d893-49f8-b4aa-343d24ff565b": {
+                                            "functions": [],
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.optionName"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "Create Tracking Category Option"
+        },
+        "6453264c-61c5-48f0-abfb-ca1a519255ce": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1040,
+            "y": 128,
+            "source": {
+                "in": {
+                    "cc10b5d9-10a2-4a55-b207-08db9a9dfe2c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "cc10b5d9-10a2-4a55-b207-08db9a9dfe2c": {
+                            "out": {
+                                "type": "json2new",
                                 "lambda": {
                                     "expression": {
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{field-option-id}}}"
+                                                "field": "{{{1e911981-9d0c-4e4e-bb56-549119cb5779}}}"
                                             },
                                             {
                                                 "assertion": "equal",
-                                                "expected": "{{{expected-name}}}",
-                                                "field": "{{{field-name}}}"
-                                            },
-                                            {
-                                                "assertion": "notEmpty",
-                                                "field": "{{{field-status}}}"
+                                                "field": "{{{7aec015a-4994-4130-a052-1090f7242b45}}}",
+                                                "expected": "{{{3832fdab-f606-460f-a322-b823b87e63ef}}}"
                                             }
                                         ]
                                     }
                                 },
                                 "modifiers": {
                                     "expression": {
-                                        "expected-name": {
+                                        "1e911981-9d0c-4e4e-bb56-549119cb5779": {
                                             "functions": [],
-                                            "variable": "$.set-variables.out.optionName"
+                                            "variable": "$.cc10b5d9-10a2-4a55-b207-08db9a9dfe2c.out.TrackingOptionID"
                                         },
-                                        "field-name": {
+                                        "7aec015a-4994-4130-a052-1090f7242b45": {
                                             "functions": [],
-                                            "variable": "$.create-option.out.Name"
+                                            "variable": "$.cc10b5d9-10a2-4a55-b207-08db9a9dfe2c.out.Name"
                                         },
-                                        "field-option-id": {
+                                        "3832fdab-f606-460f-a322-b823b87e63ef": {
                                             "functions": [],
-                                            "variable": "$.create-option.out.TrackingOptionID"
-                                        },
-                                        "field-status": {
-                                            "functions": [],
-                                            "variable": "$.create-option.out.Status"
+                                            "variable": "$.b9f325f3-837e-45f8-9c1e-60e4797bde03.out.optionName"
                                         }
                                     }
-                                },
-                                "type": "json2new"
+                                }
                             }
                         }
                     }
                 }
-            },
+            }
+        },
+        "83567d45-6783-484e-b403-c01f7464e623": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1248,
+            "y": 320,
             "source": {
                 "in": {
-                    "create-option": [
+                    "6453264c-61c5-48f0-abfb-ca1a519255ce": [
                         "out"
                     ]
                 }
             },
-            "type": "appmixer.utils.test.Assert",
-            "x": 960,
-            "y": 112
-        },
-        "create-category": {
-            "config": {
-                "transform": {
-                    "in": {
-                        "set-variables": {
-                            "out": {
-                                "lambda": {
-                                    "name": "{{{var-category-name}}}",
-                                    "tenantId": "{{{var-tenant-id}}}"
-                                },
-                                "modifiers": {
-                                    "name": {
-                                        "var-category-name": {
-                                            "functions": [],
-                                            "variable": "$.set-variables.out.categoryName"
-                                        }
-                                    },
-                                    "tenantId": {
-                                        "var-tenant-id": {
-                                            "functions": [],
-                                            "variable": "$.set-variables.out.tenantId"
-                                        }
-                                    }
-                                },
-                                "type": "json2new"
-                            }
-                        }
-                    }
-                }
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             },
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            },
-            "type": "appmixer.xero.accounting.CreateTrackingCategory",
-            "x": 576,
-            "y": 112
-        },
-        "create-option": {
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-category": {
-                            "out": {
-                                "lambda": {
-                                    "name": "{{{var-option-name}}}",
-                                    "tenantId": "{{{var-tenant-id}}}",
-                                    "trackingCategoryId": "{{{var-category-id}}}"
-                                },
-                                "modifiers": {
-                                    "name": {
-                                        "var-option-name": {
-                                            "functions": [],
-                                            "variable": "$.set-variables.out.optionName"
-                                        }
-                                    },
-                                    "tenantId": {
-                                        "var-tenant-id": {
-                                            "functions": [],
-                                            "variable": "$.set-variables.out.tenantId"
-                                        }
-                                    },
-                                    "trackingCategoryId": {
-                                        "var-category-id": {
-                                            "functions": [],
-                                            "variable": "$.create-category.out.TrackingCategoryID"
-                                        }
-                                    }
-                                },
-                                "type": "json2new"
-                            }
-                        }
-                    }
-                }
-            },
-            "source": {
-                "in": {
-                    "create-category": [
-                        "out"
-                    ]
-                }
-            },
-            "type": "appmixer.xero.accounting.CreateTrackingCategoryOption",
-            "x": 768,
-            "y": 112
-        },
-        "list-tenants": {
             "config": {
                 "properties": {
-                    "account": "6a341625422c3ef50ebfd509"
-                },
-                "transform": {
-                    "in": {
-                        "on-start": {
-                            "out": {
-                                "lambda": {
-                                    "outputType": "item"
-                                },
-                                "modifiers": {},
-                                "type": "json2new"
-                            }
-                        }
-                    }
+                    "timeout": 180
                 }
-            },
+            }
+        },
+        "6b4c4577-82a1-4d7c-bdc1-38c31a0cf50b": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1440,
+            "y": 320,
             "source": {
                 "in": {
-                    "on-start": [
+                    "83567d45-6783-484e-b403-c01f7464e623": [
                         "out"
                     ]
                 }
             },
-            "type": "appmixer.xero.accounting.ListTenants",
-            "x": 192,
-            "y": 112
-        },
-        "on-start": {
-            "config": {},
-            "source": {},
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 0,
-            "y": 112
-        },
-        "process-results": {
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
             "config": {
                 "properties": {},
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "83567d45-6783-484e-b403-c01f7464e623": {
                             "out": {
-                                "lambda": {
-                                    "recipients": "test@appmixer.ai",
-                                    "result": "{{{result-var}}}",
-                                    "testCase": "E2E Xero - Create Tracking Category Option"
-                                },
+                                "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
+                                    "testCase": {},
                                     "result": {
-                                        "result-var": {
-                                            "functions": [],
-                                            "variable": "$.after-all.out"
+                                        "02156195-b6b0-4170-a7aa-0677706b0204": {
+                                            "variable": "$.83567d45-6783-484e-b403-c01f7464e623.out",
+                                            "functions": []
                                         }
-                                    },
-                                    "testCase": {}
+                                    }
                                 },
-                                "type": "json2new"
-                            }
-                        }
-                    }
-                }
-            },
-            "source": {
-                "in": {
-                    "after-all": [
-                        "out"
-                    ]
-                }
-            },
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1344,
-            "y": 112
-        },
-        "set-variables": {
-            "config": {
-                "transform": {
-                    "in": {
-                        "list-tenants": {
-                            "tenants": {
                                 "lambda": {
-                                    "variables": {
-                                        "ADD": [
-                                            {
-                                                "name": "tenantId",
-                                                "text": "{{{var-tenant-id}}}",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "name": "categoryName",
-                                                "text": "E2E Category - {{{var-cat-ts}}}",
-                                                "type": "text"
-                                            },
-                                            {
-                                                "name": "optionName",
-                                                "text": "E2E Option - {{{var-opt-ts}}}",
-                                                "type": "text"
-                                            }
-                                        ]
-                                    }
-                                },
-                                "modifiers": {
-                                    "variables": {
-                                        "var-cat-ts": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "var-opt-ts": {
-                                            "functions": [
-                                                {
-                                                    "name": "g_timestamp"
-                                                }
-                                            ]
-                                        },
-                                        "var-tenant-id": {
-                                            "functions": [],
-                                            "variable": "$.list-tenants.tenants.tenantId"
-                                        }
-                                    }
-                                },
-                                "type": "json2new"
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Xero",
+                                    "result": "{{{02156195-b6b0-4170-a7aa-0677706b0204}}}"
+                                }
                             }
                         }
                     }
                 }
-            },
-            "source": {
-                "in": {
-                    "list-tenants": [
-                        "tenants"
-                    ]
-                }
-            },
-            "type": "appmixer.utils.controls.SetVariable",
-            "x": 384,
-            "y": 112
+            }
         }
     },
-    "name": "E2E Xero - Create Tracking Category Option",
-    "notes": {},
-    "wizard": {
-        "fields": []
-    }
+    "type": "flow"
 }
