@@ -25,12 +25,6 @@ module.exports = [
         reason: 'The component already presents as "Find Issue Transitions" via its label; the internal name/folder is kept as GetIssueTransitions to avoid a breaking rename of a published component (it is referenced by existing flows and IssueMetadata.js). Renaming would require a major bundle bump and flow migration, which is intentionally deferred.'
     },
     {
-        validator: 'delete-update-shape',
-        messageIncludes: 'must declare at least one required input',
-        paths: ['jira/issues/UpdateIssue/component.json'],
-        reason: 'UpdateIssue builds its whole input inspector dynamically from IssueMetadata (the inPort uses a top-level source transform that returns the issue\'s fields), so the issue id is a metadata-driven field that cannot be enumerated as a static schema.required entry. The id IS required and validated at runtime (throw new context.CancelError in UpdateIssue.js).'
-    },
-    {
         validator: 'dynamic-outport-required-inputs',
         messageIncludes: 'ignoreAuth=true',
         paths: [
@@ -40,7 +34,16 @@ module.exports = [
             'microsoft/dynamics/GetObjectRecord/component.json',
             'microsoft/dynamics/ListAccounts/component.json',
             'microsoft/dynamics/ListContacts/component.json',
-            'microsoft/dynamics/ListLeads/component.json'
+            'microsoft/dynamics/ListLeads/component.json',
+            'microsoft/dynamics/DealStageChanged/component.json',
+            'microsoft/dynamics/NewAccount/component.json',
+            'microsoft/dynamics/NewContact/component.json',
+            'microsoft/dynamics/NewLead/component.json',
+            'microsoft/dynamics/NewObjectRecord/component.json',
+            'microsoft/dynamics/UpdatedAccount/component.json',
+            'microsoft/dynamics/UpdatedContact/component.json',
+            'microsoft/dynamics/UpdatedLead/component.json',
+            'microsoft/dynamics/UpdatedObjectRecord/component.json'
         ],
         reason: 'The output-port source is the DynamicEntity component, which calls the Dynamics 365 metadata API to build the variable picker. That call needs an active auth session, so ignoreAuth=true is intentionally omitted — adding it would make the dropdown request unauthenticated and fail.'
     },
