@@ -1,9 +1,70 @@
 'use strict';
 const pathModule = require('path');
+const crypto = require('crypto');
 
 const XeroClient = require('./XeroClient');
 
+// Default TTL for cached list/source calls. Kept short (2 min) because the same receive() also runs
+// during normal flow execution, so 2 min staleness on list endpoints is an acceptable tradeoff.
+const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000;
+
+function getCacheKey(obj) {
+    return crypto
+        .createHash('sha256')
+        .update(JSON.stringify(obj))
+        .digest('hex');
+}
+
 module.exports = {
+
+    getCacheKey,
+
+    /**
+     * Cache the result of `fn` (typically the final, post-pagination records array) so that the burst
+     * of live inspector source calls the designer fires when a Xero component is opened does not hammer
+     * Xero's tight rate limits (60 calls/min, 5 concurrent per tenant) and trip 429s.
+     *
+     * - The cache key includes the caller's access token (user identity) plus the provided `keyParts`
+     *   (tenant, endpoint, params), so entries are never shared across users/tenants/queries.
+     * - `context.lock(key)` also deduplicates the concurrent burst: the first caller populates the
+     *   cache while the rest wait on the lock and then read the freshly cached value.
+     * - Caching a single assembled array saves up to ~100 upstream (paginated) calls, not just one.
+     * - TTL is configurable via `context.config.listCacheTTL` (defaults to 120s, like ServiceNow).
+     *
+     * Falls back to a direct `fn()` call when lock/cache primitives are not available in the context.
+     *
+     * @param {object} context Component context.
+     * @param {object} keyParts Parts that uniquely identify the request (e.g. { tenantId, url, params }).
+     * @param {Function} fn Async function that performs the actual fetch and returns the records.
+     * @returns {Promise<*>} The cached (or freshly fetched) result.
+     */
+    async withCache(context, keyParts, fn) {
+
+        if (!context.lock || !context.staticCache) {
+            return fn();
+        }
+
+        const token = context.auth?.accessToken || context.accessToken;
+        const key = 'xero:' + getCacheKey({ ...keyParts, token });
+
+        let lock;
+        try {
+            lock = await context.lock(key);
+
+            const cached = await context.staticCache.get(key);
+            if (cached) {
+                context.log({ step: 'Xero cache hit', keyParts });
+                return cached;
+            }
+
+            const result = await fn();
+            const ttl = context.config?.listCacheTTL || DEFAULT_LIST_CACHE_TTL;
+            await context.staticCache.set(key, result, ttl);
+            return result;
+        } finally {
+            lock?.unlock();
+        }
+    },
 
     // Expects standardized outputType: 'item', 'items', 'file'
     async sendArrayOutput({ context, outputPortName = 'out', outputType = 'items', records = [] }) {

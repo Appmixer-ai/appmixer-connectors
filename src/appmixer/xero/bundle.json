@@ -1,6 +1,6 @@
 {
     "name": "appmixer.xero",
-    "version": "1.6.1",
+    "version": "1.6.2",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -41,6 +41,10 @@
         "1.6.1": [
             "Fixed account identity resolution: profile info now comes from the OpenID Connect userinfo endpoint (the authenticated user) instead of the organisation's first user, so two users on the same Xero org no longer collapse to the same connected account.",
             "Re-authentication required: existing Xero connections still carry the old (organisation's first user) identity. Remove and re-authorize each affected connection after upgrading for the correct user to resolve."
+        ],
+        "1.6.2": [
+            "Cache inspector/list source calls (ListTenants, ListContacts, ListAccounts, ListTrackingCategories) with context.lock + staticCache and a configurable TTL (context.config.listCacheTTL, default 120s) to avoid Xero 429 rate-limit errors in the designer.",
+            "XeroClient: honor Retry-After on 429 responses so a single throttled page does not fail the whole paginated fetch."
         ]
     }
 }

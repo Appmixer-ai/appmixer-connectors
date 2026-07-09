@@ -1,5 +1,5 @@
 'use strict';
-const { sendArrayOutput } = require('../../commons');
+const { sendArrayOutput, withCache } = require('../../commons');
 const XeroClient = require('../../XeroClient');
 
 const outputPortName = 'accounts';
@@ -15,8 +15,12 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
-        const xc = new XeroClient(context, tenantId);
-        const records = await xc.requestPaginated('GET', '/api.xro/2.0/Accounts', { params });
+        // Cache the assembled accounts array so repeated inspector source calls reuse one fetch.
+        const records = await withCache(
+            context,
+            { tenantId, url: '/api.xro/2.0/Accounts', params },
+            () => new XeroClient(context, tenantId).requestPaginated('GET', '/api.xro/2.0/Accounts', { params })
+        );
 
         return sendArrayOutput({
             context,
