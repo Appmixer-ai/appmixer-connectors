@@ -1,5 +1,6 @@
 'use strict';
 
+const { buffer: streamToBuffer } = require('stream/consumers');
 const { Sandbox } = require('e2b');
 
 module.exports = {
@@ -18,8 +19,8 @@ module.exports = {
             throw new context.CancelError('File is required!');
         }
 
-        const fileContent = await context.getFileReadStream(fileId);
-        const buffer = Buffer.isBuffer(fileContent) ? fileContent : Buffer.from(fileContent);
+        const fileStream = await context.getFileReadStream(fileId);
+        const buffer = await streamToBuffer(fileStream);
 
         const sandbox = await Sandbox.connect(sandboxID, { apiKey: context.auth.apiKey });
 

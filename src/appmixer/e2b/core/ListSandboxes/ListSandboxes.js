@@ -25,7 +25,8 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Sandboxes' });
         }
 
-        const params = { limit: 1000 };
+        // The API allows a maximum limit of 100.
+        const params = { limit: 100 };
         if (state) {
             params.state = state;
         }

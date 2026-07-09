@@ -12,10 +12,8 @@ module.exports = {
             throw new context.CancelError('Sandbox ID is required!');
         }
 
-        const data = {};
-        if (timeout) {
-            data.timeout = timeout;
-        }
+        // The /connect endpoint requires `timeout` in the request body.
+        const data = { timeout: timeout || 300 };
 
         await context.httpRequest({
             method: 'POST',
