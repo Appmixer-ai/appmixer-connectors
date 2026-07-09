@@ -1,6 +1,6 @@
 {
     "name": "appmixer.xero",
-    "version": "1.6.2",
+    "version": "1.6.3",
     "engine": ">=6.0.0",
     "changelog": {
         "1.0.0": [
@@ -45,6 +45,13 @@
         "1.6.2": [
             "Cache inspector/list source calls (ListTenants, ListContacts, ListAccounts, ListTrackingCategories) with context.lock + staticCache and a configurable TTL (context.config.listCacheTTL, default 120s) to avoid Xero 429 rate-limit errors in the designer.",
             "XeroClient: honor Retry-After on 429 responses so a single throttled page does not fail the whole paginated fetch."
+        ],
+        "1.6.3": [
+            "Fixed dynamic output port options of ListAccounts, ListContacts, ListJournals and GetOrganization: the designer's options call was rejected because the required tenantId input was not supplied, leaving downstream variable pickers empty (invalid-variable chips).",
+            "GetOrganization now outputs the organisation object directly (fields at the top level), matching the variable picker options; previously the output was wrapped in an items key that the picker did not offer.",
+            "Fixed swapped label/value pairs in output options (ListAccounts Account ID, GetOrganization External Links and Payment Terms).",
+            "ListJournals: pagination is now handled internally using the Journals endpoint's offset mechanism (the endpoint ignores page-based pagination); the manual Offset input was removed.",
+            "ListAccounts, ListContacts, ListJournals, GetOrganization: required Tenant ID input is validated with a clear error message."
         ]
     }
 }

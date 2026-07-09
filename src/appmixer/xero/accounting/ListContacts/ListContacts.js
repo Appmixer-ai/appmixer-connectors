@@ -15,6 +15,10 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required!');
+        }
+
         // Cache the assembled (post-pagination) contacts array so the burst of inspector source calls
         // does not trip Xero's rate limits. See commons.withCache for details.
         const records = await withCache(

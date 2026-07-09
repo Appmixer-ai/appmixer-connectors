@@ -15,6 +15,10 @@ module.exports = {
             return this.getOutputPortOptions(context, outputType);
         }
 
+        if (!tenantId) {
+            throw new context.CancelError('Tenant ID is required!');
+        }
+
         // Cache the assembled accounts array so repeated inspector source calls reuse one fetch.
         const records = await withCache(
             context,
@@ -35,7 +39,7 @@ module.exports = {
         if (outputType === 'item') {
             return context.sendJson(
                 [
-                    { label: 'AccountID', value: 'Account ID' },
+                    { label: 'Account ID', value: 'AccountID' },
                     { label: 'Code', value: 'Code' },
                     { label: 'Name', value: 'Name' },
                     { label: 'Status', value: 'Status' },
