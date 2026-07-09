@@ -30,7 +30,10 @@
             "UpdateObjectRecord/UpdateAccount/UpdateContact/UpdateLead: the inspector-generation source now wires the required objectName/id inputs (and the schema declares its properties), so inspector generation is no longer rejected by required-input validation."
         ],
         "2.2.0": [
-            "Added polling triggers: New Contact, Updated Contact, New Lead, Updated Lead, New Account, Updated Account, New Object Record and Updated Object Record. They detect created/updated records by polling the Dataverse OData API on createdon/modifiedon, deduplicate by record id and support a configurable first-run look-back window. The New/Updated Object Record triggers work with any (including custom) entity via the same entity selector as the Object Record actions."
+            "Added polling triggers: New Contact, Updated Contact, New Lead, Updated Lead, New Account, Updated Account, New Object Record and Updated Object Record. They detect created/updated records by polling the Dataverse OData API on createdon/modifiedon, deduplicate by record id and start watching from the moment the flow is started (historical records are never emitted). The New/Updated Object Record triggers work with any (including custom) entity via the same entity selector as the Object Record actions.",
+            "Added the 'Deal Stage Changed' trigger: fires when the sales stage of an opportunity changes. It remembers the stage of each opportunity it has seen and fires only on an actual stage transition (the watched stage attribute is configurable, defaulting to 'salesstage').",
+            "Create/Get/Update/Delete Object Record (and the generic Object Record triggers) now resolve the entity collection segment from the Dataverse metadata instead of naively appending 's' to the logical name, so entities with irregular plurals (e.g. opportunity -> opportunities) work too.",
+            "MakeApiCall: the Request Headers and Query Parameters key-value inputs are also accepted as a JSON string (e.g. when produced by a flow transform)."
         ]
     }
 }

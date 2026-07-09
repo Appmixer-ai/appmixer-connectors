@@ -1,4 +1,4 @@
-const { DEFAULT_ENTITIES } = require('../dynamics-commons');
+const { getEntitySetName, DEFAULT_ENTITIES } = require('../dynamics-commons');
 
 module.exports = {
 
@@ -18,9 +18,12 @@ module.exports = {
             throw new context.CancelError('ID is required!');
         }
 
+        // Resolve the real collection segment from metadata - a naive `${objectName}s`
+        // breaks for irregular plurals (opportunity -> opportunities).
+        const entitySet = await getEntitySetName(context, objectName);
+
         const options = {
-            // TODO: Make the url construction more robust.
-            url: `${context.resource || context.auth.resource}/api/data/v9.2/${objectName}s(${id})`,
+            url: `${context.resource || context.auth.resource}/api/data/v9.2/${entitySet}(${id})`,
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${context.auth?.accessToken || context.accessToken}`,

@@ -518,7 +518,10 @@ async function getSchemaAndInputs(context, schema, logicalName, isValidFor) {
 }
 
 const API_VERSION = 'v9.2';
-const DEFAULT_LOOKBACK_HOURS = 24;
+const MAX_POLL_PAGES = 20;
+// Upper bound on the number of record->stage entries kept in the trigger state so the
+// state document cannot grow unbounded on orgs with many active records.
+const MAX_TRACKED_STAGES = 10000;
 
 function getAuthHeaders(context) {
 
@@ -529,22 +532,60 @@ function getAuthHeaders(context) {
 }
 
 /**
+ * Baseline the polling window at flow start. Used as the `start()` hook of all the
+ * polling triggers so they only emit records created/updated/transitioned after the
+ * flow was started - never historical records.
+ * @param {Object} context
+ */
+async function startPolling(context) {
+
+    return context.saveState({ lastTimestamp: new Date().toISOString() });
+}
+
+/**
+ * Resolve the entity set (URL collection segment) of an entity from the Dataverse
+ * metadata. A naive `${logicalName}s` breaks for irregular plurals (opportunity ->
+ * opportunities), so ask the API for the real EntitySetName and cache it.
+ * @param {Object} context
+ * @param {string} logicalName
+ * @return {Promise<string>}
+ */
+async function getEntitySetName(context, logicalName) {
+
+    const resource = context.resource || context.auth.resource;
+    const cacheKey = 'ms-dynamics-' + resource + '-' + logicalName + '-entityset';
+
+    const cached = await context.staticCache.get(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
+    const url = `${resource}/api/data/${API_VERSION}/EntityDefinitions(LogicalName='${logicalName}')?$select=EntitySetName`;
+    const { data } = await context.httpRequest({ url, headers: getAuthHeaders(context) });
+    const entitySet = data?.EntitySetName || `${logicalName}s`;
+
+    await context.staticCache.set(cacheKey, entitySet, TTL_OUTPORT);
+    return entitySet;
+}
+
+/**
  * Resolve the entity descriptor for the generic Object Record triggers. The user
  * selects any entity via the `objectName` property (same UX as the DynamicEntity /
- * CreateObjectRecord actions). Mirrors the connector's existing `${objectName}s`
- * collection-name convention used by the Get/Create/Delete Object Record actions.
+ * CreateObjectRecord actions); the collection segment is resolved from the Dataverse
+ * metadata so irregular plurals (e.g. opportunity -> opportunities) work too.
  * @param {Object} context
  * @param {string} dateField 'createdon' or 'modifiedon'
- * @return {{ logicalName: string, entitySet: string, dateField: string }}
+ * @return {Promise<{ logicalName: string, entitySet: string, dateField: string }>}
  */
-function resolveGenericEntity(context, dateField) {
+async function resolveGenericEntity(context, dateField) {
 
     const objectName = context.properties.objectName;
     if (!objectName) {
         throw new context.CancelError('Object Name is required!');
     }
 
-    return { logicalName: objectName, entitySet: `${objectName}s`, dateField };
+    const entitySet = await getEntitySetName(context, objectName);
+    return { logicalName: objectName, entitySet, dateField };
 }
 
 /**
@@ -560,13 +601,11 @@ function resolveGenericEntity(context, dateField) {
 async function pollEntity(context, { logicalName, entitySet, dateField }) {
 
     const resource = context.resource || context.auth.resource;
-    const lookbackHours = Number(context.properties.lookbackHours) || DEFAULT_LOOKBACK_HOURS;
 
     const state = context.state || {};
-    // On the first tick there is no stored timestamp - look back a configurable window
-    // (default 24h) so existing records don't flood the flow.
-    const lastTimestamp = state.lastTimestamp
-        || new Date(Date.now() - lookbackHours * 60 * 60 * 1000).toISOString();
+    // The baseline is persisted by startPolling() when the flow starts; the fallback
+    // only covers the edge case of the state being lost.
+    const lastTimestamp = state.lastTimestamp || new Date().toISOString();
     const seenIds = new Set(Array.isArray(state.seenIds) ? state.seenIds : []);
 
     const url = new URL(`${resource}/api/data/${API_VERSION}/${entitySet}`);
@@ -575,11 +614,27 @@ async function pollEntity(context, { logicalName, entitySet, dateField }) {
     url.searchParams.append('$filter', `${dateField} ge ${lastTimestamp}`);
     url.searchParams.append('$orderby', `${dateField} asc`);
 
-    const { data } = await context.httpRequest({ url: url.toString(), headers: getAuthHeaders(context) });
-    const records = data.value || [];
+    // Dataverse uses server-driven paging - follow `@odata.nextLink` so no records are
+    // missed when more than one page changed since the last tick. MAX_POLL_PAGES caps a
+    // runaway backlog; anything beyond it is picked up on the next tick thanks to the
+    // persisted high-water mark.
+    let records = [];
+    let nextUrl = url.toString();
+    let pages = 0;
+    while (nextUrl && pages < MAX_POLL_PAGES) {
+        const { data } = await context.httpRequest({ url: nextUrl, headers: getAuthHeaders(context) });
+        records = records.concat(data.value || []);
+        nextUrl = data['@odata.nextLink'];
+        pages += 1;
+    }
 
     if (records.length === 0) {
-        // Nothing new - keep the existing high-water mark and seen ids.
+        // Nothing new. Persist the baseline if it isn't stored yet, otherwise the window
+        // would slide forward with every empty tick and records created between ticks
+        // would never match the `ge lastTimestamp` filter.
+        if (!state.lastTimestamp) {
+            await context.saveState({ lastTimestamp, seenIds: [] });
+        }
         return;
     }
 
@@ -608,6 +663,90 @@ async function pollEntity(context, { logicalName, entitySet, dateField }) {
         .map(record => record[idField]);
 
     await context.saveState({ lastTimestamp: maxTimestamp, seenIds: boundaryIds });
+}
+
+/**
+ * Polling trigger core for stage-change detection. Polls records modified since the last
+ * tick and compares the value of `stageField` against the stage remembered for each record
+ * in the component state. A record is emitted only when it was already seen with a
+ * different stage - the first time a record is observed it is just baselined, so records
+ * that were merely created or edited (without a stage transition) never fire the trigger.
+ * @param {Object} context
+ * @param {Object} entity
+ * @param {string} entity.entitySet e.g. 'opportunities'
+ * @param {string} entity.idField e.g. 'opportunityid'
+ * @param {string} entity.stageField e.g. 'salesstage'
+ */
+async function pollStageChanges(context, { entitySet, idField, stageField }) {
+
+    const resource = context.resource || context.auth.resource;
+
+    const state = context.state || {};
+    const stages = state.stages || {};
+    // The baseline is persisted by startPolling() when the flow starts; the fallback
+    // only covers the edge case of the state being lost.
+    const lastTimestamp = state.lastTimestamp || new Date().toISOString();
+
+    const url = new URL(`${resource}/api/data/${API_VERSION}/${entitySet}`);
+    // `ge` (not `gt`) so records sharing the boundary timestamp are not missed; re-reading
+    // a boundary record is harmless here because its remembered stage already matches.
+    url.searchParams.append('$filter', `modifiedon ge ${lastTimestamp}`);
+    url.searchParams.append('$orderby', 'modifiedon asc');
+
+    // Follow `@odata.nextLink` server-driven paging, same as pollEntity.
+    let records = [];
+    let nextUrl = url.toString();
+    let pages = 0;
+    while (nextUrl && pages < MAX_POLL_PAGES) {
+        const { data } = await context.httpRequest({ url: nextUrl, headers: getAuthHeaders(context) });
+        records = records.concat(data.value || []);
+        nextUrl = data['@odata.nextLink'];
+        pages += 1;
+    }
+
+    if (records.length === 0) {
+        // Persist the baseline if it isn't stored yet, otherwise the window would slide
+        // forward with every empty tick (see pollEntity).
+        if (!state.lastTimestamp) {
+            await context.saveState({ lastTimestamp, stages });
+        }
+        return;
+    }
+
+    let maxTimestamp = lastTimestamp;
+    for (const record of records) {
+        if (record.modifiedon && record.modifiedon > maxTimestamp) {
+            maxTimestamp = record.modifiedon;
+        }
+    }
+
+    for (const record of records) {
+        const id = record[idField];
+        if (!id) {
+            continue;
+        }
+        // Stage values can be numbers (picklists) or strings - normalize for comparison.
+        const current = record[stageField] === undefined || record[stageField] === null
+            ? null
+            : String(record[stageField]);
+        const previous = Object.prototype.hasOwnProperty.call(stages, id) ? stages[id] : undefined;
+
+        if (previous !== undefined && previous !== current) {
+            await context.sendJson(record, 'out');
+        }
+        stages[id] = current;
+    }
+
+    // Evict the longest-tracked entries when over the cap. Plain objects preserve insertion
+    // order for string keys, so the leading keys are the ones first seen.
+    const trackedIds = Object.keys(stages);
+    if (trackedIds.length > MAX_TRACKED_STAGES) {
+        for (const id of trackedIds.slice(0, trackedIds.length - MAX_TRACKED_STAGES)) {
+            delete stages[id];
+        }
+    }
+
+    await context.saveState({ lastTimestamp: maxTimestamp, stages });
 }
 
 /**
@@ -673,7 +812,10 @@ module.exports = {
     getInspectorType,
     getGroups,
     generateInspector,
+    getEntitySetName,
     resolveGenericEntity,
+    startPolling,
     pollEntity,
+    pollStageChanges,
     fetchLatestRecord
 };

@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const { generateInspector, DEFAULT_ENTITIES } = require('../dynamics-commons');
+const { getEntitySetName, generateInspector, DEFAULT_ENTITIES } = require('../dynamics-commons');
 
 module.exports = {
 
@@ -49,9 +49,12 @@ module.exports = {
             }
         }
 
+        // Resolve the real collection segment from metadata - a naive `${objectName}s`
+        // breaks for irregular plurals (opportunity -> opportunities).
+        const entitySet = await getEntitySetName(context, objectName);
+
         const options = {
-            // TODO: Make the url construction more robust.
-            url: `${context.resource || context.auth.resource}/api/data/v9.2/${objectName}s(${id})`,
+            url: `${context.resource || context.auth.resource}/api/data/v9.2/${entitySet}(${id})`,
             method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${context.auth?.accessToken || context.accessToken}`,

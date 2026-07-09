@@ -1,10 +1,16 @@
 'use strict';
 
-const { pollEntity, fetchLatestRecord } = require('../dynamics-commons');
+const { startPolling, pollEntity, fetchLatestRecord } = require('../dynamics-commons');
 
 const ENTITY = { logicalName: 'lead', entitySet: 'leads', dateField: 'createdon' };
 
 module.exports = {
+
+    async start(context) {
+
+        // Baseline the polling window so only records changed after the flow start are emitted.
+        return startPolling(context);
+    },
 
     async tick(context) {
 
