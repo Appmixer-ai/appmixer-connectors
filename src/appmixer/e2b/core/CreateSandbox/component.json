@@ -1,0 +1,74 @@
+{
+    "name": "appmixer.e2b.core.CreateSandbox",
+    "description": "Create a new E2B sandbox from a template. Returns the sandbox ID used by the other components.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "templateID": { "type": "string" },
+                    "timeout": { "type": "integer" },
+                    "metadata": { "type": "string" },
+                    "envVars": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "templateID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Template ID",
+                        "defaultValue": "base",
+                        "tooltip": "The ID of the sandbox template to use. Defaults to the E2B <b>base</b> template."
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "index": 2,
+                        "label": "Timeout (seconds)",
+                        "tooltip": "How long the sandbox stays alive before it is automatically killed, in seconds. Sandboxes are ephemeral - set a generous timeout if you plan to use the sandbox in later components."
+                    },
+                    "metadata": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Metadata (JSON)",
+                        "tooltip": "Optional JSON object of custom key/value metadata to attach to the sandbox, e.g. <b>{\"userId\": \"42\"}</b>."
+                    },
+                    "envVars": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Environment Variables (JSON)",
+                        "tooltip": "Optional JSON object of environment variables available inside the sandbox, e.g. <b>{\"NODE_ENV\": \"production\"}</b>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string", "title": "Sandbox ID", "example": "i3xkz5qz8p6z9r2v4w7yq" },
+                    "templateID": { "type": "string", "title": "Template ID", "example": "base" },
+                    "clientID": { "type": "string", "title": "Client ID", "example": "3d3f5e9a" },
+                    "alias": { "type": "string", "title": "Alias", "example": "base" },
+                    "envdVersion": { "type": "string", "title": "envd Version", "example": "0.1.5" }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,65 @@
+{
+    "name": "appmixer.e2b.core.RunCommand",
+    "description": "Run a shell command inside an E2B sandbox and return its stdout, stderr and exit code.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" },
+                    "command": { "type": "string" },
+                    "cwd": { "type": "string" }
+                },
+                "required": ["sandboxID", "command"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox to run the command in, as returned by Create Sandbox."
+                    },
+                    "command": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Command",
+                        "tooltip": "The shell command to execute, e.g. <b>echo hello</b>."
+                    },
+                    "cwd": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Working Directory",
+                        "tooltip": "Optional working directory to run the command in, e.g. <b>/home/user</b>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "stdout": { "type": "string", "title": "Stdout", "example": "hello\n" },
+                    "stderr": { "type": "string", "title": "Stderr", "example": "" },
+                    "exitCode": { "type": "integer", "title": "Exit Code", "example": 0 }
+                }
+            }
+        }
+    ]
+}

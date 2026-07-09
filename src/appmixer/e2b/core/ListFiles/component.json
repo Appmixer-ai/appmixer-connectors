@@ -1,0 +1,78 @@
+{
+    "name": "appmixer.e2b.core.ListFiles",
+    "description": "List the files and directories at a given path inside an E2B sandbox.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" },
+                    "path": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["sandboxID", "path"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox, as returned by Create Sandbox."
+                    },
+                    "path": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Directory Path",
+                        "defaultValue": "/home/user",
+                        "tooltip": "The absolute path of the directory to list, e.g. <b>/home/user</b>."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 3,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, one item at a time, or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/e2b/core/ListFiles?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/sandboxID": "inputs/in/sandboxID",
+                        "in/path": "inputs/in/path"
+                    }
+                }
+            }
+        }
+    ]
+}

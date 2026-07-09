@@ -1,0 +1,81 @@
+{
+    "name": "appmixer.e2b.core.RunCode",
+    "description": "Execute code (Python, JavaScript and more) inside an E2B sandbox using the code interpreter and return the output.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" },
+                    "code": { "type": "string" },
+                    "language": { "type": "string" }
+                },
+                "required": ["sandboxID", "code"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox to run the code in, as returned by Create Sandbox."
+                    },
+                    "code": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Code",
+                        "tooltip": "The source code to execute inside the sandbox."
+                    },
+                    "language": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Language",
+                        "defaultValue": "python",
+                        "tooltip": "The programming language of the code.",
+                        "options": [
+                            { "label": "Python", "value": "python" },
+                            { "label": "JavaScript", "value": "js" },
+                            { "label": "TypeScript", "value": "ts" },
+                            { "label": "R", "value": "r" },
+                            { "label": "Java", "value": "java" },
+                            { "label": "Bash", "value": "bash" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string", "title": "Result Text", "example": "42" },
+                    "stdout": { "type": "string", "title": "Stdout", "example": "hello world\n" },
+                    "stderr": { "type": "string", "title": "Stderr", "example": "" },
+                    "error": { "type": "string", "title": "Error", "example": "" },
+                    "results": {
+                        "type": "array",
+                        "title": "Rich Results",
+                        "items": { "type": "object" },
+                        "example": []
+                    }
+                }
+            }
+        }
+    ]
+}

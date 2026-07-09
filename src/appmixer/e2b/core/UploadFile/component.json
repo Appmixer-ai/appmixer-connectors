@@ -1,0 +1,65 @@
+{
+    "name": "appmixer.e2b.core.UploadFile",
+    "description": "Upload an Appmixer file into an E2B sandbox at the given path.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" },
+                    "path": { "type": "string" },
+                    "fileId": { "type": "string" }
+                },
+                "required": ["sandboxID", "path", "fileId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox to upload the file into, as returned by Create Sandbox."
+                    },
+                    "path": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Destination Path",
+                        "tooltip": "The absolute path inside the sandbox to write the file to, e.g. <b>/home/user/data.csv</b>."
+                    },
+                    "fileId": {
+                        "type": "filepicker",
+                        "index": 3,
+                        "label": "File",
+                        "tooltip": "Select a file or use a File ID returned from a previous step."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string", "title": "Name", "example": "data.csv" },
+                    "path": { "type": "string", "title": "Path", "example": "/home/user/data.csv" },
+                    "type": { "type": "string", "title": "Type", "example": "file" }
+                }
+            }
+        }
+    ]
+}

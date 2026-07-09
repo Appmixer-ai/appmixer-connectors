@@ -1,0 +1,65 @@
+{
+    "name": "appmixer.e2b.core.GetSandboxMetrics",
+    "description": "Get CPU and memory usage metrics for a running E2B sandbox.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" }
+                },
+                "required": ["sandboxID"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox, as returned by Create Sandbox or List Sandboxes."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "metrics": {
+                        "type": "array",
+                        "title": "Metrics",
+                        "example": [
+                            { "timestamp": "2026-07-09T10:30:00.000Z", "cpuUsedPct": 12.5, "cpuCount": 2, "memUsedMiB": 128, "memTotalMiB": 512 }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "timestamp": { "type": "string", "title": "Timestamp", "example": "2026-07-09T10:30:00.000Z" },
+                                "cpuUsedPct": { "type": "number", "title": "CPU Used (%)", "example": 12.5 },
+                                "cpuCount": { "type": "integer", "title": "CPU Count", "example": 2 },
+                                "memUsedMiB": { "type": "integer", "title": "Memory Used (MiB)", "example": 128 },
+                                "memTotalMiB": { "type": "integer", "title": "Memory Total (MiB)", "example": 512 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

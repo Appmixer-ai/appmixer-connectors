@@ -1,0 +1,72 @@
+{
+    "name": "appmixer.e2b.core.ListSandboxes",
+    "description": "List the currently running (and optionally paused) E2B sandboxes. Returns a maximum of 1000 sandboxes.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "state": { "type": "string" },
+                    "outputType": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "state": {
+                        "type": "select",
+                        "index": 1,
+                        "label": "State",
+                        "tooltip": "Filter sandboxes by state. Leave empty to return all states.",
+                        "options": [
+                            { "label": "All", "value": "" },
+                            { "label": "Running", "value": "running" },
+                            { "label": "Paused", "value": "paused" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, one item at a time, or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/e2b/core/ListSandboxes?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ]
+}

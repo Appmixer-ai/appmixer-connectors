@@ -1,0 +1,46 @@
+{
+    "name": "appmixer.e2b.core.SetSandboxTimeout",
+    "description": "Set a new timeout for a running E2B sandbox. The sandbox will be killed after the timeout elapses.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" },
+                    "timeout": { "type": "integer" }
+                },
+                "required": ["sandboxID", "timeout"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox, as returned by Create Sandbox or List Sandboxes."
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "index": 2,
+                        "label": "Timeout (seconds)",
+                        "tooltip": "The new timeout in seconds, counted from now."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": ["out"]
+}

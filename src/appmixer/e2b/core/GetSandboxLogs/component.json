@@ -1,0 +1,62 @@
+{
+    "name": "appmixer.e2b.core.GetSandboxLogs",
+    "description": "Get the logs for an E2B sandbox.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:e2b"
+    },
+    "quota": {
+        "manager": "appmixer:e2b",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "sandboxID": { "type": "string" }
+                },
+                "required": ["sandboxID"]
+            },
+            "inspector": {
+                "inputs": {
+                    "sandboxID": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Sandbox ID",
+                        "tooltip": "The ID of the sandbox, as returned by Create Sandbox or List Sandboxes."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "logs": {
+                        "type": "array",
+                        "title": "Logs",
+                        "example": [
+                            { "timestamp": "2026-07-09T10:30:00.000Z", "line": "Hello from the sandbox" }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "timestamp": { "type": "string", "title": "Timestamp", "example": "2026-07-09T10:30:00.000Z" },
+                                "line": { "type": "string", "title": "Line", "example": "Hello from the sandbox" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}
