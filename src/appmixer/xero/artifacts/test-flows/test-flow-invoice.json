@@ -35,7 +35,7 @@
                             "out": {
                                 "type": "json2new",
                                 "lambda": {
-                                    "outputType": "item"
+                                    "outputType": "items"
                                 },
                                 "modifiers": {
                                     "outputType": {}
@@ -86,6 +86,11 @@
                                                 "type": "text",
                                                 "name": "lineItems",
                                                 "text": "[{\"Description\": \"E2E Test Item\", \"Quantity\": 1, \"UnitAmount\": 100, \"AccountCode\": \"200\"}]"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "invoiceContactName",
+                                                "text": "E2E Invoice Contact {{{15109e51-676b-4d1b-aa28-9e78785cf0d0}}}"
                                             }
                                         ]
                                     }
@@ -93,8 +98,21 @@
                                 "modifiers": {
                                     "variables": {
                                         "aca97f6a-6ee3-4149-a6b5-37702a87d0d1": {
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].tenantId"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.8482ae1b-cf59-4c6f-8cdb-26f736cd840d.tenants.items"
+                                        },
+                                        "15109e51-676b-4d1b-aa28-9e78785cf0d0": {
                                             "functions": [],
-                                            "variable": "$.8482ae1b-cf59-4c6f-8cdb-26f736cd840d.tenants.tenantId"
+                                            "variable": "$.6d1cb84d-f9cd-4ba9-afe3-82bc048db8b7.out.started"
                                         }
                                     }
                                 }
@@ -106,11 +124,11 @@
         },
         "ac752164-62e1-4792-b1ec-96fe34061956": {
             "type": "appmixer.xero.accounting.ListContacts",
-            "x": 912,
+            "x": 1104,
             "y": 320,
             "source": {
                 "in": {
-                    "deec83c9-d7c1-43fb-94b0-ac0d2110b204": [
+                    "6b56fda9-167f-4849-a34c-ce8501a1095c": [
                         "out"
                     ]
                 }
@@ -123,12 +141,13 @@
             "config": {
                 "transform": {
                     "in": {
-                        "deec83c9-d7c1-43fb-94b0-ac0d2110b204": {
+                        "6b56fda9-167f-4849-a34c-ce8501a1095c": {
                             "out": {
                                 "type": "json2new",
                                 "lambda": {
                                     "tenantId": "{{{a51189e9-de74-4ceb-accf-4b0c4ba3908a}}}",
-                                    "outputType": "item"
+                                    "outputType": "items",
+                                    "where": "Name==\"{{{01343faa-aa29-43ba-a523-1f1e83133f8f}}}\""
                                 },
                                 "modifiers": {
                                     "tenantId": {
@@ -137,7 +156,13 @@
                                             "variable": "$.deec83c9-d7c1-43fb-94b0-ac0d2110b204.out.tenantId"
                                         }
                                     },
-                                    "outputType": {}
+                                    "outputType": {},
+                                    "where": {
+                                        "01343faa-aa29-43ba-a523-1f1e83133f8f": {
+                                            "functions": [],
+                                            "variable": "$.deec83c9-d7c1-43fb-94b0-ac0d2110b204.out.invoiceContactName"
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -148,7 +173,7 @@
         },
         "c94e81ea-e40b-473a-8e75-f69cc3ad6c6f": {
             "type": "appmixer.xero.accounting.CreateInvoice",
-            "x": 1104,
+            "x": 1296,
             "y": 320,
             "source": {
                 "in": {
@@ -185,8 +210,17 @@
                                     "Type": {},
                                     "ContactID": {
                                         "a143dff9-1954-480d-b7b2-1082230e62e9": {
-                                            "functions": [],
-                                            "variable": "$.ac752164-62e1-4792-b1ec-96fe34061956.contacts.ContactID"
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].ContactID"
+                                                        }
+                                                    ]
+                                                }
+                                            ],
+                                            "variable": "$.ac752164-62e1-4792-b1ec-96fe34061956.contacts.items"
                                         }
                                     },
                                     "Reference": {
@@ -211,7 +245,7 @@
         },
         "bfd88a53-b51d-48b1-b33c-4ea5ea66347b": {
             "type": "appmixer.xero.accounting.GetInvoice",
-            "x": 1296,
+            "x": 1488,
             "y": 320,
             "source": {
                 "in": {
@@ -258,7 +292,7 @@
         },
         "0d6c02ff-203f-4489-8e2f-21b511a41456": {
             "type": "appmixer.utils.files.SaveFile",
-            "x": 1488,
+            "x": 1680,
             "y": 320,
             "source": {
                 "in": {
@@ -299,12 +333,12 @@
         },
         "fadfdb51-81b6-45e7-b418-21d497c5c392": {
             "type": "appmixer.xero.accounting.AddAttachmentToInvoice",
-            "x": 1680,
+            "x": 1872,
             "y": 320,
             "source": {
                 "in": {
                     "0d6c02ff-203f-4489-8e2f-21b511a41456": [
-                        "out"
+                        "file"
                     ]
                 }
             },
@@ -317,7 +351,7 @@
                 "transform": {
                     "in": {
                         "0d6c02ff-203f-4489-8e2f-21b511a41456": {
-                            "out": {
+                            "file": {
                                 "type": "json2new",
                                 "lambda": {
                                     "tenantId": "{{{72830038-cf18-43ca-96a2-ca2c109ab150}}}",
@@ -342,7 +376,7 @@
                                     "attachment": {
                                         "8a5ec06a-1474-499e-8761-cc6d46f59efe": {
                                             "functions": [],
-                                            "variable": "$.0d6c02ff-203f-4489-8e2f-21b511a41456.out.fileId"
+                                            "variable": "$.0d6c02ff-203f-4489-8e2f-21b511a41456.file.fileId"
                                         }
                                     }
                                 }
@@ -355,7 +389,7 @@
         },
         "ec3599bf-30bd-4d33-bee5-fe5865931c72": {
             "type": "appmixer.xero.accounting.UpdateInvoice",
-            "x": 1872,
+            "x": 2064,
             "y": 320,
             "source": {
                 "in": {
@@ -404,7 +438,7 @@
         },
         "ea5def04-4ce1-42ff-b392-3ddd19926ac8": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1296,
+            "x": 1488,
             "y": 448,
             "source": {
                 "in": {
@@ -450,7 +484,7 @@
         },
         "51cfbe4d-b398-4153-912c-75ef320f2920": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1488,
+            "x": 1680,
             "y": 448,
             "source": {
                 "in": {
@@ -496,7 +530,7 @@
         },
         "d3146ae9-d7a0-4455-a6c0-0a0b7a50796e": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1872,
+            "x": 2064,
             "y": 448,
             "source": {
                 "in": {
@@ -542,7 +576,7 @@
         },
         "cb13e2e8-4ba4-48d4-a161-a5a89b0f3c22": {
             "type": "appmixer.utils.test.Assert",
-            "x": 2064,
+            "x": 2256,
             "y": 448,
             "source": {
                 "in": {
@@ -589,7 +623,7 @@
         },
         "25f528f5-c886-4af9-b660-bcb23b4167e0": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 2256,
+            "x": 2448,
             "y": 448,
             "source": {
                 "in": {
@@ -620,7 +654,7 @@
         },
         "81cbad20-b767-48b9-b94b-f3b1db86577d": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2448,
+            "x": 2640,
             "y": 448,
             "source": {
                 "in": {
@@ -661,6 +695,55 @@
                     }
                 }
             }
+        },
+        "6b56fda9-167f-4849-a34c-ce8501a1095c": {
+            "type": "appmixer.xero.accounting.CreateContact",
+            "x": 912,
+            "y": 320,
+            "source": {
+                "in": {
+                    "deec83c9-d7c1-43fb-94b0-ac0d2110b204": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "deec83c9-d7c1-43fb-94b0-ac0d2110b204": {
+                            "out": {
+                                "type": "json2new",
+                                "lambda": {
+                                    "tenantId": "{{{fef9f504-27b7-4153-8f86-11a97aba10df}}}",
+                                    "Name": "{{{e31bd695-cc41-4681-a072-56d7dbf89288}}}",
+                                    "EmailAddress": "e2e-invoice-contact@appmixer.com"
+                                },
+                                "modifiers": {
+                                    "tenantId": {
+                                        "fef9f504-27b7-4153-8f86-11a97aba10df": {
+                                            "functions": [],
+                                            "variable": "$.deec83c9-d7c1-43fb-94b0-ac0d2110b204.out.tenantId"
+                                        }
+                                    },
+                                    "Name": {
+                                        "e31bd695-cc41-4681-a072-56d7dbf89288": {
+                                            "functions": [],
+                                            "variable": "$.deec83c9-d7c1-43fb-94b0-ac0d2110b204.out.invoiceContactName"
+                                        }
+                                    },
+                                    "EmailAddress": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "label": "Create Invoice Contact"
         }
     }
 }
