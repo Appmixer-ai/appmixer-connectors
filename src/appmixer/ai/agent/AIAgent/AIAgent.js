@@ -30,7 +30,12 @@ async function ingestFile(context, kbFileId) {
         headers: form.getHeaders()
     });
 
-    await context.log({ step: 'knowledgebase-ingest', fileId: kbFileId, filename: fileInfo.filename });
+    const { data: stats } = await context.httpRequest({
+        url: `${getKnowledgebaseApiUrl(context)}/knowledgebases/${context.componentId}`,
+        method: 'GET'
+    });
+
+    return { fileId: kbFileId, filename: fileInfo.filename, stats };
 }
 
 // langfuse: { tracer, otelApi } — when provided, the retrieval span is created as a child
@@ -102,12 +107,52 @@ module.exports = {
         await componentTool.collectComponentTools(context);
 
         const kbFileIds = getKbFileIds(context);
+        const fileResults = [];
+
         for (const fileId of kbFileIds) {
             try {
-                await ingestFile(context, fileId);
+                const result = await ingestFile(context, fileId);
+                fileResults.push(result);
             } catch (err) {
                 await context.log({ step: 'knowledgebase-ingest-error', fileId, error: err.message });
             }
+        }
+
+        if (fileResults.length > 0) {
+            const totals = fileResults.reduce((acc, { stats = {} }) => {
+                acc.documentCount += stats.documentCount || 0;
+                acc.embeddingCount += stats.embeddingCount || 0;
+                acc.totalChunkLength += stats.totalChunkLength || 0;
+                if (stats.embeddingModel) acc.embeddingModel = stats.embeddingModel;
+                if (stats.embeddingDim) acc.embeddingDim = stats.embeddingDim;
+                if (stats.chunkingVersion) acc.chunkingVersion = stats.chunkingVersion;
+                if (stats.firstEmbeddingCreatedAt) {
+                    acc.firstEmbeddingCreatedAt = acc.firstEmbeddingCreatedAt
+                        ? (stats.firstEmbeddingCreatedAt < acc.firstEmbeddingCreatedAt ? stats.firstEmbeddingCreatedAt : acc.firstEmbeddingCreatedAt)
+                        : stats.firstEmbeddingCreatedAt;
+                }
+                if (stats.lastEmbeddingCreatedAt) {
+                    acc.lastEmbeddingCreatedAt = acc.lastEmbeddingCreatedAt
+                        ? (stats.lastEmbeddingCreatedAt > acc.lastEmbeddingCreatedAt ? stats.lastEmbeddingCreatedAt : acc.lastEmbeddingCreatedAt)
+                        : stats.lastEmbeddingCreatedAt;
+                }
+                return acc;
+            }, {
+                documentCount: 0,
+                embeddingCount: 0,
+                totalChunkLength: 0,
+                embeddingModel: null,
+                embeddingDim: null,
+                chunkingVersion: null,
+                firstEmbeddingCreatedAt: null,
+                lastEmbeddingCreatedAt: null
+            });
+
+            await context.log({
+                step: 'knowledgebase-ingest-complete',
+                files: fileResults.map(({ fileId, filename, stats }) => ({ fileId, filename, stats })),
+                totals
+            });
         }
     },
 
