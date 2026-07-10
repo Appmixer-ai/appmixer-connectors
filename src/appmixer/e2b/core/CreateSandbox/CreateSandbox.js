@@ -16,6 +16,25 @@ const parseJsonInput = (context, value, label) => {
     }
 };
 
+// The key-value inspector produces an array of { key, value } rows
+// (possibly wrapped in { ADD: [...] }). Also accept a plain object or
+// a JSON string for backward compatibility.
+const parseKeyValueInput = (context, value, label) => {
+    if (value === undefined || value === null || value === '') {
+        return undefined;
+    }
+    const rows = Array.isArray(value) ? value : (value && Array.isArray(value.ADD) ? value.ADD : null);
+    if (rows) {
+        const out = {};
+        for (const row of rows) {
+            if (!row || typeof row !== 'object' || !row.key) continue;
+            out[row.key] = row.value;
+        }
+        return Object.keys(out).length ? out : undefined;
+    }
+    return parseJsonInput(context, value, label);
+};
+
 module.exports = {
 
     async receive(context) {
@@ -35,7 +54,7 @@ module.exports = {
             data.metadata = parsedMetadata;
         }
 
-        const parsedEnvVars = parseJsonInput(context, envVars, 'Environment Variables');
+        const parsedEnvVars = parseKeyValueInput(context, envVars, 'Environment Variables');
         if (parsedEnvVars) {
             data.envVars = parsedEnvVars;
         }

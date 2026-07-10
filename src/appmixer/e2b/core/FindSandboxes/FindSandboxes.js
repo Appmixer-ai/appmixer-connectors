@@ -41,6 +41,10 @@ module.exports = {
         // The endpoint may return a bare array or an object wrapping the array.
         const records = Array.isArray(data) ? data : (data.sandboxes || data.data || []);
 
+        if (records.length === 0) {
+            return context.sendJson({}, 'notFound');
+        }
+
         return lib.sendArrayOutput({ context, records, outputType });
     }
 };

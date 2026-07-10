@@ -1,12 +1,15 @@
 {
-    "name": "E2E E2B - Make API Call",
     "flow": {
         "on-start": {
             "config": {},
             "source": {},
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "set-variables": {
             "config": {
@@ -43,7 +46,11 @@
             },
             "type": "appmixer.utils.controls.SetVariable",
             "x": 256,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "make-api-call": {
             "config": {
@@ -68,6 +75,9 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a4fc320a48d9e2158260009"
                 }
             },
             "source": {
@@ -79,7 +89,11 @@
             },
             "type": "appmixer.e2b.core.MakeApiCall",
             "x": 448,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "assert-response": {
             "config": {
@@ -120,7 +134,11 @@
             },
             "type": "appmixer.utils.test.Assert",
             "x": 800,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "after-all": {
             "config": {
@@ -132,12 +150,19 @@
                 "in": {
                     "assert-response": [
                         "out"
+                    ],
+                    "assert-templates": [
+                        "out"
                     ]
                 }
             },
             "type": "appmixer.utils.test.AfterAll",
             "x": 992,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "process-results": {
             "config": {
@@ -176,8 +201,100 @@
             },
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1184,
-            "y": 16
+            "y": 16,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "version": "1.0.1"
+        },
+        "list-templates": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "outputType": "array"
+                                },
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                },
+                "properties": {
+                    "account": "6a4fc320a48d9e2158260009"
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.e2b.core.ListTemplates",
+            "x": 448,
+            "y": 208,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "assert-templates": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-templates": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{count-var}}}",
+                                                "value": "^[0-9]+$"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "count-var": {
+                                            "functions": [],
+                                            "variable": "$.list-templates.out.count"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-templates": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 800,
+            "y": 208,
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         }
     },
-    "notes": {}
+    "name": "E2E E2B - Make API Call",
+    "notes": {},
+    "type": "automation",
+    "wizard": {
+        "fields": []
+    }
 }
