@@ -72,7 +72,6 @@ class XeroClient {
             params
         };
 
-        this.log({ step: 'XeroClient.request', request });
         try {
             const response = await this.client(request);
             return response.data;

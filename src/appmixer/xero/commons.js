@@ -53,7 +53,6 @@ module.exports = {
 
             const cached = await context.staticCache.get(key);
             if (cached) {
-                context.log({ step: 'Xero cache hit', keyParts });
                 return cached;
             }
 
