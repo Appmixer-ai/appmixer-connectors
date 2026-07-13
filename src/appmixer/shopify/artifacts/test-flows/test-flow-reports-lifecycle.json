@@ -1,0 +1,528 @@
+{
+    "name": "E2E Shopify - Reports Lifecycle",
+    "type": "automation",
+    "flow": {
+        "bfffb203-3075-49d8-90e5-9295eae48d19": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "31a1caaa-9556-4fb6-9483-bc61cab70bca": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "bfffb203-3075-49d8-90e5-9295eae48d19": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bfffb203-3075-49d8-90e5-9295eae48d19": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "name",
+                                                "text": "Appmixer E2E Report"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "shopifyQl",
+                                                "text": "SHOW total_sales BY month FROM sales SINCE -12m UNTIL today"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7202c7a8-ed42-4f7e-908e-4d06870f9fb6": {
+            "type": "appmixer.shopify.reports.CreateReport",
+            "x": 448,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "31a1caaa-9556-4fb6-9483-bc61cab70bca": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "31a1caaa-9556-4fb6-9483-bc61cab70bca": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "d613324f-4257-444c-bb6c-9c64a8347897": {
+                                            "variable": "$.31a1caaa-9556-4fb6-9483-bc61cab70bca.out.name",
+                                            "functions": []
+                                        }
+                                    },
+                                    "shopify_ql": {
+                                        "bce1200d-5f1f-4061-898e-0ddf672a280a": {
+                                            "variable": "$.31a1caaa-9556-4fb6-9483-bc61cab70bca.out.shopifyQl",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{d613324f-4257-444c-bb6c-9c64a8347897}}}",
+                                    "shopify_ql": "{{{bce1200d-5f1f-4061-898e-0ddf672a280a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "63ff5030-5feb-49dc-92f5-4544b270aea4": {
+            "type": "appmixer.shopify.reports.GetReport",
+            "x": 640,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7202c7a8-ed42-4f7e-908e-4d06870f9fb6": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7202c7a8-ed42-4f7e-908e-4d06870f9fb6": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "8092ce81-8b6a-4ad3-8e5a-0f38b9268bc6": {
+                                            "variable": "$.7202c7a8-ed42-4f7e-908e-4d06870f9fb6.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{8092ce81-8b6a-4ad3-8e5a-0f38b9268bc6}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1112c020-82ba-44bc-8348-d0f6d4799273": {
+            "type": "appmixer.shopify.reports.FindReport",
+            "x": 832,
+            "y": 480,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "63ff5030-5feb-49dc-92f5-4544b270aea4": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "63ff5030-5feb-49dc-92f5-4544b270aea4": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "edb6d4ab-2714-4153-af7c-c82858f3223d": {
+                                            "variable": "$.31a1caaa-9556-4fb6-9483-bc61cab70bca.out.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{edb6d4ab-2714-4153-af7c-c82858f3223d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8206a78c-1e61-431c-9565-56fe26e6d1a8": {
+            "type": "appmixer.shopify.reports.UpdateReport",
+            "x": 1024,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "63ff5030-5feb-49dc-92f5-4544b270aea4": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "63ff5030-5feb-49dc-92f5-4544b270aea4": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "fa9bd94a-a476-4ba1-9314-3b10c827c977": {
+                                            "variable": "$.7202c7a8-ed42-4f7e-908e-4d06870f9fb6.report.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {}
+                                },
+                                "lambda": {
+                                    "id": "{{{fa9bd94a-a476-4ba1-9314-3b10c827c977}}}",
+                                    "name": "Appmixer E2E Report (updated)"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "104e60f0-93bc-4159-b296-6d74e9df0e3d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 64,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7202c7a8-ed42-4f7e-908e-4d06870f9fb6": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7202c7a8-ed42-4f7e-908e-4d06870f9fb6": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6e48059a-4981-4893-9224-6afbb8bab3d2": {
+                                            "variable": "$.7202c7a8-ed42-4f7e-908e-4d06870f9fb6.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{6e48059a-4981-4893-9224-6afbb8bab3d2}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b7f86532-12f2-4303-9252-55eb18739fc8": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "63ff5030-5feb-49dc-92f5-4544b270aea4": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "63ff5030-5feb-49dc-92f5-4544b270aea4": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e87da733-b1fb-46f0-83fe-c0c5062548bd": {
+                                            "variable": "$.63ff5030-5feb-49dc-92f5-4544b270aea4.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{e87da733-b1fb-46f0-83fe-c0c5062548bd}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c4bd77ef-a341-45f9-b189-5b2dda6f5a1d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "1112c020-82ba-44bc-8348-d0f6d4799273": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "1112c020-82ba-44bc-8348-d0f6d4799273": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "6b5326ae-a177-4592-8f0f-0c90293ea77f": {
+                                            "variable": "$.1112c020-82ba-44bc-8348-d0f6d4799273.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{6b5326ae-a177-4592-8f0f-0c90293ea77f}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "f560243e-7e8b-4165-8873-21eea38560d3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 448,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8206a78c-1e61-431c-9565-56fe26e6d1a8": [
+                        "report"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8206a78c-1e61-431c-9565-56fe26e6d1a8": {
+                            "report": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "874d0c7a-2e11-44a3-9fe6-6f3877715a4c": {
+                                            "variable": "$.8206a78c-1e61-431c-9565-56fe26e6d1a8.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{874d0c7a-2e11-44a3-9fe6-6f3877715a4c}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5f0efc58-1807-4aeb-abb2-cb265340c762": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "104e60f0-93bc-4159-b296-6d74e9df0e3d": [
+                        "out"
+                    ],
+                    "b7f86532-12f2-4303-9252-55eb18739fc8": [
+                        "out"
+                    ],
+                    "c4bd77ef-a341-45f9-b189-5b2dda6f5a1d": [
+                        "out"
+                    ],
+                    "f560243e-7e8b-4165-8873-21eea38560d3": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "cbe9d248-40e7-43de-b6f8-512a055c882f": {
+            "type": "appmixer.shopify.reports.DeleteReport",
+            "x": 1600,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "5f0efc58-1807-4aeb-abb2-cb265340c762": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5f0efc58-1807-4aeb-abb2-cb265340c762": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "bd595de7-fc14-4663-8aed-637c584a6d4b": {
+                                            "variable": "$.7202c7a8-ed42-4f7e-908e-4d06870f9fb6.report.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{bd595de7-fc14-4663-8aed-637c584a6d4b}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "aba54a88-fea6-4345-9fd0-f765b3785154": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1792,
+            "y": 320,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "cbe9d248-40e7-43de-b6f8-512a055c882f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "cbe9d248-40e7-43de-b6f8-512a055c882f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2df25ee1-a886-41d0-b9b9-a6422e3ef052": {
+                                            "variable": "$.5f0efc58-1807-4aeb-abb2-cb265340c762.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Shopify - Reports Lifecycle",
+                                    "result": "{{{2df25ee1-a886-41d0-b9b9-a6422e3ef052}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

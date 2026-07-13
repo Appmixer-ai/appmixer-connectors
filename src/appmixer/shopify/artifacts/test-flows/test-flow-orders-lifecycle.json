@@ -1,0 +1,524 @@
+{
+    "name": "E2E Shopify - Orders Lifecycle",
+    "type": "automation",
+    "flow": {
+        "f6631ba5-4c9a-4020-8f72-57e40a2b24c5": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "263ad4e0-ac12-4562-8199-d034395c2d03": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "f6631ba5-4c9a-4020-8f72-57e40a2b24c5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f6631ba5-4c9a-4020-8f72-57e40a2b24c5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "email",
+                                                "text": "appmixer.e2e.order@example.com"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "itemTitle",
+                                                "text": "Appmixer E2E Line Item"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c532453b-7100-40a8-94bc-9937fedcde26": {
+            "type": "appmixer.shopify.orders.CreateOrder",
+            "x": 448,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "263ad4e0-ac12-4562-8199-d034395c2d03": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "263ad4e0-ac12-4562-8199-d034395c2d03": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "231b6c0d-eedc-4b0b-ac46-55a12bc20fbc": {
+                                            "variable": "$.263ad4e0-ac12-4562-8199-d034395c2d03.out.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "line_items": {},
+                                    "test": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{231b6c0d-eedc-4b0b-ac46-55a12bc20fbc}}}",
+                                    "test": true,
+                                    "line_items": {
+                                        "ADD": [
+                                            {
+                                                "title": "Appmixer E2E Line Item",
+                                                "price": 9.99,
+                                                "quantity": 1
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8676aa0e-cf8a-48f9-ae34-ba09e8461871": {
+            "type": "appmixer.shopify.orders.GetOrder",
+            "x": 640,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c532453b-7100-40a8-94bc-9937fedcde26": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c532453b-7100-40a8-94bc-9937fedcde26": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "99884149-9284-43c3-b31e-262b0a8e2dc8": {
+                                            "variable": "$.c532453b-7100-40a8-94bc-9937fedcde26.order.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{99884149-9284-43c3-b31e-262b0a8e2dc8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6fafbec0-def5-473e-a90e-ac000bd5ae78": {
+            "type": "appmixer.shopify.orders.UpdateOrder",
+            "x": 832,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8676aa0e-cf8a-48f9-ae34-ba09e8461871": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8676aa0e-cf8a-48f9-ae34-ba09e8461871": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "3e32beba-e779-4026-9c37-eb8cfbeb3124": {
+                                            "variable": "$.c532453b-7100-40a8-94bc-9937fedcde26.order.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "note": {}
+                                },
+                                "lambda": {
+                                    "id": "{{{3e32beba-e779-4026-9c37-eb8cfbeb3124}}}",
+                                    "note": "Updated by Appmixer E2E"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "83920895-7aab-46dd-b9e6-19c0e5219ddc": {
+            "type": "appmixer.shopify.orders.CountOrders",
+            "x": 1024,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6fafbec0-def5-473e-a90e-ac000bd5ae78": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6fafbec0-def5-473e-a90e-ac000bd5ae78": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "622e352f-3fd0-49b7-82f9-6e47ec2d9650": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 64,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c532453b-7100-40a8-94bc-9937fedcde26": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c532453b-7100-40a8-94bc-9937fedcde26": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "ecfa8526-dca5-4b46-9d7c-c6b9a0adbd80": {
+                                            "variable": "$.c532453b-7100-40a8-94bc-9937fedcde26.order.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{ecfa8526-dca5-4b46-9d7c-c6b9a0adbd80}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "638e4961-73a4-456b-8b3c-92bdaae42c92": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 192,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8676aa0e-cf8a-48f9-ae34-ba09e8461871": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8676aa0e-cf8a-48f9-ae34-ba09e8461871": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "108dbded-43c0-48b8-9261-d0f7d1cd1dd3": {
+                                            "variable": "$.8676aa0e-cf8a-48f9-ae34-ba09e8461871.order.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{108dbded-43c0-48b8-9261-d0f7d1cd1dd3}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "27c5f2bd-8b92-4e69-875b-454d8e5e4099": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "6fafbec0-def5-473e-a90e-ac000bd5ae78": [
+                        "order"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6fafbec0-def5-473e-a90e-ac000bd5ae78": {
+                            "order": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d2a81a25-33ae-4422-b9e2-63c363b45c35": {
+                                            "variable": "$.6fafbec0-def5-473e-a90e-ac000bd5ae78.order.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{d2a81a25-33ae-4422-b9e2-63c363b45c35}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d115fa2f-03f0-44e3-90b2-7a8f0666efb1": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 448,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "83920895-7aab-46dd-b9e6-19c0e5219ddc": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "83920895-7aab-46dd-b9e6-19c0e5219ddc": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "419c3af5-0b00-47a4-ba0e-d38259b1c896": {
+                                            "variable": "$.83920895-7aab-46dd-b9e6-19c0e5219ddc.out.count",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{419c3af5-0b00-47a4-ba0e-d38259b1c896}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ac6dd913-199a-4cbe-8324-eaa3ff4336d8": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1408,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "622e352f-3fd0-49b7-82f9-6e47ec2d9650": [
+                        "out"
+                    ],
+                    "638e4961-73a4-456b-8b3c-92bdaae42c92": [
+                        "out"
+                    ],
+                    "27c5f2bd-8b92-4e69-875b-454d8e5e4099": [
+                        "out"
+                    ],
+                    "d115fa2f-03f0-44e3-90b2-7a8f0666efb1": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "5e2f28b7-0eb3-459e-9a92-9b5b0a814045": {
+            "type": "appmixer.shopify.orders.DeleteOrder",
+            "x": 1600,
+            "y": 320,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "ac6dd913-199a-4cbe-8324-eaa3ff4336d8": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ac6dd913-199a-4cbe-8324-eaa3ff4336d8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "id": {
+                                        "cf3a3611-d9f2-40aa-a9e2-5d48300138b8": {
+                                            "variable": "$.c532453b-7100-40a8-94bc-9937fedcde26.order.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "id": "{{{cf3a3611-d9f2-40aa-a9e2-5d48300138b8}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "647fd6d4-6b3a-411d-ac58-db59aeadab1c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1792,
+            "y": 320,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "5e2f28b7-0eb3-459e-9a92-9b5b0a814045": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "5e2f28b7-0eb3-459e-9a92-9b5b0a814045": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "b9b2d3c3-6857-4416-9265-35edf49a9edd": {
+                                            "variable": "$.ac6dd913-199a-4cbe-8324-eaa3ff4336d8.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Shopify - Orders Lifecycle",
+                                    "result": "{{{b9b2d3c3-6857-4416-9265-35edf49a9edd}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
