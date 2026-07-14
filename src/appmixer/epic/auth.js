@@ -18,7 +18,8 @@ const SCOPES = [
     'user/Immunization.read',
     'user/DiagnosticReport.read',
     'user/DocumentReference.read',
-    'user/Device.read'
+    'user/Device.read',
+    'user/Appointment.read'
 ];
 
 async function exchangeToken(context, data) {

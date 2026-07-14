@@ -78,11 +78,117 @@ async function runPatientSearch(context, { resourceType, label, schema, extraPar
     return lib.sendArrayOutput({ context, records, outputType });
 }
 
+// Flatten a FHIR Appointment resource into designer-friendly fields. The full
+// resource is kept under `resource` so no data is lost.
+function normalizeAppointment(resource) {
+
+    const participants = (resource.participant || []).map(p => ({
+        reference: p.actor && p.actor.reference,
+        display: p.actor && p.actor.display,
+        status: p.status
+    }));
+    const byType = prefix => participants.filter(p => (p.reference || '').startsWith(prefix));
+    const patient = byType('Patient/')[0] || {};
+
+    return {
+        id: resource.id,
+        status: resource.status,
+        start: resource.start,
+        end: resource.end,
+        minutesDuration: resource.minutesDuration,
+        created: resource.created,
+        description: resource.description,
+        comment: resource.comment,
+        serviceType: (((resource.serviceType || [])[0] || {}).coding || [{}])[0].display
+            || ((resource.serviceType || [])[0] || {}).text,
+        appointmentType: (resource.appointmentType || {}).text,
+        reason: (((resource.reasonCode || [])[0] || {}).coding || [{}])[0].display
+            || ((resource.reasonCode || [])[0] || {}).text,
+        patient: patient.display,
+        patientReference: patient.reference,
+        practitioners: byType('Practitioner/').map(p => p.display).filter(Boolean),
+        locations: byType('Location/').map(p => p.display).filter(Boolean),
+        participants,
+        lastUpdated: (resource.meta || {}).lastUpdated,
+        resource
+    };
+}
+
+// How far back the polling window reaches. Wide enough to catch updates and
+// cancellations of recent appointments without pulling the whole history.
+const POLL_LOOKBACK_DAYS = 30;
+
+// Shared tick() implementation for the appointment polling triggers.
+// `mode` is one of 'new' | 'updated' | 'cancelled'. The first tick only primes
+// the state (nothing is emitted), subsequent ticks diff against it.
+async function pollAppointments(context, mode) {
+
+    const { patient } = context.properties;
+    if (!patient) {
+        throw new context.CancelError('Patient ID is required!');
+    }
+
+    const since = new Date(Date.now() - POLL_LOOKBACK_DAYS * 24 * 3600 * 1000)
+        .toISOString().slice(0, 10);
+    const bundle = await fhirRequest(context, {
+        resource: 'Appointment',
+        params: { patient, date: `ge${since}` }
+    });
+    const items = extractResources(bundle);
+
+    const state = context.state || {};
+    const known = state.known;
+    const next = {};
+    const changed = [];
+
+    for (const r of items) {
+        const hash = JSON.stringify([r.status, r.start, r.end, r.minutesDuration, (r.meta || {}).lastUpdated]);
+        next[r.id] = { status: r.status, hash };
+        if (!known) continue;
+        const prev = known[r.id];
+        if (mode === 'new' && !prev) {
+            changed.push(r);
+        } else if (mode === 'updated' && prev && prev.hash !== hash) {
+            changed.push(r);
+        } else if (mode === 'cancelled' && r.status === 'cancelled' && (!prev || prev.status !== 'cancelled')) {
+            changed.push(r);
+        }
+    }
+
+    await context.saveState({ known: next });
+
+    for (const r of changed) {
+        await context.sendJson(normalizeAppointment(r), 'out');
+    }
+}
+
+// Flow Test Mode helper for the appointment triggers: return any existing
+// appointment of the patient (normalized) or null when there is none.
+async function findTestAppointment(context) {
+
+    const { patient } = context.properties;
+    if (!patient) {
+        throw new context.CancelError('Patient ID is required!');
+    }
+
+    const since = new Date(Date.now() - POLL_LOOKBACK_DAYS * 24 * 3600 * 1000)
+        .toISOString().slice(0, 10);
+    const bundle = await fhirRequest(context, {
+        resource: 'Appointment',
+        params: { patient, date: `ge${since}` }
+    });
+    const [appointment] = extractResources(bundle);
+    return appointment ? normalizeAppointment(appointment) : null;
+}
+
 module.exports = {
     FHIR_BASE_URL,
     OAUTH_BASE_URL,
     getFhirBaseUrl,
     fhirRequest,
     extractResources,
-    runPatientSearch
+    runPatientSearch,
+    normalizeAppointment,
+    pollAppointments,
+    findTestAppointment
 };
