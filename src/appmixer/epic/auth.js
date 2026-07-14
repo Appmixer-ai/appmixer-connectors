@@ -23,13 +23,23 @@ const SCOPES = [
 
 async function exchangeToken(context, data) {
 
+    const headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+    };
+
+    if (context.clientSecret) {
+        // Epic requires confidential clients to authenticate with HTTP Basic auth.
+        // Sending client_secret in the request body results in 'invalid_client'.
+        const credentials = Buffer.from(`${context.clientId}:${context.clientSecret}`).toString('base64');
+        headers['Authorization'] = `Basic ${credentials}`;
+        delete data.client_id;
+    }
+
     const response = await context.httpRequest({
         method: 'POST',
         url: `${OAUTH_BASE_URL}/token`,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        },
+        headers,
         data: new URLSearchParams(data).toString()
     });
 
@@ -77,10 +87,6 @@ module.exports = {
                 client_id: context.clientId
             };
 
-            if (context.clientSecret) {
-                data.client_secret = context.clientSecret;
-            }
-
             return exchangeToken(context, data);
         },
 
@@ -92,27 +98,18 @@ module.exports = {
                 client_id: context.clientId
             };
 
-            if (context.clientSecret) {
-                data.client_secret = context.clientSecret;
-            }
-
             return exchangeToken(context, data);
         },
 
-        requestProfileInfo: async context => {
+        requestProfileInfo: context => {
 
+            // Epic (sandbox included) has no userinfo endpoint. The access token is
+            // a JWT — decode its claims locally instead of making an HTTP call.
             try {
-                const { data } = await context.httpRequest({
-                    method: 'GET',
-                    url: `${OAUTH_BASE_URL}/userinfo`,
-                    headers: {
-                        'Authorization': `Bearer ${context.accessToken}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                return data || {};
+                const payload = context.accessToken.split('.')[1];
+                const claims = JSON.parse(Buffer.from(payload, 'base64').toString());
+                return { sub: claims.sub, fhirUser: claims.fhirUser };
             } catch (error) {
-                // The userinfo endpoint is optional for some Epic deployments.
                 return {};
             }
         },

@@ -26,7 +26,10 @@ module.exports = {
         return runPatientSearch(context, {
             resourceType: 'CarePlan',
             label: 'Care Plans',
-            schema
+            schema,
+            // Epic rejects CarePlan searches without a category (business rule 59159).
+            // SNOMED 38717003 = longitudinal care plan, the type Epic exposes to apps.
+            extraParams: { category: '38717003' }
         });
     }
 };
