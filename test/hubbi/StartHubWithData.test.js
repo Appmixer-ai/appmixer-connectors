@@ -15,13 +15,9 @@ describe('Hubbi StartHubWithData', function () {
         context = createMockContext();
         context.auth = { baseUrl: 'https://test.hubbi.nl', clientKey: 'ck-1', token: 'jwt' };
         context.properties = {};
-        context.messages = { in: { content: { conversionKey: 'cv-1', inputMode: 'manual' } } };
+        context.messages = { in: { content: { conversionKey: 'cv-1' } } };
         context.httpRequest.resolves({});
     });
-
-    function lastPostedRows() {
-        return context.httpRequest.firstCall.args[0].data;
-    }
 
     it('throws CancelError when conversionKey is missing', async function () {
         context.messages.in.content.conversionKey = undefined;
@@ -31,10 +27,17 @@ describe('Hubbi StartHubWithData', function () {
         );
     });
 
-    describe('manual input mode (records.ADD)', function () {
+    describe('records.ADD input', function () {
 
         it('throws CancelError when no records are provided', async function () {
             context.messages.in.content.records = { ADD: [] };
+            await assert.rejects(
+                () => StartHubWithData.receive(context),
+                e => e.name === 'CancelError' && /At least one record is required/.test(e.message)
+            );
+        });
+
+        it('throws CancelError when records is absent entirely', async function () {
             await assert.rejects(
                 () => StartHubWithData.receive(context),
                 e => e.name === 'CancelError' && /At least one record is required/.test(e.message)
@@ -55,54 +58,6 @@ describe('Hubbi StartHubWithData', function () {
             );
             assert.deepStrictEqual(req.data, rows);
             assert.deepStrictEqual(context.sendJson.firstCall.args[0], { conversionKey: 'cv-1', count: 2 });
-        });
-    });
-
-    describe('array input mode (recordsArray normalization)', function () {
-
-        beforeEach(function () {
-            context.messages.in.content.inputMode = 'array';
-        });
-
-        it('accepts a real array', async function () {
-            const rows = [{ f1: 'a' }, { f1: 'b' }];
-            context.messages.in.content.recordsArray = rows;
-            await StartHubWithData.receive(context);
-            assert.deepStrictEqual(lastPostedRows(), rows);
-        });
-
-        it('parses a JSON string array', async function () {
-            context.messages.in.content.recordsArray = '[{"f1":"a"},{"f1":"b"}]';
-            await StartHubWithData.receive(context);
-            assert.deepStrictEqual(lastPostedRows(), [{ f1: 'a' }, { f1: 'b' }]);
-        });
-
-        it('restores an index-keyed object ("0","1",...) into an array', async function () {
-            context.messages.in.content.recordsArray = { 0: { f1: 'a' }, 1: { f1: 'b' } };
-            await StartHubWithData.receive(context);
-            assert.deepStrictEqual(lastPostedRows(), [{ f1: 'a' }, { f1: 'b' }]);
-        });
-
-        it('wraps a single record object into a one-element array', async function () {
-            context.messages.in.content.recordsArray = { f1: 'a' };
-            await StartHubWithData.receive(context);
-            assert.deepStrictEqual(lastPostedRows(), [{ f1: 'a' }]);
-        });
-
-        it('throws CancelError on an invalid JSON string', async function () {
-            context.messages.in.content.recordsArray = 'not json {';
-            await assert.rejects(
-                () => StartHubWithData.receive(context),
-                e => e.name === 'CancelError' && /JSON array/.test(e.message)
-            );
-        });
-
-        it('throws CancelError when the array is empty', async function () {
-            context.messages.in.content.recordsArray = [];
-            await assert.rejects(
-                () => StartHubWithData.receive(context),
-                e => e.name === 'CancelError' && /At least one record is required/.test(e.message)
-            );
         });
     });
 
@@ -142,7 +97,9 @@ describe('Hubbi StartHubWithData', function () {
             const { schema, inputs } = context.sendJson.firstCall.args[0];
             assert.deepStrictEqual(schema.required, ['conversionKey']);
             assert(inputs.conversionKey);
-            assert(inputs.recordsArray);
+            assert(inputs.records);
+            assert(!inputs.inputMode, 'the records-source switch must be removed');
+            assert(!inputs.recordsArray, 'the array input must be removed');
         });
 
         it('builds record fields from SourceFields when conversionKey is set', async function () {
@@ -159,7 +116,7 @@ describe('Hubbi StartHubWithData', function () {
             const { inputs } = context.sendJson.firstCall.args[0];
             assert.strictEqual(inputs.records.fields.f1.type, 'text');
             assert.strictEqual(inputs.records.fields.f2.type, 'number');
-            assert(/First/.test(inputs.recordsArray.tooltip), 'tooltip should hint the field keys');
+            assert(!inputs.records.when, 'records must always be visible (no inputMode gate)');
         });
     });
 });
