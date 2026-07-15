@@ -17,7 +17,9 @@
                 "value": { "type": "string" },
                 "description": { "type": "string" },
                 "ttl": { "type": "integer" },
-                "network": { "type": "string" }
+                "network": { "type": "string" },
+                "waitForActivation": { "type": "boolean" },
+                "timeout": { "type": "integer" }
             },
             "required": [
                 "listId", "value", "network"
@@ -66,6 +68,18 @@
                     "index": 4,
                     "label": "TTL",
                     "tooltip": "Time to live in seconds indicating when the entry expires."
+                },
+                "waitForActivation": {
+                    "type": "toggle",
+                    "index": 5,
+                    "label": "Wait for Activation",
+                    "tooltip": "When enabled, the component polls the list until it reaches the ACTIVE state before continuing. This also lets rapid, sequential additions succeed: if a previous activation is still PENDING_ACTIVATION, the component waits for it to complete before activating again instead of failing. Akamai activations typically take 1-15+ minutes."
+                },
+                "timeout": {
+                    "type": "number",
+                    "index": 6,
+                    "label": "Timeout (seconds)",
+                    "tooltip": "Maximum time in seconds to wait for activation to complete when \"Wait for Activation\" is enabled. Defaults to 300 (5 minutes). Increase for production activations, which can take 15+ minutes."
                 }
             }
         }
@@ -76,55 +90,74 @@
         "name": "out",
         "options": [
             {
+                "label": "Activation Status",
+                "value": "activationStatus",
+                "schema": {
+                    "type": "string",
+                    "example": "PENDING_ACTIVATION"
+                }
+            },
+            {
                 "label": "Entries",
                 "value": "entries",
                 "schema": {
                     "type": "array",
+                    "example": [{ "action": "added", "value": "1.1.1.1", "type": "IP" }],
                     "items": {
                         "type": "object",
                         "properties": {
                             "action": {
                                 "type": "string",
-                                "title": "Action"
+                                "title": "Action",
+                                "example": "added"
                             },
                             "createDate": {
                                 "type": "string",
-                                "title": "Create Date"
+                                "title": "Create Date",
+                                "example": "2026-07-15T10:00:00Z"
                             },
                             "createdBy": {
                                 "type": "string",
-                                "title": "Created By"
+                                "title": "Created By",
+                                "example": "jsmith"
                             },
                             "description": {
                                 "type": "string",
-                                "title": "Description"
+                                "title": "Description",
+                                "example": "Blocked attacker IP"
                             },
                             "expirationDate": {
                                 "type": "string",
-                                "title": "Expiration Date"
+                                "title": "Expiration Date",
+                                "example": "2026-07-16T10:00:00Z"
                             },
                             "tags": {
                                 "type": "array",
                                 "items": {
                                     "type": "string"
                                 },
-                                "title": "Tags"
+                                "title": "Tags",
+                                "example": ["malicious"]
                             },
                             "type": {
                                 "type": "string",
-                                "title": "Type"
+                                "title": "Type",
+                                "example": "IP"
                             },
                             "updateDate": {
                                 "type": "string",
-                                "title": "Update Date"
+                                "title": "Update Date",
+                                "example": "2026-07-15T10:00:00Z"
                             },
                             "updatedBy": {
                                 "type": "string",
-                                "title": "Updated By"
+                                "title": "Updated By",
+                                "example": "jsmith"
                             },
                             "value": {
                                 "type": "string",
-                                "title": "Value"
+                                "title": "Value",
+                                "example": "1.1.1.1"
                             }
                         }
                     }

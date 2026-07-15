@@ -1,12 +1,15 @@
 'use strict';
 
-const { generateAuthorizationHeader, parseIPs } = require('../../lib');
+const lib = require('../../lib');
+const { generateAuthorizationHeader, parseIPs, ACTIVATION_STATUS } = lib;
 
 module.exports = {
     receive: async (context) => {
         const { hostnameUrl, accessToken, clientSecret, clientToken } =
             context.auth;
-        const { listId, value, description, ttl, network } = context.messages.in.content;
+        const auth = { hostnameUrl, accessToken, clientSecret, clientToken };
+        const { listId, value, description, ttl, network, waitForActivation, timeout } =
+            context.messages.in.content;
 
         if (!listId) {
             throw new context.CancelError('List is required');
@@ -90,6 +93,21 @@ module.exports = {
             data: body
         });
 
+        // A list already pending activation cannot be re-activated. This is common in
+        // rapid sequential additions (e.g. blocking attacker after attacker) where a
+        // previous activation is still in flight. Wait for it to finish, or fail clearly.
+        const currentStatus = await lib.getActivationStatus(context, auth, listId, network);
+        if (currentStatus === ACTIVATION_STATUS.PENDING) {
+            if (!waitForActivation) {
+                throw new context.CancelError(
+                    `List ${listId} is already PENDING_ACTIVATION on the ${network} network, so it cannot be ` +
+                    're-activated yet. Akamai activations can take 1-15+ minutes. Enable "Wait for Activation" ' +
+                    'to poll until the current activation completes before adding more entries.'
+                );
+            }
+            await lib.waitForActivation(context, auth, listId, network, { timeout: timeout || 300 });
+        }
+
         // Activate list
         const activateBody = { action: 'ACTIVATE', network };
 
@@ -107,12 +125,19 @@ module.exports = {
             body: activateBody
         });
 
-        await context.httpRequest({
+        const { data: activation } = await context.httpRequest({
             url: ActivateUrl,
             method: ActivateMethod,
             headers: { Authorization: ActivateAuthorization },
             data: activateBody
         });
+
+        // Optionally block until the activation reaches ACTIVE so downstream steps
+        // (e.g. another rapid addition) don't hit a still-pending list.
+        let activationStatus = activation && activation.activationStatus;
+        if (waitForActivation) {
+            activationStatus = await lib.waitForActivation(context, auth, listId, network, { timeout: timeout || 300 });
+        }
 
         let addedResponse = [];
         let updatedResponse = [];
@@ -133,7 +158,10 @@ module.exports = {
             });
         }
 
-        const response = { entries: addedResponse.concat(updatedResponse) };
+        const response = {
+            entries: addedResponse.concat(updatedResponse),
+            activationStatus
+        };
 
         return context.sendJson(response, 'out');
     }
