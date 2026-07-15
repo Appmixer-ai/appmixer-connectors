@@ -14,6 +14,17 @@ name: Claude Copilot Responder (auto-address Copilot review)
 #   * the PR is OPEN,
 #   * the review is NOT a plain "approved" with no comments (nothing to do).
 #
+# TWO-PHASE TRIGGER: `pull_request_review` events on fork PRs run WITHOUT
+# repository secrets (GitHub's fork hardening), and apx-vero PRs always come
+# from the apx-vero fork — so this workflow cannot listen to the review event
+# directly. Instead, claude-copilot-trigger.yml (unprivileged) captures the
+# event and uploads {pr_number, review_id} as an artifact; THIS workflow runs
+# on `workflow_run` (which does get secrets), reads that artifact, and strictly
+# re-verifies everything against the live API before doing anything. The
+# artifact content is treated as untrusted: only numeric ids are accepted, and
+# the Resolve step independently confirms the PR author, fork owner and that
+# the review really is Copilot's.
+#
 # LOOP NOTE: if your repo is configured to make Copilot auto-review on every
 # push, our push can trigger a fresh Copilot review -> a fresh run here. That is
 # intended (Copilot found new issues), and it self-terminates: once Claude has
@@ -26,8 +37,9 @@ name: Claude Copilot Responder (auto-address Copilot review)
 # Copilot review.
 
 on:
-  pull_request_review:
-    types: [submitted]
+  workflow_run:
+    workflows: ["Claude Copilot Trigger"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -37,24 +49,74 @@ on:
         description: "Optional Copilot review id (else latest Copilot review on the PR)"
         required: false
 
-# One run per PR at a time.
-concurrency:
-  group: claude-copilot-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
-  cancel-in-progress: false
-
 jobs:
+  resolve-event:
+    # Normalise the two entry points into {proceed, number, review_id}. For
+    # workflow_run, download the trigger's artifact; if the trigger's gate job
+    # was skipped there is no artifact and we no-op. Artifact content is
+    # UNTRUSTED — accept numeric ids only; everything else is re-verified
+    # against the live API in the address-copilot job.
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read          # download the trigger run's artifact
+    outputs:
+      proceed: ${{ steps.ev.outputs.proceed }}
+      number: ${{ steps.ev.outputs.number }}
+      review_id: ${{ steps.ev.outputs.review_id }}
+    steps:
+      - name: Resolve event source
+        id: ev
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          DISP_NUM: ${{ github.event.inputs.pr_number }}
+          DISP_REVIEW: ${{ github.event.inputs.review_id }}
+        run: |
+          set -euo pipefail
+          PROCEED=true; NUM=""; REVIEW_ID=""
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            NUM="$DISP_NUM"; REVIEW_ID="${DISP_REVIEW:-}"
+          else
+            AID=$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts" \
+              --jq '.artifacts[] | select(.name == "copilot-review-event") | .id' | head -n1)
+            if [ -z "$AID" ]; then
+              echo "Trigger run $RUN_ID produced no copilot-review-event artifact (gate skipped) — nothing to do."
+              PROCEED=false
+            else
+              gh api "repos/$REPO/actions/artifacts/$AID/zip" > /tmp/event.zip
+              unzip -o /tmp/event.zip -d /tmp/copilot-event
+              NUM=$(jq -r '.pr_number // ""' /tmp/copilot-event/event.json)
+              REVIEW_ID=$(jq -r '.review_id // ""' /tmp/copilot-event/event.json)
+            fi
+          fi
+
+          # Numeric ids only — the artifact (and dispatch input) is untrusted.
+          if [ "$PROCEED" = "true" ]; then
+            case "$NUM" in
+              ''|*[!0-9]*) echo "Invalid PR number '$NUM' — skipping."; PROCEED=false ;;
+            esac
+            case "$REVIEW_ID" in
+              *[!0-9]*) echo "Invalid review id '$REVIEW_ID' — skipping."; PROCEED=false ;;
+            esac
+          fi
+
+          {
+            echo "proceed=$PROCEED"
+            echo "number=$NUM"
+            echo "review_id=$REVIEW_ID"
+          } >> "$GITHUB_OUTPUT"
+
   address-copilot:
-    # Manual dispatch always allowed. For real events: require a review submitted
-    # by the Copilot bot on an apx-vero-authored PR, and skip bare approvals.
-    # ('opilot' avoids any case ambiguity on the leading C in the bot login
-    #  `copilot-pull-request-reviewer[bot]`.) Re-verified strictly in "Resolve".
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event.pull_request.user.login == 'apx-vero' &&
-        contains(github.event.review.user.login, 'opilot') &&
-        github.event.review.state != 'approved'
-      )
+    needs: resolve-event
+    if: needs.resolve-event.outputs.proceed == 'true'
+
+    # One run per PR at a time.
+    concurrency:
+      group: claude-copilot-${{ needs.resolve-event.outputs.number }}
+      cancel-in-progress: false
 
     runs-on: ubuntu-latest
 
@@ -66,31 +128,22 @@ jobs:
     steps:
       - name: Resolve PR and Copilot review
         id: pr
-        # gh works without a checkout. Normalise across event + dispatch: find
-        # the PR number and the target Copilot review, fetch the PR's head
-        # branch/author, then dump the review body + its inline comments into
-        # /tmp/copilot-review.json for Claude. Gate the rest on `proceed`.
+        # gh works without a checkout. Fetch the PR's head branch/author,
+        # strictly verify the gate conditions against the live API, then dump
+        # the review body + its inline comments into /tmp/copilot-review.json
+        # for Claude. Gate the rest on `proceed`.
         #
         # ITERATION GUARD: each push we make can trigger a fresh Copilot review,
         # so the number of Copilot reviews already on the PR is the round count.
         # Past MAX_ROUNDS we hard-stop (proceed=false) to break any runaway loop.
         env:
           GH_TOKEN: ${{ secrets.VERO_GH_TOKEN }}
-          EVENT_NAME: ${{ github.event_name }}
           REPO: ${{ github.repository }}
-          EV_PR: ${{ github.event.pull_request.number }}
-          EV_REVIEW: ${{ github.event.review.id }}
-          DISP_NUM: ${{ github.event.inputs.pr_number }}
-          DISP_REVIEW: ${{ github.event.inputs.review_id }}
+          NUM: ${{ needs.resolve-event.outputs.number }}
+          REVIEW_ID: ${{ needs.resolve-event.outputs.review_id }}
           MAX_ROUNDS: "5"
         run: |
           set -euo pipefail
-
-          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            NUM="$DISP_NUM"; REVIEW_ID="${DISP_REVIEW:-}"
-          else
-            NUM="$EV_PR";    REVIEW_ID="$EV_REVIEW"
-          fi
 
           gh pr view "$NUM" --repo "$REPO" \
             --json number,title,url,headRefName,headRepositoryOwner,author,state \
