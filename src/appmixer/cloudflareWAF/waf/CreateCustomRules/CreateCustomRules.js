@@ -21,9 +21,9 @@ module.exports = {
             throw new context.CancelError('IP address is required');
         }
 
-        if (!ttl) {
-            throw new context.CancelError('TTL is required');
-        }
+        // TTL is optional. A positive TTL means a timed block that needs scheduled cleanup.
+        // A missing/blank TTL or TTL=0 means a permanent block (no automatic removal).
+        const hasTtl = ttl !== undefined && ttl !== null && ttl !== '' && Number(ttl) > 0;
 
         if (ips.length === 0) {
             return context.sendJson([], 'out');
@@ -77,9 +77,11 @@ module.exports = {
             const updatedIps = lib.findIpsInRules(resultRules, parsedIps);
             const updatedIpsArray = Object.entries(updatedIps).map(([ip, { id }]) => ({ ip, ruleId: id }));
 
-            if (updatedIpsArray.length) {
+            // Only persist rules for scheduled cleanup when a positive TTL was provided.
+            // Permanent blocks (no TTL or TTL=0) are not tracked in the DB.
+            if (updatedIpsArray.length && hasTtl) {
 
-                const removeAfter = new Date().getTime() + ttl * 1000;
+                const removeAfter = new Date().getTime() + Number(ttl) * 1000;
                 const dbItems = updatedIpsArray.map(item => {
                     const { ip, ruleId } = item;
                     return {
