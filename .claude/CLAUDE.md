@@ -134,9 +134,7 @@ See: `.github/copilot-instructions.md` section "Testing Guidelines"
 ## E2E Test Flows
 
 Required components in order:
-1. `OnStart` → `BeforeAll` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
-
-**BeforeAll is REQUIRED** — resets Assert/AfterAll state between runs.
+1. `OnStart` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
 
 **Critical:**
 - Assertion types: `equal`, `notEmpty`, `regex` only

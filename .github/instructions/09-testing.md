@@ -45,16 +45,16 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
     "flow": {
         "component-id-1": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 64,
+            "y": 16,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "component-id-2": {
             "type": "appmixer.connector.core.ComponentName",
-            "x": 300,
-            "y": 200,
+            "x": 256,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -83,6 +83,50 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
 }
 ```
 
+#### Component Layout Rules (IMPORTANT)
+
+For clean, readable flows without crossing lines or cycles, follow these spacing rules strictly:
+
+**Rule 1: Linear Sequence (A → B)**
+When component A connects to component B in sequence:
+```
+B.x = A.x + 192   (horizontal spacing: 192px)
+B.y = A.y         (same vertical level)
+```
+
+**Rule 2: Branching (A → B, A → C)**
+When component A branches to two components (B and C):
+```
+B.x = A.x + 192   (horizontal spacing: 192px)
+B.y = A.y         (same vertical level as A)
+
+C.x = B.x         (SAME x as B! Vertical alignment)
+C.y = A.y + 128   (vertical spacing: 128px below A)
+```
+
+**Example - Linear Flow**:
+```
+OnStart (64, 16) → SetVariable (256, 16) → Create (448, 16) → Assert (640, 16)
+                   64+192=256              256+192=448          448+192=640
+```
+
+**Example - Branching Flow**:
+```
+Create (448, 16) 
+  ├→ Assert rawJson (640, 16)      [B: x=448+192, y=16]
+  └→ Delete (640, 144)             [C: x=640 (same as B), y=16+128]
+       └→ Create fields (832, 144) [linear: 640+192]
+            └→ Assert fields (1024, 144)
+                 └→ Delete fields (1024, 272) [C: x=1024 (same as Assert), y=144+128]
+```
+
+**Constants**:
+- `deltaX = 192px` - horizontal spacing between sequential components
+- `deltaY = 128px` - vertical spacing for branching
+
+**Start Position**:
+- First component: `x = 64, y = 16`
+
 #### Required Components
 
 Every E2E test flow MUST include these components in sequence:
@@ -101,11 +145,16 @@ Every E2E test flow MUST include these components in sequence:
     - Validate component outputs
     - Supported assertions: `equal`, `notEmpty`, `regex`
     - Multiple assertions can be used throughout the flow
+    - **Layout rule**: When a Create/Get component branches, Assert goes HORIZONTALLY (x + 192px, same y), while Delete goes VERTICALLY below (same x, y + 128px)
+    - Each Assert MUST be connected to AfterAll to report test results
 
 5. **AfterAll** (`appmixer.utils.test.AfterAll`)
-    - Cleanup operations after all tests complete
-    - Receives input from all assertion components
-    - Should include timeout property (e.g., 30 seconds)
+    - Aggregation point that receives outputs from all test and deletion components
+    - Critical for proper flow termination and cleanup
+    - **Connection rule**: AfterAll should receive inputs from **the final Delete component** and **all Assert components** in the flow
+    - Should include timeout property (e.g., 120 seconds for complex operations)
+    - Position: `x = final_component.x + 192, y = last_row.y` (continues the sequence)
+    - **Key**: AfterAll validates all assertions passed before cleanup operations run
 
 6. **ProcessE2EResults** (`appmixer.utils.test.ProcessE2EResults`)
     - Final component that processes test results
@@ -248,6 +297,7 @@ Tests must pass on repeated runs without input changes:
 - **Unique inputs**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers (e.g. `e2e-{{{ts-var}}}@test.com`). Prefer modifiers over CodeBlock.
 - **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
 - **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
+- **Delete component placement**: Delete components should be placed DIRECTLY BELOW their corresponding Assert component (same x position, y + 128px) to maintain clean visual layout and avoid crossing connection lines.
 - **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: add a CodeBlock delay (`await new Promise(r => setTimeout(r, 5000))`).
 - **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
 
@@ -940,6 +990,15 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
     - ✅ `$.component-id.out.fieldName`
     - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
+
+3b. **Deep Paths Past the Static outPort Contract**
+    - ❌ `$.make-api-call.out.response.opportunityid` — works at runtime, but MakeApiCall statically declares only `response`/`status`/`statusText`, so the designer's variable picker cannot offer the deep path and renders a red invalid-variable chip (validation error).
+    - ✅ Reference the deepest DECLARED path and extract the leaf with a modifier: `"variable": "$.make-api-call.out.response"` + `"functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.opportunityid" }] }]` (note: `params`, not `args`).
+    - ✅ Dynamic outPorts (options generated by a live `source` call, e.g. polling triggers) DO offer entity leaf fields — reference those directly (`$.trigger.out.contactid`).
+
+3c. **Arrays/Objects in String-Typed Inputs**
+    - ❌ `"headers": [{ "key": "Prefer", "value": "return=representation" }]` — key-value inspector inputs (MakeApiCall `headers`/`parameters`) declare `"type": "string"`; a raw array works at runtime but fails the designer's schema validation with a red "must be string" chip.
+    - ✅ Serialize as a JSON string: `"headers": "[{\"key\": \"Prefer\", \"value\": \"return=representation\"}]"`.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults

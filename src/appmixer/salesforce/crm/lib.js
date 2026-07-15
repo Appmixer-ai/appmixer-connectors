@@ -50,6 +50,25 @@ module.exports = {
     Date: SalesforceAPI.Date,
 
     /**
+     * Fetch the single newest record of an sObject via the jsforce SDK, ordered by
+     * CreatedDate descending. Shared by the New* triggers' test() methods so the emitted
+     * record goes through the exact same SDK query path as tick() (minus the `since`
+     * baseline filter, which would suppress output on a fresh poll).
+     * @param {Object} context - Appmixer context object.
+     * @param {string} objectName - Salesforce sObject name (e.g. 'Lead').
+     * @return {Promise<Object|null>} the newest record or null when none exist.
+     */
+    async findLatestSObject(context, objectName) {
+
+        const client = this.getSalesforceAPI(context);
+        const res = await client.sobject(objectName)
+            .find({})
+            .sort({ CreatedDate: -1 })
+            .limit(1);
+        return (Array.isArray(res) && res.length) ? res[0] : null;
+    },
+
+    /**
      * Salesforce has a weird datetime format '2017-04-28T16:18:47.000+0000', but AJV
      * schema validator does not buy that, so let's reformat to ISO.
      * @param {string} date
@@ -76,6 +95,192 @@ module.exports = {
             record[field] = formatFunc(record[field]);
         });
         return record;
+    },
+
+    /**
+     * Escape a value so it can be safely embedded in a SOQL string literal.
+     * @param {*} value
+     * @return {string}
+     */
+    escapeSoql(value) {
+
+        return String(value).replace(/'/g, '\\\'');
+    },
+
+    /**
+     * Validate that a value is a safe Salesforce API identifier (object or
+     * field name) before interpolating it into a SOQL query. Salesforce API
+     * names start with a letter and contain only letters, digits and
+     * underscores, so this rejects SOQL injection and relationship paths like
+     * `Owner.Name` (which the diff logic could not handle anyway).
+     * @param {*} value
+     * @param {string} label - human readable name used in the error message
+     * @return {string} the validated identifier
+     */
+    assertSafeIdentifier(value, label) {
+
+        if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(String(value))) {
+            throw new Error(`Invalid ${label}: "${value}". Only Salesforce API names (letters, digits and underscores) are supported.`);
+        }
+        return value;
+    },
+
+    /**
+     * Common Salesforce datetime fields present on standard objects. Used to
+     * reformat values to ISO before emitting (Salesforce returns a non-ISO
+     * datetime format that the AJV schema validator rejects).
+     */
+    COMMON_DATE_FIELDS: [
+        'CreatedDate',
+        'LastModifiedDate',
+        'SystemModstamp',
+        'LastViewedDate',
+        'LastReferencedDate',
+        'LastActivityDate',
+        'EmailBouncedDate',
+        'LastCURequestDate',
+        'LastCUUpdateDate',
+        'CloseDate',
+        'ConvertedDate'
+    ],
+
+    /**
+     * Reformat the common Salesforce datetime fields of a record to ISO. Only
+     * fields actually present (and truthy) on the record are touched.
+     * @param {Object} record
+     * @return {Object} record
+     */
+    formatSalesforceDates(record) {
+
+        this.COMMON_DATE_FIELDS.forEach(field => {
+            if (record[field]) {
+                record[field] = this.formatDate(record[field]);
+            }
+        });
+        return record;
+    },
+
+    /**
+     * Build the initial { recordId: fieldValue } map of a monitored field, used
+     * by a status/field-change trigger's start() to seed known state.
+     * Optionally scoped to a single record.
+     * @param {Object} context
+     * @param {Object} params - { objectName, fieldName, recordId }
+     * @return {Promise<Object>}
+     */
+    async getFieldValueMap(context, { objectName, fieldName, recordId }) {
+
+        this.assertSafeIdentifier(objectName, 'object name');
+        this.assertSafeIdentifier(fieldName, 'field name');
+        const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
+        const soql = `SELECT Id,${fieldName} FROM ${objectName}${where}`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        const map = {};
+        ((data && data.records) || []).forEach(record => {
+            map[record['Id']] = record[fieldName];
+        });
+        return map;
+    },
+
+    /**
+     * Fetch full records of an object modified since the given date, newest
+     * first. Optionally scoped to a single record.
+     * @param {Object} context
+     * @param {Object} params - { objectName, since, recordId, limit }
+     * @return {Promise<Array>}
+     */
+    async getModifiedRecords(context, { objectName, since, recordId, limit = 200 }) {
+
+        this.assertSafeIdentifier(objectName, 'object name');
+        // The query below selects all fields via SOQL FIELDS(ALL), which
+        // Salesforce only allows as a *bounded* query: it requires a LIMIT of
+        // at most 200 (and rejects nextRecordsUrl-style pagination). Requesting
+        // more than 200 makes the API reject the query outright, so the limit is
+        // capped at 200 here. Records are ordered newest-first so the most
+        // recent changes in a tick window are never the ones dropped.
+        let where = `LastModifiedDate >= ${this.Date.toDateTimeLiteral(since)}`;
+        if (recordId) {
+            where += ` AND Id = '${this.escapeSoql(recordId)}'`;
+        }
+        const soql = `SELECT FIELDS(ALL) FROM ${objectName} WHERE ${where} ORDER BY LastModifiedDate DESC LIMIT ${limit}`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        return (data && data.records) || [];
+    },
+
+    /**
+     * Fetch the single most recently modified record of an object. Optionally
+     * scoped to a single record. Used by trigger test() methods to emit one
+     * realistic item for Flow Test Mode.
+     * @param {Object} context
+     * @param {Object} params - { objectName, recordId }
+     * @return {Promise<Object|null>}
+     */
+    async getLatestRecord(context, { objectName, recordId }) {
+
+        this.assertSafeIdentifier(objectName, 'object name');
+        const where = recordId ? ` WHERE Id = '${this.escapeSoql(recordId)}'` : '';
+        const soql = `SELECT FIELDS(ALL) FROM ${objectName}${where} ORDER BY LastModifiedDate DESC LIMIT 1`;
+        const { data } = await this.api.salesForceRq(context, {
+            method: 'GET',
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+
+        return ((data && data.records) || [])[0] || null;
+    },
+
+    /**
+     * Shared start() for status/field-change triggers: seed the known value of
+     * the monitored field for every (optionally a single) record.
+     */
+    async runFieldChangeStart(context, { objectName, fieldName, recordId }) {
+
+        const known = await this.getFieldValueMap(context, { objectName, fieldName, recordId });
+        await context.saveState({ known });
+    },
+
+    /**
+     * Shared tick() for status/field-change triggers: emit each modified record
+     * whose monitored field value changed since the previous tick.
+     */
+    async runFieldChangeTick(context, { objectName, fieldName, recordId, outputPortName }) {
+
+        const since = new Date();
+        const lastSince = context.state.since || since;
+
+        const records = await this.getModifiedRecords(context, {
+            objectName,
+            since: lastSince,
+            recordId
+        });
+
+        const known = context.state.known || {};
+        const newKnown = { ...known };
+        const triggered = [];
+
+        records.forEach(record => {
+            const id = record['Id'];
+            const prev = known[id];
+            const curr = record[fieldName];
+            // Only emit when we knew a previous value and it actually changed.
+            if (prev !== undefined && prev !== curr) {
+                triggered.push(record);
+            }
+            newKnown[id] = curr;
+        });
+
+        await Promise.all(triggered.map(record => {
+            return context.sendJson(this.formatSalesforceDates(record), outputPortName);
+        }));
+
+        await context.saveState({ known: newKnown, since });
     },
 
     // API

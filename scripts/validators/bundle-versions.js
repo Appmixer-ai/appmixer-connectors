@@ -7,12 +7,15 @@
 //   2. `bundle.changelog` exists, is a plain object, and is non-empty.
 //   3. Every key in `bundle.changelog` is valid semver.
 //   4. `bundle.version` equals the highest semver among `Object.keys(bundle.changelog)`.
+//   5. Changelog entries are listed oldest-first (newest version LAST).
 //
 // Why
 // ---
 // The marketplace UI shows the changelog of the version published as `bundle.version`.
 // If the two drift, users see stale notes after a bump, or the new version ships with
-// no notes at all. Catching it in CI prevents that class of bug.
+// no notes at all. Catching it in CI prevents that class of bug. Keeping the entries in
+// ascending order (newest at the bottom) means a new release is always appended, so the
+// file reads chronologically and diffs stay clean.
 
 const { readJson, parseVersion, compareVersions } = require('./_shared');
 
@@ -60,6 +63,18 @@ function validateBundle(bundlePath, addFailure) {
         return;
     }
 
+    // Changelog entries must be listed oldest-first (newest version LAST), so the file
+    // reads chronologically and a new release is always appended at the bottom.
+    const fileOrder = parsedChangelogVersions.map(({ raw }) => raw);
+    const ascendingOrder = parsedChangelogVersions
+        .slice()
+        .sort((left, right) => compareVersions(left.parsed, right.parsed))
+        .map(({ raw }) => raw);
+
+    if (fileOrder.some((raw, index) => raw !== ascendingOrder[index])) {
+        addFailure(bundlePath, `changelog must be ordered oldest-first (newest version last); expected [${ascendingOrder.join(', ')}] but found [${fileOrder.join(', ')}]`);
+    }
+
     parsedChangelogVersions.sort((left, right) => compareVersions(left.parsed, right.parsed));
 
     const latestVersion = parsedChangelogVersions.at(-1).raw;
@@ -71,7 +86,7 @@ function validateBundle(bundlePath, addFailure) {
 
 module.exports = {
     name: 'bundle-versions',
-    description: 'bundle.json version matches the latest changelog entry',
+    description: 'bundle.json version matches the latest changelog entry, and changelog is ordered oldest-first (newest last)',
     run(context) {
         for (const bundlePath of context.bundleFiles) {
             validateBundle(bundlePath, context.addFailure);

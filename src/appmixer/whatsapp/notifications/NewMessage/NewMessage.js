@@ -13,6 +13,18 @@ const lib = require('../../lib');
 
 module.exports = {
 
+    // Flow Test Mode: the WhatsApp Cloud API has no endpoint to list received messages — this
+    // trigger only ever gets data from a real inbound-message webhook. Fabricating a fake sample
+    // would emit data that matches nothing real, so fail with a clear explanation instead.
+    async test(context) {
+
+        throw new context.CancelError(
+            'Flow Test Mode is not available for this trigger: WhatsApp does not provide an API to '
+            + 'fetch a received message, so no real sample data can be produced. Send an actual '
+            + 'WhatsApp message to your number to trigger the flow instead.'
+        );
+    },
+
     async start(context) {
 
         // Form override (inspector input) wins over the auto-discovered default
