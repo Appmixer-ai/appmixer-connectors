@@ -61,16 +61,48 @@ describe('Hubbi NewHubEvent (trigger)', function () {
             assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [{ id: '1' }, { id: '2' }], count: 2 });
         });
 
-        it('emits an empty result when there is no data payload', async function () {
-            context.messages = { webhook: { content: { data: { conversionKey: 'cv-1' } } } };
-            await NewHubEvent.receive(context);
-            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [], count: 0 });
-        });
-
         it('ignores webhooks whose conversionKey does not match', async function () {
             context.messages = { webhook: { content: { data: { conversionKey: 'other', data: { id: '1' } } } } };
             await NewHubEvent.receive(context);
             assert(context.sendJson.notCalled, 'should not emit any record');
+            assert(context.response.calledOnce);
+        });
+    });
+
+    // An event carrying no records is a no-op. Regression cover for two distinct
+    // failures: in the 'first' output type sendArrayOutput threw a CancelError, so
+    // context.response() never ran and Hubbi saw an error instead of an ack; in the
+    // 'array' output type an empty 'result' was emitted, firing the flow with
+    // nothing to process. Both now acknowledge and emit nothing.
+    describe('webhook handling: empty payload', function () {
+
+        const emptyPayloads = {
+            'data key absent': { conversionKey: 'cv-1' },
+            'data is null': { conversionKey: 'cv-1', data: null },
+            'data is an empty array': { conversionKey: 'cv-1', data: [] }
+        };
+
+        ['first', 'array', 'object'].forEach(function (outputType) {
+            Object.entries(emptyPayloads).forEach(function ([description, payload]) {
+                it(`acknowledges without emitting when ${description} (outputType=${outputType})`, async function () {
+                    context.properties.outputType = outputType;
+                    context.messages = { webhook: { content: { data: payload } } };
+
+                    await assert.doesNotReject(() => NewHubEvent.receive(context));
+
+                    assert(context.sendJson.notCalled, 'should not emit anything for an empty event');
+                    assert(context.response.calledOnce, 'must answer the webhook');
+                });
+            });
+        });
+
+        it('still emits normally once the payload carries records', async function () {
+            context.properties.outputType = 'first';
+            context.messages = { webhook: { content: { data: { conversionKey: 'cv-1', data: [{ id: '1' }, { id: '2' }] } } } };
+
+            await NewHubEvent.receive(context);
+
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { id: '1', index: 0, count: 2 });
             assert(context.response.calledOnce);
         });
     });

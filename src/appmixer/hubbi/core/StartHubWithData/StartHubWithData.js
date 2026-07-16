@@ -98,8 +98,8 @@ async function generateInspector(context) {
     const inputs = {
         conversionKey: {
             type: 'select',
-            label: 'Conversion Key',
-            tooltip: 'The conversion identifier (UUID) of the hub to start.',
+            label: 'Hub',
+            tooltip: 'Select the hub to start.',
             index: 0,
             source: {
                 url: '/component/appmixer/hubbi/core/ListSourceHubsWithPostData?outPort=out',

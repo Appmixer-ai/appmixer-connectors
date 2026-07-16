@@ -2,31 +2,8 @@
     "name": "appmixer.hubbi",
     "version": "2.0.0",
     "changelog": {
-        "2.0.0": [
-            "StartHubWithData: remove the 'Records source' switch and the 'Map array from previous step' mode. Records are now always built manually using the hub's dynamic source fields (the repeating 'Records' field), which is no longer hidden behind a visibility gate. BREAKING: flows that mapped a whole array from a previous step must be reconfigured to build the records manually."
-        ],
-        "1.6.0": [
-            "StartHub and StartHubWithData: re-classify Hubbi HTTP errors for the retry engine via the shared lib.rethrowHubbiError helper. A 409 (Conflict) is now treated as transient and retried (the engine would otherwise drop it as a permanent client error), while a 423 (Locked) is turned into a CancelError so it is NOT retried (the engine would otherwise retry it as an unknown error). All other errors keep the engine's default classification."
-        ],
-        "1.5.0": [
-            "NewHubEvent: add an 'Output Type' option (First record / All records at once / One record at a time) and route the output through the shared lib helpers (sendArrayOutput / getOutputPortOptions). In the 'One record at a time' and 'First record' modes the individual hub fields are now exposed directly on the output port instead of being nested under the 'result' array. Loading the hub fields for the output port options is now fault-tolerant: if the TargetFields lookup fails, the generic record options are still offered instead of the option list ending up empty. BREAKING: the standalone 'conversionKey' output field was removed; events are already filtered to the configured hub."
-        ],
-        "1.4.1": [
-            "StartHubWithData: fix bulk array input being collapsed into a single record. When a whole array is mapped from a previous step, Appmixer may serialize it into an object keyed by index (\"0\", \"1\", \"2\", ...); the component now restores it to an array so all records are sent to the hub.",
-            "NewHubEvent: fix webhook payload carrying an array of records being spread into an object with numeric keys (\"0\", \"1\", \"2\", ...) on the output. The trigger now exposes the records as an array under 'result' (with a 'count'), preserving a bulk batch as an array. BREAKING: the output shape changed from flat per-field columns to 'conversionKey' + 'result' array, so existing flows reading fields directly must remap them under 'result'."
-        ],
-        "1.4.0": [
-            "StartHubWithData: support sending multiple records (bulk) in a single request. A 'Records source' switch lets you either build rows manually using the hub's dynamic source fields (repeating 'Records' field) or map a whole array of records from a previous step ('Records array'). The request body is sent as a JSON array either way. BREAKING: the input shape changed from flat per-field inputs to the new records inputs, so existing flows must remap their fields. Output now also returns the records count."
-        ],
-        "1.3.0": [
-            "Map .NET field types (Int32, Int64, Double, Decimal, DateTime, Date, Guid, Boolean, ...) to matching Appmixer inspector input types and JSON schema types in StartHubWithData inputs and NewHubEvent output port options."
-        ],
-        "1.2.0": [
-            "Replace removed HubsList endpoint with three dedicated list helpers: ListSourceHubsWithoutPostData (used by StartHub), ListSourceHubsWithPostData (used by StartHubWithData), and ListTargetHubs (used by NewHubEvent).",
-            "Auth: use ListTargetHubs endpoint for profile/validate checks (HubsList endpoint was removed)."
-        ],
-        "1.1.1": [
-            "NewHubEvent: load output port fields from TargetFields endpoint instead of SourceFields."
+        "1.0.0": [
+            "Initial release."
         ],
         "1.1.0": [
             "Add dynamic source field inputs to StartHubWithData based on selected hub.",
@@ -34,8 +11,33 @@
             "Mark ListHubs, GetSourceFields, GetTargetFields as private helper components.",
             "StartHubWithData returns conversionKey on success (fire-and-forget async action)."
         ],
-        "1.0.0": [
-            "Initial release."
+        "1.1.1": [
+            "NewHubEvent: load output port fields from TargetFields endpoint instead of SourceFields."
+        ],
+        "1.2.0": [
+            "Replace removed HubsList endpoint with three dedicated list helpers: ListSourceHubsWithoutPostData (used by StartHub), ListSourceHubsWithPostData (used by StartHubWithData), and ListTargetHubs (used by NewHubEvent).",
+            "Auth: use ListTargetHubs endpoint for profile/validate checks (HubsList endpoint was removed)."
+        ],
+        "1.3.0": [
+            "Map .NET field types (Int32, Int64, Double, Decimal, DateTime, Date, Guid, Boolean, ...) to matching Appmixer inspector input types and JSON schema types in StartHubWithData inputs and NewHubEvent output port options."
+        ],
+        "1.4.0": [
+            "StartHubWithData: support sending multiple records (bulk) in a single request. A 'Records source' switch lets you either build rows manually using the hub's dynamic source fields (repeating 'Records' field) or map a whole array of records from a previous step ('Records array'). The request body is sent as a JSON array either way. BREAKING: the input shape changed from flat per-field inputs to the new records inputs, so existing flows must remap their fields. Output now also returns the records count."
+        ],
+        "1.4.1": [
+            "StartHubWithData: fix bulk array input being collapsed into a single record. When a whole array is mapped from a previous step, Appmixer may serialize it into an object keyed by index (\"0\", \"1\", \"2\", ...); the component now restores it to an array so all records are sent to the hub.",
+            "NewHubEvent: fix webhook payload carrying an array of records being spread into an object with numeric keys (\"0\", \"1\", \"2\", ...) on the output. The trigger now exposes the records as an array under 'result' (with a 'count'), preserving a bulk batch as an array. BREAKING: the output shape changed from flat per-field columns to 'conversionKey' + 'result' array, so existing flows reading fields directly must remap them under 'result'."
+        ],
+        "1.5.0": [
+            "NewHubEvent: add an 'Output Type' option (First record / All records at once / One record at a time) and route the output through the shared lib helpers (sendArrayOutput / getOutputPortOptions). In the 'One record at a time' and 'First record' modes the individual hub fields are now exposed directly on the output port instead of being nested under the 'result' array. Loading the hub fields for the output port options is now fault-tolerant: if the TargetFields lookup fails, the generic record options are still offered instead of the option list ending up empty. BREAKING: the standalone 'conversionKey' output field was removed; events are already filtered to the configured hub."
+        ],
+        "1.6.0": [
+            "StartHub and StartHubWithData: re-classify Hubbi HTTP errors for the retry engine via the shared lib.rethrowHubbiError helper. A 409 (Conflict) is now treated as transient and retried (the engine would otherwise drop it as a permanent client error), while a 423 (Locked) is turned into a CancelError so it is NOT retried (the engine would otherwise retry it as an unknown error). All other errors keep the engine's default classification."
+        ],
+        "2.0.0": [
+            "StartHubWithData: remove the 'Records source' switch and the 'Map array from previous step' mode. Records are now always built manually using the hub's dynamic source fields (the repeating 'Records' field), which is no longer hidden behind a visibility gate. BREAKING: flows that mapped a whole array from a previous step must be reconfigured to build the records manually.",
+            "Rename the hub select input label from 'Conversion Key' to 'Hub' in StartHub, StartHubWithData, GetSourceFields and GetTargetFields, so all components label the hub picker the same way NewHubEvent already did. Labels only; the stored value is still the hub's conversion key and output ports keep the 'Conversion Key' label.",
+            "NewHubEvent: acknowledge hub events that carry no records instead of emitting or failing. Previously an empty event threw a CancelError in the 'First record' output type, leaving the webhook unanswered so Hubbi saw an error, and emitted an empty 'result' array in the 'All records at once' output type, firing the flow with nothing to process. Empty events are now logged and acknowledged, and no longer trigger the flow in any output type."
         ]
     }
 }

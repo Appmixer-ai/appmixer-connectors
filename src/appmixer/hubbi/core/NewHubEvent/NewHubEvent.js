@@ -43,6 +43,14 @@ module.exports = {
                 ? payload.data
                 : (payload.data ? [payload.data] : []);
 
+            // An event with no records is a no-op: there is nothing to emit and
+            // lib.sendArrayOutput would throw a CancelError in the 'first' mode,
+            // which would leave the webhook unanswered. Acknowledge it instead.
+            if (records.length === 0) {
+                await context.log({ step: 'Webhook ignored, no records in payload' });
+                return context.response();
+            }
+
             await lib.sendArrayOutput({ context, outputType, records });
             return context.response();
         }
