@@ -51,6 +51,9 @@ module.exports = {
 
     // Return the activation status of a list for the given network (STAGING/PRODUCTION).
     async getActivationStatus(context, auth, listId, network) {
+        if (network !== 'PRODUCTION' && network !== 'STAGING') {
+            throw new context.CancelError(`Invalid network "${network}". Expected STAGING or PRODUCTION.`);
+        }
         const list = await this.getList(context, auth, listId);
         const key = network === 'PRODUCTION'
             ? 'productionActivationStatus'
@@ -76,14 +79,15 @@ module.exports = {
                 throw new context.CancelError(`Activation of list ${listId} on the ${network} network failed.`);
             }
 
-            if (Date.now() + intervalMs >= deadline) {
+            const remainingMs = deadline - Date.now();
+            if (remainingMs <= 0) {
                 throw new context.CancelError(
                     `Timed out after ${timeout}s waiting for list ${listId} to become ACTIVE on the ${network} network. ` +
                     `Current status: ${status}. Akamai activations can take 1-15+ minutes; increase the timeout or retry later.`
                 );
             }
 
-            await new Promise(resolve => setTimeout(resolve, intervalMs));
+            await new Promise(resolve => setTimeout(resolve, Math.min(intervalMs, remainingMs)));
         }
     },
 

@@ -19,6 +19,22 @@ module.exports = {
             throw new context.CancelError('IP or IPs is required');
         }
 
+        // A list already pending activation cannot be re-activated. This is common in
+        // rapid sequential additions (e.g. blocking attacker after attacker) where a
+        // previous activation is still in flight. Check before modifying entries so the
+        // non-wait error path leaves the list untouched.
+        const currentStatus = await lib.getActivationStatus(context, auth, listId, network);
+        if (currentStatus === ACTIVATION_STATUS.PENDING) {
+            if (!waitForActivation) {
+                throw new context.CancelError(
+                    `List ${listId} is already PENDING_ACTIVATION on the ${network} network, so it cannot be ` +
+                    're-activated yet. Akamai activations can take 1-15+ minutes. Enable "Wait for Activation" ' +
+                    'to poll until the current activation completes before adding more entries.'
+                );
+            }
+            await lib.waitForActivation(context, auth, listId, network, { timeout: timeout || 300 });
+        }
+
         // GET list items to check whether to append or update
         const {
             url: getItemsUrl,
@@ -92,21 +108,6 @@ module.exports = {
             headers: { Authorization },
             data: body
         });
-
-        // A list already pending activation cannot be re-activated. This is common in
-        // rapid sequential additions (e.g. blocking attacker after attacker) where a
-        // previous activation is still in flight. Wait for it to finish, or fail clearly.
-        const currentStatus = await lib.getActivationStatus(context, auth, listId, network);
-        if (currentStatus === ACTIVATION_STATUS.PENDING) {
-            if (!waitForActivation) {
-                throw new context.CancelError(
-                    `List ${listId} is already PENDING_ACTIVATION on the ${network} network, so it cannot be ` +
-                    're-activated yet. Akamai activations can take 1-15+ minutes. Enable "Wait for Activation" ' +
-                    'to poll until the current activation completes before adding more entries.'
-                );
-            }
-            await lib.waitForActivation(context, auth, listId, network, { timeout: timeout || 300 });
-        }
 
         // Activate list
         const activateBody = { action: 'ACTIVATE', network };
