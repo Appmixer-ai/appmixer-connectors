@@ -62,6 +62,7 @@ module.exports = {
             return context.sendJson(
                 {
                     listId,
+                    network,
                     previousActivationStatus: currentStatus,
                     activationStatus: currentStatus
                 },
@@ -86,7 +87,7 @@ module.exports = {
                 phase: 'awaitClear',
                 timeoutSeconds: timeout,
                 deferred: { comments },
-                output: { listId, previousActivationStatus: currentStatus }
+                output: { listId, network, previousActivationStatus: currentStatus }
             });
         }
 

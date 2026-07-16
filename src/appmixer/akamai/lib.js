@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const EdgeGrid = require('akamai-edgegrid');
 
 // Client list activation statuses as returned by the Akamai Network/Client Lists API.
@@ -96,7 +97,7 @@ module.exports = {
             // the network — for our purposes that means the goal state is reached.
             const detail = err.response && err.response.data && err.response.data.detail;
             if (err.response && err.response.status === 400 && /already active/i.test(detail || '')) {
-                return { listId, activationStatus: ACTIVATION_STATUS.ACTIVE };
+                return { listId, network, activationStatus: ACTIVATION_STATUS.ACTIVE };
             }
             throw err;
         }
@@ -109,7 +110,14 @@ module.exports = {
     // Returns null when no fresh status is available yet (another caller holds
     // the poll lock and nothing is cached) — callers should simply retry next tick.
     async getActivationStatusShared(context, auth, listId, network, { maxAgeMs = 30 * 1000 } = {}) {
-        const cacheKey = `activation-status:${listId}:${network}`;
+        // Service state and locks are service-global — scope the keys by a
+        // non-secret hash of the credentials so two Akamai accounts with the
+        // same listId never share a cache entry or contend on the lock.
+        const authScope = crypto.createHash('sha256')
+            .update(`${auth.hostnameUrl}:${auth.clientToken}`)
+            .digest('hex')
+            .slice(0, 12);
+        const cacheKey = `activation-status:${authScope}:${listId}:${network}`;
         const cached = await context.service.stateGet(cacheKey);
         if (cached && (Date.now() - cached.time) < maxAgeMs) {
             return cached.status;
@@ -117,7 +125,7 @@ module.exports = {
 
         let lock;
         try {
-            lock = await context.lock(`akamai-poll-${listId}-${network}`, { ttl: 60 * 1000, maxRetryCount: 0 });
+            lock = await context.lock(`akamai-poll-${authScope}-${listId}-${network}`, { ttl: 60 * 1000, maxRetryCount: 0 });
         } catch (err) {
             // Another component instance is polling this list right now.
             return cached ? cached.status : null;
@@ -132,7 +140,7 @@ module.exports = {
             await context.service.stateSet(cacheKey, { status, time: Date.now() });
             return status;
         } finally {
-            lock.unlock();
+            await lock.unlock();
         }
     },
 
