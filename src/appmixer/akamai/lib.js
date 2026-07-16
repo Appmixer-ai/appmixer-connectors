@@ -61,34 +61,149 @@ module.exports = {
         return list[key];
     },
 
-    // Poll the list activation status until it reaches ACTIVE, fails, or the timeout is hit.
-    // timeout and interval are given in seconds. Returns the final activation status.
-    async waitForActivation(context, auth, listId, network, { timeout = 300, interval = 15 } = {}) {
-        const deadline = Date.now() + timeout * 1000;
-        const intervalMs = Math.max(interval, 1) * 1000;
+    // Trigger an activation of the list on the given network.
+    async activateList(context, auth, { listId, network, comments }) {
+        const { hostnameUrl, accessToken, clientSecret, clientToken } = auth;
+        const body = { action: 'ACTIVATE', network };
+        if (comments) {
+            body.comments = comments;
+        }
 
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
+        const {
+            url,
+            method,
+            headers: { Authorization }
+        } = this.generateAuthorizationHeader({
+            hostnameUrl,
+            accessToken,
+            clientToken,
+            clientSecret,
+            method: 'POST',
+            path: `/client-list/v1/lists/${listId}/activations`,
+            body
+        });
+
+        try {
+            const { data } = await context.httpRequest({
+                url,
+                method,
+                headers: { Authorization },
+                data: body
+            });
+            return data;
+        } catch (err) {
+            // Akamai rejects activating a list version that is already active on
+            // the network — for our purposes that means the goal state is reached.
+            const detail = err.response && err.response.data && err.response.data.detail;
+            if (err.response && err.response.status === 400 && /already active/i.test(detail || '')) {
+                return { listId, activationStatus: ACTIVATION_STATUS.ACTIVE };
+            }
+            throw err;
+        }
+    },
+
+    // Activation status lookup shared across component instances. The last known
+    // status is cached in the service state and a non-blocking lock guarantees
+    // that only one caller polls Akamai for a given list+network at a time —
+    // N components waiting on the same list produce one API call per tick, not N.
+    // Returns null when no fresh status is available yet (another caller holds
+    // the poll lock and nothing is cached) — callers should simply retry next tick.
+    async getActivationStatusShared(context, auth, listId, network, { maxAgeMs = 30 * 1000 } = {}) {
+        const cacheKey = `activation-status:${listId}:${network}`;
+        const cached = await context.service.stateGet(cacheKey);
+        if (cached && (Date.now() - cached.time) < maxAgeMs) {
+            return cached.status;
+        }
+
+        let lock;
+        try {
+            lock = await context.lock(`akamai-poll-${listId}-${network}`, { ttl: 60 * 1000, maxRetryCount: 0 });
+        } catch (err) {
+            // Another component instance is polling this list right now.
+            return cached ? cached.status : null;
+        }
+        try {
+            // Re-check the cache — the previous lock holder may have just refreshed it.
+            const fresh = await context.service.stateGet(cacheKey);
+            if (fresh && (Date.now() - fresh.time) < maxAgeMs) {
+                return fresh.status;
+            }
             const status = await this.getActivationStatus(context, auth, listId, network);
+            await context.service.stateSet(cacheKey, { status, time: Date.now() });
+            return status;
+        } finally {
+            lock.unlock();
+        }
+    },
 
-            if (status === ACTIVATION_STATUS.ACTIVE) {
-                return status;
-            }
+    // ------------------------------------------------------------------------
+    // Poll continuations. Long activations (1-15+ minutes) must not block
+    // receive() — the engine caps execution time. Instead, a wait is carried in
+    // a context.setTimeout message: each poll is a short receive() invocation
+    // that checks the status and either resolves the wait or re-schedules
+    // itself. The overall timeout is enforced with a deadline in the wait.
+    //
+    // A wait: { listId, network, phase, timeoutSeconds, deadline, output, deferred }
+    //   phase 'awaitClear'  — an earlier activation is still PENDING; once it
+    //                         clears, the component's onClear callback performs
+    //                         the deferred action and returns the follow-up wait
+    //                         (or null when it resolved the wait itself).
+    //   phase 'awaitActive' — waiting for the list to reach ACTIVE; the wait
+    //                         resolves via the component's onActive callback.
+    // ------------------------------------------------------------------------
 
-            if (status === ACTIVATION_STATUS.FAILED) {
-                throw new context.CancelError(`Activation of list ${listId} on the ${network} network failed.`);
-            }
+    POLL_INTERVAL_MS: 60 * 1000,
 
-            const remainingMs = deadline - Date.now();
-            if (remainingMs <= 0) {
+    // Schedule the first poll of a new wait.
+    async startWait(context, wait) {
+        const timeoutSeconds = wait.timeoutSeconds || 300;
+        await context.setTimeout({
+            ...wait,
+            timeoutSeconds,
+            deadline: Date.now() + timeoutSeconds * 1000
+        }, Math.min(this.POLL_INTERVAL_MS, timeoutSeconds * 1000));
+    },
+
+    // One poll step, invoked from receive() with the context.setTimeout message.
+    // Callbacks:
+    //   onClear(context, wait, status) — perform the deferred action, return the
+    //                                    follow-up wait (or null when resolved)
+    //   onActive(context, wait)        — emit the component output for a resolved wait
+    async continueWait(context, { onClear, onActive }) {
+        let wait = context.messages.timeout.content;
+
+        const { hostnameUrl, accessToken, clientSecret, clientToken } = context.auth;
+        const auth = { hostnameUrl, accessToken, clientSecret, clientToken };
+
+        const status = await this.getActivationStatusShared(context, auth, wait.listId, wait.network);
+
+        if (status !== null) {
+            if (wait.phase === 'awaitClear') {
+                if (status !== ACTIVATION_STATUS.PENDING) {
+                    wait = await onClear(context, wait, status);
+                    if (!wait) {
+                        return;
+                    }
+                }
+            } else if (status === ACTIVATION_STATUS.ACTIVE) {
+                return onActive(context, wait);
+            } else if (status === ACTIVATION_STATUS.FAILED) {
                 throw new context.CancelError(
-                    `Timed out after ${timeout}s waiting for list ${listId} to become ACTIVE on the ${network} network. ` +
-                    `Current status: ${status}. Akamai activations can take 1-15+ minutes; increase the timeout or retry later.`
+                    `Activation of list ${wait.listId} on the ${wait.network} network failed.`
                 );
             }
-
-            await new Promise(resolve => setTimeout(resolve, Math.min(intervalMs, remainingMs)));
         }
+
+        const remainingMs = wait.deadline - Date.now();
+        if (remainingMs <= 0) {
+            throw new context.CancelError(
+                `Timed out after ${wait.timeoutSeconds}s waiting for list ${wait.listId} to become ACTIVE ` +
+                `on the ${wait.network} network. Akamai activations can take 1-15+ minutes; ` +
+                'increase the timeout or retry later.'
+            );
+        }
+
+        await context.setTimeout(wait, Math.min(this.POLL_INTERVAL_MS, remainingMs));
     },
 
     parseIPs(input) {
