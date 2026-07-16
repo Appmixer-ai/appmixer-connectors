@@ -50,11 +50,19 @@ module.exports = {
         return data;
     },
 
-    // Return the activation status of a list for the given network (STAGING/PRODUCTION).
-    async getActivationStatus(context, auth, listId, network) {
-        if (network !== 'PRODUCTION' && network !== 'STAGING') {
+    // Normalize the network input to the STAGING/PRODUCTION enum. Values may
+    // come from flow variables in any case; don't break flows over casing.
+    normalizeNetwork(context, network) {
+        const normalized = String(network || '').trim().toUpperCase();
+        if (normalized !== 'PRODUCTION' && normalized !== 'STAGING') {
             throw new context.CancelError(`Invalid network "${network}". Expected STAGING or PRODUCTION.`);
         }
+        return normalized;
+    },
+
+    // Return the activation status of a list for the given network (STAGING/PRODUCTION).
+    async getActivationStatus(context, auth, listId, network) {
+        network = this.normalizeNetwork(context, network);
         const list = await this.getList(context, auth, listId);
         const key = network === 'PRODUCTION'
             ? 'productionActivationStatus'
@@ -64,6 +72,7 @@ module.exports = {
 
     // Trigger an activation of the list on the given network.
     async activateList(context, auth, { listId, network, comments }) {
+        network = this.normalizeNetwork(context, network);
         const { hostnameUrl, accessToken, clientSecret, clientToken } = auth;
         const body = { action: 'ACTIVATE', network };
         if (comments) {
@@ -110,6 +119,7 @@ module.exports = {
     // Returns null when no fresh status is available yet (another caller holds
     // the poll lock and nothing is cached) — callers should simply retry next tick.
     async getActivationStatusShared(context, auth, listId, network, { maxAgeMs = 30 * 1000 } = {}) {
+        network = this.normalizeNetwork(context, network);
         // Service state and locks are service-global — scope the keys by a
         // non-secret hash of the credentials so two Akamai accounts with the
         // same listId never share a cache entry or contend on the lock.
