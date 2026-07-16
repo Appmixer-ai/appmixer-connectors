@@ -15,8 +15,10 @@ const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000;
 //   must not linger forever, but it must comfortably outlive a full paginated fetch — a Xero list can be
 //   ~100 sequential pages, each of which may sit through a Retry-After backoff on a 429, so a fetch can
 //   legitimately take tens of seconds. 60s covers that with margin while still auto-recovering from a
-//   stale lock left by a dead worker (dead-lock detection). It is < the cache TTL, so a lock never
-//   outlives the value it guards.
+//   stale lock left by a dead worker (dead-lock detection). It is < the default cache TTL (120s), so
+//   under the default a lock never outlives the value it guards. (The cache TTL is configurable via
+//   context.config.listCacheTTL; if it is set below 60s the lock may outlive the cached value, which
+//   is harmless — a re-fetch simply re-populates the cache.)
 // - LOCK_RETRY_DELAY / LOCK_MAX_RETRY_COUNT: how long a waiter blocks before giving up. 500ms * 60 = 30s,
 //   which lets a waiter sit through a realistic fetch (including 429 backoff) instead of exhausting the
 //   framework default (30 attempts) and throwing. Combined with the fallback below, exceeding even this
@@ -69,7 +71,7 @@ module.exports = {
         // never contend for the lock at all — this is what stops the *META* lock exhaustion. The lock is
         // only needed to dedupe the burst that populates a cold cache.
         const cachedBeforeLock = await context.staticCache.get(key);
-        if (cachedBeforeLock) {
+        if (cachedBeforeLock !== null && cachedBeforeLock !== undefined) {
             return cachedBeforeLock;
         }
 
@@ -99,7 +101,7 @@ module.exports = {
             // Re-check under the lock: a waiter that just got the lock may find the previous holder
             // already populated the cache.
             const cached = await context.staticCache.get(key);
-            if (cached) {
+            if (cached !== null && cached !== undefined) {
                 return cached;
             }
 
