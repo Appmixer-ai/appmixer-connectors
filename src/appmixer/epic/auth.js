@@ -1,6 +1,6 @@
 'use strict';
 
-const { FHIR_BASE_URL, OAUTH_BASE_URL } = require('./commons');
+const { getFhirBaseUrl, getOauthBaseUrl } = require('./commons');
 
 // Read-only SMART on FHIR scopes covering every resource type this connector
 // reads. Adding scopes later is a breaking change (users must re-authenticate).
@@ -39,7 +39,7 @@ async function exchangeToken(context, data) {
 
     const response = await context.httpRequest({
         method: 'POST',
-        url: `${OAUTH_BASE_URL}/token`,
+        url: `${getOauthBaseUrl(context)}/token`,
         headers,
         data: new URLSearchParams(data).toString()
     });
@@ -72,11 +72,12 @@ module.exports = {
                 redirect_uri: context.callbackUrl,
                 scope: context.scope.join(' '),
                 state: context.ticket,
-                // Epic requires the FHIR base URL as the audience.
-                aud: FHIR_BASE_URL
+                // Epic requires the FHIR base URL of the target organisation
+                // as the audience.
+                aud: getFhirBaseUrl(context)
             });
 
-            return `${OAUTH_BASE_URL}/authorize?${params.toString()}`;
+            return `${getOauthBaseUrl(context)}/authorize?${params.toString()}`;
         },
 
         requestAccessToken: context => {

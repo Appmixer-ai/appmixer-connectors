@@ -16,6 +16,30 @@ function getFhirBaseUrl(context) {
     return (fromConfig || FHIR_BASE_URL).replace(/\/+$/, '');
 }
 
+// OAuth2 endpoints for the organisation the connector talks to. Every Epic
+// customer hosts its own authorize/token endpoints next to its FHIR API.
+// Precedence: explicit `config.epicOauthBaseUrl` → derived from
+// `config.epicFhirBaseUrl` (Epic's standard interconnect layout puts OAuth at
+// `<interconnect>/oauth2` next to `<interconnect>/api/FHIR/R4`) → the public
+// sandbox default.
+function getOauthBaseUrl(context) {
+
+    const fromConfig = context.config && context.config.epicOauthBaseUrl;
+    if (fromConfig) {
+        return fromConfig.replace(/\/+$/, '');
+    }
+
+    const fhirBase = getFhirBaseUrl(context);
+    if (fhirBase !== FHIR_BASE_URL) {
+        const interconnect = fhirBase.replace(/\/api\/FHIR\/[^/]+$/i, '');
+        if (interconnect !== fhirBase) {
+            return `${interconnect}/oauth2`;
+        }
+    }
+
+    return OAUTH_BASE_URL;
+}
+
 // Perform a FHIR request against the configured base URL using the OAuth2
 // access token. `resource` is the path after the base URL, e.g.
 // `Patient/123` or `Condition`.
@@ -185,6 +209,7 @@ module.exports = {
     FHIR_BASE_URL,
     OAUTH_BASE_URL,
     getFhirBaseUrl,
+    getOauthBaseUrl,
     fhirRequest,
     extractResources,
     runPatientSearch,
