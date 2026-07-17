@@ -19,14 +19,22 @@ npm run test-unit -- test/<connector_name>
 # Linting
 npm run lint
 
-# Repository validation
+# Validation while developing a connector (strict: thresholds ignored,
+# prints every failure and warning) — ALWAYS prefer this scoped form
+node scripts/validate.js --connector <connector_name>
+
+# Strict validation of files changed on the branch (used by pre-commit)
+node scripts/validate.js --changed
+
+# Repository-wide validation (threshold/ratchet mode — legacy debt is
+# tolerated, so new issues in your connector can hide under a threshold)
 npm run validate
 
 # Validate outputType components
 npm run validate-outputtype
 ```
 
-Run `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
+When working on a single connector, always validate with `--connector <name>`; use `--changed` when changes span multiple connectors. Run repo-wide `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
 
 ### Connector Structure
 
