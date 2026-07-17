@@ -1809,28 +1809,36 @@ When the upstream service requires a **single global webhook callback URL per ap
 **Architecture**
 
 ```
-External service → ONE global URL → /plugins/<vendor>/<service>/<path>
-                                          │
-                                          │  parse + HMAC-verify → triggerListeners
-                                          ▼
-                              Trigger instances (one per flow)
-                                start():    addListener(eventName, params)
-                                stop():     removeListener(eventName)
-                                receive():  context.messages.webhook.content.data
+External service (Meta App / Slack App / …)
+         │  one global callback URL configured once by the admin
+         ▼
+<API_BASE>/plugins/<vendor>/<service>/<path>         (registered in plugin.js → routes.js)
+         │
+         │  routes.js parses payload, optionally HMAC-verifies, then:
+         ▼
+context.triggerListeners({ eventName, payload, filter })
+         │
+         │  Engine fans out to all matching listener instances:
+         ▼
+Trigger component instance (one per flow)
+   start():    context.addListener(eventName, params)
+   stop():     context.removeListener(eventName)
+   receive():  context.messages.webhook.content.data  → sendJson
 ```
 
 **Required files at the connector root**
 
-`plugin.js` — executed once when the connector is installed onto the Appmixer server:
+`plugin.js` — entrypoint executed once when the connector is installed onto the Appmixer server. Loads routes (and optionally jobs):
 
 ```javascript
 'use strict';
 module.exports = async context => {
     require('./routes')(context);
+    context.log('info', '[MYSERVICE] Plugin initialized.');
 };
 ```
 
-`routes.js` — registers the HTTP endpoint and the listener-added validator:
+`routes.js` — registers the HTTP endpoint(s) and the listener-added validator:
 
 ```javascript
 'use strict';
@@ -1838,8 +1846,11 @@ module.exports = async context => {
 module.exports = async context => {
 
     // Runs every time a trigger calls context.addListener().
+    // Use it to validate params, transform them, or perform per-subscription
+    // setup against the upstream API.
     context.onListenerAdded(async listener => {
-        // listener.eventName, listener.params  — mutable; throw to reject.
+        // listener.eventName, listener.params  — mutable
+        // throw to reject the subscription
     });
 
     context.http.router.register({
@@ -1848,7 +1859,16 @@ module.exports = async context => {
         options: {
             auth: false,
             handler: async (req, h) => {
-                if (!isValidSignature(context, req)) return h.response().code(401);
+                if (!isValidSignature(context, req)) {
+                    return h.response(undefined).code(401);
+                }
+
+                // Optional verification handshake (GET hub.challenge etc.)
+                if (req.payload?.challenge) {
+                    return { challenge: req.payload.challenge };
+                }
+
+                // Parse the payload then dispatch per-listener.
                 await context.triggerListeners({
                     eventName: extractEventName(req.payload),
                     payload: extractEventBody(req.payload),
@@ -1867,9 +1887,15 @@ The endpoint URL is `<API_BASE>/plugins/<vendor>/<service>/<path>` — derived f
 
 ```javascript
 'use strict';
+
 module.exports = {
 
     async start(context) {
+
+        // (Optional) Upstream-side per-subscription setup. Mandatory only if
+        // the upstream needs to know "this user wants events" — e.g. Meta's
+        // POST /{waba-id}/subscribed_apps.
+
         await context.addListener(`channel:${context.properties.channelId}`, {
             userId: context.profileInfo.userId,
             accessToken: context.auth.accessToken
@@ -1882,7 +1908,7 @@ module.exports = {
 
     async receive(context) {
         if (!context.messages.webhook) return;
-        const data = context.messages.webhook.content.data;     // from triggerListeners()
+        const data = context.messages.webhook.content.data;     // payload passed in via triggerListeners
         await context.sendJson(data, 'out');
     }
 };
@@ -1894,17 +1920,22 @@ module.exports = {
 |---|---|---|
 | `context.http.router.register({ method, path, options })` | `routes.js` | Mount an HTTP route under `/plugins/<vendor>/<service>` |
 | `context.onListenerAdded(cb)` | `routes.js` | Hook fired when a trigger calls `addListener` — validate / transform `listener.params` |
-| `context.triggerListeners({ eventName, payload, filter })` | inside route handler | Fan event out to subscribed listeners |
-| `context.addListener(eventName, params)` | trigger `start()` | Register this instance |
-| `context.removeListener(eventName)` | trigger `stop()` | Unregister |
+| `context.triggerListeners({ eventName, payload, filter })` | `routes.js` (inside route handler) | Fan an event out to all subscribed listeners matching `eventName` and optional `filter` |
+| `context.addListener(eventName, params)` | trigger `start()` | Register this trigger instance as a consumer of `eventName` |
+| `context.removeListener(eventName)` | trigger `stop()` | Unregister this instance |
 | `context.messages.webhook.content.data` | trigger `receive()` | The payload from `triggerListeners` |
 
 **When to use this pattern (vs. section 2's per-trigger webhook URL)**
 
 - Upstream service allows **only one callback URL per app** (Meta App, Slack App, GitHub App)
-- Events fan out to many tenants; routing happens server-side
-- HMAC signature verification of the **app's** secret should be centralized
-- Multiple trigger types share the same upstream stream
+- Upstream events fan out to many tenants and you must route them server-side
+- You want HMAC signature verification of the **app's** secret centrally, not per-trigger
+- You have multiple trigger types listening to the same upstream stream (e.g. `NewMessage` and `MessageStatusUpdated` both consume Meta's `messages` webhook)
+
+**When NOT to use this pattern**
+
+- The upstream service supports per-resource webhooks (ActiveCampaign, Stripe per-account) — section 2 is simpler
+- Polling is acceptable and the upstream has no webhook API — use `tick: true`
 
 **Reference implementations**
 
@@ -2262,11 +2293,18 @@ async receive(context) {
 },
 ```
 
-Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint. TTL is configurable via `context.config.listCacheTTL` (default 120 s).
+Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint. Include **every input that shapes the result** in the key (endpoint/url, token, tenant or account ID, query params) so entries are never shared across users, tenants or queries. TTL is configurable via `context.config.listCacheTTL` (default 120 s).
+
+The `context.lock(key)` around the fetch is not just for correctness — the designer fires source calls in a **concurrent burst** when a component's inspector opens (one call per dropdown, several dropdowns per component). The first caller populates the cache while the rest wait on the lock and then read the cached value, so the API sees one call instead of the whole burst.
+
+**Variant — cache unconditionally (heavily rate-limited APIs):** when the upstream API has tight limits (e.g. Xero: 60 calls/min, 5 concurrent per tenant) or one source component backs a dropdown used by most components in the connector (typically a tenant/account selector), skip the sentinel check and cache inside `receive()` unconditionally, with a short TTL. Cache the **final assembled (post-pagination) records array** — one cache entry then saves up to ~100 upstream page calls, and ~2 min staleness on list data is an acceptable tradeoff even for normal flow execution. Pair this with honoring `Retry-After` on 429 responses in the connector's HTTP client, so a single throttled page does not fail the whole paginated fetch.
 
 **Reference implementations:**
 - Error suppression only: `src/appmixer/microsoft/onedrive/ListSites/ListSites.js`
 - Caching + error suppression: `src/appmixer/facebookbusiness/marketing/GetAdAccounts/GetAdAccounts.js` + `facebookbusiness/lib.js`
+- Unconditional caching of paginated results + burst dedupe + `Retry-After` on 429: `src/appmixer/xero/commons.js` (`withCache`) + `src/appmixer/xero/XeroClient.js`
+
+Components referenced in a `source.url` **only** with `generateOutputPortOptions` (dynamic output port options) are exempt — that path returns static schema options and must not call the API at all.
 
 ---
 
@@ -2279,7 +2317,8 @@ Cache key is a SHA-256 hash of `{ url, token }` — unique per user and endpoint
 - Add one empty line after the `receive` function definition
 - Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
 - Remove all unused variables and imports
-- Property names in component.json must use underscore `_` or camelCase as separator (NOT pipe `|`, e.g., `lock_type` or `lockType`, not `lock|type`)
+- Property names in component.json must NEVER use a pipe `|` (e.g., `lockType`, not `lock|type`)
+- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding). CI enforces camelCase only on changed/new inputs via `npm run validate:changed`.
 - Property names in component.json must exactly match those used in `context.messages.in.content`
 
 ## Development Guidelines (For All)
@@ -2644,16 +2683,16 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
     "flow": {
         "component-id-1": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 100,
-            "y": 200,
+            "x": 64,
+            "y": 16,
             "source": {},
             "version": "1.0.0",
             "config": {}
         },
         "component-id-2": {
             "type": "appmixer.connector.core.ComponentName",
-            "x": 300,
-            "y": 200,
+            "x": 256,
+            "y": 16,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -2682,6 +2721,50 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
 }
 ```
 
+#### Component Layout Rules (IMPORTANT)
+
+For clean, readable flows without crossing lines or cycles, follow these spacing rules strictly:
+
+**Rule 1: Linear Sequence (A → B)**
+When component A connects to component B in sequence:
+```
+B.x = A.x + 192   (horizontal spacing: 192px)
+B.y = A.y         (same vertical level)
+```
+
+**Rule 2: Branching (A → B, A → C)**
+When component A branches to two components (B and C):
+```
+B.x = A.x + 192   (horizontal spacing: 192px)
+B.y = A.y         (same vertical level as A)
+
+C.x = B.x         (SAME x as B! Vertical alignment)
+C.y = A.y + 128   (vertical spacing: 128px below A)
+```
+
+**Example - Linear Flow**:
+```
+OnStart (64, 16) → SetVariable (256, 16) → Create (448, 16) → Assert (640, 16)
+                   64+192=256              256+192=448          448+192=640
+```
+
+**Example - Branching Flow**:
+```
+Create (448, 16) 
+  ├→ Assert rawJson (640, 16)      [B: x=448+192, y=16]
+  └→ Delete (640, 144)             [C: x=640 (same as B), y=16+128]
+       └→ Create fields (832, 144) [linear: 640+192]
+            └→ Assert fields (1024, 144)
+                 └→ Delete fields (1024, 272) [C: x=1024 (same as Assert), y=144+128]
+```
+
+**Constants**:
+- `deltaX = 192px` - horizontal spacing between sequential components
+- `deltaY = 128px` - vertical spacing for branching
+
+**Start Position**:
+- First component: `x = 64, y = 16`
+
 #### Required Components
 
 Every E2E test flow MUST include these components in sequence:
@@ -2700,11 +2783,16 @@ Every E2E test flow MUST include these components in sequence:
     - Validate component outputs
     - Supported assertions: `equal`, `notEmpty`, `regex`
     - Multiple assertions can be used throughout the flow
+    - **Layout rule**: When a Create/Get component branches, Assert goes HORIZONTALLY (x + 192px, same y), while Delete goes VERTICALLY below (same x, y + 128px)
+    - Each Assert MUST be connected to AfterAll to report test results
 
 5. **AfterAll** (`appmixer.utils.test.AfterAll`)
-    - Cleanup operations after all tests complete
-    - Receives input from all assertion components
-    - Should include timeout property (e.g., 30 seconds)
+    - Aggregation point that receives outputs from all test and deletion components
+    - Critical for proper flow termination and cleanup
+    - **Connection rule**: AfterAll should receive inputs from **the final Delete component** and **all Assert components** in the flow
+    - Should include timeout property (e.g., 120 seconds for complex operations)
+    - Position: `x = final_component.x + 192, y = last_row.y` (continues the sequence)
+    - **Key**: AfterAll validates all assertions passed before cleanup operations run
 
 6. **ProcessE2EResults** (`appmixer.utils.test.ProcessE2EResults`)
     - Final component that processes test results
@@ -2847,6 +2935,7 @@ Tests must pass on repeated runs without input changes:
 - **Unique inputs**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers (e.g. `e2e-{{{ts-var}}}@test.com`). Prefer modifiers over CodeBlock.
 - **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
 - **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
+- **Delete component placement**: Delete components should be placed DIRECTLY BELOW their corresponding Assert component (same x position, y + 128px) to maintain clean visual layout and avoid crossing connection lines.
 - **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: add a CodeBlock delay (`await new Promise(r => setTimeout(r, 5000))`).
 - **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
 
@@ -3539,6 +3628,15 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - ❌ `$.component.out.items.0.id` — `.N.` array indexing does not work in variable paths.
     - ✅ `$.component-id.out.fieldName`
     - ✅ For array items use modifier functions: `g_jsonPath` with param `"$[0].id"` on `$.component.out.items`, or `g_first` / `g_last` for simple first/last element. See **Modifier Functions** section above.
+
+3b. **Deep Paths Past the Static outPort Contract**
+    - ❌ `$.make-api-call.out.response.opportunityid` — works at runtime, but MakeApiCall statically declares only `response`/`status`/`statusText`, so the designer's variable picker cannot offer the deep path and renders a red invalid-variable chip (validation error).
+    - ✅ Reference the deepest DECLARED path and extract the leaf with a modifier: `"variable": "$.make-api-call.out.response"` + `"functions": [{ "name": "g_jsonPath", "params": [{ "value": "$.opportunityid" }] }]` (note: `params`, not `args`).
+    - ✅ Dynamic outPorts (options generated by a live `source` call, e.g. polling triggers) DO offer entity leaf fields — reference those directly (`$.trigger.out.contactid`).
+
+3c. **Arrays/Objects in String-Typed Inputs**
+    - ❌ `"headers": [{ "key": "Prefer", "value": "return=representation" }]` — key-value inspector inputs (MakeApiCall `headers`/`parameters`) declare `"type": "string"`; a raw array works at runtime but fails the designer's schema validation with a red "must be string" chip.
+    - ✅ Serialize as a JSON string: `"headers": "[{\"key\": \"Prefer\", \"value\": \"return=representation\"}]"`.
 
 4. **Forgetting ProcessE2EResults**
     - ❌ Ending flow without ProcessE2EResults

@@ -7,18 +7,25 @@
 //
 // 1. Required-input wiring (FAILURE)
 //    Every input field marked required in an inPort's `schema.required`
-//    MUST also be wired into `source.data.messages`. The expected key
-//    in messages is `<inPortName>/<fieldName>` (e.g. `in/query`). The
-//    value is allowed to be any of the formats the engine accepts —
-//    typically the literal string `"any"`, or a reference like
-//    `"inputs/in/query"`. Only the KEY presence is enforced.
+//    MUST also be wired into `source.data.messages`. Two equivalent
+//    formats are accepted:
+//      - flat key:   `messages["<inPortName>/<fieldName>"]` (e.g. `in/query`)
+//      - nested map:  `messages["<inPortName>"]["<fieldName>"]`
+//                     (e.g. `{ "in": { "query": [] } }`)
+//    The value is allowed to be any of the formats the engine accepts —
+//    typically the literal string `"any"`, a reference like
+//    `"inputs/in/query"`, or a literal placeholder such as `[]`. Only the
+//    presence of the field (in either form) is enforced.
 //
-// 2. `ignoreAuth=true` query parameter (WARNING)
+// 2. `ignoreAuth=true` query parameter (FAILURE, threshold-gated)
 //    A dynamic outPort `source.url` should usually carry
 //    `ignoreAuth=true` so the Designer can render the dropdown even when
 //    the user's auth account is missing or stale. Absence is not always
 //    wrong (some sources legitimately need an active session), so this
-//    is emitted as a non-failing warning.
+//    used to be a non-failing warning — but the warnings were noisy and
+//    untracked. It is now a threshold-gated failure (ratchet): existing
+//    misses are capped in scripts/validators/.thresholds.json and CI fails
+//    only when the count goes UP, with the floor target at 0.
 //
 // Why
 // ---
@@ -84,32 +91,84 @@ function urlHasIgnoreAuth(url) {
     return /[?&]ignoreAuth=true(?:&|$)/.test(url);
 }
 
-function validateOutPort(componentPath, outPort, portLocation, requiredByPort, addFailure, addWarning) {
+function validateOutPort(componentPath, outPort, portLocation, requiredByPort, addFailure) {
 
     if (!outPort.source) {
         return;
     }
 
-    // Warning: recommend ignoreAuth=true on the dynamic source URL so the
-    // Designer dropdown still loads when auth is missing/stale.
+    // Failure (threshold-gated): recommend ignoreAuth=true on the dynamic source
+    // URL so the Designer dropdown still loads when auth is missing/stale.
     if (outPort.source.url && !urlHasIgnoreAuth(outPort.source.url)) {
-        addWarning(componentPath, `${portLocation} source.url is missing "ignoreAuth=true" — recommended for dynamic dropdowns`);
+        addFailure(componentPath, `${portLocation} source.url is missing "ignoreAuth=true" — recommended for dynamic dropdowns`);
     }
 
     const messages = getMessagesMap(outPort);
 
     for (const [inPortName, requiredFields] of Object.entries(requiredByPort)) {
-        for (const field of requiredFields) {
-            const key = `${inPortName}/${field}`;
+        const nested = messages[inPortName];
+        const hasNestedMap = nested && typeof nested === 'object' && !Array.isArray(nested);
 
-            if (!(key in messages)) {
-                addFailure(componentPath, `${portLocation} source.data.messages missing required input "${key}"`);
+        for (const field of requiredFields) {
+            // Accept either the flat key form (`in/list`) or the nested map form (`{ in: { list } }`).
+            const hasFlatKey = `${inPortName}/${field}` in messages;
+            const hasNestedKey = hasNestedMap && field in nested;
+
+            if (!hasFlatKey && !hasNestedKey) {
+                addFailure(componentPath, `${portLocation} source.data.messages missing required input "${inPortName}/${field}"`);
             }
         }
     }
 }
 
-function validateComponent(componentPath, addFailure, addWarning) {
+// The `/component/<name-as-path>` URL this component's own source calls resolve to.
+function selfComponentPath(component) {
+
+    if (typeof component.name !== 'string') return null;
+    return '/component/' + component.name.split('.').join('/');
+}
+
+// Same required-input contract for inspector INPUT fields whose `source`
+// self-invokes this component (a dynamic typeahead, e.g. the Object Name field).
+// The Designer calls that source.url to populate the field's options, and the
+// engine validates the component's required inputs against source.data.messages
+// before receive() runs — so every required field must be wired here too
+// (typically as "any"), exactly like a dynamic outPort source. Sources that
+// target a DIFFERENT component are skipped: their required contract belongs to
+// that other component, not this one.
+function validateInputSources(componentPath, component, requiredByPort, addFailure) {
+
+    const selfPath = selfComponentPath(component);
+    if (!selfPath) return;
+
+    const inPorts = Array.isArray(component.inPorts) ? component.inPorts : [];
+
+    for (const port of inPorts) {
+        const inputs = port && port.inspector && port.inspector.inputs;
+        if (!inputs || typeof inputs !== 'object') continue;
+
+        for (const [fieldName, field] of Object.entries(inputs)) {
+            if (!field || typeof field !== 'object' || !field.source) continue;
+
+            const url = field.source.url;
+            // Only self-invoking sources go through THIS component's required validation.
+            if (typeof url !== 'string' || !url.includes(selfPath)) continue;
+
+            const messages = getMessagesMap(field);
+
+            for (const [inPortName, requiredFields] of Object.entries(requiredByPort)) {
+                for (const requiredField of requiredFields) {
+                    const key = `${inPortName}/${requiredField}`;
+                    if (!(key in messages)) {
+                        addFailure(componentPath, `inspector input "${fieldName}" source.data.messages missing required input "${key}"`);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function validateComponent(componentPath, addFailure) {
 
     if (isMakeApiCallComponent(componentPath)) {
         return;
@@ -136,16 +195,18 @@ function validateComponent(componentPath, addFailure, addWarning) {
         }
 
         const portLocation = `outPorts[${index}](${port.name || index})`;
-        validateOutPort(componentPath, port, portLocation, requiredByPort, addFailure, addWarning);
+        validateOutPort(componentPath, port, portLocation, requiredByPort, addFailure);
     }
+
+    validateInputSources(componentPath, component, requiredByPort, addFailure);
 }
 
 module.exports = {
     name: 'dynamic-outport-required-inputs',
-    description: 'dynamic outPort (with `source`) wires every required inPort field into source.data.messages; warns if ignoreAuth=true missing from source.url',
+    description: 'dynamic outPort (with `source`) and self-invoking inspector input sources wire every required inPort field into source.data.messages; flags missing ignoreAuth=true on outPort source.url (threshold-gated)',
     run(context) {
         for (const componentPath of context.componentFiles) {
-            validateComponent(componentPath, context.addFailure, context.addWarning);
+            validateComponent(componentPath, context.addFailure);
         }
     }
 };
