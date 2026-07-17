@@ -1,6 +1,6 @@
 'use strict';
 
-const { getFhirBaseUrl, getOauthBaseUrl } = require('./commons');
+const { getFhirBaseUrl, getOauthBaseUrl } = require('./lib');
 
 // Read-only SMART on FHIR scopes covering every resource type this connector
 // reads. Adding scopes later is a breaking change (users must re-authenticate).

@@ -1,7 +1,7 @@
 'use strict';
 
 const lib = require('../../lib');
-const { fhirRequest, extractResources } = require('../../commons');
+const { fhirRequest, extractResources } = require('../../lib');
 
 const schema = {
     'resourceType': {

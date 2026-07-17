@@ -1,6 +1,6 @@
 'use strict';
 
-const { getFhirBaseUrl } = require('../../commons');
+const { getFhirBaseUrl } = require('../../lib');
 
 function kvToObj(arr) {
     if (!arr || !Array.isArray(arr)) return {};

@@ -1,6 +1,6 @@
 'use strict';
 
-const { runPatientSearch } = require('../../commons');
+const { runPatientSearch } = require('../../lib');
 
 const schema = {
     'resourceType': {

@@ -1,6 +1,6 @@
 'use strict';
 
-const { pollAppointments, findTestAppointment } = require('../../commons');
+const { pollAppointments, findTestAppointment } = require('../../lib');
 
 module.exports = {
 

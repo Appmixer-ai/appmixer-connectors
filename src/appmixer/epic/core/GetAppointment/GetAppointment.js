@@ -1,6 +1,6 @@
 'use strict';
 
-const { fhirRequest, normalizeAppointment } = require('../../commons');
+const { fhirRequest, normalizeAppointment } = require('../../lib');
 
 module.exports = {
 

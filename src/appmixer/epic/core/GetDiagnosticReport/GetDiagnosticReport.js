@@ -1,6 +1,6 @@
 'use strict';
 
-const { fhirRequest } = require('../../commons');
+const { fhirRequest } = require('../../lib');
 
 module.exports = {
     async receive(context) {
