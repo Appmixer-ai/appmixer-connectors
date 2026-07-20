@@ -58,6 +58,13 @@ module.exports = {
 
         const customerInfo = context.messages.in.content;
 
+
+        if (!customerInfo.firstName) {
+            throw new context.CancelError('First name is required!');
+        }
+        if (!customerInfo.lastName) {
+            throw new context.CancelError('Last name is required!');
+        }
         const customer = await shopify.customer.create(buildCustomer(customerInfo, context));
         return context.sendJson(customer, 'customer');
     }

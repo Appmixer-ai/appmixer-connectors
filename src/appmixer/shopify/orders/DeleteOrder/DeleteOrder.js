@@ -12,6 +12,10 @@ module.exports = {
         const shopify = commons.getShopifyAPI(context.auth);
         const { id } = context.messages.in.content;
 
+
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
         await shopify.order.delete(id);
         return context.sendJson({ id }, 'deleted');
     }

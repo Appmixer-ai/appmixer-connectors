@@ -12,6 +12,10 @@ module.exports = {
         const shopify = commons.getShopifyAPI(context.auth);
         const { id } = context.messages.in.content;
 
+
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
         const customer = await shopify.customer.get(id);
         return context.sendJson(customer, 'customer');
     }

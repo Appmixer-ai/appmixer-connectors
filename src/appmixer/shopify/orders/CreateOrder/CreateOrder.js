@@ -29,6 +29,11 @@ function buildOrder(orderInfo) {
         };
     }
 
+    // Shopify rejects an order with an empty customer object
+    // ("customer: Required parameter missing or invalid") — only send it
+    // when a customer id or at least one customer field was provided.
+    const hasCustomer = Object.values(customer).some(value => value !== undefined && value !== null && value !== '');
+
     const order = {
         email,
         phone,
@@ -36,7 +41,7 @@ function buildOrder(orderInfo) {
         note,
         tags,
         test,
-        customer,
+        ...(hasCustomer ? { customer } : {}),
         'line_items': orderInfo.line_items.ADD,
         'buyer_accepts_marketing': orderInfo.buyer_accepts_marketing,
         'financial_status': orderInfo.financial_status,

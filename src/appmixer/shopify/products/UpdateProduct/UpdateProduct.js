@@ -58,6 +58,10 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context.auth);
         const productInfo = context.messages.in.content;
+
+        if (!productInfo.id) {
+            throw new context.CancelError('ID is required!');
+        }
         const { id } = productInfo;
 
         const product = await shopify.product.get(id, { fields: 'id,images' });

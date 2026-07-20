@@ -33,6 +33,11 @@ module.exports = {
 
         const reportInfo = context.messages.in.content;
         const { id } = reportInfo;
+
+        if (!id) {
+            throw new context.CancelError('ID is required!');
+        }
+
         const updatedReport = await shopify.report.update(id, buildReport(reportInfo));
         return context.sendJson(updatedReport, 'report');
     }

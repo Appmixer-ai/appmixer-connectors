@@ -11,6 +11,10 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context.auth);
         const { query, maxResults, sort, sendWholeArray } = context.messages.in.content;
+
+        if (!query) {
+            throw new context.CancelError('Query is required!');
+        }
         const customers = await shopify.customer.search({
             query,
             limit: maxResults,

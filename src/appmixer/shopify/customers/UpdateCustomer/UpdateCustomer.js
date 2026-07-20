@@ -63,6 +63,10 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context.auth);
         const customerInfo = context.messages.in.content;
+
+        if (!customerInfo.id) {
+            throw new context.CancelError('ID is required!');
+        }
         const { id } = customerInfo;
 
         const updatedCustomer = await shopify.customer.update(id, buildCustomer(customerInfo, context));

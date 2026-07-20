@@ -230,5 +230,60 @@ module.exports = [
         messageIncludes: 'must declare an "outputType" input',
         paths: ['google/calendar/FindEvent/component.json'],
         reason: 'Pre-existing component (predates the Find outputType standard). It emits one message per matching event on "out" plus a "notFound" port; adding an outputType input would change its output shape and break existing flows, so it is deferred to a future major version of the connector.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: [
+            'shopify/customers/DeleteCustomer/component.json',
+            'shopify/orders/DeleteOrder/component.json',
+            'shopify/products/DeleteProduct/component.json',
+            'shopify/reports/DeleteReport/component.json'
+        ],
+        reason: 'Pre-existing Shopify Delete components return the deleted resource id ({ id }) rather than {}. They predate the delete-shape standard and are wired into published flows; changing the payload/port is a breaking change deferred to a future major version. Surfaced now only because the OAuth->apiKey auth migration touched every component.json (scope removal).'
+    },
+    {
+        validator: 'delete-update-shape',
+        messageIncludes: 'single output port named "out"',
+        paths: [
+            'shopify/customers/DeleteCustomer/component.json',
+            'shopify/orders/DeleteOrder/component.json',
+            'shopify/products/DeleteProduct/component.json',
+            'shopify/reports/DeleteReport/component.json'
+        ],
+        reason: 'Pre-existing Shopify Delete components emit on a "deleted" port. Renaming to "out" breaks flows wired to that port; deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
+    },
+    {
+        validator: 'find-component-standards',
+        paths: [
+            'shopify/customers/FindCustomers/component.json',
+            'shopify/reports/FindReport/component.json'
+        ],
+        reason: 'Pre-existing Shopify Find components emit on a service-named port (customer/report) with an optional sendWholeArray toggle instead of the outputType/notFound standard. Aligning them changes the output contract of published flows; deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        paths: [
+            'shopify/customers/CreateCustomer/component.json',
+            'shopify/customers/FindCustomers/component.json',
+            'shopify/customers/GetCustomer/component.json',
+            'shopify/customers/UpdateCustomer/component.json'
+        ],
+        reason: 'Pre-existing dynamic outPort source config on the customers components (missing ignoreAuth / required-input priming). These sources predate the standard; fixing them is a designer-metadata change unrelated to the auth migration and is deferred. Surfaced now only because the apiKey auth migration touched every component.json.'
+    },
+    {
+        validator: 'input-property-naming',
+        paths: [
+            'shopify/customers/CreateCustomer/component.json',
+            'shopify/customers/UpdateCustomer/component.json',
+            'shopify/orders/CountOrders/component.json',
+            'shopify/orders/UpdateOrder/component.json',
+            'shopify/products/CountProducts/component.json',
+            'shopify/products/CreateProduct/component.json',
+            'shopify/products/UpdateProduct/component.json',
+            'shopify/reports/CreateReport/component.json',
+            'shopify/reports/UpdateReport/component.json'
+        ],
+        reason: 'Pre-existing snake_case input property names (created_at_min, shopify_ql, product_type, accepts_marketing, ...) mirror the Shopify Admin API field names 1:1 and are referenced by published flows and the buildOrder/buildProduct/buildReport mappers. Renaming to camelCase is a breaking change deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
     }
 ];

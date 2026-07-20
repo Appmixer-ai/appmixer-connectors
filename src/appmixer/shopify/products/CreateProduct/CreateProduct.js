@@ -31,6 +31,13 @@ module.exports = {
 
         const shopify = commons.getShopifyAPI(context.auth);
 
+        if (!context.messages.in.content.title) {
+
+            throw new context.CancelError('Title is required!');
+
+        }
+
+
         const productData = buildProduct(context.messages.in.content);
 
         await context.log({ step: 'Creating product: ', ...productData });

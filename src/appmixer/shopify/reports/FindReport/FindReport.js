@@ -21,6 +21,10 @@ module.exports = {
         });
 
         const { name, caseSensitive } = context.messages.in.content;
+
+        if (!name) {
+            throw new context.CancelError('Name is required!');
+        }
         const filter = caseSensitive ? new RegExp(name, 'i') : new RegExp(name);
         const foundReports = reports.filter(report => filter.test(report.name));
 
