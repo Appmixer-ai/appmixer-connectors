@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * Component which triggers whenever new report comes.
@@ -9,7 +9,7 @@ module.exports = {
 
     async tick(context) {
 
-        const shopify = commons.getShopifyAPI(context.auth);
+        const shopify = commons.getShopifyAPI(context);
 
         const reports = await shopify.report.list({ order: 'updated_at DESC' });
         let known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;

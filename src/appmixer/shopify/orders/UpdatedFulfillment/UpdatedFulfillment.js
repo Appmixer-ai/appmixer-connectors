@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * This trigger fires when a fulfillment is updated on a Shopify order (e.g. tracking / shipment status changes).

@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 function buildOrder(orderInfo) {
 
@@ -52,7 +52,7 @@ module.exports = {
 
     async receive(context) {
 
-        const shopify = commons.getShopifyAPI(context.auth);
+        const shopify = commons.getShopifyAPI(context);
         const orderInfo = context.messages.in.content;
 
         if (!orderInfo.id) {

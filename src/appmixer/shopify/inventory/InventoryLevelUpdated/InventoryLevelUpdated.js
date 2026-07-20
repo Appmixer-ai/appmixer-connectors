@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * This trigger fires when an inventory level is updated on Shopify (e.g. for low-stock alerts).

@@ -1,17 +1,15 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
-// The Returns API (and its webhook topics) only exists on newer Shopify API
-// versions than the connector default (2023-04), so this trigger registers its
-// webhook and reads sample data through a version-pinned client.
-const RETURNS_API_VERSION = '2024-04';
+// The connector targets a Shopify API version (2024-04) that includes the
+// Returns API and its webhook topics, so no version-specific handling is needed.
 const TOPIC = 'returns/update';
 
 module.exports = {
 
     async start(context) {
 
-        return commons.registerWebhookVersioned(context, TOPIC, RETURNS_API_VERSION);
+        return commons.registerWebhook(context, TOPIC);
     },
 
     async receive(context) {
@@ -28,17 +26,14 @@ module.exports = {
 
     async test(context) {
 
-        const shopify = commons.getShopifyAPI(context.auth);
-        // Returns are GraphQL-only in this library; fetch the newest return of the
+        const shopify = commons.getShopifyAPI(context);
+        // Returns are only exposed through GraphQL; fetch the newest return of the
         // most recent order so the emitted shape matches the webhook payload.
         const orders = await shopify.order.list({ status: 'any', limit: 10, order: 'created_at DESC' });
 
         if (!Array.isArray(orders)) {
             throw new Error('No orders to look up returns for.');
         }
-
-        const versioned = commons.getShopifyAPI({ ...context.auth });
-        versioned.options.apiVersion = RETURNS_API_VERSION;
 
         for (const order of orders) {
             const query = `query {
@@ -53,14 +48,13 @@ module.exports = {
             }`;
             let result;
             try {
-                result = await versioned.graphql(query);
+                result = await shopify.graphql(query);
             } catch (err) {
                 continue;
             }
             const edges = result && result.order && result.order.returns && result.order.returns.edges;
             if (Array.isArray(edges) && edges[0]) {
-                const node = edges[0].node;
-                return context.sendJson({ ...node, webhookTopic: TOPIC }, 'return');
+                return context.sendJson({ ...edges[0].node, webhookTopic: TOPIC }, 'return');
             }
         }
 

@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * Shopify has no "cart abandoned" webhook — abandonment is derived server-side and
@@ -11,7 +11,7 @@ module.exports = {
 
     async tick(context) {
 
-        const shopify = commons.getShopifyAPI(context.auth);
+        const shopify = commons.getShopifyAPI(context);
 
         const checkouts = await shopify.checkout.list({ limit: 250 });
         const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
@@ -34,7 +34,7 @@ module.exports = {
 
     async test(context) {
 
-        const shopify = commons.getShopifyAPI(context.auth);
+        const shopify = commons.getShopifyAPI(context);
         const checkouts = await shopify.checkout.list({ limit: 1 });
         const checkout = Array.isArray(checkouts) ? checkouts[0] : null;
 

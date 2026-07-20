@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 function buildOrder(orderInfo) {
 
@@ -99,7 +99,7 @@ module.exports = {
             return context.sendJson(products, 'order');
         }
 
-        const shopify = commons.getShopifyAPI(context.auth);
+        const shopify = commons.getShopifyAPI(context);
         const orderInput = buildOrder(context.messages.in.content);
 
         await context.log({ step: 'Creating order: ', ...orderInput });
