@@ -263,13 +263,14 @@ module.exports = [
     },
     {
         validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing required input',
         paths: [
             'shopify/customers/CreateCustomer/component.json',
             'shopify/customers/FindCustomers/component.json',
             'shopify/customers/GetCustomer/component.json',
             'shopify/customers/UpdateCustomer/component.json'
         ],
-        reason: 'Pre-existing dynamic outPort source config on the customers components (missing ignoreAuth / required-input priming). These sources predate the standard; fixing them is a designer-metadata change unrelated to the auth migration and is deferred. Surfaced now only because the apiKey auth migration touched every component.json.'
+        reason: 'The customers dynamic outPort source (GenerateCustomersOutput) is a pure static field-list generator — it reads no inputs and no auth, so it correctly carries ignoreAuth=true. The "missing required input" priming the validator wants is a false positive for a static source (it never consumes those inputs), so only that message is suppressed here.'
     },
     {
         validator: 'input-property-naming',
