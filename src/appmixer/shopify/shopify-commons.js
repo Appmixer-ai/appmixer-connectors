@@ -172,5 +172,95 @@ module.exports = {
         const reports = await shopify.report.list({ order: 'updated_at DESC', limit: 1 });
 
         return Array.isArray(reports) ? (reports[0] || null) : null;
+    },
+
+    /**
+     * Fetch the newest order-scoped child record (refund/fulfillment) and reshape
+     * it into the webhook payload shape (`+ webhookTopic`). Refunds and fulfillments
+     * are nested under orders, so we scan recent orders until one has a child.
+     * @param {Context} context
+     * @param {Object} options
+     * @param {'refund'|'fulfillment'} options.child - Order-scoped resource name.
+     * @param {string} options.topic - The webhook topic (e.g. 'refunds/create').
+     * @returns {Promise<Object|null>} The child record + webhookTopic, or null.
+     */
+    async fetchLatestOrderChildExample(context, { child, topic }) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+        const orders = await shopify.order.list({ status: 'any', limit: 20, order: 'created_at DESC' });
+
+        if (!Array.isArray(orders)) {
+            return null;
+        }
+
+        for (const order of orders) {
+            const children = await shopify[child].list(order.id, { limit: 1 });
+            if (Array.isArray(children) && children[0]) {
+                const record = children[0];
+                record.webhookTopic = topic;
+                return record;
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * Fetch the newest inventory level (reshaped into the webhook payload shape).
+     * `inventoryLevel.list` requires a location or inventory-item filter, so we
+     * resolve the first location and query its levels.
+     * @param {Context} context
+     * @param {string} topic - The webhook topic (e.g. 'inventory_levels/update').
+     * @returns {Promise<Object|null>} The inventory level + webhookTopic, or null.
+     */
+    async fetchLatestInventoryLevelExample(context, topic) {
+
+        const shopify = this.getShopifyAPI(context.auth);
+        const locations = await shopify.location.list({ limit: 1 });
+        const location = Array.isArray(locations) ? locations[0] : null;
+
+        if (!location) {
+            return null;
+        }
+
+        const levels = await shopify.inventoryLevel.list({ location_ids: String(location.id), limit: 1 });
+        const level = Array.isArray(levels) ? levels[0] : null;
+
+        if (!level) {
+            return null;
+        }
+
+        level.webhookTopic = topic;
+        return level;
+    },
+
+    /**
+     * Register a webhook using a specific Shopify API version. Needed for topics
+     * that only exist on newer versions than the connector default (e.g. the
+     * Returns API topics require 2023-10+), without changing every other call.
+     * @param {Context} context
+     * @param {string} topic
+     * @param {string} apiVersion
+     * @returns {Promise<*>}
+     */
+    async registerWebhookVersioned(context, topic, apiVersion) {
+
+        const shopify = new Shopify({
+            shopName: context.auth.store,
+            accessToken: context.auth.accessToken,
+            apiVersion
+        });
+        const address = context.getWebhookUrl();
+
+        const webhooks = await shopify.webhook.list({ address });
+
+        let response;
+        if (Array.isArray(webhooks) && webhooks.length > 0) {
+            response = webhooks[0];
+        } else {
+            response = await shopify.webhook.create({ address, topic });
+        }
+
+        return context.saveState({ webhookId: response.id });
     }
 };
