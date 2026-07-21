@@ -1,0 +1,77 @@
+{
+    "name": "appmixer.ai.agentcore.ListMemoryRecords",
+    "description": "List memory records in an Amazon Bedrock AgentCore Memory resource by namespace.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "memoryId": { "type": "string" },
+                    "namespace": { "type": "string" },
+                    "memoryStrategyId": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["memoryId", "namespace"]
+            },
+            "inspector": {
+                "inputs": {
+                    "memoryId": {
+                        "type": "text",
+                        "label": "Memory ID",
+                        "index": 1,
+                        "tooltip": "The identifier of the AgentCore Memory resource."
+                    },
+                    "namespace": {
+                        "type": "text",
+                        "label": "Namespace",
+                        "index": 2,
+                        "tooltip": "The namespace prefix to filter memory records by, e.g. /users/user-123."
+                    },
+                    "memoryStrategyId": {
+                        "type": "text",
+                        "label": "Memory Strategy ID",
+                        "index": 3,
+                        "tooltip": "Optional memory strategy identifier to filter records by."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 4,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, the first item only, one item at a time, or stored to a CSV file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ai/agentcore/ListMemoryRecords?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/memoryId": "inputs/in/memoryId",
+                        "in/namespace": "inputs/in/namespace",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ]
+}

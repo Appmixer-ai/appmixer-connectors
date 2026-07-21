@@ -1,0 +1,89 @@
+{
+    "name": "appmixer.ai.agentcore.InvokeAgentRuntime",
+    "description": "Invoke an Amazon Bedrock AgentCore Runtime and receive the aggregated (buffered) response.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "agentRuntimeArn": { "type": "string" },
+                    "runtimeSessionId": { "type": "string" },
+                    "payload": { "type": "string" },
+                    "qualifier": { "type": "string" },
+                    "runtimeUserId": { "type": "string" },
+                    "contentType": { "type": "string" },
+                    "accept": { "type": "string" }
+                },
+                "required": ["agentRuntimeArn", "runtimeSessionId", "payload"]
+            },
+            "inspector": {
+                "inputs": {
+                    "agentRuntimeArn": {
+                        "type": "text",
+                        "label": "Agent Runtime ARN",
+                        "index": 1,
+                        "tooltip": "The ARN (or agent ID) of the AgentCore Runtime to invoke."
+                    },
+                    "runtimeSessionId": {
+                        "type": "text",
+                        "label": "Runtime Session ID",
+                        "index": 2,
+                        "tooltip": "Session identifier used to maintain conversation state. Must be 33-256 characters long."
+                    },
+                    "payload": {
+                        "type": "textarea",
+                        "label": "Payload",
+                        "index": 3,
+                        "tooltip": "The request payload sent to the agent runtime. Usually a JSON object matching the content type, e.g. {\"prompt\": \"Hello\"}."
+                    },
+                    "qualifier": {
+                        "type": "text",
+                        "label": "Qualifier (Endpoint)",
+                        "index": 4,
+                        "tooltip": "Optional endpoint name pointing to a specific version. Defaults to the runtime's DEFAULT endpoint."
+                    },
+                    "runtimeUserId": {
+                        "type": "text",
+                        "label": "Runtime User ID",
+                        "index": 5,
+                        "tooltip": "Optional user identifier. Requires the additional bedrock-agentcore:InvokeAgentRuntimeForUser IAM permission."
+                    },
+                    "contentType": {
+                        "type": "text",
+                        "label": "Content Type",
+                        "index": 6,
+                        "defaultValue": "application/json",
+                        "tooltip": "MIME type of the payload. Defaults to application/json."
+                    },
+                    "accept": {
+                        "type": "text",
+                        "label": "Accept",
+                        "index": 7,
+                        "tooltip": "Desired MIME type of the response. Defaults to application/json."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "response": { "type": "string", "title": "Response", "example": "{\"result\":\"Hello, how can I help you today?\"}" },
+                    "responseJson": { "type": "object", "title": "Response (parsed JSON)", "example": { "result": "Hello, how can I help you today?" } },
+                    "runtimeSessionId": { "type": "string", "title": "Runtime Session ID", "example": "session-1234567890abcdef1234567890abcdef" },
+                    "contentType": { "type": "string", "title": "Content Type", "example": "application/json" },
+                    "statusCode": { "type": "integer", "title": "Status Code", "example": 200 }
+                }
+            }
+        }
+    ]
+}

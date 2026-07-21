@@ -1,0 +1,77 @@
+{
+    "name": "appmixer.ai.agentcore.CreateMemory",
+    "description": "Create a new Amazon Bedrock AgentCore Memory resource.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" },
+                    "eventExpiryDuration": { "type": "integer" },
+                    "description": { "type": "string" },
+                    "memoryExecutionRoleArn": { "type": "string" },
+                    "encryptionKeyArn": { "type": "string" }
+                },
+                "required": ["name", "eventExpiryDuration"]
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "label": "Name",
+                        "index": 1,
+                        "tooltip": "The name of the memory. Must be unique within your account, start with a letter and contain only letters, numbers and underscores (max 48 chars)."
+                    },
+                    "eventExpiryDuration": {
+                        "type": "number",
+                        "label": "Event Expiry Duration (days)",
+                        "index": 2,
+                        "defaultValue": 90,
+                        "tooltip": "The number of days after which memory events expire. Between 3 and 365."
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "index": 3,
+                        "tooltip": "Optional description of the memory."
+                    },
+                    "memoryExecutionRoleArn": {
+                        "type": "text",
+                        "label": "Memory Execution Role ARN",
+                        "index": 4,
+                        "tooltip": "Optional IAM role ARN that grants the memory permission to access AWS services."
+                    },
+                    "encryptionKeyArn": {
+                        "type": "text",
+                        "label": "Encryption Key ARN",
+                        "index": 5,
+                        "tooltip": "Optional AWS KMS key ARN used to encrypt the memory data."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Memory ID", "example": "myMemory-abc1234567" },
+                    "arn": { "type": "string", "title": "Memory ARN", "example": "arn:aws:bedrock-agentcore:us-east-1:123456789012:memory/myMemory-abc1234567" },
+                    "name": { "type": "string", "title": "Name", "example": "myMemory" },
+                    "description": { "type": "string", "title": "Description", "example": "My agent memory" },
+                    "status": { "type": "string", "title": "Status", "example": "CREATING" },
+                    "eventExpiryDuration": { "type": "integer", "title": "Event Expiry Duration (days)", "example": 90 },
+                    "createdAt": { "type": "string", "format": "date-time", "title": "Created At", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
+        }
+    ]
+}

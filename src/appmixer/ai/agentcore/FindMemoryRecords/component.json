@@ -1,0 +1,95 @@
+{
+    "name": "appmixer.ai.agentcore.FindMemoryRecords",
+    "description": "Semantically search (retrieve) memory records from an Amazon Bedrock AgentCore Memory resource using the RetrieveMemoryRecords API. Returns up to 100 records.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "memoryId": { "type": "string" },
+                    "namespace": { "type": "string" },
+                    "searchQuery": { "type": "string" },
+                    "topK": { "type": "integer" },
+                    "memoryStrategyId": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["memoryId", "namespace", "searchQuery"]
+            },
+            "inspector": {
+                "inputs": {
+                    "memoryId": {
+                        "type": "text",
+                        "label": "Memory ID",
+                        "index": 1,
+                        "tooltip": "The identifier of the AgentCore Memory resource to search."
+                    },
+                    "namespace": {
+                        "type": "text",
+                        "label": "Namespace",
+                        "index": 2,
+                        "tooltip": "The namespace prefix to filter memory records by, e.g. /users/user-123."
+                    },
+                    "searchQuery": {
+                        "type": "textarea",
+                        "label": "Search Query",
+                        "index": 3,
+                        "tooltip": "The natural-language query used to find semantically relevant memory records."
+                    },
+                    "topK": {
+                        "type": "number",
+                        "label": "Top K",
+                        "index": 4,
+                        "tooltip": "Optional maximum number of most relevant records to return."
+                    },
+                    "memoryStrategyId": {
+                        "type": "text",
+                        "label": "Memory Strategy ID",
+                        "index": 5,
+                        "tooltip": "Optional memory strategy identifier to scope the search."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, the first item only, one item at a time, or stored to a CSV file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ai/agentcore/FindMemoryRecords?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/memoryId": "inputs/in/memoryId",
+                        "in/namespace": "inputs/in/namespace",
+                        "in/searchQuery": "inputs/in/searchQuery",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ]
+}

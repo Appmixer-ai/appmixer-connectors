@@ -1,0 +1,60 @@
+{
+    "name": "appmixer.ai.agentcore.NewMemoryEvent",
+    "description": "Triggers when a new event is written to an actor session in an Amazon Bedrock AgentCore Memory resource. Polls ListEvents.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "trigger": true,
+    "tick": true,
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "memoryId": { "type": "string" },
+                "actorId": { "type": "string" },
+                "sessionId": { "type": "string" }
+            },
+            "required": ["memoryId", "actorId", "sessionId"]
+        },
+        "inspector": {
+            "inputs": {
+                "memoryId": {
+                    "type": "text",
+                    "label": "Memory ID",
+                    "index": 1,
+                    "tooltip": "The identifier of the AgentCore Memory resource to watch."
+                },
+                "actorId": {
+                    "type": "text",
+                    "label": "Actor ID",
+                    "index": 2,
+                    "tooltip": "The identifier of the actor whose events to watch."
+                },
+                "sessionId": {
+                    "type": "text",
+                    "label": "Session ID",
+                    "index": 3,
+                    "tooltip": "The identifier of the session whose events to watch."
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "eventId": { "type": "string", "title": "Event ID", "example": "0000000000000000000000000" },
+                    "actorId": { "type": "string", "title": "Actor ID", "example": "user-123" },
+                    "sessionId": { "type": "string", "title": "Session ID", "example": "session-1234567890abcdef" },
+                    "memoryId": { "type": "string", "title": "Memory ID", "example": "myMemory-abc1234567" },
+                    "eventTimestamp": { "type": "string", "format": "date-time", "title": "Event Timestamp", "example": "2025-01-15T10:30:00Z" },
+                    "payload": { "type": "array", "title": "Payload", "items": { "type": "object" }, "example": [{ "conversational": { "role": "USER", "content": { "text": "Hello" } } }] }
+                }
+            }
+        }
+    ]
+}

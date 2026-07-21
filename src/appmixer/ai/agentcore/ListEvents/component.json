@@ -1,0 +1,86 @@
+{
+    "name": "appmixer.ai.agentcore.ListEvents",
+    "description": "List events for an actor session in an Amazon Bedrock AgentCore Memory resource.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "memoryId": { "type": "string" },
+                    "actorId": { "type": "string" },
+                    "sessionId": { "type": "string" },
+                    "includePayloads": { "type": "boolean" },
+                    "outputType": { "type": "string" }
+                },
+                "required": ["memoryId", "actorId", "sessionId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "memoryId": {
+                        "type": "text",
+                        "label": "Memory ID",
+                        "index": 1,
+                        "tooltip": "The identifier of the AgentCore Memory resource."
+                    },
+                    "actorId": {
+                        "type": "text",
+                        "label": "Actor ID",
+                        "index": 2,
+                        "tooltip": "The identifier of the actor for which to list events."
+                    },
+                    "sessionId": {
+                        "type": "text",
+                        "label": "Session ID",
+                        "index": 3,
+                        "tooltip": "The identifier of the session for which to list events."
+                    },
+                    "includePayloads": {
+                        "type": "toggle",
+                        "label": "Include Payloads",
+                        "index": 4,
+                        "defaultValue": true,
+                        "tooltip": "Whether to include the event payloads in the response."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, the first item only, one item at a time, or stored to a CSV file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ai/agentcore/ListEvents?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/memoryId": "inputs/in/memoryId",
+                        "in/actorId": "inputs/in/actorId",
+                        "in/sessionId": "inputs/in/sessionId",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ]
+}

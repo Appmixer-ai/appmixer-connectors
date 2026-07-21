@@ -1,0 +1,98 @@
+{
+    "name": "appmixer.ai.agentcore.CreateAgentRuntime",
+    "description": "Create a new Amazon Bedrock AgentCore Runtime from a container image.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "agentRuntimeName": { "type": "string" },
+                    "containerUri": { "type": "string" },
+                    "roleArn": { "type": "string" },
+                    "networkMode": { "type": "string" },
+                    "serverProtocol": { "type": "string" },
+                    "description": { "type": "string" },
+                    "environmentVariables": { "type": "object" }
+                },
+                "required": ["agentRuntimeName", "containerUri", "roleArn"]
+            },
+            "inspector": {
+                "inputs": {
+                    "agentRuntimeName": {
+                        "type": "text",
+                        "label": "Name",
+                        "index": 1,
+                        "tooltip": "The name of the AgentCore Runtime. Must start with a letter and contain only letters, numbers and underscores (max 48 chars)."
+                    },
+                    "containerUri": {
+                        "type": "text",
+                        "label": "Container Image URI",
+                        "index": 2,
+                        "tooltip": "The ECR container image URI of the agent, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-agent:latest."
+                    },
+                    "roleArn": {
+                        "type": "text",
+                        "label": "Role ARN",
+                        "index": 3,
+                        "tooltip": "The IAM role ARN that provides permissions for the AgentCore Runtime."
+                    },
+                    "networkMode": {
+                        "type": "select",
+                        "label": "Network Mode",
+                        "index": 4,
+                        "defaultValue": "PUBLIC",
+                        "tooltip": "The network mode for the AgentCore Runtime.",
+                        "options": [
+                            { "label": "Public", "value": "PUBLIC" },
+                            { "label": "VPC", "value": "VPC" }
+                        ]
+                    },
+                    "serverProtocol": {
+                        "type": "select",
+                        "label": "Server Protocol",
+                        "index": 5,
+                        "tooltip": "The protocol the agent runtime uses to communicate with clients.",
+                        "options": [
+                            { "clearItem": true, "content": "Clear" },
+                            { "label": "HTTP", "value": "HTTP" },
+                            { "label": "MCP", "value": "MCP" }
+                        ]
+                    },
+                    "description": {
+                        "type": "textarea",
+                        "label": "Description",
+                        "index": 6,
+                        "tooltip": "Optional description of the AgentCore Runtime."
+                    },
+                    "environmentVariables": {
+                        "type": "textarea",
+                        "label": "Environment Variables",
+                        "index": 7,
+                        "tooltip": "Optional environment variables for the runtime as a JSON object, e.g. {\"KEY\": \"value\"}."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "agentRuntimeId": { "type": "string", "title": "Agent Runtime ID", "example": "myAgent-abc1234567" },
+                    "agentRuntimeArn": { "type": "string", "title": "Agent Runtime ARN", "example": "arn:aws:bedrock-agentcore:us-east-1:123456789012:agent/00000000-0000-0000-0000-000000000000:1" },
+                    "agentRuntimeVersion": { "type": "string", "title": "Version", "example": "1" },
+                    "status": { "type": "string", "title": "Status", "example": "CREATING" },
+                    "createdAt": { "type": "string", "format": "date-time", "title": "Created At", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
+        }
+    ]
+}

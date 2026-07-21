@@ -1,0 +1,95 @@
+{
+    "name": "appmixer.ai.agentcore.CreateEvent",
+    "description": "Write an event (a memory turn) into an Amazon Bedrock AgentCore Memory resource.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "memoryId": { "type": "string" },
+                    "actorId": { "type": "string" },
+                    "sessionId": { "type": "string" },
+                    "role": { "type": "string" },
+                    "messageText": { "type": "string" },
+                    "payload": { "type": "string" },
+                    "eventTimestamp": { "type": "string", "format": "date-time" }
+                },
+                "required": ["memoryId", "actorId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "memoryId": {
+                        "type": "text",
+                        "label": "Memory ID",
+                        "index": 1,
+                        "tooltip": "The identifier of the AgentCore Memory resource in which to create the event."
+                    },
+                    "actorId": {
+                        "type": "text",
+                        "label": "Actor ID",
+                        "index": 2,
+                        "tooltip": "The identifier of the actor associated with this event."
+                    },
+                    "sessionId": {
+                        "type": "text",
+                        "label": "Session ID",
+                        "index": 3,
+                        "tooltip": "Optional identifier of the session this event belongs to."
+                    },
+                    "role": {
+                        "type": "select",
+                        "label": "Role",
+                        "index": 4,
+                        "defaultValue": "USER",
+                        "tooltip": "The role of the message author for a conversational event. Used when Message Text is provided.",
+                        "options": [
+                            { "label": "User", "value": "USER" },
+                            { "label": "Assistant", "value": "ASSISTANT" },
+                            { "label": "Tool", "value": "TOOL" },
+                            { "label": "Other", "value": "OTHER" }
+                        ]
+                    },
+                    "messageText": {
+                        "type": "textarea",
+                        "label": "Message Text",
+                        "index": 5,
+                        "tooltip": "The conversational message content to store. Ignored when a raw Payload is provided."
+                    },
+                    "payload": {
+                        "type": "textarea",
+                        "label": "Payload (raw JSON)",
+                        "index": 6,
+                        "tooltip": "Optional raw payload as a JSON array of PayloadType objects. Overrides Message Text / Role when provided."
+                    },
+                    "eventTimestamp": {
+                        "type": "date-time",
+                        "label": "Event Timestamp",
+                        "index": 7,
+                        "tooltip": "Optional timestamp of the event. Defaults to the current time."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "eventId": { "type": "string", "title": "Event ID", "example": "0000000000000000000000000" },
+                    "memoryId": { "type": "string", "title": "Memory ID", "example": "myMemory-abc1234567" },
+                    "actorId": { "type": "string", "title": "Actor ID", "example": "user-123" },
+                    "sessionId": { "type": "string", "title": "Session ID", "example": "session-1234567890abcdef" },
+                    "eventTimestamp": { "type": "string", "format": "date-time", "title": "Event Timestamp", "example": "2025-01-15T10:30:00Z" }
+                }
+            }
+        }
+    ]
+}

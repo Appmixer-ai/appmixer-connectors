@@ -1,0 +1,89 @@
+{
+    "name": "appmixer.ai.agentcore.MakeApiCall",
+    "description": "Generic method for making SigV4-signed API calls to the Amazon Bedrock AgentCore data-plane or control-plane endpoints.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:agentcore"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string" },
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+                        "default": "GET"
+                    },
+                    "parameters": { "type": "string" },
+                    "body": { "type": "string" },
+                    "headers": { "type": "string" }
+                },
+                "required": ["url", "method"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint URL",
+                        "tooltip": "A full URL (e.g. https://bedrock-agentcore-control.us-east-1.amazonaws.com/runtimes/) or a path relative to the data-plane host https://bedrock-agentcore.{region}.amazonaws.com."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional request headers."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status Code", "value": "status", "schema": { "type": "integer", "example": 200 } },
+                { "label": "Response Headers", "value": "headers", "schema": { "type": "object", "example": {} } },
+                { "label": "Response Body", "value": "body", "schema": { "type": "object", "properties": {}, "example": {} } }
+            ]
+        }
+    ]
+}
