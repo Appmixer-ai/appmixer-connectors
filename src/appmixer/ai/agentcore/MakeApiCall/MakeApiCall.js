@@ -51,6 +51,18 @@ module.exports = {
             : `https://bedrock-agentcore.${region}.amazonaws.com${url.startsWith('/') ? url : '/' + url}`;
 
         const parsed = new URL(targetUrl);
+
+        // Sign with the region embedded in the endpoint hostname
+        // (e.g. bedrock-agentcore-control.eu-central-1.amazonaws.com) so that a
+        // call to a region other than the account's configured one still gets a
+        // valid signature. Fall back to the configured region for hostnames that
+        // don't follow the AWS endpoint pattern.
+        let signingRegion = region;
+        const hostParts = parsed.hostname.split('.');
+        if (/^bedrock-agentcore(-control)?(-fips)?$/.test(hostParts[0]) && hostParts[1]) {
+            signingRegion = hostParts[1];
+        }
+
         const query = {};
         parsed.searchParams.forEach((value, key) => {
             query[key] = value;
@@ -62,11 +74,13 @@ module.exports = {
             bodyString = typeof body === 'string' ? body : JSON.stringify(body);
         }
 
-        // Derive the signing service name from the host so both the data-plane
-        // (bedrock-agentcore) and control-plane (bedrock-agentcore-control) work.
-        const service = parsed.hostname.startsWith('bedrock-agentcore-control')
-            ? 'bedrock-agentcore-control'
-            : 'bedrock-agentcore';
+        // Both the data-plane (bedrock-agentcore.*) and the control-plane
+        // (bedrock-agentcore-control.*) hosts sign requests under the same SigV4
+        // service name, "bedrock-agentcore" (the SDK's defaultSigningName for
+        // both clients). Signing the control-plane host as
+        // "bedrock-agentcore-control" produces a wrong credential scope and AWS
+        // rejects it with "Unable to determine service/operation name to be authorized".
+        const service = 'bedrock-agentcore';
 
         const credentials = {
             accessKeyId: context.auth.accessKeyId,
@@ -90,7 +104,7 @@ module.exports = {
             body: bodyString
         });
 
-        const signer = new SignatureV4({ credentials, region, service, sha256: Sha256 });
+        const signer = new SignatureV4({ credentials, region: signingRegion, service, sha256: Sha256 });
         const signed = await signer.sign(requestToSign);
 
         const response = await context.httpRequest({

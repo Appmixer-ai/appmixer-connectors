@@ -16,7 +16,14 @@
                     "eventExpiryDuration": { "type": "integer" },
                     "description": { "type": "string" },
                     "memoryExecutionRoleArn": { "type": "string" },
-                    "encryptionKeyArn": { "type": "string" }
+                    "encryptionKeyArn": { "type": "string" },
+                    "strategyType": {
+                        "type": "string",
+                        "enum": ["semantic", "summary", "userPreference"]
+                    },
+                    "strategyName": { "type": "string" },
+                    "strategyNamespaces": { "type": "string" },
+                    "waitForActive": { "type": "boolean" }
                 },
                 "required": ["name", "eventExpiryDuration"]
             },
@@ -52,6 +59,35 @@
                         "label": "Encryption Key ARN",
                         "index": 5,
                         "tooltip": "Optional AWS KMS key ARN used to encrypt the memory data."
+                    },
+                    "strategyType": {
+                        "type": "select",
+                        "label": "Extraction Strategy",
+                        "index": 6,
+                        "tooltip": "Optional built-in memory strategy that extracts long-term memory records from events. Without a strategy the memory only stores raw events and never produces memory records. Advanced or multiple strategies can be configured via the Make API Call component.",
+                        "options": [
+                            { "label": "Semantic (facts)", "value": "semantic" },
+                            { "label": "Summary", "value": "summary" },
+                            { "label": "User Preference", "value": "userPreference" }
+                        ]
+                    },
+                    "strategyName": {
+                        "type": "text",
+                        "label": "Strategy Name",
+                        "index": 7,
+                        "tooltip": "Required when an Extraction Strategy is selected. A name for the strategy (letters, numbers and underscores)."
+                    },
+                    "strategyNamespaces": {
+                        "type": "text",
+                        "label": "Strategy Namespaces",
+                        "index": 8,
+                        "tooltip": "Optional comma-separated list of namespaces the strategy writes records into, e.g. /facts/{actorId}. Supports the {actorId} and {sessionId} placeholders. Leave empty to use the AWS default namespace."
+                    },
+                    "waitForActive": {
+                        "type": "toggle",
+                        "label": "Wait Until Active",
+                        "index": 9,
+                        "tooltip": "When enabled, the component waits (up to ~3 minutes) until the memory finishes provisioning and reaches the ACTIVE state before continuing. A memory stays in the CREATING state for about a minute after creation and rejects Create Event calls until it is active, so enable this when the same flow adds events right after creating the memory."
                     }
                 }
             }

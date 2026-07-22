@@ -55,17 +55,17 @@
                                             {
                                                 "type": "text",
                                                 "name": "namespace",
-                                                "text": "/summaries/appmixer-e2e-actor"
+                                                "text": "/facts/appmixer-e2e-actor"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "searchQuery",
-                                                "text": "What did the user ask about Appmixer?"
+                                                "text": "Where does the user live?"
                                             },
                                             {
                                                 "type": "text",
                                                 "name": "messageText",
-                                                "text": "Hello, I am testing the Appmixer AgentCore memory connector."
+                                                "text": "My name is Alex Novak, I live in Prague and I am allergic to peanuts."
                                             }
                                         ]
                                     }
@@ -105,11 +105,19 @@
                                             "functions": []
                                         }
                                     },
-                                    "eventExpiryDuration": {}
+                                    "eventExpiryDuration": {},
+                                    "strategyType": {},
+                                    "strategyName": {},
+                                    "strategyNamespaces": {},
+                                    "waitForActive": {}
                                 },
                                 "lambda": {
                                     "name": "{{{9a92bbcd-bc01-46c2-b05b-d077245924c2}}}",
-                                    "eventExpiryDuration": 7
+                                    "eventExpiryDuration": 7,
+                                    "strategyType": "semantic",
+                                    "strategyName": "facts",
+                                    "strategyNamespaces": "/facts/{actorId}",
+                                    "waitForActive": true
                                 }
                             }
                         }
@@ -320,9 +328,9 @@
                 "onError": "stopFlow"
             }
         },
-        "c4fbecbb-2dd1-48ff-8a49-41b8065ed9a3": {
-            "type": "appmixer.ai.agentcore.ListMemoryRecords",
-            "x": 960,
+        "d5e8a1c4-7b62-4f3a-9e05-1c8b6a2f4d90": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 840,
             "y": 600,
             "source": {
                 "in": {
@@ -336,6 +344,40 @@
                 "transform": {
                     "in": {
                         "0ccd090c-8cb1-4f56-8c9e-ff1d8fe972e5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "45s"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "c4fbecbb-2dd1-48ff-8a49-41b8065ed9a3": {
+            "type": "appmixer.ai.agentcore.ListMemoryRecords",
+            "x": 1080,
+            "y": 600,
+            "source": {
+                "in": {
+                    "d5e8a1c4-7b62-4f3a-9e05-1c8b6a2f4d90": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "d5e8a1c4-7b62-4f3a-9e05-1c8b6a2f4d90": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
