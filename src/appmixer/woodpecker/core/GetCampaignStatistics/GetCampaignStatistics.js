@@ -12,12 +12,21 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
+        // Campaign statistics are exposed through the v1 campaign detail
+        // (GET /v1/campaign_list?id=X → [0].stats); there is no /statistics endpoint on v2.
         const response = await context.httpRequest({
             method: 'GET',
-            url: `${lib.API_BASE_URL}/v2/campaigns/${campaignId}/statistics`,
-            headers: lib.getHeaders(context)
+            url: `${lib.API_BASE_URL}/v1/campaign_list`,
+            headers: lib.getHeaders(context),
+            params: { id: campaignId }
         });
 
-        return context.sendJson(response.data, 'out');
+        const campaign = Array.isArray(response.data) ? response.data[0] : null;
+        if (!campaign) {
+            throw new context.CancelError(`Campaign ${campaignId} not found.`);
+        }
+
+        const { emails, ...stats } = campaign.stats || {};
+        return context.sendJson({ id: campaign.id, name: campaign.name, status: campaign.status, ...stats }, 'out');
     }
 };

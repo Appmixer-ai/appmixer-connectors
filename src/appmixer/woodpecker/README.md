@@ -25,3 +25,17 @@ Notes:
 - Credentials are validated against `GET /v1/me`.
 
 Official guide: [Generating API Key](https://woodpecker.co/help-center/en/articles/5223172-generating-api-key)
+
+## Connecting a mailbox (required for campaigns)
+
+Campaign components (Create Campaign, Run/Pause/Stop Campaign) and the mailbox components
+need at least one **connected email account** in Woodpecker — `POST /v2/campaigns` rejects
+requests without `email_account_ids` and `GET /v2/mailboxes` returns `[]` on a fresh account.
+
+1. Log in at [app.woodpecker.co](https://app.woodpecker.co).
+2. Open **Settings → Email accounts** (gear icon).
+3. Click **Connect an email account** and follow the provider flow (Google/Microsoft
+   OAuth or manual SMTP/IMAP).
+4. The account then appears in the **List Mailboxes** component; its `id` is the
+   **Email Account ID** that **Create Campaign** requires.
+

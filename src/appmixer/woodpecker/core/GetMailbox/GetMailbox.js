@@ -18,6 +18,7 @@ module.exports = {
             headers: lib.getHeaders(context)
         });
 
-        return context.sendJson(response.data, 'out');
+        const { details, ...rest } = response.data || {};
+        return context.sendJson({ ...rest, ...details }, 'out');
     }
 };

@@ -23,7 +23,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${lib.API_BASE_URL}/v2/manual-tasks`,
+            url: `${lib.API_BASE_URL}/v2/manual_tasks`,
             headers: lib.getHeaders(context)
         });
 

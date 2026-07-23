@@ -8,7 +8,11 @@
             "y": 320,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "f2ce69e8-b060-4b81-bffc-01e29d778b02": {
             "type": "appmixer.utils.controls.SetVariable",
@@ -56,16 +60,20 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "57654b3a-a484-4bbe-ba6a-7e2ee34675be": {
             "type": "appmixer.woodpecker.core.CreateCampaign",
-            "x": 448,
+            "x": 640,
             "y": 320,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "f2ce69e8-b060-4b81-bffc-01e29d778b02": [
+                    "ab000000-0000-4000-8000-000000000001": [
                         "out"
                     ]
                 }
@@ -73,7 +81,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "f2ce69e8-b060-4b81-bffc-01e29d778b02": {
+                        "ab000000-0000-4000-8000-000000000001": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -83,28 +91,35 @@
                                             "functions": []
                                         }
                                     },
-                                    "fromName": {
-                                        "var-from-name": {
-                                            "variable": "$.f2ce69e8-b060-4b81-bffc-01e29d778b02.out.fromName",
-                                            "functions": []
-                                        }
-                                    },
                                     "timezone": {
                                         "var-timezone": {
                                             "variable": "$.f2ce69e8-b060-4b81-bffc-01e29d778b02.out.timezone",
+                                            "functions": []
+                                        }
+                                    },
+                                    "emailAccountId": {
+                                        "var-mailbox-id": {
+                                            "variable": "$.ab000000-0000-4000-8000-000000000001.out.id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "name": "{{{var-campaign-name}}}",
-                                    "fromName": "{{{var-from-name}}}",
-                                    "timezone": "{{{var-timezone}}}"
+                                    "timezone": "{{{var-timezone}}}",
+                                    "emailAccountId": "{{{var-mailbox-id}}}",
+                                    "subject": "E2E probe subject",
+                                    "message": "<div>Hi {{FIRST_NAME | \"there\"}}, this is an Appmixer E2E campaign.</div>",
+                                    "dailyEnroll": 10
                                 }
                             }
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "c31ead38-4481-4ea7-bbab-c681ba8cd2c6": {
@@ -145,12 +160,10 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "type": "string",
                                                 "assertion": "notEmpty",
                                                 "field": "{{{field-create-id}}}"
                                             },
                                             {
-                                                "type": "string",
                                                 "assertion": "equal",
                                                 "field": "{{{field-create-name}}}",
                                                 "expected": "{{{expected-name}}}"
@@ -162,6 +175,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "645cf6f7-2e61-4674-adf4-fa137e452d42": {
@@ -197,6 +214,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "4dba1108-cf65-46aa-a8d8-d9ee350b3056": {
@@ -237,12 +258,10 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "type": "string",
                                                 "assertion": "notEmpty",
                                                 "field": "{{{field-get-id}}}"
                                             },
                                             {
-                                                "type": "string",
                                                 "assertion": "equal",
                                                 "field": "{{{field-get-name}}}",
                                                 "expected": "{{{expected-name}}}"
@@ -254,6 +273,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "59e1bed4-df6c-44ea-927d-814fe9e31656": {
@@ -289,6 +312,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "4970f47e-b71a-4c06-a95c-079ecac07748": {
@@ -311,6 +338,10 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
+                                        "field-stats-id": {
+                                            "variable": "$.59e1bed4-df6c-44ea-927d-814fe9e31656.out.id",
+                                            "functions": []
+                                        },
                                         "field-stats-sent": {
                                             "variable": "$.59e1bed4-df6c-44ea-927d-814fe9e31656.out.sent",
                                             "functions": []
@@ -321,9 +352,13 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "type": "string",
                                                 "assertion": "notEmpty",
-                                                "field": "{{{field-stats-sent}}}"
+                                                "field": "{{{field-stats-id}}}"
+                                            },
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{field-stats-sent}}}",
+                                                "expected": "^[0-9]+$"
                                             }
                                         ]
                                     }
@@ -332,6 +367,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "8a2a809b-1d8d-416a-8a81-6f56c7f14e7f": {
@@ -371,6 +410,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "eeaf28ff-965e-48f3-93ce-334d40d37c94": {
@@ -403,7 +446,6 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "type": "string",
                                                 "assertion": "notEmpty",
                                                 "field": "{{{field-add-status}}}"
                                             }
@@ -414,6 +456,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "6fa8d204-ae33-48ce-ac97-d541c980bd85": {
@@ -449,6 +495,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "0ab7ea35-f345-4244-818f-41eecee577e7": {
@@ -484,6 +534,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "ca826e85-3e64-4889-b30f-dfbaf5de50a3": {
@@ -519,6 +573,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "dcd50e73-a01a-4209-a0b3-7b53a29ecf51": {
@@ -549,6 +607,10 @@
                 "properties": {
                     "timeout": 180
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "7171bee3-e948-4123-9beb-6fb77d2fec83": {
@@ -584,6 +646,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "76c443a5-7209-4fcc-b94d-eaaf00a46ddb": {
@@ -624,6 +690,41 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ab000000-0000-4000-8000-000000000001": {
+            "type": "appmixer.woodpecker.core.ListMailboxes",
+            "x": 448,
+            "y": 320,
+            "source": {
+                "in": {
+                    "f2ce69e8-b060-4b81-bffc-01e29d778b02": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "f2ce69e8-b060-4b81-bffc-01e29d778b02": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         }
     }

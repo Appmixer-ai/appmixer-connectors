@@ -26,14 +26,16 @@ module.exports = {
             params.status = status;
         }
 
+        // Campaign listing lives on the v1 API (GET /v2/campaigns responds 405);
+        // an account with no campaigns responds 204 with an empty body.
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${lib.API_BASE_URL}/v2/campaigns`,
+            url: `${lib.API_BASE_URL}/v1/campaign_list`,
             headers: lib.getHeaders(context),
             params
         });
 
-        const campaigns = Array.isArray(data) ? data : (data.campaigns || data.data || []);
+        const campaigns = Array.isArray(data) ? data : (data && (data.campaigns || data.data)) || [];
 
         return lib.sendArrayOutput({ context, outputType, records: campaigns });
     }

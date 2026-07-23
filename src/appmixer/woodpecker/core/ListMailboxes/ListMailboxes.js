@@ -28,6 +28,9 @@ module.exports = {
 
         const mailboxes = Array.isArray(data) ? data : (data.mailboxes || data.data || []);
 
-        return lib.sendArrayOutput({ context, outputType, records: mailboxes });
+        // The API nests mailbox fields under `details` — flatten to match the declared schema.
+        const records = mailboxes.map(({ details, ...rest }) => ({ ...rest, ...details }));
+
+        return lib.sendArrayOutput({ context, outputType, records });
     }
 };

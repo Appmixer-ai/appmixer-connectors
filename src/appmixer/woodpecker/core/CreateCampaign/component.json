@@ -1,7 +1,7 @@
 {
     "name": "appmixer.woodpecker.core.CreateCampaign",
     "label": "Create Campaign",
-    "description": "Create a new campaign in your Woodpecker account.",
+    "description": "Create a new email campaign (one email step; delivery on workdays 8:00-18:00). Requires a connected email account (mailbox) in Woodpecker.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -13,11 +13,34 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "name": { "type": "string" },
-                    "fromName": { "type": "string" },
-                    "timezone": { "type": "string" }
+                    "name": {
+                        "type": "string"
+                    },
+                    "emailAccountId": {
+                        "type": [
+                            "integer",
+                            "string"
+                        ]
+                    },
+                    "subject": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "dailyEnroll": {
+                        "type": "integer"
+                    }
                 },
-                "required": ["name"]
+                "required": [
+                    "name",
+                    "emailAccountId",
+                    "subject",
+                    "message"
+                ]
             },
             "inspector": {
                 "inputs": {
@@ -25,19 +48,37 @@
                         "type": "text",
                         "label": "Name",
                         "index": 1,
-                        "tooltip": "The name of the campaign."
+                        "tooltip": "Campaign name."
                     },
-                    "fromName": {
-                        "type": "text",
-                        "label": "From Name",
+                    "emailAccountId": {
+                        "type": "number",
+                        "label": "Email Account ID",
                         "index": 2,
-                        "tooltip": "The sender name displayed on outgoing emails."
+                        "tooltip": "ID of a connected Woodpecker email account (mailbox) the campaign sends from. Use the List Mailboxes component to find it."
+                    },
+                    "subject": {
+                        "type": "text",
+                        "label": "Subject",
+                        "index": 3,
+                        "tooltip": "Subject of the first campaign email."
+                    },
+                    "message": {
+                        "type": "textarea",
+                        "label": "Message",
+                        "index": 4,
+                        "tooltip": "HTML body of the first campaign email, e.g. <div>Hi {{FIRST_NAME}}</div>."
                     },
                     "timezone": {
                         "type": "text",
                         "label": "Timezone",
-                        "index": 3,
-                        "tooltip": "The timezone for the campaign, e.g. America/New_York."
+                        "index": 5,
+                        "tooltip": "Sending timezone (regional ID, e.g. Europe/Prague). Defaults to Europe/London."
+                    },
+                    "dailyEnroll": {
+                        "type": "number",
+                        "label": "Daily Enroll Limit",
+                        "index": 6,
+                        "tooltip": "Maximum number of prospects enrolled per day. Defaults to 20."
                     }
                 }
             }
@@ -49,12 +90,36 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "id": { "type": "integer", "title": "Campaign ID", "example": 12345 },
-                    "name": { "type": "string", "title": "Name", "example": "Q1 Outreach" },
-                    "status": { "type": "string", "title": "Status", "example": "RUNNING" },
-                    "created": { "type": "string", "title": "Created", "example": "2025-01-15T10:30:00Z" },
-                    "from_name": { "type": "string", "title": "From Name", "example": "Jane Doe" },
-                    "timezone": { "type": "string", "title": "Timezone", "example": "America/New_York" }
+                    "id": {
+                        "type": "integer",
+                        "title": "Campaign ID",
+                        "example": 12345
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Q1 Outreach"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "RUNNING"
+                    },
+                    "created": {
+                        "type": "string",
+                        "title": "Created",
+                        "example": "2025-01-15T10:30:00Z"
+                    },
+                    "from_name": {
+                        "type": "string",
+                        "title": "From Name",
+                        "example": "Jane Doe"
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "title": "Timezone",
+                        "example": "America/New_York"
+                    }
                 }
             }
         }

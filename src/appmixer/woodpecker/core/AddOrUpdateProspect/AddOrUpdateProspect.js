@@ -26,13 +26,15 @@ module.exports = {
             prospect.title = title;
         }
 
+        // The upsert endpoint is /v1/add_prospects_list (POST /v1/prospects does not exist).
         const response = await context.httpRequest({
             method: 'POST',
-            url: `${lib.API_BASE_URL}/v1/prospects`,
+            url: `${lib.API_BASE_URL}/v1/add_prospects_list`,
             headers: lib.getHeaders(context),
-            data: { prospects: [prospect] }
+            data: { update: 'true', prospects: [prospect] }
         });
 
-        return context.sendJson(response.data, 'out');
+        const saved = (response.data.prospects && response.data.prospects[0]) || {};
+        return context.sendJson({ ...prospect, ...saved }, 'out');
     }
 };

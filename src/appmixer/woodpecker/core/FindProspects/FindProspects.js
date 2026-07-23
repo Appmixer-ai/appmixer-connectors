@@ -30,7 +30,7 @@ module.exports = {
 
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `${lib.API_BASE_URL}/v1/search-prospects`,
+            url: `${lib.API_BASE_URL}/v2/prospects`,
             headers: lib.getHeaders(context),
             params
         });
