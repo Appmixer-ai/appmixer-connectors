@@ -2,7 +2,7 @@
 const commons = require('../../lib');
 
 // Metrics shown by this curated report (verified against the ShopifyQL `payments` dataset).
-const METRICS = ["net_payments", "gross_payments", "transactions"];
+const METRICS = ['net_payments', 'gross_payments', 'transactions'];
 
 /**
  * Run a payments report over a date range (net and gross payments and transaction count), optionally grouped by day, week or month.
