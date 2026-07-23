@@ -1,6 +1,6 @@
 {
     "name": "appmixer.shopify",
-    "version": "2.2.0",
+    "version": "3.1.0",
     "changelog": {
         "1.0.1": [
             "Initial version."
@@ -37,6 +37,17 @@
             "Removed the shopify-api-node dependency — the connector now calls the Shopify Admin REST API directly through context.httpRequest. A new lib.js provides a throttled (~2 req/s), 429/Retry-After-aware request layer, Link-header cursor pagination and response-envelope unwrapping, exposed via a getShopifyAPI(context) facade with the same method shapes the components used.",
             "Merged shopify-commons.js into lib.js (repository convention) and removed shopify-commons.js.",
             "Bumped the targeted Shopify API version from 2023-04 to 2024-04; the Returns API (Return Tracking trigger) is now available without a version-specific client."
+        ],
+        "3.0.0": [
+            "BREAKING: Find Customers migrated to the standard outputType pattern. The single 'customer' output port (with a 'Send all customers at once' toggle) is replaced by an 'Output Type' selector (First item / All at once / One at a time / CSV file) emitting on the 'out' port, plus a dedicated 'notFound' port when the search returns nothing. Array output is now under 'result'. lib.js gains sendArrayOutput() and getOutputPortOptions() helpers. Flows wired to the old 'customer' port must be rewired.",
+            "BREAKING: Removed the reports CRUD components (Create/Get/List/Find/Update/Delete Report and the New Report trigger). They wrapped the Shopify REST Report resource, which is gated by store plan (404/406 on Basic/Developer plans even with read_reports/write_reports granted) and never returned query results. Replaced by a Run Report component that executes an arbitrary ShopifyQL query through the GraphQL Admin API (shopifyqlQuery) and returns the resulting table ({ columns, rows, rowCount }). ShopifyQL is available on developer/basic plans.",
+            "Added curated report components on top of ShopifyQL: Sales Report (total/gross/net sales, orders, discounts, returns, taxes, average order value) and Payments Report (net/gross payments, transactions). Each takes a friendly date range (Since/Until) plus an optional Day/Week/Month grouping and builds the ShopifyQL query internally, so no query language knowledge is needed. lib.js gains buildReportQuery() and runReport() helpers shared by all three report components.",
+            "Create Order: strip the UI-only `variantType` line-item discriminator before sending to Shopify, so custom line items (title/price/quantity) are sent cleanly and the inspector renders the correct Variant/Custom sub-form."
+        ],
+        "3.1.0": [
+            "Return Tracking: subscribe to the whole family of return webhook topics instead of returns/update only. Live testing showed returns/update never fires during the standard return journey — each step fires its own topic (returns/request on a customer portal request, returns/approve on merchant approval, and returns/decline, returns/cancel, returns/close, returns/reopen). The trigger now has a 'Return Events' multiselect property (all events selected by default) and emits the fired topic in the webhookTopic output field. Registration goes through GraphQL webhookSubscriptionCreate because the REST webhook endpoint does not expose the returns/* topics (except returns/update). lib.js gains registerWebhooks() (multi-topic GraphQL registration) and unregisterWebhook() now cleans up all registered webhooks (GraphQL gids and legacy REST ids).",
+            "Docs: the auth tooltip now lists all scopes the connector uses (customers, products, orders, draft orders, fulfillments, inventory, locations, reports, returns) and the draft-order/inventory trigger descriptions state their required scopes — webhook registration fails with 422 'Invalid topic' when the custom app token lacks the matching read scope.",
+            "Added E2E trigger flows for CancelledOrder, NewPaidOrder, NewRefund, NewFulfillment, FulfilledOrder, UpdatedFulfillment, NewDraftOrder, UpdatedDraftOrder, InventoryLevelUpdated and AbandonedCart."
         ]
     }
 }

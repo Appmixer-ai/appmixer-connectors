@@ -8,9 +8,12 @@
 //   - a getShopifyAPI(context) facade whose method shapes mirror the resources
 //     the components use, so component bodies stay declarative.
 
+const pathModule = require('path');
+
 const DEFAULT_API_VERSION = '2024-04';
 const MIN_REQUEST_INTERVAL_MS = 500; // ~2 requests/second
 const MAX_429_RETRIES = 4;
+const DEFAULT_EXPORT_PREFIX = 'shopify-objects-export';
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -129,7 +132,6 @@ const RESOURCES = {
     order: { path: 'orders', one: 'order', many: 'orders' },
     customer: { path: 'customers', one: 'customer', many: 'customers' },
     product: { path: 'products', one: 'product', many: 'products' },
-    report: { path: 'reports', one: 'report', many: 'reports' },
     checkout: { path: 'checkouts', one: 'checkout', many: 'checkouts' },
     location: { path: 'locations', one: 'location', many: 'locations' },
     inventoryLevel: { path: 'inventory_levels', one: 'inventory_level', many: 'inventory_levels' },
@@ -191,6 +193,141 @@ module.exports = {
     },
 
     /**
+     * Emit an array of records on an output port honoring the selected outputType
+     * (first / array / object / file). Array output is always under `result`.
+     * @param {object} params
+     * @param {Context} params.context
+     * @param {string} [params.outputPortName='out']
+     * @param {string} [params.outputType='array']
+     * @param {Array<object>} [params.records=[]]
+     */
+    async sendArrayOutput({
+        context,
+        outputPortName = 'out',
+        outputType = 'array',
+        records = []
+    }) {
+
+        if (outputType === 'first') {
+            if (records.length === 0) {
+                throw new context.CancelError('No records available for first output type');
+            }
+            await context.sendJson(
+                { ...records[0], index: 0, count: records.length },
+                outputPortName
+            );
+        } else if (outputType === 'object') {
+            for (let index = 0; index < records.length; index++) {
+                await context.sendJson(
+                    { ...records[index], index, count: records.length },
+                    outputPortName
+                );
+            }
+        } else if (outputType === 'array') {
+            await context.sendJson({ result: records, count: records.length }, outputPortName);
+        } else if (outputType === 'file') {
+            const csvString = toCsv(records);
+            const buffer = Buffer.from(csvString, 'utf8');
+            const componentName = context.flowDescriptor[context.componentId].label || context.componentId;
+            const fileName = `${context.config.outputFilePrefix || DEFAULT_EXPORT_PREFIX}-${componentName}.csv`;
+            const savedFile = await context.saveFileStream(pathModule.normalize(fileName), buffer);
+
+            await context.log({ step: 'File was saved', fileName, fileId: savedFile.fileId });
+            await context.sendJson({ fileId: savedFile.fileId }, outputPortName);
+        } else {
+            throw new context.CancelError('Unsupported outputType ' + outputType);
+        }
+    },
+
+    /**
+     * Build the dynamic output-port options for an outputType component from a
+     * single-item schema. Call from receive() when
+     * context.properties.generateOutputPortOptions is set.
+     * @param {Context} context
+     * @param {string} outputType
+     * @param {object} itemSchema map of field -> JSON schema (with title)
+     * @param {object} arrayOption { label, value } for the array wrapper
+     */
+    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+
+        if (outputType === 'object' || outputType === 'first') {
+            const options = Object.keys(itemSchema)
+                .reduce((res, field) => {
+                    const schema = itemSchema[field];
+                    const { title: fieldLabel, ...schemaWithoutTitle } = schema;
+
+                    res.push({ label: fieldLabel, value: field, schema: schemaWithoutTitle });
+                    return res;
+                }, [{
+                    label: 'Current Item Index',
+                    value: 'index',
+                    schema: { type: 'integer' }
+                }, {
+                    label: 'Items Count',
+                    value: 'count',
+                    schema: { type: 'integer' }
+                }]);
+
+            return context.sendJson(options, 'out');
+        }
+
+        if (outputType === 'array') {
+            return context.sendJson([{
+                label,
+                value,
+                schema: {
+                    type: 'array',
+                    items: { type: 'object', properties: itemSchema }
+                }
+            }], 'out');
+        }
+
+        if (outputType === 'file') {
+            return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
+        }
+    },
+
+    /**
+     * Build a ShopifyQL query string for a curated report component.
+     * @param {string} dataset e.g. 'sales', 'payments'
+     * @param {string[]} metrics columns to SHOW
+     * @param {object} opts { since, until, groupBy }
+     * @returns {string}
+     */
+    buildReportQuery(dataset, metrics, { since = '-30d', until = 'today', groupBy } = {}) {
+
+        let query = `FROM ${dataset} SHOW ${metrics.join(', ')} SINCE ${since} UNTIL ${until}`;
+        if (groupBy && groupBy !== 'none') {
+            query += ` GROUP BY ${groupBy} ORDER BY ${groupBy}`;
+        }
+        return query;
+    },
+
+    /**
+     * Run a ShopifyQL query (GraphQL shopifyqlQuery) and normalize the result to
+     * { columns, rows, rowCount }. Throws a CancelError on ShopifyQL parse errors.
+     * Shared by RunReport and the curated report components.
+     * @param {Context} context
+     * @param {string} query
+     */
+    async runReport(context, query) {
+
+        const shopify = this.getShopifyAPI(context);
+        const response = await shopify.report.run(query);
+
+        const parseErrors = (response && response.parseErrors) || [];
+        if (parseErrors.length) {
+            throw new context.CancelError('Invalid ShopifyQL query: ' + parseErrors.join('; '));
+        }
+
+        const tableData = (response && response.tableData) || { columns: [], rows: [] };
+        const columns = tableData.columns || [];
+        const rows = tableData.rows || [];
+
+        return { columns, rows, rowCount: rows.length };
+    },
+
+    /**
      * Facade over the Shopify Admin REST API. Method shapes mirror the resources
      * the components rely on. Requires the full `context` (for context.httpRequest).
      * @param {Context} context
@@ -202,7 +339,6 @@ module.exports = {
         return {
             order: crud(context, RESOURCES.order),
             product: crud(context, RESOURCES.product),
-            report: crud(context, RESOURCES.report),
             location: crud(context, RESOURCES.location),
             inventoryLevel: crud(context, RESOURCES.inventoryLevel),
             checkout: crud(context, RESOURCES.checkout),
@@ -256,9 +392,33 @@ module.exports = {
                 }
             },
 
+            // Run a ShopifyQL query through the GraphQL Admin API and return the
+            // table result. Unlike the (plan-gated) REST Report resource, the
+            // shopifyqlQuery field is available on developer/basic plans.
+            report: {
+                async run(query) {
+                    const gql = `query RunShopifyql($q: String!) {
+                        shopifyqlQuery(query: $q) {
+                            parseErrors
+                            tableData {
+                                columns { name displayName dataType }
+                                rows
+                            }
+                        }
+                    }`;
+                    const result = await shopifyRequest(context, {
+                        method: 'POST',
+                        path: 'graphql.json',
+                        body: { query: gql, variables: { q: query } }
+                    });
+                    return result.data.data.shopifyqlQuery;
+                }
+            },
+
             // Minimal GraphQL passthrough (returns the `data` payload).
-            async graphql(query, apiVersion) {
-                const { data } = await shopifyRequest(context, { method: 'POST', path: 'graphql.json', body: { query }, apiVersion });
+            async graphql(query, variables, apiVersion) {
+                const body = variables ? { query, variables } : { query };
+                const { data } = await shopifyRequest(context, { method: 'POST', path: 'graphql.json', body, apiVersion });
                 return data.data;
             }
         };
@@ -313,6 +473,53 @@ module.exports = {
         return context.saveState({ webhookId: response.id });
     },
 
+    // Registers one webhook per topic through GraphQL webhookSubscriptionCreate —
+    // most returns/* topics are not exposed on the REST webhook endpoint at all.
+    async registerWebhooks(context, topics) {
+
+        const shopify = this.getShopifyAPI(context);
+        const address = context.getWebhookUrl();
+
+        const listQuery = `query {
+            webhookSubscriptions(first: 100) {
+                edges { node {
+                    id topic
+                    endpoint { ... on WebhookHttpEndpoint { callbackUrl } }
+                } }
+            }
+        }`;
+        const listResult = await shopify.graphql(listQuery);
+        const existing = new Map();
+        (listResult.webhookSubscriptions.edges || []).forEach(({ node }) => {
+            if (node.endpoint && node.endpoint.callbackUrl === address) {
+                existing.set(node.topic, node.id);
+            }
+        });
+
+        const webhookIds = [];
+        for (const topic of topics) {
+            const gqlTopic = topic.toUpperCase().replace('/', '_');
+            if (existing.has(gqlTopic)) {
+                webhookIds.push(existing.get(gqlTopic));
+                continue;
+            }
+            const mutation = `mutation {
+                webhookSubscriptionCreate(topic: ${gqlTopic}, webhookSubscription: { callbackUrl: "${address}", format: JSON }) {
+                    webhookSubscription { id }
+                    userErrors { message }
+                }
+            }`;
+            const result = await shopify.graphql(mutation);
+            const { webhookSubscription, userErrors } = result.webhookSubscriptionCreate;
+            if (!webhookSubscription) {
+                throw new Error(`Failed to subscribe to ${topic}: ${(userErrors || []).map(e => e.message).join('; ')}`);
+            }
+            webhookIds.push(webhookSubscription.id);
+        }
+
+        return context.saveState({ webhookIds });
+    },
+
     async onReceive(context, port) {
 
         const { headers, data } = context.messages.webhook.content;
@@ -326,11 +533,18 @@ module.exports = {
     async unregisterWebhook(context) {
 
         const shopify = this.getShopifyAPI(context);
-        const { webhookId } = await context.loadState();
+        const { webhookId, webhookIds } = await context.loadState();
 
-        if (webhookId) {
-            return shopify.webhook.delete(webhookId);
-        }
+        const ids = Array.isArray(webhookIds) ? webhookIds : (webhookId ? [webhookId] : []);
+        return Promise.all(ids.map(id => {
+            // GraphQL-registered subscriptions carry a gid, REST-registered ones a number.
+            const remove = String(id).startsWith('gid://')
+                ? shopify.graphql(`mutation {
+                    webhookSubscriptionDelete(id: "${id}") { deletedWebhookSubscriptionId userErrors { message } }
+                }`)
+                : shopify.webhook.delete(id);
+            return remove.catch(() => {});
+        }));
     },
 
     async fetchLatestWebhookExample(context, { resource, topic, params = {} }) {
@@ -359,14 +573,6 @@ module.exports = {
         }
 
         return { id: record.id, webhookTopic: topic };
-    },
-
-    async fetchLatestReport(context) {
-
-        const shopify = this.getShopifyAPI(context);
-        const reports = await shopify.report.list({ order: 'updated_at DESC', limit: 1 });
-
-        return Array.isArray(reports) ? (reports[0] || null) : null;
     },
 
     async fetchLatestOrderChildExample(context, { child, topic }) {
@@ -411,3 +617,31 @@ module.exports = {
         return level;
     }
 };
+
+/**
+ * Serialize an array of flat objects to CSV.
+ * @param {Array<object>} array
+ * @returns {string}
+ */
+function toCsv(array) {
+    if (!array || array.length === 0) {
+        return '';
+    }
+
+    const headers = Object.keys(array[0]);
+    if (headers.length === 0) {
+        return '';
+    }
+
+    return [
+        headers.join(','),
+        ...array.map(items => {
+            return Object.values(items).map(property => {
+                if (typeof property === 'object') {
+                    return JSON.stringify(property);
+                }
+                return property != null ? property : '';
+            }).join(',');
+        })
+    ].join('\n');
+}

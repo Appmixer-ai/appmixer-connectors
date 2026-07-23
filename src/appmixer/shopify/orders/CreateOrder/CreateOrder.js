@@ -42,7 +42,10 @@ function buildOrder(orderInfo) {
         tags,
         test,
         ...(hasCustomer ? { customer } : {}),
-        'line_items': orderInfo.line_items.ADD,
+        // `variantType` is a UI-only discriminator (Variant vs Custom line item)
+        // used by the inspector's `when` conditions; strip it before sending so
+        // Shopify only receives real line-item fields.
+        'line_items': orderInfo.line_items.ADD.map(({ variantType, ...lineItem }) => lineItem),
         'buyer_accepts_marketing': orderInfo.buyer_accepts_marketing,
         'financial_status': orderInfo.financial_status,
         'fulfillment_status': orderInfo.fulfillment_status === 'null' ? null : orderInfo.fulfillment_status,

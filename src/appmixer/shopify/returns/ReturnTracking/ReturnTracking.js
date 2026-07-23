@@ -1,15 +1,32 @@
 'use strict';
 const commons = require('../../lib');
 
-// The connector targets a Shopify API version (2024-04) that includes the
-// Returns API and its webhook topics, so no version-specific handling is needed.
-const TOPIC = 'returns/update';
+// Each step of the return journey fires its own webhook topic (a customer
+// request fires returns/request, an admin approval returns/approve, ...) —
+// returns/update alone never fires during the standard journey, so the
+// trigger subscribes to every selected topic and emits the topic name.
+const TOPICS = [
+    'returns/request',
+    'returns/approve',
+    'returns/decline',
+    'returns/cancel',
+    'returns/close',
+    'returns/reopen',
+    'returns/update'
+];
 
 module.exports = {
 
     async start(context) {
 
-        return commons.registerWebhook(context, TOPIC);
+        let topics = context.properties.topics
+            ? commons.normalizeMultiselectInput(context.properties.topics, context, 'Return Events')
+            : [];
+        topics = topics.filter(topic => TOPICS.includes(topic));
+        if (!topics.length) {
+            topics = TOPICS;
+        }
+        return commons.registerWebhooks(context, topics);
     },
 
     async receive(context) {
@@ -54,7 +71,7 @@ module.exports = {
             }
             const edges = result && result.order && result.order.returns && result.order.returns.edges;
             if (Array.isArray(edges) && edges[0]) {
-                return context.sendJson({ ...edges[0].node, webhookTopic: TOPIC }, 'return');
+                return context.sendJson({ ...edges[0].node, webhookTopic: 'returns/request' }, 'return');
             }
         }
 

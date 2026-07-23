@@ -19,7 +19,8 @@ module.exports = {
                 name: 'Admin API access token',
                 tooltip: 'Create a custom app in your Shopify admin ' +
                     '(<i>Settings &rarr; Apps and sales channels &rarr; Develop apps</i>), enable the required ' +
-                    'scopes (customers, products, orders, reports) and generate an Admin API access token ' +
+                    'scopes (customers, products, orders, draft orders, fulfillments, inventory, locations, ' +
+                    'reports, returns) and generate an Admin API access token ' +
                     '(starts with <b>shpat_</b>). The token is shown only once, so copy it immediately.',
                 required: true
             }

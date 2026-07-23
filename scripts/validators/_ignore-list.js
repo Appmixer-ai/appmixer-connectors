@@ -237,8 +237,7 @@ module.exports = [
         paths: [
             'shopify/customers/DeleteCustomer/component.json',
             'shopify/orders/DeleteOrder/component.json',
-            'shopify/products/DeleteProduct/component.json',
-            'shopify/reports/DeleteReport/component.json'
+            'shopify/products/DeleteProduct/component.json'
         ],
         reason: 'Pre-existing Shopify Delete components return the deleted resource id ({ id }) rather than {}. They predate the delete-shape standard and are wired into published flows; changing the payload/port is a breaking change deferred to a future major version. Surfaced now only because the OAuth->apiKey auth migration touched every component.json (scope removal).'
     },
@@ -248,18 +247,9 @@ module.exports = [
         paths: [
             'shopify/customers/DeleteCustomer/component.json',
             'shopify/orders/DeleteOrder/component.json',
-            'shopify/products/DeleteProduct/component.json',
-            'shopify/reports/DeleteReport/component.json'
+            'shopify/products/DeleteProduct/component.json'
         ],
         reason: 'Pre-existing Shopify Delete components emit on a "deleted" port. Renaming to "out" breaks flows wired to that port; deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
-    },
-    {
-        validator: 'find-component-standards',
-        paths: [
-            'shopify/customers/FindCustomers/component.json',
-            'shopify/reports/FindReport/component.json'
-        ],
-        reason: 'Pre-existing Shopify Find components emit on a service-named port (customer/report) with an optional sendWholeArray toggle instead of the outputType/notFound standard. Aligning them changes the output contract of published flows; deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
     },
     {
         validator: 'dynamic-outport-required-inputs',
@@ -270,7 +260,7 @@ module.exports = [
             'shopify/customers/GetCustomer/component.json',
             'shopify/customers/UpdateCustomer/component.json'
         ],
-        reason: 'The customers dynamic outPort source (GenerateCustomersOutput) is a pure static field-list generator — it reads no inputs and no auth, so it correctly carries ignoreAuth=true. The "missing required input" priming the validator wants is a false positive for a static source (it never consumes those inputs), so only that message is suppressed here.'
+        reason: 'The customers dynamic outPort sources are pure static field-list generators — GenerateCustomersOutput (Create/Get/UpdateCustomer) and FindCustomers own generateOutputPortOptions branch (which only needs outputType, not the required "query"). They read no service data, so the "missing required input" priming the validator wants is a false positive for a static source (it never consumes those inputs), so only that message is suppressed here.'
     },
     {
         validator: 'input-property-naming',
@@ -281,10 +271,8 @@ module.exports = [
             'shopify/orders/UpdateOrder/component.json',
             'shopify/products/CountProducts/component.json',
             'shopify/products/CreateProduct/component.json',
-            'shopify/products/UpdateProduct/component.json',
-            'shopify/reports/CreateReport/component.json',
-            'shopify/reports/UpdateReport/component.json'
+            'shopify/products/UpdateProduct/component.json'
         ],
-        reason: 'Pre-existing snake_case input property names (created_at_min, shopify_ql, product_type, accepts_marketing, ...) mirror the Shopify Admin API field names 1:1 and are referenced by published flows and the buildOrder/buildProduct/buildReport mappers. Renaming to camelCase is a breaking change deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
+        reason: 'Pre-existing snake_case input property names (created_at_min, product_type, accepts_marketing, ...) mirror the Shopify Admin API field names 1:1 and are referenced by published flows and the buildOrder/buildProduct mappers. Renaming to camelCase is a breaking change deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
     }
 ];
