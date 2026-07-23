@@ -12,11 +12,18 @@ module.exports = {
             throw new context.CancelError('Campaign ID is required!');
         }
 
+        if (!prospects) {
+            throw new context.CancelError('Prospects are required!');
+        }
+
         let parsedProspects;
         try {
-            parsedProspects = JSON.parse(prospects);
+            parsedProspects = typeof prospects === 'object' ? prospects : JSON.parse(prospects);
         } catch (err) {
             throw new context.CancelError('Prospects must be a valid JSON array.');
+        }
+        if (!Array.isArray(parsedProspects)) {
+            throw new context.CancelError('Prospects must be a JSON array of prospect objects.');
         }
 
         const response = await context.httpRequest({

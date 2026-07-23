@@ -76,7 +76,7 @@ module.exports = async context => {
                 context.log('error', 'woodpecker-plugin-listener-added-error', { error: err.message });
             }
         } finally {
-            lock?.unlock();
+            await lock?.unlock();
         }
     });
 
@@ -92,7 +92,9 @@ module.exports = async context => {
                 const events = Array.isArray(payload) ? payload : [payload];
 
                 context.log('info', 'woodpecker-plugin-route-webhook-hit', { eventCount: events.length });
-                context.log('trace', 'woodpecker-plugin-route-webhook-payload', { payload });
+                if (context.config?.logWebhookPayloads) {
+                    context.log('trace', 'woodpecker-plugin-route-webhook-payload', { payload });
+                }
 
                 for (const event of events) {
                     if (!event || typeof event !== 'object') {
@@ -101,7 +103,8 @@ module.exports = async context => {
 
                     const eventType = extractEventType(event);
                     const companyId = extractCompanyId(event);
-                    if (!eventType) {
+                    if (!eventType || !companyId) {
+                        // Events without a company id cannot be routed to a tenant's listener.
                         continue;
                     }
 
@@ -125,5 +128,5 @@ function extractEventType(event) {
 
 // The account/company identifier used to route an event to the right tenant's listeners.
 function extractCompanyId(event) {
-    return event.company_id || event.companyId || event.company || event.account_id || event.accountId || 'unknown';
+    return event.company_id || event.companyId || event.company || event.account_id || event.accountId || null;
 }

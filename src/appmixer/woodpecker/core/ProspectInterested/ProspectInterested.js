@@ -8,6 +8,9 @@ module.exports = {
 
     async start(context) {
         const companyId = context.profileInfo?.companyId;
+        if (!companyId) {
+            throw new context.CancelError('Woodpecker account is missing a company id — reconnect the account.');
+        }
         return context.addListener(`${EVENT}:${companyId}`, {
             apiKey: context.auth.apiKey,
             companyId,
