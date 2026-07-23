@@ -1,6 +1,6 @@
 {
     "name": "appmixer.shopify",
-    "version": "3.1.0",
+    "version": "2.0.0",
     "changelog": {
         "1.0.1": [
             "Initial version."
@@ -24,30 +24,14 @@
             "Added MakeApiCall component for performing arbitrary authorized API calls to the Shopify API."
         ],
         "2.0.0": [
-            "BREAKING: Switched authentication from OAuth 2.0 to Admin API access token (apiKey). Each merchant now creates a custom app in their own Shopify admin (Settings → Apps and sales channels → Develop apps) and provides the store address and Admin API access token (shpat_...). This enables multi-tenant use without Shopify App Store review. Existing users must reconnect their account.",
-            "Removed App Store-only GDPR mandatory webhooks (customers/data_request, customers/redact, shop/redact) and the OAuth install route, which are not applicable to custom apps.",
-            "Removed leftover OAuth scope declarations from component auth blocks (engine could not match apiKey accounts against scope filters — 'Access token not found').",
-            "Create Order: omit the customer object when no customer id or customer fields are provided (Shopify rejects an empty customer)."
-        ],
-        "2.1.0": [
-            "Added 11 new trigger components matching common e-commerce automations: New Paid Order (orders/paid), New Refund (refunds/create), New Fulfillment / Updated Fulfillment (fulfillments/*), New Checkout / Updated Checkout (checkouts/*), Abandoned Cart (polls abandoned checkouts), New Draft Order / Updated Draft Order (draft_orders/*), Inventory Level Updated (inventory_levels/update), and Return Tracking (returns/update; requires Shopify API 2023-10+ and read_returns scope).",
-            "New modules: checkouts, draftorders, inventory, returns."
-        ],
-        "2.2.0": [
-            "Removed the shopify-api-node dependency — the connector now calls the Shopify Admin REST API directly through context.httpRequest. A new lib.js provides a throttled (~2 req/s), 429/Retry-After-aware request layer, Link-header cursor pagination and response-envelope unwrapping, exposed via a getShopifyAPI(context) facade with the same method shapes the components used.",
-            "Merged shopify-commons.js into lib.js (repository convention) and removed shopify-commons.js.",
-            "Bumped the targeted Shopify API version from 2023-04 to 2024-04; the Returns API (Return Tracking trigger) is now available without a version-specific client."
-        ],
-        "3.0.0": [
-            "BREAKING: Find Customers migrated to the standard outputType pattern. The single 'customer' output port (with a 'Send all customers at once' toggle) is replaced by an 'Output Type' selector (First item / All at once / One at a time / CSV file) emitting on the 'out' port, plus a dedicated 'notFound' port when the search returns nothing. Array output is now under 'result'. lib.js gains sendArrayOutput() and getOutputPortOptions() helpers. Flows wired to the old 'customer' port must be rewired.",
-            "BREAKING: Removed the reports CRUD components (Create/Get/List/Find/Update/Delete Report and the New Report trigger). They wrapped the Shopify REST Report resource, which is gated by store plan (404/406 on Basic/Developer plans even with read_reports/write_reports granted) and never returned query results. Replaced by a Run Report component that executes an arbitrary ShopifyQL query through the GraphQL Admin API (shopifyqlQuery) and returns the resulting table ({ columns, rows, rowCount }). ShopifyQL is available on developer/basic plans.",
-            "Added curated report components on top of ShopifyQL: Sales Report (total/gross/net sales, orders, discounts, returns, taxes, average order value) and Payments Report (net/gross payments, transactions). Each takes a friendly date range (Since/Until) plus an optional Day/Week/Month grouping and builds the ShopifyQL query internally, so no query language knowledge is needed. lib.js gains buildReportQuery() and runReport() helpers shared by all three report components.",
-            "Create Order: strip the UI-only `variantType` line-item discriminator before sending to Shopify, so custom line items (title/price/quantity) are sent cleanly and the inspector renders the correct Variant/Custom sub-form."
-        ],
-        "3.1.0": [
-            "Return Tracking: subscribe to the whole family of return webhook topics instead of returns/update only. Live testing showed returns/update never fires during the standard return journey — each step fires its own topic (returns/request on a customer portal request, returns/approve on merchant approval, and returns/decline, returns/cancel, returns/close, returns/reopen). The trigger now has a 'Return Events' multiselect property (all events selected by default) and emits the fired topic in the webhookTopic output field. Registration goes through GraphQL webhookSubscriptionCreate because the REST webhook endpoint does not expose the returns/* topics (except returns/update). lib.js gains registerWebhooks() (multi-topic GraphQL registration) and unregisterWebhook() now cleans up all registered webhooks (GraphQL gids and legacy REST ids).",
-            "Docs: the auth tooltip now lists all scopes the connector uses (customers, products, orders, draft orders, fulfillments, inventory, locations, reports, returns) and the draft-order/inventory trigger descriptions state their required scopes — webhook registration fails with 422 'Invalid topic' when the custom app token lacks the matching read scope.",
-            "Added E2E trigger flows for CancelledOrder, NewPaidOrder, NewRefund, NewFulfillment, FulfilledOrder, UpdatedFulfillment, NewDraftOrder, UpdatedDraftOrder, InventoryLevelUpdated and AbandonedCart."
+            "BREAKING: Authentication switched from OAuth 2.0 to an Admin API access token (apiKey). Each merchant creates a custom app in their Shopify admin (Settings → Apps and sales channels → Develop apps) and provides the store address and shpat_ token; the auth tooltip lists all scopes the connector uses. Existing users must reconnect. App Store-only GDPR webhooks and the OAuth install route were removed.",
+            "BREAKING: Find Customers migrated to the standard outputType pattern ('Output Type' selector, 'out' + 'notFound' ports, array output under 'result'); flows wired to the old 'customer' port must be rewired.",
+            "BREAKING: Removed the reports CRUD components (plan-gated Shopify REST Report resource). Replaced by ShopifyQL-based Run Report (arbitrary query), Sales Report and Payments Report (friendly date range + grouping), available on basic/developer plans.",
+            "Removed the shopify-api-node dependency: lib.js now calls the Admin REST API (2024-04) directly through context.httpRequest with throttling, 429/Retry-After handling and cursor pagination.",
+            "Added 13 trigger components: New Paid Order, Cancelled Order, Fulfilled Order, New Refund, New/Updated Fulfillment, New/Updated Checkout, New/Updated Draft Order, Abandoned Cart, Inventory Level Updated and Return Tracking (new modules: checkouts, draftorders, inventory, returns).",
+            "Return Tracking subscribes to the whole returns/* topic family via a 'Return Events' multiselect (returns/update alone never fires during a standard return journey) and registers webhooks through GraphQL, emitting the fired topic in webhookTopic.",
+            "Create Order: omit empty customer objects and strip the UI-only variantType discriminator.",
+            "Added E2E trigger test flows covering every trigger component (self-provoke via MakeApiCall where the Admin API allows it; storefront-driven flows carry step-by-step notes)."
         ]
     }
 }
