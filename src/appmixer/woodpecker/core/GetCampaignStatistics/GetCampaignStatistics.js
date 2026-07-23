@@ -26,7 +26,8 @@ module.exports = {
             throw new context.CancelError(`Campaign ${campaignId} not found.`);
         }
 
-        const { emails, ...stats } = campaign.stats || {};
+        const stats = { ...(campaign.stats || {}) };
+        delete stats.emails;
         return context.sendJson({ id: campaign.id, name: campaign.name, status: campaign.status, ...stats }, 'out');
     }
 };
