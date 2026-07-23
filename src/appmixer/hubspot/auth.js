@@ -43,16 +43,18 @@ module.exports = {
 
         authUrl: context => {
 
+            const { scopeDelimiter, optionalScope } = module.exports.definition;
+
             const params = new URLSearchParams({
                 client_id: context.clientId,
                 redirect_uri: context.callbackUrl,
-                scope: context.scope.join(' '),
+                scope: context.scope.join(scopeDelimiter),
                 state: context.ticket,
                 response_type: 'code'
             });
 
-            if (context.optionalScope && context.optionalScope.length > 0) {
-                params.set('optional_scope', context.optionalScope.join(' '));
+            if (optionalScope && optionalScope.length > 0) {
+                params.set('optional_scope', optionalScope.join(scopeDelimiter));
             }
 
             return 'https://app.hubspot.com/oauth/authorize?' + params.toString();
