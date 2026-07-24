@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * @extends {Component}
