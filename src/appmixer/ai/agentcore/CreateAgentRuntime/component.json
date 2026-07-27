@@ -1,6 +1,6 @@
 {
     "name": "appmixer.ai.agentcore.CreateAgentRuntime",
-    "description": "Create a new Amazon Bedrock AgentCore Runtime from a container image.",
+    "description": "Create a new Amazon Bedrock AgentCore Runtime from a container image or from code hosted in Amazon S3.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "auth": {
@@ -13,14 +13,20 @@
                 "type": "object",
                 "properties": {
                     "agentRuntimeName": { "type": "string" },
-                    "containerUri": { "type": "string" },
                     "roleArn": { "type": "string" },
+                    "artifactType": { "type": "string", "enum": ["container", "code"] },
+                    "containerUri": { "type": "string" },
+                    "codeS3Bucket": { "type": "string" },
+                    "codeS3Prefix": { "type": "string" },
+                    "codeS3VersionId": { "type": "string" },
+                    "codeRuntime": { "type": "string", "enum": ["PYTHON_3_10", "PYTHON_3_11", "PYTHON_3_12", "PYTHON_3_13"] },
+                    "codeEntryPoint": { "type": "string" },
                     "networkMode": { "type": "string" },
                     "serverProtocol": { "type": "string" },
                     "description": { "type": "string" },
                     "environmentVariables": { "type": "object" }
                 },
-                "required": ["agentRuntimeName", "containerUri", "roleArn"]
+                "required": ["agentRuntimeName", "roleArn"]
             },
             "inspector": {
                 "inputs": {
@@ -30,22 +36,77 @@
                         "index": 1,
                         "tooltip": "The name of the AgentCore Runtime. Must start with a letter and contain only letters, numbers and underscores (max 48 chars)."
                     },
-                    "containerUri": {
-                        "type": "text",
-                        "label": "Container Image URI",
-                        "index": 2,
-                        "tooltip": "The ECR container image URI of the agent, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-agent:latest."
-                    },
                     "roleArn": {
                         "type": "text",
                         "label": "Role ARN",
-                        "index": 3,
+                        "index": 2,
                         "tooltip": "The IAM role ARN that provides permissions for the AgentCore Runtime."
+                    },
+                    "artifactType": {
+                        "type": "select",
+                        "label": "Artifact Type",
+                        "index": 3,
+                        "defaultValue": "container",
+                        "tooltip": "How the agent code is packaged: a container image in Amazon ECR, or source code in an Amazon S3 bucket (managed runtime).",
+                        "options": [
+                            { "label": "Container image (ECR)", "value": "container" },
+                            { "label": "Code (Amazon S3)", "value": "code" }
+                        ]
+                    },
+                    "containerUri": {
+                        "when": { "eq": { "./artifactType": "container" } },
+                        "type": "text",
+                        "label": "Container Image URI",
+                        "index": 4,
+                        "tooltip": "The ECR container image URI of the agent, e.g. 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-agent:latest."
+                    },
+                    "codeS3Bucket": {
+                        "when": { "eq": { "./artifactType": "code" } },
+                        "type": "text",
+                        "label": "Code S3 Bucket",
+                        "index": 5,
+                        "tooltip": "The name of the Amazon S3 bucket that holds the agent source code archive."
+                    },
+                    "codeS3Prefix": {
+                        "when": { "eq": { "./artifactType": "code" } },
+                        "type": "text",
+                        "label": "Code S3 Prefix",
+                        "index": 6,
+                        "tooltip": "The Amazon S3 object key (prefix) of the source code archive, e.g. 1700000000-abc-my_agent.zip."
+                    },
+                    "codeS3VersionId": {
+                        "when": { "eq": { "./artifactType": "code" } },
+                        "type": "text",
+                        "label": "Code S3 Version ID",
+                        "index": 7,
+                        "tooltip": "Optional. The version ID of the Amazon S3 object. If omitted, the latest version is used."
+                    },
+                    "codeRuntime": {
+                        "when": { "eq": { "./artifactType": "code" } },
+                        "type": "select",
+                        "label": "Managed Runtime",
+                        "index": 8,
+                        "defaultValue": "PYTHON_3_13",
+                        "tooltip": "The managed runtime environment used to execute the code.",
+                        "options": [
+                            { "label": "Python 3.13", "value": "PYTHON_3_13" },
+                            { "label": "Python 3.12", "value": "PYTHON_3_12" },
+                            { "label": "Python 3.11", "value": "PYTHON_3_11" },
+                            { "label": "Python 3.10", "value": "PYTHON_3_10" }
+                        ]
+                    },
+                    "codeEntryPoint": {
+                        "when": { "eq": { "./artifactType": "code" } },
+                        "type": "text",
+                        "label": "Code Entry Point",
+                        "index": 9,
+                        "defaultValue": "main.py",
+                        "tooltip": "The entry point file for the code execution, e.g. main.py. Provide a comma-separated list for multiple entries."
                     },
                     "networkMode": {
                         "type": "select",
                         "label": "Network Mode",
-                        "index": 4,
+                        "index": 10,
                         "defaultValue": "PUBLIC",
                         "tooltip": "The network mode for the AgentCore Runtime.",
                         "options": [
@@ -56,24 +117,25 @@
                     "serverProtocol": {
                         "type": "select",
                         "label": "Server Protocol",
-                        "index": 5,
+                        "index": 11,
                         "tooltip": "The protocol the agent runtime uses to communicate with clients.",
                         "options": [
                             { "clearItem": true, "content": "Clear" },
                             { "label": "HTTP", "value": "HTTP" },
-                            { "label": "MCP", "value": "MCP" }
+                            { "label": "MCP", "value": "MCP" },
+                            { "label": "A2A", "value": "A2A" }
                         ]
                     },
                     "description": {
                         "type": "textarea",
                         "label": "Description",
-                        "index": 6,
+                        "index": 12,
                         "tooltip": "Optional description of the AgentCore Runtime."
                     },
                     "environmentVariables": {
                         "type": "textarea",
                         "label": "Environment Variables",
-                        "index": 7,
+                        "index": 13,
                         "tooltip": "Optional environment variables for the runtime as a JSON object, e.g. {\"KEY\": \"value\"}."
                     }
                 }
