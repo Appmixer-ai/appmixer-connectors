@@ -1,0 +1,173 @@
+{
+    "name": "appmixer.fal.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Perform an arbitrary authorized API call to fal. Pick one of fal's base URLs, then provide a path (or full URL), method, headers, query parameters and body.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fal"
+    },
+    "quota": {
+        "manager": "appmixer:fal",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "baseUrl": {
+                        "type": "string",
+                        "enum": [
+                            "fal.run",
+                            "queue.fal.run",
+                            "api.fal.ai/v1"
+                        ]
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "headers": {
+                        "type": "string"
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "baseUrl": {
+                        "type": "select",
+                        "index": 0,
+                        "label": "Base URL",
+                        "defaultValue": "api.fal.ai/v1",
+                        "tooltip": "fal exposes several non-interchangeable base URLs. Pick the one for the operation you are calling. Ignored when the Path field is a full URL.",
+                        "options": [
+                            {
+                                "label": "api.fal.ai/v1 (Platform APIs)",
+                                "value": "api.fal.ai/v1"
+                            },
+                            {
+                                "label": "queue.fal.run (Async queue)",
+                                "value": "queue.fal.run"
+                            },
+                            {
+                                "label": "fal.run (Synchronous inference)",
+                                "value": "fal.run"
+                            }
+                        ]
+                    },
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to the selected Base URL, for example <code>/meta</code> or <code>/models</code>, or a full URL on a fal host."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiM2RTU2RjciLz4KICA8cGF0aCBkPSJNNDEgMThoLTljLTMuMyAwLTYgMi43LTYgNnYzaC00djZoNHYxM2g2VjMzaDh2LTZoLTh2LTJjMC0uNi40LTEgMS0xaDh6IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNDEiIGN5PSI0MyIgcj0iNCIgZmlsbD0iI0MyRjA0QSIvPgo8L3N2Zz4K"
+}

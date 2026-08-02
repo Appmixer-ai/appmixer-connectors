@@ -1,0 +1,224 @@
+{
+    "name": "appmixer.fal.core.GenerateImage",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Generate images from a text prompt using a fal text-to-image model (default fal-ai/flux/schnell). Runs synchronously and returns the generated image URLs.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fal"
+    },
+    "quota": {
+        "manager": "appmixer:fal",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "endpointId": {
+                        "type": "string",
+                        "example": "fal-ai/flux/schnell"
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "example": "A photorealistic red bicycle leaning on a brick wall"
+                    },
+                    "imageSize": {
+                        "type": "string"
+                    },
+                    "numImages": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "seed": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "outputFormat": {
+                        "type": "string",
+                        "enum": [
+                            "jpeg",
+                            "png"
+                        ]
+                    },
+                    "numInferenceSteps": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "enableSafetyChecker": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "endpointId",
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "endpointId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Model Endpoint Id",
+                        "defaultValue": "fal-ai/flux/schnell",
+                        "tooltip": "A text-to-image model endpoint id. Use Find Models with category text-to-image to discover more."
+                    },
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Prompt",
+                        "tooltip": "The text description of the image to generate."
+                    },
+                    "imageSize": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "Image Size",
+                        "tooltip": "The aspect ratio / size preset for the generated image.",
+                        "options": [
+                            {
+                                "label": "Square HD",
+                                "value": "square_hd"
+                            },
+                            {
+                                "label": "Square",
+                                "value": "square"
+                            },
+                            {
+                                "label": "Portrait 4:3",
+                                "value": "portrait_4_3"
+                            },
+                            {
+                                "label": "Portrait 16:9",
+                                "value": "portrait_16_9"
+                            },
+                            {
+                                "label": "Landscape 4:3",
+                                "value": "landscape_4_3"
+                            },
+                            {
+                                "label": "Landscape 16:9",
+                                "value": "landscape_16_9"
+                            }
+                        ]
+                    },
+                    "numImages": {
+                        "type": "number",
+                        "index": 3,
+                        "label": "Number Of Images",
+                        "defaultValue": 1,
+                        "tooltip": "How many images to generate."
+                    },
+                    "seed": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Seed",
+                        "tooltip": "Optional seed for reproducible results."
+                    },
+                    "outputFormat": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Output Format",
+                        "tooltip": "The image file format.",
+                        "options": [
+                            {
+                                "label": "JPEG",
+                                "value": "jpeg"
+                            },
+                            {
+                                "label": "PNG",
+                                "value": "png"
+                            }
+                        ]
+                    },
+                    "numInferenceSteps": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Inference Steps",
+                        "tooltip": "Optional number of denoising steps (model dependent)."
+                    },
+                    "enableSafetyChecker": {
+                        "type": "toggle",
+                        "index": 7,
+                        "label": "Enable Safety Checker",
+                        "defaultValue": true,
+                        "tooltip": "Run fal's NSFW safety checker on the generated images."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "images": {
+                        "type": "array",
+                        "title": "Images",
+                        "example": [
+                            {
+                                "url": "https://v3b.fal.media/files/penguin/abc123.jpeg",
+                                "width": 1024,
+                                "height": 1024,
+                                "content_type": "image/jpeg"
+                            }
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "title": "Image URL",
+                                    "example": "https://v3b.fal.media/files/penguin/abc123.jpeg"
+                                },
+                                "width": {
+                                    "type": "integer",
+                                    "title": "Width",
+                                    "example": 1024
+                                },
+                                "height": {
+                                    "type": "integer",
+                                    "title": "Height",
+                                    "example": 1024
+                                },
+                                "content_type": {
+                                    "type": "string",
+                                    "title": "Content Type",
+                                    "example": "image/jpeg"
+                                }
+                            }
+                        }
+                    },
+                    "seed": {
+                        "type": "integer",
+                        "title": "Seed",
+                        "example": 42
+                    },
+                    "has_nsfw_concepts": {
+                        "type": "array",
+                        "title": "Has NSFW Concepts",
+                        "example": [
+                            false
+                        ],
+                        "items": {
+                            "type": "boolean",
+                            "example": false
+                        }
+                    },
+                    "requestId": {
+                        "type": "string",
+                        "title": "Request Id",
+                        "example": "764cabcf-b745-4b3e-ae38-1200304cf45b"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiM2RTU2RjciLz4KICA8cGF0aCBkPSJNNDEgMThoLTljLTMuMyAwLTYgMi43LTYgNnYzaC00djZoNHYxM2g2VjMzaDh2LTZoLTh2LTJjMC0uNi40LTEgMS0xaDh6IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNDEiIGN5PSI0MyIgcj0iNCIgZmlsbD0iI0MyRjA0QSIvPgo8L3N2Zz4K"
+}

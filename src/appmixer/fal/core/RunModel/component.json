@@ -1,0 +1,157 @@
+{
+    "name": "appmixer.fal.core.RunModel",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Run any fal.ai model by its endpoint id. Set Wait For Result on for a synchronous call (bounded to 60s) or off to submit the job to the async queue and return immediately.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fal"
+    },
+    "quota": {
+        "manager": "appmixer:fal",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "endpointId": {
+                        "type": "string",
+                        "example": "fal-ai/flux/schnell"
+                    },
+                    "arguments": {
+                        "type": "string"
+                    },
+                    "waitForResult": {
+                        "type": "boolean"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "normal",
+                            "low"
+                        ]
+                    },
+                    "timeout": {
+                        "type": "integer"
+                    },
+                    "storeIO": {
+                        "type": "boolean"
+                    },
+                    "noRetry": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "endpointId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "endpointId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Model Endpoint Id",
+                        "tooltip": "The fal model endpoint id, for example <code>fal-ai/flux/schnell</code>. Use the Find Models action to discover endpoint ids."
+                    },
+                    "arguments": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Arguments (JSON)",
+                        "tooltip": "A JSON object matching the selected model's input schema, for example <code>{ \"prompt\": \"a red bicycle\" }</code>."
+                    },
+                    "waitForResult": {
+                        "type": "toggle",
+                        "index": 2,
+                        "label": "Wait For Result",
+                        "defaultValue": true,
+                        "tooltip": "On: synchronous call bounded to 60 seconds, returns the model result. Off: submit to the queue and return the request id immediately. Use the queue for long-running models such as video."
+                    },
+                    "priority": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Queue Priority",
+                        "tooltip": "Advanced. Maps to the X-Fal-Queue-Priority header.",
+                        "options": [
+                            {
+                                "label": "Normal",
+                                "value": "normal"
+                            },
+                            {
+                                "label": "Low",
+                                "value": "low"
+                            }
+                        ]
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Start Timeout (seconds)",
+                        "tooltip": "Advanced. Deadline for the request to start. Maps to the X-Fal-Request-Timeout header."
+                    },
+                    "storeIO": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Store Payloads",
+                        "defaultValue": true,
+                        "tooltip": "Advanced. Turn off to prevent fal from persisting request/response payloads (maps to X-Fal-Store-IO: 0)."
+                    },
+                    "noRetry": {
+                        "type": "toggle",
+                        "index": 6,
+                        "label": "Disable Auto Retry",
+                        "defaultValue": false,
+                        "tooltip": "Advanced. Turn on to disable fal's automatic retry (maps to the X-Fal-No-Retry header)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "type": "object",
+                        "title": "Result",
+                        "description": "The raw model response (present when Wait For Result is on). The shape depends on the model.",
+                        "properties": {}
+                    },
+                    "requestId": {
+                        "type": "string",
+                        "title": "Request Id",
+                        "example": "764cabcf-b745-4b3e-ae38-1200304cf45b"
+                    },
+                    "statusUrl": {
+                        "type": "string",
+                        "title": "Status URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b/status"
+                    },
+                    "responseUrl": {
+                        "type": "string",
+                        "title": "Response URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b"
+                    },
+                    "cancelUrl": {
+                        "type": "string",
+                        "title": "Cancel URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b/cancel"
+                    },
+                    "queuePosition": {
+                        "type": "integer",
+                        "title": "Queue Position",
+                        "example": 0
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiM2RTU2RjciLz4KICA8cGF0aCBkPSJNNDEgMThoLTljLTMuMyAwLTYgMi43LTYgNnYzaC00djZoNHYxM2g2VjMzaDh2LTZoLTh2LTJjMC0uNi40LTEgMS0xaDh6IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNDEiIGN5PSI0MyIgcj0iNCIgZmlsbD0iI0MyRjA0QSIvPgo8L3N2Zz4K"
+}

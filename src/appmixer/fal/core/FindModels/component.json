@@ -1,0 +1,153 @@
+{
+    "name": "appmixer.fal.core.FindModels",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Search fal's model catalogue. Filter by query, category and status. Uses cursor-based pagination (no offset).",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fal"
+    },
+    "quota": {
+        "manager": "appmixer:fal",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "example": "flux"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Query",
+                        "tooltip": "Free-text search over model names and descriptions."
+                    },
+                    "category": {
+                        "type": "select",
+                        "index": 1,
+                        "label": "Category",
+                        "tooltip": "Filter models by category.",
+                        "options": [
+                            {
+                                "label": "Text to Image",
+                                "value": "text-to-image"
+                            },
+                            {
+                                "label": "Image to Image",
+                                "value": "image-to-image"
+                            },
+                            {
+                                "label": "Image to Video",
+                                "value": "image-to-video"
+                            },
+                            {
+                                "label": "Text to Video",
+                                "value": "text-to-video"
+                            },
+                            {
+                                "label": "Video to Video",
+                                "value": "video-to-video"
+                            },
+                            {
+                                "label": "Text to Audio",
+                                "value": "text-to-audio"
+                            },
+                            {
+                                "label": "Text to Speech",
+                                "value": "text-to-speech"
+                            },
+                            {
+                                "label": "Speech to Text",
+                                "value": "speech-to-text"
+                            },
+                            {
+                                "label": "Image to 3D",
+                                "value": "image-to-3d"
+                            },
+                            {
+                                "label": "Vision",
+                                "value": "vision"
+                            },
+                            {
+                                "label": "LLM",
+                                "value": "llm"
+                            },
+                            {
+                                "label": "Training",
+                                "value": "training"
+                            }
+                        ]
+                    },
+                    "status": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Status",
+                        "tooltip": "Filter models by status, for example <code>active</code>."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether to receive the result set as one complete list, first item only, or one item at a time.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/fal/core/FindModels?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiM2RTU2RjciLz4KICA8cGF0aCBkPSJNNDEgMThoLTljLTMuMyAwLTYgMi43LTYgNnYzaC00djZoNHYxM2g2VjMzaDh2LTZoLTh2LTJjMC0uNi40LTEgMS0xaDh6IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNDEiIGN5PSI0MyIgcj0iNCIgZmlsbD0iI0MyRjA0QSIvPgo8L3N2Zz4K"
+}

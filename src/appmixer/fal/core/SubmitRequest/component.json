@@ -1,0 +1,132 @@
+{
+    "name": "appmixer.fal.core.SubmitRequest",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Submit a model inference job to the fal async queue and return immediately with the request handles. Pair the optional Webhook URL with a Generation Completed trigger, or poll with Get Request Status / Get Request Result.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fal"
+    },
+    "quota": {
+        "manager": "appmixer:fal",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "endpointId": {
+                        "type": "string",
+                        "example": "fal-ai/flux/schnell"
+                    },
+                    "arguments": {
+                        "type": "string"
+                    },
+                    "webhookUrl": {
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://api.appmixer.com/hook/abc123"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "normal",
+                            "low"
+                        ]
+                    },
+                    "timeout": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "endpointId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "endpointId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Model Endpoint Id",
+                        "tooltip": "The fal model endpoint id, for example <code>fal-ai/flux/schnell</code>."
+                    },
+                    "arguments": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Arguments (JSON)",
+                        "tooltip": "A JSON object matching the selected model's input schema."
+                    },
+                    "webhookUrl": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Webhook URL",
+                        "tooltip": "Optional. fal will POST the result to this URL once on completion. Wire it from a Generation Completed trigger's webhook URL. fal has no account-wide subscription API, so this per-request pairing is the only way to receive completions."
+                    },
+                    "priority": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Queue Priority",
+                        "tooltip": "Advanced. Maps to the X-Fal-Queue-Priority header.",
+                        "options": [
+                            {
+                                "label": "Normal",
+                                "value": "normal"
+                            },
+                            {
+                                "label": "Low",
+                                "value": "low"
+                            }
+                        ]
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Start Timeout (seconds)",
+                        "tooltip": "Advanced. Deadline for the request to start. Maps to the X-Fal-Request-Timeout header."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "requestId": {
+                        "type": "string",
+                        "title": "Request Id",
+                        "example": "764cabcf-b745-4b3e-ae38-1200304cf45b"
+                    },
+                    "statusUrl": {
+                        "type": "string",
+                        "title": "Status URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b/status"
+                    },
+                    "responseUrl": {
+                        "type": "string",
+                        "title": "Response URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b"
+                    },
+                    "cancelUrl": {
+                        "type": "string",
+                        "title": "Cancel URL",
+                        "example": "https://queue.fal.run/fal-ai/flux/schnell/requests/764cabcf-b745-4b3e-ae38-1200304cf45b/cancel"
+                    },
+                    "queuePosition": {
+                        "type": "integer",
+                        "title": "Queue Position",
+                        "example": 0
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+CiAgPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiM2RTU2RjciLz4KICA8cGF0aCBkPSJNNDEgMThoLTljLTMuMyAwLTYgMi43LTYgNnYzaC00djZoNHYxM2g2VjMzaDh2LTZoLTh2LTJjMC0uNi40LTEgMS0xaDh6IiBmaWxsPSIjZmZmZmZmIi8+CiAgPGNpcmNsZSBjeD0iNDEiIGN5PSI0MyIgcj0iNCIgZmlsbD0iI0MyRjA0QSIvPgo8L3N2Zz4K"
+}
