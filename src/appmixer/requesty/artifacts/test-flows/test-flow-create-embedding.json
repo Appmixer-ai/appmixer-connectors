@@ -1,19 +1,23 @@
 {
     "name": "E2E Requesty - Create Embedding",
     "flow": {
-        "on-start": {
+        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 48,
+            "x": 208,
             "y": 320,
-            "source": {}
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
-        "set-variables": {
+        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
             "type": "appmixer.utils.controls.SetVariable",
-            "x": 240,
+            "x": 400,
             "y": 320,
             "source": {
                 "in": {
-                    "on-start": [
+                    "489eba08-520b-4f0e-aa1d-fc3892db60f1": [
                         "out"
                     ]
                 }
@@ -21,7 +25,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "on-start": {
+                        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -47,27 +51,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 432,
-            "y": 320,
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            }
-        },
-        "create-embedding": {
+        "e34ea85a-34ab-4af9-be91-92a531b55575": {
             "type": "appmixer.requesty.core.CreateEmbedding",
-            "x": 624,
+            "x": 592,
             "y": 320,
             "source": {
                 "in": {
-                    "before-all": [
+                    "ab92255b-23a6-4e72-a4e1-1e10230bc044": [
                         "out"
                     ]
                 }
@@ -75,20 +71,20 @@
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "model": {
                                         "var-model": {
                                             "functions": [],
-                                            "variable": "$.set-variables.out.model"
+                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.model"
                                         }
                                     },
                                     "input": {
                                         "var-input": {
                                             "functions": [],
-                                            "variable": "$.set-variables.out.input"
+                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.input"
                                         }
                                     }
                                 },
@@ -100,15 +96,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "assert-create-embedding": {
+        "edd59a4f-b9fe-43f7-93f7-e422636c82e2": {
             "type": "appmixer.utils.test.Assert",
-            "x": 816,
-            "y": 320,
+            "x": 784,
+            "y": 448,
             "source": {
                 "in": {
-                    "create-embedding": [
+                    "e34ea85a-34ab-4af9-be91-92a531b55575": [
                         "out"
                     ]
                 }
@@ -116,18 +116,18 @@
             "config": {
                 "transform": {
                     "in": {
-                        "create-embedding": {
+                        "e34ea85a-34ab-4af9-be91-92a531b55575": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "var-model": {
                                             "functions": [],
-                                            "variable": "$.create-embedding.out.model"
+                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.model"
                                         },
                                         "var-tokens": {
                                             "functions": [],
-                                            "variable": "$.create-embedding.out.usage.total_tokens"
+                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.usage.total_tokens"
                                         }
                                     }
                                 },
@@ -149,15 +149,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "after-all": {
+        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1008,
-            "y": 320,
+            "x": 976,
+            "y": 448,
             "source": {
                 "in": {
-                    "assert-create-embedding": [
+                    "edd59a4f-b9fe-43f7-93f7-e422636c82e2": [
                         "out"
                     ]
                 }
@@ -166,15 +170,19 @@
                 "properties": {
                     "timeout": 180
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "process-results": {
+        "cc3a522a-99d9-44a0-baa0-760f6df45062": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1200,
-            "y": 320,
+            "x": 1168,
+            "y": 448,
             "source": {
                 "in": {
-                    "after-all": [
+                    "e46d0969-4101-4a43-abb8-45f37f41bdb6": [
                         "out"
                     ]
                 }
@@ -183,7 +191,7 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -192,7 +200,7 @@
                                     "result": {
                                         "result-var": {
                                             "functions": [],
-                                            "variable": "$.after-all.out"
+                                            "variable": "$.e46d0969-4101-4a43-abb8-45f37f41bdb6.out"
                                         }
                                     }
                                 },
@@ -205,6 +213,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         }
     },

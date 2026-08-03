@@ -1,19 +1,23 @@
 {
     "name": "E2E Requesty - Chat Completion",
     "flow": {
-        "on-start": {
+        "78c50d16-f237-44b6-8354-c632a2198f7c": {
             "type": "appmixer.utils.controls.OnStart",
-            "x": 48,
+            "x": 208,
             "y": 320,
-            "source": {}
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
-        "set-variables": {
+        "7d606d0b-97ce-42fc-bc63-3b1003058088": {
             "type": "appmixer.utils.controls.SetVariable",
-            "x": 240,
+            "x": 400,
             "y": 320,
             "source": {
                 "in": {
-                    "on-start": [
+                    "78c50d16-f237-44b6-8354-c632a2198f7c": [
                         "out"
                     ]
                 }
@@ -21,7 +25,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "on-start": {
+                        "78c50d16-f237-44b6-8354-c632a2198f7c": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -47,27 +51,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "before-all": {
-            "type": "appmixer.utils.test.BeforeAll",
-            "x": 432,
-            "y": 320,
-            "source": {
-                "in": {
-                    "set-variables": [
-                        "out"
-                    ]
-                }
-            }
-        },
-        "chat-completion": {
+        "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": {
             "type": "appmixer.requesty.core.ChatCompletion",
-            "x": 624,
+            "x": 592,
             "y": 320,
             "source": {
                 "in": {
-                    "before-all": [
+                    "7d606d0b-97ce-42fc-bc63-3b1003058088": [
                         "out"
                     ]
                 }
@@ -75,20 +71,20 @@
             "config": {
                 "transform": {
                     "in": {
-                        "before-all": {
+                        "7d606d0b-97ce-42fc-bc63-3b1003058088": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "model": {
                                         "var-model": {
                                             "functions": [],
-                                            "variable": "$.set-variables.out.model"
+                                            "variable": "$.7d606d0b-97ce-42fc-bc63-3b1003058088.out.model"
                                         }
                                     },
                                     "prompt": {
                                         "var-prompt": {
                                             "functions": [],
-                                            "variable": "$.set-variables.out.prompt"
+                                            "variable": "$.7d606d0b-97ce-42fc-bc63-3b1003058088.out.prompt"
                                         }
                                     }
                                 },
@@ -100,15 +96,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "assert-chat-completion": {
+        "045ef488-0e02-4ae8-a058-78f377621d80": {
             "type": "appmixer.utils.test.Assert",
-            "x": 816,
-            "y": 320,
+            "x": 784,
+            "y": 448,
             "source": {
                 "in": {
-                    "chat-completion": [
+                    "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": [
                         "out"
                     ]
                 }
@@ -116,18 +116,18 @@
             "config": {
                 "transform": {
                     "in": {
-                        "chat-completion": {
+                        "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "var-id": {
                                             "functions": [],
-                                            "variable": "$.chat-completion.out.id"
+                                            "variable": "$.6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce.out.id"
                                         },
                                         "var-content": {
                                             "functions": [],
-                                            "variable": "$.chat-completion.out.choices.message.content"
+                                            "variable": "$.6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce.out.choices.message.content"
                                         }
                                     }
                                 },
@@ -149,15 +149,19 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "after-all": {
+        "f7410503-7252-48b2-8f5c-b076efab36c2": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1008,
-            "y": 320,
+            "x": 976,
+            "y": 448,
             "source": {
                 "in": {
-                    "assert-chat-completion": [
+                    "045ef488-0e02-4ae8-a058-78f377621d80": [
                         "out"
                     ]
                 }
@@ -166,15 +170,19 @@
                 "properties": {
                     "timeout": 180
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
-        "process-results": {
+        "cf9cc16d-c11a-4f74-b6bb-0fb31a11c605": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1200,
-            "y": 320,
+            "x": 1168,
+            "y": 448,
             "source": {
                 "in": {
-                    "after-all": [
+                    "f7410503-7252-48b2-8f5c-b076efab36c2": [
                         "out"
                     ]
                 }
@@ -183,7 +191,7 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "after-all": {
+                        "f7410503-7252-48b2-8f5c-b076efab36c2": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -192,7 +200,7 @@
                                     "result": {
                                         "result-var": {
                                             "functions": [],
-                                            "variable": "$.after-all.out"
+                                            "variable": "$.f7410503-7252-48b2-8f5c-b076efab36c2.out"
                                         }
                                     }
                                 },
@@ -205,6 +213,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         }
     },
