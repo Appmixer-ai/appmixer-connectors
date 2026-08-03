@@ -4,6 +4,20 @@ const crypto = require('crypto');
 
 module.exports = async context => {
 
+    context.onListenerAdded(async listener => {
+
+        // Components register with `realmId` (the QuickBooks company id) as a listener param.
+        // Unlike Slack (which resolves userId from an accessToken), the realmId is passed
+        // directly by the component, so no API call is needed here. We only validate and
+        // normalize the params so the webhook handler can filter listeners by realmId.
+        const realmId = listener.params?.realmId;
+        if (!realmId) {
+            throw new Error('Missing realmId listener param.');
+        }
+
+        listener.params = { realmId: `${realmId}` };
+    });
+
     context.http.router.register({
         method: 'GET',
         path: '/',
@@ -47,7 +61,6 @@ module.exports.webhookHandler = async (context, req, h) => {
         return h.response('Forbidden: Invalid signature').code(403);
     }
 
-    let registeredComponents = {};
     const realmIds = req.payload.eventNotifications?.map(notification => notification.realmId);
     /**
      * Combination of `name` and `operation` from entities in the payload.
@@ -59,53 +72,37 @@ module.exports.webhookHandler = async (context, req, h) => {
     const eventsCount = req.payload.eventNotifications.flatMap(n => n.dataChangeEvent.entities).length;
     context.log('debug', 'quickbooks-plugin-route-webhook-log', { realmIds, triggerTypes, eventsCount });
 
+    // Loop over realms (tenants). AuthHub delivers all tenants through this single shared
+    // endpoint, so we identify the owner of each event by the realmId in the payload and
+    // route to registered listeners filtered by that realmId.
     for (const realmId of realmIds) {
-        registeredComponents[realmId] = {};
+        // Loop over trigger types (e.g. 'Invoice.Create')
         for (const triggerType of triggerTypes) {
-            const components = await context.service.stateGet(`${triggerType}:${realmId}`);
-            if (components) {
-                registeredComponents[realmId][triggerType] = components;
-            }
-        }
-    }
-
-    const componentsCount = Object.values(registeredComponents)
-        .map(components => Object.values(components).filter(c => c).length)
-        .reduce((acc, val) => acc + val, 0);
-    context.log('debug', 'quickbooks-plugin-route-webhook-log', { registeredComponentsCount: componentsCount, registeredComponents });
-
-    // Loop over realms
-    for (const realmId of realmIds) {
-        // Loop over components registered for the realm
-        for (const triggerType of triggerTypes) {
-            // Get all components registered for the realm and triggerType
-            const components = registeredComponents[realmId][triggerType] || [];
             // Get all events/entities for the realm and triggerType
             const allEvents = req.payload.eventNotifications
                 .find(n => n.realmId === realmId)?.dataChangeEvent.entities || [];
             const events = allEvents.filter(e => `${e.name}.${e.operation}` === triggerType);
             const entityIds = events.map(e => e.id);
 
-            context.log('debug', 'quickbooks-plugin-route-webhook-log', { realmId, triggerType, components: components.length, events: events.length });
-            // Send all the events once for each component
-            for (const component of components) {
-                context.log('debug', 'quickbooks-plugin-route-webhook-trigger-start', { realmId, component, entityIds });
-                try {
-                    const resp = await context.triggerComponent(
-                        component.flowId,
-                        component.componentId,
-                        entityIds,
-                        { enqueueOnly: 'true' }, {}
-                    );
-                    await context.log('info', 'quickbooks-plugin-route-webhook-trigger-ok', { realmId, component, resp });
-                } catch (error) {
-                    await context.log('error', 'quickbooks-plugin-route-webhook-trigger-error', { realmId, component, error });
-                }
+            if (!entityIds.length) {
+                continue;
+            }
+
+            context.log('debug', 'quickbooks-plugin-route-webhook-trigger-start', { realmId, triggerType, entityIds });
+            try {
+                const resp = await context.triggerListeners({
+                    eventName: triggerType,
+                    payload: entityIds,
+                    filter: listener => listener.params.realmId === `${realmId}`
+                });
+                await context.log('info', 'quickbooks-plugin-route-webhook-trigger-ok', { realmId, triggerType, resp });
+            } catch (error) {
+                await context.log('error', 'quickbooks-plugin-route-webhook-trigger-error', { realmId, triggerType, error });
             }
         }
     }
 
-    context.log('info', 'quickbooks-plugin-route-webhook-success', { registeredComponentsCount: componentsCount });
+    context.log('info', 'quickbooks-plugin-route-webhook-success', { realmIds, triggerTypes, eventsCount });
 
     // Empty response
     return h.response(undefined).code(200);

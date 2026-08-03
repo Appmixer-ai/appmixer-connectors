@@ -64,9 +64,6 @@ describe('Quickbooks webhooks', function() {
         it('should return empty object when invalid or no payload', async function() {
 
             req.payload = undefined;
-            context.service.stateGet = async function() {
-                return [{ flowId: 'flowId', componentId: 'componentId' }];
-            };
             const res = await webhookHandler(context, req, h);
             assert.deepEqual(res, { code: 200, msg: undefined });
         });
@@ -103,25 +100,8 @@ describe('Quickbooks webhooks', function() {
             assert.equal(res.msg, 'Forbidden: Invalid signature');
         });
 
-        it('should return empty object when no registered components', async function() {
-
-            req.payload = {
-                eventNotifications: [{
-                    realmId: REALM_ID_AIRBUS,
-                    dataChangeEvent: {
-                        entities: [CUSTOMER_A_CREATED]
-                    }
-                }]
-            };
-            // Set the correct signature
-            req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken).update(JSON.stringify(req.payload)).digest('base64');
-
-            const res = await webhookHandler(context, req, h);
-            assert.deepEqual(res, { code: 200, msg: undefined });
-        });
-
-        // Single company, single entity, single component.
-        it('should trigger a single component for a single company and entity', async function() {
+        // Single company, single entity: one triggerListeners call filtered by realmId.
+        it('should trigger listeners for a single company and entity', async function() {
 
             req.payload = {
                 eventNotifications: [{
@@ -131,19 +111,23 @@ describe('Quickbooks webhooks', function() {
                     }
                 }]
             };
-            context.service.stateGet.returns([{ flowId: 'flow-foo', componentId: 'component-bar' }]);
             // Set the correct signature
             req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken).update(JSON.stringify(req.payload)).digest('base64');
 
             const res = await webhookHandler(context, req, h);
-            assert.equal(context.service.stateGet.callCount, 1);
-            assert.equal(context.triggerComponent.callCount, 1);
-            assert(context.triggerComponent.calledWith('flow-foo', 'component-bar', [INVOICE_B2_CREATED.id]));
+            assert.equal(context.triggerComponent.callCount, 0);
+            assert.equal(context.triggerListeners.callCount, 1);
+            const callArg = context.triggerListeners.args[0][0];
+            assert.equal(callArg.eventName, 'Invoice.Create');
+            assert.deepEqual(callArg.payload, [INVOICE_B2_CREATED.id]);
+            // The filter routes only to listeners registered for this realmId.
+            assert.equal(callArg.filter({ params: { realmId: REALM_ID_AIRBUS } }), true);
+            assert.equal(callArg.filter({ params: { realmId: REALM_ID_BOEING } }), false);
             assert.deepEqual(res, { code: 200, msg: undefined });
         });
 
-        // Single company, single entity, no components.
-        it('should not trigger any component for a single company and entity', async function() {
+        // A trigger type with no events for a realm should not produce a triggerListeners call.
+        it('should not trigger listeners when there are no matching events', async function() {
 
             req.payload = {
                 eventNotifications: [{
@@ -153,18 +137,20 @@ describe('Quickbooks webhooks', function() {
                     }
                 }]
             };
-            context.service.stateGet.returns([]); // There is no `NewCustomer` component registered for Airbus company.
             // Set the correct signature
             req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken).update(JSON.stringify(req.payload)).digest('base64');
 
             const res = await webhookHandler(context, req, h);
-            assert.equal(context.service.stateGet.callCount, 1);
-            assert.equal(context.triggerComponent.callCount, 0);
+            // Exactly one call: Customer.Create for Airbus. Nothing for Invoice/Update.
+            assert.equal(context.triggerListeners.callCount, 1);
+            const callArg = context.triggerListeners.args[0][0];
+            assert.equal(callArg.eventName, 'Customer.Create');
+            assert.deepEqual(callArg.payload, [CUSTOMER_A_CREATED.id]);
             assert.deepEqual(res, { code: 200, msg: undefined });
         });
 
         // A big payload with multiple companies and entities. Quickbooks usually sends one company at a time with one entity.
-        it('should trigger multiple components in multiple flows for multiple companies', async function() {
+        it('should trigger listeners per realm and trigger type for multiple companies', async function() {
 
             req.payload = {
                 eventNotifications: [{
@@ -187,56 +173,35 @@ describe('Quickbooks webhooks', function() {
                     }
                 }]
             };
-            // Simulate 2 NewCustomer trigger components for Airbus
-            context.service.stateGet.onCall(0).returns([
-                { flowId: 'flowA', componentId: 'new-customer-comp-1' },
-                { flowId: 'flowA', componentId: 'new-customer-comp-2' }
-            ]);
-            // Simulate 0 UpdateContact trigger component for Airbus
-            context.service.stateGet.onCall(1).returns([]);
-            // Simulate 2 NewInvoice trigger components for Airbus
-            context.service.stateGet.onCall(2).returns([
-                { flowId: 'flowA', componentId: 'new-invoice-comp-1' },
-                { flowId: 'flowA', componentId: 'new-invoice-comp-2' }
-            ]);
-            // Simulate 2 NewCustomer trigger components for Boeing
-            context.service.stateGet.onCall(3).returns([
-                { flowId: 'flowB', componentId: 'new-customer-comp-3' },
-                { flowId: 'flowB', componentId: 'new-customer-comp-4' }
-            ]);
-            // Simulate 0 UpdateContact trigger component for Boeing
-            context.service.stateGet.onCall(4).returns([]);
-            // Simulate 2 NewInvoice trigger components for Boeing
-            context.service.stateGet.onCall(5).returns([
-                { flowId: 'flowB', componentId: 'new-invoice-comp-3' },
-                { flowId: 'flowB', componentId: 'new-invoice-comp-4' }
-            ]);
             // Set the correct signature
             req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken).update(JSON.stringify(req.payload)).digest('base64');
 
             const res = await webhookHandler(context, req, h);
-            // 4 stateGet calls: 2 tenants * 3 component types
-            assert.equal(context.service.stateGet.callCount, 6);
-            // 4 NewCustomer components in total: 4 different new-contact-comp-x components
-            // 0 UpdateCustomer: no components for this event type
-            // 4 NewInvoice components in total: 4 different new-invoice-comp-x components
-            assert.equal(context.triggerComponent.callCount, 8);
-            // 8 expected calls
+            assert.equal(context.triggerComponent.callCount, 0);
+            // 5 calls: Airbus (Customer.Create, Customer.Update, Invoice.Create) +
+            // Boeing (Customer.Create, Invoice.Create). Boeing has no Customer.Update events.
+            assert.equal(context.triggerListeners.callCount, 5);
+
+            // Each expected call: eventName, payload and the realmId its filter should match.
             const expectedCalls = [
-                // Customers
-                ['flowA', 'new-customer-comp-1', [CUSTOMER_A_CREATED.id, CUSTOMER_B_CREATED.id]],
-                ['flowA', 'new-customer-comp-2', [CUSTOMER_A_CREATED.id, CUSTOMER_B_CREATED.id]],
-                ['flowB', 'new-customer-comp-3', [CUSTOMER_C_CREATED.id, CUSTOMER_D_CREATED.id]],
-                ['flowB', 'new-customer-comp-4', [CUSTOMER_C_CREATED.id, CUSTOMER_D_CREATED.id]],
-                // Invoices
-                ['flowA', 'new-invoice-comp-1', [INVOICE_A1_CREATED.id, INVOICE_A2_CREATED.id]],
-                ['flowA', 'new-invoice-comp-2', [INVOICE_A1_CREATED.id, INVOICE_A2_CREATED.id]],
-                ['flowB', 'new-invoice-comp-3', [INVOICE_B1_CREATED.id]],
-                ['flowB', 'new-invoice-comp-4', [INVOICE_B1_CREATED.id]]
+                { eventName: 'Customer.Create', payload: [CUSTOMER_A_CREATED.id, CUSTOMER_B_CREATED.id], realmId: REALM_ID_AIRBUS },
+                { eventName: 'Customer.Update', payload: [CUSTOMER_E_UPDATED.id], realmId: REALM_ID_AIRBUS },
+                { eventName: 'Invoice.Create', payload: [INVOICE_A1_CREATED.id, INVOICE_A2_CREATED.id], realmId: REALM_ID_AIRBUS },
+                { eventName: 'Customer.Create', payload: [CUSTOMER_C_CREATED.id, CUSTOMER_D_CREATED.id], realmId: REALM_ID_BOEING },
+                { eventName: 'Invoice.Create', payload: [INVOICE_B1_CREATED.id], realmId: REALM_ID_BOEING }
             ];
-            // Loose comparison of the calls
-            for (const expectedCall of expectedCalls) {
-                assert(context.triggerComponent.calledWith(...expectedCall));
+
+            const actualCalls = context.triggerListeners.args.map(args => args[0]);
+            for (const expected of expectedCalls) {
+                const match = actualCalls.find(call =>
+                    call.eventName === expected.eventName &&
+                    JSON.stringify(call.payload) === JSON.stringify(expected.payload) &&
+                    call.filter({ params: { realmId: expected.realmId } }) === true
+                );
+                assert(match, `Expected a triggerListeners call for ${expected.eventName} realm ${expected.realmId}`);
+                // The filter must not match a different realm.
+                const otherRealm = expected.realmId === REALM_ID_AIRBUS ? REALM_ID_BOEING : REALM_ID_AIRBUS;
+                assert.equal(match.filter({ params: { realmId: otherRealm } }), false);
             }
 
             assert.deepEqual(res, { code: 200, msg: undefined });
