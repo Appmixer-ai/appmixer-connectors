@@ -18,18 +18,19 @@ if (process.PG_ASYNC_CONNECTIONS) {
 }
 
 /**
- * Builds a libpq-style connection string for dblink_connect.
+ * Builds a libpq connection URI for dblink_connect.
  * dblink needs to connect back to the same database.
+ * A URI with percent-encoded parts is used instead of the key=value conninfo
+ * format so that values containing spaces or conninfo metacharacters
+ * (quotes, backslashes, '=') cannot break parsing or inject parameters.
  */
 const buildConnStr = (auth) => {
-    const parts = [
-        `host=${auth.dbHost}`,
-        `port=${auth.dbPort || 5432}`,
-        `dbname=${auth.database}`,
-        `user=${auth.dbUser}`,
-        `password=${auth.dbPassword}`
-    ];
-    return parts.join(' ');
+    const user = encodeURIComponent(auth.dbUser);
+    const password = encodeURIComponent(auth.dbPassword);
+    const host = encodeURIComponent(auth.dbHost);
+    const port = auth.dbPort || 5432;
+    const dbname = encodeURIComponent(auth.database);
+    return `postgresql://${user}:${password}@${host}:${port}/${dbname}`;
 };
 
 /**
@@ -117,15 +118,15 @@ const pollJob = async (jobId) => {
     // Query is done — fetch results via dblink_get_result
     // Using the generic single-column signature matching our row_to_json wrapper
     const resultRes = await client.query(
-        'SELECT * FROM dblink_get_result($1) AS r(jsonRow text)',
+        'SELECT * FROM dblink_get_result($1) AS r(json_row text)',
         [dblinkConnName]
     );
 
     const rows = resultRes.rows.map(r => {
         try {
-            return JSON.parse(r.jsonRow);
+            return JSON.parse(r.json_row);
         } catch (e) {
-            return { raw: r.jsonRow };
+            return { raw: r.json_row };
         }
     });
 

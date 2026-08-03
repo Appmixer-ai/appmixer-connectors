@@ -15,19 +15,13 @@ module.exports = {
             || context.messages.webhook?.content
             || null;
         if (webhookData && webhookData.asyncJobId) {
-            return this.deliverAsyncResult(
-                context, webhookData.asyncJobId, webhookData.outputType,
-                webhookData.asyncRows, webhookData.asyncError
-            );
+            return this.deliverAsyncResult(context, webhookData);
         }
 
         // Also check if triggerComponent delivered via the 'in' port
         const inData = context.messages.in?.content;
         if (inData && inData.asyncJobId) {
-            return this.deliverAsyncResult(
-                context, inData.asyncJobId, inData.outputType,
-                inData.asyncRows, inData.asyncError
-            );
+            return this.deliverAsyncResult(context, inData);
         }
 
         if (context.properties.generateOutputPortOptions) {
@@ -96,6 +90,23 @@ module.exports = {
      */
     async startAsyncQuery(context, query, outputType) {
 
+        // Async mode delivers results back through the 'out' port as rows —
+        // streaming to a file is not possible in this mode.
+        if (outputType === 'file') {
+            throw new context.CancelError('Output type "Stream to file" is not supported in Async Mode. Choose "All rows at once" or "One row at a time".');
+        }
+
+        // The dblink result wrapper (row_to_json over a subquery) only works for
+        // statements that return rows, and a recovered job may be re-executed —
+        // so async mode is restricted to single, read-only SELECT/WITH queries.
+        const trimmedQuery = query.trim().replace(/;\s*$/, '');
+        if (trimmedQuery.includes(';')) {
+            throw new context.CancelError('Async Mode supports a single SQL statement only.');
+        }
+        if (!/^(select|with)\b/i.test(trimmedQuery)) {
+            throw new context.CancelError('Async Mode supports read-only SELECT (or WITH ... SELECT) queries only.');
+        }
+
         const connections = require('../../connections');
         const jobId = crypto.randomBytes(16).toString('hex');
 
@@ -132,18 +143,18 @@ module.exports = {
      * Called when jobs.js has determined the query is complete (or errored).
      * Receives result rows directly in the triggerComponent payload.
      */
-    async deliverAsyncResult(context, jobId, outputType, rows, asyncError) {
+    async deliverAsyncResult(context, { asyncJobId: jobId, outputType, query, asyncRows, asyncError }) {
 
         if (asyncError) {
             throw new Error(`Async query failed: ${asyncError}`);
         }
 
-        rows = rows || [];
+        const rows = asyncRows || [];
 
         await context.log({ step: 'async_query_deliver', jobId, rowCount: rows.length });
 
         if (!rows.length) {
-            return context.sendJson({ query: '', message: 'No data returned for the query.' }, 'emptyResult');
+            return context.sendJson({ query, message: 'No data returned for the query.' }, 'emptyResult');
         }
 
         if (outputType === 'row') {
