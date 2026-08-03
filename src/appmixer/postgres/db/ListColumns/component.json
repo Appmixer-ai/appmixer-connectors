@@ -40,7 +40,75 @@
     ],
     "outPorts": [
         {
-            "name": "columns"
+            "name": "columns",
+            "schema": {
+                "type": "array",
+                "description": "Rows from INFORMATION_SCHEMA.COLUMNS for the configured table. The port payload is the array itself — extract fields with the g_jsonPath modifier, e.g. $[0].column_name.",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "table_schema": {
+                            "type": "string",
+                            "title": "Table Schema",
+                            "example": "public"
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "title": "Table Name",
+                            "example": "users"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "title": "Column Name",
+                            "example": "id"
+                        },
+                        "ordinal_position": {
+                            "type": "integer",
+                            "title": "Ordinal Position",
+                            "example": 1
+                        },
+                        "column_default": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "title": "Column Default",
+                            "example": "nextval('users_id_seq'::regclass)"
+                        },
+                        "is_nullable": {
+                            "type": "string",
+                            "title": "Is Nullable",
+                            "example": "NO"
+                        },
+                        "data_type": {
+                            "type": "string",
+                            "title": "Data Type",
+                            "example": "integer"
+                        },
+                        "character_maximum_length": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "title": "Character Maximum Length",
+                            "example": 255
+                        },
+                        "numeric_precision": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "title": "Numeric Precision",
+                            "example": 32
+                        },
+                        "udt_name": {
+                            "type": "string",
+                            "title": "UDT Name",
+                            "example": "int4"
+                        }
+                    }
+                }
+            }
         }
     ],
     "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjA2Ij48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwyMDYuMDAwMDAwKSBzY2FsZSgwLjEwMDAwMCwtMC4xMDAwMDApIiBmaWxsPSIjMDAwMDAwIj48cGF0aCBkPSJNMTI4MCAyMDQ0IGMtNDQgLTkgLTk4IC0xMiAtMTcwIC04IC0xMTQgNyAtMTkzIC00IC0yNzIgLTM4IGwtNDYgLTIwIC04NCAyMiBjLTEwNSAyOCAtMjkzIDM4IC0zNjkgMjAgLTI1NyAtNjAgLTM3OSAtMjkzIC0zMjQgLTYyMSA3MiAtNDM0IDIyMSAtNzg3IDM1OSAtODUzIDQ3IC0yMiAxMjMgLTIxIDE2MyA0IGwzMyAyMCAzNSAtMjQgYzYzIC00MyAyMjcgLTYwIDI5NyAtMzEgMTQgNiAxNyAtNSAyMiAtODIgMjUgLTM1MSAxMjIgLTQ2OSAzNDggLTQyMiAyMDIgNDMgMjg3IDE3MSAzMDYgNDY0IGw3IDEwMCA3NiA2IGMyMzQgMTkgNDA0IDE3MCAzMTQgMjc3IC0zMSAzNyAtNjIgNDQgLTE0OCAzMCAtMzcgLTYgLTY5IC05IC03MiAtNyAtMiAyIDI1IDYyIDYwIDEzMyAxMTcgMjM2IDE4MSA0NzMgMTczIDY0NiAtNSAxMTggLTIyIDE1MyAtMTEyIDIzNyAtMTQ4IDEzOSAtMzczIDE5NCAtNTk2IDE0N3oiLz48L2c+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMC4wMDAwMDAsMjA2LjAwMDAwMCkgc2NhbGUoMC4xMDAwMDAsLTAuMTAwMDAwKSIgZmlsbD0iI2ZmZmZmZiI+PHBhdGggZD0iTTEyODggMTk5NSBjLTM3IC04IC03MiAtMTYgLTc3IC0xOSAtNCAtMyAtNDcgMCAtOTMgNiAtMTAzIDE0IC0xOTUgMiAtMjcyIC0zNiBsLTUxIC0yNSAtODUgMjYgYy0xMzIgNDEgLTM0OCA0MCAtNDM4IC0xIC0xMjEgLTU2IC0xOTAgLTE2MiAtMjEzIC0zMjQgLTMzIC0yMzQgMTM1IC04MjAgMjc4IC05NzMgOTIgLTk4IDE1OCAtODkgMjY3IDQwIDExMiAxMzMgMTE0IDEzNCAxNzUgMTE4IGw1MyAtMTQgLTIzIC0yNiBjLTE3IC0xOSAtNDcgLTM0IC05OSAtNDggLTgzIC0yMyAtMTEwIC00MSAtMTEwIC03NCAwIC04MSAyMDEgLTExOSAzMTEgLTU5IGw1NCAzMCAtMyAtMzIgYy05IC03NiAxOCAtMzQ1IDM5IC0zOTQgNTkgLTEzNyAyMDAgLTE3NiAzNTYgLTk5IDEwOSA1MyAxMzMgMTAyIDE2NCAzNDMgMTEgODggMjIgMTcxIDI1IDE4MiAzIDIwIDEyIDIyIDEwNyAyNiAxMjAgNSAxODcgMzAgMjU1IDk1IDQ1IDQzIDUwIDU4IDI5IDg3IC0xNSAyMSAtMzIgMjIgLTE1MyAxMSAtNDUgLTQgLTkzIC01IC0xMDggLTEgbC0yNiA2IDM3IDU3IGMxNDMgMjI1IDI2NyA2MTQgMjQ5IDc4NiAtMjMgMjIzIC0zMzYgMzc0IC02NDggMzEyeiIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjAwMDAwMCwyMDYuMDAwMDAwKSBzY2FsZSgwLjEwMDAwMCwtMC4xMDAwMDApIiBmaWxsPSIjMzM2NzkxIj48cGF0aCBkPSJNMTM5MyAyMDAzIGMyNiAtMiA2OCAtMiA5NSAwIDI2IDIgNCAzIC00OCAzIC01MiAwIC03NCAtMSAtNDcgLTN6IE0xMzM4IDE5NDMgYy0yMSAtMiAtMzggLTkgLTM4IC0xNSAwIC01IDggLTcgMTcgLTQgMTAgNCAxNCA0IDExIDAgLTQgLTMgMTkgLTIzIDUwIC00NCAxMDIgLTY2IDIwNiAtMTk0IDI1MyAtMzEyIDE5IC00NyAyMCAtNjMgMTMgLTE0OCAtOCAtMTAyIC04IC0xMzMgLTMgLTMxMCA0IC0xMDIgMiAtMTIwIC0xOCAtMTYzIC0xNCAtMjkgLTE4IC00NyAtMTAgLTQ0IDYgMiAxMSAxMCAxMCAxNiAtMiA2IDEgMTEgNiAxMSAxNSAwIDk1IDE1NSAxNDQgMjgwIDc4IDE5OCAxMTYgMzg5IDk3IDQ5MyAtOCA0NSAtMTcgNTkgLTY5IDEwOCAtMTE2IDExMSAtMjYzIDE1MyAtNDYzIDEzMnogTTk1MCAxOTE3IGMtMTY3IC0zOCAtMjY3IC0xNzMgLTMwNSAtNDE0IGwtNyAtNDMgNDUgMjAgYzIxMyA5NCAzMTEgOSAzMTEgLTI3MCBsMSAtMTI1IC00OCAtMTE3IGMtNTIgLTEyNyAtNTIgLTEyOCAtMzYgLTEyOCA1IDAgOCA0IDUgOSAtNCA1IDEyIDEgMzQgLTEwIDczIC0zNSA3NCAtNDIgODAgLTMyNCA2IC0yMzQgNyAtMjUzIDI5IC0zMDMgNDMgLTk1IDExMCAtMTIwIDIyOSAtODMgMTMzIDQwIDE1NSA5NiAxOTIgNDg2IDE1IDE1NyAyNCAxOTEgNTggMjEyIDE1IDkgMjkgMTggMzEgMjAgMyAyIC01IDE2IC0xNiAzMSAtMzcgNTAgLTE2MSAyOTUgLTE4MyAzNjIgLTU5IDE3NyAtMyAyODAgMTU0IDI4MCA0MCAwIDY2IDQgNjYgMTEgMCA1IC01IDcgLTEyIDMgLTcgLTQgLTggLTMgLTQgNCAyMiAzNyAtMTM0IDIzOCAtMjM0IDMwMiAtMTA4IDY5IC0yNzYgMTAyIC0zOTAgNzd6IE0zNTQgMTkxMSBjLTI0NyAtNjQgLTI5NSAtMzAxIC0xNTkgLTc5NSA4NiAtMzEzIDE5OSAtNTA1IDI3OCAtNDY5IDEyIDYgNjQgNTggMTE0IDExNSBsOTIgMTA1IC0yOSAyOCBjLTM3IDM2IC02OSAxMTAgLTcwIDE2NiAtOCA0MjYgMjMgNjE5IDEyNiA3NjEgMTkgMjggMzQgNTEgMzIgNTMgLTI4IDI3IC0zMTUgNTQgLTM4NCAzNnogTTE0NTUgMTQ1NiBjLTg1IC0zNyAtNjYgLTE2NSA1NyAtMzk0IDcwIC0xMzEgNzIgLTEyOCA3NCAxNDggMSAxMTggMyAyMjQgNSAyMzUgNCAxOCAtMiAyMCAtNTEgMjIgLTMwIDIgLTY5IC0zIC04NSAtMTF6IG04MSAtMjggYzkgLTE1IC0yOCAtNDkgLTQ5IC00NiAtMjUgNCAtNDggMzkgLTI5IDQ1IDYgMyAxMCA4IDggMTIgLTMgNCAxMSA1IDMwIDMgMTkgLTIgMzcgLTggNDAgLTE0eiBNNzQ0IDE0NDYgYy0yMiAtNyAtNTQgLTIxIC03MSAtMzEgbC0zMCAtMTggLTYgLTE3NCBjLTMgLTExNCAtMiAtMTg2IDYgLTIwNiAyOCAtODMgOTkgLTE0OCAxNjQgLTE1MiBsMzcgLTMgNDUgMTEyIGM1MSAxMjYgNjQgMjQxIDQyIDM2NiAtMjEgMTE0IC03MSAxNDIgLTE4NyAxMDZ6IG0xNDQgLTM5IGM2IC01IDEyIC02IDEyIC0yIDAgNSAzIDUgNiAyIDEwIC0xMCAtMzggLTQ2IC02MCAtNDcgLTIyIDAgLTU2IDI3IC01NiA0NiAwIDI0IDY4IDI1IDk4IDF6IE0xNTgyIDc4OSBjLTEyIC01IC0yMiAtMTEgLTIyIC0xNCAwIC00IDYgLTMgMTMgMCA2IDQgNCAwIC02IC04IC0xMSAtOSAtMTcgLTI1IC0xNSAtMzkgNyAtNDkgMjUxIC0yMCAyOTcgMzYgOCA5IC0xMiAxMSAtODIgOCAtNjYgLTMgLTEwMiAwIC0xMjcgMTAgLTIzIDEwIC00MyAxMiAtNTggN3ogTTg2MyA3MzcgYy0zOSAtNDEgLTYxIC01NiAtOTkgLTY2IC0yNyAtNyAtNjAgLTE3IC03NCAtMjEgbC0yNSAtOCAyOCAtMTEgYzEzMiAtNTIgMzQ0IDY1IDI1OSAxNDIgLTI3IDI1IC0zMyAyMiAtODkgLTM2eiBNOTQ5IDYxMyBjLTkgLTEwIC05IC0xNCAtMiAtMTAgOSA2IDEzIC0xMiAxNiAtNjUgbDMgLTczIDEgODMgYzAgNDUgLTEgODIgLTIgODIgLTEgMCAtOSAtOCAtMTYgLTE3eiIvPjwvZz48L3N2Zz4="
