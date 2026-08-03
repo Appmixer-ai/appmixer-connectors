@@ -12,16 +12,21 @@ module.exports = async (context) => {
     // connector keeps connection auth), never in the pgAsyncJobs collection.
     const authStateKey = (jobId) => `pgAsyncJobAuth:${jobId}`;
 
-    // ─── TTL Index ────────────────────────────────────────────────────────────
-    // Auto-delete completed/errored jobs after 24 hours.
-    // Running jobs are never auto-deleted — only via explicit cleanup.
+    // ─── Indexes ──────────────────────────────────────────────────────────────
+    // TTL: auto-delete completed/errored jobs after 24 hours. Running jobs are
+    // never auto-deleted — only via explicit cleanup.
+    // Unique jobId: syncPendingJobs is check-then-insert; when the cluster lock
+    // expires mid-run (many jobs, slow starts) a second node can enter the sync
+    // concurrently — the unique index turns the double insert (and the double
+    // query start behind it) into a harmless duplicate-key error.
     try {
         await collection().createIndex(
             { updatedAt: 1 },
             { expireAfterSeconds: 86400, partialFilterExpression: { status: { $in: ['done', 'error'] } } }
         );
+        await collection().createIndex({ jobId: 1 }, { unique: true });
     } catch (err) {
-        await context.log('warn', `[PG_ASYNC] Could not create TTL index: ${err.message}`);
+        await context.log('warn', `[PG_ASYNC] Could not create index: ${err.message}`);
     }
 
     const discardAuth = async (jobId) => {
@@ -32,19 +37,45 @@ module.exports = async (context) => {
         }
     };
 
-    const failJob = async (job, message) => {
-        await collection().updateOne(
-            { jobId: job.jobId },
-            { $set: { status: 'error', error: message, updatedAt: new Date() } }
+    /**
+     * Atomically claim a status transition from 'running'. Exactly one node in the
+     * cluster wins the claim for a given job — the loser (e.g. a node that was
+     * paused long enough for stale recovery to take over and then resumed) must
+     * NOT deliver anything, only clean up its local connection.
+     */
+    const claimJob = async (jobId, fields) => {
+        const res = await collection().findOneAndUpdate(
+            { jobId, status: 'running' },
+            { $set: { ...fields, updatedAt: new Date() } }
         );
+        // Driver version differences: result may be the doc or { value: doc }.
+        return Boolean(res && (res.value || res.jobId || res['_id']));
+    };
+
+    const failJob = async (job, message) => {
+        const claimed = await claimJob(job.jobId, { status: 'error', error: message });
         await connections.closeConnection(job.jobId);
         await discardAuth(job.jobId);
+        if (!claimed) return; // another node already finished/failed this job
         await context.triggerComponent(
             job.flowId, job.componentId,
             { asyncJobId: job.jobId, query: job.query, asyncError: message },
             { enqueueOnly: 'true' }
         ).catch(() => {});
     };
+
+    const insertJob = (jobData) => collection().insertOne({
+        jobId: jobData.jobId,
+        status: jobData.status || 'running',
+        flowId: jobData.flowId,
+        componentId: jobData.componentId,
+        query: jobData.query,
+        outputType: jobData.outputType,
+        dblinkConnName: null,
+        error: jobData.error || null,
+        createdAt: new Date(jobData.createdAt || Date.now()),
+        updatedAt: new Date()
+    });
 
     /**
      * Sync pending async jobs from service state into MongoDB and START them here.
@@ -70,18 +101,19 @@ module.exports = async (context) => {
                     // Credentials go to service state; the job document itself never
                     // holds them so the pgAsyncJobs collection contains no secrets.
                     await context.service.stateSet(authStateKey(jobId), jobData.auth);
-                    await collection().insertOne({
-                        jobId: jobData.jobId,
-                        status: jobData.status || 'running',
-                        flowId: jobData.flowId,
-                        componentId: jobData.componentId,
-                        query: jobData.query,
-                        outputType: jobData.outputType,
-                        dblinkConnName: null,
-                        error: jobData.error || null,
-                        createdAt: new Date(jobData.createdAt || Date.now()),
-                        updatedAt: new Date()
-                    });
+                    try {
+                        await insertJob(jobData);
+                    } catch (err) {
+                        if (err && err.code === 11000) {
+                            // Unique-index race: another node synced this job between our
+                            // findOne and insertOne (expired cluster lock). It also started
+                            // the query — do not start it again here.
+                            await context.log('info', `[PG_ASYNC] Job ${jobId} was synced by another node. Skipping start.`);
+                            await context.service.stateRemoveFromSet('pendingAsyncJobs', jobData);
+                            continue;
+                        }
+                        throw err;
+                    }
                     await context.log('info', `[PG_ASYNC] Synced job ${jobId} from service state to MongoDB.`);
 
                     try {
@@ -170,26 +202,22 @@ module.exports = async (context) => {
                     const rows = result.rows || [];
                     await context.log('info', `[PG_ASYNC] Job ${jobId} done — ${rows.length} row(s).`);
 
-                    // Persist the result so it can be inspected or re-delivered
-                    // even if the triggerComponent delivery below fails.
-                    await collection().updateOne(
-                        { jobId },
-                        {
-                            $set: {
-                                status: 'done',
-                                result: rows,
-                                rowCount: rows.length,
-                                updatedAt: new Date()
-                            }
-                        }
-                    );
+                    // Atomic claim running→done: only the claiming node delivers. Result
+                    // rows are intentionally NOT persisted in the job document — a large
+                    // resultset would exceed the 16MB BSON document limit and kill an
+                    // otherwise successful job; only rowCount is kept for inspection.
+                    const claimed = await claimJob(jobId, { status: 'done', rowCount: rows.length });
 
-                    await context.triggerComponent(
-                        job.flowId,
-                        job.componentId,
-                        { asyncJobId: jobId, outputType: job.outputType, query: job.query, asyncRows: rows },
-                        { enqueueOnly: 'true' }
-                    );
+                    if (claimed) {
+                        await context.triggerComponent(
+                            job.flowId,
+                            job.componentId,
+                            { asyncJobId: jobId, outputType: job.outputType, query: job.query, asyncRows: rows },
+                            { enqueueOnly: 'true' }
+                        );
+                    } else {
+                        await context.log('info', `[PG_ASYNC] Job ${jobId} was already finished by another node. Skipping delivery.`);
+                    }
 
                     await connections.closeConnection(jobId);
                     await discardAuth(jobId);
@@ -233,6 +261,19 @@ module.exports = async (context) => {
             if (openConns[jobId]) continue; // owned locally — pollLocalJobs handles it
 
             try {
+                // Never restart (a potentially expensive) query for a flow that has
+                // been stopped in the meantime — pollLocalJobs would only kill it
+                // again on its next tick, after the full query ran for nothing.
+                const flow = await context.db
+                    .coreCollection('flows')
+                    .findOne({ flowId: job.flowId, stage: 'running' });
+                if (!flow) {
+                    await context.log('info', `[PG_ASYNC] Flow ${job.flowId} is not running. Removing stale job ${jobId} instead of restarting it.`);
+                    await collection().deleteOne({ jobId });
+                    await discardAuth(jobId);
+                    continue;
+                }
+
                 const auth = await context.service.stateGet(authStateKey(jobId));
                 if (!auth) {
                     await failJob(job, 'Cannot recover job: credentials are no longer available.');

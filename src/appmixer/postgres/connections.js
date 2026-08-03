@@ -30,7 +30,11 @@ const buildConnStr = (auth) => {
     const host = encodeURIComponent(auth.dbHost);
     const port = auth.dbPort || 5432;
     const dbname = encodeURIComponent(auth.database);
-    return `postgresql://${user}:${password}@${host}:${port}/${dbname}`;
+    // default_transaction_read_only enforces read-only server-side: the async query
+    // may be re-executed by stale-job recovery, and the SELECT/WITH regex guard in
+    // Query.js can be bypassed with a data-modifying CTE (WITH x AS (DELETE ...) SELECT ...).
+    const options = encodeURIComponent('-c default_transaction_read_only=on');
+    return `postgresql://${user}:${password}@${host}:${port}/${dbname}?options=${options}`;
 };
 
 /**
