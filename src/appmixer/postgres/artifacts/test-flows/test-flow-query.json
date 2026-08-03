@@ -17,7 +17,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "on-start": ["out"]
+                    "on-start": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -31,7 +33,7 @@
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "CREATE TABLE IF NOT EXISTS appmixer_e2e_query_test (id SERIAL PRIMARY KEY, val TEXT); DELETE FROM appmixer_e2e_query_test; INSERT INTO appmixer_e2e_query_test (val) VALUES ('alpha'), ('beta'), ('gamma')",
+                                    "query": "CREATE TABLE IF NOT EXISTS appmixer_e2e_query_test (id SERIAL PRIMARY KEY, val TEXT)",
                                     "outputType": "rows"
                                 }
                             }
@@ -47,13 +49,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "setup-table": ["out", "emptyResult"]
+                    "seed-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "setup-table": {
+                        "seed-table": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -88,7 +93,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "query-rows": ["out"]
+                    "query-rows": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -100,12 +107,30 @@
                                 "modifiers": {
                                     "expression": {
                                         "first-val": {
-                                            "variable": "$.query-rows.out.rows[0].val",
-                                            "functions": []
+                                            "variable": "$.query-rows.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
                                         "row-count": {
                                             "variable": "$.query-rows.out.rows",
-                                            "functions": [{ "name": "length" }]
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[2].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -120,7 +145,7 @@
                                             {
                                                 "field": "{{{row-count}}}",
                                                 "assertion": "equal",
-                                                "expected": "3"
+                                                "expected": "gamma"
                                             }
                                         ]
                                     }
@@ -138,13 +163,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "setup-table": ["out", "emptyResult"]
+                    "seed-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "setup-table": {
+                        "seed-table": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -179,7 +207,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "query-row": ["out"]
+                    "query-row": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -229,13 +259,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "setup-table": ["out", "emptyResult"]
+                    "seed-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "setup-table": {
+                        "seed-table": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -270,7 +303,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "query-file": ["out"]
+                    "query-file": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -310,9 +345,15 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-rows": ["out"],
-                    "assert-row": ["out"],
-                    "assert-file": ["out"]
+                    "assert-rows": [
+                        "out"
+                    ],
+                    "assert-row": [
+                        "out"
+                    ],
+                    "assert-file": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -328,7 +369,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "after-all": ["out"]
+                    "after-all": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -358,13 +401,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "drop-table": ["out", "emptyResult"]
+                    "drop-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "successStoreId": "695d11bf9bd2c7da7fff03f6",
+                    "failedStoreId": "695d11c1c38355dede7fa7a0"
                 },
                 "transform": {
                     "in": {
@@ -403,6 +449,50 @@
                                     "recipients": "jirka@client.io",
                                     "testCase": "E2E PostgreSQL - Query Output Types",
                                     "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "seed-table": {
+            "type": "appmixer.postgres.db.Query",
+            "x": 352,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "setup-table": [
+                        "out",
+                        "emptyResult"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "setup-table": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "WITH cleared AS (DELETE FROM appmixer_e2e_query_test RETURNING id) INSERT INTO appmixer_e2e_query_test (val) VALUES ('alpha'), ('beta'), ('gamma') RETURNING id, val",
+                                    "outputType": "rows"
+                                }
+                            },
+                            "emptyResult": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "WITH cleared AS (DELETE FROM appmixer_e2e_query_test RETURNING id) INSERT INTO appmixer_e2e_query_test (val) VALUES ('alpha'), ('beta'), ('gamma') RETURNING id, val",
+                                    "outputType": "rows"
                                 }
                             }
                         }

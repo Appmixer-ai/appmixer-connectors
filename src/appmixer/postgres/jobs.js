@@ -47,9 +47,13 @@ module.exports = async (context) => {
     };
 
     /**
-     * Sync pending async jobs from service state into MongoDB.
+     * Sync pending async jobs from service state into MongoDB and START them here.
      * Components register jobs via context.service.stateAddToSet('pendingAsyncJobs', ...)
-     * because they don't have access to context.db.
+     * because they don't have access to context.db — and, crucially, they run in
+     * engine worker processes that share no memory with this plugin: a dblink
+     * session opened in a component could never be polled by pollLocalJobs. The
+     * query is therefore fired from THIS process, so the pg client lands in the
+     * local connections map that pollLocalJobs watches.
      */
     async function syncPendingJobs() {
 
@@ -79,6 +83,20 @@ module.exports = async (context) => {
                         updatedAt: new Date()
                     });
                     await context.log('info', `[PG_ASYNC] Synced job ${jobId} from service state to MongoDB.`);
+
+                    try {
+                        const dblinkConnName = await connections.startAsyncQuery(jobData.auth, jobId, jobData.query);
+                        await collection().updateOne(
+                            { jobId },
+                            { $set: { dblinkConnName, updatedAt: new Date() } }
+                        );
+                        await context.log('info', `[PG_ASYNC] Started async query for job ${jobId} (${dblinkConnName}).`);
+                    } catch (err) {
+                        // Start failed (bad SQL, missing dblink extension, unreachable DB) —
+                        // deliver the error to the component instead of leaving the job to
+                        // rot until the stale-recovery restart.
+                        await failJob(jobData, err.message);
+                    }
                 }
 
                 // Remove from state set after successful sync

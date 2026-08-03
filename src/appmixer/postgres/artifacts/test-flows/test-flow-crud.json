@@ -17,7 +17,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "on-start": ["out"]
+                    "on-start": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -46,38 +48,44 @@
             "y": 144,
             "version": "1.0.0",
             "source": {
-                "in": {
-                    "create-table": ["out", "emptyResult"]
+                "row": {
+                    "create-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "transform": {
-                    "in": {
+                    "row": {
                         "create-table": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "tableName": {},
-                                    "data": {}
+                                    "name": {},
+                                    "score": {}
                                 },
                                 "lambda": {
-                                    "tableName": "appmixer_e2e_test",
-                                    "data": "{\"name\": \"E2E Test Row\", \"score\": 42}"
+                                    "name": "E2E Test Row",
+                                    "score": 42
                                 }
                             },
                             "emptyResult": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "tableName": {},
-                                    "data": {}
+                                    "name": {},
+                                    "score": {}
                                 },
                                 "lambda": {
-                                    "tableName": "appmixer_e2e_test",
-                                    "data": "{\"name\": \"E2E Test Row\", \"score\": 42}"
+                                    "name": "E2E Test Row",
+                                    "score": 42
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "table": "appmixer_e2e_test"
                 }
             }
         },
@@ -88,23 +96,25 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-row": ["out"]
+                    "create-row": [
+                        "newRow"
+                    ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
                         "create-row": {
-                            "out": {
+                            "newRow": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
                                         "row-id": {
-                                            "variable": "$.create-row.out.id",
+                                            "variable": "$.create-row.newRow.id",
                                             "functions": []
                                         },
                                         "row-name": {
-                                            "variable": "$.create-row.out.name",
+                                            "variable": "$.create-row.newRow.name",
                                             "functions": []
                                         }
                                     }
@@ -137,14 +147,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "create-row": ["out"]
+                    "create-row": [
+                        "newRow"
+                    ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
                         "create-row": {
-                            "out": {
+                            "newRow": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "query": {},
@@ -167,7 +179,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "query-rows": ["out"]
+                    "query-rows": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -179,8 +193,17 @@
                                 "modifiers": {
                                     "expression": {
                                         "first-score": {
-                                            "variable": "$.query-rows.out.rows[0].score",
-                                            "functions": []
+                                            "variable": "$.query-rows.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].score"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -207,29 +230,44 @@
             "y": 144,
             "version": "1.0.0",
             "source": {
-                "in": {
-                    "query-rows": ["out"]
+                "row": {
+                    "query-rows": [
+                        "out"
+                    ]
                 }
             },
             "config": {
                 "transform": {
-                    "in": {
+                    "row": {
                         "query-rows": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "tableName": {},
-                                    "filters": {},
-                                    "data": {}
+                                    "score": {},
+                                    "filter": {}
                                 },
                                 "lambda": {
-                                    "tableName": "appmixer_e2e_test",
-                                    "filters": "{\"AND\": [{\"column\": \"name\", \"operator\": \"=\", \"value\": \"E2E Test Row\"}]}",
-                                    "data": "{\"score\": 99}"
+                                    "score": 99,
+                                    "filter": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "column": "name",
+                                                        "operator": "=",
+                                                        "value": "E2E Test Row"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "table": "appmixer_e2e_test"
                 }
             }
         },
@@ -240,7 +278,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "update-row": ["out"]
+                    "update-row": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -251,8 +291,8 @@
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "updated-score": {
-                                            "variable": "$.update-row.out.score",
+                                        "updated-count": {
+                                            "variable": "$.update-row.out.rowCount",
                                             "functions": []
                                         }
                                     }
@@ -261,9 +301,9 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{updated-score}}}",
+                                                "field": "{{{updated-count}}}",
                                                 "assertion": "equal",
-                                                "expected": "99"
+                                                "expected": "1"
                                             }
                                         ]
                                     }
@@ -281,7 +321,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "update-row": ["out"]
+                    "update-row": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -291,16 +333,29 @@
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "tableName": {},
-                                    "filters": {}
+                                    "filter": {}
                                 },
                                 "lambda": {
-                                    "tableName": "appmixer_e2e_test",
-                                    "filters": "{\"AND\": [{\"column\": \"name\", \"operator\": \"=\", \"value\": \"E2E Test Row\"}]}"
+                                    "filter": {
+                                        "AND": [
+                                            {
+                                                "OR": [
+                                                    {
+                                                        "column": "name",
+                                                        "operator": "=",
+                                                        "value": "E2E Test Row"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "table": "appmixer_e2e_test"
                 }
             }
         },
@@ -311,7 +366,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "delete-row": ["out"]
+                    "delete-row": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -352,10 +409,18 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "assert-create": ["out"],
-                    "assert-query": ["out"],
-                    "assert-update": ["out"],
-                    "assert-delete": ["out"]
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-query": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ],
+                    "assert-delete": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -371,7 +436,9 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "after-all": ["out"]
+                    "after-all": [
+                        "out"
+                    ]
                 }
             },
             "config": {
@@ -401,13 +468,16 @@
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "drop-table": ["out", "emptyResult"]
+                    "drop-table": [
+                        "out",
+                        "emptyResult"
+                    ]
                 }
             },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "successStoreId": "695d11bf9bd2c7da7fff03f6",
+                    "failedStoreId": "695d11c1c38355dede7fa7a0"
                 },
                 "transform": {
                     "in": {

@@ -31,7 +31,7 @@
                                     "outputType": {}
                                 },
                                 "lambda": {
-                                    "query": "CREATE TABLE IF NOT EXISTS appmixer_e2e_async_test (id SERIAL PRIMARY KEY, val TEXT); DELETE FROM appmixer_e2e_async_test; INSERT INTO appmixer_e2e_async_test (val) VALUES ('async-alpha'), ('async-beta'), ('async-gamma')",
+                                    "query": "CREATE TABLE IF NOT EXISTS appmixer_e2e_async_test (id SERIAL PRIMARY KEY, val TEXT)",
                                     "outputType": "rows"
                                 }
                             }
@@ -40,7 +40,7 @@
                 }
             }
         },
-        "sync-query": {
+        "seed-table": {
             "type": "appmixer.postgres.db.Query",
             "x": 448,
             "y": 16,
@@ -54,6 +54,47 @@
                 "transform": {
                     "in": {
                         "setup-table": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "WITH cleared AS (DELETE FROM appmixer_e2e_async_test RETURNING id) INSERT INTO appmixer_e2e_async_test (val) VALUES ('async-alpha'), ('async-beta'), ('async-gamma') RETURNING id, val",
+                                    "outputType": "rows"
+                                }
+                            },
+                            "emptyResult": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "query": {},
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "query": "WITH cleared AS (DELETE FROM appmixer_e2e_async_test RETURNING id) INSERT INTO appmixer_e2e_async_test (val) VALUES ('async-alpha'), ('async-beta'), ('async-gamma') RETURNING id, val",
+                                    "outputType": "rows"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "sync-query": {
+            "type": "appmixer.postgres.db.Query",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "seed-table": ["out", "emptyResult"]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "seed-table": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -100,12 +141,30 @@
                                 "modifiers": {
                                     "expression": {
                                         "first-val": {
-                                            "variable": "$.sync-query.out.rows[0].val",
-                                            "functions": []
+                                            "variable": "$.sync-query.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
                                         "row-count": {
                                             "variable": "$.sync-query.out.rows",
-                                            "functions": [{"name": "length"}]
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[2].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -120,7 +179,7 @@
                                             {
                                                 "field": "{{{row-count}}}",
                                                 "assertion": "equal",
-                                                "expected": "3"
+                                                "expected": "async-gamma"
                                             }
                                         ]
                                     }
@@ -182,12 +241,30 @@
                                 "modifiers": {
                                     "expression": {
                                         "first-val": {
-                                            "variable": "$.async-query-rows.out.rows[0].val",
-                                            "functions": []
+                                            "variable": "$.async-query-rows.out.rows",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         },
                                         "row-count": {
                                             "variable": "$.async-query-rows.out.rows",
-                                            "functions": [{"name": "length"}]
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[2].val"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     }
                                 },
@@ -202,7 +279,7 @@
                                             {
                                                 "field": "{{{row-count}}}",
                                                 "assertion": "equal",
-                                                "expected": "3"
+                                                "expected": "async-gamma"
                                             }
                                         ]
                                     }
@@ -345,8 +422,8 @@
             },
             "config": {
                 "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
+                    "successStoreId": "695d11bf9bd2c7da7fff03f6",
+                    "failedStoreId": "695d11c1c38355dede7fa7a0"
                 },
                 "transform": {
                     "in": {

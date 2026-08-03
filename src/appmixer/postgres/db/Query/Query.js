@@ -83,10 +83,12 @@ module.exports = {
     },
 
     /**
-     * Starts an async (dblink-based) query.
-     * Registers the job via service state so jobs.js can track it in MongoDB,
-     * fires dblink_send_query via connections module, and returns immediately.
-     * Results will be delivered later via deliverAsyncResult() triggered by jobs.js.
+     * Registers an async (dblink-based) query job and returns immediately.
+     * The query itself is started by jobs.js (syncPendingJobs) in the plugin
+     * process — components run in engine worker processes that share no memory
+     * with the plugin, so a dblink session opened here could never be polled
+     * by the plugin's poll job. Results are delivered later via
+     * deliverAsyncResult() triggered by jobs.js.
      */
     async startAsyncQuery(context, query, outputType) {
 
@@ -107,7 +109,6 @@ module.exports = {
             throw new context.CancelError('Async Mode supports read-only SELECT (or WITH ... SELECT) queries only.');
         }
 
-        const connections = require('../../connections');
         const jobId = crypto.randomBytes(16).toString('hex');
 
         await context.log({ step: 'async_query_start', jobId, query });
@@ -123,18 +124,13 @@ module.exports = {
             createdAt: new Date().toISOString()
         };
 
-        // Register the job via service-level state so jobs.js can persist it to MongoDB.
-        // Using stateAddToSet so multiple concurrent async queries don't overwrite each other.
+        // Register the job via service-level state so jobs.js can persist it to MongoDB
+        // and start the dblink query in the plugin process (the only process that can
+        // poll it). Using stateAddToSet so multiple concurrent async queries don't
+        // overwrite each other.
         await context.service.stateAddToSet('pendingAsyncJobs', jobData);
 
-        try {
-            const dblinkConnName = await connections.startAsyncQuery(context.auth, jobId, query);
-            await context.log({ step: 'async_query_started', jobId, dblinkConnName });
-        } catch (err) {
-            // Remove from pending set and re-add with error status
-            await context.service.stateRemoveFromSet('pendingAsyncJobs', jobData);
-            throw err;
-        }
+        await context.log({ step: 'async_query_registered', jobId });
 
         // Return without sending to output — jobs.js will deliver results asynchronously
     },
