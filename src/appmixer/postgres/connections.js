@@ -1,6 +1,7 @@
 'use strict';
 
 const { Client } = require('pg');
+const QueryStream = require('pg-query-stream');
 
 /**
  * Process-global storage for live pg.Client instances running dblink async queries.
@@ -96,45 +97,65 @@ const startAsyncQuery = async (auth, jobId, query) => {
 
 /**
  * Checks whether the async query is still running.
- * Returns null if the connection is not on this node.
- * Returns { status: 'pending' } if still running.
- * Returns { status: 'done', rows: Array } when complete.
- *
  * @param {string} jobId
- * @returns {null | { status: 'pending' } | { status: 'done', rows: object[] }}
+ * @returns {null | boolean} null when the connection is not on this node,
+ *   true when the query is still running, false when the result is ready.
  */
-const pollJob = async (jobId) => {
+const isJobBusy = async (jobId) => {
 
     const conn = PG_ASYNC_CONNECTIONS[jobId];
     if (!conn) return null; // not on this node
 
-    const { client, dblinkConnName } = conn;
-
-    const busyRes = await client.query(
+    const busyRes = await conn.client.query(
         'SELECT dblink_is_busy($1) AS busy',
-        [dblinkConnName]
+        [conn.dblinkConnName]
     );
+    return busyRes.rows[0].busy === 1;
+};
 
-    if (busyRes.rows[0].busy === 1) {
-        return { status: 'pending' };
-    }
+/**
+ * Fetches the whole result set into memory (rows/row output types).
+ * Call only after isJobBusy() returned false — dblink_get_result blocks otherwise.
+ * The result can be consumed only once per dblink session.
+ * @param {string} jobId
+ * @returns {null | object[]}
+ */
+const fetchRows = async (jobId) => {
 
-    // Query is done — fetch results via dblink_get_result
-    // Using the generic single-column signature matching our row_to_json wrapper
-    const resultRes = await client.query(
+    const conn = PG_ASYNC_CONNECTIONS[jobId];
+    if (!conn) return null;
+
+    // Generic single-column signature matching our row_to_json wrapper.
+    const resultRes = await conn.client.query(
         'SELECT * FROM dblink_get_result($1) AS r(json_row text)',
-        [dblinkConnName]
+        [conn.dblinkConnName]
     );
 
-    const rows = resultRes.rows.map(r => {
+    return resultRes.rows.map(r => {
         try {
             return JSON.parse(r.json_row);
         } catch (e) {
             return { raw: r.json_row };
         }
     });
+};
 
-    return { status: 'done', rows };
+/**
+ * Streams the result set (file output type) — never materializes it in memory.
+ * Call only after isJobBusy() returned false. Consumable only once.
+ * @param {string} jobId
+ * @returns {null | ReadableStream} object-mode stream of { json_row: string } rows
+ */
+const streamResult = (jobId) => {
+
+    const conn = PG_ASYNC_CONNECTIONS[jobId];
+    if (!conn) return null;
+
+    const queryStream = new QueryStream(
+        'SELECT * FROM dblink_get_result($1) AS r(json_row text)',
+        [conn.dblinkConnName]
+    );
+    return conn.client.query(queryStream);
 };
 
 /**
@@ -168,7 +189,9 @@ const listConnections = () => PG_ASYNC_CONNECTIONS;
 
 module.exports = {
     startAsyncQuery,
-    pollJob,
+    isJobBusy,
+    fetchRows,
+    streamResult,
     closeConnection,
     listConnections
 };

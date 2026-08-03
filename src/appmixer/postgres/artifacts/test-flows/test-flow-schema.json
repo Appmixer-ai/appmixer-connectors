@@ -1,6 +1,4 @@
 {
-    "name": "E2E PostgreSQL - Schema Inspection",
-    "description": "End-to-end test for PostgreSQL connector - tests schema inspection components: ListTables and ListColumns. Creates a test table, verifies it appears in ListTables, verifies columns appear in ListColumns, then cleans up.",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -8,7 +6,11 @@
             "y": 144,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "create-table": {
             "type": "appmixer.postgres.db.Query",
@@ -39,7 +41,14 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "list-tables": {
@@ -71,7 +80,14 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-list-tables": {
@@ -123,6 +139,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "list-columns": {
@@ -156,8 +176,13 @@
                     }
                 },
                 "properties": {
-                    "table": "appmixer_e2e_schema_test"
+                    "table": "appmixer_e2e_schema_test",
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-list-columns": {
@@ -209,6 +234,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "after-all": {
@@ -230,6 +259,10 @@
                 "properties": {
                     "timeout": 30
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "drop-table": {
@@ -261,14 +294,21 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1408,
             "y": 144,
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "in": {
                     "drop-table": [
@@ -278,10 +318,7 @@
                 }
             },
             "config": {
-                "properties": {
-                    "successStoreId": "695d11bf9bd2c7da7fff03f6",
-                    "failedStoreId": "695d11c1c38355dede7fa7a0"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
                         "drop-table": {
@@ -324,7 +361,14 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         }
-    }
+    },
+    "name": "E2E PostgreSQL - Schema Inspection",
+    "type": "automation",
+    "notes": {}
 }

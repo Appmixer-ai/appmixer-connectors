@@ -92,12 +92,6 @@ module.exports = {
      */
     async startAsyncQuery(context, query, outputType) {
 
-        // Async mode delivers results back through the 'out' port as rows —
-        // streaming to a file is not possible in this mode.
-        if (outputType === 'file') {
-            throw new context.CancelError('Output type "Stream to file" is not supported in Async Mode. Choose "All rows at once" or "One row at a time".');
-        }
-
         // The dblink result wrapper (row_to_json over a subquery) only works for
         // statements that return rows, and a recovered job may be re-executed —
         // so async mode is restricted to single, read-only SELECT/WITH queries.
@@ -139,10 +133,23 @@ module.exports = {
      * Called when jobs.js has determined the query is complete (or errored).
      * Receives result rows directly in the triggerComponent payload.
      */
-    async deliverAsyncResult(context, { asyncJobId: jobId, outputType, query, asyncRows, asyncError }) {
+    async deliverAsyncResult(
+        context,
+        { asyncJobId: jobId, outputType, query, asyncRows, asyncError, asyncFileId, asyncRowCount }
+    ) {
 
         if (asyncError) {
             throw new Error(`Async query failed: ${asyncError}`);
+        }
+
+        if (outputType === 'file') {
+            // jobs.js streamed the result into file storage — only the fileId travels
+            // in the message, so arbitrarily large results are safe.
+            await context.log({ step: 'async_query_deliver', jobId, fileId: asyncFileId, rowCount: asyncRowCount });
+            if (!asyncFileId) {
+                return context.sendJson({ query, message: 'No data returned for the query.' }, 'emptyResult');
+            }
+            return context.sendJson({ fileId: asyncFileId }, 'out');
         }
 
         const rows = asyncRows || [];
@@ -158,7 +165,6 @@ module.exports = {
                 await context.sendJson({ row: rows[i], index: i }, 'out');
             }
         } else {
-            // 'rows' — default for async (file output not supported in async mode)
             await context.sendJson({ rows }, 'out');
         }
     },

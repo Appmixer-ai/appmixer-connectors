@@ -1,5 +1,7 @@
 'use strict';
 
+const { Transform } = require('stream');
+const { stringify } = require('csv-stringify');
 const connections = require('./connections');
 
 module.exports = async (context) => {
@@ -63,6 +65,64 @@ module.exports = async (context) => {
             { enqueueOnly: 'true' }
         ).catch(() => {});
     };
+
+    /**
+     * Streams the finished dblink result of a job into platform file storage as CSV.
+     * Returns { fileId, rowCount }; fileId is null for an empty result (the empty
+     * file is removed so the component can emit on the emptyResult port instead).
+     * The file is saved under the flow owner's userId (read from the flows
+     * collection) with originFlowId metadata — the same identity/lifecycle a
+     * component-level context.saveFileStream would produce. Note: unlike the
+     * component path this direct adapter call does not go through the user
+     * storage-quota manager (not exposed to plugins).
+     */
+    async function streamResultToFile(job) {
+
+        const flow = await context.db.coreCollection('flows').findOne({ flowId: job.flowId });
+        if (!flow || !flow.userId) {
+            throw new Error(`Cannot resolve the owner of flow ${job.flowId} to save the result file.`);
+        }
+
+        const source = connections.streamResult(job.jobId);
+        if (!source) {
+            throw new Error('Result stream is not available on this node.');
+        }
+
+        let rowCount = 0;
+        const parse = new Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                rowCount++;
+                try {
+                    callback(null, JSON.parse(chunk.json_row));
+                } catch (e) {
+                    callback(null, { raw: chunk.json_row });
+                }
+            }
+        });
+        const stringifier = stringify({ header: true });
+
+        const adapter = context.file.Factory.getAdapter();
+        const file = await adapter.saveFileStream(
+            flow.userId,
+            'pg-async-result.csv',
+            source.pipe(parse).pipe(stringifier),
+            undefined,
+            { originFlowId: job.flowId }
+        );
+        const fileJson = typeof file.toJson === 'function' ? file.toJson() : file;
+        const fileId = fileJson.fileId;
+
+        if (!rowCount) {
+            // Empty result — remove the empty CSV, the component emits emptyResult.
+            try {
+                await adapter.removeFile(flow.userId, fileId);
+            } catch (e) { /* best effort */ }
+            return { fileId: null, rowCount: 0 };
+        }
+
+        return { fileId, rowCount };
+    }
 
     const insertJob = (jobData) => collection().insertOne({
         jobId: jobData.jobId,
@@ -190,38 +250,74 @@ module.exports = async (context) => {
                 }
 
                 // ── Poll the query status ──────────────────────────────────────
-                const result = await connections.pollJob(jobId);
+                const busy = await connections.isJobBusy(jobId);
 
-                if (!result || result.status === 'pending') {
+                if (busy === null || busy) {
                     // Heartbeat — tells other nodes this job is alive and owned.
                     await collection().updateOne({ jobId }, { $set: { updatedAt: new Date() } });
                     continue;
                 }
 
-                if (result.status === 'done') {
-                    const rows = result.rows || [];
-                    await context.log('info', `[PG_ASYNC] Job ${jobId} done — ${rows.length} row(s).`);
+                // Atomic claim running→done BEFORE consuming the result: only the
+                // claiming node fetches and delivers. A node that lost the claim
+                // (its job was taken over by stale recovery while it was paused)
+                // just discards its copy of the result.
+                const claimed = await claimJob(jobId, { status: 'done' });
+                if (!claimed) {
+                    await context.log('info', `[PG_ASYNC] Job ${jobId} was already finished by another node. Skipping delivery.`);
+                    await connections.closeConnection(jobId);
+                    await discardAuth(jobId);
+                    continue;
+                }
 
-                    // Atomic claim running→done: only the claiming node delivers. Result
-                    // rows are intentionally NOT persisted in the job document — a large
-                    // resultset would exceed the 16MB BSON document limit and kill an
-                    // otherwise successful job; only rowCount is kept for inspection.
-                    const claimed = await claimJob(jobId, { status: 'done', rowCount: rows.length });
-
-                    if (claimed) {
+                try {
+                    if (job.outputType === 'file') {
+                        // Stream the result into file storage — never materialized in
+                        // memory or in a message payload, so arbitrarily large results
+                        // work (this is what async mode exists for).
+                        const { fileId, rowCount } = await streamResultToFile(job);
+                        await collection().updateOne({ jobId }, { $set: { rowCount, updatedAt: new Date() } });
+                        await context.log('info',
+                            `[PG_ASYNC] Job ${jobId} done — ${rowCount} row(s) → file ${fileId || '(empty)'}.`);
+                        await context.triggerComponent(
+                            job.flowId,
+                            job.componentId,
+                            { asyncJobId: jobId, outputType: 'file', query: job.query, asyncFileId: fileId, asyncRowCount: rowCount },
+                            { enqueueOnly: 'true' }
+                        );
+                    } else {
+                        // rows/row output — the result travels in the message payload.
+                        // It is intentionally NOT persisted in the job document (16MB
+                        // BSON limit would fail large but successful jobs).
+                        const rows = (await connections.fetchRows(jobId)) || [];
+                        await collection().updateOne(
+                            { jobId },
+                            { $set: { rowCount: rows.length, updatedAt: new Date() } }
+                        );
+                        await context.log('info', `[PG_ASYNC] Job ${jobId} done — ${rows.length} row(s).`);
                         await context.triggerComponent(
                             job.flowId,
                             job.componentId,
                             { asyncJobId: jobId, outputType: job.outputType, query: job.query, asyncRows: rows },
                             { enqueueOnly: 'true' }
                         );
-                    } else {
-                        await context.log('info', `[PG_ASYNC] Job ${jobId} was already finished by another node. Skipping delivery.`);
                     }
-
-                    await connections.closeConnection(jobId);
-                    await discardAuth(jobId);
+                } catch (deliveryErr) {
+                    // We own the claim (status is already 'done') — failJob would not
+                    // match; record the error and notify the component directly.
+                    await collection().updateOne(
+                        { jobId },
+                        { $set: { status: 'error', error: deliveryErr.message, updatedAt: new Date() } }
+                    );
+                    await context.triggerComponent(
+                        job.flowId, job.componentId,
+                        { asyncJobId: jobId, query: job.query, asyncError: deliveryErr.message },
+                        { enqueueOnly: 'true' }
+                    ).catch(() => {});
                 }
+
+                await connections.closeConnection(jobId);
+                await discardAuth(jobId);
 
             } catch (err) {
                 await context.log('error', `[PG_ASYNC] Error processing job ${jobId}: ${err.message}`);

@@ -1,6 +1,4 @@
 {
-    "name": "E2E PostgreSQL - CRUD Lifecycle",
-    "description": "End-to-end test for PostgreSQL connector - tests full CRUD lifecycle: creates a test table via Query, inserts a row via CreateRow, reads it back via Query, updates it via UpdateRow, deletes it via DeleteRow, then drops the table. Asserts each step.",
     "flow": {
         "on-start": {
             "type": "appmixer.utils.controls.OnStart",
@@ -8,7 +6,11 @@
             "y": 144,
             "source": {},
             "version": "1.0.0",
-            "config": {}
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
         },
         "create-table": {
             "type": "appmixer.postgres.db.Query",
@@ -39,7 +41,14 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "create-row": {
@@ -85,8 +94,13 @@
                     }
                 },
                 "properties": {
-                    "table": "appmixer_e2e_test"
+                    "table": "appmixer_e2e_test",
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-create": {
@@ -156,12 +170,16 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "query-rows": {
             "type": "appmixer.postgres.db.Query",
-            "x": 640,
-            "y": 144,
+            "x": 616,
+            "y": 400,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -187,13 +205,20 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-query": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1000,
-            "y": 144,
+            "x": 865,
+            "y": 228,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -240,12 +265,16 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "update-row": {
             "type": "appmixer.postgres.db.UpdateRow",
-            "x": 832,
-            "y": 144,
+            "x": 837,
+            "y": 467,
             "version": "1.0.0",
             "source": {
                 "row": {
@@ -285,14 +314,19 @@
                     }
                 },
                 "properties": {
-                    "table": "appmixer_e2e_test"
+                    "table": "appmixer_e2e_test",
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-update": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1000,
-            "y": 272,
+            "x": 1401,
+            "y": 649,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -330,12 +364,16 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "delete-row": {
             "type": "appmixer.postgres.db.DeleteRow",
-            "x": 1192,
-            "y": 144,
+            "x": 1168,
+            "y": 294,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -373,14 +411,19 @@
                     }
                 },
                 "properties": {
-                    "table": "appmixer_e2e_test"
+                    "table": "appmixer_e2e_test",
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "assert-delete": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1384,
-            "y": 16,
+            "x": 1401,
+            "y": 294,
             "version": "1.0.0",
             "source": {
                 "in": {
@@ -418,6 +461,10 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "after-all": {
@@ -445,6 +492,10 @@
                 "properties": {
                     "timeout": 30
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "drop-table": {
@@ -476,14 +527,21 @@
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "69b42b24a745079d67442abe"
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         },
         "process-results": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1960,
             "y": 144,
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "in": {
                     "drop-table": [
@@ -493,10 +551,7 @@
                 }
             },
             "config": {
-                "properties": {
-                    "successStoreId": "695d11bf9bd2c7da7fff03f6",
-                    "failedStoreId": "695d11c1c38355dede7fa7a0"
-                },
+                "properties": {},
                 "transform": {
                     "in": {
                         "drop-table": {
@@ -539,7 +594,14 @@
                         }
                     }
                 }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
             }
         }
-    }
+    },
+    "name": "E2E PostgreSQL - CRUD Lifecycle",
+    "type": "automation",
+    "notes": {}
 }
