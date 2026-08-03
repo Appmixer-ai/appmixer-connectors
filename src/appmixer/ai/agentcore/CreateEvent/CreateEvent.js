@@ -20,7 +20,15 @@ module.exports = {
 
         let payloadValue;
         if (payload) {
-            payloadValue = typeof payload === 'string' ? JSON.parse(payload) : payload;
+            if (typeof payload === 'string') {
+                try {
+                    payloadValue = JSON.parse(payload);
+                } catch (e) {
+                    throw new context.CancelError('Invalid JSON in Payload: ' + e.message);
+                }
+            } else {
+                payloadValue = payload;
+            }
         } else if (messageText) {
             payloadValue = [{
                 conversational: {

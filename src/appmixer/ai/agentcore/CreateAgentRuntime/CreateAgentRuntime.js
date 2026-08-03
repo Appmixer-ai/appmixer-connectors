@@ -87,9 +87,15 @@ module.exports = {
             params.description = description;
         }
         if (environmentVariables) {
-            params.environmentVariables = typeof environmentVariables === 'string'
-                ? JSON.parse(environmentVariables)
-                : environmentVariables;
+            if (typeof environmentVariables === 'string') {
+                try {
+                    params.environmentVariables = JSON.parse(environmentVariables);
+                } catch (e) {
+                    throw new context.CancelError('Invalid JSON in Environment Variables: ' + e.message);
+                }
+            } else {
+                params.environmentVariables = environmentVariables;
+            }
         }
 
         const response = await controlClient.send(new CreateAgentRuntimeCommand(params));
