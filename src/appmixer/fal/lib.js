@@ -148,9 +148,19 @@ function kvToObject(rows) {
     return result;
 }
 
+// Reduce an endpoint id to the owner/model pair that queue.fal.run's request
+// routes accept. Submitting uses the FULL id (POST queue.fal.run/fal-ai/flux/schnell),
+// but the /requests/... sub-paths are only routed on the first two segments —
+// ".../fal-ai/flux/schnell/requests/<id>/status" answers 405 Method Not Allowed,
+// while ".../fal-ai/flux/requests/<id>/status" works. This mirrors the status_url
+// fal itself returns on submit.
+function queueBaseId(endpointId) {
+    return String(endpointId || '').split('/').filter(Boolean).slice(0, 2).join('/');
+}
+
 // Build the queue endpoint URLs for a given endpoint id + request id.
 function queueUrls(endpointId, requestId) {
-    const base = `${QUEUE_URL}/${endpointId}/requests/${requestId}`;
+    const base = `${QUEUE_URL}/${queueBaseId(endpointId)}/requests/${requestId}`;
     return {
         statusUrl: `${base}/status`,
         responseUrl: base,
@@ -222,6 +232,7 @@ module.exports = {
     logInference,
     parseArguments,
     kvToObject,
+    queueBaseId,
     queueUrls,
     sendArrayOutput,
     getOutputPortOptions

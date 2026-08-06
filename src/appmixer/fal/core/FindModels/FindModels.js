@@ -55,7 +55,13 @@ module.exports = {
             });
 
             const data = response.data || {};
-            models.push(...(data.models || []));
+
+            // The API nests everything except endpoint_id under `metadata`. Flatten it
+            // so the records match the output schema declared above — otherwise every
+            // field but endpoint_id would be unreachable in the variable picker.
+            for (const model of data.models || []) {
+                models.push({ endpoint_id: model.endpoint_id, ...(model.metadata || {}) });
+            }
 
             if (!data.has_more || !data.next_cursor) {
                 break;

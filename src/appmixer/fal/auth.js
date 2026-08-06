@@ -29,16 +29,22 @@ module.exports = {
 
         validate: async (context) => {
 
-            // Validate against an endpoint that REQUIRES authentication (returns
-            // 401 unauthenticated). Do NOT use /v1/models — auth is optional there,
-            // so it returns 200 even with an invalid key and would silently accept
-            // broken credentials.
+            // Validated against /v1/models, which works with an API-scoped key
+            // (the common case). Do NOT use /v1/storage/settings — it is ADMIN-only
+            // and returns 403 for ordinary API keys, so it would reject valid
+            // connections.
+            //
+            // /v1/models allows ANONYMOUS reads (no header => 200), but any request
+            // that DOES send an Authorization header is authenticated strictly:
+            // an empty, malformed, or wrong key all return 401. Since we always send
+            // the header, a broken credential can never pass this check.
             await context.httpRequest({
                 method: 'GET',
-                url: `${lib.PLATFORM_URL}/storage/settings`,
+                url: `${lib.PLATFORM_URL}/models`,
                 headers: {
                     Authorization: `Key ${context.apiKey}`
-                }
+                },
+                params: { limit: 1 }
             });
             return true;
         }

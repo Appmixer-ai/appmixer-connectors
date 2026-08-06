@@ -18,9 +18,12 @@ dynamically through `FindModels`.
 - Keys have an **API** scope (inference + most Platform APIs) or an **ADMIN** scope
   (adds usage, billing, serverless, key management). A `403` from an ADMIN-only endpoint
   means the connection is using an API-scoped key.
-- The connection is validated against `GET /v1/storage/settings`, which requires
-  authentication. (`/v1/models` is intentionally **not** used for validation — auth is
-  optional there, so it would accept an invalid key.)
+- The connection is validated against `GET /v1/models`, which accepts API-scoped keys.
+  (`/v1/storage/settings` is intentionally **not** used — it is ADMIN-only and returns
+  `403` for ordinary API keys, which would reject perfectly valid connections.)
+  `/v1/models` permits anonymous reads, but a request that *sends* an `Authorization`
+  header is authenticated strictly — empty, malformed, and wrong keys all return `401` —
+  and the validator always sends one, so an invalid key cannot slip through.
 
 ## Base URLs
 
