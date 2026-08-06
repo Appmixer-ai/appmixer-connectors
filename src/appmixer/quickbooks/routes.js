@@ -61,39 +61,41 @@ module.exports.webhookHandler = async (context, req, h) => {
         return h.response('Forbidden: Invalid signature').code(403);
     }
 
-    const realmIds = req.payload.eventNotifications?.map(notification => notification.realmId);
-    /**
-     * Combination of `name` and `operation` from entities in the payload.
-     * @example ['Customer.Create', 'Invoice.Create', 'Customer.Update'];
-     * @type {string[]} */
-    const triggerTypes = [...new Set(req.payload.eventNotifications.flatMap(notification => {
-        return notification.dataChangeEvent.entities.map(entity => `${entity.name}.${entity.operation}`);
-    }))];
-    const eventsCount = req.payload.eventNotifications.flatMap(n => n.dataChangeEvent.entities).length;
-    context.log('debug', 'quickbooks-plugin-route-webhook-log', { realmIds, triggerTypes, eventsCount });
+    // Group entities by realm (tenant). A single payload may carry more than one notification
+    // for the same realmId, so entities are merged instead of looked up by the first match.
+    /** @type {Map<string, Array<object>>} */
+    const entitiesByRealm = new Map();
+    for (const notification of req.payload.eventNotifications) {
+        const realmId = `${notification.realmId}`;
+        const entities = notification.dataChangeEvent?.entities || [];
+        entitiesByRealm.set(realmId, (entitiesByRealm.get(realmId) || []).concat(entities));
+    }
 
-    // Loop over realms (tenants). AuthHub delivers all tenants through this single shared
-    // endpoint, so we identify the owner of each event by the realmId in the payload and
-    // route to registered listeners filtered by that realmId.
-    for (const realmId of realmIds) {
+    const realmIds = [...entitiesByRealm.keys()];
+    const eventsCount = [...entitiesByRealm.values()].reduce((sum, entities) => sum + entities.length, 0);
+    context.log('debug', 'quickbooks-plugin-route-webhook-log', { realmIds, eventsCount });
+
+    // AuthHub delivers all tenants through this single shared endpoint, so we identify the
+    // owner of each event by the realmId in the payload and route to registered listeners
+    // filtered by that realmId.
+    for (const [realmId, entities] of entitiesByRealm) {
+        /**
+         * Combination of `name` and `operation` from the realm's entities.
+         * @example ['Customer.Create', 'Invoice.Create', 'Customer.Update'];
+         * @type {string[]} */
+        const triggerTypes = [...new Set(entities.map(entity => `${entity.name}.${entity.operation}`))];
         // Loop over trigger types (e.g. 'Invoice.Create')
         for (const triggerType of triggerTypes) {
-            // Get all events/entities for the realm and triggerType
-            const allEvents = req.payload.eventNotifications
-                .find(n => n.realmId === realmId)?.dataChangeEvent.entities || [];
-            const events = allEvents.filter(e => `${e.name}.${e.operation}` === triggerType);
-            const entityIds = events.map(e => e.id);
-
-            if (!entityIds.length) {
-                continue;
-            }
+            const entityIds = entities
+                .filter(entity => `${entity.name}.${entity.operation}` === triggerType)
+                .map(entity => entity.id);
 
             context.log('debug', 'quickbooks-plugin-route-webhook-trigger-start', { realmId, triggerType, entityIds });
             try {
                 const resp = await context.triggerListeners({
                     eventName: triggerType,
                     payload: entityIds,
-                    filter: listener => listener.params.realmId === `${realmId}`
+                    filter: listener => listener.params.realmId === realmId
                 });
                 await context.log('info', 'quickbooks-plugin-route-webhook-trigger-ok', { realmId, triggerType, resp });
             } catch (error) {
@@ -102,7 +104,7 @@ module.exports.webhookHandler = async (context, req, h) => {
         }
     }
 
-    context.log('info', 'quickbooks-plugin-route-webhook-success', { realmIds, triggerTypes, eventsCount });
+    context.log('info', 'quickbooks-plugin-route-webhook-success', { realmIds, eventsCount });
 
     // Empty response
     return h.response(undefined).code(200);

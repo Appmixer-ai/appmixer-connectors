@@ -321,3 +321,187 @@ describe('NewCustomer component', function() {
         assert.match(args3[0].url, /'99'%2C'100'\)/, 'Third call should contain the last 20 IDs - end');
     });
 });
+
+describe('Quickbooks webhooks: realm grouping', function() {
+
+    let context;
+    let req;
+    let h;
+
+    function sign() {
+        req.headers['intuit-signature'] = crypto.createHmac('sha256', context.config.webhookVerifierToken)
+            .update(JSON.stringify(req.payload)).digest('base64');
+    }
+
+    beforeEach(function() {
+
+        context = {
+            ...testUtils.createMockContext(),
+            config: { webhookVerifierToken: 'webhooksVerifier' },
+            profileInfo: { companyId: 'companyId' }
+        };
+        req = { payload: {}, query: {}, info: { hostname: 'hostname' }, headers: {} };
+        h = {
+            response: function(msg) {
+                return { code: function(code) { return { code, msg }; } };
+            }
+        };
+    });
+
+    // Intuit usually sends one notification per realm, but nothing guarantees it. Two
+    // notifications for the same realm must be merged, not processed twice.
+    it('should merge multiple notifications for the same realm', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [CUSTOMER_A_CREATED] }
+            }, {
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [CUSTOMER_B_CREATED, INVOICE_A1_CREATED] }
+            }]
+        };
+        sign();
+
+        const res = await webhookHandler(context, req, h);
+        // One call per trigger type, not per notification.
+        assert.equal(context.triggerListeners.callCount, 2);
+        const calls = context.triggerListeners.args.map(args => args[0]);
+
+        const customerCall = calls.find(call => call.eventName === 'Customer.Create');
+        assert(customerCall, 'Expected a Customer.Create call');
+        // Entities from both notifications, none dropped.
+        assert.deepEqual(customerCall.payload, [CUSTOMER_A_CREATED.id, CUSTOMER_B_CREATED.id]);
+
+        const invoiceCall = calls.find(call => call.eventName === 'Invoice.Create');
+        assert(invoiceCall, 'Expected an Invoice.Create call');
+        assert.deepEqual(invoiceCall.payload, [INVOICE_A1_CREATED.id]);
+
+        assert.deepEqual(res, { code: 200, msg: undefined });
+    });
+
+    // A trigger type present for one realm must not produce an empty call for another realm.
+    it('should not cross trigger types between realms', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [CUSTOMER_A_CREATED] }
+            }, {
+                realmId: REALM_ID_BOEING,
+                dataChangeEvent: { entities: [INVOICE_B1_CREATED] }
+            }]
+        };
+        sign();
+
+        await webhookHandler(context, req, h);
+        assert.equal(context.triggerListeners.callCount, 2);
+        for (const call of context.triggerListeners.args.map(args => args[0])) {
+            assert(call.payload.length, `Call for ${call.eventName} must not have an empty payload`);
+        }
+    });
+
+    // Only the first notification is validated by isPayloadValid, so a later malformed one
+    // must not crash the handler and lose the valid events.
+    it('should tolerate a notification without dataChangeEvent', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: REALM_ID_AIRBUS,
+                dataChangeEvent: { entities: [CUSTOMER_A_CREATED] }
+            }, {
+                realmId: REALM_ID_BOEING
+            }]
+        };
+        sign();
+
+        const res = await webhookHandler(context, req, h);
+        assert.equal(context.triggerListeners.callCount, 1);
+        assert.equal(context.triggerListeners.args[0][0].eventName, 'Customer.Create');
+        assert.deepEqual(res, { code: 200, msg: undefined });
+    });
+
+    // Intuit sends realmId as a string, but a listener may have stored it as a number.
+    it('should match listeners whose realmId is a number', async function() {
+
+        req.payload = {
+            eventNotifications: [{
+                realmId: Number(REALM_ID_AIRBUS),
+                dataChangeEvent: { entities: [CUSTOMER_A_CREATED] }
+            }]
+        };
+        sign();
+
+        await webhookHandler(context, req, h);
+        const call = context.triggerListeners.args[0][0];
+        // onListenerAdded normalizes params.realmId to a string, so the filter compares strings.
+        assert.equal(call.filter({ params: { realmId: REALM_ID_AIRBUS } }), true);
+        assert.equal(call.filter({ params: { realmId: REALM_ID_BOEING } }), false);
+    });
+});
+
+describe('Quickbooks onListenerAdded', function() {
+
+    let onListenerAdded;
+
+    beforeEach(async function() {
+
+        const context = {
+            ...testUtils.createMockContext(),
+            http: { router: { register: sinon.stub() } }
+        };
+        await require('../../routes')(context);
+        onListenerAdded = context.onListenerAdded.args[0][0];
+    });
+
+    it('should normalize realmId to a string', async function() {
+
+        const listener = { params: { realmId: 1185883450 } };
+        await onListenerAdded(listener);
+        assert.deepEqual(listener.params, { realmId: '1185883450' });
+    });
+
+    it('should drop extra params', async function() {
+
+        const listener = { params: { realmId: REALM_ID_AIRBUS, somethingElse: 'x' } };
+        await onListenerAdded(listener);
+        assert.deepEqual(listener.params, { realmId: REALM_ID_AIRBUS });
+    });
+
+    it('should reject a listener without realmId', async function() {
+
+        await assert.rejects(() => onListenerAdded({ params: {} }), /Missing realmId/);
+        await assert.rejects(() => onListenerAdded({}), /Missing realmId/);
+    });
+});
+
+describe('Quickbooks trigger registration', function() {
+
+    const TRIGGERS = [
+        { path: '../../accounting/NewInvoice/NewInvoice', eventName: 'Invoice.Create' },
+        { path: '../../accounting/UpdatedInvoice/UpdatedInvoice', eventName: 'Invoice.Update' },
+        { path: '../../accounting/NewCustomer/NewCustomer', eventName: 'Customer.Create' },
+        { path: '../../accounting/UpdatedCustomer/UpdatedCustomer', eventName: 'Customer.Update' }
+    ];
+
+    for (const trigger of TRIGGERS) {
+        it(`${trigger.eventName} should register and unregister a listener`, async function() {
+
+            const { start, stop } = require(trigger.path);
+            const context = {
+                ...testUtils.createMockContext(),
+                profileInfo: { companyId: REALM_ID_AIRBUS }
+            };
+
+            await start(context);
+            assert(context.addListener.calledOnce);
+            assert.deepEqual(context.addListener.args[0], [trigger.eventName, { realmId: REALM_ID_AIRBUS }]);
+            // The state-based registration must be gone — it is not AuthHub-compatible.
+            assert.equal(context.service.stateAddToSet.callCount, 0);
+
+            await stop(context);
+            assert(context.removeListener.calledOnce);
+            assert.deepEqual(context.removeListener.args[0], [trigger.eventName]);
+        });
+    }
+});
