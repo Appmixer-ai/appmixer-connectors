@@ -490,6 +490,9 @@ describe('Quickbooks trigger registration', function() {
             const { start, stop } = require(trigger.path);
             const context = {
                 ...testUtils.createMockContext(),
+                callAppmixer: sinon.stub().resolves({}),
+                flowId: 'flow-1',
+                componentId: 'component-1',
                 profileInfo: { companyId: REALM_ID_AIRBUS }
             };
 
@@ -498,10 +501,133 @@ describe('Quickbooks trigger registration', function() {
             assert.deepEqual(context.addListener.args[0], [trigger.eventName, { realmId: REALM_ID_AIRBUS }]);
             // The state-based registration must be gone — it is not AuthHub-compatible.
             assert.equal(context.service.stateAddToSet.callCount, 0);
+            // The plugin-route registration is the effective write path (engine addListener
+            // does not persist — see routes.js workaround).
+            const registerCall = context.callAppmixer.args.find(a => a[0].endPoint.endsWith('/listeners'));
+            assert(registerCall, 'start() must register via the plugin route');
+            assert.deepEqual(registerCall[0].body, {
+                eventName: trigger.eventName, realmId: REALM_ID_AIRBUS,
+                flowId: 'flow-1', componentId: 'component-1',
+                apiOrigin: 'https://api.my.appmixer.cloud'
+            });
 
             await stop(context);
             assert(context.removeListener.calledOnce);
             assert.deepEqual(context.removeListener.args[0], [trigger.eventName]);
+            const removeCall = context.callAppmixer.args.find(a => a[0].endPoint.endsWith('/listeners/remove'));
+            assert(removeCall, 'stop() must unregister via the plugin route');
+            assert.deepEqual(removeCall[0].body, {
+                eventName: trigger.eventName, flowId: 'flow-1', componentId: 'component-1'
+            });
+        });
+
+        it(`${trigger.eventName} start must survive a failing engine addListener`, async function() {
+
+            const { start } = require(trigger.path);
+            const context = {
+                ...testUtils.createMockContext(),
+                callAppmixer: sinon.stub().resolves({}),
+                flowId: 'flow-1',
+                componentId: 'component-1',
+                profileInfo: { companyId: REALM_ID_AIRBUS }
+            };
+            context.addListener = sinon.stub().rejects(new Error('Request failed with status code 500'));
+
+            await start(context);
+            // The plugin-route registration still happens — the flow must start.
+            assert(context.callAppmixer.args.some(a => a[0].endPoint.endsWith('/listeners')));
         });
     }
+});
+
+describe('Quickbooks plugin listener routes', function() {
+
+    let context;
+    let routes;
+    let coreDocs;
+
+    function handlerFor(path, method = 'POST') {
+        const call = context.http.router.register.args.find(a => a[0].path === path && a[0].method === method);
+        assert(call, `route ${method} ${path} must be registered`);
+        return call[0].options.handler;
+    }
+
+    const h = {
+        response: msg => ({ code: code => ({ code, msg }) })
+    };
+
+    beforeEach(async function() {
+
+        coreDocs = [];
+        context = {
+            ...testUtils.createMockContext(),
+            http: { router: { register: sinon.stub() } },
+            db: {
+                coreCollection: sinon.stub().returns({
+                    insertMany: sinon.stub().callsFake(async docs => coreDocs.push(...docs)),
+                    deleteMany: sinon.stub().callsFake(async query => {
+                        const matches = url => query.url instanceof RegExp ? query.url.test(url) : url === query.url;
+                        for (let i = coreDocs.length - 1; i >= 0; i--) {
+                            if (matches(coreDocs[i].url) && coreDocs[i].eventName === query.eventName) {
+                                coreDocs.splice(i, 1);
+                            }
+                        }
+                    })
+                })
+            }
+        };
+        routes = require('../../routes');
+        await routes(context);
+    });
+
+    it('POST /listeners persists the engine-shaped listener document', async function() {
+
+        const handler = handlerFor('/listeners');
+        const req = {
+            info: { hostname: 'internal-host' },
+            payload: { eventName: 'Customer.Create', realmId: 310687, flowId: 'f1', componentId: 'c1', apiOrigin: 'https://api.example.com' }
+        };
+        const res = await handler(req, h);
+        assert.deepEqual(res, {});
+        assert.equal(coreDocs.length, 1);
+        const doc = coreDocs[0];
+        assert.equal(doc.eventName, 'Customer.Create');
+        assert.equal(doc.serviceId, 'appmixer.quickbooks');
+        assert.equal(doc.hostname, 'api.example.com');
+        assert.equal(doc.url, 'https://api.example.com/flows/f1/components/c1');
+        // realmId is normalized to a string so the webhook filter compares like for like.
+        assert.deepEqual(doc.params, { realmId: '310687' });
+        assert(doc.mtime instanceof Date);
+    });
+
+    it('POST /listeners upserts instead of duplicating', async function() {
+
+        const handler = handlerFor('/listeners');
+        const req = {
+            info: { hostname: 'api.example.com' },
+            payload: { eventName: 'Customer.Create', realmId: 'r1', flowId: 'f1', componentId: 'c1', apiOrigin: 'https://api.example.com' }
+        };
+        await handler(req, h);
+        await handler(req, h);
+        assert.equal(coreDocs.length, 1);
+    });
+
+    it('POST /listeners rejects incomplete payloads', async function() {
+
+        const handler = handlerFor('/listeners');
+        const res = await handler({ info: { hostname: 'x' }, payload: { eventName: 'E' } }, h);
+        assert.equal(res.code, 400);
+        assert.equal(coreDocs.length, 0);
+    });
+
+    it('POST /listeners/remove deletes the registration', async function() {
+
+        const register = handlerFor('/listeners');
+        const remove = handlerFor('/listeners/remove');
+        const info = { hostname: 'api.example.com' };
+        await register({ info, payload: { eventName: 'Customer.Create', realmId: 'r1', flowId: 'f1', componentId: 'c1' } }, h);
+        assert.equal(coreDocs.length, 1);
+        await remove({ info, payload: { eventName: 'Customer.Create', flowId: 'f1', componentId: 'c1' } }, h);
+        assert.equal(coreDocs.length, 0);
+    });
 });

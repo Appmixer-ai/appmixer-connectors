@@ -2,6 +2,8 @@
 
 const crypto = require('crypto');
 
+const SERVICE_ID = 'appmixer.quickbooks';
+
 module.exports = async context => {
 
     context.onListenerAdded(async listener => {
@@ -32,6 +34,70 @@ module.exports = async context => {
                 }
             },
             auth: false
+        }
+    });
+
+    // Fallback listener registration used by the trigger components (via context.callAppmixer).
+    //
+    // WORKAROUND for an engine defect observed on 6.6.0: context.addListener() in a component
+    // acknowledges the call but does not persist the listener into the engine's `listeners`
+    // collection (and consequently never invokes onListenerAdded), so context.triggerListeners()
+    // finds no listeners to deliver to. The read path is healthy: a listener document in the
+    // collection is picked up and delivered correctly. These routes replace only the broken
+    // write path, using the exact document shape the engine reads. Remove them (and the
+    // callAppmixer calls in the triggers) once the engine persists listeners itself — the
+    // upsert-by-{url, eventName} below keeps the registration single even when both paths work.
+    context.http.router.register({
+        method: 'POST',
+        path: '/listeners',
+        options: {
+            handler: async (req, h) => {
+
+                const { eventName, realmId, flowId, componentId, apiOrigin } = req.payload || {};
+                if (!eventName || !realmId || !flowId || !componentId) {
+                    return h.response('eventName, realmId, flowId and componentId are required.').code(400);
+                }
+                // apiOrigin comes from the component (context.getWebhookUrl) — through
+                // callAppmixer this request carries an internal hostname, which would
+                // produce an undeliverable listener URL.
+                const origin = apiOrigin || `https://${req.info.hostname}`;
+                const hostname = new URL(origin).hostname;
+                const url = `${origin}/flows/${flowId}/components/${componentId}`;
+                const collection = context.db.coreCollection('listeners');
+                // Upsert: one registration per (component, eventName), no matter how many
+                // times the flow restarts or whether the engine's own write also succeeded.
+                await collection.deleteMany({ url, eventName });
+                await collection.insertMany([{
+                    eventName,
+                    hostname,
+                    mtime: new Date(),
+                    params: { realmId: `${realmId}` },
+                    serviceId: SERVICE_ID,
+                    url
+                }]);
+                await context.log('info', 'quickbooks-plugin-listener-registered', { eventName, realmId: `${realmId}`, url });
+                return {};
+            }
+        }
+    });
+
+    context.http.router.register({
+        method: 'POST',
+        path: '/listeners/remove',
+        options: {
+            handler: async (req, h) => {
+
+                const { eventName, flowId, componentId } = req.payload || {};
+                if (!eventName || !flowId || !componentId) {
+                    return h.response('eventName, flowId and componentId are required.').code(400);
+                }
+                // Match by the flow/component path suffix so the registration is found no
+                // matter which origin it was stored under.
+                const urlPattern = new RegExp(`/flows/${flowId}/components/${componentId}$`);
+                await context.db.coreCollection('listeners').deleteMany({ url: urlPattern, eventName });
+                await context.log('info', 'quickbooks-plugin-listener-removed', { eventName, flowId, componentId });
+                return {};
+            }
         }
     });
 

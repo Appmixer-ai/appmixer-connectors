@@ -65,7 +65,8 @@
         ],
         "1.8.0": [
             "Rewrote the NewInvoice, UpdatedInvoice, NewCustomer and UpdatedCustomer triggers to use Appmixer listeners (context.addListener/removeListener) instead of shared service state, so webhook routing works through AuthHub's single shared endpoint. Webhook events are now delivered via context.triggerListeners filtered by realmId.",
-            "Fixed webhook routing when a single payload carries more than one notification for the same company: entities are now merged per realm instead of the first notification being processed twice and the rest dropped. A notification without a dataChangeEvent no longer aborts the whole payload."
+            "Fixed webhook routing when a single payload carries more than one notification for the same company: entities are now merged per realm instead of the first notification being processed twice and the rest dropped. A notification without a dataChangeEvent no longer aborts the whole payload.",
+            "Added a plugin-route fallback for listener registration: context.addListener on the engine acknowledges but does not persist the listener (observed on engine 6.6.0), so triggers also register through POST /plugins/appmixer/quickbooks/listeners which writes the registration the webhook router reads. Remove once the engine persists listeners itself."
         ]
     }
 }
