@@ -18,6 +18,10 @@ module.exports = {
             headers: lib.getHeaders(context)
         });
 
-        return context.sendJson(data, 'out');
+        // The API wraps the summary: { "summary": { template_name, markdown_formatted } }.
+        // Unwrap it so the output matches this component's declared out-port schema —
+        // otherwise those fields never resolve in the variable picker. `summary` is null
+        // when the meeting has no AI summary yet.
+        return context.sendJson((data && data.summary) || {}, 'out');
     }
 };
