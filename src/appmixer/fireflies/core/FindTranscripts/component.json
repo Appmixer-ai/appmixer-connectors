@@ -1,0 +1,97 @@
+{
+    "name": "appmixer.fireflies.core.FindTranscripts",
+    "label": "Find Transcripts",
+    "description": "Search Fireflies meeting transcripts by keyword, date range or organizer/participant email. Returns up to 50 matching transcripts (newest first). Routes to the 'notFound' port when nothing matches.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fireflies"
+    },
+    "quota": {
+        "manager": "appmixer:fireflies",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "keyword": { "type": "string" },
+                    "fromDate": { "type": "string", "format": "date-time" },
+                    "toDate": { "type": "string", "format": "date-time" },
+                    "organizerEmail": { "type": "string" },
+                    "participantEmail": { "type": "string" },
+                    "outputType": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "keyword": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Keyword",
+                        "tooltip": "Optional search term matched against transcript titles and content."
+                    },
+                    "fromDate": {
+                        "type": "date-time",
+                        "index": 2,
+                        "label": "From Date",
+                        "tooltip": "Only return transcripts on or after this date/time (ISO 8601)."
+                    },
+                    "toDate": {
+                        "type": "date-time",
+                        "index": 3,
+                        "label": "To Date",
+                        "tooltip": "Only return transcripts on or before this date/time (ISO 8601)."
+                    },
+                    "organizerEmail": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Organizer Email",
+                        "tooltip": "Only return transcripts organized by this email address."
+                    },
+                    "participantEmail": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Participant Email",
+                        "tooltip": "Only return transcripts that include this participant email address."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/fireflies/core/FindTranscripts?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNjI0NkVBIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTUwIDIwYy0xMCAxMS0xOCAyMC0xOCAzM2ExOCAxOCAwIDAgMCAzNiAwYzAtNy0zLTEzLTgtMTcgMSA2LTEgMTEtNSAxMS00IDAtNi01LTMtMTEgMi02IDEtMTItMi0xNnoiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjU5IiByPSI4IiBmaWxsPSIjNjI0NkVBIi8+PC9zdmc+Cg=="
+}

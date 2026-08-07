@@ -1,0 +1,78 @@
+{
+    "name": "appmixer.fireflies.core.UploadAudio",
+    "label": "Upload Audio",
+    "description": "Submit a publicly accessible audio or video URL to Fireflies for transcription. Audio up to 200 MB (all tiers); video up to 100 MB on Free and 1.5 GB on paid tiers.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fireflies"
+    },
+    "quota": {
+        "manager": "appmixer:fireflies",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string" },
+                    "title": { "type": "string" },
+                    "webhook": { "type": "string" },
+                    "clientReferenceId": { "type": "string" },
+                    "language": { "type": "string" }
+                },
+                "required": ["url"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Media URL",
+                        "tooltip": "Publicly accessible URL of the audio or video file to transcribe."
+                    },
+                    "title": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Title",
+                        "tooltip": "Optional title for the resulting meeting."
+                    },
+                    "webhook": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Webhook URL",
+                        "tooltip": "Optional URL that Fireflies will call once transcription for this upload completes."
+                    },
+                    "clientReferenceId": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Client Reference ID",
+                        "tooltip": "Optional custom identifier (max 128 characters) echoed back in webhook payloads."
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Language",
+                        "tooltip": "Optional language code for the media (e.g. 'en', 'es'). Leave empty for auto-detection."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean", "title": "Success", "example": true },
+                    "title": { "type": "string", "title": "Title", "example": "Client Onboarding Call" },
+                    "message": { "type": "string", "title": "Message", "example": "Audio uploaded successfully" }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNjI0NkVBIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTUwIDIwYy0xMCAxMS0xOCAyMC0xOCAzM2ExOCAxOCAwIDAgMCAzNiAwYzAtNy0zLTEzLTgtMTcgMSA2LTEgMTEtNSAxMS00IDAtNi01LTMtMTEgMi02IDEtMTItMi0xNnoiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjU5IiByPSI4IiBmaWxsPSIjNjI0NkVBIi8+PC9zdmc+Cg=="
+}

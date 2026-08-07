@@ -1,0 +1,67 @@
+{
+    "name": "appmixer.fireflies.core.ShareMeeting",
+    "label": "Share Meeting",
+    "description": "Share a Fireflies meeting transcript with one or more email addresses. Rate limited by Fireflies to 10 requests per hour and up to 50 emails per call.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fireflies"
+    },
+    "quota": {
+        "manager": "appmixer:fireflies",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "transcriptId": { "type": "string" },
+                    "emails": { "type": "string" },
+                    "expiry": { "type": "integer" }
+                },
+                "required": ["transcriptId", "emails"]
+            },
+            "inspector": {
+                "inputs": {
+                    "transcriptId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Transcript ID",
+                        "tooltip": "The ID of the transcript/meeting to share."
+                    },
+                    "emails": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Emails",
+                        "tooltip": "Comma-separated list of email addresses to share the meeting with (max 50)."
+                    },
+                    "expiry": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Expiry (days)",
+                        "tooltip": "How long the shared access remains valid.",
+                        "options": [
+                            { "label": "7 days", "value": 7 },
+                            { "label": "14 days", "value": 14 },
+                            { "label": "30 days", "value": 30 }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean", "title": "Success", "example": true }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNjI0NkVBIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTUwIDIwYy0xMCAxMS0xOCAyMC0xOCAzM2ExOCAxOCAwIDAgMCAzNiAwYzAtNy0zLTEzLTgtMTcgMSA2LTEgMTEtNSAxMS00IDAtNi01LTMtMTEgMi02IDEtMTItMi0xNnoiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjU5IiByPSI4IiBmaWxsPSIjNjI0NkVBIi8+PC9zdmc+Cg=="
+}

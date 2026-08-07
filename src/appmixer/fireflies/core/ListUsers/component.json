@@ -1,0 +1,59 @@
+{
+    "name": "appmixer.fireflies.core.ListUsers",
+    "label": "List Users",
+    "description": "Retrieve the users in your Fireflies team/workspace, including their transcript counts and admin status.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fireflies"
+    },
+    "quota": {
+        "manager": "appmixer:fireflies",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 0,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/fireflies/core/ListUsers?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjNjI0NkVBIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTUwIDIwYy0xMCAxMS0xOCAyMC0xOCAzM2ExOCAxOCAwIDAgMCAzNiAwYzAtNy0zLTEzLTgtMTcgMSA2LTEgMTEtNSAxMS00IDAtNi01LTMtMTEgMi02IDEtMTItMi0xNnoiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjU5IiByPSI4IiBmaWxsPSIjNjI0NkVBIi8+PC9zdmc+Cg=="
+}
