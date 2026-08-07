@@ -32,8 +32,8 @@ module.exports = {
                 $keyword: String
                 $fromDate: DateTime
                 $toDate: DateTime
-                $organizers: [String]
-                $participants: [String]
+                $organizers: [String!]
+                $participants: [String!]
                 $limit: Int
             ) {
                 transcripts(

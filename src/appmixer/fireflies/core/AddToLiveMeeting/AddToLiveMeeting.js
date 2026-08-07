@@ -17,14 +17,14 @@ module.exports = {
             mutation AddToLiveMeeting(
                 $meeting_link: String!
                 $title: String
-                $password: String
+                $meeting_password: String
                 $duration: Int
                 $language: String
             ) {
                 addToLiveMeeting(
                     meeting_link: $meeting_link
                     title: $title
-                    password: $password
+                    meeting_password: $meeting_password
                     duration: $duration
                     language: $language
                 ) {
@@ -35,7 +35,7 @@ module.exports = {
 
         const variables = { meeting_link: meetingLink };
         if (title) variables.title = title;
-        if (password) variables.password = password;
+        if (password) variables.meeting_password = password;
         if (duration !== undefined && duration !== null && duration !== '') variables.duration = duration;
         if (language) variables.language = language;
 

@@ -20,8 +20,8 @@ module.exports = {
         // Creates a soundbite (highlight clip) from a section of a transcript,
         // defined by start/end offsets in seconds.
         const query = `
-            mutation CreateBite($transcript_id: ID!, $start: Float!, $end: Float!, $name: String) {
-                createBite(transcript_id: $transcript_id, start: $start, end: $end, name: $name) {
+            mutation CreateBite($transcript_Id: ID!, $start_time: Float!, $end_time: Float!, $name: String) {
+                createBite(transcript_Id: $transcript_Id, start_time: $start_time, end_time: $end_time, name: $name) {
                     id
                     name
                     status
@@ -30,9 +30,9 @@ module.exports = {
         `;
 
         const variables = {
-            transcript_id: transcriptId,
-            start: parseFloat(start),
-            end: parseFloat(end)
+            transcript_Id: transcriptId,
+            start_time: parseFloat(start),
+            end_time: parseFloat(end)
         };
         if (name) variables.name = name;
 

@@ -13,15 +13,15 @@ module.exports = {
 
         // Rate limited by Fireflies to 10 requests per minute. Irreversible.
         const query = `
-            mutation DeleteTranscript($transcript_id: String!) {
-                deleteTranscript(transcript_id: $transcript_id) {
+            mutation DeleteTranscript($id: String!) {
+                deleteTranscript(id: $id) {
                     id
                     title
                 }
             }
         `;
 
-        await lib.makeRequest({ context, query, variables: { transcript_id: transcriptId } });
+        await lib.makeRequest({ context, query, variables: { id: transcriptId } });
 
         return context.sendJson({}, 'out');
     }

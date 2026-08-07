@@ -15,14 +15,14 @@ module.exports = {
         }
 
         const query = `
-            mutation UpdateMeetingTitle($transcript_id: String!, $title: String!) {
-                updateMeetingTitle(transcript_id: $transcript_id, title: $title) {
+            mutation UpdateMeetingTitle($input: UpdateMeetingTitleInput!) {
+                updateMeetingTitle(input: $input) {
                     title
                 }
             }
         `;
 
-        await lib.makeRequest({ context, query, variables: { transcript_id: transcriptId, title } });
+        await lib.makeRequest({ context, query, variables: { input: { id: transcriptId, title } } });
 
         return context.sendJson({}, 'out');
     }

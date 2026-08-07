@@ -22,16 +22,16 @@ module.exports = {
 
         // Rate limited by Fireflies to 10 requests per hour, max 50 emails per call.
         const query = `
-            mutation ShareMeeting($transcript_id: String!, $emails: [String!]!, $expiry: Int) {
-                shareMeeting(transcript_id: $transcript_id, emails: $emails, expiry: $expiry) {
+            mutation ShareMeeting($input: ShareMeetingInput!) {
+                shareMeeting(input: $input) {
                     success
                 }
             }
         `;
 
-        const variables = { transcript_id: transcriptId, emails: emailList };
+        const variables = { input: { meeting_id: transcriptId, emails: emailList } };
         if (expiry !== undefined && expiry !== null && expiry !== '') {
-            variables.expiry = parseInt(expiry, 10);
+            variables.input.expiry_days = parseInt(expiry, 10);
         }
 
         const data = await lib.makeRequest({ context, query, variables });
