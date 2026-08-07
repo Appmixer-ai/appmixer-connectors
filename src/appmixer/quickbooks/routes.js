@@ -22,7 +22,15 @@ module.exports = async context => {
         method: 'GET',
         path: '/',
         options: {
-            handler: () => ({ version: require('./bundle.json').version }),
+            // bundle.json is not part of the deployed plugin package, so this must not throw
+            // — the route exists as a liveness probe, the version is a nice-to-have.
+            handler: () => {
+                try {
+                    return { version: require('./bundle.json').version };
+                } catch (error) {
+                    return { version: null };
+                }
+            },
             auth: false
         }
     });
