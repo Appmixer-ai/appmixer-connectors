@@ -1,0 +1,64 @@
+{
+    "name": "appmixer.fathom.core.ListTeams",
+    "label": "List Teams",
+    "description": "List the teams in the Fathom account. Follows cursor pagination up to a maximum of 500 teams.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fathom"
+    },
+    "quota": {
+        "manager": "appmixer:fathom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/fathom/core/ListTeams?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI1NiIgZmlsbD0iIzU4NTBFQyIvPjxnIGZpbGw9IiNGRkZGRkYiPjxyZWN0IHg9IjcyIiB5PSIxMDQiIHdpZHRoPSIxNCIgaGVpZ2h0PSI0OCIgcng9IjciLz48cmVjdCB4PSIxMDIiIHk9IjgwIiB3aWR0aD0iMTQiIGhlaWdodD0iOTYiIHJ4PSI3Ii8+PHJlY3QgeD0iMTMyIiB5PSI2MCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjEzNiIgcng9IjciLz48cmVjdCB4PSIxNjIiIHk9Ijg4IiB3aWR0aD0iMTQiIGhlaWdodD0iODAiIHJ4PSI3Ii8+PC9nPjwvc3ZnPgo="
+}

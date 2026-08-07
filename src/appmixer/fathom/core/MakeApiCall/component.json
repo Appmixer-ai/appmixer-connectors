@@ -1,0 +1,102 @@
+{
+    "name": "appmixer.fathom.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "description": "Performs an arbitrary authorized API call to the Fathom API.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:fathom",
+        "scope": ["public_api"]
+    },
+    "quota": {
+        "manager": "appmixer:fathom",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string" },
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+                    },
+                    "headers": { "type": "string" },
+                    "parameters": { "type": "string" },
+                    "body": { "type": "string" }
+                },
+                "required": ["url", "method"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the API endpoint path relative to <code>https://api.fathom.ai/external/v1</code> (for example <code>/meetings</code>) or provide a full URL."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Query Parameters",
+                        "index": 3,
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Request Headers",
+                        "index": 5,
+                        "tooltip": "Optional additional request headers."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status Code", "value": "status" },
+                { "label": "Response Headers", "value": "headers" },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": { "type": "object", "properties": {} }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI1NiIgZmlsbD0iIzU4NTBFQyIvPjxnIGZpbGw9IiNGRkZGRkYiPjxyZWN0IHg9IjcyIiB5PSIxMDQiIHdpZHRoPSIxNCIgaGVpZ2h0PSI0OCIgcng9IjciLz48cmVjdCB4PSIxMDIiIHk9IjgwIiB3aWR0aD0iMTQiIGhlaWdodD0iOTYiIHJ4PSI3Ii8+PHJlY3QgeD0iMTMyIiB5PSI2MCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjEzNiIgcng9IjciLz48cmVjdCB4PSIxNjIiIHk9Ijg4IiB3aWR0aD0iMTQiIGhlaWdodD0iODAiIHJ4PSI3Ii8+PC9nPjwvc3ZnPgo="
+}

@@ -1,0 +1,76 @@
+{
+    "name": "appmixer.fathom.core.GetMeetingTranscript",
+    "label": "Get Meeting Transcript",
+    "description": "Retrieve the transcript for a recording. This endpoint is subject to Fathom's heavy rate limit.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:fathom"
+    },
+    "quota": {
+        "manager": "appmixer:fathom",
+        "resources": "heavy",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "recordingId": { "type": "integer" }
+                },
+                "required": ["recordingId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "recordingId": {
+                        "type": "number",
+                        "label": "Recording ID",
+                        "index": 1,
+                        "tooltip": "The recording ID of the meeting (the recording_id field returned by List/Find Meetings)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "transcript_language": { "type": "string", "title": "Transcript Language", "example": "en" },
+                    "transcript": {
+                        "type": "array",
+                        "title": "Transcript",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "speaker": {
+                                    "type": "object",
+                                    "properties": {
+                                        "display_name": { "type": "string", "example": "Jane Doe" },
+                                        "matched_calendar_invitee_email": { "type": "string", "example": "jane.doe@example.com" }
+                                    }
+                                },
+                                "text": { "type": "string", "example": "Thanks everyone for joining today." },
+                                "timestamp": { "type": "string", "example": "00:00:12" }
+                            }
+                        },
+                        "example": [
+                            {
+                                "speaker": { "display_name": "Jane Doe", "matched_calendar_invitee_email": "jane.doe@example.com" },
+                                "text": "Thanks everyone for joining today.",
+                                "timestamp": "00:00:12"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiI+PHJlY3Qgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI1NiIgZmlsbD0iIzU4NTBFQyIvPjxnIGZpbGw9IiNGRkZGRkYiPjxyZWN0IHg9IjcyIiB5PSIxMDQiIHdpZHRoPSIxNCIgaGVpZ2h0PSI0OCIgcng9IjciLz48cmVjdCB4PSIxMDIiIHk9IjgwIiB3aWR0aD0iMTQiIGhlaWdodD0iOTYiIHJ4PSI3Ii8+PHJlY3QgeD0iMTMyIiB5PSI2MCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjEzNiIgcng9IjciLz48cmVjdCB4PSIxNjIiIHk9Ijg4IiB3aWR0aD0iMTQiIGhlaWdodD0iODAiIHJ4PSI3Ii8+PC9nPjwvc3ZnPgo="
+}
