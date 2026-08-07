@@ -10,7 +10,8 @@ const REST_URL = 'https://rest.fal.ai';       // storage upload + JWKS
 const BASE_URLS = {
     'fal.run': RUN_URL,
     'queue.fal.run': QUEUE_URL,
-    'api.fal.ai/v1': PLATFORM_URL
+    'api.fal.ai/v1': PLATFORM_URL,
+    'rest.fal.ai': REST_URL
 };
 
 function authHeaders(context) {
