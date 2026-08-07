@@ -1,0 +1,92 @@
+{
+    "name": "appmixer.tldv.core.NewMeeting",
+    "label": "New Meeting",
+    "description": "Triggers when a new tl;dv meeting appears. Polls the meetings endpoint and emits each new meeting once. Note: only meetings whose organizer is on a paid plan are visible via the API.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "trigger": true,
+    "tick": true,
+    "auth": {
+        "service": "appmixer:tldv"
+    },
+    "properties": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "meetingType": {
+                    "type": "string",
+                    "enum": [
+                        "internal",
+                        "external"
+                    ]
+                }
+            }
+        },
+        "inspector": {
+            "inputs": {
+                "meetingType": {
+                    "type": "select",
+                    "label": "Meeting Type",
+                    "index": 1,
+                    "tooltip": "Optionally only trigger for internal or external meetings.",
+                    "options": [
+                        { "label": "Any", "value": "" },
+                        { "label": "Internal", "value": "internal" },
+                        { "label": "External", "value": "external" }
+                    ]
+                }
+            }
+        }
+    },
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Meeting ID", "example": "657f1e2b9a1c4d0012ab34cd" },
+                    "name": { "type": "string", "title": "Name", "example": "Acme <> Widgets weekly sync" },
+                    "happenedAt": { "type": "string", "format": "date-time", "title": "Happened At", "example": "2025-01-15T10:30:00Z" },
+                    "url": { "type": "string", "title": "tl;dv URL", "example": "https://tldv.io/app/meetings/657f1e2b9a1c4d0012ab34cd" },
+                    "duration": { "type": "integer", "title": "Duration (seconds)", "example": 1830 },
+                    "organizer": {
+                        "type": "object",
+                        "title": "Organizer",
+                        "properties": {
+                            "name": { "type": "string", "title": "Name", "example": "Jane Doe" },
+                            "email": { "type": "string", "title": "Email", "example": "jane@acme.com" }
+                        }
+                    },
+                    "invitees": {
+                        "type": "array",
+                        "title": "Invitees",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": { "type": "string" },
+                                "email": { "type": "string" }
+                            }
+                        },
+                        "example": [{ "name": "John Smith", "email": "john@widgets.com" }]
+                    },
+                    "template": {
+                        "type": "object",
+                        "title": "Template",
+                        "properties": {
+                            "id": { "type": "string", "title": "Template ID", "example": "tmpl_123" },
+                            "label": { "type": "string", "title": "Template Label", "example": "Sales Call" }
+                        }
+                    },
+                    "extraProperties": {
+                        "type": "object",
+                        "title": "Extra Properties",
+                        "properties": {
+                            "conferenceId": { "type": "string", "title": "Conference ID", "example": "abc-defg-hij" }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICAgIDxyZWN0IHg9IjQiIHk9IjIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9Ijg4IiByeD0iMTgiIGZpbGw9IiMxMTE4MjciLz4KICAgIDxwYXRoIGQ9Ik01NCA1MGwyNiAxNC0yNiAxNHoiIGZpbGw9IiMwMEMyQTgiLz4KICAgIDxyZWN0IHg9IjIwIiB5PSIzNCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjMDBDMkE4Ii8+CiAgICA8cmVjdCB4PSIyMCIgeT0iOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iIzRCNTU2MyIvPgogICAgPHJlY3QgeD0iODYiIHk9IjkwIiB3aWR0aD0iMjIiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiM0QjU1NjMiLz4KPC9zdmc+Cg=="
+}

@@ -1,0 +1,80 @@
+{
+    "name": "appmixer.tldv.core.GetMeetingNotes",
+    "label": "Get Meeting Notes",
+    "description": "Retrieve the AI-generated notes of a tl;dv meeting: structured notes, topic summaries and a ready-to-use Markdown document you can push straight into a CRM, email or chat message.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tldv"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "meetingId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "meetingId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "meetingId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Meeting ID",
+                        "tooltip": "The unique identifier of the tl;dv meeting whose notes you want to retrieve."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "markdownContent": { "type": "string", "title": "Markdown Content", "example": "## Summary\n- Kicked off the weekly sync\n- Reviewed the roadmap" },
+                    "structuredNotes": {
+                        "type": "array",
+                        "title": "Structured Notes",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "segmentId": { "type": "string" },
+                                "timestamp": { "type": "number" },
+                                "text": { "type": "string" },
+                                "topicId": { "type": "string" }
+                            }
+                        },
+                        "example": [
+                            { "segmentId": "seg_1", "timestamp": 42.5, "text": "Agreed to ship the connector next week.", "topicId": "top_1" }
+                        ]
+                    },
+                    "topics": {
+                        "type": "array",
+                        "title": "Topics",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": { "type": "string" },
+                                "order": { "type": "integer" },
+                                "title": { "type": "string" },
+                                "summary": { "type": "string" }
+                            }
+                        },
+                        "example": [
+                            { "id": "top_1", "order": 1, "title": "Roadmap", "summary": "Discussed Q1 roadmap priorities." }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICAgIDxyZWN0IHg9IjQiIHk9IjIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9Ijg4IiByeD0iMTgiIGZpbGw9IiMxMTE4MjciLz4KICAgIDxwYXRoIGQ9Ik01NCA1MGwyNiAxNC0yNiAxNHoiIGZpbGw9IiMwMEMyQTgiLz4KICAgIDxyZWN0IHg9IjIwIiB5PSIzNCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjMDBDMkE4Ii8+CiAgICA8cmVjdCB4PSIyMCIgeT0iOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iIzRCNTU2MyIvPgogICAgPHJlY3QgeD0iODYiIHk9IjkwIiB3aWR0aD0iMjIiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiM0QjU1NjMiLz4KPC9zdmc+Cg=="
+}

@@ -1,0 +1,88 @@
+{
+    "name": "appmixer.tldv.core.ImportMeeting",
+    "label": "Import Meeting",
+    "description": "Imports an external audio/video recording from a publicly reachable URL into tl;dv for transcription and AI notes. Supported formats: mp3, mp4, wav, m4a, mkv, mov, avi, wma, flac. Import is asynchronous — it returns a job ID that cannot be resolved to the created meeting, so pair it with the New Meeting trigger to pick the meeting up once it finishes processing.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tldv"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "happenedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "participants": {
+                        "type": "string"
+                    },
+                    "dryRun": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "url"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "name": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Name",
+                        "tooltip": "Name for the imported meeting."
+                    },
+                    "url": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Recording URL",
+                        "tooltip": "Publicly accessible URL of the audio/video file to import (mp3, mp4, wav, m4a, mkv, mov, avi, wma, flac)."
+                    },
+                    "happenedAt": {
+                        "type": "date-time",
+                        "index": 3,
+                        "label": "Happened At",
+                        "tooltip": "Optional date/time when the meeting actually took place."
+                    },
+                    "participants": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Participant Emails",
+                        "tooltip": "Optional comma-separated list of participant email addresses."
+                    },
+                    "dryRun": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Dry Run",
+                        "tooltip": "When enabled, tl;dv validates the request without persisting anything. Useful for testing."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "success": { "type": "boolean", "title": "Success", "example": true },
+                    "jobId": { "type": "string", "title": "Job ID", "example": "job_657f1e2b9a1c4d0012ab34cd" },
+                    "message": { "type": "string", "title": "Message", "example": "Meeting import started." }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICAgIDxyZWN0IHg9IjQiIHk9IjIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9Ijg4IiByeD0iMTgiIGZpbGw9IiMxMTE4MjciLz4KICAgIDxwYXRoIGQ9Ik01NCA1MGwyNiAxNC0yNiAxNHoiIGZpbGw9IiMwMEMyQTgiLz4KICAgIDxyZWN0IHg9IjIwIiB5PSIzNCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjMDBDMkE4Ii8+CiAgICA8cmVjdCB4PSIyMCIgeT0iOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iIzRCNTU2MyIvPgogICAgPHJlY3QgeD0iODYiIHk9IjkwIiB3aWR0aD0iMjIiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiM0QjU1NjMiLz4KPC9zdmc+Cg=="
+}

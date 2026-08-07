@@ -1,0 +1,120 @@
+{
+    "name": "appmixer.tldv.core.FindMeetings",
+    "label": "Find Meetings",
+    "description": "Search tl;dv meetings by free-text query, date range, meeting type and participation. Pages through all matches (up to the tl;dv 10,000 result ceiling).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tldv"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "from": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "to": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "meetingType": {
+                        "type": "string",
+                        "enum": [
+                            "internal",
+                            "external"
+                        ]
+                    },
+                    "onlyParticipated": {
+                        "type": "boolean"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "label": "Search Query",
+                        "index": 1,
+                        "tooltip": "Free-text search across meeting names."
+                    },
+                    "from": {
+                        "type": "date-time",
+                        "label": "From",
+                        "index": 2,
+                        "tooltip": "Only return meetings that happened on or after this date/time."
+                    },
+                    "to": {
+                        "type": "date-time",
+                        "label": "To",
+                        "index": 3,
+                        "tooltip": "Only return meetings that happened on or before this date/time."
+                    },
+                    "meetingType": {
+                        "type": "select",
+                        "label": "Meeting Type",
+                        "index": 4,
+                        "tooltip": "Filter by whether the meeting is internal (only your organization) or external (with outside participants).",
+                        "options": [
+                            { "label": "Any", "value": "" },
+                            { "label": "Internal", "value": "internal" },
+                            { "label": "External", "value": "external" }
+                        ]
+                    },
+                    "onlyParticipated": {
+                        "type": "toggle",
+                        "label": "Only Meetings I Participated In",
+                        "index": 5,
+                        "tooltip": "When enabled, only return meetings the API-key owner participated in."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 6,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/tldv/core/FindMeetings?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound",
+            "schema": {
+                "type": "object",
+                "properties": {}
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICAgIDxyZWN0IHg9IjQiIHk9IjIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9Ijg4IiByeD0iMTgiIGZpbGw9IiMxMTE4MjciLz4KICAgIDxwYXRoIGQ9Ik01NCA1MGwyNiAxNC0yNiAxNHoiIGZpbGw9IiMwMEMyQTgiLz4KICAgIDxyZWN0IHg9IjIwIiB5PSIzNCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjMDBDMkE4Ii8+CiAgICA8cmVjdCB4PSIyMCIgeT0iOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iIzRCNTU2MyIvPgogICAgPHJlY3QgeD0iODYiIHk9IjkwIiB3aWR0aD0iMjIiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiM0QjU1NjMiLz4KPC9zdmc+Cg=="
+}

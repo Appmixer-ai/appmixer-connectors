@@ -1,0 +1,74 @@
+{
+    "name": "appmixer.tldv.core.GetMeetingTranscript",
+    "label": "Get Meeting Transcript",
+    "description": "Retrieve the transcript of a tl;dv meeting. The transcript is only available once processing completes; if it is not ready yet the flow continues from the 'notReady' port instead of failing.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:tldv"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "meetingId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "meetingId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "meetingId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Meeting ID",
+                        "tooltip": "The unique identifier of the tl;dv meeting whose transcript you want to retrieve."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Transcript ID", "example": "657f1e2b9a1c4d0012ab99ff" },
+                    "meetingId": { "type": "string", "title": "Meeting ID", "example": "657f1e2b9a1c4d0012ab34cd" },
+                    "data": {
+                        "type": "array",
+                        "title": "Transcript Segments",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "speaker": { "type": "string" },
+                                "text": { "type": "string" },
+                                "startTime": { "type": "number" },
+                                "endTime": { "type": "number" }
+                            }
+                        },
+                        "example": [
+                            { "speaker": "Jane Doe", "text": "Thanks everyone for joining.", "startTime": 0.5, "endTime": 3.2 }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "name": "notReady",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "meetingId": { "type": "string", "title": "Meeting ID", "example": "657f1e2b9a1c4d0012ab34cd" }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjggMTI4Ij4KICAgIDxyZWN0IHg9IjQiIHk9IjIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9Ijg4IiByeD0iMTgiIGZpbGw9IiMxMTE4MjciLz4KICAgIDxwYXRoIGQ9Ik01NCA1MGwyNiAxNC0yNiAxNHoiIGZpbGw9IiMwMEMyQTgiLz4KICAgIDxyZWN0IHg9IjIwIiB5PSIzNCIgd2lkdGg9IjE0IiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjMDBDMkE4Ii8+CiAgICA8cmVjdCB4PSIyMCIgeT0iOTAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI0IiByeD0iMiIgZmlsbD0iIzRCNTU2MyIvPgogICAgPHJlY3QgeD0iODYiIHk9IjkwIiB3aWR0aD0iMjIiIGhlaWdodD0iNCIgcng9IjIiIGZpbGw9IiM0QjU1NjMiLz4KPC9zdmc+Cg=="
+}
