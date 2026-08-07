@@ -17,6 +17,13 @@ module.exports = {
 
     API_BASE_URL,
 
+    // Authentication header used by every request. Fathom keys are passed as `X-Api-Key`.
+    getHeaders(context) {
+        return {
+            'X-Api-Key': context.auth.apiKey
+        };
+    },
+
     /**
      * 429-aware wrapper around context.httpRequest. Fathom returns `Retry-After` (seconds)
      * on 429; we honour it and otherwise fall back to capped exponential backoff.

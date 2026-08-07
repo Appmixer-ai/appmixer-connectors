@@ -15,7 +15,7 @@ module.exports = {
         const { data } = await lib.apiRequest(context, {
             method: 'GET',
             url: `${lib.API_BASE_URL}/recordings/${encodeURIComponent(recordingId)}/transcript`,
-            headers: { Authorization: `Bearer ${context.auth.accessToken}` }
+            headers: lib.getHeaders(context)
         });
 
         return context.sendJson(data, 'out');

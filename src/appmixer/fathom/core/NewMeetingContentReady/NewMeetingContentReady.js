@@ -38,7 +38,7 @@ module.exports = {
             method: 'POST',
             url: `${lib.API_BASE_URL}/webhooks`,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
+                ...lib.getHeaders(context),
                 'Content-Type': 'application/json'
             },
             data: body
@@ -75,7 +75,7 @@ module.exports = {
         const { data } = await lib.apiRequest(context, {
             method: 'GET',
             url: `${lib.API_BASE_URL}/meetings?${query.toString()}`,
-            headers: { Authorization: `Bearer ${context.auth.accessToken}` }
+            headers: lib.getHeaders(context)
         });
 
         const items = (data && data.items) || [];
@@ -94,7 +94,7 @@ module.exports = {
             await lib.apiRequest(context, {
                 method: 'DELETE',
                 url: `${lib.API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}`,
-                headers: { 'Authorization': `Bearer ${context.auth.accessToken}` }
+                headers: lib.getHeaders(context)
             });
         }
     }

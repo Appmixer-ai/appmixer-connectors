@@ -80,7 +80,7 @@ module.exports = {
 
         const records = await lib.fetchAllPages(context, {
             url,
-            headers: { Authorization: `Bearer ${context.auth.accessToken}` }
+            headers: lib.getHeaders(context)
         });
 
         if (records.length === 0) {

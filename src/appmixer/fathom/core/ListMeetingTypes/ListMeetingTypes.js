@@ -20,7 +20,7 @@ module.exports = {
 
         const records = await lib.fetchAllPages(context, {
             url: `${lib.API_BASE_URL}/meeting_types`,
-            headers: { Authorization: `Bearer ${context.auth.accessToken}` }
+            headers: lib.getHeaders(context)
         });
 
         return lib.sendArrayOutput({ context, outputType, records });

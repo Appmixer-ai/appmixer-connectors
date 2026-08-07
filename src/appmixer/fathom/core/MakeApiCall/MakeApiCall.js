@@ -38,7 +38,7 @@ module.exports = {
             method,
             url: targetUrl,
             headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`,
+                ...lib.getHeaders(context),
                 'Content-Type': 'application/json',
                 ...extraHeaders
             }
