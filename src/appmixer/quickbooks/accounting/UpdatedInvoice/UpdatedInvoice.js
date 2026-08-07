@@ -8,7 +8,7 @@ module.exports = {
     start: async function(context) {
 
         const eventName = `${ENTITY_NAME}.Update`;
-        await context.log({ step: 'Registering listener', eventName });
+        await context.log({ step: 'Registering listener', eventName, realmId: context.profileInfo && context.profileInfo.companyId });
         // Register a listener so webhook events received via ../../routes.js can be routed
         // to this component by realmId. This is AuthHub-compatible (shared webhook endpoint).
         return context.addListener(eventName, { realmId: context.profileInfo.companyId });
