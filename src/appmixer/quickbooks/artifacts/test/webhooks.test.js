@@ -126,6 +126,44 @@ describe('Quickbooks webhooks', function() {
             assert.deepEqual(res, { code: 200, msg: undefined });
         });
 
+        // Intuit issues separate verifier tokens for the Development (sandbox) and Production
+        // webhook sections; both environments may point at the same endpoint.
+        it('should accept a signature made with the sandbox verifier token', async function() {
+
+            context.config.webhookVerifierTokenSandbox = 'sandboxVerifier';
+            req.payload = {
+                eventNotifications: [{
+                    realmId: REALM_ID_AIRBUS,
+                    dataChangeEvent: {
+                        entities: [CUSTOMER_A_CREATED]
+                    }
+                }]
+            };
+            req.headers['intuit-signature'] = crypto.createHmac('sha256', 'sandboxVerifier').update(JSON.stringify(req.payload)).digest('base64');
+
+            const res = await webhookHandler(context, req, h);
+            assert.equal(context.triggerListeners.callCount, 1);
+            assert.deepEqual(res, { code: 200, msg: undefined });
+        });
+
+        it('should accept a signature made with any of the comma-separated verifier tokens', async function() {
+
+            context.config.webhookVerifierToken = 'prodVerifier, otherVerifier';
+            req.payload = {
+                eventNotifications: [{
+                    realmId: REALM_ID_AIRBUS,
+                    dataChangeEvent: {
+                        entities: [CUSTOMER_A_CREATED]
+                    }
+                }]
+            };
+            req.headers['intuit-signature'] = crypto.createHmac('sha256', 'otherVerifier').update(JSON.stringify(req.payload)).digest('base64');
+
+            const res = await webhookHandler(context, req, h);
+            assert.equal(context.triggerListeners.callCount, 1);
+            assert.deepEqual(res, { code: 200, msg: undefined });
+        });
+
         // A trigger type with no events for a realm should not produce a triggerListeners call.
         it('should not trigger listeners when there are no matching events', async function() {
 

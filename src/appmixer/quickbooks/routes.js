@@ -55,17 +55,25 @@ module.exports.webhookHandler = async (context, req, h) => {
         context.log('error', 'quickbooks-plugin-route-webhook-missing-payload');
         return h.response().code(200);
     }
-    // Validates the payload with the signature hash
+    // Validates the payload with the signature hash. Intuit issues a separate verifier token
+    // for the Development (sandbox) and Production webhook sections of the app, and both can be
+    // pointed at this single endpoint — realm-based listener filtering keeps the routing correct.
+    // Accepts several tokens: `webhookVerifierToken` (comma-separated) plus an optional
+    // `webhookVerifierTokenSandbox`.
     const signature = req.headers['intuit-signature'];
-    const webhookKey = context.config?.webhookVerifierToken;
-    if (!webhookKey) {
+    const webhookKeys = [context.config?.webhookVerifierToken, context.config?.webhookVerifierTokenSandbox]
+        .filter(Boolean)
+        .flatMap(value => `${value}`.split(',').map(token => token.trim()).filter(Boolean));
+    if (!webhookKeys.length) {
         context.log('error', 'quickbooks-plugin-route-webhook-missing-key');
         return h.response('No Verifier Token found').code(403);
     }
-    const hash = crypto.createHmac('sha256', webhookKey).update(JSON.stringify(req.payload)).digest('base64');
-    if (signature !== hash) {
-        context.log('debug', 'quickbooks-plugin-route-webhook-invalid-signature', { config: context.config });
-        context.log('error', 'quickbooks-plugin-route-webhook-invalid-signature', { signature, hash });
+    const body = JSON.stringify(req.payload);
+    const signatureValid = webhookKeys.some(
+        key => crypto.createHmac('sha256', key).update(body).digest('base64') === signature
+    );
+    if (!signatureValid) {
+        context.log('error', 'quickbooks-plugin-route-webhook-invalid-signature', { signature });
         return h.response('Forbidden: Invalid signature').code(403);
     }
 
