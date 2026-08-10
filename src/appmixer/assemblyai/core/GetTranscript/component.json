@@ -1,0 +1,80 @@
+{
+    "name": "appmixer.assemblyai.core.GetTranscript",
+    "label": "Get Transcript",
+    "description": "Retrieve a transcript by its id, including the full text, words, utterances (with speaker labels) and any enabled Audio Intelligence results. If the transcript failed, the component reports the error.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:assemblyai"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "transcriptId": { "type": "string" }
+                },
+                "required": ["transcriptId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "transcriptId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Transcript ID",
+                        "tooltip": "The id returned by Transcribe Audio."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Transcript ID", "example": "5551722-f677-48a6-9287-39c0aafd9ac1" },
+                    "status": { "type": "string", "title": "Status", "example": "completed" },
+                    "text": { "type": "string", "title": "Text", "example": "Runner's knee runner's knee is a condition characterized by pain behind or around the kneecap." },
+                    "language_code": { "type": "string", "title": "Language Code", "example": "en_us" },
+                    "audio_url": { "type": "string", "title": "Audio URL", "example": "https://cdn.assemblyai.com/upload/463ce27f-0922-4ea9-9ce4-3353771c46f2" },
+                    "audio_duration": { "type": "integer", "title": "Audio Duration (s)", "example": 281 },
+                    "confidence": { "type": "number", "title": "Confidence", "example": 0.938 },
+                    "words": {
+                        "type": "array",
+                        "title": "Words",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": { "type": "string", "example": "Runner's" },
+                                "start": { "type": "integer", "example": 250 },
+                                "end": { "type": "integer", "example": 650 },
+                                "confidence": { "type": "number", "example": 0.97 },
+                                "speaker": { "type": "string", "example": "A" }
+                            }
+                        },
+                        "example": [{ "text": "Runner's", "start": 250, "end": 650, "confidence": 0.97, "speaker": "A" }]
+                    },
+                    "utterances": {
+                        "type": "array",
+                        "title": "Utterances",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "text": { "type": "string", "example": "Runner's knee is a condition." },
+                                "start": { "type": "integer", "example": 250 },
+                                "end": { "type": "integer", "example": 3450 },
+                                "confidence": { "type": "number", "example": 0.94 },
+                                "speaker": { "type": "string", "example": "A" }
+                            }
+                        },
+                        "example": [{ "text": "Runner's knee is a condition.", "start": 250, "end": 3450, "confidence": 0.94, "speaker": "A" }]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyOCIgZmlsbD0iIzIxNDhGRiIvPgogIDxnIGZpbGw9IiNGRkZGRkYiPgogICAgPHJlY3QgeD0iMzAiIHk9IjUyIiB3aWR0aD0iOCIgaGVpZ2h0PSIyNCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MCIgd2lkdGg9IjgiIGhlaWdodD0iNDgiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQ0IiB3aWR0aD0iOCIgaGVpZ2h0PSI0MCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}
