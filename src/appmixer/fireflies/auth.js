@@ -60,7 +60,11 @@ module.exports = {
                 }
             });
 
-            if (!data || data.errors || !data.data || !data.data.user) {
+            // GraphQL may return an empty `errors` array on success, so only a
+            // non-empty one means the key was rejected.
+            const errors = Array.isArray(data && data.errors) ? data.errors : [];
+
+            if (!data || errors.length || !data.data || !data.data.user) {
                 throw new Error('Invalid Fireflies API key.');
             }
 
