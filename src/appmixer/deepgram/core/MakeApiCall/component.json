@@ -1,0 +1,101 @@
+{
+    "name": "appmixer.deepgram.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Performs an arbitrary authorized API call to the Deepgram API. The path is resolved against the base URL of the selected region.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string" },
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+                    },
+                    "parameters": { "type": "string" },
+                    "body": { "type": "string" },
+                    "headers": { "type": "string" }
+                },
+                "required": ["url", "method"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "Enter the API endpoint path relative to the region base URL (for example <code>/v1/projects</code>) or provide a full URL."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "Select the HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Query Parameters",
+                        "index": 3,
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "label": "Request Headers",
+                        "index": 5,
+                        "tooltip": "Optional additional request headers."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "options": [
+                { "label": "Status Code", "value": "status" },
+                { "label": "Response Headers", "value": "headers" },
+                {
+                    "label": "Response Body",
+                    "value": "body",
+                    "schema": { "type": "object", "properties": {} }
+                }
+            ]
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}

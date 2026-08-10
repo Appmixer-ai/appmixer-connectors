@@ -1,0 +1,74 @@
+{
+    "name": "appmixer.deepgram.core.GetRequest",
+    "label": "Get Request",
+    "description": "Retrieves a single request-log entry and its stored result by request ID. This is how the transcript of an asynchronous (callback) transcription is collected without a webhook.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": { "type": "string" },
+                    "requestId": { "type": "string" }
+                },
+                "required": [
+                    "projectId",
+                    "requestId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "The Deepgram project the request belongs to. Start typing to pick from your projects, or enter a project ID manually.",
+                        "source": {
+                            "url": "/component/appmixer/deepgram/core/ListProjects?outPort=out",
+                            "data": {
+                                "transform": "./ListProjects#toSelectArray",
+                                "messages": {
+                                    "in/outputType": "array"
+                                }
+                            }
+                        }
+                    },
+                    "requestId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Request ID",
+                        "tooltip": "The request ID returned by Transcribe Audio (Async) or listed by Find Requests."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "request_id": { "type": "string", "title": "Request ID", "example": "b1f4a0c2-9d3e-4a7b-8c1d-2e5f6a7b8c9d" },
+                    "created": { "type": "string", "format": "date-time", "title": "Created", "example": "2026-01-15T10:30:00Z" },
+                    "path": { "type": "string", "title": "Path", "example": "/v1/listen" },
+                    "code": { "type": "integer", "title": "Response Code", "example": 200 },
+                    "response": { "type": "object", "title": "Response", "example": { "results": { "channels": [{ "alternatives": [{ "transcript": "Hello world." }] }] } } }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}

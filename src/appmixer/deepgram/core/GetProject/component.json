@@ -1,0 +1,66 @@
+{
+    "name": "appmixer.deepgram.core.GetProject",
+    "label": "Get Project",
+    "description": "Retrieves a single Deepgram project by its ID.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "The Deepgram project to retrieve. Start typing to pick from your projects, or enter a project ID manually.",
+                        "source": {
+                            "url": "/component/appmixer/deepgram/core/ListProjects?outPort=out",
+                            "data": {
+                                "transform": "./ListProjects#toSelectArray",
+                                "messages": {
+                                    "in/outputType": "array"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "project_id": { "type": "string", "title": "Project ID", "example": "bb9e3a1c-1f4e-4c2a-9c3d-2b7f5a6e8d10" },
+                    "name": { "type": "string", "title": "Name", "example": "My First Project" },
+                    "company": { "type": "string", "title": "Company", "example": "Acme Inc." }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}

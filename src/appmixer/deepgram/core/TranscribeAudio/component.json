@@ -1,0 +1,167 @@
+{
+    "name": "appmixer.deepgram.core.TranscribeAudio",
+    "label": "Transcribe Audio",
+    "description": "Transcribes pre-recorded audio synchronously and returns the full transcript. Accepts either an audio URL or a file (max 2 GB). WARNING: this call blocks and fails with a 504 Gateway Timeout after 10 minutes of processing (20 minutes for Whisper models). For long recordings use the Transcribe Audio (Async) component instead.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "audioUrl": { "type": "string" },
+                    "fileId": { "type": "string" },
+                    "model": { "type": "string" },
+                    "language": { "type": "string" },
+                    "detectLanguage": { "type": "boolean" },
+                    "smartFormat": { "type": "boolean" },
+                    "punctuate": { "type": "boolean" },
+                    "paragraphs": { "type": "boolean" },
+                    "utterances": { "type": "boolean" },
+                    "diarize": { "type": "boolean" },
+                    "summarize": { "type": "boolean" },
+                    "sentiment": { "type": "boolean" },
+                    "topics": { "type": "boolean" },
+                    "intents": { "type": "boolean" },
+                    "extraParams": { "type": "array" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "audioUrl": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Audio URL",
+                        "tooltip": "Publicly accessible URL of the audio file to transcribe. Provide either this or a File below."
+                    },
+                    "fileId": {
+                        "type": "filepicker",
+                        "index": 2,
+                        "label": "File",
+                        "tooltip": "Audio file to transcribe (max 2 GB). The file is streamed directly to Deepgram. Provide either this or an Audio URL above."
+                    },
+                    "model": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Model",
+                        "defaultValue": "nova-3",
+                        "tooltip": "Speech-to-text model, e.g. <code>nova-3</code> (default), <code>nova-2</code> or <code>whisper-large</code>. Use the List Models component to see all options."
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Language",
+                        "tooltip": "BCP-47 language code, e.g. <code>en</code> or <code>es</code>. Leave empty to use the model default."
+                    },
+                    "detectLanguage": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Detect Language",
+                        "tooltip": "Automatically detect the spoken language."
+                    },
+                    "smartFormat": {
+                        "type": "toggle",
+                        "index": 6,
+                        "label": "Smart Format",
+                        "tooltip": "Apply formatting to dates, times, numbers, etc."
+                    },
+                    "punctuate": {
+                        "type": "toggle",
+                        "index": 7,
+                        "label": "Punctuate",
+                        "tooltip": "Add punctuation and capitalization to the transcript."
+                    },
+                    "paragraphs": {
+                        "type": "toggle",
+                        "index": 8,
+                        "label": "Paragraphs",
+                        "tooltip": "Split the transcript into paragraphs."
+                    },
+                    "utterances": {
+                        "type": "toggle",
+                        "index": 9,
+                        "label": "Utterances",
+                        "tooltip": "Segment the transcript into utterances."
+                    },
+                    "diarize": {
+                        "type": "toggle",
+                        "index": 10,
+                        "label": "Diarize",
+                        "tooltip": "Recognize and label distinct speakers."
+                    },
+                    "summarize": {
+                        "type": "toggle",
+                        "index": 11,
+                        "label": "Summarize",
+                        "tooltip": "Generate a summary (Audio Intelligence). Note the ~10 concurrent request limit for intelligence features."
+                    },
+                    "sentiment": {
+                        "type": "toggle",
+                        "index": 12,
+                        "label": "Sentiment",
+                        "tooltip": "Analyze sentiment (Audio Intelligence)."
+                    },
+                    "topics": {
+                        "type": "toggle",
+                        "index": 13,
+                        "label": "Topics",
+                        "tooltip": "Detect topics (Audio Intelligence)."
+                    },
+                    "intents": {
+                        "type": "toggle",
+                        "index": 14,
+                        "label": "Intents",
+                        "tooltip": "Detect intents (Audio Intelligence)."
+                    },
+                    "extraParams": {
+                        "type": "key-value",
+                        "index": 15,
+                        "keyLabel": "Parameter",
+                        "valueLabel": "Value",
+                        "addLabel": "Add parameter",
+                        "removeLabel": "Remove parameter",
+                        "label": "Additional Query Parameters",
+                        "tooltip": "Any additional Deepgram query parameters (e.g. redact, keyterm, search, replace)."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "transcript": { "type": "string", "title": "Transcript", "example": "Hello, and welcome to the show." },
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "properties": {
+                            "request_id": { "type": "string", "title": "Request ID", "example": "b1f4a0c2-9d3e-4a7b-8c1d-2e5f6a7b8c9d" },
+                            "duration": { "type": "number", "title": "Duration", "example": 42.5 },
+                            "channels": { "type": "integer", "title": "Channels", "example": 1 }
+                        }
+                    },
+                    "results": {
+                        "type": "object",
+                        "title": "Results",
+                        "example": { "channels": [{ "alternatives": [{ "transcript": "Hello, and welcome to the show.", "confidence": 0.99 }] }] }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}

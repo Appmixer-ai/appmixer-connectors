@@ -1,0 +1,111 @@
+{
+    "name": "appmixer.deepgram.core.FindRequests",
+    "label": "Find Requests",
+    "description": "Finds API requests logged for a Deepgram project, filtered by date range and status. Returns up to 1000 request-log entries (a log, not a transcript store). Retrieve the stored result of a request with the Get Request component.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": { "type": "string" },
+                    "start": { "type": "string", "format": "date-time" },
+                    "end": { "type": "string", "format": "date-time" },
+                    "status": { "type": "string" },
+                    "outputType": { "type": "string" }
+                },
+                "required": [
+                    "projectId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "The Deepgram project to query. Start typing to pick from your projects, or enter a project ID manually.",
+                        "source": {
+                            "url": "/component/appmixer/deepgram/core/ListProjects?outPort=out",
+                            "data": {
+                                "transform": "./ListProjects#toSelectArray",
+                                "messages": {
+                                    "in/outputType": "array"
+                                }
+                            }
+                        }
+                    },
+                    "start": {
+                        "type": "date-time",
+                        "index": 2,
+                        "label": "Start",
+                        "tooltip": "Only include requests created on or after this date/time."
+                    },
+                    "end": {
+                        "type": "date-time",
+                        "index": 3,
+                        "label": "End",
+                        "tooltip": "Only include requests created on or before this date/time."
+                    },
+                    "status": {
+                        "type": "select",
+                        "index": 4,
+                        "label": "Status",
+                        "tooltip": "Filter by request status.",
+                        "options": [
+                            { "label": "All", "value": "" },
+                            { "label": "Succeeded", "value": "succeeded" },
+                            { "label": "Failed", "value": "failed" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 5,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, first item only, one item at a time, or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/deepgram/core/FindRequests?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/projectId": "dummy"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}

@@ -1,0 +1,118 @@
+{
+    "name": "appmixer.deepgram.core.AnalyzeText",
+    "label": "Analyze Text",
+    "description": "Runs Deepgram Text Intelligence (summarization, sentiment, topics and intents) over text or a text URL. Enable at least one analysis feature.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:deepgram"
+    },
+    "quota": {
+        "manager": "appmixer:deepgram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "text": { "type": "string" },
+                    "url": { "type": "string" },
+                    "language": { "type": "string" },
+                    "summarize": { "type": "boolean" },
+                    "sentiment": { "type": "boolean" },
+                    "topics": { "type": "boolean" },
+                    "intents": { "type": "boolean" },
+                    "customTopic": { "type": "string" },
+                    "customIntent": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "text": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Text",
+                        "tooltip": "The text to analyze. Provide either this or a URL below."
+                    },
+                    "url": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "URL",
+                        "tooltip": "URL of a text document to analyze. Provide either this or Text above."
+                    },
+                    "language": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Language",
+                        "defaultValue": "en",
+                        "tooltip": "BCP-47 language code. Defaults to <code>en</code>."
+                    },
+                    "summarize": {
+                        "type": "toggle",
+                        "index": 4,
+                        "label": "Summarize",
+                        "tooltip": "Generate a summary of the text."
+                    },
+                    "sentiment": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Sentiment",
+                        "tooltip": "Analyze sentiment."
+                    },
+                    "topics": {
+                        "type": "toggle",
+                        "index": 6,
+                        "label": "Topics",
+                        "tooltip": "Detect topics."
+                    },
+                    "intents": {
+                        "type": "toggle",
+                        "index": 7,
+                        "label": "Intents",
+                        "tooltip": "Detect intents."
+                    },
+                    "customTopic": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "Custom Topic",
+                        "tooltip": "Optional custom topic to detect."
+                    },
+                    "customIntent": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Custom Intent",
+                        "tooltip": "Optional custom intent to detect."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "metadata": {
+                        "type": "object",
+                        "title": "Metadata",
+                        "properties": {
+                            "request_id": { "type": "string", "title": "Request ID", "example": "b1f4a0c2-9d3e-4a7b-8c1d-2e5f6a7b8c9d" }
+                        }
+                    },
+                    "results": {
+                        "type": "object",
+                        "title": "Results",
+                        "example": { "summary": { "text": "The caller requested a refund." }, "sentiments": { "average": { "sentiment": "neutral", "sentiment_score": 0.1 } } }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB2aWV3Qm94PSIwIDAgMTI4IDEyOCIgZmlsbD0ibm9uZSI+CiAgPHJlY3Qgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHJ4PSIyNCIgZmlsbD0iIzEwMTAxNCIvPgogIDxnIGZpbGw9IiMxM0VGOTMiPgogICAgPHJlY3QgeD0iMzAiIHk9IjU0IiB3aWR0aD0iOCIgaGVpZ2h0PSIyMCIgcng9IjQiLz4KICAgIDxyZWN0IHg9IjQ2IiB5PSI0MiIgd2lkdGg9IjgiIGhlaWdodD0iNDQiIHJ4PSI0Ii8+CiAgICA8cmVjdCB4PSI2MiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjY4IiByeD0iNCIvPgogICAgPHJlY3QgeD0iNzgiIHk9IjQyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0NCIgcng9IjQiLz4KICAgIDxyZWN0IHg9Ijk0IiB5PSI1NCIgd2lkdGg9IjgiIGhlaWdodD0iMjAiIHJ4PSI0Ii8+CiAgPC9nPgo8L3N2Zz4K"
+}
