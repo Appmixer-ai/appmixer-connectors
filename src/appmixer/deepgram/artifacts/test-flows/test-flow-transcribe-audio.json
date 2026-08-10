@@ -1,0 +1,167 @@
+{
+    "name": "E2E Deepgram - Transcribe Audio",
+    "flow": {
+        "38f2f73a-4eef-4ced-897a-6a8300ad2340": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 300,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bab82233-87bd-4fd2-bba3-a4a3aa858a0f": {
+            "type": "appmixer.deepgram.core.TranscribeAudio",
+            "x": 324,
+            "y": 300,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "38f2f73a-4eef-4ced-897a-6a8300ad2340": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "38f2f73a-4eef-4ced-897a-6a8300ad2340": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "audioUrl": {},
+                                    "smartFormat": {}
+                                },
+                                "lambda": {
+                                    "audioUrl": "https://dpgr.am/spacewalk.wav",
+                                    "smartFormat": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dab5f175-f8cd-4638-a2cf-f94364e65b6a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 584,
+            "y": 300,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "bab82233-87bd-4fd2-bba3-a4a3aa858a0f": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bab82233-87bd-4fd2-bba3-a4a3aa858a0f": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "9fe12d27-a5b9-4fa2-9afc-9bf64ee4ba5d": {
+                                            "functions": [],
+                                            "variable": "$.bab82233-87bd-4fd2-bba3-a4a3aa858a0f.out.transcript"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{9fe12d27-a5b9-4fa2-9afc-9bf64ee4ba5d}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e63c2bd5-434b-44a5-b4a4-963f09391d68": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 844,
+            "y": 300,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "dab5f175-f8cd-4638-a2cf-f94364e65b6a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            }
+        },
+        "cfa8b3f0-4339-4c8b-b419-8292986bfc56": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 300,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "e63c2bd5-434b-44a5-b4a4-963f09391d68": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "64cb41824421780007381f86",
+                    "failedStoreId": "64cb41969751560007caf0bf"
+                },
+                "transform": {
+                    "in": {
+                        "e63c2bd5-434b-44a5-b4a4-963f09391d68": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "793dc793-41db-46bb-bc97-d476731cb275": {
+                                            "functions": [],
+                                            "variable": "$.e63c2bd5-434b-44a5-b4a4-963f09391d68.out"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "testCase": "E2E Deepgram - Transcribe Audio",
+                                    "result": "{{{793dc793-41db-46bb-bc97-d476731cb275}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
