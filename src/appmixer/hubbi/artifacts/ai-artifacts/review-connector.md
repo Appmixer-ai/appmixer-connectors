@@ -22,7 +22,11 @@ At review time hubbi reported 5 non-blocking validator findings. **Four were fix
 
 Verification after the fixes:
 
-- `npm run validate` — hubbi reports **1** finding (`connector-has-makeapicall`, backlog).
+- `node scripts/validate.js --connector hubbi` (strict, thresholds ignored) — **8 failures**:
+  `connector-has-makeapicall`, `no-select-with-source` x4, `dynamic-outport-required-inputs` x3.
+  See *Strict validator findings* below. (Repo-wide `npm run validate` reports only the first of
+  these — it runs in threshold/ratchet mode, which hid the other 7. An earlier draft of this
+  report claimed the connector was clean apart from MakeApiCall on that basis; that was wrong.)
 - `npx mocha --recursive --exit "test/hubbi/**/*.test.js"` — **87 passing**, 0 failing (was 75).
 - `npx eslint src/appmixer/hubbi` — 0 findings other than `linebreak-style`, which comes from
   `core.autocrlf=true` on this Windows checkout. (`test/hubbi/*.test.js` additionally reports
@@ -115,6 +119,46 @@ See *Note on the `test()` implementation* above.
 ```
 
 Repo-wide standard; many connectors still lack it. Backlog, not a blocker.
+
+### Strict validator findings (surfaced by `--connector hubbi`, NOT by repo-wide validate)
+
+These 7 are additional to V1-V3 and were missed in the first pass, which used the repo-wide
+threshold-mode validator.
+
+**X1. `no-select-with-source` (4 occurrences)** — every hub picker is `type: "select"` bound to a
+dynamic source. The standard asks for `type: "text"` (typeahead) so the user can still enter a
+conversion key by hand when the source errors or returns `[]`.
+
+```
+StartHub/component.json        inPorts[0](in).inspector.inputs.conversionKey
+GetSourceFields/component.json inPorts[0](in).inspector.inputs.conversionKey
+GetTargetFields/component.json inPorts[0](in).inspector.inputs.conversionKey
+NewHubEvent/component.json     properties.inspector.inputs.conversionKey
+```
+
+Note the validator only sees `component.json`, so it counts 4 — but **StartHubWithData's picker has
+the same problem**, declared as `type: 'select'` in `StartHubWithData.js:100`. Any fix must cover
+all five.
+
+This is the same resilience concern as N1, one layer up: N1 stopped a failed field lookup from
+blanking the inspector, but the hub picker itself still has no manual fallback.
+
+**X2. `dynamic-outport-required-inputs` (3 occurrences)**
+
+```
+GetSourceFields/component.json: outPorts[0](out) source.data.messages missing required input "in/conversionKey"
+GetTargetFields/component.json: outPorts[0](out) source.data.messages missing required input "in/conversionKey"
+NewHubEvent/component.json:     outPorts[0](out) source.url is missing "ignoreAuth=true"
+```
+
+The first two are mechanical — both components declare `conversionKey` as required but don't pass it
+to the port-options request. Harmless today (their port options are built from a static `SCHEMA`
+constant that ignores the hub), but the declaration should match.
+
+⚠️ The third needs judgment, **do not apply blindly**: `ignoreAuth=true` is right for the List
+components, whose port generation makes no HTTP call. `NewHubEvent.generateOutputPortOptions()`
+*does* call `TargetFields` and needs `context.auth` to do it, so adding `ignoreAuth=true` there may
+break the per-hub output fields. Verify against a live instance before changing it.
 
 ### Warnings
 
