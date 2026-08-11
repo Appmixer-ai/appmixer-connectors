@@ -59,7 +59,7 @@ function validateComponent(componentPath, addFailure, addWarning) {
     if (hasTickMethod && !hasTickFlag) {
         addFailure(componentPath,
             `${name}.js implements a tick() method but component.json is missing "tick": true — ` +
-            `the engine never polls it, so the trigger silently never fires. Add "tick": true.`);
+            'the engine never polls it, so the trigger silently never fires. Add "tick": true.');
     }
 
     if (hasTickFlag && !hasTickMethod) {
