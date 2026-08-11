@@ -2,6 +2,12 @@
 
 const lib = require('../../lib');
 
+// On the very first tick the watermark is seeded slightly in the past instead of at "now",
+// so meetings that appeared between the flow starting and the first tick are still picked
+// up. The window is deliberately short: it avoids replaying the whole history while closing
+// the start-up gap.
+const INITIAL_LOOKBACK_MS = 5 * 60 * 1000;
+
 module.exports = {
 
     async tick(context) {
@@ -12,17 +18,19 @@ module.exports = {
             baseParams.meetingType = meetingType;
         }
 
-        // First run: establish a baseline watermark so we only emit meetings that appear
-        // after the flow started, instead of replaying the whole history.
-        if (context.state.since === undefined) {
-            await context.saveState({ since: new Date().toISOString(), known: [] });
-            return;
-        }
-
-        const from = context.state.since;
+        // First run: establish a baseline watermark (with a small lookback) so we only emit
+        // recent meetings instead of replaying the whole history.
+        const from = context.state.since === undefined
+            ? new Date(Date.now() - INITIAL_LOOKBACK_MS).toISOString()
+            : context.state.since;
         const meetings = await lib.fetchAllMeetings(context, { ...baseParams, from });
 
         if (!meetings.length) {
+            // Persist the seeded watermark on the first tick so the lookback window is
+            // anchored once instead of sliding forward on every empty tick.
+            if (context.state.since === undefined) {
+                await context.saveState({ since: from, known: [] });
+            }
             return;
         }
 

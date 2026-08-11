@@ -55,10 +55,22 @@ module.exports = {
         }
 
         if (status === 400 && Array.isArray(body.errors)) {
+            // The shape of errors[] is not guaranteed (it may contain strings, nulls or
+            // objects without `property`/`constraints`), so every item is normalized
+            // defensively — a formatting slip here must never mask the original API error.
             const details = body.errors.map((item) => {
-                const constraints = item && item.constraints ? Object.values(item.constraints).join('; ') : '';
-                return `${item.property}: ${constraints}`;
-            }).join(' | ');
+                if (!item || typeof item !== 'object') {
+                    return typeof item === 'string' ? item : '';
+                }
+                const constraints = item.constraints && typeof item.constraints === 'object'
+                    ? Object.values(item.constraints).join('; ')
+                    : '';
+                const property = item.property || '';
+                if (property && constraints) {
+                    return `${property}: ${constraints}`;
+                }
+                return property || constraints || item.message || '';
+            }).filter(Boolean).join(' | ');
             return new context.CancelError(`tl;dv rejected the request (400): ${details || body.message || 'invalid parameters'}.`);
         }
 
