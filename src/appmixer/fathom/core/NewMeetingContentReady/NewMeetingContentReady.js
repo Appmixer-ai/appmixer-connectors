@@ -22,7 +22,15 @@ module.exports = {
         let triggeredFor = normalizeTriggeredFor(context.properties.triggeredFor);
         if (triggeredFor.length === 0) {
             // Sensible default so the trigger is functional even if nothing was selected.
+            // Mirrored by the `defaultValue` on the inspector field.
             triggeredFor = ['my_recordings'];
+        }
+
+        // Fathom rejects webhook registration unless at least one content part is requested.
+        if (!includeSummary && !includeTranscript && !includeActionItems && !includeCrmMatches) {
+            throw new context.CancelError(
+                'At least one of Include Summary, Include Transcript, Include Action Items or Include CRM Matches must be turned on.'
+            );
         }
 
         const body = {

@@ -28,8 +28,7 @@
                 "includeTranscript": { "type": "boolean" },
                 "includeActionItems": { "type": "boolean" },
                 "includeCrmMatches": { "type": "boolean" }
-            },
-            "required": ["triggeredFor"]
+            }
         },
         "inspector": {
             "inputs": {
@@ -37,7 +36,8 @@
                     "type": "multiselect",
                     "label": "Triggered For",
                     "index": 1,
-                    "tooltip": "Which recordings should trigger this webhook.",
+                    "defaultValue": ["my_recordings"],
+                    "tooltip": "Which recordings should trigger this webhook. Defaults to your own recordings when nothing is selected.",
                     "options": [
                         { "label": "My recordings", "value": "my_recordings" },
                         { "label": "Shared external recordings", "value": "shared_external_recordings" },
@@ -49,25 +49,25 @@
                     "type": "toggle",
                     "label": "Include Summary",
                     "index": 2,
-                    "tooltip": "Include the AI summary in the webhook payload. May be unavailable for OAuth applications."
+                    "tooltip": "Include the AI summary in the webhook payload. At least one of the Include toggles must be turned on."
                 },
                 "includeTranscript": {
                     "type": "toggle",
                     "label": "Include Transcript",
                     "index": 3,
-                    "tooltip": "Include the transcript in the webhook payload. May be unavailable for OAuth applications."
+                    "tooltip": "Include the transcript in the webhook payload. At least one of the Include toggles must be turned on."
                 },
                 "includeActionItems": {
                     "type": "toggle",
                     "label": "Include Action Items",
                     "index": 4,
-                    "tooltip": "Include action items in the webhook payload."
+                    "tooltip": "Include action items in the webhook payload. At least one of the Include toggles must be turned on."
                 },
                 "includeCrmMatches": {
                     "type": "toggle",
                     "label": "Include CRM Matches",
                     "index": 5,
-                    "tooltip": "Include CRM matches (contacts, companies, deals) in the webhook payload."
+                    "tooltip": "Include CRM matches (contacts, companies, deals) in the webhook payload. At least one of the Include toggles must be turned on."
                 }
             }
         }
@@ -96,7 +96,39 @@
                             "email": { "type": "string", "example": "jane.doe@example.com" }
                         }
                     },
-                    "default_summary": { "type": "string", "title": "Default Summary", "example": "## Key Takeaways\n- Renewal on track" },
+                    "default_summary": {
+                        "type": "object",
+                        "title": "Default Summary",
+                        "properties": {
+                            "template_name": { "type": "string", "title": "Template Name", "example": "general" },
+                            "markdown_formatted": { "type": "string", "title": "Markdown Formatted", "example": "## Key Takeaways\n- Renewal on track" }
+                        }
+                    },
+                    "transcript": {
+                        "type": "array",
+                        "title": "Transcript",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "speaker": {
+                                    "type": "object",
+                                    "properties": {
+                                        "display_name": { "type": "string", "example": "Jane Doe" },
+                                        "matched_calendar_invitee_email": { "type": "string", "example": "jane.doe@example.com" }
+                                    }
+                                },
+                                "text": { "type": "string", "example": "Thanks everyone for joining today." },
+                                "timestamp": { "type": "string", "example": "00:00:12" }
+                            }
+                        },
+                        "example": [
+                            {
+                                "speaker": { "display_name": "Jane Doe", "matched_calendar_invitee_email": "jane.doe@example.com" },
+                                "text": "Thanks everyone for joining today.",
+                                "timestamp": "00:00:12"
+                            }
+                        ]
+                    },
                     "action_items": {
                         "type": "array",
                         "title": "Action Items",
@@ -104,10 +136,44 @@
                         "example": [
                             {
                                 "description": "Send renewal quote to Acme",
+                                "user_generated": false,
                                 "completed": false,
-                                "assignee": { "name": "Jane Doe", "email": "jane.doe@example.com" }
+                                "recording_timestamp": "00:10:45",
+                                "recording_playback_url": "https://fathom.video/calls/123456?timestamp=645",
+                                "assignee": { "name": "Jane Doe", "email": "jane.doe@example.com", "team": "Sales" }
                             }
                         ]
+                    },
+                    "crm_matches": {
+                        "type": "object",
+                        "title": "CRM Matches",
+                        "properties": {
+                            "contacts": {
+                                "type": "array",
+                                "title": "Contacts",
+                                "items": { "type": "object" },
+                                "example": [
+                                    { "name": "John Smith", "email": "john.smith@client.com", "record_url": "https://app.hubspot.com/contacts/123" }
+                                ]
+                            },
+                            "companies": {
+                                "type": "array",
+                                "title": "Companies",
+                                "items": { "type": "object" },
+                                "example": [
+                                    { "name": "Acme Corp", "record_url": "https://app.hubspot.com/companies/456" }
+                                ]
+                            },
+                            "deals": {
+                                "type": "array",
+                                "title": "Deals",
+                                "items": { "type": "object" },
+                                "example": [
+                                    { "name": "Q1 Renewal", "amount": 50000, "record_url": "https://app.hubspot.com/deals/789" }
+                                ]
+                            },
+                            "error": { "type": "string", "title": "Error", "example": "no CRM connected" }
+                        }
                     }
                 }
             }
