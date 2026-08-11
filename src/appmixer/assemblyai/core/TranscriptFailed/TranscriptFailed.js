@@ -2,35 +2,33 @@
 
 const lib = require('../../lib');
 
-const PAGE_LIMIT = 50;
-
 module.exports = {
 
     async tick(context) {
 
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `${lib.getBaseUrl(context)}/v2/transcript`,
-            headers: lib.getHeaders(context),
-            params: { limit: PAGE_LIMIT, status: 'error' }
-        });
+        const previousIds = Array.isArray(context.state.seen) ? context.state.seen : null;
+        const seen = previousIds ? new Set(previousIds) : null;
 
-        const transcripts = (data && data.transcripts) || [];
-        const currentIds = transcripts.map(t => t.id);
+        const { records, truncated } = await lib.fetchTranscriptsUntilSeen(context, { status: 'error', seen });
+
+        if (truncated) {
+            await context.log({
+                step: 'Poll window truncated',
+                message: 'More failed transcripts than the poll window covers; consider a shorter tick interval.'
+            });
+        }
 
         // First poll establishes a baseline and does not emit.
-        const seen = Array.isArray(context.state.seen) ? new Set(context.state.seen) : null;
         if (seen === null) {
-            await context.saveState({ seen: currentIds });
+            await context.saveState({ seen: lib.mergeSeenIds(records.map(t => t.id), []) });
             return;
         }
 
-        const fresh = transcripts.filter(t => !seen.has(t.id));
-        for (const summary of fresh) {
+        for (const summary of records) {
             await context.sendJson(summary, 'transcript');
         }
 
-        await context.saveState({ seen: currentIds });
+        await context.saveState({ seen: lib.mergeSeenIds(records.map(t => t.id), previousIds) });
     },
 
     async test(context) {

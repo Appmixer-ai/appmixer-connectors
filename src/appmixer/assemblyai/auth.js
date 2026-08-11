@@ -42,11 +42,18 @@ module.exports = {
                 return true;
             },
 
-            accountNameFromProfileInfo: (context) => {
+            // API keys have no profile endpoint, so the obfuscated key plus the region
+            // (keys are region-bound) is the profile info the account label is built from.
+            requestProfileInfo: (context) => {
                 const apiKey = context.apiKey || '';
                 const region = (context.region || 'us').toUpperCase();
-                return `${apiKey.substr(0, 6)}...${apiKey.substr(-4)} (${region})`;
-            }
+                return {
+                    key: `${apiKey.substr(0, 6)}...${apiKey.substr(-4)} (${region})`,
+                    region
+                };
+            },
+
+            accountNameFromProfileInfo: 'key'
         };
     }
 };

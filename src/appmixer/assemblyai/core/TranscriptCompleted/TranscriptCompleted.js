@@ -2,8 +2,6 @@
 
 const lib = require('../../lib');
 
-const PAGE_LIMIT = 50;
-
 module.exports = {
 
     async tick(context) {
@@ -12,26 +10,25 @@ module.exports = {
         const headers = lib.getHeaders(context);
         const includeFull = context.properties.includeFullTranscript !== false;
 
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `${baseUrl}/v2/transcript`,
-            headers,
-            params: { limit: PAGE_LIMIT, status: 'completed' }
-        });
+        const previousIds = Array.isArray(context.state.seen) ? context.state.seen : null;
+        const seen = previousIds ? new Set(previousIds) : null;
 
-        const transcripts = (data && data.transcripts) || [];
-        const currentIds = transcripts.map(t => t.id);
+        const { records, truncated } = await lib.fetchTranscriptsUntilSeen(context, { status: 'completed', seen });
+
+        if (truncated) {
+            await context.log({
+                step: 'Poll window truncated',
+                message: 'More completed transcripts than the poll window covers; consider a shorter tick interval.'
+            });
+        }
 
         // First poll establishes a baseline and does not emit.
-        const seen = Array.isArray(context.state.seen) ? new Set(context.state.seen) : null;
         if (seen === null) {
-            await context.saveState({ seen: currentIds });
+            await context.saveState({ seen: lib.mergeSeenIds(records.map(t => t.id), []) });
             return;
         }
 
-        const fresh = transcripts.filter(t => !seen.has(t.id));
-
-        for (const summary of fresh) {
+        for (const summary of records) {
             let payload = summary;
             if (includeFull) {
                 const { data: full } = await context.httpRequest({
@@ -44,7 +41,7 @@ module.exports = {
             await context.sendJson(payload, 'transcript');
         }
 
-        await context.saveState({ seen: currentIds });
+        await context.saveState({ seen: lib.mergeSeenIds(records.map(t => t.id), previousIds) });
     },
 
     async test(context) {

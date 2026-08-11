@@ -3,6 +3,15 @@
 const lib = require('../../lib');
 
 function kvToObj(arr) {
+    // The engine can deliver the key-value input as a JSON string (e.g. when the array
+    // comes from a flow transform instead of the designer's key-value editor).
+    if (typeof arr === 'string') {
+        try {
+            arr = JSON.parse(arr);
+        } catch (e) {
+            return {};
+        }
+    }
     if (!arr || !Array.isArray(arr)) return {};
     const out = {};
     for (const row of arr) {
@@ -30,10 +39,27 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
+        // The request carries the account's API key, so an absolute URL is only accepted
+        // when it points at the account's own regional API host.
         const baseUrl = lib.getBaseUrl(context);
-        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
-            ? url
-            : `${baseUrl}${url}`;
+        let targetUrl;
+
+        if (/^https?:\/\//i.test(url)) {
+            let parsed;
+            try {
+                parsed = new URL(url);
+            } catch (e) {
+                throw new context.CancelError('API Endpoint URL is not a valid URL.');
+            }
+            if (parsed.origin !== new URL(baseUrl).origin) {
+                throw new context.CancelError(
+                    `API Endpoint URL must target ${baseUrl}. Use a path such as /v2/transcript instead.`
+                );
+            }
+            targetUrl = parsed.href;
+        } else {
+            targetUrl = `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
+        }
 
         const requestOptions = {
             method,

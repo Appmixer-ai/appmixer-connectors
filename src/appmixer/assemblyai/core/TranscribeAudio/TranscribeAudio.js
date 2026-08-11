@@ -44,10 +44,15 @@ module.exports = {
             body.webhook_url = input.webhookUrl;
         }
 
+        // Send the explicit value whenever the toggle was set: some options (punctuate,
+        // format_text) default to true at AssemblyAI, so omitting false would silently
+        // ignore a user turning them off.
         Object.keys(BOOLEAN_FIELDS).forEach(inputName => {
-            if (input[inputName]) {
-                body[BOOLEAN_FIELDS[inputName]] = true;
+            const value = input[inputName];
+            if (value === undefined || value === null || value === '') {
+                return;
             }
+            body[BOOLEAN_FIELDS[inputName]] = value === true || value === 'true';
         });
 
         const { data } = await context.httpRequest({

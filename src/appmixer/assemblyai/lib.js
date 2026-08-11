@@ -9,6 +9,12 @@ const BASE_URLS = {
     eu: 'https://api.eu.assemblyai.com'
 };
 
+// Trigger polling: one page is 50 records, and up to MAX_PAGES pages are walked per tick
+// so a burst between ticks cannot be missed. MAX_SEEN caps the ids carried in the state.
+const TRIGGER_PAGE_LIMIT = 50;
+const TRIGGER_MAX_PAGES = 20;
+const MAX_SEEN = 1000;
+
 module.exports = {
 
     /**
@@ -32,6 +38,76 @@ module.exports = {
         return {
             Authorization: context.auth.apiKey
         };
+    },
+
+    /**
+     * Walk the transcript list (newest first) until a record the trigger has already
+     * emitted is reached, so more than one page of new records between two ticks is
+     * still picked up. Stops after TRIGGER_MAX_PAGES pages as a safety cap.
+     * @param {object} context
+     * @param {object} options - { status, seen } where seen is a Set of known ids or null
+     * @returns {Promise<{ records: array, truncated: boolean }>} records are oldest first
+     */
+    async fetchTranscriptsUntilSeen(context, { status, seen } = {}) {
+
+        const baseUrl = this.getBaseUrl(context);
+        const headers = this.getHeaders(context);
+
+        const params = { limit: TRIGGER_PAGE_LIMIT };
+        if (status) {
+            params.status = status;
+        }
+
+        let url = `${baseUrl}/v2/transcript`;
+        // The first request is parameterized; next_url already carries limit and status.
+        let requestParams = params;
+        const records = [];
+        let pages = 0;
+        let reachedKnown = false;
+
+        while (url && pages < TRIGGER_MAX_PAGES) {
+
+            const { data } = await context.httpRequest({ method: 'GET', url, headers, params: requestParams });
+            const transcripts = (data && data.transcripts) || [];
+
+            for (const transcript of transcripts) {
+                if (seen && seen.has(transcript.id)) {
+                    reachedKnown = true;
+                    break;
+                }
+                records.push(transcript);
+            }
+
+            pages += 1;
+
+            if (reachedKnown || transcripts.length === 0) {
+                break;
+            }
+
+            const nextUrl = data && data.page_details && data.page_details.next_url;
+            if (!nextUrl) {
+                break;
+            }
+
+            url = nextUrl.startsWith('http') ? nextUrl : `${baseUrl}${nextUrl}`;
+            requestParams = undefined;
+        }
+
+        // Emit oldest first so downstream components see the records in the order they happened.
+        return { records: records.reverse(), truncated: !reachedKnown && pages >= TRIGGER_MAX_PAGES };
+    },
+
+    /**
+     * Ids to persist after a tick: everything just scanned plus the previous window,
+     * newest first and capped so the state cannot grow without bound.
+     * @param {array} newIds - ids seen in this tick, oldest first
+     * @param {array} previousIds
+     * @returns {array}
+     */
+    mergeSeenIds(newIds, previousIds) {
+
+        const merged = [...[...newIds].reverse(), ...(previousIds || [])];
+        return [...new Set(merged)].slice(0, MAX_SEEN);
     },
 
     async sendArrayOutput({
