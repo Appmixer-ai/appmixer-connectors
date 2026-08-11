@@ -1,5 +1,26 @@
 'use strict';
 
+// Both the profile lookup and the validation check hit the same endpoint. A
+// blank field would otherwise surface as a TypeError from .replace()/.slice()
+// instead of a readable authentication error.
+async function listTargetHubs(context) {
+
+    const { baseUrl, token, clientKey } = context;
+
+    if (!baseUrl || !token || !clientKey) {
+        throw new Error('Base URL, Bearer Token and Client Key are all required.');
+    }
+
+    return context.httpRequest({
+        method: 'GET',
+        url: `${baseUrl.replace(/\/$/, '')}/Flows/Home/ListTargetHubs?clientKey=${encodeURIComponent(clientKey)}`,
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+        }
+    });
+}
+
 module.exports = {
     type: 'apiKey',
     definition: {
@@ -22,15 +43,7 @@ module.exports = {
         },
 
         async requestProfileInfo(context) {
-            const baseUrl = context.baseUrl.replace(/\/$/, '');
-            await context.httpRequest({
-                method: 'GET',
-                url: `${baseUrl}/Flows/Home/ListTargetHubs?clientKey=${encodeURIComponent(context.clientKey)}`,
-                headers: {
-                    'Authorization': `Bearer ${context.token}`,
-                    'Accept': 'application/json'
-                }
-            });
+            await listTargetHubs(context);
             const ck = context.clientKey;
             const maskedKey = ck.length > 6 ? ck.slice(0, 3) + '...' + ck.slice(-3) : ck;
             return { name: `HubBI (${maskedKey})` };
@@ -39,14 +52,7 @@ module.exports = {
         accountNameFromProfileInfo: 'name',
 
         validate: async (context) => {
-            const baseUrl = context.baseUrl.replace(/\/$/, '');
-            await context.httpRequest({
-                method: 'GET',
-                url: `${baseUrl}/Flows/Home/ListTargetHubs?clientKey=${encodeURIComponent(context.clientKey)}`,
-                headers: {
-                    'Authorization': `Bearer ${context.token}`
-                }
-            });
+            await listTargetHubs(context);
             return true;
         }
     }

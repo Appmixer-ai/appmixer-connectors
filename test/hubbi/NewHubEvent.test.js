@@ -135,4 +135,98 @@ describe('Hubbi NewHubEvent (trigger)', function () {
             assert.deepStrictEqual(options[0].schema.items.properties, {});
         });
     });
+
+    describe('test (Flow Test Mode)', function () {
+
+        const FIELDS = [
+            { fieldId: 'f1', name: 'First', type: 'string' },
+            { fieldId: 'f2', name: 'Count', type: 'int32' },
+            { fieldId: 'f3', name: 'Ratio', type: 'double' },
+            { fieldId: 'f4', name: 'Active', type: 'boolean' },
+            { fieldId: 'f5', name: 'Seen At', type: 'datetime' },
+            { fieldId: 'f6', name: 'Day', type: 'date' },
+            { fieldId: 'f7', name: 'Ref', type: 'guid' }
+        ];
+
+        const SAMPLE = {
+            f1: 'First',
+            f2: 42,
+            f3: 42.5,
+            f4: true,
+            f5: '2026-01-01T09:00:00.000Z',
+            f6: '2026-01-01',
+            f7: '3f2504e0-4f89-11d3-9a0c-0305e82c3301'
+        };
+
+        beforeEach(function () {
+            context.httpRequest.resolves({ data: FIELDS });
+        });
+
+        it('throws when no hub is selected', async function () {
+            context.properties.conversionKey = undefined;
+            await assert.rejects(() => NewHubEvent.test(context), /No hub selected/);
+            assert(context.httpRequest.notCalled);
+        });
+
+        it('throws when the hub has no target fields', async function () {
+            context.httpRequest.resolves({ data: [] });
+            await assert.rejects(() => NewHubEvent.test(context), /no target fields/);
+        });
+
+        it('reads the target fields of the configured hub only', async function () {
+            await NewHubEvent.test(context);
+            assert(context.httpRequest.calledOnce);
+            const req = context.httpRequest.firstCall.args[0];
+            assert.strictEqual(req.method, 'GET');
+            assert.strictEqual(
+                req.url,
+                'https://test.hubbi.nl/Flows/Home/TargetFields?clientKey=ck-1&conversionKey=cv-1'
+            );
+        });
+
+        it('never writes state', async function () {
+            await NewHubEvent.test(context);
+            assert(context.saveState.notCalled);
+        });
+
+        it('synthesizes one value per mapped field type (array output)', async function () {
+            await NewHubEvent.test(context);
+            assert(context.sendJson.calledOnce);
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [SAMPLE], count: 1 });
+            assert.strictEqual(context.sendJson.firstCall.args[1], 'out');
+        });
+
+        it('emits the flattened record for the "first" output type', async function () {
+            context.properties.outputType = 'first';
+            await NewHubEvent.test(context);
+            assert(context.sendJson.calledOnce);
+            assert.deepStrictEqual(
+                context.sendJson.firstCall.args[0],
+                Object.assign({}, SAMPLE, { index: 0, count: 1 })
+            );
+        });
+
+        it('emits exactly one message for the "object" output type', async function () {
+            context.properties.outputType = 'object';
+            await NewHubEvent.test(context);
+            assert(context.sendJson.calledOnce);
+            assert.deepStrictEqual(
+                context.sendJson.firstCall.args[0],
+                Object.assign({}, SAMPLE, { index: 0, count: 1 })
+            );
+        });
+
+        it('matches the shape receive() produces for the same record', async function () {
+            await NewHubEvent.test(context);
+            const fromTest = context.sendJson.firstCall.args[0];
+
+            const live = createMockContext();
+            live.auth = context.auth;
+            live.properties = { conversionKey: 'cv-1', outputType: 'array' };
+            live.messages = { webhook: { content: { data: { conversionKey: 'cv-1', data: [SAMPLE] } } } };
+            await NewHubEvent.receive(live);
+
+            assert.deepStrictEqual(fromTest, live.sendJson.firstCall.args[0]);
+        });
+    });
 });

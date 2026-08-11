@@ -49,32 +49,41 @@ async function generateInspector(context) {
     const recordFields = {};
     const itemProperties = {};
 
+    // Any failure while loading the field definitions (transient endpoint error,
+    // expired token, hub without fields) must NOT reject the whole inspector:
+    // the in port has no static schema, so the user would be left without any
+    // inputs at all, not even the hub picker. Isolate it and fall back to an
+    // empty record row instead.
     if (conversionKey) {
-        const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
-        const response = await context.httpRequest({
-            method: 'GET',
-            url: `${baseUrl}/Flows/Home/SourceFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.token}`,
-                'Accept': 'application/json'
-            }
-        });
+        try {
+            const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
+            const response = await context.httpRequest({
+                method: 'GET',
+                url: `${baseUrl}/Flows/Home/SourceFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
+                headers: {
+                    'Authorization': `Bearer ${context.auth.token}`,
+                    'Accept': 'application/json'
+                }
+            });
 
-        const fields = response.data || [];
+            const fields = response.data || [];
 
-        fields.forEach((field, index) => {
-            if (!field.fieldId) return;
-            const { inspectorType, inspectorConfig, schema: fieldSchema } = lib.mapFieldType(field.type);
-            itemProperties[field.fieldId] = fieldSchema;
-            const input = {
-                type: inspectorType,
-                label: field.name || field.fieldId,
-                tooltip: `Source field: ${field.name || field.fieldId} (${field.type || 'string'})`,
-                index: index + 1
-            };
-            if (inspectorConfig) input.config = inspectorConfig;
-            recordFields[field.fieldId] = input;
-        });
+            fields.forEach((field, index) => {
+                if (!field.fieldId) return;
+                const { inspectorType, inspectorConfig, schema: fieldSchema } = lib.mapFieldType(field.type);
+                itemProperties[field.fieldId] = fieldSchema;
+                const input = {
+                    type: inspectorType,
+                    label: field.name || field.fieldId,
+                    tooltip: `Source field: ${field.name || field.fieldId} (${field.type || 'string'})`,
+                    index: index + 1
+                };
+                if (inspectorConfig) input.config = inspectorConfig;
+                recordFields[field.fieldId] = input;
+            });
+        } catch (err) {
+            await context.log({ step: 'Failed to load source fields for inspector', conversionKey, error: err.message });
+        }
     }
 
     const schema = {

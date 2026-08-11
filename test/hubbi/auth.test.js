@@ -46,4 +46,16 @@ describe('Hubbi auth', function () {
         const info = await auth.definition.requestProfileInfo(context);
         assert.strictEqual(info.name, 'HubBI (abc)');
     });
+
+    ['baseUrl', 'token', 'clientKey'].forEach(function (field) {
+
+        it(`reports a readable error instead of a TypeError when ${field} is blank`, async function () {
+            const context = ctx({ [field]: '' });
+            await assert.rejects(
+                () => auth.definition.validate(context),
+                e => e.name === 'Error' && /are all required/.test(e.message)
+            );
+            assert(context.httpRequest.notCalled);
+        });
+    });
 });

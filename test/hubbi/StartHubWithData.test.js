@@ -118,5 +118,23 @@ describe('Hubbi StartHubWithData', function () {
             assert.strictEqual(inputs.records.fields.f2.type, 'number');
             assert(!inputs.records.when, 'records must always be visible (no inputMode gate)');
         });
+
+        it('still returns the hub picker when the SourceFields lookup fails', async function () {
+            context.properties = { generateInspector: true, conversionKey: 'cv-1' };
+            context.httpRequest.rejects(new Error('network down'));
+
+            await StartHubWithData.receive(context);
+
+            const { schema, inputs } = context.sendJson.firstCall.args[0];
+            assert(inputs.conversionKey, 'the hub picker must survive a failed lookup');
+            assert(inputs.records, 'the records input must survive a failed lookup');
+            assert.deepStrictEqual(inputs.records.fields, {});
+            assert.deepStrictEqual(schema.properties.records.properties.ADD.items.properties, {});
+            assert(context.log.calledOnce);
+            assert.strictEqual(
+                context.log.firstCall.args[0].step,
+                'Failed to load source fields for inspector'
+            );
+        });
     });
 });

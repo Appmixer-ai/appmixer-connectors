@@ -1,60 +1,73 @@
 # Connector Review: hubbi
 
-**Review Date:** 2026-07-16
+**Review Date:** 2026-08-11 (re-review; supersedes the 2026-07-16 pass)
 **Reviewer:** Claude AI
 **Branch:** feature/hubbi
 **Bundle version:** 2.0.0
 
 ## Summary
 
-| Category | Status | Issues Found | Fixed |
-|----------|--------|--------------|-------|
-| Structural | FIXED | 3 (2 blocking) | 2 |
-| Component Types | PASS | 2 (non-blocking) | 0 |
-| Label Consistency | FIXED | 3 | 1 |
-| Code Quality | PASS | 4 (suggestions) | 0 |
+| Category | Status | Issues Found |
+|----------|--------|--------------|
+| Structural | PASS | 1 (warning) |
+| Component Types | PASS | 2 (suggestions) |
+| Label Consistency | PASS | 3 (minor) |
+| Code Quality | PASS | 5 (1 warning, 4 suggestions) |
 
-`npm run validate` failed on this connector at review time and **now passes** — both blocking
-findings (C1, C2) were fixed. ESLint is clean: the 689 reported errors are all `linebreak-style`
-caused by `core.autocrlf=true` on this Windows checkout (box reports 797 of the same), not by
-connector code.
+**No blocking issues.** The two critical findings of the previous pass (changelog order, missing
+`webhookUrl` in the properties schema) are fixed and confirmed gone from `npm run validate`.
 
-## Fixes Applied (2026-07-16)
+At review time hubbi reported 5 non-blocking validator findings. **Four were fixed in this pass**
+(see *Fixes Applied* below); only `connector-has-makeapicall` remains.
+
+Verification after the fixes:
+
+- `npm run validate` — hubbi reports **1** finding (`connector-has-makeapicall`, backlog).
+- `npx mocha --recursive --exit "test/hubbi/**/*.test.js"` — **87 passing**, 0 failing (was 75).
+- `npx eslint src/appmixer/hubbi` — 0 findings other than `linebreak-style`, which comes from
+  `core.autocrlf=true` on this Windows checkout. (`test/hubbi/*.test.js` additionally reports
+  pre-existing `space-before-function-paren` on the mocha `function ()` style, in files this pass
+  did not touch as well.)
+
+## Fixes Applied (2026-08-11)
 
 | # | Fix | Files |
 |---|-----|-------|
-| C1 | Reordered bundle.json changelog oldest-first (1.0.0 → 2.0.0) | `bundle.json` |
-| C2 | Added `webhookUrl` to NewHubEvent `properties.schema.properties` | `core/NewHubEvent/component.json` |
-| W1 | NewHubEvent acknowledges an empty event instead of throwing/emitting | `core/NewHubEvent/NewHubEvent.js` |
-| 5 | Standardized the hub select label to "Hub" across all five components; output ports keep "Conversion Key" | `core/StartHub/component.json`, `core/GetSourceFields/component.json`, `core/GetTargetFields/component.json`, `core/StartHubWithData/StartHubWithData.js` |
-| — | Regression cover for W1: 10 new cases across all three output types | `test/hubbi/NewHubEvent.test.js` |
-| — | Recorded the label rename and the W1 behavior change in the unreleased 2.0.0 changelog | `bundle.json` |
+| N1 | Isolated the SourceFields lookup in `try/catch` + `context.log` so a failed lookup no longer blanks the inspector | `core/StartHubWithData/StartHubWithData.js` |
+| V1 | Added `example` values to the StartHub / StartHubWithData output port schemas | `core/StartHub/component.json`, `core/StartHubWithData/component.json` |
+| V2 | Added `test(context)` to NewHubEvent for Flow Test Mode, plus a shared `fetchTargetFields()` helper | `core/NewHubEvent/NewHubEvent.js` |
+| S3 | Shared one `listTargetHubs()` request between `requestProfileInfo` and `validate`, with a readable error on blank fields | `auth.js` |
+| S4 | Defaulted `{ label = 'Records', value = 'result' }` in `getOutputPortOptions` | `lib.js` |
+| — | Regression cover: 12 new cases (inspector fault tolerance, auth guards, `test()` across all three output types incl. shape parity with `receive()`) | `test/hubbi/StartHubWithData.test.js`, `test/hubbi/auth.test.js`, `test/hubbi/NewHubEvent.test.js` |
+| — | Recorded all of the above in the unreleased 2.0.0 changelog | `bundle.json` |
 
-Verified: all edited JSON parses; `npm run validate` no longer reports `[bundle-versions]` or
-`[component-schemas]` for hubbi; the hubbi suite passes 75/75; the 6 new empty-payload assertions
-fail against the unfixed component, confirming they pin the regression.
+**Not applied** (not selected): W4 (`version` in service.json), the `count` label alignment, the
+NewHubEvent outputType option wording, S1, S2, S5, S6, and V3 (MakeApiCall).
 
-### Note: W1 changed a behavior an existing test had pinned
+### Note on the `test()` implementation
 
-`test/hubbi/NewHubEvent.test.js` contained `emits an empty result when there is no data payload`,
-asserting the old `array`-mode output of `{ result: [], count: 0 }`. That test was replaced, not
-deleted around. It came from commit `11126b45` ("test(hubbi): add unit test suite for the Hubbi
-connector"), a single after-the-fact suite that characterized existing behavior rather than
-specifying intended behavior — so the empty emission was captured, not designed. The W1 fix means
-an empty event no longer triggers the flow in **any** output type, which is broader than only
-repairing the `first`-mode crash. If the old `array` behavior is wanted, scope the guard in
-`NewHubEvent.js` to `outputType === 'first'` and restore the original assertion.
+Hubbi has no endpoint for reading past hub events, so `test()` cannot fetch a real record. Instead
+it loads the selected hub's **target field definitions** — through `fetchTargetFields()`, the same
+helper `generateOutputPortOptions()` now uses — and synthesizes one value per mapped field type
+(fixed values, so a test run is reproducible).
 
-**Still open** (deferred by reviewer): W2 (`test()` method), W3 (`example` values), W4
-(service.json `version`), W5 (MakeApiCall), the `count` label mismatch, and the outputType option
-wording.
+The first implementation emitted through `lib.sendArrayOutput` with a single record, which
+guarantees shape parity by construction. The repo validator rejects that
+(`[trigger-test-method] test() must emit a single item with sendJson, not sendArray/sendArrayOutput`),
+so the payload is now built directly and passed to `context.sendJson`. Parity is instead pinned by a
+test that runs `test()` and `receive()` over the same record and asserts the two emissions are
+deep-equal — if `lib.sendArrayOutput`'s shape ever changes, that test fails.
 
-### Unrelated environment issues found while testing
+`test()` honors both `context.properties` filters (`conversionKey`, `outputType`), is read-only
+(one `GET`), writes no state, and throws when no hub is selected or the hub has no target fields.
 
-- `npm run test-unit` crashes on Windows with `spawn EINVAL` — `scripts/run_test_unit.js:45`
-  spawns `mocha.cmd` without `shell: true`. Workaround: `npx mocha --recursive --exit "test/hubbi/**/*.test.js"`.
-- The repo-wide suite fails in `test/mssql/validateQuery.test.js` with `MODULE_NOT_FOUND`
-  (mssql dependency not installed locally). Pre-existing, unrelated to hubbi.
+> `test()` has **not** been exercised against a live Hubbi instance — verification here is
+> validator + unit tests only. Confirm via `appmixer test component ./src/appmixer/hubbi/core/NewHubEvent --test`
+> or Flow Test Mode before release.
+
+> `npm run test-unit` still crashes on Windows with `spawn EINVAL` (`scripts/run_test_unit.js:45`
+> spawns `mocha.cmd` without `shell: true`). Use the `npx mocha` command above. Pre-existing,
+> unrelated to hubbi.
 
 ## Components Reviewed
 
@@ -73,49 +86,11 @@ wording.
 
 ### Critical Issues
 
-**C1. bundle.json changelog is ordered newest-first; validator requires oldest-first**
+None.
 
-`[bundle-versions] src/appmixer/hubbi/bundle.json: changelog must be ordered oldest-first`
+### Validator findings
 
-Found `[2.0.0, 1.6.0, 1.5.0, 1.4.1, 1.4.0, 1.3.0, 1.2.0, 1.1.1, 1.1.0, 1.0.0]`,
-expected `[1.0.0, 1.1.0, 1.1.1, 1.2.0, 1.3.0, 1.4.0, 1.4.1, 1.5.0, 1.6.0, 2.0.0]`.
-Fix: reverse the key order in the `changelog` object. Content is unchanged.
-
-**C2. NewHubEvent: `webhookUrl` inspector input is missing from `properties.schema.properties`**
-
-`[component-schemas] src/appmixer/hubbi/core/NewHubEvent/component.json: properties inspector input 'webhookUrl' is missing from schema.properties`
-
-The inspector declares a `webhookUrl` input but the properties schema only declares
-`generateInspector`, `conversionKey`, and `outputType`. Add:
-
-```json
-"webhookUrl": { "type": "string" }
-```
-
-### Warnings
-
-**W1. NewHubEvent can return an error response to Hubbi for an empty event**
-
-In `NewHubEvent.js:46`, `lib.sendArrayOutput` is called before `context.response()`. When
-`outputType` is `first` and the webhook payload carries no records, `lib.sendArrayOutput`
-throws `CancelError('No records available for first output type')` (`lib.js:88-89`), so
-`context.response()` never runs and Hubbi receives an error instead of a 200. A trigger should
-acknowledge the webhook regardless. Suggested guard before the send:
-
-```javascript
-if (records.length === 0) {
-    await context.log({ step: 'Webhook ignored, no records in payload' });
-    return context.response();
-}
-```
-
-**W2. NewHubEvent has no `test(context)` method for Flow Test Mode**
-
-`[trigger-has-test-method] .../NewHubEvent/component.json: Trigger is missing a test(context) method`
-
-See the `connector-test-method` skill.
-
-**W3. Output port schemas are missing `example` values**
+**V1. Output port schemas are missing `example` values** (3 occurrences) — **FIXED**
 
 ```
 [output-port-examples] StartHub/component.json: outPorts[0](out) options[conversionKey].schema is missing 'example'
@@ -123,68 +98,118 @@ See the `connector-test-method` skill.
 [output-port-examples] StartHubWithData/component.json: outPorts[0](out) options[count].schema is missing 'example'
 ```
 
-`example` powers the variable-picker preview. Suggested: a UUID for `conversionKey`, `3` for `count`.
+`example` powers the variable-picker preview. Added a UUID string for `conversionKey`, `3` for `count`.
+
+**V2. NewHubEvent has no `test(context)` method for Flow Test Mode** — **FIXED**
+
+```
+[trigger-has-test-method] core/NewHubEvent/component.json: Trigger is missing a test(context) method
+```
+
+See *Note on the `test()` implementation* above.
+
+**V3. Connector has no MakeApiCall component** — still open
+
+```
+[connector-has-makeapicall] bundle.json: connector has no MakeApiCall component — see issue #1459
+```
+
+Repo-wide standard; many connectors still lack it. Backlog, not a blocker.
+
+### Warnings
+
+**N1. StartHubWithData's `generateInspector` is not fault-tolerant (NEW this pass)** — **FIXED**
+
+`core/StartHubWithData/StartHubWithData.js:52-78` calls `/Flows/Home/SourceFields` with no
+`try/catch`. If that request fails — transient 5xx, an expired token, a hub whose field definitions
+are unavailable — the whole inspector generation rejects. Because `component.json` declares the
+in-port purely as a `source` with **no static `schema`/`inspector` fallback**, the user is left with
+no inputs at all, not even the Hub picker they just used.
+
+The sibling code path already solves exactly this: `NewHubEvent.js:88-108` isolates the equivalent
+`TargetFields` lookup in a `try/catch` and degrades to the generic options rather than blanking the
+port. Apply the same shape here — keep the `conversionKey` select, log the failure, and fall back to
+empty `recordFields`:
+
+```javascript
+if (conversionKey) {
+    try {
+        // ... existing SourceFields request + field loop
+    } catch (err) {
+        await context.log({ step: 'Failed to load source fields for inspector', conversionKey, error: err.message });
+    }
+}
+```
 
 **W4. service.json has no `version` field**
 
-The documented service.json schema lists `version`, and 95 of 149 connectors set it. Add `"version": "2.0.0"`.
-
-**W5. Connector has no MakeApiCall component**
-
-`[connector-has-makeapicall] src/appmixer/hubbi/bundle.json: connector has no MakeApiCall component — see issue #1459`
-
-Repo-wide standard, though a number of connectors currently lack it. Treat as backlog, not a blocker.
+The documented service.json schema lists `version`, and 95 of 149 connectors set it (54 do not).
+Add `"version": "2.0.0"`.
 
 ### Suggestions
 
-**S1.** StartHub and StartHubWithData use the `options[]` form for outPorts. CLAUDE.md prefers
-JSON Schema (`schema`) over `options[]`.
+**S1.** StartHub and StartHubWithData use the `options[]` form for `outPorts`. CLAUDE.md prefers
+JSON Schema (`schema`) over `options[]`. Both are accepted; converting is optional.
 
-**S2.** `GetSourceFields` / `GetTargetFields` return arrays and use `outputType` + lib helpers, so
-they are List-shaped components named with the `Get` prefix (per CLAUDE.md, `Get` means a single
-item by ID). Both are `private: true`, so user impact is nil. Rename only if you touch them anyway.
+**S2.** `GetSourceFields` / `GetTargetFields` return arrays and use `outputType` + the lib helpers, so
+they are List-shaped components carrying a `Get` prefix (per CLAUDE.md, `Get` means a single item by
+ID). Both are `private: true`, so user impact is nil. Rename only if you touch them anyway.
 
-**S3.** `auth.js` duplicates the identical ListTargetHubs request in `requestProfileInfo` and
-`validate`. Could share one helper.
+**S3.** — **FIXED.** `auth.js` duplicated the identical `ListTargetHubs` request in `requestProfileInfo` and
+`validate`. Worth one shared helper. While there: `requestProfileInfo` does `context.clientKey.slice(...)`
+and `context.baseUrl.replace(...)` with no guard, so a blank field surfaces as a `TypeError` rather
+than a readable auth error.
 
-**S4.** `conversionKey` uses `index: 1` in StartHub but `index: 0` in GetSourceFields, GetTargetFields
-and StartHubWithData's generated inspector. Harmless (indexes only order within a component) but
-inconsistent.
+**S4.** — **FIXED.** `lib.getOutputPortOptions` took `{ label, value }` where the canonical template hardcodes
+`value: 'result'`. Every current call site passes `value: 'result'`, but an omitted `value` would
+silently emit `value: undefined`. Default it: `{ label, value = 'result' }`.
+
+**S5.** The five List-shaped components' descriptions don't state a maximum record count (the
+checklist asks for it). The Hubbi endpoints are unpaginated and return the full set, so there is no
+real cap to state — either add "Returns all hubs for the client." or accept as-is.
+
+**S6.** `conversionKey` uses `index: 1` in StartHub but `index: 0` in GetSourceFields, GetTargetFields
+and StartHubWithData's generated inspector. Harmless (indexes only order within one component).
+Relatedly, StartHubWithData's generated inspector defines no `groups` while every other component
+groups its fields into Required/Settings.
+
+### Confirmed non-issues
+
+- **`"trigger": true` on NewHubEvent** — only 10 of 117 webhook components in this repo set it, and
+  the docs' own webhook example omits it. Not a violation.
+- **`"type": "object"` on `properties.schema`** — only 112 of 362 trigger-style property schemas set
+  it. Not a violation.
+- **`lib.js` divergence from the canonical template** — hubbi adds `mapFieldType` and
+  `rethrowHubbiError`, drops the unused `getProperty`, and reorders the `array`-mode options. All
+  deliberate; the array output field is still `result` and the helper contract is intact.
 
 ## Label Consistency Analysis
 
-### Entity: Hub (conversionKey input)
+### Entity: Hub (`conversionKey` inspector input)
 
 | Component | Field | Label | Tooltip | Status |
 |-----------|-------|-------|---------|--------|
-| StartHub | conversionKey | Conversion Key | The conversion identifier (UUID) of the hub to start. | baseline |
-| StartHubWithData | conversionKey | Conversion Key | The conversion identifier (UUID) of the hub to start. | OK |
-| GetSourceFields | conversionKey | Conversion Key | The conversion identifier (UUID) of the hub. | OK |
-| GetTargetFields | conversionKey | Conversion Key | The conversion identifier (UUID) of the hub. | OK |
-| NewHubEvent | conversionKey | **Hub** | Select the hub to listen for events from. | **MISMATCH** |
+| StartHub | conversionKey | Hub | Select the hub to start. | OK |
+| StartHubWithData | conversionKey | Hub | Select the hub to start. | OK |
+| GetSourceFields | conversionKey | Hub | Select the hub to load the source field definitions from. | OK |
+| GetTargetFields | conversionKey | Hub | Select the hub to load the target field definitions from. | OK |
+| NewHubEvent | conversionKey | Hub | Select the hub to listen for events from. | OK |
 
-All five inputs are the same thing: a `select` populated with hub names whose value is the hub's
-conversion key. NewHubEvent labels it "Hub"; everything else labels it "Conversion Key".
-
-**Recommendation:** standardize on **"Hub"** everywhere, not "Conversion Key". The control shows a
-list of hub *names* and the user is picking a hub — "Conversion Key" describes the stored value,
-not the choice, and reads as though a UUID must be pasted in. The output ports can keep the
-"Conversion Key" label, since there the value genuinely is the key. This is a judgment call and
-the reverse (standardize on "Conversion Key") is defensible; it just makes four inspectors worse
-instead of making one better.
+**Resolved.** The 2.0.0 rename standardized all five on "Hub". Tooltips follow one
+"Select the hub to …" pattern. Output ports correctly keep the "Conversion Key" label, where the
+value genuinely is the key.
 
 ### Entity: Hub (list component record schema)
 
 | Component | Field | Title | Status |
 |-----------|-------|-------|--------|
-| ListSourceHubsWithPostData | key | Conversion Key | OK |
-| ListSourceHubsWithoutPostData | key | Conversion Key | OK |
-| ListTargetHubs | key | Conversion Key | OK |
-| all three | name | Name | OK |
+| ListSourceHubsWithPostData | key / name | Conversion Key / Name | OK |
+| ListSourceHubsWithoutPostData | key / name | Conversion Key / Name | OK |
+| ListTargetHubs | key / name | Conversion Key / Name | OK |
 
 Consistent.
 
-### Field: Hub field definitions
+### Entity: Hub field definitions
 
 | Component | Fields | Status |
 |-----------|--------|--------|
@@ -199,14 +224,15 @@ Consistent.
 
 | Component | Output Label | Value Key | Status |
 |-----------|--------------|-----------|--------|
-| StartHubWithData | **Records Count** | count | **MISMATCH** |
-| NewHubEvent (via lib) | Items Count | count | OK (baseline) |
-| GetSourceFields (via lib) | Items Count | count | OK |
-| GetTargetFields (via lib) | Items Count | count | OK |
+| StartHubWithData | **Records Count** | count | MISMATCH (judgment call) |
+| NewHubEvent (via lib) | Items Count | count | baseline |
+| GetSourceFields / GetTargetFields (via lib) | Items Count | count | OK |
 | List* components (via lib) | Items Count | count | OK |
 
-**Recommendation:** rename StartHubWithData's `count` label to **"Items Count"** to match the shared
-`lib.getOutputPortOptions` helper, which every other component in the connector inherits.
+The previous review recommended renaming to "Items Count" for uniformity. Counter-argument: in
+StartHubWithData the number is *records sent to the hub*, not items in a returned result set, so
+"Records Count" is the more accurate label and is the only hand-written one. **Low priority — pick
+either, but don't churn it twice.**
 
 ### Field: `conversionKey` (output port)
 
@@ -222,93 +248,83 @@ Consistent.
 | Component | Options | Status |
 |-----------|---------|--------|
 | GetSourceFields / GetTargetFields / List* | First Item Only, All items at once, One item at a time, Store to CSV file | baseline |
-| NewHubEvent | **First Record, All records at once, One record at a time** | **MISMATCH** |
+| NewHubEvent | **First Record, All records at once, One record at a time** | MISMATCH |
 
 NewHubEvent says "Record" where the rest of the connector says "Item", and drops the CSV option
-(correct — a trigger has no file output). Defensible as-is, since the trigger genuinely emits hub
-records, but the wording drift is visible to users configuring both a trigger and a list component
-in one flow.
+(correct — a trigger has no file output). Defensible as-is; the wording drift is only visible to a
+user configuring both a trigger and a list component in one flow. Low priority.
 
-**Recommendation:** low priority. If aligning, change NewHubEvent to "First Item Only" /
-"All items at once" / "One item at a time".
+### Input/output alignment
+
+`StartHub`/`StartHubWithData` emit `conversionKey` ("Conversion Key"); the List* components emit the
+same value as `key` ("Conversion Key"); every hub picker consumes it. Labels align.
 
 ## Component-by-Component Review
 
 ### StartHub
 - **Type:** Action
-- **Issues:** W3 (missing `example` on output schema), S1 (`options[]` over `schema`), S4 (index 1 vs 0)
-- **Status:** PASS (with warnings)
+- **Issues:** V1 (missing `example`), S1 (`options[]` over `schema`), S6 (index 1 vs 0)
+- **Notes:** Required-input validation present. `lib.rethrowHubbiError` wraps the call, so 409 retries
+  and 423 cancels as designed — covered by 3 dedicated tests.
+- **Status:** PASS
 
 ### StartHubWithData
 - **Type:** Action with dynamically generated inspector
-- **Issues:** W3, S1, `count` labeled "Records Count" vs lib's "Items Count"
-- **Notes:** Required-input validation present for both `conversionKey` and empty `records`. `.NET`
-  type mapping via `lib.mapFieldType` is applied correctly. `lib.rethrowHubbiError` wraps the write call.
-- **Status:** PASS (with warnings)
+- **Issues:** **N1 (inspector generation not fault-tolerant)**, V1, S1, S6, `count` label
+- **Notes:** Validates both `conversionKey` and a non-empty `records.ADD`. `.NET` type mapping via
+  `lib.mapFieldType` applied to both the inspector type and the JSON schema. The 2.0.0 removal of the
+  "Records source" switch left a single, simpler code path.
+- **Status:** PASS (with N1 to address)
 
 ### NewHubEvent
 - **Type:** Trigger (webhook)
-- **Issues:** **C2 (validator failure)**, W1 (error response on empty `first` payload), W2 (no `test()`), label "Hub" vs "Conversion Key", outputType option wording
-- **Notes:** Correctly uses `properties` not `inPorts`; implements `start`/`receive`/`stop`; returns
-  `context.response()` on all handled paths except the W1 case. The fault-tolerant try/catch around
-  the TargetFields lookup in `generateOutputPortOptions` is a good call — a lookup failure degrades
-  to generic options instead of blanking the port. Absence of `"trigger": true` is **not** an issue:
-  only 2 of 149 components in this repo set it, and the docs' own webhook example omits it.
-- **Status:** FAIL (C2 blocks `npm run validate`)
+- **Issues:** V2 (no `test()`), outputType option wording
+- **Notes:** Uses `properties` not `inPorts`; implements `start`/`receive`/`stop`; returns
+  `context.response()` on every handled webhook path, including the empty-payload and
+  conversionKey-mismatch short-circuits. The fault-tolerant `try/catch` in `generateOutputPortOptions`
+  is the pattern N1 asks StartHubWithData to adopt. `receive` falls through to `undefined` when no
+  branch matches (no webhook, no generate flag) — harmless but an explicit return would read better.
+- **Status:** PASS
 
 ### GetSourceFields / GetTargetFields
 - **Type:** List (private helper)
-- **Issues:** S2 (List-shaped but `Get`-named); descriptions don't state a maximum record count
-- **Notes:** Correct use of `lib.sendArrayOutput` / `lib.getOutputPortOptions`, array field is `result`,
-  no limit/offset, required `conversionKey` validated.
+- **Issues:** S2 (List-shaped, `Get`-named), S5 (no max record count in description)
+- **Notes:** Correct `lib.sendArrayOutput` / `lib.getOutputPortOptions` usage, array field is `result`,
+  no limit/offset, required `conversionKey` validated, `outputType` last with the highest index.
 - **Status:** PASS
 
 ### ListSourceHubsWithPostData / ListSourceHubsWithoutPostData / ListTargetHubs
 - **Type:** List (private helper)
-- **Issues:** descriptions don't state a maximum record count
-- **Notes:** Three near-identical files differing only in endpoint. Correct lib helper usage,
-  `outputType` last with highest index, no limit/offset, `toSelectArray` handles both the
-  `{result}` and bare-array shapes.
+- **Issues:** S5
+- **Notes:** Three near-identical files differing only in endpoint. `toSelectArray` handles both the
+  `{result}` and bare-array shapes. `ignoreAuth=true` on the port-options source is correct.
 - **Status:** PASS
 
 ## Recommended Fixes
 
-1. **Reverse bundle.json changelog order** (blocks `npm run validate`)
-   - File: `src/appmixer/hubbi/bundle.json`
-   - Current: `2.0.0` first, `1.0.0` last
-   - Suggested: `1.0.0` first, `2.0.0` last
-   - Reason: `[bundle-versions]` validator requires oldest-first
+Ordered by value.
 
-2. **Add `webhookUrl` to NewHubEvent properties schema** (blocks `npm run validate`)
-   - File: `src/appmixer/hubbi/core/NewHubEvent/component.json`
-   - Suggested: add `"webhookUrl": { "type": "string" }` to `properties.schema.properties`
-   - Reason: `[component-schemas]` validator requires every inspector input to be declared
+1. **Wrap StartHubWithData's SourceFields lookup in try/catch** (N1)
+   - File: `core/StartHubWithData/StartHubWithData.js:52-78`
+   - Reason: a failed lookup currently blanks the entire inspector, including the Hub picker, because
+     the in-port has no static fallback schema. NewHubEvent already does this correctly.
 
-3. **Guard the empty-records case in NewHubEvent**
-   - File: `src/appmixer/hubbi/core/NewHubEvent/NewHubEvent.js:46`
-   - Reason: `outputType: 'first'` + empty payload throws before `context.response()`, returning an
-     error to Hubbi instead of acknowledging the webhook
+2. **Add `example` to output port schemas** (V1)
+   - Files: `core/StartHub/component.json`, `core/StartHubWithData/component.json`
+   - Suggested: `"example": "3f2504e0-4f89-11d3-9a0c-0305e82c3301"` for `conversionKey`, `"example": 3` for `count`
 
-4. **Add `example` to output port schemas**
-   - Files: `StartHub/component.json`, `StartHubWithData/component.json`
-   - Reason: `[output-port-examples]` validator; powers the variable-picker preview
+3. **Add a `test(context)` method to NewHubEvent** (V2) — see the `connector-test-method` skill
 
-5. **Standardize the hub select label**
-   - Files: all five components with a `conversionKey` select
-   - Current: "Hub" in NewHubEvent, "Conversion Key" in the other four
-   - Suggested: "Hub" everywhere
-   - Reason: the control is a hub-name picker; "Conversion Key" describes the stored value
-
-6. **Rename StartHubWithData's `count` output label**
-   - File: `src/appmixer/hubbi/core/StartHubWithData/component.json`
-   - Current: "Records Count"
-   - Suggested: "Items Count"
-   - Reason: matches `lib.getOutputPortOptions`, which every other component inherits
-
-7. **Add `version` to service.json**
-   - File: `src/appmixer/hubbi/service.json`
+4. **Add `version` to service.json** (W4)
    - Suggested: `"version": "2.0.0"`
 
-8. **Add a `test(context)` method to NewHubEvent** — see the `connector-test-method` skill
+5. **Default `value` in `lib.getOutputPortOptions`** (S4)
+   - File: `lib.js:117` → `{ label, value = 'result' }`
 
-9. **Add a MakeApiCall component** (backlog, issue #1459)
+6. **Share the auth request between `requestProfileInfo` and `validate`, and guard blank fields** (S3)
+
+7. **Align the `count` output label** — "Records Count" vs "Items Count". Judgment call; low priority.
+
+8. **Align NewHubEvent's outputType option wording** with the List components. Low priority.
+
+9. **Add a MakeApiCall component** (V3, issue #1459) — backlog.

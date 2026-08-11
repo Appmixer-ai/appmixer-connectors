@@ -114,7 +114,7 @@ module.exports = {
         }
     },
 
-    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
+    getOutputPortOptions(context, outputType, itemSchema, { label = 'Records', value = 'result' } = {}) {
 
         if (outputType === 'object' || outputType === 'first') {
             const options = Object.keys(itemSchema).reduce((res, field) => {
