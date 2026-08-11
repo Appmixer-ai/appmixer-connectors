@@ -1,0 +1,109 @@
+{
+    "name": "acme.posthog.core.GetPerson",
+    "description": "Retrieve a single person from a PostHog project by their person ID.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "acme:posthog"
+    },
+    "quota": {
+        "manager": "acme:posthog",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "personId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "personId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "Pick a project, or type the numeric Project ID directly.",
+                        "source": {
+                            "url": "/component/acme/posthog/core/ListProjects?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "personId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Person ID",
+                        "tooltip": "UUID of the person. Use the Find Persons component to obtain it."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Person ID",
+                        "example": "740618a0-913f-5eb1-b8b1-b43de8b81e8d"
+                    },
+                    "uuid": {
+                        "type": "string",
+                        "title": "Person UUID",
+                        "example": "018e3b3c-7c3e-0000-8a2a-56d9b1a2c3d4"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "example": "Jane Doe"
+                    },
+                    "distinct_ids": {
+                        "type": "array",
+                        "title": "Distinct IDs",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "user-42"
+                        ]
+                    },
+                    "properties": {
+                        "type": "object",
+                        "title": "Properties",
+                        "example": {
+                            "email": "jane@example.com"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2025-01-15T10:30:00Z"
+                    }
+                }
+            }
+        }
+    ]
+}

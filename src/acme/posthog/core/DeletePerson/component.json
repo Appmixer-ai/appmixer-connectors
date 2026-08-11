@@ -1,0 +1,64 @@
+{
+    "name": "acme.posthog.core.DeletePerson",
+    "description": "Delete a person from a PostHog project by their person ID. This action is irreversible.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "acme:posthog"
+    },
+    "quota": {
+        "manager": "acme:posthog",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "personId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "personId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "Pick a project, or type the numeric Project ID directly.",
+                        "source": {
+                            "url": "/component/acme/posthog/core/ListProjects?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "personId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Person ID",
+                        "tooltip": "UUID of the person to delete. Use the Find Persons component to obtain it."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        "out"
+    ]
+}

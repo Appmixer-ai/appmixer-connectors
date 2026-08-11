@@ -1,0 +1,90 @@
+{
+    "name": "acme.posthog.core.IdentifyUser",
+    "description": "Identify a user in PostHog by sending an $identify event with person properties ($set).",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "acme:posthog"
+    },
+    "quota": {
+        "manager": "acme:posthog",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "distinctId": {
+                        "type": "string"
+                    },
+                    "properties": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "distinctId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "Pick a project, or type the numeric Project ID directly.",
+                        "source": {
+                            "url": "/component/acme/posthog/core/ListProjects?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "distinctId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Distinct ID",
+                        "tooltip": "Unique identifier of the user to identify."
+                    },
+                    "properties": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Person Properties",
+                        "tooltip": "Optional person properties to set as a JSON object, e.g. {\"email\": \"jane@example.com\", \"plan\": \"premium\"}."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "example": "Ok"
+                    },
+                    "distinctId": {
+                        "type": "string",
+                        "title": "Distinct ID",
+                        "example": "user-42"
+                    }
+                }
+            }
+        }
+    ]
+}

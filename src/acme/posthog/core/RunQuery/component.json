@@ -1,0 +1,104 @@
+{
+    "name": "acme.posthog.core.RunQuery",
+    "description": "Run a HogQL (SQL-like) query against a PostHog project's analytics data and return the result rows.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "acme:posthog"
+    },
+    "quota": {
+        "manager": "acme:posthog",
+        "resources": "query",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "projectId": {
+                        "type": "string"
+                    },
+                    "query": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "projectId",
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "projectId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Project",
+                        "tooltip": "Pick a project, or type the numeric Project ID directly.",
+                        "source": {
+                            "url": "/component/acme/posthog/core/ListProjects?outPort=out",
+                            "data": {
+                                "properties": {
+                                    "isSource": true
+                                },
+                                "transform": "./ListProjects#toSelectArray"
+                            }
+                        }
+                    },
+                    "query": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "HogQL Query",
+                        "tooltip": "HogQL query to run, e.g. SELECT event, count() FROM events GROUP BY event ORDER BY count() DESC LIMIT 10."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "results": {
+                        "type": "array",
+                        "title": "Result Rows",
+                        "items": {
+                            "type": "array"
+                        },
+                        "example": [
+                            [
+                                "$pageview",
+                                1234
+                            ],
+                            [
+                                "order_created",
+                                56
+                            ]
+                        ]
+                    },
+                    "columns": {
+                        "type": "array",
+                        "title": "Columns",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "event",
+                            "count()"
+                        ]
+                    },
+                    "count": {
+                        "type": "integer",
+                        "title": "Row Count",
+                        "example": 2
+                    }
+                }
+            }
+        }
+    ]
+}
