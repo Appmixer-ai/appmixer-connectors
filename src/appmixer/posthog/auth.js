@@ -22,7 +22,7 @@ module.exports = {
         accountNameFromProfileInfo: 'email',
 
         requestProfileInfo: async (context) => {
-            const host = (context.host || '').replace(/\/+$/, '');
+            const host = (context.host || 'https://us.posthog.com').replace(/\/+$/, '');
             const { data } = await context.httpRequest({
                 method: 'GET',
                 url: `${host}/api/users/@me/`,
@@ -34,7 +34,7 @@ module.exports = {
         },
 
         validate: async (context) => {
-            const host = (context.host || '').replace(/\/+$/, '');
+            const host = (context.host || 'https://us.posthog.com').replace(/\/+$/, '');
             await context.httpRequest({
                 method: 'GET',
                 url: `${host}/api/users/@me/`,
