@@ -1,5 +1,5 @@
 'use strict';
-const commons = require('../../shopify-commons');
+const commons = require('../../lib');
 
 /**
  * Component which triggers whenever new product comes.

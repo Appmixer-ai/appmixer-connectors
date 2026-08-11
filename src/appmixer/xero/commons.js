@@ -8,6 +8,25 @@ const XeroClient = require('./XeroClient');
 // during normal flow execution, so 2 min staleness on list endpoints is an acceptable tradeoff.
 const DEFAULT_LIST_CACHE_TTL = 2 * 60 * 1000;
 
+// Lock settings for the withCache dedupe lock (key "xero:<hash>", i.e. the resource that surfaced as
+// *META*::locks:xero:<hash> in the "Exceeded 30 attempts to lock the resource" failures on long jobs).
+//
+// - LOCK_TTL: the lock is a dead-man's switch. If the holder crashes (or is killed) mid-fetch the lock
+//   must not linger forever, but it must comfortably outlive a full paginated fetch — a Xero list can be
+//   ~100 sequential pages, each of which may sit through a Retry-After backoff on a 429, so a fetch can
+//   legitimately take tens of seconds. 60s covers that with margin while still auto-recovering from a
+//   stale lock left by a dead worker (dead-lock detection). It is < the default cache TTL (120s), so
+//   under the default a lock never outlives the value it guards. (The cache TTL is configurable via
+//   context.config.listCacheTTL; if it is set below 60s the lock may outlive the cached value, which
+//   is harmless — a re-fetch simply re-populates the cache.)
+// - LOCK_RETRY_DELAY / LOCK_MAX_RETRY_COUNT: how long a waiter blocks before giving up. 500ms * 60 = 30s,
+//   which lets a waiter sit through a realistic fetch (including 429 backoff) instead of exhausting the
+//   framework default (30 attempts) and throwing. Combined with the fallback below, exceeding even this
+//   budget degrades gracefully rather than failing the component.
+const LOCK_TTL = 60 * 1000;
+const LOCK_RETRY_DELAY = 500;
+const LOCK_MAX_RETRY_COUNT = 60;
+
 function getCacheKey(obj) {
     return crypto
         .createHash('sha256')
@@ -47,12 +66,42 @@ module.exports = {
         const token = context.auth?.accessToken || context.accessToken;
         const key = 'xero:' + getCacheKey({ ...keyParts, token });
 
+        // Fast path: serve a warm cache without ever taking the lock. On long-running jobs the same
+        // account/query is read over and over, so the overwhelming majority of calls hit this path and
+        // never contend for the lock at all — this is what stops the *META* lock exhaustion. The lock is
+        // only needed to dedupe the burst that populates a cold cache.
+        const cachedBeforeLock = await context.staticCache.get(key);
+        if (cachedBeforeLock !== null && cachedBeforeLock !== undefined) {
+            return cachedBeforeLock;
+        }
+
+        // Cache miss: take the lock so a concurrent burst does not fire N duplicate paginated fetches
+        // (Xero has tight rate limits). Acquisition is best-effort — never fail the component just
+        // because the dedupe lock is contended/stale.
         let lock;
         try {
-            lock = await context.lock(key);
+            lock = await context.lock(key, {
+                ttl: LOCK_TTL,
+                retryDelay: LOCK_RETRY_DELAY,
+                maxRetryCount: LOCK_MAX_RETRY_COUNT
+            });
+        } catch (err) {
+            // Lock exhausted (e.g. a very slow holder or a leftover stale lock). Degrade gracefully to
+            // an un-deduplicated direct fetch: we lose only the burst dedupe, correctness is preserved,
+            // and the job keeps running instead of dying with "Exceeded N attempts to lock the resource".
+            await context.log({
+                step: 'xero:withCache lock acquisition failed — falling back to direct fetch',
+                key,
+                error: err.message
+            });
+            return fn();
+        }
 
+        try {
+            // Re-check under the lock: a waiter that just got the lock may find the previous holder
+            // already populated the cache.
             const cached = await context.staticCache.get(key);
-            if (cached) {
+            if (cached !== null && cached !== undefined) {
                 return cached;
             }
 
@@ -61,7 +110,14 @@ module.exports = {
             await context.staticCache.set(key, result, ttl);
             return result;
         } finally {
-            lock?.unlock();
+            // Always release the lock, in every path (cache hit, success, or fn() throwing). Awaited and
+            // guarded so a release failure is logged rather than swallowed, and can never mask the
+            // original result/error from the try block.
+            try {
+                await lock.unlock();
+            } catch (err) {
+                await context.log({ step: 'xero:withCache lock release failed', key, error: err.message });
+            }
         }
     },
 

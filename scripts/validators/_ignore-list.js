@@ -148,12 +148,12 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/mongodb/service.json',
-            'appmixer/mysql/service.json',
-            'appmixer/mssql/service.json',
-            'appmixer/postgres/service.json',
-            'appmixer/redis/service.json',
-            'appmixer/snowflake/service.json'
+            'appmixer/mongodb/bundle.json',
+            'appmixer/mysql/bundle.json',
+            'appmixer/mssql/bundle.json',
+            'appmixer/postgres/bundle.json',
+            'appmixer/redis/bundle.json',
+            'appmixer/snowflake/bundle.json'
         ],
         reason: 'Database connectors that talk to their engine over a native driver/SQL protocol, not an HTTP REST API. There is no endpoint/method/headers surface for a generic "call any endpoint" helper to target.'
     },
@@ -161,8 +161,8 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/kafka/service.json',
-            'appmixer/rabbitmq/service.json'
+            'appmixer/kafka/bundle.json',
+            'appmixer/rabbitmq/bundle.json'
         ],
         reason: 'Message brokers consumed/produced over their native wire protocol (AMQP / Kafka), not HTTP. A generic REST MakeApiCall does not apply.'
     },
@@ -170,34 +170,28 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/utils/service.json',
-            'appmixer/system/service.json'
+            'appmixer/utils/bundle.json',
+            'appmixer/system/bundle.json'
         ],
         reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
     },
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
-        paths: ['appmixer/aws/service.json'],
-        reason: 'AWS spans many services (S3, Lambda, SNS, ...) each with its own host and SigV4 request signing; there is no single base URL or generic authorized call a MakeApiCall could expose. Per-service modules wrap the operations instead.'
-    },
-    {
-        validator: 'connector-has-makeapicall',
-        messageIncludes: 'no MakeApiCall component',
-        paths: ['appmixer/evernote/service.json'],
+        paths: ['appmixer/evernote/bundle.json'],
         reason: 'Evernote authenticates with OAuth 1.0a request signing (HMAC-SHA1) and a Thrift-based API, not a plain Bearer/API-key REST surface, so a generic header-based MakeApiCall cannot sign arbitrary requests.'
     },
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/azureCognitiveServices/service.json',
-            'appmixer/deepai/service.json',
-            'appmixer/screenshotapi/service.json',
-            'appmixer/ringring/service.json',
-            'appmixer/exchangeratesapi/service.json',
-            'appmixer/freeforexapi/service.json',
-            'appmixer/vatcomply/service.json'
+            'appmixer/azureCognitiveServices/bundle.json',
+            'appmixer/deepai/bundle.json',
+            'appmixer/screenshotapi/bundle.json',
+            'appmixer/ringring/bundle.json',
+            'appmixer/exchangeratesapi/bundle.json',
+            'appmixer/freeforexapi/bundle.json',
+            'appmixer/vatcomply/bundle.json'
         ],
         reason: 'No connector-level auth.js — these are keyless public APIs or thin multi-module wrappers where credentials (if any) are supplied per component. There is no stored connector credential for a generic "authorized API call" to attach, so MakeApiCall has nothing to authorize.'
     },
@@ -230,5 +224,121 @@ module.exports = [
         messageIncludes: 'must declare an "outputType" input',
         paths: ['google/calendar/FindEvent/component.json'],
         reason: 'Pre-existing component (predates the Find outputType standard). It emits one message per matching event on "out" plus a "notFound" port; adding an outputType input would change its output shape and break existing flows, so it is deferred to a future major version of the connector.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        messageIncludes: 'must return an empty object',
+        paths: [
+            'shopify/customers/DeleteCustomer/component.json',
+            'shopify/orders/DeleteOrder/component.json',
+            'shopify/products/DeleteProduct/component.json'
+        ],
+        reason: 'Pre-existing Shopify Delete components return the deleted resource id ({ id }) rather than {}. They predate the delete-shape standard and are wired into published flows; changing the payload/port is a breaking change deferred to a future major version. Surfaced now only because the OAuth->apiKey auth migration touched every component.json (scope removal).'
+    },
+    {
+        validator: 'delete-update-shape',
+        messageIncludes: 'single output port named "out"',
+        paths: [
+            'shopify/customers/DeleteCustomer/component.json',
+            'shopify/orders/DeleteOrder/component.json',
+            'shopify/products/DeleteProduct/component.json'
+        ],
+        reason: 'Pre-existing Shopify Delete components emit on a "deleted" port. Renaming to "out" breaks flows wired to that port; deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing required input',
+        paths: [
+            'shopify/customers/CreateCustomer/component.json',
+            'shopify/customers/FindCustomers/component.json',
+            'shopify/customers/GetCustomer/component.json',
+            'shopify/customers/UpdateCustomer/component.json'
+        ],
+        reason: 'The customers dynamic outPort sources are pure static field-list generators — GenerateCustomersOutput (Create/Get/UpdateCustomer) and FindCustomers own generateOutputPortOptions branch (which only needs outputType, not the required "query"). They read no service data, so the "missing required input" priming the validator wants is a false positive for a static source (it never consumes those inputs), so only that message is suppressed here.'
+    },
+    {
+        validator: 'input-property-naming',
+        paths: [
+            'shopify/customers/CreateCustomer/component.json',
+            'shopify/customers/UpdateCustomer/component.json',
+            'shopify/orders/CountOrders/component.json',
+            'shopify/orders/UpdateOrder/component.json',
+            'shopify/products/CountProducts/component.json',
+            'shopify/products/CreateProduct/component.json',
+            'shopify/products/UpdateProduct/component.json'
+        ],
+        reason: 'Pre-existing snake_case input property names (created_at_min, product_type, accepts_marketing, ...) mirror the Shopify Admin API field names 1:1 and are referenced by published flows and the buildOrder/buildProduct mappers. Renaming to camelCase is a breaking change deferred to a future major version. Surfaced now only because the apiKey auth migration touched every component.json.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        paths: [
+            'hubspot/crm/DeleteCompany/component.json',
+            'hubspot/crm/DeleteContact/component.json',
+            'hubspot/crm/DeleteDeal/component.json'
+        ],
+        reason: 'These published Delete components return { companyId | contactId | dealId } and declare those fields as outPort options that existing flows map. Switching to the standard empty-object return is a breaking output change deferred to a future major version. Surfaced now only because the 4.8.0 quality pass touched these files.'
+    },
+    {
+        validator: 'delete-update-shape',
+        paths: [
+            'hubspot/crm/UpdateCompany/component.json',
+            'hubspot/crm/UpdateContact/component.json'
+        ],
+        reason: 'UpdateContact accepts email OR contactId (either identifies the record) and UpdateCompany resolves the company by domain, so neither has a single always-required ID input. Marking one required now would break existing flows that use the other identifier. Deferred to a future major redesign.'
+    },
+    {
+        validator: 'find-list-no-pagination',
+        paths: [
+            'hubspot/crm/FindCompanies/component.json',
+            'hubspot/crm/FindContacts/component.json',
+            'hubspot/crm/ListContacts/component.json',
+            'hubspot/crm/ListDeals/component.json'
+        ],
+        reason: 'The limit input is a long-published part of these components and existing flows set it. Removing it is a breaking change deferred to a future major version. Surfaced now only because the 4.8.0 quality pass touched these files.'
+    },
+    {
+        validator: 'delete-returns-empty',
+        paths: ['postgres/db/DeleteRow/component.json'],
+        reason: 'Pre-existing published component: DeleteRow deletes by WHERE filter (potentially many rows) and returns { rowCount }, declared as an outPort option that existing flows map. Switching to the standard empty-object return is a breaking output change deferred to a future major version.'
+    },
+    {
+        validator: 'delete-update-shape',
+        messageIncludes: 'at least one required input',
+        paths: [
+            'postgres/db/DeleteRow/component.json',
+            'postgres/db/UpdateRow/component.json'
+        ],
+        reason: 'SQL row components have no single entity-ID input by design: the target rows are selected by an arbitrary WHERE filter expression (and the required "table" lives in properties, which the validator does not count). Requiring the filter would break the legitimate "update/delete all rows" case.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['postgres/db/CreateRow/component.json'],
+        reason: 'The newRow outPort source calls ListColumns, which runs a live information_schema query against the connected database and therefore needs the caller\'s auth account. Adding ignoreAuth=true would make the designer call it unauthenticated and fail with Invalid URL chips.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: [
+            'hubspot/crm/ContactPropertyChanged/component.json',
+            'hubspot/crm/NewContactInList/component.json',
+            'hubspot/crm/CreateCompany/component.json',
+            'hubspot/crm/CreateDeal/component.json',
+            'hubspot/crm/FindCompanies/component.json',
+            'hubspot/crm/FindContacts/component.json',
+            'hubspot/crm/GetContact/component.json',
+            'hubspot/crm/GetDeal/component.json',
+            'hubspot/crm/ListContacts/component.json',
+            'hubspot/crm/ListDeals/component.json',
+            'hubspot/crm/NewContact/component.json',
+            'hubspot/crm/NewDeal/component.json',
+            'hubspot/crm/UpdateCompany/component.json',
+            'hubspot/crm/UpdateContact/component.json',
+            'hubspot/crm/UpdateDeal/component.json',
+            'hubspot/crm/UpdatedContact/component.json',
+            'hubspot/crm/UpdatedDeal/component.json',
+            'hubspot/engagements/FindNotes/component.json'
+        ],
+        reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
     }
 ];
