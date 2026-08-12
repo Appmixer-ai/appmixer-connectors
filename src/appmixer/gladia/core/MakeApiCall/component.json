@@ -1,0 +1,100 @@
+{
+    "name": "appmixer.gladia.core.MakeApiCall",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized API call to Gladia. Provide a path (or full URL), method, headers, query parameters and body. The x-gladia-key header is added automatically.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gladia"
+    },
+    "quota": {
+        "manager": "appmixer:gladia",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": { "type": "string" },
+                    "method": {
+                        "type": "string",
+                        "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+                    },
+                    "headers": { "type": "string" },
+                    "parameters": { "type": "string" },
+                    "body": { "type": "string" }
+                },
+                "required": ["url", "method"]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to <code>https://api.gladia.io</code>, for example <code>/v2/pre-recorded</code>, or a full URL on a Gladia host."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            { "label": "GET", "value": "GET" },
+                            { "label": "POST", "value": "POST" },
+                            { "label": "PUT", "value": "PUT" },
+                            { "label": "PATCH", "value": "PATCH" },
+                            { "label": "DELETE", "value": "DELETE" }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The x-gladia-key header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": { "type": "integer", "title": "Status Code", "example": 200 },
+                    "headers": { "type": "object", "title": "Response Headers", "properties": {} },
+                    "body": { "type": "object", "title": "Response Body", "properties": {} }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSI1NiIgdmlld0JveD0iMCAwIDU2IDU2Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjU2IiB5Mj0iNTYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRjZCNEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRjlBNkMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzBCMEIxMiIvPjxnIGZpbGw9InVybCgjZykiPjxyZWN0IHg9IjE0IiB5PSIyNCIgd2lkdGg9IjQiIGhlaWdodD0iOCIgcng9IjIiLz48cmVjdCB4PSIyMSIgeT0iMTgiIHdpZHRoPSI0IiBoZWlnaHQ9IjIwIiByeD0iMiIvPjxyZWN0IHg9IjI4IiB5PSIxMiIgd2lkdGg9IjQiIGhlaWdodD0iMzIiIHJ4PSIyIi8+PHJlY3QgeD0iMzUiIHk9IjE4IiB3aWR0aD0iNCIgaGVpZ2h0PSIyMCIgcng9IjIiLz48cmVjdCB4PSI0MiIgeT0iMjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjgiIHJ4PSIyIi8+PC9nPjwvc3ZnPg=="
+}

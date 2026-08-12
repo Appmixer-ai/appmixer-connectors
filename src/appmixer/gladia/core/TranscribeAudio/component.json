@@ -1,0 +1,178 @@
+{
+    "name": "appmixer.gladia.core.TranscribeAudio",
+    "label": "Transcribe Audio",
+    "description": "Start an asynchronous Gladia transcription for an audio URL and (by default) poll until it completes. Supports diarization, translation, summarization, subtitles, sentiment analysis and PII redaction.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gladia"
+    },
+    "quota": {
+        "manager": "appmixer:gladia",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "audioUrl": { "type": "string" },
+                    "diarization": { "type": "boolean" },
+                    "translation": { "type": "boolean" },
+                    "translationTargetLanguages": { "type": "string" },
+                    "summarization": { "type": "boolean" },
+                    "subtitles": { "type": "boolean" },
+                    "sentimentAnalysis": { "type": "boolean" },
+                    "piiRedaction": { "type": "boolean" },
+                    "languages": { "type": "string" },
+                    "wait": { "type": "boolean" },
+                    "pollingTimeout": { "type": "integer" }
+                },
+                "required": ["audioUrl"]
+            },
+            "inspector": {
+                "inputs": {
+                    "audioUrl": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Audio URL",
+                        "tooltip": "URL of the audio/video file to transcribe. Use the Upload Audio component to obtain a hosted Gladia URL, or provide any publicly accessible URL."
+                    },
+                    "diarization": {
+                        "type": "toggle",
+                        "index": 2,
+                        "label": "Diarization",
+                        "defaultValue": false,
+                        "tooltip": "Enable speaker recognition to label who spoke each segment."
+                    },
+                    "translation": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Translation",
+                        "defaultValue": false,
+                        "tooltip": "Translate the transcript into the target languages provided below."
+                    },
+                    "translationTargetLanguages": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Translation Target Languages",
+                        "tooltip": "Comma-separated ISO 639-1 language codes to translate into (e.g. <code>en, fr, es</code>). Only used when Translation is enabled."
+                    },
+                    "summarization": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Summarization",
+                        "defaultValue": false,
+                        "tooltip": "Generate a summary of the transcript."
+                    },
+                    "subtitles": {
+                        "type": "toggle",
+                        "index": 6,
+                        "label": "Subtitles",
+                        "defaultValue": false,
+                        "tooltip": "Generate subtitles (SRT/VTT) from the transcript."
+                    },
+                    "sentimentAnalysis": {
+                        "type": "toggle",
+                        "index": 7,
+                        "label": "Sentiment Analysis",
+                        "defaultValue": false,
+                        "tooltip": "Detect the sentiment and emotion of each utterance."
+                    },
+                    "piiRedaction": {
+                        "type": "toggle",
+                        "index": 8,
+                        "label": "PII Redaction",
+                        "defaultValue": false,
+                        "tooltip": "Redact personally identifiable information from the transcript."
+                    },
+                    "languages": {
+                        "type": "text",
+                        "index": 9,
+                        "label": "Languages",
+                        "tooltip": "Optional comma-separated ISO 639-1 language codes to force the spoken language(s) (e.g. <code>en, es</code>). Leave empty for automatic detection."
+                    },
+                    "wait": {
+                        "type": "toggle",
+                        "index": 10,
+                        "label": "Wait For Completion",
+                        "defaultValue": true,
+                        "tooltip": "On: poll until the job finishes and output the full transcription result. Off: return the job id and result URL immediately."
+                    },
+                    "pollingTimeout": {
+                        "type": "number",
+                        "index": 11,
+                        "label": "Polling Timeout (seconds)",
+                        "defaultValue": 300,
+                        "tooltip": "Maximum time to wait for the transcription to finish when Wait For Completion is on."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Job ID", "example": "45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
+                    "status": { "type": "string", "title": "Status", "example": "done" },
+                    "result_url": { "type": "string", "title": "Result URL", "example": "https://api.gladia.io/v2/pre-recorded/45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created At", "example": "2026-08-01T14:00:00.000Z" },
+                    "completed_at": { "type": "string", "format": "date-time", "title": "Completed At", "example": "2026-08-01T14:01:12.000Z" },
+                    "result": {
+                        "type": "object",
+                        "title": "Result",
+                        "properties": {
+                            "metadata": {
+                                "type": "object",
+                                "title": "Metadata",
+                                "properties": {
+                                    "audio_duration": { "type": "number", "title": "Audio Duration (seconds)", "example": 128.5 },
+                                    "number_of_distinct_channels": { "type": "integer", "title": "Distinct Channels", "example": 1 },
+                                    "billing_time": { "type": "number", "title": "Billing Time (seconds)", "example": 128.5 },
+                                    "transcription_time": { "type": "number", "title": "Transcription Time (seconds)", "example": 12.3 }
+                                }
+                            },
+                            "transcription": {
+                                "type": "object",
+                                "title": "Transcription",
+                                "properties": {
+                                    "full_transcript": { "type": "string", "title": "Full Transcript", "example": "Hello and welcome to the meeting." },
+                                    "languages": {
+                                        "type": "array",
+                                        "title": "Languages",
+                                        "items": { "type": "string" },
+                                        "example": ["en"]
+                                    },
+                                    "utterances": {
+                                        "type": "array",
+                                        "title": "Utterances",
+                                        "example": [{ "text": "Hello and welcome to the meeting.", "language": "en", "start": 0.0, "end": 2.5, "confidence": 0.98, "speaker": 0 }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "text": { "type": "string", "title": "Text" },
+                                                "language": { "type": "string", "title": "Language" },
+                                                "start": { "type": "number", "title": "Start" },
+                                                "end": { "type": "number", "title": "End" },
+                                                "confidence": { "type": "number", "title": "Confidence" },
+                                                "speaker": { "type": "integer", "title": "Speaker" }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSI1NiIgdmlld0JveD0iMCAwIDU2IDU2Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjU2IiB5Mj0iNTYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRjZCNEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRjlBNkMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzBCMEIxMiIvPjxnIGZpbGw9InVybCgjZykiPjxyZWN0IHg9IjE0IiB5PSIyNCIgd2lkdGg9IjQiIGhlaWdodD0iOCIgcng9IjIiLz48cmVjdCB4PSIyMSIgeT0iMTgiIHdpZHRoPSI0IiBoZWlnaHQ9IjIwIiByeD0iMiIvPjxyZWN0IHg9IjI4IiB5PSIxMiIgd2lkdGg9IjQiIGhlaWdodD0iMzIiIHJ4PSIyIi8+PHJlY3QgeD0iMzUiIHk9IjE4IiB3aWR0aD0iNCIgaGVpZ2h0PSIyMCIgcng9IjIiLz48cmVjdCB4PSI0MiIgeT0iMjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjgiIHJ4PSIyIi8+PC9nPjwvc3ZnPg=="
+}

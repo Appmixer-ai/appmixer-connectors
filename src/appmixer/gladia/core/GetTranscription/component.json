@@ -1,0 +1,100 @@
+{
+    "name": "appmixer.gladia.core.GetTranscription",
+    "label": "Get Transcription",
+    "description": "Retrieve a single Gladia transcription job by its ID, including its status and (once done) the full transcription result.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gladia"
+    },
+    "quota": {
+        "manager": "appmixer:gladia",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "transcriptionId": { "type": "string" }
+                },
+                "required": ["transcriptionId"]
+            },
+            "inspector": {
+                "inputs": {
+                    "transcriptionId": {
+                        "type": "text",
+                        "index": 0,
+                        "label": "Transcription ID",
+                        "tooltip": "The ID of the transcription job to retrieve."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "title": "Job ID", "example": "45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
+                    "status": { "type": "string", "title": "Status", "example": "done" },
+                    "result_url": { "type": "string", "title": "Result URL", "example": "https://api.gladia.io/v2/pre-recorded/45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
+                    "created_at": { "type": "string", "format": "date-time", "title": "Created At", "example": "2026-08-01T14:00:00.000Z" },
+                    "completed_at": { "type": "string", "format": "date-time", "title": "Completed At", "example": "2026-08-01T14:01:12.000Z" },
+                    "result": {
+                        "type": "object",
+                        "title": "Result",
+                        "properties": {
+                            "metadata": {
+                                "type": "object",
+                                "title": "Metadata",
+                                "properties": {
+                                    "audio_duration": { "type": "number", "title": "Audio Duration (seconds)", "example": 128.5 },
+                                    "number_of_distinct_channels": { "type": "integer", "title": "Distinct Channels", "example": 1 },
+                                    "billing_time": { "type": "number", "title": "Billing Time (seconds)", "example": 128.5 },
+                                    "transcription_time": { "type": "number", "title": "Transcription Time (seconds)", "example": 12.3 }
+                                }
+                            },
+                            "transcription": {
+                                "type": "object",
+                                "title": "Transcription",
+                                "properties": {
+                                    "full_transcript": { "type": "string", "title": "Full Transcript", "example": "Hello and welcome to the meeting." },
+                                    "languages": {
+                                        "type": "array",
+                                        "title": "Languages",
+                                        "items": { "type": "string" },
+                                        "example": ["en"]
+                                    },
+                                    "utterances": {
+                                        "type": "array",
+                                        "title": "Utterances",
+                                        "example": [{ "text": "Hello and welcome to the meeting.", "language": "en", "start": 0.0, "end": 2.5, "confidence": 0.98, "speaker": 0 }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "text": { "type": "string", "title": "Text" },
+                                                "language": { "type": "string", "title": "Language" },
+                                                "start": { "type": "number", "title": "Start" },
+                                                "end": { "type": "number", "title": "End" },
+                                                "confidence": { "type": "number", "title": "Confidence" },
+                                                "speaker": { "type": "integer", "title": "Speaker" }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSI1NiIgdmlld0JveD0iMCAwIDU2IDU2Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjU2IiB5Mj0iNTYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRjZCNEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRjlBNkMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzBCMEIxMiIvPjxnIGZpbGw9InVybCgjZykiPjxyZWN0IHg9IjE0IiB5PSIyNCIgd2lkdGg9IjQiIGhlaWdodD0iOCIgcng9IjIiLz48cmVjdCB4PSIyMSIgeT0iMTgiIHdpZHRoPSI0IiBoZWlnaHQ9IjIwIiByeD0iMiIvPjxyZWN0IHg9IjI4IiB5PSIxMiIgd2lkdGg9IjQiIGhlaWdodD0iMzIiIHJ4PSIyIi8+PHJlY3QgeD0iMzUiIHk9IjE4IiB3aWR0aD0iNCIgaGVpZ2h0PSIyMCIgcng9IjIiLz48cmVjdCB4PSI0MiIgeT0iMjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjgiIHJ4PSIyIi8+PC9nPjwvc3ZnPg=="
+}

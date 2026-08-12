@@ -1,0 +1,75 @@
+{
+    "name": "appmixer.gladia.core.ListTranscriptions",
+    "label": "List Transcriptions",
+    "description": "List your Gladia transcription jobs (newest first), optionally filtered by status. Pages through the API 50 records at a time up to a maximum of 500 records.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:gladia"
+    },
+    "quota": {
+        "manager": "appmixer:gladia",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "status": { "type": "string" },
+                    "outputType": { "type": "string" }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "status": {
+                        "type": "select",
+                        "index": 0,
+                        "label": "Status",
+                        "tooltip": "Optionally filter jobs by status. Leave empty to return jobs of any status.",
+                        "options": [
+                            { "label": "Queued", "value": "queued" },
+                            { "label": "Processing", "value": "processing" },
+                            { "label": "Done", "value": "done" },
+                            { "label": "Error", "value": "error" }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            { "label": "First Item Only", "value": "first" },
+                            { "label": "All items at once", "value": "array" },
+                            { "label": "One item at a time", "value": "object" },
+                            { "label": "Store to CSV file", "value": "file" }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/gladia/core/ListTranscriptions?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NiIgaGVpZ2h0PSI1NiIgdmlld0JveD0iMCAwIDU2IDU2Ij48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciIHgxPSIwIiB5MT0iMCIgeDI9IjU2IiB5Mj0iNTYiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNGRjZCNEEiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNGRjlBNkMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHJ4PSIxMiIgZmlsbD0iIzBCMEIxMiIvPjxnIGZpbGw9InVybCgjZykiPjxyZWN0IHg9IjE0IiB5PSIyNCIgd2lkdGg9IjQiIGhlaWdodD0iOCIgcng9IjIiLz48cmVjdCB4PSIyMSIgeT0iMTgiIHdpZHRoPSI0IiBoZWlnaHQ9IjIwIiByeD0iMiIvPjxyZWN0IHg9IjI4IiB5PSIxMiIgd2lkdGg9IjQiIGhlaWdodD0iMzIiIHJ4PSIyIi8+PHJlY3QgeD0iMzUiIHk9IjE4IiB3aWR0aD0iNCIgaGVpZ2h0PSIyMCIgcng9IjIiLz48cmVjdCB4PSI0MiIgeT0iMjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjgiIHJ4PSIyIi8+PC9nPjwvc3ZnPg=="
+}
