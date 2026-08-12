@@ -45,13 +45,23 @@ module.exports = {
                 return true;
             },
 
-            accountNameFromProfileInfo: (context) => {
+            accountNameFromProfileInfo: 'accountName',
+
+            // Deepgram has no "who am I" endpoint, so the profile is derived from the
+            // credential itself. Never expose the raw key - only a masked form is stored.
+            requestProfileInfo: async (context) => {
+
                 const apiKey = context.apiKey || '';
                 const masked = apiKey.length > 10
-                    ? `${apiKey.substr(0, 6)}...${apiKey.substr(-4)}`
+                    ? `${apiKey.substring(0, 6)}...${apiKey.substring(apiKey.length - 4)}`
                     : 'Deepgram';
-                const region = context.region && context.region !== 'global' ? ` (${context.region})` : '';
-                return `${masked}${region}`;
+                const region = context.region || 'global';
+                const suffix = region !== 'global' ? ` (${region})` : '';
+
+                return {
+                    accountName: `${masked}${suffix}`,
+                    region
+                };
             }
         };
     }

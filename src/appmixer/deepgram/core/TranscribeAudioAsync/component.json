@@ -9,7 +9,7 @@
     },
     "quota": {
         "manager": "appmixer:deepgram",
-        "resources": "requests",
+        "resources": "inference",
         "scope": {
             "userId": "{{userId}}"
         }
@@ -76,7 +76,17 @@
                         "index": 5,
                         "label": "Model",
                         "defaultValue": "nova-3",
-                        "tooltip": "Speech-to-text model, e.g. <code>nova-3</code> (default). Use the List Models component to see all options."
+                        "tooltip": "Speech-to-text model, e.g. <code>nova-3</code> (default). Start typing to pick from the available STT models, or enter a model name manually.",
+                        "source": {
+                            "url": "/component/appmixer/deepgram/core/ListModels?outPort=out",
+                            "data": {
+                                "transform": "./ListModels#toSelectArray",
+                                "messages": {
+                                    "in/outputType": "array",
+                                    "in/isSource": true
+                                }
+                            }
+                        }
                     },
                     "language": {
                         "type": "text",

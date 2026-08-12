@@ -1,7 +1,8 @@
 {
-    "name": "E2E Deepgram - Requests (Find and Get)",
+    "name": "E2E Deepgram - New Request Trigger",
+    "description": "End-to-end test for the New Request polling trigger. Text to Speech runs in the same flow and logs a /v1/speak entry in the project request log, which the trigger picks up on a later poll.",
     "flow": {
-        "7e1eda81-e56c-4396-b3f9-94af57855be9": {
+        "7494451d-cc54-4745-a7ae-1f6d22db161c": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
             "y": 300,
@@ -12,8 +13,8 @@
                 "onError": "stopFlow"
             }
         },
-        "f9d3704a-1058-457f-9ebf-47a848a8816e": {
-            "type": "appmixer.deepgram.core.ListProjects",
+        "8ae5275f-bf1a-4fc2-9ff0-e05c04aa275e": {
+            "type": "appmixer.utils.controls.SetVariable",
             "x": 324,
             "y": 300,
             "version": "1.0.0",
@@ -23,7 +24,7 @@
             },
             "source": {
                 "in": {
-                    "7e1eda81-e56c-4396-b3f9-94af57855be9": [
+                    "7494451d-cc54-4745-a7ae-1f6d22db161c": [
                         "out"
                     ]
                 }
@@ -31,144 +32,19 @@
             "config": {
                 "transform": {
                     "in": {
-                        "7e1eda81-e56c-4396-b3f9-94af57855be9": {
+                        "7494451d-cc54-4745-a7ae-1f6d22db161c": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "outputType": {}
+                                    "variables": {}
                                 },
                                 "lambda": {
-                                    "outputType": "first"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "91c99729-71cc-4ac8-b121-be7ace62b30b": {
-            "type": "appmixer.deepgram.core.FindRequests",
-            "x": 584,
-            "y": 300,
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "source": {
-                "in": {
-                    "f9d3704a-1058-457f-9ebf-47a848a8816e": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f9d3704a-1058-457f-9ebf-47a848a8816e": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "projectId": {
-                                        "ef80c553-2138-45e1-bc02-ceba95703464": {
-                                            "functions": [],
-                                            "variable": "$.f9d3704a-1058-457f-9ebf-47a848a8816e.out.project_id"
-                                        }
-                                    },
-                                    "outputType": {}
-                                },
-                                "lambda": {
-                                    "projectId": "{{{ef80c553-2138-45e1-bc02-ceba95703464}}}",
-                                    "outputType": "first"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "f69b919b-8d46-4c83-8d59-9cc5041361f7": {
-            "type": "appmixer.deepgram.core.GetRequest",
-            "x": 844,
-            "y": 300,
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "source": {
-                "in": {
-                    "91c99729-71cc-4ac8-b121-be7ace62b30b": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "91c99729-71cc-4ac8-b121-be7ace62b30b": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "projectId": {
-                                        "2c75b373-1473-400b-9f8a-7bc7d0b428bb": {
-                                            "functions": [],
-                                            "variable": "$.f9d3704a-1058-457f-9ebf-47a848a8816e.out.project_id"
-                                        }
-                                    },
-                                    "requestId": {
-                                        "9700dc1a-c14a-4b10-af92-d57cb3929a78": {
-                                            "functions": [],
-                                            "variable": "$.91c99729-71cc-4ac8-b121-be7ace62b30b.out.request_id"
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "projectId": "{{{2c75b373-1473-400b-9f8a-7bc7d0b428bb}}}",
-                                    "requestId": "{{{9700dc1a-c14a-4b10-af92-d57cb3929a78}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "89c27786-0b96-4f01-bfb1-43fc86782f8a": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1104,
-            "y": 300,
-            "version": "1.0.0",
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            },
-            "source": {
-                "in": {
-                    "f69b919b-8d46-4c83-8d59-9cc5041361f7": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "f69b919b-8d46-4c83-8d59-9cc5041361f7": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "5a4066d5-2b68-4e53-9131-794defee0b06": {
-                                            "functions": [],
-                                            "variable": "$.f69b919b-8d46-4c83-8d59-9cc5041361f7.out.request_id"
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
+                                    "variables": {
+                                        "ADD": [
                                             {
-                                                "assertion": "notEmpty",
-                                                "field": "{{{5a4066d5-2b68-4e53-9131-794defee0b06}}}"
+                                                "type": "text",
+                                                "name": "speechText",
+                                                "text": "Appmixer end to end test for the Deepgram new request trigger."
                                             }
                                         ]
                                     }
@@ -179,9 +55,9 @@
                 }
             }
         },
-        "e3a0c166-f8cb-423c-b72a-985976eeaa30": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1364,
+        "b58cfb7c-fe59-496a-83d5-81eee3b200c4": {
+            "type": "appmixer.deepgram.core.TextToSpeech",
+            "x": 584,
             "y": 300,
             "version": "1.0.0",
             "errorHandling": {
@@ -190,21 +66,195 @@
             },
             "source": {
                 "in": {
-                    "89c27786-0b96-4f01-bfb1-43fc86782f8a": [
+                    "8ae5275f-bf1a-4fc2-9ff0-e05c04aa275e": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8ae5275f-bf1a-4fc2-9ff0-e05c04aa275e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {
+                                        "f5290fe0-ad4a-4edc-81cb-1cdfe2f8bfc4": {
+                                            "functions": [],
+                                            "variable": "$.8ae5275f-bf1a-4fc2-9ff0-e05c04aa275e.out.speechText"
+                                        }
+                                    },
+                                    "model": {},
+                                    "encoding": {},
+                                    "container": {}
+                                },
+                                "lambda": {
+                                    "text": "{{{f5290fe0-ad4a-4edc-81cb-1cdfe2f8bfc4}}}",
+                                    "model": "aura-2-thalia-en",
+                                    "encoding": "linear16",
+                                    "container": "wav"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "71e57834-4a21-48dc-949d-f422c920ff15": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 844,
+            "y": 300,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "b58cfb7c-fe59-496a-83d5-81eee3b200c4": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "b58cfb7c-fe59-496a-83d5-81eee3b200c4": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "e54110ca-3bf8-4059-a7a7-275436ac0529": {
+                                            "functions": [],
+                                            "variable": "$.b58cfb7c-fe59-496a-83d5-81eee3b200c4.out.fileId"
+                                        },
+                                        "a2e2d7d2-8a55-4019-b22e-a639e94f6a98": {
+                                            "functions": [],
+                                            "variable": "$.b58cfb7c-fe59-496a-83d5-81eee3b200c4.out.fileName"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{e54110ca-3bf8-4059-a7a7-275436ac0529}}}"
+                                            },
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{a2e2d7d2-8a55-4019-b22e-a639e94f6a98}}}",
+                                                "value": "\\.wav$"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6fb71381-4604-4a5b-a89f-debaeec75072": {
+            "type": "appmixer.deepgram.core.NewRequest",
+            "x": 584,
+            "y": 460,
+            "version": "1.0.0",
+            "source": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "properties": {
+                    "projectId": "DEEPGRAM_PROJECT_ID"
+                }
+            }
+        },
+        "856f71f5-1c3a-4044-bdbe-cff0b3eb55fc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 844,
+            "y": 460,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "6fb71381-4604-4a5b-a89f-debaeec75072": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6fb71381-4604-4a5b-a89f-debaeec75072": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "28344622-7cfa-4832-a2b5-a5bde0577d43": {
+                                            "functions": [],
+                                            "variable": "$.6fb71381-4604-4a5b-a89f-debaeec75072.out.request_id"
+                                        },
+                                        "9ae284f1-d21f-4b05-a880-4543aa066a18": {
+                                            "functions": [],
+                                            "variable": "$.6fb71381-4604-4a5b-a89f-debaeec75072.out.path"
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{28344622-7cfa-4832-a2b5-a5bde0577d43}}}"
+                                            },
+                                            {
+                                                "assertion": "regex",
+                                                "field": "{{{9ae284f1-d21f-4b05-a880-4543aa066a18}}}",
+                                                "value": "^/v1/"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "bbcdfb3a-62dc-44ab-83c8-8748c4c37e7f": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 380,
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "source": {
+                "in": {
+                    "71e57834-4a21-48dc-949d-f422c920ff15": [
+                        "out"
+                    ],
+                    "856f71f5-1c3a-4044-bdbe-cff0b3eb55fc": [
                         "out"
                     ]
                 }
             },
             "config": {
                 "properties": {
-                    "timeout": 180
+                    "timeout": 420
                 }
             }
         },
-        "21e529ec-3fe5-472c-847c-b2b7c04d7411": {
+        "466b8624-908f-4fad-bec0-012682e0c83c": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1624,
-            "y": 300,
+            "x": 1364,
+            "y": 380,
             "version": "1.0.0",
             "errorHandling": {
                 "autoRetry": false,
@@ -212,7 +262,7 @@
             },
             "source": {
                 "in": {
-                    "e3a0c166-f8cb-423c-b72a-985976eeaa30": [
+                    "bbcdfb3a-62dc-44ab-83c8-8748c4c37e7f": [
                         "out"
                     ]
                 }
@@ -224,23 +274,23 @@
                 },
                 "transform": {
                     "in": {
-                        "e3a0c166-f8cb-423c-b72a-985976eeaa30": {
+                        "bbcdfb3a-62dc-44ab-83c8-8748c4c37e7f": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "37bfa5e2-6b45-47de-9be8-9c75a374391c": {
+                                        "84b3018f-6604-4c7d-a851-96a4b914bb31": {
                                             "functions": [],
-                                            "variable": "$.e3a0c166-f8cb-423c-b72a-985976eeaa30.out"
+                                            "variable": "$.bbcdfb3a-62dc-44ab-83c8-8748c4c37e7f.out"
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Deepgram - Requests (Find and Get)",
-                                    "result": "{{{37bfa5e2-6b45-47de-9be8-9c75a374391c}}}"
+                                    "testCase": "E2E Deepgram - New Request Trigger",
+                                    "result": "{{{84b3018f-6604-4c7d-a851-96a4b914bb31}}}"
                                 }
                             }
                         }

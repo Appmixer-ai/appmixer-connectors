@@ -45,18 +45,37 @@ module.exports = {
 
     async tick(context) {
 
-        const { includeResult = true } = context.properties;
-        const requests = await fetchCompletedTranscriptions(context);
-
-        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
-        const { diff, actual } = lib.getNewItems(known, requests, 'request_id');
-
-        for (const request of diff) {
-            const payload = await enrich(context, request, includeResult);
-            await context.sendJson(payload, 'out');
+        // With Include Result on, a single tick can issue up to 1000 sequential detail
+        // requests and run well past the polling interval. Without a lock the next tick
+        // would start on the same `known` set and re-emit everything this one is still
+        // working through, so hold the component lock across fetch/diff/send/save.
+        let lock;
+        try {
+            lock = await context.lock(context.componentId, {
+                ttl: 10 * 60 * 1000,
+                maxRetryCount: 0
+            });
+        } catch (e) {
+            return; // Another tick still owns this component - skip this round.
         }
 
-        await context.saveState({ known: actual });
+        try {
+            const { includeResult = true } = context.properties;
+            const requests = await fetchCompletedTranscriptions(context);
+
+            const state = await context.loadState();
+            const known = Array.isArray(state.known) ? new Set(state.known) : null;
+            const { diff, actual } = lib.getNewItems(known, requests, 'request_id');
+
+            for (const request of diff) {
+                const payload = await enrich(context, request, includeResult);
+                await context.sendJson(payload, 'out');
+            }
+
+            await context.saveState({ known: actual });
+        } finally {
+            await lock.unlock();
+        }
     },
 
     // Flow Test Mode: emit the single most recent completed transcription, read-only, no state writes.

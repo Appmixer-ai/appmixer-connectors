@@ -29,10 +29,32 @@ module.exports = {
         const extraHeaders = kvToObj(headersKV);
         const queryParams = kvToObj(parametersKV);
 
-        const baseUrl = lib.getBaseUrl(context.auth);
-        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+        const baseUrl = lib.getBaseUrl(context.auth, context);
+        const isAbsolute = /^https?:\/\//i.test(url);
+        const targetUrl = isAbsolute
             ? url
             : `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`;
+
+        // The account's API key is attached below, so the target must stay on the
+        // configured Deepgram (or custom/self-hosted) origin. Without this check a flow
+        // could point the URL at any host and leak the key, or use this component as an
+        // authenticated SSRF primitive against internal services.
+        if (isAbsolute) {
+            let requested;
+            try {
+                requested = new URL(url);
+            } catch (e) {
+                throw new context.CancelError(`API Endpoint URL is not a valid URL: ${url}`);
+            }
+            const allowed = new URL(baseUrl);
+            if (requested.origin !== allowed.origin) {
+                throw new context.CancelError(
+                    `API Endpoint URL must stay on the configured Deepgram host ${allowed.origin}, `
+                    + `but it points at ${requested.origin}. Use a path such as /v1/projects, `
+                    + 'or change the Region / Custom Host on the connected account.'
+                );
+            }
+        }
 
         const requestOptions = {
             method,

@@ -30,16 +30,21 @@ module.exports = {
      * Resolve the API base URL from the auth object (or an auth-like context in validate).
      * Deepgram keys are portable across regions, so this only affects routing.
      * @param {object} auth - object holding region / customHost (context.auth or context)
+     * @param {object} [context] - component context, used only to raise a CancelError
      * @returns {string}
      */
-    getBaseUrl(auth = {}) {
+    getBaseUrl(auth = {}, context = null) {
 
         const region = auth.region || 'global';
 
         if (region === 'custom') {
             let host = (auth.customHost || '').trim().replace(/\/+$/, '');
             if (!host) {
-                return REGION_HOSTS.global;
+                // Never silently fall back to the global endpoint - that would send the
+                // credential and every request to a region the user did not select.
+                const message = 'Region is set to "Custom / self-hosted" but Custom Host is empty. '
+                    + 'Set the Custom Host on the connected Deepgram account or pick a built-in region.';
+                throw context && context.CancelError ? new context.CancelError(message) : new Error(message);
             }
             if (!/^https?:\/\//i.test(host)) {
                 host = `https://${host}`;
@@ -68,7 +73,7 @@ module.exports = {
     async apiRequest(context, { method = 'GET', path, url, headers = {}, data, params, responseType } = {}) {
 
         const auth = context.auth || context;
-        const target = url || `${this.getBaseUrl(auth)}${path}`;
+        const target = url || `${this.getBaseUrl(auth, context)}${path}`;
 
         try {
             return await context.httpRequest({
@@ -118,10 +123,19 @@ module.exports = {
             detail = body;
         }
 
+        // 413 means different things per endpoint: too much text for /v1/speak,
+        // too large an audio upload everywhere else. Branch on the request path.
+        const requestUrl = (error.config && error.config.url) || '';
+        const payloadTooLarge = /\/v1\/speak(\?|$|\/)/.test(requestUrl)
+            ? 'Payload too large (413). Text to Speech input exceeds the 2000-character limit.'
+            : 'Payload too large (413). The request body exceeds the endpoint limit '
+                + '(2000 characters for Text to Speech, 2 GB for audio uploads). '
+                + 'Shorten the input, or pass audio by URL instead of uploading it.';
+
         const hints = {
             401: 'Authentication failed (401). Check that your API key is correct and uses the "Token" scheme.',
             402: 'Payment required (402). Your Deepgram project is out of credits. Top up your balance at https://console.deepgram.com.',
-            413: 'Payload too large (413). Text to Speech input exceeds the 2000-character limit.',
+            413: payloadTooLarge,
             429: 'Too many requests (429). The project concurrency limit was exceeded. Retry with backoff or reduce parallel calls.',
             504: 'Gateway timeout (504). Processing exceeded the 10-minute ceiling (20 minutes for Whisper). Use the Transcribe Audio (Async) component for long audio.'
         };
@@ -212,7 +226,7 @@ module.exports = {
             const componentName = context.flowDescriptor[context.componentId].label || context.componentId;
             const fileName = `${context.config.outputFilePrefix || DEFAULT_PREFIX}-${componentName}.csv`;
             const savedFile = await context.saveFileStream(pathModule.normalize(fileName), buffer);
-            await context.log({ step: 'File was saved', fileName, fileId: savedFile.fileId });
+            await context.log('info', 'File was saved', { fileName, fileId: savedFile.fileId });
             await context.sendJson({ fileId: savedFile.fileId }, outputPortName);
         } else {
             throw new context.CancelError('Unsupported outputType ' + outputType);
