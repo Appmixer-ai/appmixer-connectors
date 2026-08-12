@@ -32,8 +32,9 @@ module.exports = {
             start,
             end,
             status,
-            // Request the maximum page size (1-1000). No pagination is performed.
-            limit: 1000
+            // Request the maximum page size. Deepgram rejects anything above 100 with
+            // "Invalid value for 'limit' parameter". No pagination is performed.
+            limit: 100
         });
 
         const { data } = await lib.apiRequest(context, {

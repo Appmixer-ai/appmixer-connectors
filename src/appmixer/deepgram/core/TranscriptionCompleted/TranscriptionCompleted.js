@@ -14,7 +14,9 @@ async function fetchCompletedTranscriptions(context) {
     const { data } = await lib.apiRequest(context, {
         method: 'GET',
         path: `/v1/projects/${encodeURIComponent(projectId)}/requests`,
-        params: { status: 'succeeded', limit: 1000 }
+        // 100 is Deepgram's maximum page size here; larger values are rejected with
+        // "Invalid value for 'limit' parameter".
+        params: { status: 'succeeded', limit: 100 }
     });
 
     return ((data && data.requests) || [])

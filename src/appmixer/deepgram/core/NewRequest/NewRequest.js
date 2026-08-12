@@ -14,7 +14,9 @@ async function fetchRequests(context, extraParams = {}) {
     const { data } = await lib.apiRequest(context, {
         method: 'GET',
         path: `/v1/projects/${encodeURIComponent(projectId)}/requests`,
-        params: { limit: 1000, ...extraParams }
+        // 100 is Deepgram's maximum page size here; larger values are rejected with
+        // "Invalid value for 'limit' parameter".
+        params: { limit: 100, ...extraParams }
     });
 
     return (data && data.requests) || [];
