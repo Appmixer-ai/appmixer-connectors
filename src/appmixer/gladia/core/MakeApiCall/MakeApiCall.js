@@ -30,12 +30,10 @@ module.exports = {
             throw new context.CancelError('HTTP Method is required!');
         }
 
-        let targetUrl;
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            targetUrl = url;
-        } else {
-            targetUrl = `${lib.API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
-        }
+        // The Gladia API key is attached to every request below, so the target has
+        // to be pinned to the Gladia API. Without this an absolute URL pointing at
+        // a third-party host would leak the account's secret to that host.
+        const targetUrl = lib.resolveApiUrl(context, url);
 
         const requestOptions = {
             method,

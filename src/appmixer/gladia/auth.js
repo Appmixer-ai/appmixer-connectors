@@ -41,14 +41,20 @@ module.exports = {
             try {
                 await context.httpRequest({
                     method: 'GET',
-                    url: `${API_BASE_URL}/v2/pre-recorded`,
+                    url: `${API_BASE_URL}/v2/transcription`,
                     headers: {
                         'x-gladia-key': context.apiKey
                     },
                     params: { limit: 1 }
                 });
             } catch (err) {
-                throw new Error('Invalid Gladia API key.');
+                // Only the documented 401 means the key itself is wrong. Rate limits,
+                // outages and network errors must keep their original message so a
+                // transient failure is not misreported as an invalid key.
+                if (err.response && err.response.status === 401) {
+                    throw new Error('Invalid Gladia API key.');
+                }
+                throw err;
             }
 
             return true;

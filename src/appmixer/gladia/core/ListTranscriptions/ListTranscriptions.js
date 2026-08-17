@@ -38,7 +38,7 @@ module.exports = {
             const data = await lib.makeRequest({
                 context,
                 method: 'GET',
-                path: '/v2/pre-recorded',
+                path: '/v2/transcription',
                 params
             });
 

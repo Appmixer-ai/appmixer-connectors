@@ -2,7 +2,9 @@
 
 const lib = require('../../lib');
 
-const POLL_INTERVAL_MS = 5000;
+// Appmixer will not schedule a continuation shorter than one minute, so that is
+// both the default and the floor for the polling interval.
+const MIN_POLL_INTERVAL_SECONDS = 60;
 
 function parseCsv(value) {
     if (!value) {
@@ -14,8 +16,58 @@ function parseCsv(value) {
         .filter(Boolean);
 }
 
+/**
+ * Build a human readable reason for a failed Gladia job. Current API responses
+ * carry `error_message`; older ones only had `error_code`/`error`, so all three
+ * are consulted before falling back to a generic message.
+ * @param {object} job the Gladia job payload
+ * @returns {string}
+ */
+function describeJobError(job) {
+
+    const parts = [job && job.error_message, job && job.error_code, job && job.error]
+        .filter(Boolean)
+        .map(part => (typeof part === 'string' ? part : JSON.stringify(part)));
+
+    return parts.length ? parts.join(' - ') : 'unknown error';
+}
+
 module.exports = {
     async receive(context) {
+
+        // Polling continuation scheduled by a previous invocation. Doing this with
+        // context.setTimeout instead of sleeping in-process keeps the worker free
+        // and survives the engine's cap on a single execution.
+        if (context.messages.timeout) {
+
+            const { jobId, deadline, pollIntervalMs } = context.messages.timeout.content;
+
+            const job = await lib.makeRequest({
+                context,
+                method: 'GET',
+                path: `/v2/transcription/${jobId}`
+            });
+
+            if (job && job.status === 'done') {
+                return context.sendJson(job, 'out');
+            }
+
+            if (job && job.status === 'error') {
+                throw new context.CancelError(
+                    `Gladia transcription ${jobId} failed: ${describeJobError(job)}`
+                );
+            }
+
+            if (Date.now() >= deadline) {
+                const status = (job && job.status) || 'unknown';
+                throw new context.CancelError(
+                    `Transcription ${jobId} did not complete in time (status: ${status}). `
+                    + 'Use the Get Transcription component with this job id to fetch the result once it is done.'
+                );
+            }
+
+            return context.setTimeout({ jobId, deadline, pollIntervalMs }, pollIntervalMs);
+        }
 
         const {
             audioUrl,
@@ -27,6 +79,7 @@ module.exports = {
             sentimentAnalysis,
             piiRedaction,
             languages,
+            customMetadata,
             wait,
             pollingTimeout
         } = context.messages.in.content;
@@ -64,11 +117,25 @@ module.exports = {
             payload.language_config = { languages: langs };
         }
 
+        // Gladia echoes custom_metadata back on the job and in the list endpoint,
+        // so it is the way to correlate a job with your own records later.
+        if (customMetadata) {
+            if (typeof customMetadata === 'object') {
+                payload.custom_metadata = customMetadata;
+            } else {
+                try {
+                    payload.custom_metadata = JSON.parse(customMetadata);
+                } catch (error) {
+                    throw new context.CancelError('Custom Metadata must be valid JSON.');
+                }
+            }
+        }
+
         // Gladia returns 201 with the job id and a result_url to poll.
         const created = await lib.makeRequest({
             context,
             method: 'POST',
-            path: '/v2/pre-recorded',
+            path: '/v2/transcription',
             data: payload
         });
 
@@ -79,40 +146,21 @@ module.exports = {
 
         // When the user opts out of waiting, return the created job reference and
         // let a separate Get Transcription / trigger fetch the result later.
-        if (wait === false) {
+        // Toggle values can reach the component as the string 'false'.
+        if (wait === false || wait === 'false') {
             return context.sendJson(created, 'out');
         }
 
         const timeoutSeconds = Number(pollingTimeout) > 0 ? Number(pollingTimeout) : 300;
-        const deadline = Date.now() + timeoutSeconds * 1000;
+        const pollIntervalSeconds = Math.max(
+            Number(context.config && context.config.pollIntervalSeconds) || MIN_POLL_INTERVAL_SECONDS,
+            MIN_POLL_INTERVAL_SECONDS
+        );
 
-        let job = null;
-        while (Date.now() < deadline) {
-            await lib.sleep(POLL_INTERVAL_MS);
-            job = await lib.makeRequest({
-                context,
-                method: 'GET',
-                path: `/v2/pre-recorded/${jobId}`
-            });
-            if (job && (job.status === 'done' || job.status === 'error')) {
-                break;
-            }
-        }
-
-        if (job && job.status === 'error') {
-            throw new context.CancelError(
-                `Gladia transcription ${jobId} failed: ${JSON.stringify(job.error_code || job.error || 'unknown error')}`
-            );
-        }
-
-        if (!job || job.status !== 'done') {
-            const status = (job && job.status) || 'unknown';
-            throw new context.CancelError(
-                `Transcription ${jobId} did not complete within ${timeoutSeconds} seconds (status: ${status}). `
-                + 'Use the Get Transcription component with this job id to fetch the result once it is done.'
-            );
-        }
-
-        return context.sendJson(job, 'out');
+        return context.setTimeout({
+            jobId,
+            deadline: Date.now() + timeoutSeconds * 1000,
+            pollIntervalMs: pollIntervalSeconds * 1000
+        }, pollIntervalSeconds * 1000);
     }
 };

@@ -10,13 +10,51 @@ module.exports = {
     API_BASE_URL,
 
     /**
+     * Resolve a user supplied endpoint (relative path or absolute URL) against the
+     * Gladia API base and refuse anything that would send the account's API key
+     * somewhere else.
+     *
+     * Resolving through the WHATWG URL parser and then comparing the resulting
+     * origin also rejects protocol-relative input such as `//example.com/x`, which
+     * would otherwise silently resolve to a foreign host.
+     * @param {object} context Appmixer component context (for CancelError)
+     * @param {string} url relative path (e.g. '/v2/transcription') or absolute Gladia URL
+     * @returns {string} absolute URL on the Gladia API host
+     */
+    resolveApiUrl(context, url) {
+
+        const candidate = /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith('//')
+            ? url
+            : `${url.startsWith('/') ? '' : '/'}${url}`;
+
+        let parsed;
+        try {
+            parsed = new URL(candidate, API_BASE_URL);
+        } catch (error) {
+            throw new context.CancelError(`API Endpoint Path is not a valid URL: ${url}`);
+        }
+
+        if (parsed.username || parsed.password) {
+            throw new context.CancelError('API Endpoint Path must not contain credentials.');
+        }
+
+        if (parsed.origin !== API_BASE_URL) {
+            throw new context.CancelError(
+                `API Endpoint Path must target ${API_BASE_URL}, got ${parsed.origin}.`
+            );
+        }
+
+        return parsed.toString();
+    },
+
+    /**
      * Thin wrapper around context.httpRequest that applies the Gladia auth
      * header and returns the parsed response body. context.httpRequest throws
      * on non-2xx responses, so callers can rely on the body being present.
      * @param {object} args
      * @param {object} args.context Appmixer component context (needs `auth.apiKey`)
      * @param {string} [args.method] HTTP method (default GET)
-     * @param {string} args.path API path starting with a slash (e.g. '/v2/pre-recorded')
+     * @param {string} args.path API path starting with a slash (e.g. '/v2/transcription')
      * @param {object} [args.data] JSON request body
      * @param {object} [args.params] Query parameters
      * @returns {Promise<object>} the parsed response body
@@ -41,15 +79,6 @@ module.exports = {
 
         const response = await context.httpRequest(options);
         return response ? response.data : null;
-    },
-
-    /**
-     * Promise-based delay used while polling a transcription job to completion.
-     * @param {number} ms milliseconds to wait
-     * @returns {Promise<void>}
-     */
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
     },
 
     async sendArrayOutput({

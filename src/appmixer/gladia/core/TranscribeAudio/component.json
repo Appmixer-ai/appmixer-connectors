@@ -29,6 +29,7 @@
                     "sentimentAnalysis": { "type": "boolean" },
                     "piiRedaction": { "type": "boolean" },
                     "languages": { "type": "string" },
+                    "customMetadata": { "type": "string" },
                     "wait": { "type": "boolean" },
                     "pollingTimeout": { "type": "integer" }
                 },
@@ -96,16 +97,22 @@
                         "label": "Languages",
                         "tooltip": "Optional comma-separated ISO 639-1 language codes to force the spoken language(s) (e.g. <code>en, es</code>). Leave empty for automatic detection."
                     },
+                    "customMetadata": {
+                        "type": "textarea",
+                        "index": 10,
+                        "label": "Custom Metadata",
+                        "tooltip": "Optional JSON object stored with the job and returned by Get Transcription and the Transcription Completed trigger, for example <code>{\"orderId\": \"1234\"}</code>. Use it to recognise your own jobs later."
+                    },
                     "wait": {
                         "type": "toggle",
-                        "index": 10,
+                        "index": 11,
                         "label": "Wait For Completion",
                         "defaultValue": true,
                         "tooltip": "On: poll until the job finishes and output the full transcription result. Off: return the job id and result URL immediately."
                     },
                     "pollingTimeout": {
                         "type": "number",
-                        "index": 11,
+                        "index": 12,
                         "label": "Polling Timeout (seconds)",
                         "defaultValue": 300,
                         "tooltip": "Maximum time to wait for the transcription to finish when Wait For Completion is on."
@@ -122,9 +129,10 @@
                 "properties": {
                     "id": { "type": "string", "title": "Job ID", "example": "45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
                     "status": { "type": "string", "title": "Status", "example": "done" },
-                    "result_url": { "type": "string", "title": "Result URL", "example": "https://api.gladia.io/v2/pre-recorded/45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
+                    "result_url": { "type": "string", "title": "Result URL", "example": "https://api.gladia.io/v2/transcription/45463597-20b7-4af7-b3b3-f5fb778f7f0a" },
                     "created_at": { "type": "string", "format": "date-time", "title": "Created At", "example": "2026-08-01T14:00:00.000Z" },
                     "completed_at": { "type": "string", "format": "date-time", "title": "Completed At", "example": "2026-08-01T14:01:12.000Z" },
+                    "custom_metadata": { "type": "object", "title": "Custom Metadata", "example": { "orderId": "1234" } },
                     "result": {
                         "type": "object",
                         "title": "Result",
@@ -163,6 +171,136 @@
                                                 "end": { "type": "number", "title": "End" },
                                                 "confidence": { "type": "number", "title": "Confidence" },
                                                 "speaker": { "type": "integer", "title": "Speaker" }
+                                            }
+                                        }
+                                    },
+                                    "subtitles": {
+                                        "type": "array",
+                                        "title": "Subtitles",
+                                        "example": [{ "format": "srt", "subtitles": "1\n00:00:00,000 --> 00:00:02,500\nHello and welcome to the meeting.\n" }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "format": { "type": "string", "title": "Format" },
+                                                "subtitles": { "type": "string", "title": "Subtitles" }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "diarization": {
+                                "type": "object",
+                                "title": "Diarization",
+                                "properties": {
+                                    "success": { "type": "boolean", "title": "Success", "example": true },
+                                    "is_empty": { "type": "boolean", "title": "Is Empty", "example": false },
+                                    "exec_time": { "type": "number", "title": "Execution Time (seconds)", "example": 0.42 },
+                                    "error": { "type": "string", "title": "Error", "example": null },
+                                    "results": {
+                                        "type": "array",
+                                        "title": "Speaker Segments",
+                                        "example": [{ "text": "Hello and welcome to the meeting.", "language": "en", "start": 0.0, "end": 2.5, "confidence": 0.98, "channel": 0, "speaker": 0 }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "text": { "type": "string", "title": "Text" },
+                                                "language": { "type": "string", "title": "Language" },
+                                                "start": { "type": "number", "title": "Start" },
+                                                "end": { "type": "number", "title": "End" },
+                                                "confidence": { "type": "number", "title": "Confidence" },
+                                                "channel": { "type": "integer", "title": "Channel" },
+                                                "speaker": { "type": "integer", "title": "Speaker" }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "translation": {
+                                "type": "object",
+                                "title": "Translation",
+                                "properties": {
+                                    "success": { "type": "boolean", "title": "Success", "example": true },
+                                    "is_empty": { "type": "boolean", "title": "Is Empty", "example": false },
+                                    "exec_time": { "type": "number", "title": "Execution Time (seconds)", "example": 1.8 },
+                                    "error": { "type": "string", "title": "Error", "example": null },
+                                    "results": {
+                                        "type": "array",
+                                        "title": "Translations",
+                                        "example": [{ "languages": ["fr"], "full_transcript": "Bonjour et bienvenue a la reunion." }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "languages": {
+                                                    "type": "array",
+                                                    "title": "Languages",
+                                                    "items": { "type": "string" }
+                                                },
+                                                "full_transcript": { "type": "string", "title": "Full Transcript" },
+                                                "error": { "type": "string", "title": "Error" },
+                                                "utterances": {
+                                                    "type": "array",
+                                                    "title": "Utterances",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "text": { "type": "string", "title": "Text" },
+                                                            "language": { "type": "string", "title": "Language" },
+                                                            "start": { "type": "number", "title": "Start" },
+                                                            "end": { "type": "number", "title": "End" },
+                                                            "confidence": { "type": "number", "title": "Confidence" },
+                                                            "speaker": { "type": "integer", "title": "Speaker" }
+                                                        }
+                                                    }
+                                                },
+                                                "subtitles": {
+                                                    "type": "array",
+                                                    "title": "Subtitles",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "format": { "type": "string", "title": "Format" },
+                                                            "subtitles": { "type": "string", "title": "Subtitles" }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "summarization": {
+                                "type": "object",
+                                "title": "Summarization",
+                                "properties": {
+                                    "success": { "type": "boolean", "title": "Success", "example": true },
+                                    "is_empty": { "type": "boolean", "title": "Is Empty", "example": false },
+                                    "exec_time": { "type": "number", "title": "Execution Time (seconds)", "example": 2.1 },
+                                    "error": { "type": "string", "title": "Error", "example": null },
+                                    "results": { "type": "string", "title": "Summary", "example": "The team agreed to ship the release on Friday." }
+                                }
+                            },
+                            "sentiment_analysis": {
+                                "type": "object",
+                                "title": "Sentiment Analysis",
+                                "properties": {
+                                    "success": { "type": "boolean", "title": "Success", "example": true },
+                                    "is_empty": { "type": "boolean", "title": "Is Empty", "example": false },
+                                    "exec_time": { "type": "number", "title": "Execution Time (seconds)", "example": 0.9 },
+                                    "error": { "type": "string", "title": "Error", "example": null },
+                                    "results": {
+                                        "type": "array",
+                                        "title": "Sentiment Segments",
+                                        "example": [{ "text": "Hello and welcome to the meeting.", "sentiment": "neutral", "emotion": "neutral", "start": 0.0, "end": 2.5, "speaker": 0, "channel": 0 }],
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "text": { "type": "string", "title": "Text" },
+                                                "sentiment": { "type": "string", "title": "Sentiment" },
+                                                "emotion": { "type": "string", "title": "Emotion" },
+                                                "start": { "type": "number", "title": "Start" },
+                                                "end": { "type": "number", "title": "End" },
+                                                "speaker": { "type": "integer", "title": "Speaker" },
+                                                "channel": { "type": "integer", "title": "Channel" }
                                             }
                                         }
                                     }

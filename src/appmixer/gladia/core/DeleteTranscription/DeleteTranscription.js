@@ -15,7 +15,7 @@ module.exports = {
         await lib.makeRequest({
             context,
             method: 'DELETE',
-            path: `/v2/pre-recorded/${transcriptionId}`
+            path: `/v2/transcription/${transcriptionId}`
         });
 
         return context.sendJson({}, 'out');

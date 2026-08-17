@@ -14,7 +14,7 @@ module.exports = {
         const job = await lib.makeRequest({
             context,
             method: 'GET',
-            path: `/v2/pre-recorded/${transcriptionId}`
+            path: `/v2/transcription/${transcriptionId}`
         });
 
         if (!job || !job.id) {
