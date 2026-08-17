@@ -161,6 +161,104 @@ module.exports = {
     },
 
     /**
+     * Standard Contact fields selected by the Get Contacts components. Kept as an
+     * explicit list (instead of FIELDS(ALL)) so the SOQL query is not bound by the
+     * 200 record limit Salesforce imposes on FIELDS(ALL) queries, and so the output
+     * shape stays predictable for the variable picker.
+     */
+    CONTACT_FIELDS: [
+        'Id',
+        'AccountId',
+        'FirstName',
+        'LastName',
+        'Name',
+        'Salutation',
+        'Title',
+        'Department',
+        'Email',
+        'Phone',
+        'MobilePhone',
+        'HomePhone',
+        'Fax',
+        'MailingStreet',
+        'MailingCity',
+        'MailingState',
+        'MailingPostalCode',
+        'MailingCountry',
+        'OwnerId',
+        'LeadSource',
+        'Description',
+        'CreatedDate',
+        'LastModifiedDate'
+    ],
+
+    /**
+     * Run a SOQL query and return every matching record, following Salesforce's
+     * query pagination (nextRecordsUrl) until the whole result set is fetched.
+     * @param {Object} context
+     * @param {string} soql
+     * @return {Promise<Array>}
+     */
+    async queryAll(context, soql) {
+
+        let records = [];
+        let { data } = await this.api.salesForceRq(context, {
+            action: `query?q=${encodeURIComponent(soql)}`
+        });
+        records = records.concat((data && data.records) || []);
+
+        // nextRecordsUrl looks like /services/data/vXX.0/query/01g...-2000; rebuild
+        // the action relative to the data service so salesForceRq can reissue it
+        // with the configured API version.
+        while (data && data.done === false && data.nextRecordsUrl) {
+            const action = 'query' + data.nextRecordsUrl.split('/query')[1];
+            ({ data } = await this.api.salesForceRq(context, { action }));
+            records = records.concat((data && data.records) || []);
+        }
+
+        return records;
+    },
+
+    /**
+     * Fetch Contact records (with the standard CONTACT_FIELDS) matching an
+     * optional SOQL WHERE clause, newest first, with datetime fields reformatted
+     * to ISO. The caller is responsible for building a safe WHERE clause.
+     * @param {Object} context
+     * @param {Object} params - { where }
+     * @return {Promise<Array>}
+     */
+    async findContacts(context, { where } = {}) {
+
+        let soql = `SELECT ${this.CONTACT_FIELDS.join(', ')} FROM Contact`;
+        if (where) {
+            soql += ` WHERE ${where}`;
+        }
+        soql += ' ORDER BY LastModifiedDate DESC';
+
+        const records = await this.queryAll(context, soql);
+        return records.map(record => this.formatSalesforceDates(record));
+    },
+
+    /**
+     * Emit the output port options for the Get Contacts components based on the
+     * chosen outputType (mirrors the pattern used by Query and ListObjects).
+     * @param {Object} context
+     * @param {string} outputType
+     */
+    getContactOutputPortOptions(context, outputType) {
+
+        if (outputType === 'object') {
+            const output = this.CONTACT_FIELDS.map(field => ({ label: field, value: field }));
+            return context.sendJson(output, 'out');
+        } else if (outputType === 'array') {
+            return context.sendJson([{ label: 'Result', value: 'result' }], 'out');
+        } else {
+            // file
+            return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
+        }
+    },
+
+    /**
      * Build the initial { recordId: fieldValue } map of a monitored field, used
      * by a status/field-change trigger's start() to seed known state.
      * Optionally scoped to a single record.
