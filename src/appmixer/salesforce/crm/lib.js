@@ -154,6 +154,22 @@ module.exports = {
     },
 
     /**
+     * Escape a value so it can be safely embedded in a SOQL LIKE pattern.
+     * On top of the quote escaping, the LIKE wildcards % (any sequence) and
+     * _ (any single character) must be escaped too, so that user input is
+     * matched literally — the caller then adds its own wildcards around the
+     * escaped value (e.g. `'%' + escapeSoqlLike(v) + '%'` for a contains
+     * match). Note that SOQL only supports LIKE on text fields; using it on
+     * an ID, number or date field makes Salesforce reject the query.
+     * @param {*} value
+     * @return {string}
+     */
+    escapeSoqlLike(value) {
+
+        return this.escapeSoql(value).replace(/([%_])/g, '\\$1');
+    },
+
+    /**
      * Validate that a value is a safe Salesforce API identifier (object or
      * field name) before interpolating it into a SOQL query. Salesforce API
      * names start with a letter and contain only letters, digits and

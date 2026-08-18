@@ -11,7 +11,7 @@ module.exports = {
 
     async receive(context) {
 
-        const { fieldName, fieldValue, outputType } = context.messages.in.content;
+        const { fieldName, fieldValue, matchType = 'exact', outputType } = context.messages.in.content;
 
         if (context.properties.generateOutputPortOptions) {
             return commons.getContactOutputPortOptions(context, outputType);
@@ -28,7 +28,19 @@ module.exports = {
         // value cannot be used to inject arbitrary SOQL.
         commons.assertSafeIdentifier(fieldName, 'field name');
 
-        const where = `${fieldName} = '${commons.escapeSoql(fieldValue)}'`;
+        let where;
+        if (matchType === 'contains' || matchType === 'startsWith') {
+            // SOQL LIKE: % matches any sequence of characters. LIKE only works on
+            // text fields (Email, LastName, custom text fields, ...) — on ID,
+            // number or date fields Salesforce rejects the query, so the Exact
+            // match type must be used for those. escapeSoqlLike() escapes the
+            // LIKE wildcards in the user value so it is matched literally.
+            const escaped = commons.escapeSoqlLike(fieldValue);
+            const pattern = matchType === 'contains' ? `%${escaped}%` : `${escaped}%`;
+            where = `${fieldName} LIKE '${pattern}'`;
+        } else {
+            where = `${fieldName} = '${commons.escapeSoql(fieldValue)}'`;
+        }
         const records = await commons.findContacts(context, { where });
 
         if (!records.length) {

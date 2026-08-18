@@ -1,12 +1,9 @@
 {
-    "name": "E2E Salesforce - Get Contacts By Field",
-    "type": "automation",
-    "notes": {},
     "flow": {
-        "47586202-f1bd-42b0-a60a-5146bec621d6": {
+        "cb930bd6-3774-4f99-a5ba-26523ba4cd01": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 64,
-            "y": 300,
+            "y": 320,
             "source": {},
             "version": "1.0.0",
             "errorHandling": {
@@ -14,14 +11,14 @@
                 "onError": "stopFlow"
             }
         },
-        "33b99c69-edb7-448e-9dc6-e367e1045581": {
+        "221086c5-c7c4-4cf1-8acd-7525d809e86d": {
             "type": "appmixer.salesforce.crm.CreateAccount",
             "x": 256,
-            "y": 300,
+            "y": 320,
             "version": "1.1.2",
             "source": {
                 "account": {
-                    "47586202-f1bd-42b0-a60a-5146bec621d6": [
+                    "cb930bd6-3774-4f99-a5ba-26523ba4cd01": [
                         "out"
                     ]
                 }
@@ -29,16 +26,19 @@
             "config": {
                 "transform": {
                     "account": {
-                        "47586202-f1bd-42b0-a60a-5146bec621d6": {
+                        "cb930bd6-3774-4f99-a5ba-26523ba4cd01": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {},
                                 "lambda": {
-                                    "name": "E2E GetContactsByField Account"
+                                    "name": "E2E GetContacts Account"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
@@ -46,41 +46,44 @@
                 "onError": "stopFlow"
             }
         },
-        "543df9dc-3d24-4e33-a5c3-3f3cc1015f02": {
+        "1bff04c0-dc2b-41a4-9bf4-5d48d045e5a1": {
             "type": "appmixer.salesforce.crm.CreateContact",
-            "x": 448,
-            "y": 300,
+            "x": 832,
+            "y": 434,
             "version": "1.1.2",
             "source": {
                 "contact": {
-                    "33b99c69-edb7-448e-9dc6-e367e1045581": [
-                        "newAccount"
+                    "1a4dd435-b83d-4ab5-a8e6-abe85c183577": [
+                        "out"
                     ]
                 }
             },
             "config": {
                 "transform": {
                     "contact": {
-                        "33b99c69-edb7-448e-9dc6-e367e1045581": {
-                            "newAccount": {
+                        "1a4dd435-b83d-4ab5-a8e6-abe85c183577": {
+                            "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "accountId": {
-                                        "544238f4-b18e-4a23-bd81-8e89d71351cb": {
-                                            "variable": "$.33b99c69-edb7-448e-9dc6-e367e1045581.newAccount.Id",
+                                        "a81cb114-320f-47b5-b9e0-7cd3ab95c648": {
+                                            "variable": "$.221086c5-c7c4-4cf1-8acd-7525d809e86d.newAccount.Id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "accountId": "{{{544238f4-b18e-4a23-bd81-8e89d71351cb}}}",
+                                    "accountId": "{{{a81cb114-320f-47b5-b9e0-7cd3ab95c648}}}",
                                     "firstName": "Appmixer",
-                                    "lastName": "E2E ByField Tester",
-                                    "email": "e2e.byfield.tester@example.com"
+                                    "lastName": "E2E GetContacts Tester",
+                                    "email": "e2e.contact@example.com"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
@@ -88,14 +91,14 @@
                 "onError": "stopFlow"
             }
         },
-        "c41e5525-116e-4eda-bd65-c425db3ac4fb": {
-            "type": "appmixer.salesforce.crm.FindContactsByField",
-            "x": 640,
-            "y": 300,
+        "3b9c100b-f699-4278-841f-f25c9245a8b6": {
+            "type": "appmixer.salesforce.crm.FindContacts",
+            "x": 1024,
+            "y": 414,
             "version": "1.1.2",
             "source": {
                 "in": {
-                    "543df9dc-3d24-4e33-a5c3-3f3cc1015f02": [
+                    "1bff04c0-dc2b-41a4-9bf4-5d48d045e5a1": [
                         "newContact"
                     ]
                 }
@@ -103,25 +106,27 @@
             "config": {
                 "transform": {
                     "in": {
-                        "543df9dc-3d24-4e33-a5c3-3f3cc1015f02": {
+                        "1bff04c0-dc2b-41a4-9bf4-5d48d045e5a1": {
                             "newContact": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "fieldValue": {
-                                        "dd0890ba-6bbc-4c7d-bec1-b037b46eddc4": {
-                                            "variable": "$.543df9dc-3d24-4e33-a5c3-3f3cc1015f02.newContact.Email",
+                                    "accountId": {
+                                        "5604bc0e-e1ca-4e3d-8cb6-62285c44839f": {
+                                            "variable": "$.221086c5-c7c4-4cf1-8acd-7525d809e86d.newAccount.Id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "fieldName": "Email",
-                                    "fieldValue": "{{{dd0890ba-6bbc-4c7d-bec1-b037b46eddc4}}}",
+                                    "accountId": "{{{5604bc0e-e1ca-4e3d-8cb6-62285c44839f}}}",
                                     "outputType": "object"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
@@ -129,14 +134,14 @@
                 "onError": "stopFlow"
             }
         },
-        "de4c8353-dfe0-4870-8a30-9d5b65232756": {
+        "8d061f81-8dd8-44b8-bacb-a29837ae6611": {
             "type": "appmixer.utils.test.Assert",
-            "x": 832,
-            "y": 160,
+            "x": 1216,
+            "y": 414,
             "version": "1.0.0",
             "source": {
                 "in": {
-                    "c41e5525-116e-4eda-bd65-c425db3ac4fb": [
+                    "3b9c100b-f699-4278-841f-f25c9245a8b6": [
                         "out"
                     ]
                 }
@@ -144,17 +149,17 @@
             "config": {
                 "transform": {
                     "in": {
-                        "c41e5525-116e-4eda-bd65-c425db3ac4fb": {
+                        "3b9c100b-f699-4278-841f-f25c9245a8b6": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "41e07d58-ec2d-46de-a109-e09b0b462231": {
-                                            "variable": "$.c41e5525-116e-4eda-bd65-c425db3ac4fb.out.Id",
+                                        "9c3261f7-c12f-4d91-a7eb-7da64371978a": {
+                                            "variable": "$.3b9c100b-f699-4278-841f-f25c9245a8b6.out.Id",
                                             "functions": []
                                         },
-                                        "5c933cc0-fff8-4cd9-86b4-e0d4ba24bf62": {
-                                            "variable": "$.c41e5525-116e-4eda-bd65-c425db3ac4fb.out.LastName",
+                                        "db9d66f3-4dcd-4a5f-9c96-b155f3a8d597": {
+                                            "variable": "$.3b9c100b-f699-4278-841f-f25c9245a8b6.out.LastName",
                                             "functions": []
                                         }
                                     }
@@ -163,13 +168,13 @@
                                     "expression": {
                                         "AND": [
                                             {
-                                                "field": "{{{41e07d58-ec2d-46de-a109-e09b0b462231}}}",
+                                                "field": "{{{9c3261f7-c12f-4d91-a7eb-7da64371978a}}}",
                                                 "assertion": "notEmpty"
                                             },
                                             {
-                                                "field": "{{{5c933cc0-fff8-4cd9-86b4-e0d4ba24bf62}}}",
+                                                "field": "{{{db9d66f3-4dcd-4a5f-9c96-b155f3a8d597}}}",
                                                 "assertion": "equal",
-                                                "expected": "E2E ByField Tester"
+                                                "expected": "E2E GetContacts Tester"
                                             }
                                         ]
                                     }
@@ -184,19 +189,16 @@
                 "onError": "stopFlow"
             }
         },
-        "ad23db23-de54-4a3a-99d1-18e48593474f": {
+        "9360aa46-6228-48c0-877b-2fe31b52f66d": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1792,
-            "y": 300,
+            "x": 1408,
+            "y": 340,
             "source": {
                 "in": {
-                    "de4c8353-dfe0-4870-8a30-9d5b65232756": [
+                    "8d061f81-8dd8-44b8-bacb-a29837ae6611": [
                         "out"
                     ],
-                    "409ceffd-8d6d-4bef-97f0-69f7b9eb9c8e": [
-                        "out"
-                    ],
-                    "1b49cedb-86d8-4ae5-8945-35976b810805": [
+                    "1a4dd435-b83d-4ab5-a8e6-abe85c183577": [
                         "out"
                     ]
                 }
@@ -212,14 +214,14 @@
                 "onError": "stopFlow"
             }
         },
-        "c7676b0d-17af-4767-b3f6-121d3da2f98e": {
+        "7c059e3a-662d-4a92-b6d1-c165c84c5c0a": {
             "type": "appmixer.salesforce.crm.DeleteObjectRecord",
-            "x": 1984,
-            "y": 300,
+            "x": 1600,
+            "y": 340,
             "version": "1.1.2",
             "source": {
                 "in": {
-                    "ad23db23-de54-4a3a-99d1-18e48593474f": [
+                    "9360aa46-6228-48c0-877b-2fe31b52f66d": [
                         "out"
                     ]
                 }
@@ -227,24 +229,27 @@
             "config": {
                 "transform": {
                     "in": {
-                        "ad23db23-de54-4a3a-99d1-18e48593474f": {
+                        "9360aa46-6228-48c0-877b-2fe31b52f66d": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "id": {
-                                        "ea54a84a-4926-442b-82d5-9edbd240e28e": {
-                                            "variable": "$.543df9dc-3d24-4e33-a5c3-3f3cc1015f02.newContact.Id",
+                                        "af29516b-b754-4ed1-9093-47a59851b474": {
+                                            "variable": "$.1bff04c0-dc2b-41a4-9bf4-5d48d045e5a1.newContact.Id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "objectName": "Contact",
-                                    "id": "{{{ea54a84a-4926-442b-82d5-9edbd240e28e}}}"
+                                    "id": "{{{af29516b-b754-4ed1-9093-47a59851b474}}}"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
@@ -252,14 +257,14 @@
                 "onError": "stopFlow"
             }
         },
-        "308c4e0d-e919-4fb9-8cf2-c4a6a2c10421": {
+        "c0b0c7c5-e052-43a9-8bd6-6d751e8e89b0": {
             "type": "appmixer.salesforce.crm.DeleteAccount",
-            "x": 2176,
-            "y": 300,
+            "x": 1766,
+            "y": 340,
             "version": "1.1.2",
             "source": {
                 "in": {
-                    "c7676b0d-17af-4767-b3f6-121d3da2f98e": [
+                    "7c059e3a-662d-4a92-b6d1-c165c84c5c0a": [
                         "out"
                     ]
                 }
@@ -267,23 +272,26 @@
             "config": {
                 "transform": {
                     "in": {
-                        "c7676b0d-17af-4767-b3f6-121d3da2f98e": {
+                        "7c059e3a-662d-4a92-b6d1-c165c84c5c0a": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "accountId": {
-                                        "c1be81f7-60f4-4055-b993-4ac2caac7971": {
-                                            "variable": "$.33b99c69-edb7-448e-9dc6-e367e1045581.newAccount.Id",
+                                        "f32ba61f-b787-4ec8-ac4d-ef0c77a1d5f8": {
+                                            "variable": "$.221086c5-c7c4-4cf1-8acd-7525d809e86d.newAccount.Id",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
-                                    "accountId": "{{{c1be81f7-60f4-4055-b993-4ac2caac7971}}}"
+                                    "accountId": "{{{f32ba61f-b787-4ec8-ac4d-ef0c77a1d5f8}}}"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
@@ -291,13 +299,13 @@
                 "onError": "stopFlow"
             }
         },
-        "21f55093-1a54-47ba-b451-f967d6fe2e0d": {
+        "692820b5-1853-4b79-8ec7-f7858461b7d6": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2368,
-            "y": 300,
+            "x": 1957,
+            "y": 340,
             "source": {
                 "in": {
-                    "308c4e0d-e919-4fb9-8cf2-c4a6a2c10421": [
+                    "c0b0c7c5-e052-43a9-8bd6-6d751e8e89b0": [
                         "out"
                     ]
                 }
@@ -307,23 +315,23 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "308c4e0d-e919-4fb9-8cf2-c4a6a2c10421": {
+                        "c0b0c7c5-e052-43a9-8bd6-6d751e8e89b0": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "recipients": {},
                                     "testCase": {},
                                     "result": {
-                                        "25d6ddf1-3785-4c51-8bc1-3756034731d0": {
-                                            "variable": "$.ad23db23-de54-4a3a-99d1-18e48593474f.out",
+                                        "8be8d05c-b675-498b-a17b-364842e1c942": {
+                                            "variable": "$.9360aa46-6228-48c0-877b-2fe31b52f66d.out",
                                             "functions": []
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Salesforce - Get Contacts By Field",
-                                    "result": "{{{25d6ddf1-3785-4c51-8bc1-3756034731d0}}}"
+                                    "testCase": "E2E Salesforce - Get Contacts",
+                                    "result": "{{{8be8d05c-b675-498b-a17b-364842e1c942}}}"
                                 }
                             }
                         }
@@ -335,44 +343,54 @@
                 "onError": "stopFlow"
             }
         },
-        "bfd6fe15-f890-430e-9170-ebdc24aa14de": {
-            "type": "appmixer.salesforce.crm.FindContactsByField",
-            "x": 1408,
+        "69aac46e-bc2e-4ebb-8f52-aa43c9cb4cd4": {
+            "type": "appmixer.salesforce.crm.FindContacts",
+            "x": 448,
             "y": 300,
             "source": {
                 "in": {
-                    "409ceffd-8d6d-4bef-97f0-69f7b9eb9c8e": [
-                        "out"
+                    "221086c5-c7c4-4cf1-8acd-7525d809e86d": [
+                        "newAccount"
                     ]
                 }
             },
             "config": {
                 "transform": {
                     "in": {
-                        "409ceffd-8d6d-4bef-97f0-69f7b9eb9c8e": {
-                            "out": {
+                        "221086c5-c7c4-4cf1-8acd-7525d809e86d": {
+                            "newAccount": {
                                 "type": "json2new",
-                                "modifiers": {},
+                                "modifiers": {
+                                    "accountId": {
+                                        "5df1bcbd-5bfb-4af4-8db5-650158a7bd8d": {
+                                            "variable": "$.221086c5-c7c4-4cf1-8acd-7525d809e86d.newAccount.Id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
                                 "lambda": {
-                                    "fieldName": "LeadSource",
-                                    "fieldValue": "E2E-NoSuchSource-6f2c",
+                                    "accountId": "{{{5df1bcbd-5bfb-4af4-8db5-650158a7bd8d}}}",
                                     "outputType": "object"
                                 }
                             }
                         }
                     }
+                },
+                "properties": {
+                    "account": "6a8441b0b4ad2b40855c671e"
                 }
             },
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
-            }
+            },
+            "version": "1.1.2"
         },
-        "1b49cedb-86d8-4ae5-8945-35976b810805": {
+        "1a4dd435-b83d-4ab5-a8e6-abe85c183577": {
             "type": "appmixer.utils.test.Assert",
             "source": {
                 "in": {
-                    "bfd6fe15-f890-430e-9170-ebdc24aa14de": [
+                    "69aac46e-bc2e-4ebb-8f52-aa43c9cb4cd4": [
                         "notFound"
                     ]
                 }
@@ -380,7 +398,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "bfd6fe15-f890-430e-9170-ebdc24aa14de": {
+                        "69aac46e-bc2e-4ebb-8f52-aa43c9cb4cd4": {
                             "notFound": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -402,100 +420,15 @@
                     }
                 }
             },
-            "x": 1600,
-            "y": 160,
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "225a3116-d44a-4047-97b7-fb43ab68d76f": {
-            "type": "appmixer.salesforce.crm.FindContactsByField",
-            "x": 1024,
-            "y": 300,
-            "source": {
-                "in": {
-                    "de4c8353-dfe0-4870-8a30-9d5b65232756": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "de4c8353-dfe0-4870-8a30-9d5b65232756": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {},
-                                "lambda": {
-                                    "fieldName": "Email",
-                                    "fieldValue": "byfield.tester",
-                                    "matchType": "contains",
-                                    "outputType": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "errorHandling": {
-                "autoRetry": false,
-                "onError": "stopFlow"
-            }
-        },
-        "409ceffd-8d6d-4bef-97f0-69f7b9eb9c8e": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 1216,
-            "y": 160,
-            "source": {
-                "in": {
-                    "225a3116-d44a-4047-97b7-fb43ab68d76f": [
-                        "out"
-                    ]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "225a3116-d44a-4047-97b7-fb43ab68d76f": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "135e8fbf-f0fc-4eed-acba-fd4c35e6fae8": {
-                                            "variable": "$.225a3116-d44a-4047-97b7-fb43ab68d76f.out.Id",
-                                            "functions": []
-                                        },
-                                        "a935e323-cfe3-40f0-9647-a7a974a95bc8": {
-                                            "variable": "$.225a3116-d44a-4047-97b7-fb43ab68d76f.out.Email",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{135e8fbf-f0fc-4eed-acba-fd4c35e6fae8}}}",
-                                                "assertion": "notEmpty"
-                                            },
-                                            {
-                                                "field": "{{{a935e323-cfe3-40f0-9647-a7a974a95bc8}}}",
-                                                "assertion": "equal",
-                                                "expected": "e2e.byfield.tester@example.com"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
+            "x": 640,
+            "y": 340,
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
             }
         }
-    }
+    },
+    "name": "E2E Salesforce - Get Contacts",
+    "notes": {},
+    "type": "automation"
 }
