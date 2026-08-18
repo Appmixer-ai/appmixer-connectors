@@ -282,6 +282,43 @@ module.exports = {
     },
 
     /**
+     * Fetch all Campaign records.
+     * @param {Object} context
+     * @return {Promise<Array>}
+     */
+    listCampaigns(context) {
+
+        const client = this.getSalesforceAPI(context);
+        return client.sobject('Campaign')
+            .find({}, { Id: 1, Name: 1, IsActive: 1, Status: 1, Type: 1, StartDate: 1, EndDate: 1 })
+            .sort({ Name: 1 });
+    },
+
+    /**
+     * Cached variant of listCampaigns for dynamic-source (dropdown) calls (see
+     * listAccountsCached).
+     * @param {Object} context
+     * @return {Promise<Array>}
+     */
+    async listCampaignsCached(context) {
+
+        const key = getSourceCacheKey({ resource: 'campaigns', token: context.auth.accessToken });
+        let lock;
+        try {
+            lock = await context.lock(key);
+            const cached = await context.staticCache.get(key);
+            if (cached) return cached;
+
+            const campaigns = await this.listCampaigns(context);
+            const ttl = context.config.listCampaignsCacheTTL || (5 * 60 * 1000);
+            await context.staticCache.set(key, campaigns, ttl);
+            return campaigns;
+        } finally {
+            lock?.unlock();
+        }
+    },
+
+    /**
      * Fetch Contact records (with the standard CONTACT_FIELDS) matching an
      * optional SOQL WHERE clause, newest first, with datetime fields reformatted
      * to ISO. The caller is responsible for building a safe WHERE clause.

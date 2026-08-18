@@ -1,7 +1,7 @@
 {
     "name": "appmixer.salesforce.crm.FindContacts",
     "author": "Appmixer <info@appmixer.ai>",
-    "description": "Get all contacts, optionally for a single account, together with their related contact information (name, email, phone, ...).",
+    "description": "Get all contacts, optionally scoped to a single account and/or campaign, together with their related contact information (name, email, phone, ...).",
     "private": false,
     "auth": {
         "service": "appmixer:salesforce"
@@ -21,6 +21,7 @@
                 "type": "object",
                 "properties": {
                     "accountId": { "type": "string" },
+                    "campaignId": { "type": "string" },
                     "outputType": { "type": "string" }
                 }
             },
@@ -38,10 +39,22 @@
                             }
                         }
                     },
+                    "campaignId": {
+                        "type": "text",
+                        "label": "Campaign",
+                        "index": 2,
+                        "tooltip": "Optional. Select a campaign to return only its member contacts (the contact's Campaign History). Can be combined with the Account filter.",
+                        "source": {
+                            "url": "/component/appmixer/salesforce/crm/ListCampaigns?outPort=campaigns",
+                            "data": {
+                                "transform": "./transformers#campaignsToSelectArray"
+                            }
+                        }
+                    },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 2,
+                        "index": 3,
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the items to a file is the most efficient method.",
                         "options": [
                             {
