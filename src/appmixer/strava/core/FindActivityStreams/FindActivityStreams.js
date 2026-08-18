@@ -2,6 +2,7 @@
 'use strict';
 
 const lib = require('../../lib.generated');
+const { API_BASE_URL } = require('../../constants');
 
 const schema = {
     'type': { 'type': 'string', 'title': 'Stream Type' },
@@ -36,7 +37,7 @@ module.exports = {
         // https://developers.strava.com/docs/reference/#api-Streams-getActivityStreams
         const { data } = await context.httpRequest({
             method: 'GET',
-            url: `https://www.strava.com/api/v3/activities/${activityId}/streams`,
+            url: `${API_BASE_URL}/activities/${activityId}/streams`,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`
             },

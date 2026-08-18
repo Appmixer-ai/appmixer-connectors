@@ -58,6 +58,12 @@ Add `activity:read_all` when private/detailed data is required. Avoid over-scopi
 ## Base URL
 `https://www.strava.com/api/v3`
 
+> **Upcoming migration:** Strava is migrating the API base URL to
+> `https://api-v3.strava.com`, available January 4, 2027. The base URL is
+> centralized in `constants.js` (`API_BASE_URL`), so switching hosts once the
+> new one is live is a one-line change. See
+> https://developers.strava.com/docs/changelog/
+
 ## Rate Limiting
 Default (per application):
 - Short term: 100 requests per 15 minutes
