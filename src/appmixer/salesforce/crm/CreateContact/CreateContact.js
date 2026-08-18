@@ -9,9 +9,12 @@ const commons = require('../lib');
 function buildContact(contact) {
 
     let contactObject = {
-        LastName: contact.lastName,
-        AccountId: contact['accountId']
+        LastName: contact.lastName
     };
+
+    if (contact['accountId']) {
+        contactObject['AccountId'] = contact['accountId'];
+    }
 
     if (contact['reportsTo']) {
         contactObject['ReportsToId'] = contact['reportsTo'];
@@ -78,10 +81,7 @@ module.exports = {
 
     receive(context) {
 
-        const { accountId, lastName } = context.messages.contact.content;
-        if (!accountId) {
-            throw new context.CancelError('Account is required!');
-        }
+        const { lastName } = context.messages.contact.content;
         if (!lastName) {
             throw new context.CancelError('Last Name is required!');
         }
