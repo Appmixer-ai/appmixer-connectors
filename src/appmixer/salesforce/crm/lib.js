@@ -71,28 +71,43 @@ module.exports = {
     },
 
     /**
-     * Cached variant of listAccounts for dynamic-source (dropdown) calls, so
-     * repeated inspector openings do not burn the Salesforce request quota.
-     * Keyed by the access token — a token refresh naturally invalidates it.
+     * Shared cache wrapper for dynamic-source (dropdown) calls, so repeated
+     * inspector openings do not burn the Salesforce request quota. Keyed by
+     * the access token — a token refresh naturally invalidates the cache.
      * @param {Object} context
-     * @return {Promise<Array>}
+     * @param {Object} params - { resource, ttlConfigKey, fetch }
+     * @return {Promise<*>} the fetch() result, possibly served from cache
      */
-    async listAccountsCached(context) {
+    async cachedSource(context, { resource, ttlConfigKey, fetch }) {
 
-        const key = getSourceCacheKey({ resource: 'accounts', token: context.auth.accessToken });
+        const key = getSourceCacheKey({ resource, token: context.auth.accessToken });
         let lock;
         try {
             lock = await context.lock(key);
             const cached = await context.staticCache.get(key);
             if (cached) return cached;
 
-            const accounts = await this.listAccounts(context);
-            const ttl = context.config.listAccountsCacheTTL || (5 * 60 * 1000);
-            await context.staticCache.set(key, accounts, ttl);
-            return accounts;
+            const result = await fetch();
+            const ttl = (ttlConfigKey && context.config[ttlConfigKey]) || (5 * 60 * 1000);
+            await context.staticCache.set(key, result, ttl);
+            return result;
         } finally {
             lock?.unlock();
         }
+    },
+
+    /**
+     * Cached variant of listAccounts for dynamic-source (dropdown) calls.
+     * @param {Object} context
+     * @return {Promise<Array>}
+     */
+    listAccountsCached(context) {
+
+        return this.cachedSource(context, {
+            resource: 'accounts',
+            ttlConfigKey: 'listAccountsCacheTTL',
+            fetch: () => this.listAccounts(context)
+        });
     },
 
     /**
@@ -266,11 +281,11 @@ module.exports = {
      */
     async queryAll(context, soql) {
 
-        let records = [];
+        const records = [];
         let { data } = await this.api.salesForceRq(context, {
             action: `query?q=${encodeURIComponent(soql)}`
         });
-        records = records.concat((data && data.records) || []);
+        records.push(...((data && data.records) || []));
 
         // nextRecordsUrl looks like /services/data/vXX.0/query/01g...-2000; rebuild
         // the action relative to the data service so salesForceRq can reissue it
@@ -278,7 +293,7 @@ module.exports = {
         while (data && data.done === false && data.nextRecordsUrl) {
             const action = 'query' + data.nextRecordsUrl.split('/query')[1];
             ({ data } = await this.api.salesForceRq(context, { action }));
-            records = records.concat((data && data.records) || []);
+            records.push(...((data && data.records) || []));
         }
 
         return records;
@@ -298,47 +313,50 @@ module.exports = {
     },
 
     /**
-     * Cached variant of listCampaigns for dynamic-source (dropdown) calls (see
-     * listAccountsCached).
+     * Cached variant of listCampaigns for dynamic-source (dropdown) calls.
      * @param {Object} context
      * @return {Promise<Array>}
      */
-    async listCampaignsCached(context) {
+    listCampaignsCached(context) {
 
-        const key = getSourceCacheKey({ resource: 'campaigns', token: context.auth.accessToken });
-        let lock;
-        try {
-            lock = await context.lock(key);
-            const cached = await context.staticCache.get(key);
-            if (cached) return cached;
-
-            const campaigns = await this.listCampaigns(context);
-            const ttl = context.config.listCampaignsCacheTTL || (5 * 60 * 1000);
-            await context.staticCache.set(key, campaigns, ttl);
-            return campaigns;
-        } finally {
-            lock?.unlock();
-        }
+        return this.cachedSource(context, {
+            resource: 'campaigns',
+            ttlConfigKey: 'listCampaignsCacheTTL',
+            fetch: () => this.listCampaigns(context)
+        });
     },
 
     /**
      * Fetch Contact records (with the standard CONTACT_FIELDS) matching an
      * optional SOQL WHERE clause, newest first, with datetime fields reformatted
      * to ISO. The caller is responsible for building a safe WHERE clause.
+     * `extraFields` lets a caller add validated field names to the SELECT list
+     * (e.g. the filtered custom field, so its value appears in the output).
      * @param {Object} context
-     * @param {Object} params - { where }
+     * @param {Object} params - { where, extraFields }
      * @return {Promise<Array>}
      */
-    async findContacts(context, { where } = {}) {
+    async findContacts(context, { where, extraFields = [] } = {}) {
 
-        let soql = `SELECT ${this.CONTACT_FIELDS.join(', ')} FROM Contact`;
+        const fields = [...this.CONTACT_FIELDS];
+        extraFields.forEach(field => {
+            if (field && !fields.includes(field)) {
+                fields.push(this.assertSafeIdentifier(field, 'field name'));
+            }
+        });
+        let soql = `SELECT ${fields.join(', ')} FROM Contact`;
         if (where) {
             soql += ` WHERE ${where}`;
         }
         soql += ' ORDER BY LastModifiedDate DESC';
 
         const records = await this.queryAll(context, soql);
-        return records.map(record => this.formatSalesforceDates(record));
+        // Strip the REST envelope's `attributes` object — it is not part of the
+        // declared output and its JSON (with commas) corrupts the CSV file mode.
+        return records.map(record => {
+            const { attributes, ...rest } = record;
+            return this.formatSalesforceDates(rest);
+        });
     },
 
     /**

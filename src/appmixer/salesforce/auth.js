@@ -82,8 +82,17 @@ module.exports = {
                             'Authorization': `Bearer ${context.accessToken}`
                         }
                     });
+                    const restUrl = userinfo['urls'] && userinfo['urls']['rest'];
+                    if (!userinfo['sub'] || !restUrl) {
+                        // The urls claim requires the connected app to have the
+                        // `profile`/`full` scope; without it we cannot derive the
+                        // instance URL from the token alone.
+                        throw new Error('Salesforce userinfo response is missing the "sub"/"urls" claims. '
+                            + 'Grant the connected app the "profile" (or "full") scope, or create the account '
+                            + 'through the standard OAuth flow.');
+                    }
                     instanceId = userinfo['sub'];
-                    instanceUrl = new URL(userinfo['urls']['rest']).origin;
+                    instanceUrl = new URL(restUrl).origin;
                 }
 
                 const { data } = await context.httpRequest({

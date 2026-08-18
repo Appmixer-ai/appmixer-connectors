@@ -185,7 +185,7 @@
         },
         "9360aa46-6228-48c0-877b-2fe31b52f66d": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 2176,
+            "x": 2560,
             "y": 300,
             "source": {
                 "in": {
@@ -196,6 +196,9 @@
                         "out"
                     ],
                     "524213c7-e077-475d-9165-098f2b56ffc8": [
+                        "out"
+                    ],
+                    "021fa465-78cb-4366-82b8-e63f052d3191": [
                         "out"
                     ]
                 }
@@ -213,7 +216,7 @@
         },
         "7c059e3a-662d-4a92-b6d1-c165c84c5c0a": {
             "type": "appmixer.salesforce.crm.DeleteObjectRecord",
-            "x": 2560,
+            "x": 2944,
             "y": 300,
             "version": "1.1.2",
             "source": {
@@ -253,7 +256,7 @@
         },
         "c0b0c7c5-e052-43a9-8bd6-6d751e8e89b0": {
             "type": "appmixer.salesforce.crm.DeleteAccount",
-            "x": 2752,
+            "x": 3136,
             "y": 300,
             "version": "1.1.2",
             "source": {
@@ -292,7 +295,7 @@
         },
         "692820b5-1853-4b79-8ec7-f7858461b7d6": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 2944,
+            "x": 3328,
             "y": 300,
             "source": {
                 "in": {
@@ -502,11 +505,11 @@
         },
         "e68a166b-dd52-44c2-adf8-f3f64a9f11ec": {
             "type": "appmixer.salesforce.crm.FindContacts",
-            "x": 1792,
+            "x": 2176,
             "y": 300,
             "source": {
                 "in": {
-                    "af39093c-83ea-4ad3-869f-c7a42869cb01": [
+                    "021fa465-78cb-4366-82b8-e63f052d3191": [
                         "out"
                     ]
                 }
@@ -514,7 +517,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "af39093c-83ea-4ad3-869f-c7a42869cb01": {
+                        "021fa465-78cb-4366-82b8-e63f052d3191": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -550,7 +553,7 @@
         },
         "524213c7-e077-475d-9165-098f2b56ffc8": {
             "type": "appmixer.utils.test.Assert",
-            "x": 1984,
+            "x": 2368,
             "y": 160,
             "source": {
                 "in": {
@@ -604,7 +607,7 @@
         },
         "a1f13b68-acda-40df-8da0-2ff3fe093f81": {
             "type": "appmixer.salesforce.crm.DeleteObjectRecord",
-            "x": 2368,
+            "x": 2752,
             "y": 300,
             "source": {
                 "in": {
@@ -639,6 +642,76 @@
                                 "lambda": {
                                     "objectName": "Campaign",
                                     "id": "{{{4e213dc0-c4ba-420f-b3ff-77c95e67389f}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8e2a0db8-5301-4e90-afce-0197c4cf19f9": {
+            "type": "appmixer.salesforce.crm.ListCampaigns",
+            "x": 1792,
+            "y": 300,
+            "source": {
+                "in": {
+                    "af39093c-83ea-4ad3-869f-c7a42869cb01": [
+                        "out"
+                    ]
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "021fa465-78cb-4366-82b8-e63f052d3191": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1984,
+            "y": 160,
+            "source": {
+                "in": {
+                    "8e2a0db8-5301-4e90-afce-0197c4cf19f9": [
+                        "campaigns"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8e2a0db8-5301-4e90-afce-0197c4cf19f9": {
+                            "campaigns": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "eb02bfe6-55f3-42f2-9b1d-51fe45e896df": {
+                                            "variable": "$.8e2a0db8-5301-4e90-afce-0197c4cf19f9.campaigns",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].Id"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{eb02bfe6-55f3-42f2-9b1d-51fe45e896df}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
                                 }
                             }
                         }

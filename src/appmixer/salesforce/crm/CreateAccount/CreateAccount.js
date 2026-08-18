@@ -40,11 +40,12 @@ function buildAccount(account) {
         accountObject['AccountNumber'] = account['accountNumber'];
     }
 
-    if (account['numberOfEmployees']) {
+    // != null (not truthiness) so an explicit 0 is stored, not dropped.
+    if (account['numberOfEmployees'] != null && account['numberOfEmployees'] !== '') {
         accountObject['NumberOfEmployees'] = account['numberOfEmployees'];
     }
 
-    if (account['annualRevenue']) {
+    if (account['annualRevenue'] != null && account['annualRevenue'] !== '') {
         accountObject['AnnualRevenue'] = account['annualRevenue'];
     }
 
