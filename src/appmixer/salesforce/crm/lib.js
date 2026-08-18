@@ -145,12 +145,15 @@ module.exports = {
 
     /**
      * Escape a value so it can be safely embedded in a SOQL string literal.
+     * Backslashes must be escaped first — a trailing backslash in the value
+     * would otherwise escape the literal's closing quote and let the rest of
+     * the query be injected into the string.
      * @param {*} value
      * @return {string}
      */
     escapeSoql(value) {
 
-        return String(value).replace(/'/g, '\\\'');
+        return String(value).replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
     },
 
     /**
