@@ -32,7 +32,7 @@ module.exports = {
         const records = await commons.findContacts(context, { where });
 
         if (!records.length) {
-            return context.sendJson({ result: [] }, 'out');
+            return context.sendJson({}, 'notFound');
         }
 
         return commons.sendArrayOutput({

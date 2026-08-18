@@ -68,6 +68,24 @@ module.exports = {
 
             requestProfileInfo: async context => {
 
+                if (!instanceId || !instanceUrl) {
+                    // The identity URL and instance URL normally come from the
+                    // requestAccessToken closure. When the account is created from
+                    // pre-obtained tokens (token import via the accounts API), that
+                    // closure state is empty — recover both from the OAuth userinfo
+                    // endpoint instead.
+                    const { baseUrl = 'https://login.salesforce.com' } = context.authConfig;
+                    const { data: userinfo } = await context.httpRequest({
+                        method: 'GET',
+                        url: new URL('/services/oauth2/userinfo', baseUrl).toString(),
+                        headers: {
+                            'Authorization': `Bearer ${context.accessToken}`
+                        }
+                    });
+                    instanceId = userinfo['sub'];
+                    instanceUrl = new URL(userinfo['urls']['rest']).origin;
+                }
+
                 const { data } = await context.httpRequest({
                     method: 'GET',
                     url: instanceId,

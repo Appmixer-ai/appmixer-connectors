@@ -90,7 +90,7 @@
             }
         },
         "c41e5525-116e-4eda-bd65-c425db3ac4fb": {
-            "type": "appmixer.salesforce.crm.GetContactsByField",
+            "type": "appmixer.salesforce.crm.FindContactsByField",
             "x": 640,
             "y": 300,
             "version": "1.1.2",
@@ -187,11 +187,14 @@
         },
         "ad23db23-de54-4a3a-99d1-18e48593474f": {
             "type": "appmixer.utils.test.AfterAll",
-            "x": 1024,
+            "x": 1408,
             "y": 300,
             "source": {
                 "in": {
                     "de4c8353-dfe0-4870-8a30-9d5b65232756": [
+                        "out"
+                    ],
+                    "1b49cedb-86d8-4ae5-8945-35976b810805": [
                         "out"
                     ]
                 }
@@ -209,7 +212,7 @@
         },
         "c7676b0d-17af-4767-b3f6-121d3da2f98e": {
             "type": "appmixer.salesforce.crm.DeleteObjectRecord",
-            "x": 1216,
+            "x": 1600,
             "y": 300,
             "version": "1.1.2",
             "source": {
@@ -249,7 +252,7 @@
         },
         "308c4e0d-e919-4fb9-8cf2-c4a6a2c10421": {
             "type": "appmixer.salesforce.crm.DeleteObjectRecord",
-            "x": 1408,
+            "x": 1792,
             "y": 300,
             "version": "1.1.2",
             "source": {
@@ -289,7 +292,7 @@
         },
         "21f55093-1a54-47ba-b451-f967d6fe2e0d": {
             "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1600,
+            "x": 1984,
             "y": 300,
             "source": {
                 "in": {
@@ -326,6 +329,80 @@
                     }
                 }
             },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "bfd6fe15-f890-430e-9170-ebdc24aa14de": {
+            "type": "appmixer.salesforce.crm.FindContactsByField",
+            "x": 1024,
+            "y": 300,
+            "source": {
+                "in": {
+                    "de4c8353-dfe0-4870-8a30-9d5b65232756": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "de4c8353-dfe0-4870-8a30-9d5b65232756": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {},
+                                "lambda": {
+                                    "fieldName": "LeadSource",
+                                    "fieldValue": "E2E-NoSuchSource-6f2c",
+                                    "outputType": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "1b49cedb-86d8-4ae5-8945-35976b810805": {
+            "type": "appmixer.utils.test.Assert",
+            "source": {
+                "in": {
+                    "bfd6fe15-f890-430e-9170-ebdc24aa14de": [
+                        "notFound"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "bfd6fe15-f890-430e-9170-ebdc24aa14de": {
+                            "notFound": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {}
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "1",
+                                                "assertion": "equal",
+                                                "expected": "1"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "x": 1216,
+            "y": 160,
             "errorHandling": {
                 "autoRetry": false,
                 "onError": "stopFlow"
