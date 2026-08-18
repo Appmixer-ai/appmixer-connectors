@@ -1,6 +1,16 @@
 const SalesforceAPI = require('jsforce');
 const pathModule = require('path');
+const crypto = require('crypto');
 const DEFAULT_API_VERSION = '58.0';
+
+/**
+ * Stable cache key for cached dynamic-source (dropdown) calls.
+ * @param {Object} obj - anything JSON-serializable that identifies the call
+ * @return {string}
+ */
+function getSourceCacheKey(obj) {
+    return 'salesforce_source_' + crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex');
+}
 
 module.exports = {
 
@@ -48,6 +58,42 @@ module.exports = {
     },
 
     Date: SalesforceAPI.Date,
+
+    /**
+     * Fetch all Account records via the jsforce SDK.
+     * @param {Object} context
+     * @return {Promise<Array>}
+     */
+    listAccounts(context) {
+
+        const client = this.getSalesforceAPI(context);
+        return client.sobject('Account').find();
+    },
+
+    /**
+     * Cached variant of listAccounts for dynamic-source (dropdown) calls, so
+     * repeated inspector openings do not burn the Salesforce request quota.
+     * Keyed by the access token — a token refresh naturally invalidates it.
+     * @param {Object} context
+     * @return {Promise<Array>}
+     */
+    async listAccountsCached(context) {
+
+        const key = getSourceCacheKey({ resource: 'accounts', token: context.auth.accessToken });
+        let lock;
+        try {
+            lock = await context.lock(key);
+            const cached = await context.staticCache.get(key);
+            if (cached) return cached;
+
+            const accounts = await this.listAccounts(context);
+            const ttl = context.config.listAccountsCacheTTL || (5 * 60 * 1000);
+            await context.staticCache.set(key, accounts, ttl);
+            return accounts;
+        } finally {
+            lock?.unlock();
+        }
+    },
 
     /**
      * Fetch the single newest record of an sObject via the jsforce SDK, ordered by
