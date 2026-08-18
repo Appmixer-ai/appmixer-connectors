@@ -13,7 +13,7 @@ module.exports = {
         const { conversionKey, records } = context.messages.in.content;
 
         if (!conversionKey) {
-            throw new context.CancelError('Conversion Key is required!');
+            throw new context.CancelError('Hub is required!');
         }
 
         const rows = Array.isArray(records?.ADD) ? records.ADD : [];
@@ -108,8 +108,9 @@ async function generateInspector(context) {
         conversionKey: {
             type: 'select',
             label: 'Hub',
-            tooltip: 'Select the hub to start.',
+            tooltip: 'Select the hub to start. Only hubs that accept data are offered.',
             index: 0,
+            variables: false,
             source: {
                 url: '/component/appmixer/hubbi/core/ListSourceHubsWithPostData?outPort=out',
                 data: {

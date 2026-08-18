@@ -340,5 +340,31 @@ module.exports = [
             'hubspot/engagements/FindNotes/component.json'
         ],
         reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+    },
+    {
+        validator: 'no-select-with-source',
+        messageIncludes: 'is type "select" with a dynamic source',
+        paths: [
+            'hubbi/core/NewHubEvent/component.json',
+            'hubbi/core/StartHub/component.json',
+            'hubbi/core/GetSourceFields/component.json',
+            'hubbi/core/GetTargetFields/component.json'
+        ],
+        reason: 'The customer (Freshdesk ticket 9713) explicitly requires the hub field to offer hubs and nothing else: a hub is never mapped from a previous step in their integration, and a free-text conversion key typed by hand is not a case they want to support. The pickers are therefore type "select" and additionally carry "variables": false, which also removes the variable picker. StartHubWithData has the same picker, declared in StartHubWithData.js, where the validator cannot see it. Accepted trade-off: if the ListTargetHubs / ListSourceHubs* lookup fails, the component cannot be configured at all instead of degrading to manual entry.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['hubbi/core/NewHubEvent/component.json'],
+        reason: 'NewHubEvent builds its output port from the live TargetFields endpoint (generateOutputPortOptions -> fetchTargetFields), so the port-options request needs an authenticated session. Verified what ignoreAuth=true would cost: without auth the lookup fails on context.auth being undefined, the try/catch swallows it, and the variable picker silently drops to the generic "index"/"count" options with every hub field missing - a silent degradation rather than a visible error. The five private helpers (List*/Get*) do carry ignoreAuth=true because their generateOutputPortOptions returns a static SCHEMA and makes no HTTP call. The inPort source of StartHubWithData omits it for the same reason as NewHubEvent, but the validator only inspects outPorts and does not report it.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing required input "in/conversionKey"',
+        paths: [
+            'hubbi/core/GetSourceFields/component.json',
+            'hubbi/core/GetTargetFields/component.json'
+        ],
+        reason: 'The output-port options of these two helpers do not depend on conversionKey, so forwarding it would change nothing. Verified: generateOutputPortOptions returns before conversionKey is read and emits a fixed SCHEMA (fieldId / name / type), the shape of a field definition, which is the same for every hub - the emitted options are byte-identical for conversionKey undefined, cv-1 and cv-2, and no HTTP request is made (hence the ignoreAuth=true these two legitimately carry). conversionKey is a required input of the in port only for the runtime call, which is why the validator asks for it. Both components are private: true, so the port options are not even reachable from the designer palette.'
     }
 ];

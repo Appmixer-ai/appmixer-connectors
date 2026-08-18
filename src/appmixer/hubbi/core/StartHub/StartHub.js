@@ -9,7 +9,7 @@ module.exports = {
         const { conversionKey } = context.messages.in.content;
 
         if (!conversionKey) {
-            throw new context.CancelError('Conversion Key is required!');
+            throw new context.CancelError('Hub is required!');
         }
 
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');

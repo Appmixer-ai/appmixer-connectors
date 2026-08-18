@@ -3,7 +3,7 @@
 const lib = require('../../lib');
 
 const SCHEMA = {
-    key: { type: 'string', title: 'Conversion Key' },
+    key: { type: 'string', title: 'Hub Key' },
     name: { type: 'string', title: 'Name' }
 };
 

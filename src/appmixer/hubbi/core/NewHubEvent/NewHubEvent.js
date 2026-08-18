@@ -2,31 +2,21 @@
 
 const lib = require('../../lib');
 
+const START_HUB_TYPES = [
+    'appmixer.hubbi.core.StartHub',
+    'appmixer.hubbi.core.StartHubWithData'
+];
+
 module.exports = {
 
     async receive(context) {
-
-        if (context.properties.generateInspector) {
-            return context.sendJson({
-                inputs: {
-                    webhookUrl: {
-                        label: 'Webhook URL',
-                        type: 'text',
-                        readonly: true,
-                        defaultValue: context.getWebhookUrl(),
-                        value: context.getWebhookUrl(),
-                        tooltip: 'Configure this URL in Hubbi to send hub events to this trigger.'
-                    }
-                }
-            }, 'out');
-        }
 
         if (context.properties.generateOutputPortOptions) {
             return generateOutputPortOptions(context);
         }
 
         if (context.messages.webhook) {
-            const { conversionKey: configuredKey, outputType = 'array' } = context.properties;
+            const { conversionKey: configuredKey, outputType = 'object' } = context.properties;
             const payload = context.messages.webhook.content.data || {};
 
             if (payload.conversionKey && payload.conversionKey !== configuredKey) {
@@ -43,9 +33,8 @@ module.exports = {
                 ? payload.data
                 : (payload.data ? [payload.data] : []);
 
-            // An event with no records is a no-op: there is nothing to emit and
-            // lib.sendArrayOutput would throw a CancelError in the 'first' mode,
-            // which would leave the webhook unanswered. Acknowledge it instead.
+            // An event with no records is a no-op: there is nothing to emit, so
+            // acknowledge it instead of firing the flow with an empty batch.
             if (records.length === 0) {
                 await context.log({ step: 'Webhook ignored, no records in payload' });
                 return context.response();
@@ -56,7 +45,7 @@ module.exports = {
         }
     },
 
-    // Flow Test Mode. Hubbi pushes hub events to the webhook URL and offers no
+    // Flow Test Mode. HubBI pushes hub events to the webhook URL and offers no
     // endpoint to read past events, so there is no real record to fetch. The
     // output shape is fully derived from the hub's target field definitions
     // though, so we load them through the same fetchTargetFields() helper the
@@ -65,10 +54,10 @@ module.exports = {
     // Test Mode must emit exactly one item with sendJson (not sendArrayOutput),
     // so the single-record payload lib.sendArrayOutput would build for the
     // configured output type is reproduced here: 'array' wraps the record in
-    // 'result' with a count, 'first'/'object' flatten it with index + count.
+    // 'result' with a count, 'object' flattens it with index + count.
     async test(context) {
 
-        const { conversionKey, outputType = 'array' } = context.properties;
+        const { conversionKey, outputType = 'object' } = context.properties;
 
         if (!conversionKey) {
             throw new Error('No hub selected, cannot build test data.');
@@ -100,6 +89,8 @@ module.exports = {
             throw new context.CancelError('Hub is required!');
         }
 
+        assertNoCircularReference(context, conversionKey);
+
         const webhookUrl = context.getWebhookUrl();
         await context.saveState({ webhookUrl });
         await context.log({ step: 'Webhook registered', webhookUrl });
@@ -110,6 +101,64 @@ module.exports = {
         await context.saveState({});
     }
 };
+
+// Guard against a circular reference: receiving from a hub and starting the
+// same hub in one flow makes the flow trigger itself. The option lists cannot
+// prevent the selection (they are resolved per component, in isolation from
+// the flow), so the cycle is caught here instead and the flow refuses to
+// start. A cycle spread across two separate flows is not detectable this way.
+function assertNoCircularReference(context, conversionKey) {
+
+    const flowDescriptor = context.flowDescriptor || {};
+
+    for (const componentId of Object.keys(flowDescriptor)) {
+        if (componentId === context.componentId) continue;
+
+        const component = flowDescriptor[componentId] || {};
+        if (!START_HUB_TYPES.includes(component.type)) continue;
+
+        if (getConfiguredHubs(component).includes(conversionKey)) {
+            const label = component.label || component.type.split('.').pop();
+            throw new context.CancelError(
+                `Circular reference: "${label}" starts the same hub this trigger receives from. ` +
+                'Select a different hub in one of the two components, or move it to another flow.'
+            );
+        }
+    }
+}
+
+// Every hub a single component is configured with. A trigger keeps its
+// configuration in config.properties, while an action receives it through its
+// in port, where the designer stores the resolved values per incoming
+// connection under config.transform.<inPort>.<sourceId>.<sourcePort>.lambda.
+// Values still carrying a mustache placeholder are mapped from a previous step
+// and cannot be resolved statically, so they are skipped.
+function getConfiguredHubs(component) {
+
+    const config = component.config || {};
+    const hubs = [];
+
+    const add = value => {
+        if (typeof value === 'string' && value && !value.includes('{{{')) {
+            hubs.push(value);
+        }
+    };
+
+    add((config.properties || {}).conversionKey);
+
+    const transform = config.transform || {};
+    for (const inPort of Object.keys(transform)) {
+        const sources = transform[inPort] || {};
+        for (const sourceId of Object.keys(sources)) {
+            const ports = sources[sourceId] || {};
+            for (const sourcePort of Object.keys(ports)) {
+                add(((ports[sourcePort] || {}).lambda || {}).conversionKey);
+            }
+        }
+    }
+
+    return hubs;
+}
 
 // Single source of truth for the target field lookup: the output port options
 // and test() both describe the same record shape, so they must read it the
@@ -145,7 +194,7 @@ function sampleValue(schema, field) {
 
 async function generateOutputPortOptions(context) {
 
-    const { conversionKey, outputType = 'array' } = context.properties;
+    const { conversionKey, outputType = 'object' } = context.properties;
 
     // Build the per-record field schema. Any failure here (missing auth during
     // port generation, endpoint error, empty hub) must NOT blank out the whole
