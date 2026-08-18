@@ -78,6 +78,14 @@ module.exports = {
 
     receive(context) {
 
+        const { accountId, lastName } = context.messages.contact.content;
+        if (!accountId) {
+            throw new context.CancelError('Account is required!');
+        }
+        if (!lastName) {
+            throw new context.CancelError('Last Name is required!');
+        }
+
         const client = commons.getSalesforceAPI(context);
         let contactObject = buildContact(context.messages.contact.content);
 
