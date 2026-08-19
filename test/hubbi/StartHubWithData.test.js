@@ -8,10 +8,10 @@ const StartHubWithData = require(path.join(
     __dirname, '../../src/appmixer/hubbi/core/StartHubWithData/StartHubWithData.js'
 ));
 
-describe('Hubbi StartHubWithData', function () {
+describe('Hubbi StartHubWithData', function() {
 
     let context;
-    beforeEach(function () {
+    beforeEach(function() {
         context = createMockContext();
         context.auth = { baseUrl: 'https://test.hubbi.nl', clientKey: 'ck-1', token: 'jwt' };
         context.properties = {};
@@ -19,7 +19,7 @@ describe('Hubbi StartHubWithData', function () {
         context.httpRequest.resolves({});
     });
 
-    it('throws CancelError when conversionKey is missing', async function () {
+    it('throws CancelError when conversionKey is missing', async function() {
         context.messages.in.content.conversionKey = undefined;
         await assert.rejects(
             () => StartHubWithData.receive(context),
@@ -27,9 +27,9 @@ describe('Hubbi StartHubWithData', function () {
         );
     });
 
-    describe('records.ADD input', function () {
+    describe('records.ADD input', function() {
 
-        it('throws CancelError when no records are provided', async function () {
+        it('throws CancelError when no records are provided', async function() {
             context.messages.in.content.records = { ADD: [] };
             await assert.rejects(
                 () => StartHubWithData.receive(context),
@@ -37,14 +37,14 @@ describe('Hubbi StartHubWithData', function () {
             );
         });
 
-        it('throws CancelError when records is absent entirely', async function () {
+        it('throws CancelError when records is absent entirely', async function() {
             await assert.rejects(
                 () => StartHubWithData.receive(context),
                 e => e.name === 'CancelError' && /At least one record is required/.test(e.message)
             );
         });
 
-        it('posts the ADD rows and reports the count', async function () {
+        it('posts the ADD rows and reports the count', async function() {
             const rows = [{ f1: 'a' }, { f1: 'b' }];
             context.messages.in.content.records = { ADD: rows };
 
@@ -61,13 +61,13 @@ describe('Hubbi StartHubWithData', function () {
         });
     });
 
-    describe('error reclassification', function () {
+    describe('error reclassification', function() {
 
-        beforeEach(function () {
+        beforeEach(function() {
             context.messages.in.content.records = { ADD: [{ f1: 'a' }] };
         });
 
-        it('reclassifies HTTP 409 as retryable', async function () {
+        it('reclassifies HTTP 409 as retryable', async function() {
             const err = new Error('conflict');
             err.response = { status: 409 };
             context.httpRequest.rejects(err);
@@ -77,7 +77,7 @@ describe('Hubbi StartHubWithData', function () {
             );
         });
 
-        it('reclassifies HTTP 423 as a CancelError', async function () {
+        it('reclassifies HTTP 423 as a CancelError', async function() {
             const err = new Error('locked');
             err.response = { status: 423 };
             context.httpRequest.rejects(err);
@@ -88,9 +88,9 @@ describe('Hubbi StartHubWithData', function () {
         });
     });
 
-    describe('generateInspector', function () {
+    describe('generateInspector', function() {
 
-        it('returns a base schema when no conversionKey is set', async function () {
+        it('returns a base schema when no conversionKey is set', async function() {
             context.properties = { generateInspector: true };
             await StartHubWithData.receive(context);
             assert(context.httpRequest.notCalled);
@@ -102,7 +102,7 @@ describe('Hubbi StartHubWithData', function () {
             assert(!inputs.recordsArray, 'the array input must be removed');
         });
 
-        it('builds record fields from SourceFields when conversionKey is set', async function () {
+        it('builds record fields from SourceFields when conversionKey is set', async function() {
             context.properties = { generateInspector: true, conversionKey: 'cv-1' };
             context.httpRequest.resolves({ data: [
                 { fieldId: 'f1', name: 'First', type: 'string' },
@@ -119,7 +119,7 @@ describe('Hubbi StartHubWithData', function () {
             assert(!inputs.records.when, 'records must always be visible (no inputMode gate)');
         });
 
-        it('still returns the hub picker when the SourceFields lookup fails', async function () {
+        it('still returns the hub picker when the SourceFields lookup fails', async function() {
             context.properties = { generateInspector: true, conversionKey: 'cv-1' };
             context.httpRequest.rejects(new Error('network down'));
 
