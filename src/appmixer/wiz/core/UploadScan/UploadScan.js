@@ -2,12 +2,19 @@ const lib = require('../../lib');
 const uuid = require('uuid').v4;
 const moment = require('moment');
 
+// Upper bounds for the lock configuration. The knobs are configurable per
+// connector, but without a cap a misconfigured value could make each lock
+// acquisition wait far longer than a receive() is allowed to run.
+const MAX_LOCK_RETRY_DELAY = 5000; // 5s
+const MAX_LOCK_TTL = 15 * 60 * 1000; // 15 min
+const MAX_LOCK_MAX_RETRY_COUNT = 60;
+
 const getLockConfiguration = (context) => {
 
     return {
-        retryDelay: parseInt(context.config.uploadLockRetryDelay, 10) || 3000,
-        ttl: parseInt(context.config.uploadLockTtl, 10) || 15 * 60 * 1000,
-        maxRetryCount: parseInt(context.config.uploadLockMaxRetryCount, 10) || 60
+        retryDelay: Math.min(parseInt(context.config.uploadLockRetryDelay, 10) || 3000, MAX_LOCK_RETRY_DELAY),
+        ttl: Math.min(parseInt(context.config.uploadLockTtl, 10) || 15 * 60 * 1000, MAX_LOCK_TTL),
+        maxRetryCount: Math.min(parseInt(context.config.uploadLockMaxRetryCount, 10) || 60, MAX_LOCK_MAX_RETRY_COUNT)
     };
 };
 

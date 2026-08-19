@@ -104,9 +104,16 @@ const uploadFile = async function(context, { url, fileContent }) {
         data: fileContent, // stream upload is not implemented on the wiz side
         headers: {
             'Content-Type': 'application/json'
-        }
+        },
+        timeout: lib.getRequestTimeout(context)
     });
-    await context.log({ stage: 'upload-finished', uploadData: upload.statusCode, fileContent });
+    // Do not log the full fileContent: the upload batch can be megabytes and may
+    // contain security-findings data. Log only its size/shape instead.
+    await context.log({
+        stage: 'upload-finished',
+        uploadData: upload.statusCode,
+        dataSourcesCount: Array.isArray(fileContent?.dataSources) ? fileContent.dataSources.length : undefined
+    });
 };
 
 const normalizeEvents = function(events) {

@@ -38,7 +38,27 @@ const systemActivityQuery = `query SystemActivity($id: ID!) {
           handled
       }`;
 
+// Upper bounds so a hung Wiz endpoint or a misconfigured connector cannot hold a
+// single receive() call for an unbounded amount of time.
+const DEFAULT_REQUEST_TIMEOUT = 60 * 1000; // 60s
+const MAX_REQUEST_TIMEOUT = 5 * 60 * 1000; // 5 min
+const DEFAULT_STATUS_ATTEMPTS = 20;
+const MAX_STATUS_ATTEMPTS = 60;
+const DEFAULT_STATUS_POLLING_INTERVAL = 3000; // 3s
+const MAX_STATUS_POLLING_INTERVAL = 10 * 1000; // 10s
+
 module.exports = {
+
+    // Resolve a bounded HTTP request timeout. Configurable via `requestTimeout`
+    // (ms) but always capped so no single request can hang receive() indefinitely.
+    getRequestTimeout(context) {
+
+        const configured = parseInt(context?.config?.requestTimeout, 10);
+        if (!configured || configured <= 0) {
+            return DEFAULT_REQUEST_TIMEOUT;
+        }
+        return Math.min(configured, MAX_REQUEST_TIMEOUT);
+    },
 
     async makeApiCall({ context, method = 'GET', data }) {
 
@@ -51,7 +71,8 @@ module.exports = {
                 'content-type': 'application/json',
                 'authorization': `Bearer ${context.auth.token}`
             },
-            data
+            data,
+            timeout: this.getRequestTimeout(context)
         });
     },
 
@@ -80,9 +101,16 @@ module.exports = {
             data: fileContent, // stream upload is not implemented on the wiz side
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            timeout: this.getRequestTimeout(context)
         });
-        await context.log({ stage: 'upload-finished', uploadData: upload.statusCode, fileContent });
+        // Do not log the full fileContent: the upload batch can be megabytes and may
+        // contain security-findings data. Log only its size/shape instead.
+        await context.log({
+            stage: 'upload-finished',
+            uploadData: upload.statusCode,
+            dataSourcesCount: Array.isArray(fileContent?.dataSources) ? fileContent.dataSources.length : undefined
+        });
     },
 
     requestUpload: async function(context, { filename }) {
@@ -109,8 +137,16 @@ module.exports = {
 
     getStatus: async function(context, id, attempts = 0) {
 
-        const maxAttempts = parseInt(context.config.statusNumberOfAttempts , 10) || 20;
-        const pollingInterval = parseInt(context.config.statusPollingInterval, 10) || 3000;
+        // Both knobs come from connector config; cap them so a large value cannot
+        // turn a single receive() into a tens-of-minutes sleep-poll.
+        const maxAttempts = Math.min(
+            parseInt(context.config.statusNumberOfAttempts, 10) || DEFAULT_STATUS_ATTEMPTS,
+            MAX_STATUS_ATTEMPTS
+        );
+        const pollingInterval = Math.min(
+            parseInt(context.config.statusPollingInterval, 10) || DEFAULT_STATUS_POLLING_INTERVAL,
+            MAX_STATUS_POLLING_INTERVAL
+        );
 
         context.log({ stage: 'retrieving-upload-status', systemActivityId: id, attempts, maxAttempts, pollingInterval });
         const { data } = await this.makeApiCall({
