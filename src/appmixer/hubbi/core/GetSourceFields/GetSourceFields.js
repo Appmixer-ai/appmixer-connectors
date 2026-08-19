@@ -3,9 +3,9 @@
 const lib = require('../../lib');
 
 const SCHEMA = {
-    fieldId: { type: 'string', title: 'Field ID' },
-    name: { type: 'string', title: 'Name' },
-    type: { type: 'string', title: 'Type' }
+    fieldId: { type: 'string', title: 'Field ID', example: 'orderNumber' },
+    name: { type: 'string', title: 'Name', example: 'Order Number' },
+    type: { type: 'string', title: 'Type', example: 'String' }
 };
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
         }
 
         if (!conversionKey) {
-            throw new context.CancelError('Conversion Key is required!');
+            throw new context.CancelError('Hub is required!');
         }
 
         const baseUrl = context.auth.baseUrl.replace(/\/$/, '');

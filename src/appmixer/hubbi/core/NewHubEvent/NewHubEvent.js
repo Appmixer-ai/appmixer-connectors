@@ -45,41 +45,22 @@ module.exports = {
         }
     },
 
-    // Flow Test Mode. HubBI pushes hub events to the webhook URL and offers no
-    // endpoint to read past events, so there is no real record to fetch. The
-    // output shape is fully derived from the hub's target field definitions
-    // though, so we load them through the same fetchTargetFields() helper the
-    // output port options use and synthesize one record from them.
+    // Flow Test Mode. HubBI delivers hub events by pushing them to the webhook
+    // URL and exposes no endpoint for reading past events, so there is no real
+    // record to fetch and no honest example to emit. Throwing is the correct
+    // answer: the engine logs it and falls through to its own fallbacks, and the
+    // user is told how to produce real data instead.
     //
-    // Test Mode must emit exactly one item with sendJson (not sendArrayOutput),
-    // so the single-record payload lib.sendArrayOutput would build for the
-    // configured output type is reproduced here: 'array' wraps the record in
-    // 'result' with a count, 'object' flattens it with index + count.
+    // This deliberately does NOT synthesize a record out of the hub's target
+    // field definitions. Fabricated values would make the test pass while
+    // testing nothing, and emit a shape that matches no real run - downstream
+    // components would be configured against data that never arrives.
     async test(context) {
 
-        const { conversionKey, outputType = 'object' } = context.properties;
-
-        if (!conversionKey) {
-            throw new Error('No hub selected, cannot build test data.');
-        }
-
-        const fields = await fetchTargetFields(context, conversionKey);
-
-        if (!fields.length) {
-            throw new Error('The selected hub has no target fields to use as test data.');
-        }
-
-        const record = {};
-        for (const field of fields) {
-            if (!field.fieldId) continue;
-            record[field.fieldId] = sampleValue(lib.mapFieldType(field.type).schema, field);
-        }
-
-        const payload = outputType === 'array'
-            ? { result: [record], count: 1 }
-            : { ...record, index: 0, count: 1 };
-
-        return context.sendJson(payload, 'out');
+        throw new context.CancelError(
+            'HubBI has no endpoint for reading past hub events, so no real example can be fetched. ' +
+            'Start the flow and send data from the selected hub in HubBI to see the actual output.'
+        );
     },
 
     async start(context) {
@@ -160,36 +141,19 @@ function getConfiguredHubs(component) {
     return hubs;
 }
 
-// Single source of truth for the target field lookup: the output port options
-// and test() both describe the same record shape, so they must read it the
-// same way.
+// The target field definitions describe the shape of one record, which is what
+// the output port options are built from. Uncached on purpose: this runs behind
+// generateOutputPortOptions, which the designer resolves once per inspector open
+// rather than in the concurrent burst the hub dropdowns produce.
 async function fetchTargetFields(context, conversionKey) {
 
-    const baseUrl = context.auth.baseUrl.replace(/\/$/, '');
-    const response = await context.httpRequest({
-        method: 'GET',
-        url: `${baseUrl}/Flows/Home/TargetFields?clientKey=${encodeURIComponent(context.auth.clientKey)}&conversionKey=${encodeURIComponent(conversionKey)}`,
-        headers: {
-            'Authorization': `Bearer ${context.auth.token}`,
-            'Accept': 'application/json'
-        }
-    });
+    const response = await lib.apiGet(context, lib.apiUrl(
+        context,
+        `/Flows/Home/TargetFields?clientKey=${encodeURIComponent(context.auth.clientKey)}` +
+        `&conversionKey=${encodeURIComponent(conversionKey)}`
+    ));
 
     return response.data || [];
-}
-
-// A plausible value for one target field, derived from the schema
-// lib.mapFieldType already produces for it. Values are fixed rather than
-// generated so a test run is reproducible.
-function sampleValue(schema, field) {
-
-    if (schema.type === 'integer') return 42;
-    if (schema.type === 'number') return 42.5;
-    if (schema.type === 'boolean') return true;
-    if (schema.format === 'date-time') return '2026-01-01T09:00:00.000Z';
-    if (schema.format === 'date') return '2026-01-01';
-    if (schema.format === 'uuid') return '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
-    return field.name || field.fieldId;
 }
 
 async function generateOutputPortOptions(context) {

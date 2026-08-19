@@ -114,6 +114,9 @@ async function generateInspector(context) {
             source: {
                 url: '/component/appmixer/hubbi/core/ListSourceHubsWithPostData?outPort=out',
                 data: {
+                    properties: {
+                        isSource: true
+                    },
                     messages: {
                         'in/outputType': 'array'
                     },

@@ -20,7 +20,7 @@ describe('Hubbi GetSourceFields', function () {
         context.messages.in.content.conversionKey = undefined;
         await assert.rejects(
             () => GetSourceFields.receive(context),
-            e => e.name === 'CancelError' && /Conversion Key is required/.test(e.message)
+            e => e.name === 'CancelError' && /Hub is required/.test(e.message)
         );
     });
 

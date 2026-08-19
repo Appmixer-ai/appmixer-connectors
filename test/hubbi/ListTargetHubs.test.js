@@ -59,4 +59,82 @@ describe('Hubbi ListTargetHubs', function () {
             assert.deepStrictEqual(ListTargetHubs.toSelectArray({}), []);
         });
     });
+    // Inspector dropdowns are resolved with isSource, and the designer fires
+    // them in a concurrent burst whenever an inspector opens. Those calls are
+    // cached; a flow run (no sentinel) must still get the live list.
+    describe('dynamic source calls', function () {
+
+        const HUBS = [{ key: 'k1', name: 'Hub 1' }];
+
+        beforeEach(function () {
+            global.serviceState = {};
+            context.httpRequest.resolves({ data: HUBS });
+            // Short TTL so the cache mock does not leave a 2-minute timer armed.
+            context.config = { listCacheTTL: 2000 };
+        });
+
+        it('hits the API once and serves the burst from cache', async function () {
+            context.properties.isSource = true;
+
+            await ListTargetHubs.receive(context);
+            await ListTargetHubs.receive(context);
+            await ListTargetHubs.receive(context);
+
+            assert.strictEqual(context.httpRequest.callCount, 1, 'burst must collapse to one call');
+            assert(context.staticCache.set.calledOnce);
+            assert.deepStrictEqual(context.sendJson.lastCall.args[0], { result: HUBS, count: 1 });
+        });
+
+        it('takes a lock around the fetch so a cold cache does not stampede', async function () {
+            context.properties.isSource = true;
+            await ListTargetHubs.receive(context);
+            assert(context.lock.calledOnce);
+            assert.strictEqual(context.lock.firstCall.args[0], context.staticCache.set.firstCall.args[0]);
+        });
+
+        it('keys the cache on the account, not just the URL', async function () {
+            context.properties.isSource = true;
+            await ListTargetHubs.receive(context);
+            const firstKey = context.staticCache.set.firstCall.args[0];
+
+            context.staticCache.set.resetHistory();
+            context.auth = { ...context.auth, token: 'other-jwt' };
+            await ListTargetHubs.receive(context);
+
+            assert.notStrictEqual(context.staticCache.set.firstCall.args[0], firstKey);
+        });
+
+        it('honors the configured cache TTL', async function () {
+            context.properties.isSource = true;
+            context.config = { listCacheTTL: 5000 };
+            await ListTargetHubs.receive(context);
+            assert.strictEqual(context.staticCache.set.firstCall.args[2], 5000);
+        });
+
+        it('answers a failed dropdown with an empty list instead of an error', async function () {
+            context.properties.isSource = true;
+            context.httpRequest.rejects(new Error('502 Bad Gateway'));
+
+            await assert.doesNotReject(() => ListTargetHubs.receive(context));
+
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], { result: [], count: 0 });
+            assert.strictEqual(context.log.firstCall.args[0].error, '502 Bad Gateway');
+        });
+
+        it('still fails a flow run loudly', async function () {
+            context.httpRequest.rejects(new Error('502 Bad Gateway'));
+
+            await assert.rejects(() => ListTargetHubs.receive(context), /502 Bad Gateway/);
+            assert(context.sendJson.notCalled);
+        });
+
+        it('does not cache a flow run', async function () {
+            await ListTargetHubs.receive(context);
+            await ListTargetHubs.receive(context);
+
+            assert.strictEqual(context.httpRequest.callCount, 2, 'live runs must not be cached');
+            assert(context.staticCache.set.notCalled);
+            assert(context.lock.notCalled);
+        });
+    });
 });

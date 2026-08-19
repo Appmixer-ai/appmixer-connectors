@@ -16,7 +16,7 @@ describe('Hubbi lib', function () {
                 .forEach(t => {
                     const r = lib.mapFieldType(t);
                     assert.strictEqual(r.inspectorType, 'number');
-                    assert.deepStrictEqual(r.schema, { type: 'integer' });
+                    assert.deepStrictEqual(r.schema, { type: 'integer', example: 42 });
                 });
         });
 
@@ -24,7 +24,7 @@ describe('Hubbi lib', function () {
             ['double', 'decimal', 'single', 'float'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'number');
-                assert.deepStrictEqual(r.schema, { type: 'number' });
+                assert.deepStrictEqual(r.schema, { type: 'number', example: 42.5 });
             });
         });
 
@@ -32,7 +32,7 @@ describe('Hubbi lib', function () {
             ['boolean', 'bool'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'toggle');
-                assert.deepStrictEqual(r.schema, { type: 'boolean' });
+                assert.deepStrictEqual(r.schema, { type: 'boolean', example: true });
             });
         });
 
@@ -41,7 +41,7 @@ describe('Hubbi lib', function () {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'date-time');
                 assert.deepStrictEqual(r.inspectorConfig, { enableTime: true });
-                assert.deepStrictEqual(r.schema, { type: 'string', format: 'date-time' });
+                assert.deepStrictEqual(r.schema, { type: 'string', format: 'date-time', example: '2026-01-01T09:00:00.000Z' });
             });
         });
 
@@ -49,7 +49,7 @@ describe('Hubbi lib', function () {
             ['date', 'dateonly'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'date-time');
-                assert.deepStrictEqual(r.schema, { type: 'string', format: 'date' });
+                assert.deepStrictEqual(r.schema, { type: 'string', format: 'date', example: '2026-01-01' });
             });
         });
 
@@ -57,7 +57,7 @@ describe('Hubbi lib', function () {
             ['guid', 'uuid'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'text');
-                assert.deepStrictEqual(r.schema, { type: 'string', format: 'uuid' });
+                assert.deepStrictEqual(r.schema, { type: 'string', format: 'uuid', example: '3f2504e0-4f89-11d3-9a0c-0305e82c3301' });
             });
         });
 
@@ -65,14 +65,14 @@ describe('Hubbi lib', function () {
             ['string', 'char', '', undefined, null, 'somethingWeird'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'text');
-                assert.deepStrictEqual(r.schema, { type: 'string' });
+                assert.deepStrictEqual(r.schema, { type: 'string', example: 'Example value' });
             });
         });
 
         it('is case-insensitive and trims whitespace', function () {
             const r = lib.mapFieldType('  DateTime  ');
             assert.strictEqual(r.inspectorType, 'date-time');
-            assert.deepStrictEqual(r.schema, { type: 'string', format: 'date-time' });
+            assert.deepStrictEqual(r.schema, { type: 'string', format: 'date-time', example: '2026-01-01T09:00:00.000Z' });
         });
     });
 
@@ -174,8 +174,8 @@ describe('Hubbi lib', function () {
 
         let context;
         const itemSchema = {
-            key: { type: 'string', title: 'Conversion Key' },
-            name: { type: 'string', title: 'Name' }
+            key: { type: 'string', title: 'Hub Key', example: 'k1' },
+            name: { type: 'string', title: 'Name', example: 'Hub 1' }
         };
 
         beforeEach(function () {
@@ -185,12 +185,13 @@ describe('Hubbi lib', function () {
         it('object/first: returns flat field options plus Index and Count', function () {
             lib.getOutputPortOptions(context, 'object', itemSchema, { label: 'Hubs', value: 'result' });
             const options = context.sendJson.firstCall.args[0];
-            assert.deepStrictEqual(options[0], { label: 'Current Item Index', value: 'index', schema: { type: 'integer' } });
-            assert.deepStrictEqual(options[1], { label: 'Items Count', value: 'count', schema: { type: 'integer' } });
+            assert.deepStrictEqual(options[0], { label: 'Current Item Index', value: 'index', schema: { type: 'integer', example: 0 } });
+            assert.deepStrictEqual(options[1], { label: 'Items Count', value: 'count', schema: { type: 'integer', example: 3 } });
             // title is stripped from per-field schema and surfaced as label
             const keyOption = options.find(o => o.value === 'key');
-            assert.strictEqual(keyOption.label, 'Conversion Key');
-            assert.deepStrictEqual(keyOption.schema, { type: 'string' });
+            assert.strictEqual(keyOption.label, 'Hub Key');
+            // title is stripped, the example survives so the picker can preview it
+            assert.deepStrictEqual(keyOption.schema, { type: 'string', example: 'k1' });
         });
 
         it('array: returns an array schema option plus Items Count', function () {
@@ -200,12 +201,34 @@ describe('Hubbi lib', function () {
             assert.strictEqual(options[0].value, 'result');
             assert.strictEqual(options[0].schema.type, 'array');
             assert.deepStrictEqual(options[0].schema.items, { type: 'object', properties: itemSchema });
-            assert.deepStrictEqual(options[1], { label: 'Items Count', value: 'count', schema: { type: 'integer' } });
+            assert.deepStrictEqual(options[1], { label: 'Items Count', value: 'count', schema: { type: 'integer', example: 3 } });
         });
 
         it('file: returns a single File ID option', function () {
             lib.getOutputPortOptions(context, 'file', itemSchema, { label: 'Hubs', value: 'result' });
-            assert.deepStrictEqual(context.sendJson.firstCall.args[0], [{ label: 'File ID', value: 'fileId' }]);
+            assert.deepStrictEqual(context.sendJson.firstCall.args[0], [{
+                label: 'File ID',
+                value: 'fileId',
+                schema: { type: 'string', example: '5f2a1c8e4b3d2a1908f7e6d5' }
+            }]);
+        });
+
+        // The components pass context.messages.in.content.outputType straight
+        // through, and that is empty until the user saves the inspector. Falling
+        // through used to leave the designer's request unanswered.
+        it('defaults to the array options when no outputType is given', function () {
+            lib.getOutputPortOptions(context, undefined, itemSchema, { label: 'Hubs', value: 'result' });
+            const options = context.sendJson.firstCall.args[0];
+            assert.strictEqual(options[0].label, 'Hubs');
+            assert.strictEqual(options[0].schema.type, 'array');
+        });
+
+        it('throws on an unknown outputType instead of answering with nothing', function () {
+            assert.throws(
+                () => lib.getOutputPortOptions(context, 'nonsense', itemSchema, { label: 'Hubs', value: 'result' }),
+                e => e.name === 'CancelError' && /Unsupported outputType nonsense/.test(e.message)
+            );
+            assert(context.sendJson.notCalled);
         });
     });
 });
