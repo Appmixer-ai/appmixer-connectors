@@ -80,7 +80,21 @@ module.exports = {
 
     mapFieldType(netType) {
 
-        const t = String(netType || '').trim().toLowerCase();
+        // HubBI reports the same .NET types in more than one notation: the
+        // SourceFields endpoint returns bare names ("Int32", "DateTime") while
+        // TargetFields returns fully qualified ones ("System.Int32",
+        // "System.Guid"), and a nullable column can arrive as
+        // "System.Nullable`1[System.Int32]". Keeping only the last namespace
+        // segment (after dropping a trailing bracket) collapses all three forms
+        // onto the same case - without this, every qualified type fell through
+        // to the default and a number, date or GUID was described as a string.
+        const t = String(netType || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\]+$/, '')
+            .split('.')
+            .pop();
+
         switch (t) {
             case 'int16':
             case 'int32':

@@ -69,6 +69,32 @@ describe('Hubbi lib', function () {
             });
         });
 
+        // Observed live: TargetFields answers with "System.Int32" / "System.Guid"
+        // while SourceFields answers with "Int32" / "Guid" for the same types.
+        // Qualified names used to fall through to the string default, so a
+        // number, date or GUID coming from a hub was described as text.
+        it('maps fully qualified .NET type names', function () {
+            const cases = [
+                ['System.String', 'text', { type: 'string', example: 'Example value' }],
+                ['System.Int32', 'number', { type: 'integer', example: 42 }],
+                ['System.Double', 'number', { type: 'number', example: 42.5 }],
+                ['System.Boolean', 'toggle', { type: 'boolean', example: true }],
+                ['System.Guid', 'text', { type: 'string', format: 'uuid', example: '3f2504e0-4f89-11d3-9a0c-0305e82c3301' }],
+                ['System.DateTime', 'date-time', { type: 'string', format: 'date-time', example: '2026-01-01T09:00:00.000Z' }]
+            ];
+            cases.forEach(([netType, inspectorType, schema]) => {
+                const r = lib.mapFieldType(netType);
+                assert.strictEqual(r.inspectorType, inspectorType, netType);
+                assert.deepStrictEqual(r.schema, schema, netType);
+            });
+        });
+
+        it('unwraps a nullable type', function () {
+            const r = lib.mapFieldType('System.Nullable`1[System.Int32]');
+            assert.strictEqual(r.inspectorType, 'number');
+            assert.deepStrictEqual(r.schema, { type: 'integer', example: 42 });
+        });
+
         it('is case-insensitive and trims whitespace', function () {
             const r = lib.mapFieldType('  DateTime  ');
             assert.strictEqual(r.inspectorType, 'date-time');
