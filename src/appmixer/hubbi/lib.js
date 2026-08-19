@@ -36,6 +36,25 @@ module.exports = {
         });
     },
 
+    // Rows from a key-value inspector input come in as [{key, value}]; the HTTP
+    // client wants a plain object. Rows without a key are dropped rather than
+    // producing an empty-string header or parameter.
+    kvToObject(rows) {
+
+        if (!Array.isArray(rows)) {
+            return {};
+        }
+
+        const result = {};
+        for (const row of rows) {
+            if (!row || typeof row.key !== 'string' || !row.key) {
+                continue;
+            }
+            result[row.key] = row.value;
+        }
+        return result;
+    },
+
     // Cached variant of apiGet for inspector dropdown (source) calls. The
     // designer fires those in a concurrent burst - one per dropdown, several
     // dropdowns per inspector - and a hub list changes rarely, so serving them

@@ -1,0 +1,142 @@
+{
+    "name": "appmixer.hubbi.core.MakeApiCall",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Make API Call",
+    "description": "Perform an arbitrary authorized API call to HubBI. Provide a path relative to the Base URL of the connected account (or a full URL), a method, and optional query parameters, headers and body.",
+    "version": "1.0.0",
+    "private": false,
+    "auth": {
+        "service": "appmixer:hubbi"
+    },
+    "quota": {
+        "manager": "appmixer:hubbi",
+        "resources": "requests"
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string"
+                    },
+                    "method": {
+                        "type": "string",
+                        "enum": [
+                            "GET",
+                            "POST",
+                            "PUT",
+                            "PATCH",
+                            "DELETE"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "headers": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "url",
+                    "method"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "url": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "API Endpoint Path",
+                        "tooltip": "A path relative to the Base URL of the connected account, for example <code>/Flows/Home/ListTargetHubs</code>, or a full URL."
+                    },
+                    "method": {
+                        "type": "select",
+                        "index": 2,
+                        "label": "HTTP Method",
+                        "defaultValue": "GET",
+                        "tooltip": "The HTTP method for the API call.",
+                        "options": [
+                            {
+                                "label": "GET",
+                                "value": "GET"
+                            },
+                            {
+                                "label": "POST",
+                                "value": "POST"
+                            },
+                            {
+                                "label": "PUT",
+                                "value": "PUT"
+                            },
+                            {
+                                "label": "PATCH",
+                                "value": "PATCH"
+                            },
+                            {
+                                "label": "DELETE",
+                                "value": "DELETE"
+                            }
+                        ]
+                    },
+                    "parameters": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 3,
+                        "label": "Query Parameters",
+                        "tooltip": "Optional query parameters. The clientKey of the connected account is added automatically unless you set it here yourself."
+                    },
+                    "body": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Request Body",
+                        "tooltip": "Optional JSON request body."
+                    },
+                    "headers": {
+                        "type": "key-value",
+                        "keyLabel": "Key",
+                        "valueLabel": "Value",
+                        "addLabel": "Add item",
+                        "removeLabel": "Remove item",
+                        "index": 5,
+                        "label": "Request Headers",
+                        "tooltip": "Optional additional headers. The Authorization header is set automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "statusCode": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "example": 200
+                    },
+                    "headers": {
+                        "type": "object",
+                        "title": "Response Headers",
+                        "properties": {}
+                    },
+                    "body": {
+                        "type": "object",
+                        "title": "Response Body",
+                        "properties": {}
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iMjU2cHgiIGhlaWdodD0iMjU2cHgiIHZpZXdCb3g9IjAgMCAxMDcxIDEwNzEiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8dGl0bGU+aHViYmktaXQ8L3RpdGxlPgogICAgPGRlZnM+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSI0Ny42NjI5OTY1JSIgeTE9IjQ4LjEzNTQ5NzklIiB4Mj0iNjUuOTIxODAyMyUiIHkyPSI2Mi43MzM2MzY5JSIgaWQ9ImxpbmVhckdyYWRpZW50LTEiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRUZGOUZGIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiMyQUE5RTgiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSIzNy4xNDM3NzY2JSIgeTE9IjQ4Ljc3ODcyMTIlIiB4Mj0iMTM3LjU4ODMzNSUiIHkyPSI1OC4zNDA3MzY4JSIgaWQ9ImxpbmVhckdyYWRpZW50LTIiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjRUZGOUZGIiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiMyQUE5RTgiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgPGxpbmVhckdyYWRpZW50IHgxPSI4MC44NDcxMDEzJSIgeTE9IjM4LjM3NzY2MDUlIiB4Mj0iMCUiIHkyPSI4Mi41NDUzODUxJSIgaWQ9ImxpbmVhckdyYWRpZW50LTMiPgogICAgICAgICAgICA8c3RvcCBzdG9wLWNvbG9yPSIjMkFBOUU4IiBvZmZzZXQ9IjAlIj48L3N0b3A+CiAgICAgICAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiMzRjMyNjIiIG9mZnNldD0iMTAwJSI+PC9zdG9wPgogICAgICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICAgICAgPHBhdGggZD0iTTAsMTc0LjcwNTA2IEMwLDI3MS4xOTEwMSA4NS43Mzk2NTI4LDMwOSAxOTEuNDk3ODg5LDMwOSBMMTkxLjQ5Nzg4OSwzMDkgQzI5Ny4yNjAzNDcsMzA5IDM4MywyNzEuMTkxMDEgMzgzLDE3NC43MDUwNiBMMzgzLDE3NC43MDUwNiBDMzgzLDc4LjIxOTExMDUgMjk3LjI2MDM0NywwIDE5MS40OTc4ODksMCBMMTkxLjQ5Nzg4OSwwIEM4NS43Mzk2NTI4LDAgMCw3OC4yMTkxMTA1IDAsMTc0LjcwNTA2IiBpZD0icGF0aC00Ij48L3BhdGg+CiAgICA8L2RlZnM+CiAgICA8ZyBpZD0iaHViYmktaXQiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIxIiBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPgogICAgICAgIDxnIGlkPSJHcm91cC0zLUNvcHkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDg4LjUsIDEzMykiPgogICAgICAgICAgICA8cGF0aCBkPSJNNDA4Ljk1NDQwMiw0NTIuNjcyMzk1IEMzNzIuNTQ2NDEzLDQ4Ny42Njg1MDggMzk0LjUyNTU4NCw3MTAuMDEwNDI1IDQxMS4zODE2MDEsNzEyLjMwMDEyNyBMNDExLjM4MTYwMSw3MTIuMzAwMTI3IEM0NjcuMTc3Nzg5LDcxOS44ODc0MDYgNTA0LjAwMTUwOSw1OTMuMTM0MjIxIDUwNC4xNjUyODIsNTQwLjI4NTE5IEw1MDQuMTY1MjgyLDU0MC4yODUxOSBMNTA0LjE2NTI4Miw1MzkuNTk2NTg5IEM1MDQuMTUyNjg0LDUzNi4wMjI2MjYgNTAzLjk3MjExNCw1MzIuNzk1MDc1IDUwMy42MTA5NzQsNTI5Ljk4OTk3OSBMNTAzLjYxMDk3NCw1MjkuOTg5OTc5IEM0OTkuMDMzNzI5LDQ5NC40ODI2OTYgNDYzLjgzMDk0MSw0NDMuMDQwNDM3IDQzMS4yNzc5MTYsNDQzLjA0MDQzNyBMNDMxLjI3NzkxNiw0NDMuMDQwNDM3IEM0MjMuNTM4NTk0LDQ0My4wNDA0MzcgNDE1Ljk0NjI0Nyw0NDUuOTUxMTQ3IDQwOC45NTQ0MDIsNDUyLjY3MjM5NSIgaWQ9IkZpbGwtNDYtQ29weS0zIiBmaWxsPSJ1cmwoI2xpbmVhckdyYWRpZW50LTEpIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0NDYuNjk1NCwgNTc3LjgzMzQpIHJvdGF0ZSg1OCkgdHJhbnNsYXRlKC00NDYuNjk1NCwgLTU3Ny44MzM0KSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTE0LjAwMDYxNyw2OTggQzExMy4zMzE2MDEsNjk4IDExMi42OTMyNzMsNjk3Ljg2ODYwNSAxMTIuMTEwMDMzLDY5Ny42MzAyMTMgQzEwOS44MTg0NTcsNjk2LjkwODA3NyAxMDcuOTI0MjU3LDY5NS4xNzMxNjcgMTA3LjAzODQzNSw2OTIuODQ2NzQyIEwwLjI2Mjg5NzQwNyw0MTIuNDIzMzcxIEMtMC41MjMyMDg3NjYsNDEwLjM1ODgyOSAwLjUxMzE2Nzk1Miw0MDguMDQ3OTIzIDIuNTc3NzA5Niw0MDcuMjYxODE3IEMzLjAzMjMwMDQ3LDQwNy4wODg3MjQgMy41MTQ2NTEwMSw0MDcgNC4wMDEwODA3NCw0MDcgTDMzOS43MjYyNjQsNDA3IEMzNDMuMDQ2MjU4LDQwNyAzNDYuMDIxMjM0LDQwOS4wNTA1NzEgMzQ3LjIwMjYzLDQxMi4xNTMyNTggTDQ0NC44ODMsNjY4LjY5IEw2NjAuMTA0OTk3LDY2OC42OTA2NDcgQzY2Mi44NjY0MjEsNjY4LjY5MDY0NyA2NjUuMTA0OTk3LDY3MC45MjkyMjQgNjY1LjEwNDk5Nyw2NzMuNjkwNjQ3IEw2NjUuMTA0OTk3LDY5MyBDNjY1LjEwNDk5Nyw2OTUuNzYxNDI0IDY2Mi44NjY0MjEsNjk4IDY2MC4xMDQ5OTcsNjk4IEwxMTQuMDAwNjE3LDY5OCBaIiBpZD0iQ29tYmluZWQtU2hhcGUiIGZpbGw9IiNCOUQzREYiPjwvcGF0aD4KICAgICAgICAgICAgPGcgaWQ9Ikdyb3VwIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxOTQuMTA1LCA1MjApIiBmaWxsPSIjRUFGN0ZEIj4KICAgICAgICAgICAgICAgIDxwYXRoIGQ9Ik00MC4wODg2MDQsNDcuODU3MTQyOSBMMTIuMDE2NjU5MSw0Ny44NTcxNDI5IEM5LjMwNDMzNDU1LDQ3Ljg1NzE0MjkgNy4xMDUyNjMxNiw0NS43MTQzNDUzIDcuMTA1MjYzMTYsNDMuMDcxNDI4NiBMNy4xMDUyNjMxNiw0My4wNzE0Mjg2IEM3LjEwNTI2MzE2LDQwLjQyODUxMTkgOS4zMDQzMzQ1NSwzOC4yODU3MTQzIDEyLjAxNjY1OTEsMzguMjg1NzE0MyBMNDAuMDg4NjA0LDM4LjI4NTcxNDMgQzQyLjgwMDkyODYsMzguMjg1NzE0MyA0NSw0MC40Mjg1MTE5IDQ1LDQzLjA3MTQyODYgTDQ1LDQzLjA3MTQyODYgQzQ1LDQ1LjcxNDM0NTMgNDIuODAwOTI4Niw0Ny44NTcxNDI5IDQwLjA4ODYwNCw0Ny44NTcxNDI5IiBpZD0iRmlsbC0zIj48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNMzEuNzcyMzg5LDY3IEwyMC4zMzI4NzQxLDY3IEMxNy42MDU3ODE2LDY3IDE1LjM5NDczNjgsNjQuODU3MjAyNCAxNS4zOTQ3MzY4LDYyLjIxNDI4NTcgTDE1LjM5NDczNjgsNjIuMjE0Mjg1NyBDMTUuMzk0NzM2OCw1OS41NzEzNjkgMTcuNjA1NzgxNiw1Ny40Mjg1NzE0IDIwLjMzMjg3NDEsNTcuNDI4NTcxNCBMMzEuNzcyMzg5LDU3LjQyODU3MTQgQzM0LjQ5OTQ4MTUsNTcuNDI4NTcxNCAzNi43MTA1MjYzLDU5LjU3MTM2OSAzNi43MTA1MjYzLDYyLjIxNDI4NTcgTDM2LjcxMDUyNjMsNjIuMjE0Mjg1NyBDMzYuNzEwNTI2Myw2NC44NTcyMDI0IDM0LjQ5OTQ4MTUsNjcgMzEuNzcyMzg5LDY3IiBpZD0iRmlsbC01Ij48L3BhdGg+CiAgICAgICAgICAgICAgICA8cGF0aCBkPSJNNDAuMTg1Nzk1OSw5LjU3MTQyODU3IEwyMy43NjE1NzI1LDkuNTcxNDI4NTcgQzIxLjEwMTU4NDMsOS41NzE0Mjg1NyAxOC45NDczNjg0LDcuNDI4NjMwOTkgMTguOTQ3MzY4NCw0Ljc4NTcxNDI5IEwxOC45NDczNjg0LDQuNzg1NzE0MjkgQzE4Ljk0NzM2ODQsMi4xNDI3OTc1OSAyMS4xMDE1ODQzLDAgMjMuNzYxNTcyNSwwIEw0MC4xODU3OTU5LDAgQzQyLjg0NDQ0NjEsMCA0NSwyLjE0Mjc5NzU5IDQ1LDQuNzg1NzE0MjkgTDQ1LDQuNzg1NzE0MjkgQzQ1LDcuNDI4NjMwOTkgNDIuODQ0NDQ2MSw5LjU3MTQyODU3IDQwLjE4NTc5NTksOS41NzE0Mjg1NyIgaWQ9IkZpbGwtNyI+PC9wYXRoPgogICAgICAgICAgICAgICAgPHBhdGggZD0iTTMwLjczODAxNTIsMjcuNTE3ODU3MSBMNC43ODgzMDA1OSwyNy41MTc4NTcxIEMyLjE0Mzk1NTYsMjcuNTE3ODU3MSAwLDI1LjM3NTA1OTYgMCwyMi43MzIxNDI5IEwwLDIyLjczMjE0MjkgQzAsMjAuMDg5MjI2MiAyLjE0Mzk1NTYsMTcuOTQ2NDI4NiA0Ljc4ODMwMDU5LDE3Ljk0NjQyODYgTDMwLjczODAxNTIsMTcuOTQ2NDI4NiBDMzMuMzgyMzYwMiwxNy45NDY0Mjg2IDM1LjUyNjMxNTgsMjAuMDg5MjI2MiAzNS41MjYzMTU4LDIyLjczMjE0MjkgTDM1LjUyNjMxNTgsMjIuNzMyMTQyOSBDMzUuNTI2MzE1OCwyNS4zNzUwNTk2IDMzLjM4MjM2MDIsMjcuNTE3ODU3MSAzMC43MzgwMTUyLDI3LjUxNzg1NzEiIGlkPSJGaWxsLTEwIj48L3BhdGg+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPHBhdGggZD0iTTQwMS4xMDQ5OTcsNDE1LjU5MTQ5IEM0MDEuMTA0OTk3LDU0MC4xODEzNTUgNTExLjQ3MDI3Nyw1ODkgNjQ3LjYwOTIwNyw1ODkgTDY0Ny42MDkyMDcsNTg5IEM3ODMuNzQzOTI3LDU4OSA4OTQuMTA0OTk3LDU0MC4xODEzNTUgODk0LjEwNDk5Nyw0MTUuNTkxNDkgTDg5NC4xMDQ5OTcsNDE1LjU5MTQ5IEM4OTQuMTA0OTk3LDI5MS4wMDE2MjUgNzgzLjc0MzkyNywxOTAgNjQ3LjYwOTIwNywxOTAgTDY0Ny42MDkyMDcsMTkwIEM1MTEuNDcwMjc3LDE5MCA0MDEuMTA0OTk3LDI5MS4wMDE2MjUgNDAxLjEwNDk5Nyw0MTUuNTkxNDkiIGlkPSJGaWxsLTI0Ij48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik00MDEsNDE1LjU5MTQ5IEM0MDEsNTQwLjE4MTM1NSA1MTEuMzY1MjgsNTg5IDY0Ny41MDQyMSw1ODkgTDY0Ny41MDQyMSw1ODkgQzc4My42Mzg5Myw1ODkgODk0LDU0MC4xODEzNTUgODk0LDQxNS41OTE0OSBMODk0LDQxNS41OTE0OSBDODk0LDI5MS4wMDE2MjUgNzgzLjYzODkzLDE5MCA2NDcuNTA0MjEsMTkwIEw2NDcuNTA0MjEsMTkwIEM1MTEuMzY1MjgsMTkwIDQwMSwyOTEuMDAxNjI1IDQwMSw0MTUuNTkxNDkiIGlkPSJGaWxsLTI3IiBmaWxsPSJ1cmwoI2xpbmVhckdyYWRpZW50LTIpIj48L3BhdGg+CiAgICAgICAgICAgIDxlbGxpcHNlIGlkPSJPdmFsIiBmaWxsPSIjRkZGRkZGIiBjeD0iNjQ4IiBjeT0iODA1IiByeD0iMjIwIiByeT0iMzUiPjwvZWxsaXBzZT4KICAgICAgICAgICAgPGcgaWQ9Ik92YWwiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQyMC4xMDUsIDI0NCkiPgogICAgICAgICAgICAgICAgPG1hc2sgaWQ9Im1hc2stNSIgZmlsbD0id2hpdGUiPgogICAgICAgICAgICAgICAgICAgIDx1c2UgeGxpbms6aHJlZj0iI3BhdGgtNCI+PC91c2U+CiAgICAgICAgICAgICAgICA8L21hc2s+CiAgICAgICAgICAgICAgICA8dXNlIGlkPSJNYXNrIiBmaWxsPSJ1cmwoI2xpbmVhckdyYWRpZW50LTMpIiB4bGluazpocmVmPSIjcGF0aC00Ij48L3VzZT4KICAgICAgICAgICAgICAgIDxlbGxpcHNlIGZpbGw9IiMyQjFGNDkiIG9wYWNpdHk9IjAuNDI5NTkwMTM0IiBtYXNrPSJ1cmwoI21hc2stNSkiIGN4PSIzMzEuNzI0MDQ0IiBjeT0iMjU0LjcxNjIxNiIgcng9IjI2Ni44NDQyNjIiIHJ5PSIyMzUuOTI1Njc2Ij48L2VsbGlwc2U+CiAgICAgICAgICAgIDwvZz4KICAgICAgICAgICAgPHBhdGggZD0iTTQ2NS4xMDQ5OTcsMzk1LjUgQzQ2NS4xMDQ5OTcsMzU4LjIxOTIxMiA0ODMuMjM4MjA3LDMyOCA1MDUuNjA0OTk3LDMyOCBDNTI3Ljk3MTc4NywzMjggNTQ2LjEwNDk5NywzNTguMjE5MjEyIDU0Ni4xMDQ5OTcsMzk1LjUgQzU0Ni4xMDQ5OTcsNDMyLjc4MDc4OCA1MjcuOTcxNzg3LDQ2MyA1MDUuNjA0OTk3LDQ2MyBDNDgzLjIzODIwNyw0NjMgNDY1LjEwNDk5Nyw0MzIuNzgwNzg4IDQ2NS4xMDQ5OTcsMzk1LjUiIGlkPSJGaWxsLTM5IiBmaWxsPSIjRkVGRUZFIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik02NDAuMTA0OTk3LDM5NS41IEM2NDAuMTA0OTk3LDM1OC4yMTkyMTIgNjU4LjIzODIwNywzMjggNjgwLjYwNDk5NywzMjggQzcwMi45NzE3ODcsMzI4IDcyMS4xMDQ5OTcsMzU4LjIxOTIxMiA3MjEuMTA0OTk3LDM5NS41IEM3MjEuMTA0OTk3LDQzMi43ODA3ODggNzAyLjk3MTc4Nyw0NjMgNjgwLjYwNDk5Nyw0NjMgQzY1OC4yMzgyMDcsNDYzIDY0MC4xMDQ5OTcsNDMyLjc4MDc4OCA2NDAuMTA0OTk3LDM5NS41IiBpZD0iRmlsbC00MSIgZmlsbD0iI0ZFRkVGRSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNNTYyLjA0NDk1NSw0NDkuMDAxNzY5IEM1NzAuNDg2MjMsNDU2Ljg1Nzc2OSA1ODEuNzk3MzcxLDQ2MC44NzEyOTYgNTkzLjA4NzQ3Miw0NTkuODQwNzk2IEM2MDMuMjg3Njk3LDQ1OC45MTA0MjUgNjEwLjkzMzY1OCw0NTMuOTU4MTgzIDYxOC4yMjYxNDYsNDQ3LjM5OTY5NSBDNjIzLjk0NDgzNyw0NDIuMjUxMzY2IDYxNS4zMTQyMDEsNDMzLjQxNDkzIDYwOS42MDM5MjYsNDM4LjU1MDc0MyBDNjA0LjU4Mzc2Niw0NDMuMDY5MDkxIDU5OS42MTgzMDksNDQ2Ljc5NDc0NiA1OTIuNTg2NzE4LDQ0Ny43NjY4MzcgQzU4NC44NjkyMjEsNDQ4LjgzMDcxNCA1NzYuNDgyNjUsNDQ2LjE3MzEwOCA1NzAuNjYyOTY3LDQ0MC43NTc3NjYgQzU2NC44NTU5MDgsNDM1LjM1NDk0MSA1NTYuMjA4NDM5LDQ0My41Njk3MzkgNTYyLjA0NDk1NSw0NDkuMDAxNzY5IiBpZD0iRmlsbC00MyIgZmlsbD0iI0ZFRkVGRSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNNjk1LjI1ODgzNSw0NTIuNjcyMzk1IEM2NTguODUwODQ2LDQ4Ny42Njg1MDggNjgwLjgzMDAxNyw3MTAuMDEwNDI1IDY5Ny42ODYwMzQsNzEyLjMwMDEyNyBMNjk3LjY4NjAzNCw3MTIuMzAwMTI3IEM3NTMuNDgyMjIyLDcxOS44ODc0MDYgNzkwLjMwNTk0Miw1OTMuMTM0MjIxIDc5MC40Njk3MTUsNTQwLjI4NTE5IEw3OTAuNDY5NzE1LDU0MC4yODUxOSBMNzkwLjQ2OTcxNSw1MzkuNTk2NTg5IEM3OTAuNDU3MTE3LDUzNi4wMjI2MjYgNzkwLjI3NjU0Nyw1MzIuNzk1MDc1IDc4OS45MTU0MDcsNTI5Ljk4OTk3OSBMNzg5LjkxNTQwNyw1MjkuOTg5OTc5IEM3ODUuMzM4MTYzLDQ5NC40ODI2OTYgNzUwLjEzNTM3NSw0NDMuMDQwNDM3IDcxNy41ODIzNDksNDQzLjA0MDQzNyBMNzE3LjU4MjM0OSw0NDMuMDQwNDM3IEM3MDkuODQzMDI3LDQ0My4wNDA0MzcgNzAyLjI1MDY4MSw0NDUuOTUxMTQ3IDY5NS4yNTg4MzUsNDUyLjY3MjM5NSIgaWQ9IkZpbGwtNDYiIGZpbGw9InVybCgjbGluZWFyR3JhZGllbnQtMSkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDczMi45OTk4LCA1NzcuODMzNCkgcm90YXRlKDU4KSB0cmFuc2xhdGUoLTczMi45OTk4LCAtNTc3LjgzMzQpIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik03MzEuNzY4NTg0LDU0LjY2OTY5NDYgQzczMS43Njg1ODQsNTQuNjY5Njk0NiA2ODcuNTQ1MDk4LDI5LjExODIzOTcgNjc2LjQ5MzQwOCwzMC4yMzE1NDcxIEw2NzYuNDkzNDA4LDMwLjIzMTU0NzEgQzY2NS40Mzc1MzcsMzEuMzQwNjUzMyA2NTIuMTY5NjU1LDE1Ni44NTg3MDkgNjUyLjE2OTY1NSwxNTYuODU4NzA5IEw2NTIuMTY5NjU1LDE1Ni44NTg3MDkgQzY0OS45NTc2NDQsMTcxLjI5ODA5NiA3MDUuMjM3MDAyLDEwNy45ODI0MTQgNzA1LjIzNzAwMiwxMDcuOTgyNDE0IEw3MDUuMjM3MDAyLDEwNy45ODI0MTQgQzcwNS4yMzcwMDIsMTA3Ljk4MjQxNCA3NjMuODMyMjg0LDEyNS43NTc1MjIgNzY5LjM2MDIyLDEyMy41MzUxMDkgTDc2OS4zNjAyMiwxMjMuNTM1MTA5IEM3NzQuODg4MTU2LDEyMS4zMTI2OTUgNzg3LjA0Nzk0Miw0LjY4NDI5MzM1IDc4NC44NDAxMTMsMC4yMzk0NjYxMTggTDc4NC44NDAxMTMsMC4yMzk0NjYxMTggQzc4NC43NjA2NjUsMC4wNzk4MjIwMzkyIDc4NC42MTQzMTIsMCA3ODQuNDA5NDE5LDAgTDc4NC40MDk0MTksMCBDNzc4Ljk5NDM4NCwwLjAwNDIwMTE1OTk2IDczMS43Njg1ODQsNTQuNjY5Njk0NiA3MzEuNzY4NTg0LDU0LjY2OTY5NDYiIGlkPSJGaWxsLTQ5IiBmaWxsPSIjM0YzMjYyIj48L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4="
+}
