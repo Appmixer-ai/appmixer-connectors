@@ -340,5 +340,16 @@ module.exports = [
             'hubspot/engagements/FindNotes/component.json'
         ],
         reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing "ignoreAuth=true"',
+        paths: [
+            'salesforce/crm/AccountStatusChange/component.json',
+            'salesforce/crm/ContactStatusChange/component.json',
+            'salesforce/crm/LeadStatusChange/component.json',
+            'salesforce/crm/RecordFieldChange/component.json'
+        ],
+        reason: 'These trigger outPort sources resolve through the live Salesforce describe API (GetObjectFields / ListObjects), which reads context.auth.accessToken and context.profileInfo.instanceUrl. With ignoreAuth=true the engine calls the source without the account, the URL is built from undefined and the designer renders 500 "Invalid URL" chips (observed on dev-automated-00001, 2026-08-19). The designer sends the caller\'s bound account automatically, so the sources must keep authenticated calls.'
     }
 ];

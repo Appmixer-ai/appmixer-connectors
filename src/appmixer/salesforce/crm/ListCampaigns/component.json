@@ -16,52 +16,53 @@
     },
     "inPorts": [
         {
-            "name": "in"
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 1,
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or one item at a time or stream the items to a file. For large datasets, streaming the items to a file is the most efficient method.",
+                        "options": [
+                            {
+                                "content": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "content": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "content": "Save items to file",
+                                "value": "file"
+                            }
+                        ],
+                        "defaultValue": "array"
+                    }
+                }
+            }
         }
     ],
     "outPorts": [
         {
-            "name": "campaigns",
-            "schema": {
-                "type": "array",
-                "items": {
-                    "type": "object",
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/salesforce/crm/ListCampaigns?outPort=out&ignoreAuth=true",
+                "data": {
                     "properties": {
-                        "Id": {
-                            "type": "string",
-                            "title": "Campaign ID",
-                            "example": "7017R000001MObMQAW"
-                        },
-                        "Name": {
-                            "type": "string",
-                            "title": "Campaign Name",
-                            "example": "User Conference - Jun 17-19, 2002"
-                        },
-                        "IsActive": {
-                            "type": "boolean",
-                            "title": "Active",
-                            "example": true
-                        },
-                        "Status": {
-                            "type": "string",
-                            "title": "Status",
-                            "example": "Completed"
-                        },
-                        "Type": {
-                            "type": "string",
-                            "title": "Type",
-                            "example": "Conference"
-                        },
-                        "StartDate": {
-                            "type": "string",
-                            "title": "Start Date",
-                            "example": "2026-06-17"
-                        },
-                        "EndDate": {
-                            "type": "string",
-                            "title": "End Date",
-                            "example": "2026-06-19"
-                        }
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
                     }
                 }
             }

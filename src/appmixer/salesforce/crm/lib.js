@@ -304,12 +304,15 @@ module.exports = {
      * @param {Object} context
      * @return {Promise<Array>}
      */
-    listCampaigns(context) {
+    async listCampaigns(context) {
 
         const client = this.getSalesforceAPI(context);
-        return client.sobject('Campaign')
+        const records = await client.sobject('Campaign')
             .find({}, { Id: 1, Name: 1, IsActive: 1, Status: 1, Type: 1, StartDate: 1, EndDate: 1 })
             .sort({ Name: 1 });
+        // Strip the SDK's `attributes` envelope — it is not part of the declared
+        // output and its JSON (with commas) corrupts the CSV file mode.
+        return (records || []).map(({ attributes, ...rest }) => rest);
     },
 
     /**
