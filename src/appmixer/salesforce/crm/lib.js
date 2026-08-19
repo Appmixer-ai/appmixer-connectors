@@ -357,6 +357,7 @@ module.exports = {
         // Strip the REST envelope's `attributes` object — it is not part of the
         // declared output and its JSON (with commas) corrupts the CSV file mode.
         return records.map(record => {
+            // eslint-disable-next-line no-unused-vars
             const { attributes, ...rest } = record;
             return this.formatSalesforceDates(rest);
         });
