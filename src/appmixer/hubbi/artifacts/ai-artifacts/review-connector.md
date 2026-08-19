@@ -143,16 +143,26 @@ all five.
 This is the same resilience concern as N1, one layer up: N1 stopped a failed field lookup from
 blanking the inspector, but the hub picker itself still has no manual fallback.
 
-> **Resolved as a deliberate deviation (ticket 9713, bundle 2.1.0).** The customer explicitly asked
-> for the opposite: the hub field must offer hubs *and nothing else*, because a hub is never mapped
-> from a previous step in their integration. All five pickers therefore stay `type: "select"` and
-> additionally got `"variables": false`, which also removes the variable picker. The validator will
-> no longer reports these 4 occurrences: they are recorded as an intentional deviation in
+> **Resolved as a deliberate deviation (ticket 9713).** The customer explicitly asked for the
+> opposite: the hub field must offer hubs *and nothing else*, because a hub is never mapped from a
+> previous step in their integration. All five pickers therefore stay `type: "select"`, which is
+> what prevents a conversion key from being typed by hand. Recorded as an intentional deviation in
 > `scripts/validators/_ignore-list.js` (visible via `node scripts/validate.js --connector hubbi
-> --show-ignored`), which takes the connector from 8 open failures to 4. The trade-off the standard
-> guards against remains real - if `ListTargetHubs` / `ListSourceHubs*` fails, the user cannot
-> configure the component at all - so the endpoint failing is now a hard block rather than a
-> degraded experience.
+> --show-ignored`). The trade-off the standard guards against remains real - if `ListTargetHubs` /
+> `ListSourceHubs*` fails, the user cannot configure the component at all - so the endpoint failing
+> is a hard block rather than a degraded experience.
+>
+> **The second half of the request could not be delivered.** Hiding the variable picker, so the
+> dropdown stops offering the output of earlier steps, has no working mechanism at connector level.
+> `"variables": false` is the documented flag and it does work on a select with a static `options`
+> array, but on a select backed by a dynamic `source` it suppresses the entire option list: the hub
+> dropdown came up empty. Verified in the designer by publishing Receive Hub without the flag and
+> the two Start Hub actions with it - the former listed all six hubs, the latter listed none, on the
+> same account in the same session. The backend was ruled out first: the source call returns 200
+> with all six hubs. Supporting evidence for it being unsupported rather than misconfigured: across
+> ~220 connectors in this repo there are 1067 inputs with a dynamic `source` and hubbi was the only
+> place that combined one with `variables: false`; every other use of the flag sits on a select with
+> static options. The flag was reverted everywhere. This is worth raising with the platform team.
 
 **X2. `dynamic-outport-required-inputs` (3 occurrences)**
 

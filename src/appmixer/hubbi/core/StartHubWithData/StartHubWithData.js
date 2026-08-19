@@ -110,7 +110,6 @@ async function generateInspector(context) {
             label: 'Hub',
             tooltip: 'Select the hub to start. Only hubs that accept data are offered.',
             index: 0,
-            variables: false,
             source: {
                 url: '/component/appmixer/hubbi/core/ListSourceHubsWithPostData?outPort=out',
                 data: {
