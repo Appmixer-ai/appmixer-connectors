@@ -1,7 +1,7 @@
 {
-    "name": "E2E Requesty - List Models",
+    "name": "E2E Requesty - Create Embedding",
     "flow": {
-        "32e5e523-17fa-4b62-b35c-fb0ae019c08a": {
+        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 208,
             "y": 320,
@@ -11,13 +11,13 @@
                 "onError": "stopFlow"
             }
         },
-        "4bdef88d-9e0f-41cc-96c5-decad6e161e8": {
+        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
             "type": "appmixer.utils.controls.SetVariable",
             "x": 400,
             "y": 320,
             "source": {
                 "in": {
-                    "32e5e523-17fa-4b62-b35c-fb0ae019c08a": [
+                    "489eba08-520b-4f0e-aa1d-fc3892db60f1": [
                         "out"
                     ]
                 }
@@ -25,7 +25,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "32e5e523-17fa-4b62-b35c-fb0ae019c08a": {
+                        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -36,8 +36,13 @@
                                         "ADD": [
                                             {
                                                 "type": "text",
-                                                "name": "outputType",
-                                                "text": "first"
+                                                "name": "model",
+                                                "text": "openai/text-embedding-3-small"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "input",
+                                                "text": "The quick brown fox jumps over the lazy dog."
                                             }
                                         ]
                                     }
@@ -52,13 +57,13 @@
                 "onError": "stopFlow"
             }
         },
-        "3b3de042-f44d-4526-82f0-5ebc5d82e946": {
-            "type": "appmixer.requesty.core.ListModels",
+        "e34ea85a-34ab-4af9-be91-92a531b55575": {
+            "type": "appmixer.ai.requesty.CreateEmbedding",
             "x": 592,
             "y": 320,
             "source": {
                 "in": {
-                    "4bdef88d-9e0f-41cc-96c5-decad6e161e8": [
+                    "ab92255b-23a6-4e72-a4e1-1e10230bc044": [
                         "out"
                     ]
                 }
@@ -66,14 +71,26 @@
             "config": {
                 "transform": {
                     "in": {
-                        "4bdef88d-9e0f-41cc-96c5-decad6e161e8": {
+                        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
-                                    "outputType": {}
+                                    "model": {
+                                        "var-model": {
+                                            "functions": [],
+                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.model"
+                                        }
+                                    },
+                                    "input": {
+                                        "var-input": {
+                                            "functions": [],
+                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.input"
+                                        }
+                                    }
                                 },
                                 "lambda": {
-                                    "outputType": "first"
+                                    "model": "{{{var-model}}}",
+                                    "input": "{{{var-input}}}"
                                 }
                             }
                         }
@@ -85,13 +102,13 @@
                 "onError": "stopFlow"
             }
         },
-        "c9d87b29-d58f-4281-a968-e731981ff4a8": {
+        "edd59a4f-b9fe-43f7-93f7-e422636c82e2": {
             "type": "appmixer.utils.test.Assert",
             "x": 784,
             "y": 448,
             "source": {
                 "in": {
-                    "3b3de042-f44d-4526-82f0-5ebc5d82e946": [
+                    "e34ea85a-34ab-4af9-be91-92a531b55575": [
                         "out"
                     ]
                 }
@@ -99,14 +116,18 @@
             "config": {
                 "transform": {
                     "in": {
-                        "3b3de042-f44d-4526-82f0-5ebc5d82e946": {
+                        "e34ea85a-34ab-4af9-be91-92a531b55575": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "var-id": {
+                                        "var-model": {
                                             "functions": [],
-                                            "variable": "$.3b3de042-f44d-4526-82f0-5ebc5d82e946.out.id"
+                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.model"
+                                        },
+                                        "var-tokens": {
+                                            "functions": [],
+                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.usage.total_tokens"
                                         }
                                     }
                                 },
@@ -115,7 +136,11 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{var-id}}}"
+                                                "field": "{{{var-model}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{var-tokens}}}"
                                             }
                                         ]
                                     }
@@ -130,13 +155,13 @@
                 "onError": "stopFlow"
             }
         },
-        "bbb288fa-836b-4d4d-bff6-724d5c3d70fd": {
+        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 976,
             "y": 448,
             "source": {
                 "in": {
-                    "c9d87b29-d58f-4281-a968-e731981ff4a8": [
+                    "edd59a4f-b9fe-43f7-93f7-e422636c82e2": [
                         "out"
                     ]
                 }
@@ -151,13 +176,13 @@
                 "onError": "stopFlow"
             }
         },
-        "94610f95-4804-4881-9319-2802354eaa93": {
+        "cc3a522a-99d9-44a0-baa0-760f6df45062": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1168,
             "y": 448,
             "source": {
                 "in": {
-                    "bbb288fa-836b-4d4d-bff6-724d5c3d70fd": [
+                    "e46d0969-4101-4a43-abb8-45f37f41bdb6": [
                         "out"
                     ]
                 }
@@ -166,7 +191,7 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "bbb288fa-836b-4d4d-bff6-724d5c3d70fd": {
+                        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -175,13 +200,13 @@
                                     "result": {
                                         "result-var": {
                                             "functions": [],
-                                            "variable": "$.bbb288fa-836b-4d4d-bff6-724d5c3d70fd.out"
+                                            "variable": "$.e46d0969-4101-4a43-abb8-45f37f41bdb6.out"
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Requesty - List Models",
+                                    "testCase": "E2E Requesty - Create Embedding",
                                     "result": "{{{result-var}}}"
                                 }
                             }

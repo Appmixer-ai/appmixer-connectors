@@ -1,15 +1,15 @@
 {
-    "name": "appmixer.requesty.core.ChatCompletion",
-    "label": "Chat Completion",
-    "description": "Generates a model response for the given chat conversation through the Requesty OpenAI-compatible router.",
+    "name": "appmixer.ai.requesty.CreateEmbedding",
+    "label": "Create Embedding",
+    "description": "Creates an embedding vector representing the input text using a Requesty-routed embedding model.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
     "auth": {
-        "service": "appmixer:requesty"
+        "service": "appmixer:ai:requesty"
     },
     "quota": {
-        "manager": "appmixer:requesty",
+        "manager": "appmixer:ai:requesty",
         "resources": "requests",
         "scope": {
             "userId": "{{userId}}"
@@ -24,31 +24,20 @@
                     "model": {
                         "type": "string"
                     },
-                    "instructions": {
+                    "input": {
                         "type": "string"
                     },
-                    "prompt": {
-                        "type": "string"
-                    },
-                    "temperature": {
-                        "type": "number"
-                    },
-                    "maxTokens": {
-                        "type": "integer"
-                    },
-                    "topP": {
-                        "type": "number"
-                    },
-                    "frequencyPenalty": {
-                        "type": "number"
-                    },
-                    "presencePenalty": {
-                        "type": "number"
+                    "encodingFormat": {
+                        "type": "string",
+                        "enum": [
+                            "float",
+                            "base64"
+                        ]
                     }
                 },
                 "required": [
                     "model",
-                    "prompt"
+                    "input"
                 ]
             },
             "inspector": {
@@ -57,67 +46,35 @@
                         "type": "text",
                         "index": 1,
                         "label": "Model",
-                        "tooltip": "The provider-prefixed model identifier to use (for example <code>openai/gpt-4o</code> or <code>anthropic/claude-3-5-sonnet-latest</code>). The list is populated from your account's available models.",
+                        "tooltip": "The provider-prefixed embedding model identifier to use (for example <code>openai/text-embedding-3-small</code>). The list is populated from your account's available models.",
                         "source": {
-                            "url": "/component/appmixer/requesty/core/ListModels?outPort=out",
+                            "url": "/component/appmixer/ai/requesty/ListModels?outPort=out",
                             "data": {
                                 "transform": "./ListModels#toSelectArray"
                             }
                         }
                     },
-                    "instructions": {
+                    "input": {
                         "type": "textarea",
                         "index": 2,
-                        "label": "System Instructions",
-                        "tooltip": "The system instructions that the assistant uses. For example 'Be precise and concise.'"
+                        "label": "Input",
+                        "tooltip": "The text to generate an embedding for."
                     },
-                    "prompt": {
-                        "type": "textarea",
+                    "encodingFormat": {
+                        "type": "select",
                         "index": 3,
-                        "label": "Prompt",
-                        "tooltip": "The text input that the model will use to generate a response."
-                    },
-                    "temperature": {
-                        "group": "advanced",
-                        "type": "number",
-                        "index": 4,
-                        "label": "Temperature",
-                        "tooltip": "Controls the randomness of the model. Lower values make the output more focused and deterministic, higher values more creative. Typically between 0 and 2."
-                    },
-                    "maxTokens": {
-                        "group": "advanced",
-                        "type": "number",
-                        "index": 5,
-                        "label": "Max Tokens",
-                        "tooltip": "The maximum number of completion tokens returned by the API. The total length of input tokens and generated tokens is limited by the model's context length."
-                    },
-                    "topP": {
-                        "group": "advanced",
-                        "type": "number",
-                        "index": 6,
-                        "label": "Top P",
-                        "tooltip": "An alternative to sampling with temperature, called nucleus sampling, valued between 0 and 1. We generally recommend altering this or temperature but not both."
-                    },
-                    "frequencyPenalty": {
-                        "group": "advanced",
-                        "type": "number",
-                        "index": 7,
-                        "label": "Frequency Penalty",
-                        "tooltip": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim."
-                    },
-                    "presencePenalty": {
-                        "group": "advanced",
-                        "type": "number",
-                        "index": 8,
-                        "label": "Presence Penalty",
-                        "tooltip": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics."
-                    }
-                },
-                "groups": {
-                    "advanced": {
-                        "label": "Advanced",
-                        "closed": true,
-                        "index": 1
+                        "label": "Encoding Format",
+                        "tooltip": "The format to return the embeddings in.",
+                        "options": [
+                            {
+                                "label": "Float",
+                                "value": "float"
+                            },
+                            {
+                                "label": "Base64",
+                                "value": "base64"
+                            }
+                        ]
                     }
                 }
             }
@@ -128,43 +85,22 @@
             "name": "out",
             "options": [
                 {
-                    "label": "ID",
-                    "value": "id",
-                    "schema": {
-                        "type": "string",
-                        "example": "chatcmpl-abc123def456"
-                    }
-                },
-                {
                     "label": "Model",
                     "value": "model",
                     "schema": {
                         "type": "string",
-                        "example": "openai/gpt-4o"
+                        "example": "openai/text-embedding-3-small"
                     }
                 },
                 {
-                    "label": "Created Timestamp",
-                    "value": "created",
+                    "label": "Embedding",
+                    "value": "embedding",
                     "schema": {
-                        "type": "number",
-                        "example": 1709251200
-                    }
-                },
-                {
-                    "label": "Result",
-                    "value": "choices.message.content",
-                    "schema": {
-                        "type": "string",
-                        "example": "Here is the answer to your question..."
-                    }
-                },
-                {
-                    "label": "Finish Reason",
-                    "value": "choices.finish_reason",
-                    "schema": {
-                        "type": "string",
-                        "example": "stop"
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        },
+                        "example": [0.0023064255, -0.009327292, 0.015797347]
                     }
                 },
                 {
@@ -172,15 +108,7 @@
                     "value": "usage.prompt_tokens",
                     "schema": {
                         "type": "number",
-                        "example": 25
-                    }
-                },
-                {
-                    "label": "Completion Tokens",
-                    "value": "usage.completion_tokens",
-                    "schema": {
-                        "type": "number",
-                        "example": 150
+                        "example": 8
                     }
                 },
                 {
@@ -188,7 +116,7 @@
                     "value": "usage.total_tokens",
                     "schema": {
                         "type": "number",
-                        "example": 175
+                        "example": 8
                     }
                 }
             ]
