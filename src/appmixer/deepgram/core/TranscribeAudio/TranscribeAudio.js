@@ -40,10 +40,21 @@ module.exports = {
             const requestId = (body.metadata || {}).request_id;
             const submitted = (requestId && await context.stateGet(jobKey(requestId))) || {};
 
+            // A failed job must be visible, not an empty transcript: Deepgram reports
+            // failures in the callback body (`err_code`/`err_msg`, or no `results` at
+            // all). Surface it on the `done` port so downstream asserts/branches see it.
+            const failure = body.err_code
+                ? `${body.err_code}${body.err_msg ? `: ${body.err_msg}` : ''}`
+                : (!body.results ? 'Deepgram delivered no results for this job.' : null);
+            if (failure) {
+                await context.log({ step: 'transcription-failed', requestId, failure, body });
+            }
+
             await context.sendJson({
                 ...submitted,
                 request_id: requestId,
                 transcript: alternative ? alternative.transcript : '',
+                ...(failure ? { error: failure } : {}),
                 metadata: body.metadata || {},
                 results: body.results || {}
             }, 'done');
@@ -78,11 +89,13 @@ module.exports = {
             sentiment: sentiment ? 'true' : undefined,
             topics: topics ? 'true' : undefined,
             intents: intents ? 'true' : undefined,
+            ...kvToObj(extraParams),
             // Deepgram always calls this component back, so the transcript arrives on the
             // `done` port instead of being polled out of the request log (which lags by
             // minutes). Delivering it anywhere else is a downstream component's job.
-            callback: context.getWebhookUrl(),
-            ...kvToObj(extraParams)
+            // AFTER the extraParams spread on purpose: a user-supplied `callback` would
+            // redirect the delivery and the `done` port would silently never fire.
+            callback: context.getWebhookUrl()
         });
 
         let data;
