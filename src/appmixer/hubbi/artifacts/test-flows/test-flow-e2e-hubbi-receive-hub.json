@@ -1,0 +1,189 @@
+{
+    "name": "E2E HubBI - receive hub",
+    "description": "End-to-end test for HubBI - the Receive Hub webhook trigger. HubBI has no API for registering a webhook, so this flow is a MANUAL harness: start it, copy the trigger's webhook URL from the flow log, point the hub at it in HubBI and send data from the hub. See the sticky note in the flow and artifacts/test-flows/README.md.",
+    "notes": {
+        "3e2a510a-aaff-4c58-9b52-49b1b290b77d": {
+            "x": 64,
+            "y": -260,
+            "width": 720,
+            "height": 230,
+            "content": "MANUAL HARNESS — the Receive Hub event cannot be provoked from this flow.\n\nHubBI exposes no endpoint for registering a webhook, and the connector deliberately refuses to start a flow where a Start Hub component uses the same hub as Receive Hub (that would make the flow trigger itself). So the event has to be sent by hand:\n\n1) Start the flow and wait for the trigger's start() to log \"Webhook registered\" with the webhookUrl (appmixer logs --flowId <id>, or appmixer flow trigger-url <flowId>).\n2) In HubBI, configure the hub 'Flow as target' (f40d47ec-a9cf-4d4b-b021-5ecf30bce03a) to post its events to that URL.\n3) Send data from that hub in HubBI. The event must carry at least one record - an event with no records is acknowledged without firing the flow.\n4) The Assert checks the Product field of the received record, so the record must have FieldIdProduct set.\n\nThe AfterAll timeout is 600 s to leave time for those steps.\n\nENVIRONMENT - built for the appmixer:hubbi account on test-app.hubbi.nl; the hub key above is tenant-bound."
+        }
+    },
+    "flow": {
+        "ee548286-60db-4fac-8190-f5b067051641": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "d517f946-daa3-406b-8981-20577c3f9a67": {
+            "type": "appmixer.utils.timers.Wait",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "ee548286-60db-4fac-8190-f5b067051641": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "ee548286-60db-4fac-8190-f5b067051641": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "interval": {}
+                                },
+                                "lambda": {
+                                    "interval": "1m"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "46bc0da1-fcdc-44cf-96a9-dc006213e3f2": {
+            "type": "appmixer.hubbi.core.NewHubEvent",
+            "label": "Receive Hub",
+            "x": 64,
+            "y": 144,
+            "source": {},
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "conversionKey": "f40d47ec-a9cf-4d4b-b021-5ecf30bce03a",
+                    "outputType": "object"
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "04bb7d23-d665-4a72-9c77-ab67119410cc": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 272,
+            "y": 144,
+            "source": {
+                "in": {
+                    "46bc0da1-fcdc-44cf-96a9-dc006213e3f2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "46bc0da1-fcdc-44cf-96a9-dc006213e3f2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "2669f06f-9d43-494f-8bc5-4ee2b3d892b3": {
+                                            "variable": "$.46bc0da1-fcdc-44cf-96a9-dc006213e3f2.out.FieldIdProduct",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{2669f06f-9d43-494f-8bc5-4ee2b3d892b3}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "596c11bc-39a0-4ad7-a643-39ab41c35861": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 480,
+            "y": 144,
+            "source": {
+                "in": {
+                    "04bb7d23-d665-4a72-9c77-ab67119410cc": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 600
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8cde81f2-41c6-44e5-ac0e-0462829a7542": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 688,
+            "y": 144,
+            "source": {
+                "in": {
+                    "596c11bc-39a0-4ad7-a643-39ab41c35861": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "596c11bc-39a0-4ad7-a643-39ab41c35861": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "259e1871-a9c0-4cff-871e-60dbc7d72851": {
+                                            "variable": "$.596c11bc-39a0-4ad7-a643-39ab41c35861.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E HubBI - receive hub",
+                                    "result": "{{{259e1871-a9c0-4cff-871e-60dbc7d72851}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

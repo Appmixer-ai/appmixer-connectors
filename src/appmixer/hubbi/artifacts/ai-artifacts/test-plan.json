@@ -7,7 +7,8 @@
                 "status": "pass",
                 "detail": "PASS - 6 target hubs."
             },
-            "note": "Read-only. Source for the Receive Hub dropdown. Yields the target-hub keys used by GetTargetFields."
+            "note": "Read-only. Source for the Receive Hub dropdown. Yields the target-hub keys used by GetTargetFields.",
+            "e2eFlow": null
         },
         {
             "name": "ListSourceHubsWithoutPostData",
@@ -16,7 +17,8 @@
                 "status": "pass",
                 "detail": "PASS - 2 source hubs (no post data)."
             },
-            "note": "Read-only. Source for the Start Hub dropdown. Yields the key used by StartHub."
+            "note": "Read-only. Source for the Start Hub dropdown. Yields the key used by StartHub.",
+            "e2eFlow": null
         },
         {
             "name": "ListSourceHubsWithPostData",
@@ -25,7 +27,8 @@
                 "status": "pass",
                 "detail": "PASS - 6 source hubs (with post data). Overlaps the target list on hub \"Review\" (9964c542), so a circular reference is constructible and the guard in Receive Hub is required."
             },
-            "note": "Read-only. Source for the Start Hub With Data dropdown. Yields the key used by GetSourceFields and StartHubWithData."
+            "note": "Read-only. Source for the Start Hub With Data dropdown. Yields the key used by GetSourceFields and StartHubWithData.",
+            "e2eFlow": null
         },
         {
             "name": "GetTargetFields",
@@ -34,7 +37,8 @@
                 "status": "pass",
                 "detail": "PASS - 4 fields for hub \"Review\". Revealed that TargetFields reports fully qualified .NET types (System.Int32, System.Guid), which mapFieldType did not handle; fixed."
             },
-            "note": "Read-only. Needs a conversionKey from ListTargetHubs. Same lookup Receive Hub uses to build its output port."
+            "note": "Read-only. Needs a conversionKey from ListTargetHubs. Same lookup Receive Hub uses to build its output port.",
+            "e2eFlow": null
         },
         {
             "name": "GetSourceFields",
@@ -43,7 +47,8 @@
                 "status": "pass",
                 "detail": "PASS - 4 fields for hub \"Flow as Source (With data)\". SourceFields reports bare type names (Int32, Guid, DateTime)."
             },
-            "note": "Read-only. Needs a conversionKey from ListSourceHubsWithPostData. Defines the record fields StartHubWithData sends."
+            "note": "Read-only. Needs a conversionKey from ListSourceHubsWithPostData. Defines the record fields StartHubWithData sends.",
+            "e2eFlow": null
         },
         {
             "name": "StartHub",
@@ -52,7 +57,8 @@
                 "status": "pass",
                 "detail": "PASS - started hub \"FlowCounter\". Emits conversionKey; the CLI displays it under the outPort label \"Hub\"."
             },
-            "note": "SIDE EFFECT: starts a hub in HubBI. Needs a conversionKey from ListSourceHubsWithoutPostData."
+            "note": "SIDE EFFECT: starts a hub in HubBI. Needs a conversionKey from ListSourceHubsWithoutPostData.",
+            "e2eFlow": "E2E HubBI - start hubs"
         },
         {
             "name": "StartHubWithData",
@@ -61,16 +67,18 @@
                 "status": "pass",
                 "detail": "PASS - started hub \"Flow as Source (With data)\" with 1 record built from its source fields. Returned count 1."
             },
-            "note": "SIDE EFFECT: starts a hub in HubBI and sends records. Needs a conversionKey from ListSourceHubsWithPostData plus a record built from GetSourceFields."
+            "note": "SIDE EFFECT: starts a hub in HubBI and sends records. Needs a conversionKey from ListSourceHubsWithPostData plus a record built from GetSourceFields.",
+            "e2eFlow": "E2E HubBI - start hubs"
         },
         {
             "name": "NewHubEvent",
-            "completed": false,
+            "completed": true,
             "result": {
-                "status": "not-testable",
-                "detail": "NOT CLI-TESTABLE - webhook trigger. The CLI starts the component lifecycle and blocks; test() throws by design. Output port generation verified separately against the live TargetFields payload. Verify end to end by publishing and sending from the hub."
+                "status": "pass",
+                "detail": "NOT CLI-TESTABLE - webhook trigger. The CLI starts the component lifecycle and blocks; test() throws by design. Covered by the E2E flow \"E2E HubBI - receive hub\" instead: with the flow running, the payload HubBI would send was POSTed to /flows/{flowId}/components/{componentId} and the assert passed (\"E2E Widget is not empty\"). That verifies the connector's half - webhook handling, conversionKey filtering, record normalization, object output mode. HubBI's own delivery still needs the manual registration described in artifacts/test-flows/README.md."
             },
-            "note": "Not testable via the CLI: webhook trigger with no in port, and test() throws by design (HubBI has no endpoint for past events). Verify by publishing and sending from the hub."
+            "note": "Not testable via the CLI: webhook trigger with no in port, and test() throws by design (HubBI has no endpoint for past events). Verified via the E2E flow with a direct webhook probe.",
+            "e2eFlow": "E2E HubBI - receive hub"
         },
         {
             "name": "MakeApiCall",
@@ -79,7 +87,36 @@
             "result": {
                 "status": "pass",
                 "detail": "PASS - GET /Flows/Home/ListTargetHubs returned 200 with the hub list, clientKey injected automatically. The parameters/headers inputs cannot be driven through the CLI: the standard declares their schema type as \"string\" while the key-value inspector produces an array, and port validation rejects it - the reference implementation (fal) fails identically. Those paths are covered by unit tests."
-            }
+            },
+            "e2eFlow": "E2E HubBI - make API call"
         }
-    ]
+    ],
+    "e2e": {
+        "ranAt": "2026-08-21",
+        "instance": "https://api-dev-automated-00001.dev.appmixer.ai",
+        "user": "test@appmixer.ai",
+        "account": "6a857014181aefe255df45f9",
+        "flows": [
+            {
+                "name": "E2E HubBI - start hubs",
+                "flowId": "199b85b9-be84-4920-89a3-812494c9292c",
+                "status": "PASSED",
+                "assertions": 3
+            },
+            {
+                "name": "E2E HubBI - make API call",
+                "flowId": "28a05734-d66e-4a26-b832-53ef29f408e3",
+                "status": "PASSED",
+                "assertions": 2
+            },
+            {
+                "name": "E2E HubBI - receive hub",
+                "flowId": "a12d579c-ca12-4a94-a9f1-dd87004c255e",
+                "status": "PASSED",
+                "assertions": 1,
+                "note": "Manual harness - fired with a direct webhook probe, not by HubBI. See artifacts/test-flows/README.md."
+            }
+        ],
+        "note": "The five private:true components are dropdown source helpers, excluded from E2E coverage by design (no-private-component-node); they keep their CLI component tests above."
+    }
 }

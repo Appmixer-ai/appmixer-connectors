@@ -1,0 +1,183 @@
+{
+    "name": "E2E HubBI - make API call",
+    "description": "End-to-end test for HubBI - calls the ListTargetHubs endpoint through the generic Make API Call component and checks the status code and the returned hub list.",
+    "flow": {
+        "65d9d756-bf01-45e7-a816-4f81916d0ad6": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9232d74b-aa54-411f-b328-3f2856276d87": {
+            "type": "appmixer.hubbi.core.MakeApiCall",
+            "label": "Make API Call",
+            "x": 272,
+            "y": 16,
+            "source": {
+                "in": {
+                    "65d9d756-bf01-45e7-a816-4f81916d0ad6": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "65d9d756-bf01-45e7-a816-4f81916d0ad6": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "/Flows/Home/ListTargetHubs",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "01d8025f-fdf2-4b88-afe7-2f9d89fce3d2": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 480,
+            "y": 16,
+            "source": {
+                "in": {
+                    "9232d74b-aa54-411f-b328-3f2856276d87": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "9232d74b-aa54-411f-b328-3f2856276d87": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fe541af7-8b1d-4b16-ae7b-da0300a9d3ad": {
+                                            "variable": "$.9232d74b-aa54-411f-b328-3f2856276d87.out.statusCode",
+                                            "functions": []
+                                        },
+                                        "0c998346-b40a-43b5-9be0-ba010112121d": {
+                                            "variable": "$.9232d74b-aa54-411f-b328-3f2856276d87.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$[0].key"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{fe541af7-8b1d-4b16-ae7b-da0300a9d3ad}}}",
+                                                "assertion": "equal",
+                                                "expected": 200
+                                            },
+                                            {
+                                                "field": "{{{0c998346-b40a-43b5-9be0-ba010112121d}}}",
+                                                "assertion": "notEmpty"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "52e5d20b-81f8-43b8-ba4a-5352e99f47c0": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 688,
+            "y": 16,
+            "source": {
+                "in": {
+                    "01d8025f-fdf2-4b88-afe7-2f9d89fce3d2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "4d704be3-8b27-45f9-8d7f-ea71e351f4a8": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 896,
+            "y": 16,
+            "source": {
+                "in": {
+                    "52e5d20b-81f8-43b8-ba4a-5352e99f47c0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "52e5d20b-81f8-43b8-ba4a-5352e99f47c0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "dd3d8e08-26c7-48b1-9a08-edaf5252071a": {
+                                            "variable": "$.52e5d20b-81f8-43b8-ba4a-5352e99f47c0.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E HubBI - make API call",
+                                    "result": "{{{dd3d8e08-26c7-48b1-9a08-edaf5252071a}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
