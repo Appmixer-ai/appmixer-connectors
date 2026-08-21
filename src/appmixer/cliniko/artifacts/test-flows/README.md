@@ -61,6 +61,26 @@ is a bare `OnStart → Wait 10m` so the flow still satisfies the structural vali
 `test-flow-invoices.json` (Find Invoices) has the same limitation and needs an invoice
 to already exist.
 
+## The appointment trigger flows can outrun the runner's completion detection
+
+`appmixer e2e run` decides a run is finished by looking for a `ProcessE2EResults`
+entry in the **newest 50 log entries** of the flow. A polling trigger keeps ticking
+and logging for as long as the flow is up, and the appointment trigger flows are the
+longest ones here (a seven-step provoke lane plus a two-step cleanup), so that entry
+can scroll out of the window before the runner next polls. The run is then reported
+as a timeout even though the flow passed.
+
+**Check `appmixer e2e results` before believing a timeout on these four flows** — a
+`✓` there with a timestamp inside the run window means the flow reached
+ProcessE2EResults and every assertion held. Measured on 2026-08-21: New Appointment
+Trigger and New Booking Trigger both reported "Runner timeout exceeded" while landing
+in the success store at 10:05:06 and 10:17:03.
+
+Note also that the runner has a hard 10-minute wall-clock kill
+(`AGENT_TIMEOUT_MS`, default 600000 ms) that is independent of `--timeout`. Passing
+`--timeout 600` makes the two fire together and you lose the runner's own verdict —
+leave the default (480 s), which is comfortably above what these flows need.
+
 ## Cleanup uses Archive, not Delete
 
 Cliniko's `DELETE /patients/{id}` is deprecated and archives rather than deletes, so the
