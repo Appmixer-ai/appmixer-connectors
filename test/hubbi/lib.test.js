@@ -45,10 +45,11 @@ describe('Hubbi lib', function() {
             });
         });
 
-        it('maps date-only types to date', function() {
+        it('maps date-only types to date with enableTime off', function() {
             ['date', 'dateonly'].forEach(t => {
                 const r = lib.mapFieldType(t);
                 assert.strictEqual(r.inspectorType, 'date-time');
+                assert.deepStrictEqual(r.inspectorConfig, { enableTime: false });
                 assert.deepStrictEqual(r.schema, { type: 'string', format: 'date', example: '2026-01-01' });
             });
         });

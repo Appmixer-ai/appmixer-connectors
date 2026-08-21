@@ -144,8 +144,12 @@ module.exports = {
                 };
             case 'date':
             case 'dateonly':
+                // Date-only column: the same date-time inspector, but with the
+                // time part switched off, so the picker cannot produce a value
+                // HubBI would reject for a "format": "date" field.
                 return {
                     inspectorType: 'date-time',
+                    inspectorConfig: { enableTime: false },
                     schema: { type: 'string', format: 'date', example: '2026-01-01' }
                 };
             case 'guid':
