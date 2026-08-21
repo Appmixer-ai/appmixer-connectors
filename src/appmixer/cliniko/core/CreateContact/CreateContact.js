@@ -9,10 +9,10 @@ module.exports = {
         const content = context.messages.in.content;
         const { phoneNumber, phoneType } = content;
 
-        // Cliniko has no single mandatory field here, but a contact with no name at all is
-        // unusable - catch it before the API turns it into an opaque 422.
-        if (!content.firstName && !content.lastName && !content.companyName) {
-            throw new context.CancelError('At least one of First Name, Last Name or Company Name is required!');
+        // Cliniko rejects a contact without a personal name - "first_name: or last name is
+        // required" - even when Company Name is filled in. Say so before the API does.
+        if (!content.firstName && !content.lastName) {
+            throw new context.CancelError('First Name or Last Name is required!');
         }
 
         const body = lib.clean({
