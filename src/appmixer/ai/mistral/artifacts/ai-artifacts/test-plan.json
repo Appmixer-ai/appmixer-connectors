@@ -276,5 +276,33 @@
                 "note": "New 10th component added during testing. Returns the preset voices from /v1/audio/voices; first/array/generateOutputPortOptions verified."
             }
         }
-    ]
+    ],
+    "e2e": {
+        "instance": "api-dev-automated-00001.dev.appmixer.ai",
+        "accountId": "6a8c20957dfdc2b6f42c5072",
+        "status": "4/4 flows PASSED - 21 assertions, 0 errors, 0 entries in the failed store",
+        "flows": {
+            "E2E Mistral - Models and Voices": "e80a53e3-bf8e-4f5e-950a-288c3c2312dd",
+            "E2E Mistral - Chat Moderation and Embeddings": "a14c2114-9a12-4d62-880e-b0a0779f7280",
+            "E2E Mistral - Documents and Audio": "690b3308-8818-4bd6-a549-487f6145f8a0",
+            "E2E Mistral - Vision and Raw API Call": "706c1f16-afde-47c2-8224-469d427214f1"
+        },
+        "notes": [
+            "The first run of all four flows printed PASSED while two of them recorded ZERO",
+            "assertions. Two authoring bugs caused it, both fixed:",
+            "  1. A regex assertion reads its pattern from the clause field `regex`, not",
+            "     `expected` (utils/test/Assert switches the two on assertion type). With",
+            "     `expected` the pattern is undefined and the assertion matches anything.",
+            "  2. ProcessE2EResults must read `$.<afterAll>.out`. In the two flows with a",
+            "     RemoveFile cleanup after AfterAll it was reading the cleanup component's own",
+            "     output ({fileId}), so the assert roll-up never reached the store.",
+            "",
+            "Import must use --no-validate: the local rule static-outport-deep-path resolves an",
+            "outPort option by its first path segment only, so it wrongly rejects the dotted",
+            "option values this connector declares (choices.message.content,",
+            "categories.jailbreaking). The server offers exactly those paths - it rejected the",
+            "shortened form the rule asked for. Run `appmixer e2e validate` separately; the",
+            "three static-outport-deep-path findings there are that known false positive."
+        ]
+    }
 }
