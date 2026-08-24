@@ -6,23 +6,25 @@ module.exports = {
 
     async receive(context) {
 
-        const { text, voiceId, responseFormat, model } = context.messages.in.content;
+        const { text, voice, responseFormat, model } = context.messages.in.content;
 
         if (!text) {
             throw new context.CancelError('Text is required!');
+        }
+        // The API rejects a request without a voice ("Either ref_audio or voice
+        // must be provided"), so fail early with a message the user can act on.
+        if (!voice) {
+            throw new context.CancelError('Voice is required!');
         }
 
         const format = responseFormat || 'mp3';
 
         const data = {
             input: text,
-            voice_id: voiceId,
+            voice,
             response_format: format,
-            model
+            model: model || 'voxtral-mini-tts-latest'
         };
-
-        // Remove undefined optional parameters.
-        Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
         // https://docs.mistral.ai/api/#tag/audio-speech
         const { data: response } = await context.httpRequest({
@@ -45,7 +47,7 @@ module.exports = {
         return context.sendJson({
             fileId: savedFile.fileId,
             fileName,
-            model: response?.model
+            model: response?.model || data.model
         }, 'out');
     }
 };

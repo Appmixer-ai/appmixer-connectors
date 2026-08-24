@@ -21,18 +21,19 @@
                     "text": {
                         "type": "string"
                     },
-                    "voiceId": {
-                        "type": "string"
-                    },
                     "responseFormat": {
                         "type": "string"
                     },
                     "model": {
                         "type": "string"
+                    },
+                    "voice": {
+                        "type": "string"
                     }
                 },
                 "required": [
-                    "text"
+                    "text",
+                    "voice"
                 ]
             },
             "inspector": {
@@ -43,11 +44,17 @@
                         "label": "Text",
                         "tooltip": "The text to generate speech from."
                     },
-                    "voiceId": {
+                    "voice": {
                         "type": "text",
                         "index": 2,
-                        "label": "Voice ID",
-                        "tooltip": "The preset or custom voice to use for generating the speech. The default voice is used when empty."
+                        "label": "Voice",
+                        "tooltip": "The voice used to generate the speech. Select a preset or custom voice, or insert a voice slug (for example <code>en_paul_neutral</code>) or voice ID.",
+                        "source": {
+                            "url": "/component/appmixer/ai/mistral/ListVoices?outPort=out",
+                            "data": {
+                                "transform": "./ListVoices#toSelectArray"
+                            }
+                        }
                     },
                     "responseFormat": {
                         "type": "select",
@@ -83,7 +90,14 @@
                         "type": "text",
                         "index": 4,
                         "label": "Model",
-                        "tooltip": "ID of the text-to-speech model to use. The default model is used when empty."
+                        "tooltip": "Insert model ID or select a text-to-speech model to use for the request, for example <code>voxtral-mini-tts-latest</code>.",
+                        "defaultValue": "voxtral-mini-tts-latest",
+                        "source": {
+                            "url": "/component/appmixer/ai/mistral/ListModels?outPort=out",
+                            "data": {
+                                "transform": "./ListModels#toSpeechModelSelectArray"
+                            }
+                        }
                     }
                 },
                 "groups": {
