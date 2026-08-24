@@ -1,6 +1,7 @@
 # Cliniko E2E test flows
 
-Fifteen flows cover every action and every trigger in the connector.
+Fifteen flows cover every action and every trigger in the connector. All fifteen were
+verified against a live Cliniko account (shard `eu1`) on 2026-08-24.
 
 | Flow | Covers |
 |---|---|
@@ -50,30 +51,44 @@ trigger fired with usable data.
 
 Every invoice path in the Cliniko API is **GET-only** (`/invoices`, `/invoices/{id}`,
 `/invoice_items`, and the nested per-patient/per-appointment variants); `POST /invoices`
-answers 404. Invoices can only be raised in the Cliniko UI. Two flows are shaped by that:
+answers 404. Invoices can only be raised in the Cliniko UI, normally from an appointment.
+Note that a **payment is not an invoice** — Cliniko keeps them as separate records and the
+API has no `/payments` endpoint at all, so a payment is invisible to this connector.
 
-**`test-flow-invoices.json`** needs one invoice to already exist. Find Invoices routes an
-empty result to `notFound`, so on an account with no invoices the `out` branch never
-fires. Rather than let that hang, **both ports feed the same Assert**: the `notFound`
-branch carries an assertion that fails on purpose with
+Two flows are shaped by that.
+
+### `test-flow-invoices.json` — needs one invoice to exist
+
+Find Invoices routes an empty result to `notFound`, so on an account with no invoices the
+`out` branch never fires. Rather than let that hang, **both ports feed the same Assert**:
+the `notFound` branch carries an assertion that fails on purpose with
 
 > expected at least one invoice to equal none (this account has no invoices - create one
 > in the Cliniko UI, the API cannot: every /invoices path is GET-only)
 
 so the flow finishes in ~15 s with a readable failure and a recorded result, instead of
-stalling until the AfterAll timeout with nothing in the store. Create a single invoice in
+stalling until the AfterAll timeout with nothing in the store. Raise a single invoice in
 the Cliniko UI once and the flow goes green and stays green.
 
-**`test-flow-newinvoice-trigger.json`** is a **manual harness, not an automated flow** —
-exclude it from unattended sweeps. To exercise it:
+### `test-flow-newinvoice-trigger.json` — needs an invoice raised *during* the run
+
+The trigger's first tick only takes a baseline, so an invoice that already exists will not
+fire it. Someone has to raise one while the flow is running:
 
 1. Start the flow.
-2. In the Cliniko UI, open a patient and raise an invoice.
-3. The trigger lane asserts the invoice that arrives.
+2. Wait ~2 minutes for the baseline tick.
+3. Raise an invoice in the Cliniko UI (easiest from an existing appointment).
+4. The trigger picks it up on the next tick and the flow completes.
 
-Its `AfterAll` timeout is 900 s to leave time for the manual step, and the provoke lane is
-a bare `OnStart → Wait 10m` so the flow still satisfies the structural validators. Left
-unattended it will always time out with no result — that is expected, not a regression.
+Verified this way on 2026-08-24: two invoices already existed when the flow started, a
+third was raised 83 s in, and the run recorded success 7 s later — the baseline correctly
+suppressed the first two and the trigger fired only on the new one.
+
+Because step 3 is manual, **exclude this flow from unattended sweeps** — left alone it
+times out with no result, which is expected rather than a regression. Its `AfterAll`
+timeout is 900 s to leave room for the manual step; the runner needs a matching window
+(`AGENT_TIMEOUT_MS=1200000 appmixer e2e run <flowId> --timeout 900`), since the runner's
+own 10-minute hard kill would otherwise fire first.
 
 
 ## If a trigger flow reports a timeout, check the results store
