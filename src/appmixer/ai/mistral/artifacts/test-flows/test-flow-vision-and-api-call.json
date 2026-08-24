@@ -1,0 +1,462 @@
+{
+    "name": "E2E Mistral - Vision and Raw API Call",
+    "flow": {
+        "ae91e17d-2271-434b-895d-fc48e2292690": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6b9b5c9f-c3a2-482e-962c-324380d1b572": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "ae91e17d-2271-434b-895d-fc48e2292690": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ae91e17d-2271-434b-895d-fc48e2292690": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "Test Case",
+                                                "text": "Vision and Raw API Call"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "35beff6a-2c1f-465d-b2ad-d4de4689a75e": {
+            "type": "appmixer.utils.converters.DataUri2File",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "6b9b5c9f-c3a2-482e-962c-324380d1b572": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "6b9b5c9f-c3a2-482e-962c-324380d1b572": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "dataUri": {},
+                                    "fileName": {}
+                                },
+                                "lambda": {
+                                    "dataUri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR4nGMQCbhDU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULALKyAEy3Bv1/AAAAAElFTkSuQmCC",
+                                    "fileName": "mistral-e2e-blue.png"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "7bdde02c-8e69-446d-b11e-769773bf5ac0": {
+            "type": "appmixer.ai.mistral.DescribeImages",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "35beff6a-2c1f-465d-b2ad-d4de4689a75e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "35beff6a-2c1f-465d-b2ad-d4de4689a75e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "prompt": {},
+                                    "model": {},
+                                    "images": {
+                                        "4b240f47-f578-4bdc-8261-a2b0e28e3e8a": {
+                                            "variable": "$.35beff6a-2c1f-465d-b2ad-d4de4689a75e.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "prompt": "What is the dominant colour of this image? Answer with one word.",
+                                    "model": "mistral-small-latest",
+                                    "images": {
+                                        "ADD": [
+                                            {
+                                                "fileId": "{{{4b240f47-f578-4bdc-8261-a2b0e28e3e8a}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "66f52898-e9ab-4d72-ac42-8182e4b4e5d9": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 192,
+            "source": {
+                "in": {
+                    "35beff6a-2c1f-465d-b2ad-d4de4689a75e": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "35beff6a-2c1f-465d-b2ad-d4de4689a75e": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3fd88ce1-4cff-4109-91db-b88e69354bd1": {
+                                            "variable": "$.35beff6a-2c1f-465d-b2ad-d4de4689a75e.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{3fd88ce1-4cff-4109-91db-b88e69354bd1}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "045ea5eb-f04d-4f56-a944-3cf92739e0bd": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 320,
+            "source": {
+                "in": {
+                    "7bdde02c-8e69-446d-b11e-769773bf5ac0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7bdde02c-8e69-446d-b11e-769773bf5ac0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "c3d8e578-2b55-4014-9af6-d370a8e8d247": {
+                                            "variable": "$.7bdde02c-8e69-446d-b11e-769773bf5ac0.out.answer",
+                                            "functions": []
+                                        },
+                                        "e5182256-320b-428e-a09e-5af07abd2aa1": {
+                                            "variable": "$.7bdde02c-8e69-446d-b11e-769773bf5ac0.out.prompt",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{c3d8e578-2b55-4014-9af6-d370a8e8d247}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{e5182256-320b-428e-a09e-5af07abd2aa1}}}",
+                                                "assertion": "regex",
+                                                "expected": "dominant colour"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "10317dd4-dbe0-4dbc-a1cb-1aacd95a4037": {
+            "type": "appmixer.ai.mistral.MakeApiCall",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "7bdde02c-8e69-446d-b11e-769773bf5ac0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7bdde02c-8e69-446d-b11e-769773bf5ac0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {},
+                                    "method": {},
+                                    "parameters": {},
+                                    "headers": {}
+                                },
+                                "lambda": {
+                                    "url": "models",
+                                    "method": "GET",
+                                    "parameters": "[]",
+                                    "headers": "[{\"key\":\"accept\",\"value\":\"application/json\"}]"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "61c2b28f-7d5a-44cc-b22e-c37a5b6345a3": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 448,
+            "source": {
+                "in": {
+                    "10317dd4-dbe0-4dbc-a1cb-1aacd95a4037": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "10317dd4-dbe0-4dbc-a1cb-1aacd95a4037": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "d5f5e098-9340-43b4-ae48-ffbf886c26f4": {
+                                            "variable": "$.10317dd4-dbe0-4dbc-a1cb-1aacd95a4037.out.status",
+                                            "functions": []
+                                        },
+                                        "0f4df081-5ab3-4cd8-9d83-1e305ad307af": {
+                                            "variable": "$.10317dd4-dbe0-4dbc-a1cb-1aacd95a4037.out.body",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.object"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{d5f5e098-9340-43b4-ae48-ffbf886c26f4}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            },
+                                            {
+                                                "field": "{{{0f4df081-5ab3-4cd8-9d83-1e305ad307af}}}",
+                                                "assertion": "equal",
+                                                "expected": "list"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "be37d6cc-200b-4ef1-8c56-3bf3890db68d": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 448,
+            "source": {
+                "in": {
+                    "66f52898-e9ab-4d72-ac42-8182e4b4e5d9": [
+                        "out"
+                    ],
+                    "045ea5eb-f04d-4f56-a944-3cf92739e0bd": [
+                        "out"
+                    ],
+                    "61c2b28f-7d5a-44cc-b22e-c37a5b6345a3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 300
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9f7f5ef6-5ffe-4c01-a799-95578f0d2e23": {
+            "type": "appmixer.utils.files.RemoveFile",
+            "x": 1520,
+            "y": 448,
+            "source": {
+                "in": {
+                    "be37d6cc-200b-4ef1-8c56-3bf3890db68d": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "be37d6cc-200b-4ef1-8c56-3bf3890db68d": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "fileId": {
+                                        "0163dac2-cfc5-4d1f-8e6b-5f9f078670c2": {
+                                            "variable": "$.35beff6a-2c1f-465d-b2ad-d4de4689a75e.out.fileId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "fileId": "{{{0163dac2-cfc5-4d1f-8e6b-5f9f078670c2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "6e328da8-e98f-4004-bf05-c17e88de7513": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1728,
+            "y": 448,
+            "source": {
+                "in": {
+                    "9f7f5ef6-5ffe-4c01-a799-95578f0d2e23": [
+                        "deleted"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "9f7f5ef6-5ffe-4c01-a799-95578f0d2e23": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "784f3844-4d6c-4572-a15d-afc4fe1c6ee9": {
+                                            "variable": "$.9f7f5ef6-5ffe-4c01-a799-95578f0d2e23.deleted",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Mistral - Vision and Raw API Call",
+                                    "result": "{{{784f3844-4d6c-4572-a15d-afc4fe1c6ee9}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

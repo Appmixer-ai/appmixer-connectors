@@ -1,0 +1,454 @@
+{
+    "name": "E2E Mistral - Chat Moderation and Embeddings",
+    "flow": {
+        "abc5b877-c34b-43db-a3c3-c6f7c7775339": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "fb32305c-b300-4e61-99f1-fd05f18c2e00": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "abc5b877-c34b-43db-a3c3-c6f7c7775339": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "abc5b877-c34b-43db-a3c3-c6f7c7775339": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "Test Case",
+                                                "text": "Chat Moderation and Embeddings"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "500b61db-fb9e-4a00-80e0-f636a2be26a8": {
+            "type": "appmixer.ai.mistral.SendPrompt",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "fb32305c-b300-4e61-99f1-fd05f18c2e00": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "fb32305c-b300-4e61-99f1-fd05f18c2e00": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "prompt": {},
+                                    "model": {},
+                                    "instructions": {},
+                                    "temperature": {},
+                                    "maxTokens": {},
+                                    "topP": {},
+                                    "randomSeed": {},
+                                    "safePrompt": {}
+                                },
+                                "lambda": {
+                                    "prompt": "Reply with exactly the word: pong",
+                                    "model": "mistral-small-latest",
+                                    "instructions": "Be precise and concise.",
+                                    "temperature": 0,
+                                    "maxTokens": 10,
+                                    "topP": 1,
+                                    "randomSeed": 42,
+                                    "safePrompt": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "c22e44c2-96fa-4d4a-b5fc-cd2fc2d8257b": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "500b61db-fb9e-4a00-80e0-f636a2be26a8": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "500b61db-fb9e-4a00-80e0-f636a2be26a8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "bc27b16b-e6ab-44e9-aa49-faf4490be363": {
+                                            "variable": "$.500b61db-fb9e-4a00-80e0-f636a2be26a8.out.choices",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.message.content"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "ce73cb21-95da-4b04-b57e-e52fe8d21759": {
+                                            "variable": "$.500b61db-fb9e-4a00-80e0-f636a2be26a8.out.choices",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.finish_reason"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{bc27b16b-e6ab-44e9-aa49-faf4490be363}}}",
+                                                "assertion": "regex",
+                                                "expected": "[Pp]ong"
+                                            },
+                                            {
+                                                "field": "{{{ce73cb21-95da-4b04-b57e-e52fe8d21759}}}",
+                                                "assertion": "equal",
+                                                "expected": "stop"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "9e398684-9a68-4220-ba67-d0e364454aa2": {
+            "type": "appmixer.ai.mistral.Moderate",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "500b61db-fb9e-4a00-80e0-f636a2be26a8": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "500b61db-fb9e-4a00-80e0-f636a2be26a8": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {},
+                                    "model": {}
+                                },
+                                "lambda": {
+                                    "text": "I love building integrations.",
+                                    "model": "mistral-moderation-latest"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "2353b4ad-673a-4c33-8726-814b62ae2d6a": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "9e398684-9a68-4220-ba67-d0e364454aa2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9e398684-9a68-4220-ba67-d0e364454aa2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "8190083b-a4e9-42e6-985a-fe53c4f04675": {
+                                            "variable": "$.9e398684-9a68-4220-ba67-d0e364454aa2.out.flagged",
+                                            "functions": []
+                                        },
+                                        "bd24549f-6312-48f5-95be-94172932d5be": {
+                                            "variable": "$.9e398684-9a68-4220-ba67-d0e364454aa2.out.categories",
+                                            "functions": [
+                                                {
+                                                    "name": "g_jsonPath",
+                                                    "params": [
+                                                        {
+                                                            "value": "$.jailbreaking"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "72af82a0-2f03-45ae-a600-f6efbb7a54f8": {
+                                            "variable": "$.9e398684-9a68-4220-ba67-d0e364454aa2.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{8190083b-a4e9-42e6-985a-fe53c4f04675}}}",
+                                                "assertion": "equal",
+                                                "expected": "false"
+                                            },
+                                            {
+                                                "field": "{{{bd24549f-6312-48f5-95be-94172932d5be}}}",
+                                                "assertion": "equal",
+                                                "expected": "false"
+                                            },
+                                            {
+                                                "field": "{{{72af82a0-2f03-45ae-a600-f6efbb7a54f8}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "49633f6e-532f-4ee5-a673-3d77ae61bf61": {
+            "type": "appmixer.ai.mistral.GenerateEmbeddings",
+            "x": 896,
+            "y": 576,
+            "source": {
+                "in": {
+                    "9e398684-9a68-4220-ba67-d0e364454aa2": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "9e398684-9a68-4220-ba67-d0e364454aa2": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "text": {},
+                                    "model": {}
+                                },
+                                "lambda": {
+                                    "text": "Appmixer end-to-end embedding check.",
+                                    "model": "mistral-embed"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "273ef77d-5961-4e3e-93d0-bb6f06dbd3d0": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1104,
+            "y": 576,
+            "source": {
+                "in": {
+                    "49633f6e-532f-4ee5-a673-3d77ae61bf61": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "49633f6e-532f-4ee5-a673-3d77ae61bf61": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "dfa1838b-27d0-4023-b045-d4af650c726a": {
+                                            "variable": "$.49633f6e-532f-4ee5-a673-3d77ae61bf61.out.totalTokens",
+                                            "functions": []
+                                        },
+                                        "4a546643-d0fb-4916-829d-3fef531d0b47": {
+                                            "variable": "$.49633f6e-532f-4ee5-a673-3d77ae61bf61.out.model",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{dfa1838b-27d0-4023-b045-d4af650c726a}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{4a546643-d0fb-4916-829d-3fef531d0b47}}}",
+                                                "assertion": "regex",
+                                                "expected": "mistral-embed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e2febabd-073c-4d70-a6d3-ee01a947d7fd": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1312,
+            "y": 576,
+            "source": {
+                "in": {
+                    "c22e44c2-96fa-4d4a-b5fc-cd2fc2d8257b": [
+                        "out"
+                    ],
+                    "2353b4ad-673a-4c33-8726-814b62ae2d6a": [
+                        "out"
+                    ],
+                    "273ef77d-5961-4e3e-93d0-bb6f06dbd3d0": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 240
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "488df1e8-b067-4c4e-ae01-c92e2e0363eb": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1520,
+            "y": 576,
+            "source": {
+                "in": {
+                    "e2febabd-073c-4d70-a6d3-ee01a947d7fd": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "e2febabd-073c-4d70-a6d3-ee01a947d7fd": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "075206a5-ddac-4508-acc6-26386f482375": {
+                                            "variable": "$.e2febabd-073c-4d70-a6d3-ee01a947d7fd.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Mistral - Chat Moderation and Embeddings",
+                                    "result": "{{{075206a5-ddac-4508-acc6-26386f482375}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}

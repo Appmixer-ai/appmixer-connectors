@@ -1,0 +1,307 @@
+{
+    "name": "E2E Mistral - Models and Voices",
+    "flow": {
+        "725fd2f1-200d-4d11-8de0-1f3cf8da4889": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 320,
+            "source": {},
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ae5aa5f9-48cd-4e52-8f59-4cb43883daa3": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 320,
+            "source": {
+                "in": {
+                    "725fd2f1-200d-4d11-8de0-1f3cf8da4889": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "725fd2f1-200d-4d11-8de0-1f3cf8da4889": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "Test Case",
+                                                "text": "Models and Voices"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "5261d489-c1f4-4275-9477-fef5f26769a3": {
+            "type": "appmixer.ai.mistral.ListModels",
+            "x": 480,
+            "y": 320,
+            "source": {
+                "in": {
+                    "ae5aa5f9-48cd-4e52-8f59-4cb43883daa3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "ae5aa5f9-48cd-4e52-8f59-4cb43883daa3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "0b399c71-e9ed-421e-ac7e-8032e70bd825": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 320,
+            "source": {
+                "in": {
+                    "5261d489-c1f4-4275-9477-fef5f26769a3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5261d489-c1f4-4275-9477-fef5f26769a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "42b5558e-3cd3-41dd-ad02-47a0c5ed98ad": {
+                                            "variable": "$.5261d489-c1f4-4275-9477-fef5f26769a3.out.id",
+                                            "functions": []
+                                        },
+                                        "60bcc45d-5b38-4aa2-b53b-53eccab6ae7d": {
+                                            "variable": "$.5261d489-c1f4-4275-9477-fef5f26769a3.out.object",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{42b5558e-3cd3-41dd-ad02-47a0c5ed98ad}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{60bcc45d-5b38-4aa2-b53b-53eccab6ae7d}}}",
+                                                "assertion": "equal",
+                                                "expected": "model"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "e757eb12-ab14-44b4-9fb4-42fb83e76d68": {
+            "type": "appmixer.ai.mistral.ListVoices",
+            "x": 688,
+            "y": 448,
+            "source": {
+                "in": {
+                    "5261d489-c1f4-4275-9477-fef5f26769a3": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "5261d489-c1f4-4275-9477-fef5f26769a3": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "f65a6990-90ea-4253-9596-281316c6c05c": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 448,
+            "source": {
+                "in": {
+                    "e757eb12-ab14-44b4-9fb4-42fb83e76d68": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "e757eb12-ab14-44b4-9fb4-42fb83e76d68": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "fcbe934d-87fb-48b6-a685-614446bccfd3": {
+                                            "variable": "$.e757eb12-ab14-44b4-9fb4-42fb83e76d68.out.slug",
+                                            "functions": []
+                                        },
+                                        "fbea3033-a549-44bc-9f4e-ea1bef5b6024": {
+                                            "variable": "$.e757eb12-ab14-44b4-9fb4-42fb83e76d68.out.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{fcbe934d-87fb-48b6-a685-614446bccfd3}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            },
+                                            {
+                                                "field": "{{{fbea3033-a549-44bc-9f4e-ea1bef5b6024}}}",
+                                                "assertion": "notEmpty",
+                                                "expected": ""
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "2bd273f3-bcec-4094-8640-0fb2af6e5b58": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 448,
+            "source": {
+                "in": {
+                    "0b399c71-e9ed-421e-ac7e-8032e70bd825": [
+                        "out"
+                    ],
+                    "f65a6990-90ea-4253-9596-281316c6c05c": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {
+                    "timeout": 180
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b2a5847f-67be-4bc4-bd92-83e203b4c50f": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 448,
+            "source": {
+                "in": {
+                    "2bd273f3-bcec-4094-8640-0fb2af6e5b58": [
+                        "out"
+                    ]
+                }
+            },
+            "version": "1.0.0",
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "2bd273f3-bcec-4094-8640-0fb2af6e5b58": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "7359191e-7ef4-4c0a-84ea-2ebc413adfa1": {
+                                            "variable": "$.2bd273f3-bcec-4094-8640-0fb2af6e5b58.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Mistral - Models and Voices",
+                                    "result": "{{{7359191e-7ef4-4c0a-84ea-2ebc413adfa1}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    }
+}
