@@ -71,7 +71,7 @@ as a timeout. Both appointment trigger flows hit it on 2026-08-21 while landing 
 success store at 10:05:06 and 10:17:03.
 
 Fixed in appmixer-cli — `waitForCompletion` now reads the whole run via `getRunLogs`
-(Appmixer-ai/appmixer-cli#419); the same flow went from a 600 s timeout to
+(Appmixer-ai/appmixer-cli#420); the same flow went from a 600 s timeout to
 `PASSED` in 139 s. On a CLI without that fix, **`appmixer e2e results` is the
 authority**: a `✓` with a timestamp inside the run window means the flow reached
 ProcessE2EResults and every assertion held.
