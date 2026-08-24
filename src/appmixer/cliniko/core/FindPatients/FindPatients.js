@@ -14,6 +14,8 @@ const schema = {
     gender_identity: { type: 'string', title: 'Gender Identity' },
     title: { type: 'string', title: 'Title' },
     occupation: { type: 'string', title: 'Occupation' },
+    medicare: { type: 'string', title: 'Medicare Number' },
+    medicare_reference_number: { type: 'string', title: 'Medicare Reference Number' },
     address_1: { type: 'string', title: 'Address Line 1' },
     address_2: { type: 'string', title: 'Address Line 2' },
     address_3: { type: 'string', title: 'Address Line 3' },
