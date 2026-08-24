@@ -1,0 +1,314 @@
+{
+    "flow": {
+        "72952147-28d2-48c6-beb8-f3178db907f0": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "0b2a7af8-3a3c-4217-9a4b-556c2b72c8ec": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "72952147-28d2-48c6-beb8-f3178db907f0": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "72952147-28d2-48c6-beb8-f3178db907f0": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "testUrl",
+                                                "text": "https://example.com"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "7a7068d7-5e88-45c7-bec3-fbd5437985a5": {
+            "type": "appmixer.firecrawl.core.CrawlWebsite",
+            "x": 480,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "0b2a7af8-3a3c-4217-9a4b-556c2b72c8ec": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "0b2a7af8-3a3c-4217-9a4b-556c2b72c8ec": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "2fe9062b-b3e2-45b6-8095-f4f354e946d4": {
+                                            "variable": "$.0b2a7af8-3a3c-4217-9a4b-556c2b72c8ec.out.testUrl",
+                                            "functions": []
+                                        }
+                                    },
+                                    "maxPages": {},
+                                    "pollingTimeout": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{2fe9062b-b3e2-45b6-8095-f4f354e946d4}}}",
+                                    "maxPages": 1,
+                                    "pollingTimeout": 600
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "b3204dfb-077c-4619-ac4b-70dab11fb679": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a7068d7-5e88-45c7-bec3-fbd5437985a5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a7068d7-5e88-45c7-bec3-fbd5437985a5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "32f7f5cb-e1e1-48d0-8d2c-0c8351f6d090": {
+                                            "variable": "$.7a7068d7-5e88-45c7-bec3-fbd5437985a5.out.jobId",
+                                            "functions": []
+                                        },
+                                        "52b0ac24-4088-4f7b-9af1-45978933f7dc": {
+                                            "variable": "$.7a7068d7-5e88-45c7-bec3-fbd5437985a5.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{32f7f5cb-e1e1-48d0-8d2c-0c8351f6d090}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{52b0ac24-4088-4f7b-9af1-45978933f7dc}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "8bd66bc2-3d23-425f-9cdf-deb98fbec9d7": {
+            "type": "appmixer.firecrawl.core.GetCrawlStatus",
+            "x": 688,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "7a7068d7-5e88-45c7-bec3-fbd5437985a5": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "7a7068d7-5e88-45c7-bec3-fbd5437985a5": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "jobId": {
+                                        "78b142c7-a078-422a-9171-59c83395cab0": {
+                                            "variable": "$.7a7068d7-5e88-45c7-bec3-fbd5437985a5.out.jobId",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "jobId": "{{{78b142c7-a078-422a-9171-59c83395cab0}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "ee8b761c-a15e-46d9-9d20-8a760f2f7c0d": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 896,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "8bd66bc2-3d23-425f-9cdf-deb98fbec9d7": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "8bd66bc2-3d23-425f-9cdf-deb98fbec9d7": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a3a67fcb-1863-4b51-b2fe-263551a32e66": {
+                                            "variable": "$.8bd66bc2-3d23-425f-9cdf-deb98fbec9d7.out.status",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{a3a67fcb-1863-4b51-b2fe-263551a32e66}}}",
+                                                "assertion": "equal",
+                                                "expected": "completed"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "6d0d485e-1ff6-41ec-89c8-09632ad5d3aa": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1104,
+            "y": 432,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "b3204dfb-077c-4619-ac4b-70dab11fb679": [
+                        "out"
+                    ],
+                    "ee8b761c-a15e-46d9-9d20-8a760f2f7c0d": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 720
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "70c1cb84-64ff-47f5-a7c0-29390e6c67ef": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1312,
+            "y": 432,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "6d0d485e-1ff6-41ec-89c8-09632ad5d3aa": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "6d0d485e-1ff6-41ec-89c8-09632ad5d3aa": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "a7045d23-550c-4f0d-acb0-9c659fec69fc": {
+                                            "variable": "$.6d0d485e-1ff6-41ec-89c8-09632ad5d3aa.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Firecrawl - Crawl Website Lifecycle",
+                                    "result": "{{{a7045d23-550c-4f0d-acb0-9c659fec69fc}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "name": "E2E Firecrawl - Crawl Website Lifecycle",
+    "notes": {},
+    "type": "automation"
+}

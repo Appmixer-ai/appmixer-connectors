@@ -1,0 +1,215 @@
+{
+    "flow": {
+        "c7581a2e-7aa5-49d7-bf07-c579b3849736": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 304,
+            "source": {},
+            "version": "1.0.0",
+            "config": {},
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "503d13ee-be40-4a80-9c9f-6908cef6618a": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 272,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "c7581a2e-7aa5-49d7-bf07-c579b3849736": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "c7581a2e-7aa5-49d7-bf07-c579b3849736": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "apiPath",
+                                                "text": "/v2/team/credit-usage"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "99c5bc45-cbd2-4fd4-8886-2ebecffe2995": {
+            "type": "appmixer.firecrawl.core.MakeApiCall",
+            "x": 480,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "503d13ee-be40-4a80-9c9f-6908cef6618a": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "503d13ee-be40-4a80-9c9f-6908cef6618a": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "url": {
+                                        "209b8396-8355-49c6-b352-081fd4317ae0": {
+                                            "variable": "$.503d13ee-be40-4a80-9c9f-6908cef6618a.out.apiPath",
+                                            "functions": []
+                                        }
+                                    },
+                                    "method": {}
+                                },
+                                "lambda": {
+                                    "url": "{{{209b8396-8355-49c6-b352-081fd4317ae0}}}",
+                                    "method": "GET"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "2764ac19-bc2c-47f8-b45d-2f5ed3358a38": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 688,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "99c5bc45-cbd2-4fd4-8886-2ebecffe2995": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "99c5bc45-cbd2-4fd4-8886-2ebecffe2995": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "7a5a7950-dc29-473c-abe0-8ff6fe816bd9": {
+                                            "variable": "$.99c5bc45-cbd2-4fd4-8886-2ebecffe2995.out.statusCode",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{7a5a7950-dc29-473c-abe0-8ff6fe816bd9}}}",
+                                                "assertion": "equal",
+                                                "expected": "200"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "9e1f142c-f687-40be-8854-8c05ba2db670": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 896,
+            "y": 304,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "2764ac19-bc2c-47f8-b45d-2f5ed3358a38": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 120
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        },
+        "e208ac9e-d97d-466e-b81d-e6c0fc48b91c": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1104,
+            "y": 304,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "9e1f142c-f687-40be-8854-8c05ba2db670": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "9e1f142c-f687-40be-8854-8c05ba2db670": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "2f15ae50-b5db-460d-bcb6-871acd1c5da2": {
+                                            "variable": "$.9e1f142c-f687-40be-8854-8c05ba2db670.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Firecrawl - Make API Call",
+                                    "result": "{{{2f15ae50-b5db-460d-bcb6-871acd1c5da2}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "errorHandling": {
+                "autoRetry": false,
+                "onError": "stopFlow"
+            }
+        }
+    },
+    "name": "E2E Firecrawl - Make API Call",
+    "notes": {},
+    "type": "automation"
+}
