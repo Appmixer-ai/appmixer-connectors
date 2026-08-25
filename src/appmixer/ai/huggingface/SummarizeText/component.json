@@ -1,0 +1,112 @@
+{
+    "name": "appmixer.ai.huggingface.SummarizeText",
+    "label": "Summarize Text",
+    "description": "Condense a long piece of text into a short summary using a summarization model served by Hugging Face Inference Providers.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "truncation": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "model",
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model",
+                        "defaultValue": "facebook/bart-large-cnn",
+                        "tooltip": "Repository ID of a summarization model, e.g. <code>facebook/bart-large-cnn</code> or <code>google/pegasus-xsum</code>."
+                    },
+                    "text": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Text",
+                        "tooltip": "The text to summarize."
+                    },
+                    "truncation": {
+                        "type": "select",
+                        "index": 3,
+                        "label": "Truncation",
+                        "tooltip": "How to handle text longer than the model's context window. Leave empty for the model default.",
+                        "options": [
+                            {
+                                "label": "Do not truncate",
+                                "value": "do_not_truncate"
+                            },
+                            {
+                                "label": "Longest first",
+                                "value": "longest_first"
+                            },
+                            {
+                                "label": "Only first",
+                                "value": "only_first"
+                            },
+                            {
+                                "label": "Only second",
+                                "value": "only_second"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "facebook/bart-large-cnn"
+                    },
+                    "summary": {
+                        "type": "string",
+                        "title": "Summary",
+                        "example": "The Eiffel Tower is a wrought-iron lattice tower in Paris, completed in 1889."
+                    },
+                    "inputLength": {
+                        "type": "integer",
+                        "title": "Input Length",
+                        "example": 1842
+                    },
+                    "summaryLength": {
+                        "type": "integer",
+                        "title": "Summary Length",
+                        "example": 78
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

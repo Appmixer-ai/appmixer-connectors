@@ -1,0 +1,134 @@
+{
+    "name": "appmixer.ai.huggingface.GetModel",
+    "label": "Get Model",
+    "description": "Get the metadata of a single model repository on the Hugging Face Hub by its repository ID.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "modelId": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "modelId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "modelId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model ID",
+                        "tooltip": "Repository ID of the model, e.g. <code>meta-llama/Llama-3.1-8B-Instruct</code> or <code>bert-base-uncased</code>."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Model ID",
+                        "example": "meta-llama/Llama-3.1-8B-Instruct"
+                    },
+                    "author": {
+                        "type": "string",
+                        "title": "Author",
+                        "example": "meta-llama"
+                    },
+                    "sha": {
+                        "type": "string",
+                        "title": "Commit SHA",
+                        "example": "0e9e39f249a16976918f6564b8830bc894c89659"
+                    },
+                    "pipelineTag": {
+                        "type": "string",
+                        "title": "Pipeline Tag",
+                        "example": "text-generation"
+                    },
+                    "libraryName": {
+                        "type": "string",
+                        "title": "Library",
+                        "example": "transformers"
+                    },
+                    "downloads": {
+                        "type": "integer",
+                        "title": "Downloads (last 30 days)",
+                        "example": 1204553
+                    },
+                    "likes": {
+                        "type": "integer",
+                        "title": "Likes",
+                        "example": 4021
+                    },
+                    "private": {
+                        "type": "boolean",
+                        "title": "Private",
+                        "example": false
+                    },
+                    "gated": {
+                        "type": "string",
+                        "title": "Gated",
+                        "example": "manual"
+                    },
+                    "disabled": {
+                        "type": "boolean",
+                        "title": "Disabled",
+                        "example": false
+                    },
+                    "tags": {
+                        "type": "array",
+                        "title": "Tags",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "transformers",
+                            "safetensors",
+                            "llama",
+                            "text-generation"
+                        ]
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "example": "2024-07-14T08:00:00.000Z"
+                    },
+                    "lastModified": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last Modified",
+                        "example": "2024-09-25T17:00:57.000Z"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Model URL",
+                        "example": "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

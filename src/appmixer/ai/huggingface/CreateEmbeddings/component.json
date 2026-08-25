@@ -1,0 +1,96 @@
+{
+    "name": "appmixer.ai.huggingface.CreateEmbeddings",
+    "label": "Create Embeddings",
+    "description": "Turn a piece of text into a numeric embedding vector using a feature-extraction model served by Hugging Face Inference Providers.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "normalize": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "model",
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model",
+                        "defaultValue": "sentence-transformers/all-MiniLM-L6-v2",
+                        "tooltip": "Repository ID of a feature-extraction model, e.g. <code>sentence-transformers/all-MiniLM-L6-v2</code> or <code>BAAI/bge-base-en-v1.5</code>."
+                    },
+                    "text": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Text",
+                        "tooltip": "The text to embed."
+                    },
+                    "normalize": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Normalize",
+                        "tooltip": "Scale the vector to unit length. Only supported by sentence-transformers style models."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "sentence-transformers/all-MiniLM-L6-v2"
+                    },
+                    "embedding": {
+                        "type": "array",
+                        "title": "Embedding",
+                        "items": {
+                            "type": "number"
+                        },
+                        "example": [
+                            -0.0344,
+                            0.0712,
+                            0.0159
+                        ]
+                    },
+                    "dimensions": {
+                        "type": "integer",
+                        "title": "Dimensions",
+                        "example": 384
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

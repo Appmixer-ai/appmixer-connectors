@@ -1,0 +1,119 @@
+{
+    "name": "appmixer.ai.huggingface.ClassifyText",
+    "label": "Classify Text",
+    "description": "Classify a piece of text with a text-classification model served by Hugging Face Inference Providers, for example sentiment, topic or toxicity. Returns the highest scoring label plus all scored labels.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "topK": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                },
+                "required": [
+                    "model",
+                    "text"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model",
+                        "defaultValue": "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+                        "tooltip": "Repository ID of a text-classification model, e.g. <code>distilbert/distilbert-base-uncased-finetuned-sst-2-english</code> for sentiment."
+                    },
+                    "text": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Text",
+                        "tooltip": "The text to classify."
+                    },
+                    "topK": {
+                        "type": "number",
+                        "index": 3,
+                        "label": "Top K",
+                        "tooltip": "Return only this many highest scoring labels. Leave empty to return all of them."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
+                    },
+                    "label": {
+                        "type": "string",
+                        "title": "Top Label",
+                        "example": "POSITIVE"
+                    },
+                    "score": {
+                        "type": "number",
+                        "title": "Top Score",
+                        "example": 0.9998
+                    },
+                    "labels": {
+                        "type": "array",
+                        "title": "All Labels",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string",
+                                    "title": "Label",
+                                    "example": "POSITIVE"
+                                },
+                                "score": {
+                                    "type": "number",
+                                    "title": "Score",
+                                    "example": 0.9998
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "label": "POSITIVE",
+                                "score": 0.9998
+                            },
+                            {
+                                "label": "NEGATIVE",
+                                "score": 0.0002
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

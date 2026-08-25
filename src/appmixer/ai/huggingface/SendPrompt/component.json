@@ -1,0 +1,149 @@
+{
+    "name": "appmixer.ai.huggingface.SendPrompt",
+    "label": "Send Prompt",
+    "description": "Send a prompt or a full chat conversation to any model served by Hugging Face Inference Providers and return the generated answer.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "systemPrompt": {
+                        "type": "string"
+                    },
+                    "messages": {
+                        "type": "string"
+                    },
+                    "maxTokens": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 2
+                    },
+                    "topP": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                    }
+                },
+                "required": [
+                    "model"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model",
+                        "defaultValue": "meta-llama/Llama-3.1-8B-Instruct",
+                        "tooltip": "Repository ID of a chat model on the Hub, e.g. <code>meta-llama/Llama-3.1-8B-Instruct</code>. Append a routing suffix to choose the provider: <code>:fastest</code> (default), <code>:cheapest</code>, <code>:preferred</code>, or a provider name such as <code>openai/gpt-oss-120b:groq</code>."
+                    },
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Prompt",
+                        "tooltip": "The user message to send. Ignored when <b>Messages</b> is filled in."
+                    },
+                    "systemPrompt": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "System Prompt",
+                        "tooltip": "Optional instructions that steer the model, e.g. <code>You are a concise assistant.</code>"
+                    },
+                    "messages": {
+                        "type": "textarea",
+                        "index": 4,
+                        "label": "Messages",
+                        "tooltip": "Optional full conversation as a JSON array, e.g. <code>[{\"role\": \"user\", \"content\": \"Hi\"}]</code>. Overrides <b>Prompt</b> when set."
+                    },
+                    "maxTokens": {
+                        "type": "number",
+                        "index": 5,
+                        "label": "Max Tokens",
+                        "tooltip": "Maximum number of tokens to generate. Leave empty for the provider default."
+                    },
+                    "temperature": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Temperature",
+                        "tooltip": "Sampling temperature between 0 and 2. Lower is more deterministic."
+                    },
+                    "topP": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Top P",
+                        "tooltip": "Nucleus sampling probability mass between 0 and 1."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Completion ID",
+                        "example": "chatcmpl-4f0c1a2b3d4e5f60718293a4b5c6d7e8"
+                    },
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "meta-llama/Llama-3.1-8B-Instruct"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "title": "Answer",
+                        "example": "The capital city of Portugal is Lisbon."
+                    },
+                    "finishReason": {
+                        "type": "string",
+                        "title": "Finish Reason",
+                        "example": "stop"
+                    },
+                    "promptTokens": {
+                        "type": "integer",
+                        "title": "Prompt Tokens",
+                        "example": 18
+                    },
+                    "completionTokens": {
+                        "type": "integer",
+                        "title": "Completion Tokens",
+                        "example": 9
+                    },
+                    "totalTokens": {
+                        "type": "integer",
+                        "title": "Total Tokens",
+                        "example": 27
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

@@ -1,0 +1,167 @@
+{
+    "name": "appmixer.ai.huggingface.FindModels",
+    "label": "Find Models",
+    "description": "Search the Hugging Face Hub for model repositories by keyword, author, task or tag. Returns up to 100 models per call.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "search": {
+                        "type": "string"
+                    },
+                    "author": {
+                        "type": "string"
+                    },
+                    "pipelineTag": {
+                        "type": "string"
+                    },
+                    "filter": {
+                        "type": "string"
+                    },
+                    "sort": {
+                        "type": "string"
+                    },
+                    "direction": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "search": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search",
+                        "tooltip": "Substring matched against the model repository ID, e.g. <code>llama</code>."
+                    },
+                    "author": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "Author",
+                        "tooltip": "Restrict to models owned by this user or organization, e.g. <code>google</code>."
+                    },
+                    "pipelineTag": {
+                        "type": "text",
+                        "index": 3,
+                        "label": "Task",
+                        "tooltip": "Restrict to one task, e.g. <code>text-generation</code>, <code>summarization</code>, <code>text-to-image</code>."
+                    },
+                    "filter": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Tags",
+                        "tooltip": "Comma separated list of tags a model must carry, e.g. <code>transformers, safetensors</code>."
+                    },
+                    "sort": {
+                        "type": "select",
+                        "index": 5,
+                        "label": "Sort By",
+                        "tooltip": "Property to order the results by. Leave empty for the Hub default ordering.",
+                        "options": [
+                            {
+                                "label": "Downloads",
+                                "value": "downloads"
+                            },
+                            {
+                                "label": "Likes",
+                                "value": "likes"
+                            },
+                            {
+                                "label": "Trending Score",
+                                "value": "trendingScore"
+                            },
+                            {
+                                "label": "Created At",
+                                "value": "createdAt"
+                            },
+                            {
+                                "label": "Last Modified",
+                                "value": "lastModified"
+                            }
+                        ]
+                    },
+                    "direction": {
+                        "type": "select",
+                        "index": 6,
+                        "label": "Sort Direction",
+                        "defaultValue": "desc",
+                        "tooltip": "Only applies when <b>Sort By</b> is set.",
+                        "options": [
+                            {
+                                "label": "Descending",
+                                "value": "desc"
+                            },
+                            {
+                                "label": "Ascending",
+                                "value": "asc"
+                            }
+                        ]
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "index": 7,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/ai/huggingface/FindModels?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType",
+                        "in/search": "inputs/in/search"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}

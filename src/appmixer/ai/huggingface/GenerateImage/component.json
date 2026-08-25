@@ -1,0 +1,148 @@
+{
+    "name": "appmixer.ai.huggingface.GenerateImage",
+    "label": "Generate Image",
+    "description": "Generate an image from a text prompt using a text-to-image model served by Hugging Face Inference Providers. The image is saved to file storage and its file ID is returned.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:ai:huggingface"
+    },
+    "quota": {
+        "manager": "appmixer:ai:huggingface",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "negativePrompt": {
+                        "type": "string"
+                    },
+                    "width": {
+                        "type": "integer",
+                        "minimum": 64
+                    },
+                    "height": {
+                        "type": "integer",
+                        "minimum": 64
+                    },
+                    "numInferenceSteps": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "guidanceScale": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "fileName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "model",
+                    "prompt"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "model": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Model",
+                        "defaultValue": "black-forest-labs/FLUX.1-schnell",
+                        "tooltip": "Repository ID of a text-to-image model, e.g. <code>black-forest-labs/FLUX.1-schnell</code> or <code>stabilityai/stable-diffusion-xl-base-1.0</code>."
+                    },
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Prompt",
+                        "tooltip": "Description of the image to generate, e.g. <code>a watercolour painting of a lighthouse at dawn</code>."
+                    },
+                    "negativePrompt": {
+                        "type": "textarea",
+                        "index": 3,
+                        "label": "Negative Prompt",
+                        "tooltip": "What the image should avoid. Not supported by every model."
+                    },
+                    "width": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Width",
+                        "tooltip": "Width of the generated image in pixels. Leave empty for the model default."
+                    },
+                    "height": {
+                        "type": "number",
+                        "index": 5,
+                        "label": "Height",
+                        "tooltip": "Height of the generated image in pixels. Leave empty for the model default."
+                    },
+                    "numInferenceSteps": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Inference Steps",
+                        "tooltip": "How many denoising steps to run. More steps usually means better quality and a slower, more expensive call."
+                    },
+                    "guidanceScale": {
+                        "type": "number",
+                        "index": 7,
+                        "label": "Guidance Scale",
+                        "tooltip": "How closely the image should follow the prompt. Higher values follow the prompt more literally."
+                    },
+                    "fileName": {
+                        "type": "text",
+                        "index": 8,
+                        "label": "File Name",
+                        "tooltip": "Name to store the image under. Leave empty to generate one automatically."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "fileId": {
+                        "type": "string",
+                        "title": "File ID",
+                        "example": "5f2d1e6a9c4b3a0012ab34cd"
+                    },
+                    "fileName": {
+                        "type": "string",
+                        "title": "File Name",
+                        "example": "huggingface-image-1735689600000.png"
+                    },
+                    "contentType": {
+                        "type": "string",
+                        "title": "Content Type",
+                        "example": "image/png"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "title": "Size (bytes)",
+                        "example": 418304
+                    },
+                    "model": {
+                        "type": "string",
+                        "title": "Model",
+                        "example": "black-forest-labs/FLUX.1-schnell"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJIdWdnaW5nIEZhY2UiPjxjaXJjbGUgY3g9IjYwIiBjeT0iNTgiIHI9IjQyIiBmaWxsPSIjRkZEMjFFIi8+PHBhdGggZD0iTTYwIDI0YTM0IDM0IDAgMSAwIDAgNjggMzQgMzQgMCAwIDAgMC02OFptMCA2YTI4IDI4IDAgMSAxIDAgNTYgMjggMjggMCAwIDEgMC01NloiIGZpbGw9IiNGRjlEMEIiLz48ZWxsaXBzZSBjeD0iNDciIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48ZWxsaXBzZSBjeD0iNzMiIGN5PSI1MCIgcng9IjQuNSIgcnk9IjYiIGZpbGw9IiMzQTNCNDUiLz48cGF0aCBkPSJNNDQgNjRoMzJhMyAzIDAgMCAxIDMgMyAxOSAxOSAwIDAgMS0zOCAwIDMgMyAwIDAgMSAzLTNaIiBmaWxsPSIjM0EzQjQ1Ii8+PHBhdGggZD0iTTQ2IDY3aDI4YTE1IDE1IDAgMCAxLTI4IDBaIiBmaWxsPSIjRkY2QjZCIi8+PHBhdGggZD0iTTI3IDYyYzMtNCA4LTMgOSAxbDMgMTFjMSA0LTMgNy02IDRsLTgtOGMtMi0yLTEtNiAyLThaIiBmaWxsPSIjRkY5RDBCIi8+PHBhdGggZD0iTTkzIDYyYy0zLTQtOC0zLTkgMWwtMyAxMWMtMSA0IDMgNyA2IDRsOC04YzItMiAxLTYtMi04WiIgZmlsbD0iI0ZGOUQwQiIvPjwvc3ZnPgo="
+}
