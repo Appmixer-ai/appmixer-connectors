@@ -1,7 +1,15 @@
 {
     "name": "E2E PrestaShop - Find Returns",
     "type": "automation",
-    "notes": {},
+    "notes": {
+        "48c578a2-60ca-5a6f-94b4-ea9839105207": {
+            "x": 64,
+            "y": -80,
+            "width": 672,
+            "height": 288,
+            "content": "## ⚠️ Test data assumption — merchandise returns\n\nPrestaShop does **not** expose RMA records through the Webservice API (no `order_returns` resource in any version), so **Find Returns reconstructs the return journey from the order state history** (states with the `refund` e-mail template or a return/refund name).\n\nThis flow therefore **provokes its own test data**: the MakeApiCall step POSTs a `Refunded` state (id `7`) into the history of **order `1`** via `/order_histories`. For this to work on your shop:\n\n- an order with ID `1` must exist and belong to the customer used in Find Returns (demo data: customer `2`, `pub@prestashop.com`) — otherwise change both IDs,\n- the webservice key needs **POST** permission on `order_histories`,\n- state changes may trigger customer e-mails — configure SMTP or disable mail (`PS_MAIL_METHOD=3`).\n\nSee `src/appmixer/prestashop/README.md` for a full local test-instance setup."
+        }
+    },
     "flow": {
         "18378e49-415e-4200-8334-80e0462f9170": {
             "type": "appmixer.utils.controls.OnStart",
