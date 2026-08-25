@@ -31,33 +31,31 @@
         "verifiedBy": "GET /status -> 200 and GET /zone/get_active_zones -> 200"
     },
     "cliTestResults": {
-        "ListZones": "PASS — live call, returned { result: [], count: 0 } (correct outputType shape; empty because the account has no zones)",
-        "MakeApiCall": "PASS — live call to GET /datasets/list returned HTTP 200",
-        "ScrapeUrl": "BLOCKED — account has no Web Unlocker zone",
-        "FindSearchResults": "BLOCKED — account has no SERP API zone",
-        "TriggerDatasetCollection": "NOT RUN — spends real credits; user declined for now",
-        "GetSnapshotStatus": "NOT RUN — depends on a snapshot from TriggerDatasetCollection",
-        "FindSnapshotRecords": "NOT RUN — depends on a ready snapshot"
+        "ListZones": "PASS — live; { result: [], count: 0 } (empty because the account has no zones)",
+        "MakeApiCall": "PASS — live; GET /datasets/list returned HTTP 200",
+        "TriggerDatasetCollection": "PASS — live; returned snapshotId sd_mt8vchh6qim0z7s05 for dataset gd_l1viktl72bvl7bjuj0",
+        "GetSnapshotStatus": "PASS — live; status \"ready\", derived isReady true",
+        "FindSnapshotRecords": "PASS — live; returned the full LinkedIn profile record (outputType first)",
+        "ScrapeUrl": "BLOCKED — 400 zone \"web_unlocker1\" not found; no Web Unlocker zone on the account",
+        "FindSearchResults": "BLOCKED — 400 zone \"serp_api1\" not found; no SERP API zone on the account"
     },
     "blockers": {
         "cliTests": {
-            "reason": "Account provisioning, NOT connector code. GET /status returns can_make_requests:false with auth_fail_reason:'zone_not_found' — the account has zero active zones, so every Web Unlocker and SERP API call fails regardless of how correct the component is. The remaining three dataset components were not run because triggering a collection spends real credits and the user chose to stop.",
+            "reason": "Only ScrapeUrl and FindSearchResults remain, both blocked purely by account provisioning: the account has zero zones, so the Web Unlocker and SERP products cannot be exercised. This is not a code defect — the request is well-formed and the API names the missing zone.",
             "resume": [
                 "Provision a Web Unlocker zone and a SERP API zone in the Bright Data control panel (both are paid products).",
-                "Confirm the real zone names: GET https://api.brightdata.com/zone/get_active_zones (must no longer return []).",
-                "Replace the placeholder zone names in artifacts/test-flows/test-flow-zones-scrape-search.json with the real ones.",
-                "appmixer test component ./src/appmixer/brightdata/core/ScrapeUrl -i '{\"in\":{...}}'",
-                "appmixer test component ./src/appmixer/brightdata/core/FindSearchResults -i '{\"in\":{...}}'",
-                "For the dataset chain, approve the spend first, then test TriggerDatasetCollection -> GetSnapshotStatus -> FindSnapshotRecords in that order."
+                "Confirm the real names: GET https://api.brightdata.com/zone/get_active_zones must stop returning [].",
+                "Replace the placeholder zone names in artifacts/test-flows/test-flow-zones-scrape-search.json.",
+                "appmixer test component ./src/appmixer/brightdata/core/ScrapeUrl and .../FindSearchResults with the real zone names."
             ]
         },
         "e2e": {
-            "reason": "Not started. Blocked behind the same zone provisioning: test-flow-zones-scrape-search.json exercises ScrapeUrl and FindSearchResults, which cannot succeed without zones.",
+            "reason": "Not started. The dataset flow could now pass, but the zones flow exercises ScrapeUrl and FindSearchResults and cannot succeed until zones exist.",
             "resume": [
-                "Clear the cliTests blocker first.",
-                "appmixer publish (twice — a single publish can land only part of a bundle).",
+                "appmixer pack src/appmixer/brightdata && appmixer publish (twice)",
+                "appmixer account create --from-auth appmixer:brightdata --name \"brightdata e2e test\"",
                 "appmixer e2e import src/appmixer/brightdata/artifacts/test-flows --account <id>",
-                "appmixer e2e run <flowId> --fix, then read the ProcessE2EResults payload (a PASSED runner verdict alone is not proof)."
+                "Run the dataset flow first; it is unblocked. Expect the first run after publishing to fail spuriously — re-run before diagnosing."
             ]
         }
     },
@@ -69,13 +67,17 @@
         "Two Bright Data doc pages contradict each other on the TriggerDatasetCollection request body ({\"input\": [...]} vs a plain array); the plain array was chosen from the official trigger page. UNVERIFIED — this is the most likely first-contact failure once the dataset chain is tested.",
         "Bright Data publishes no single hard rate limit; quota.js uses a conservative 10 requests/second sliding window. Revisit once real 429 behaviour is observed.",
         "Connector currently lives in a git worktree under .claude/worktrees/; branch feature/brightdata-connector holds all commits.",
-        "eslint must be run with --no-ignore inside that worktree or it exits 0 without linting anything."
+        "eslint must be run with --no-ignore inside that worktree or it exits 0 without linting anything.",
+        "RESOLVED 2026-08-25: the doc contradiction on the TriggerDatasetCollection body is moot — the API accepts BOTH shapes. A direct probe returned 200 with a snapshot_id for the plain array AND for {\"input\":[...]}. A deliberately malformed body returned 400 validation_error with per-field detail, confirming what a real payload rejection looks like. The connector sends the plain array and works.",
+        "The whole async dataset chain is verified end to end: trigger -> snapshotId -> GetSnapshotStatus ready -> FindSnapshotRecords returning real records. The snapshot became ready within seconds, not the 5 minutes the E2E flow waits for.",
+        "TRANSIENT, do not chase: the first TriggerDatasetCollection run failed with 400 \"Customer is not active\" while a direct API call with the same token and body succeeded moments later; an immediate retry of the component then passed. Retry once before diagnosing.",
+        "ScrapeUrl and FindSearchResults now fail with a precise 400 zone \"<name>\" not found, which proves the components build a correct request and the only thing missing is a provisioned zone. GET /status still reports can_make_requests:false / auth_fail_reason:zone_not_found — that flag governs the Web Unlocker and SERP proxy products ONLY; the Datasets API is unaffected by it, as the passing dataset chain shows."
     ],
     "results": {
         "validator": "0 failures, 0 warnings (node scripts/validate.js --connector brightdata) — independently re-verified",
         "lint": "clean (eslint 8.57.1 with --no-ignore, CRLF warnings excluded) — independently re-verified",
         "review": "2 findings, both fixed: duplicated POST /request + auth-header construction in ScrapeUrl and FindSearchResults (extracted to lib.zoneRequest / lib.authHeaders), and dynamic-source required inputs bound to live inputs instead of the documented 'dummy' literal.",
-        "cliTests": "PARTIAL — 2 of 7 components verified against the live API (ListZones, MakeApiCall); 2 blocked on zone provisioning; 3 not run pending spend approval",
+        "cliTests": "PARTIAL — 5 of 7 components verified against the live API; 2 blocked on zone provisioning only",
         "e2eFlows": {
             "E2E Bright Data - Zones, Scrape, Search and API Call": "generated, appmixer e2e validate passed — NOT run",
             "E2E Bright Data - Dataset Snapshot Lifecycle": "generated, appmixer e2e validate passed — NOT run"
