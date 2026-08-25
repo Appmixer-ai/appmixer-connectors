@@ -116,11 +116,35 @@ Describes the connector service and its metadata.
         },
         "icon": {
             "type": "string",
-            "description": "url to the SVG icon of the application"
+            "description": "SVG icon of the application, as a data:image/svg+xml URI"
         }
     }
 }
 ```
+
+### Icons must be SVG
+
+`service.json` and every `component.json` carry an `icon` as a
+`data:image/svg+xml;base64,…` URI. A PNG or JPEG data URI fails the
+`component-icon-svg` validator — it is not a style preference, it is a gate.
+
+When the brand only publishes raster art, trace it instead of shipping the
+raster or drawing an approximation by hand:
+
+```bash
+# 1. split the image into masks: the background, and the glyph inside it
+#    (flood-fill from the border to find "outside", glyph = inside AND light)
+# 2. trace each mask
+potrace -s -o glyph.svg --flat -O 0.4 glyph.pbm
+# 3. compose: background path/rect + glyph path, viewBox matching the source
+```
+
+**Verify numerically, never by eye** — render the SVG, threshold both images and
+compare: mismatch ratio and bounding box. Eyeballing a side-by-side whose panels
+sit on different backgrounds reliably produces false "it is distorted" calls.
+A good trace lands near 0.1 % mismatched pixels with an identical bounding box.
+On macOS `qlmanage -t -s <size> -o <dir> icon.svg` renders faithfully;
+ImageMagick's built-in SVG renderer does not.
 
 ### bundle.json
 
@@ -1046,6 +1070,14 @@ See [`examples/hybrid-trigger/NewRecord.js`](examples/hybrid-trigger/NewRecord.j
 
 ### Trigger component.json Requirements
 
+> **Not every webhook component is a trigger.** An *action* that starts a
+> long-running provider job can also carry `"webhook": true` and hand the
+> provider `context.getWebhookUrl()`, so the result comes back to the very
+> component that submitted the job (ports: `out` = job id, `done` = result).
+> That is the **self-callback** pattern — see `14-async-components.md`. Do NOT
+> use `tick()` to deliver a job's result: a tick emit has no message scope and
+> cannot continue the branch that started the job.
+
 1. **NO `inPorts`**: Triggers must NOT have input ports
 2. **Use `properties`**: Configuration is defined in `properties`, not `inPorts`
 3. **Set appropriate flags**:
@@ -1664,7 +1696,7 @@ mocha works everywhere.)
 
 ### End-to-End (E2E) Test Flows
 
-E2E test flows are automated workflow tests stored as `test-flow*.json` files in the connector's root directory (`src/<vendor>/<connector_name>/`). These flows test the complete integration by executing components in a realistic sequence.
+E2E test flows are automated workflow tests stored as `test-flow-*.json` files in the connector's `artifacts/test-flows/` directory (`src/<vendor>/<connector_name>/artifacts/test-flows/`). These flows test the complete integration by executing components in a realistic sequence.
 
 **Important**: Connectors should have **multiple smaller test flows** rather than one large flow. Each flow should test a specific feature or workflow (e.g., `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`). This approach makes tests easier to maintain, debug, and understand.
 
@@ -1683,6 +1715,14 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
 - Test flow names MUST follow the format: `"E2E Connector Name - test type"`
 - Examples: `"E2E Google Docs - images"`, `"E2E Slack - messages"`, `"E2E GitHub - pull requests"`
 - The testCase field in ProcessE2EResults should match this format
+
+**Component IDs MUST be freshly generated UUIDs** (`crypto.randomUUID()`) —
+never readable slugs like `create-task`. The engine resolves OAuth scopes via a
+global componentId lookup that ignores the flow id, so readable ids reused
+across flows bind accounts to the wrong flow (see `11-e2e-flow-generation.md`,
+rule 0b; enforced by the `component-id-uuid` validator). The JSON snippets in
+THIS document use short readable ids purely for legibility — do not copy them
+into real flows.
 
 **Basic Structure**:
 ```json
@@ -1732,51 +1772,43 @@ Test flows are JSON files that define a workflow using the Appmixer flow format.
 
 #### Component Layout Rules (IMPORTANT)
 
-For clean, readable flows without crossing lines or cycles, follow these spacing rules strictly:
+For clean, readable flows without crossing lines or cycles, lay flows out as a
+**left→right staircase** (checked, as warnings, by the `layout` validator —
+same rules as `11-e2e-flow-generation.md` rule 14):
+
+**Grid minimums**:
+- `MIN_DX = 208px` — horizontal gap between connected components
+- `MIN_DY = 128px` — vertical gap between rows
+- First component: `x = 64, y = 16`
 
 **Rule 1: Linear Sequence (A → B)**
-When component A connects to component B in sequence:
 ```
-B.x = A.x + 192   (horizontal spacing: 192px)
-B.y = A.y         (same vertical level)
-```
-
-**Rule 2: Branching (A → B, A → C)**
-When component A branches to two components (B and C):
-```
-B.x = A.x + 192   (horizontal spacing: 192px)
-B.y = A.y         (same vertical level as A)
-
-C.x = B.x         (SAME x as B! Vertical alignment)
-C.y = A.y + 128   (vertical spacing: 128px below A)
+B.x = A.x + 208   (horizontal spacing)
+B.y = A.y         (same row)
 ```
 
-**Example - Linear Flow**:
-```
-OnStart (64, 16) → SetVariable (256, 16) → Create (448, 16) → Assert (640, 16)
-                   64+192=256              256+192=448          448+192=640
-```
+**Rule 2: Staircase (one row per tested component)** — a tested component and
+**its** Assert share the same `y` (the Assert sits at `x + 208`); the NEXT
+tested component steps down to `y + 128` (and right), so each
+component→Assert pair gets its own row. Connected components either share a
+row (Δy = 0) or are ≥ 128 apart — never backward or overlapping edges.
 
-**Example - Branching Flow**:
+**Example (staircase)**:
 ```
-Create (448, 16) 
-  ├→ Assert rawJson (640, 16)      [B: x=448+192, y=16]
-  └→ Delete (640, 144)             [C: x=640 (same as B), y=16+128]
-       └→ Create fields (832, 144) [linear: 640+192]
-            └→ Assert fields (1024, 144)
-                 └→ Delete fields (1024, 272) [C: x=1024 (same as Assert), y=144+128]
+OnStart (64, 16) → Create (272, 16)
+Get (480, 144) → Assert (688, 144)
+AfterAll (896, 144) → Delete cleanup (1104, 144) → ProcessE2EResults (1312, 144)
 ```
-
-**Constants**:
-- `deltaX = 192px` - horizontal spacing between sequential components
-- `deltaY = 128px` - vertical spacing for branching
-
-**Start Position**:
-- First component: `x = 64, y = 16`
+AfterAll → cleanup (Delete) → ProcessE2EResults continue to the right after
+the last Assert (see Required Components below).
 
 #### Required Components
 
-Every E2E test flow MUST include these components in sequence:
+Every E2E test flow MUST include these components in sequence — and **every
+component in the flow MUST carry fail-fast error handling**:
+`"errorHandling": { "autoRetry": false, "onError": "stopFlow" }` (see
+`11-e2e-flow-generation.md` rule 0; enforced by the `error-handling`
+validator).
 
 1. **OnStart** (`appmixer.utils.controls.OnStart`)
     - Triggers the flow execution
@@ -1788,25 +1820,32 @@ Every E2E test flow MUST include these components in sequence:
     - Should test main CRUD operations (Create, Read, Update, Delete)
     - Chain components to test realistic workflows
 
-4. **Assert Components** (`appmixer.utils.test.Assert`)
+3. **Assert Components** (`appmixer.utils.test.Assert`)
     - Validate component outputs
     - Supported assertions: `equal`, `notEmpty`, `regex`
     - Multiple assertions can be used throughout the flow
-    - **Layout rule**: When a Create/Get component branches, Assert goes HORIZONTALLY (x + 192px, same y), while Delete goes VERTICALLY below (same x, y + 128px)
+    - **Layout rule**: a tested component and its Assert share the same row
+      (Assert at x + 208); the next tested component starts a new row (see
+      Layout Rules above)
     - Each Assert MUST be connected to AfterAll to report test results
 
-5. **AfterAll** (`appmixer.utils.test.AfterAll`)
-    - Aggregation point that receives outputs from all test and deletion components
+4. **AfterAll** (`appmixer.utils.test.AfterAll`)
+    - Aggregation point that receives the outputs of **ALL Assert components**
+      in the flow
     - Critical for proper flow termination and cleanup
-    - **Connection rule**: AfterAll should receive inputs from **the final Delete component** and **all Assert components** in the flow
-    - Should include timeout property (e.g., 120 seconds for complex operations)
-    - Position: `x = final_component.x + 192, y = last_row.y` (continues the sequence)
-    - **Key**: AfterAll validates all assertions passed before cleanup operations run
+    - **Connection rule**: every Assert feeds AfterAll; **cleanup (Delete)
+      components come AFTER AfterAll** (AfterAll → cleanup →
+      ProcessE2EResults), so cleanup runs once all assertions have reported
+    - Should include a `timeout` property (e.g. 180 seconds; use 420–600 for
+      trigger flows waiting on webhooks or manual steps — see
+      `11-e2e-flow-generation.md` rule 18)
+    - Position: `x = last_assert.x + 208, y = last_row.y` (continues the sequence)
 
-6. **ProcessE2EResults** (`appmixer.utils.test.ProcessE2EResults`)
+5. **ProcessE2EResults** (`appmixer.utils.test.ProcessE2EResults`)
     - Final component that processes test results
     - REQUIRED for all E2E test flows
-    - Must be connected after cleanup operations
+    - Connected after the cleanup components (or directly after AfterAll when
+      the flow creates nothing to clean up)
     - Reports success/failure to test infrastructure
 
 #### ProcessE2EResults Component Configuration
@@ -1945,8 +1984,64 @@ Tests must pass on repeated runs without input changes:
 - **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` to compute future dates dynamically. Hardcoded dates expire and tests break.
 - **Create + Delete cleanup**: If the API rejects duplicates (e.g. contacts by email), the test MUST delete created resources at the end.
 - **Delete component placement**: Delete components should be placed DIRECTLY BELOW their corresponding Assert component (same x position, y + 128px) to maintain clean visual layout and avoid crossing connection lines.
-- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: add a CodeBlock delay (`await new Promise(r => setTimeout(r, 5000))`).
+- **Search/Find race conditions**: Many APIs have eventual consistency. A record created 1 second ago may not appear in search results. Best approach: search for a pre-existing test record instead of a just-created one. Alternative: insert `appmixer.utils.timers.Wait` with `interval: "1m"` (minimum unit is minutes) — CodeBlock CANNOT delay: it runs synchronously in isolated-vm (`evalSync`), `await`/`setTimeout`/Promises error out.
 - **Cross-component variable references**: When referencing variables from indirect upstream components (2+ hops), prefer direct upstream references. E.g. use `$.find-items.out.id` instead of `$.create-item.out.id` when the update is triggered by find.
+
+#### Provider Latency Is a Design Input
+
+Before authoring a flow around a polling trigger, **measure how long the
+provider takes to make a new record visible**, and size the `AfterAll` timeout
+from that. Do not assume "a few seconds".
+
+Real case: Deepgram's request log lags **12–17 minutes** — records created at
+13:39 were absent at 13:50 and present at 13:56, and a job's detail endpoint
+answers `200` with an empty body immediately after the submit. Every trigger
+flow authored with a 420 s window was structurally unable to pass, no matter
+what the component code did.
+
+When the window is long, the runner needs a matching one:
+
+```bash
+AGENT_TIMEOUT_MS=3600000 appmixer e2e run <flowId> --fix --timeout 1700
+```
+
+(Budget the overall `AGENT_TIMEOUT_MS` for TWO windows plus overhead — a clean
+timeout on a trigger flow triggers one deterministic re-run, and a budget that
+only covers one window kills the runner mid-retry; see `13-e2e-run.md`.)
+
+If a component can get its result via a callback instead (see
+`14-async-components.md`), that lag disappears — 4 seconds instead of 17 minutes
+— and it is worth changing the component rather than nursing the timeouts.
+
+#### Provoking Failure States
+
+A trigger that watches a **failure** (failed job, rejected request, bounced
+message) needs a provocation the provider **accepts** and then fails. Verify
+that at design time.
+
+Real case: the Deepgram Failed Request flow submitted an unreachable audio URL.
+The provider fetches that URL while handling the submit and rejects the whole
+call synchronously (`415`), so the component throws, the flow stops on first
+error the way E2E flows must, and the trigger never sees anything — and a
+rejected submit is not logged as a failed request either. The flow could never
+pass.
+
+If no deterministic provocation exists, do not ship a flow that cannot pass.
+Remove it, cover the component with review plus its `test()` method, and write
+down why in `artifacts/test-flows/README.md` so the next person does not re-add
+it.
+
+#### Tenant-Bound Values in Flows
+
+`appmixer e2e import` re-resolves **account** bindings, but nothing else. A
+trigger's `config.properties` (e.g. `projectId`, `boardId`, `viewId`) is a plain
+string that belongs to whoever's credentials authored the flow. Swap the E2E
+account and those flows fail with `404 … cannot be found`.
+
+- Keep the list of tenant-bound properties in `artifacts/test-flows/README.md`.
+- Remember that swapping the account also resets the **data** the flows rely on:
+  a fresh API key can mean an empty project, so `Find*` components correctly
+  return `notFound` and the asserts never fire.
 
 #### Component Configuration Pattern
 
@@ -2334,35 +2429,37 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - Connect cleanup components properly
 
 8. **Component Coordinates and Layout**
-    - **Horizontal spacing**: Use **192px** between sequentially connected components on the x-axis
-    - **Vertical spacing**: Use **128px** between parallel rows/branches on the y-axis
+    - **Horizontal spacing**: at least **208px** (MIN_DX) between sequentially connected components on the x-axis
+    - **Vertical spacing**: at least **128px** (MIN_DY) between parallel rows/branches on the y-axis
     - **Starting position**: OnStart at `x: 64, y: 16`
-    - **Diagonal staircase pattern**: When operations branch off sequentially (Create → Get → Update → ...), each subsequent action moves **+192px right** and **+128px down**, forming a diagonal:
+    - **Diagonal staircase pattern**: When operations branch off sequentially (Create → Get → Update → ...), each subsequent action moves **+208px right** and **+128px down**, forming a diagonal:
       ```
-      on-start (64,16) → set-variables (272,16) → create (464,16)
+      on-start (64,16) → set-variables (272,16) → create (480,16)
                                                        ↓
-                                                   get (656,144)
+                                                   get (688,144)
                                                        ↓
-                                                   update (848,272)
+                                                   update (896,272)
                                                        ↓
-                                                   get-content (1040,400)
+                                                   get-content (1104,400)
       ```
-    - **Assert column**: All Assert components are **right-aligned at a fixed x position** (e.g., `x: 1200`), each at the **same y as its corresponding action**:
+    - **Assert column**: All Assert components are **right-aligned at a fixed x position** (e.g., `x: 1312`), each at the **same y as its corresponding action**:
       ```
-      create (464,16)          →  assert-create (1200,16)
-      get (656,144)            →  assert-get (1200,144)
-      update (848,272)         →  assert-update (1200,272)
-      get-content (1040,400)   →  assert-get-content (1200,400)
+      create (480,16)          →  assert-create (1312,16)
+      get (688,144)            →  assert-get (1312,144)
+      update (896,272)         →  assert-update (1312,272)
+      get-content (1104,400)   →  assert-get-content (1312,400)
       ```
-    - **Tail chain (AfterAll → Cleanup → ProcessResults)**: Place on a **horizontal line** at approximately the vertical center of the flow (e.g., `y: 144`), spaced ~192px apart after the assert column:
+    - **Tail chain (AfterAll → Cleanup → ProcessResults)**: Place on a **horizontal line** at approximately the vertical center of the flow (e.g., `y: 144`), spaced ≥208px apart after the assert column:
       ```
-      after-all (1392,144) → delete (1616,144) → process-results (1792,144)
+      after-all (1520,144) → delete (1728,144) → process-results (1936,144)
       ```
 
 9. **Naming Conventions**
-    - Use descriptive component IDs: `create-document`, `assert-content-exists`
-    - Name test flows: `test-flow-<feature>.json` (e.g., `test-flow-crud.json`, `test-flow-list.json`)
-    - Use clear, descriptive names that indicate what the flow tests
+    - Component IDs are **freshly generated UUIDs** (`crypto.randomUUID()`) —
+      never readable slugs (see Component IDs above; `component-id-uuid`
+      validator)
+    - Name test flow files: `test-flow-<feature>.json` (e.g., `test-flow-crud.json`, `test-flow-list.json`)
+    - Use clear, descriptive flow names that indicate what the flow tests
 
 #### Example Test Flow Pattern
 
@@ -2386,7 +2483,7 @@ See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
     - Identify what to assert
 
 3. **Create JSON File**
-    - Name: `src/<vendor>/<connector>/test-flow-<feature>.json`
+    - Name: `src/<vendor>/<connector>/artifacts/test-flows/test-flow-<feature>.json`
     - Use descriptive feature names: `crud`, `search`, `webhooks`, `list`, etc.
 
 4. **Add Required Components**
@@ -2456,11 +2553,10 @@ See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
 
 #### Reference Test Flows
 
-Good examples to reference:
-- `src/appmixer/googleDocs/test-flow.json` - Document CRUD operations
-- `src/appmixer/monday/test-flow.json` - Board management
-- `src/appmixer/jira/test-flow.json` - Issue tracking
-- `src/appmixer/hubspot/test-flow-create-deal.json` - CRM operations
+Good examples to reference (under each connector's `artifacts/test-flows/`):
+- `src/appmixer/googleDocs/artifacts/test-flows/` - Document CRUD operations
+- `src/appmixer/todoist/artifacts/test-flows/` - Task/project/label workflows
+- `src/appmixer/hubspot/artifacts/test-flows/` - CRM operations
 
 ---
 
@@ -2628,8 +2724,11 @@ trigger's `test()`).
 Run the workspace's lint/validators first when it provides them (the
 appmixer-connectors repo ships `npm run lint` + `npm run validate`). Then verify the method actually emits a realistic item. Two options:
 
-**Option 1 — Appmixer CLI** (requires a CLI version that supports the `--test` flag; check with
-`appmixer test component --help`):
+**Option 1 — Appmixer CLI** (requires version **2.6.0 or newer** — the `--test` flag is
+not implemented in 2.3.4 and older; check `appmixer --version` and
+`appmixer test component --help`. On older CLIs skip to Option 2, or verify the trigger's
+production path by running its real `tick()` loop with a short `-t` period and creating a
+matching resource mid-run):
 
 ```bash
 # one-time: store auth credentials for the connector
@@ -2898,3 +2997,1214 @@ Worked examples across the groups:
 - **`utils.forms.FormTrigger`** (`src/appmixer/utils/forms/FormTrigger/`) — `test()` synthesizes
   one entry from `properties.fields.ADD`, matching the exact shape a real POST submission
   produces (`field_<index>` keys, string values, checkbox → boolean, `defaultValue` preferred).
+
+---
+
+# E2E Test Flows
+
+Generate E2E test flow JSON files for a connector's components. **You (the agent)
+write the flows directly** — there is no separate sub-agent. After writing them
+you run a deterministic validator and fix anything it flags, looping until clean.
+
+> **Tooling:** the validator and the canonical flow template ship with the
+> `appmixer` CLI (`npm i -g appmixer`, version **>= 2.6.0** — the version-gate
+> snippet is in `12-e2e-upload.md` Prerequisites; quick probe:
+> `appmixer e2e validate --help`). No other setup is needed.
+
+## How it works
+
+1. **Pick the components** to cover (one trigger or action per flow; default: all
+   testable components of the connector).
+2. **Read the canonical template**
+   [`examples/test-flow-template.json`](examples/test-flow-template.json)
+   (shipped next to this document) — copy its structure (OnStart → setup →
+   component-under-test → Assert → AfterAll → ProcessE2EResults). It is a
+   complete, working example.
+
+   ⚠️ **The template is the ONLY structural source of truth. Do NOT copy patterns
+   from other connectors' committed test flows** — many pre-date the current
+   rules and still contain deprecated shapes, most notoriously
+   `appmixer.utils.test.BeforeAll` (forbidden — the `no-beforeall` validator
+   rejects it) and components without `errorHandling`. If a flow you are looking
+   at disagrees with the template, the template wins.
+3. **Read each component's `component.json`** under
+   `src/<vendor>/<connector>/...` (`<vendor>` = the namespace dir under `src/`;
+   `appmixer` is only the default) to get the REAL input
+   schema and output port name(s) — do not guess them.
+4. **Write** each flow to
+   `src/<vendor>/<connector>/artifacts/test-flows/test-flow-<name>.json`.
+5. **Validate**:
+   ```bash
+   appmixer e2e validate src/<vendor>/<connector>/artifacts/test-flows
+   ```
+   Fix every reported failure and re-run until it prints `Validation passed`.
+   Warnings are informational (improve them when easy, but they don't block).
+   (`--ruleset basic` limits the run to the generic flow rules; server-side
+   validation of a live flow is `appmixer flow validate <flowId>`.
+   `--connectors-dir <dir>` points the coverage rules at the workspace when
+   running from elsewhere.)
+
+## Critical rules (the validator enforces these)
+
+0. **Every component MUST carry fail-fast error handling** —
+   `"errorHandling": { "autoRetry": false, "onError": "stopFlow" }` on every
+   component in the flow (the template already does this). **Why it matters:**
+   without it the engine silently auto-retries a failing component with backoff
+   while the flow keeps "running" — failures surface late and
+   non-deterministically. With it, the first component error stops the flow
+   immediately: the run has a clear terminal state, logs carry the single real
+   error, and the runner detects the failure in seconds. Enforced by
+   `error-handling`.
+
+0b. **Component ids MUST be unique UUIDs** — every key under `flow` (and every
+   reference to it in `source.in`, `config.transform.in`, and `$.<id>.<port>`
+   variable paths) must be a freshly generated UUID (`crypto.randomUUID()`), NOT
+   a readable slug like `create-project` / `get-project`. The template already
+   does this. **Why it matters:** the engine resolves a component's OAuth scopes
+   via a GLOBAL `findByComponentId(userId, componentId)` lookup that ignores the
+   flow id; readable ids are reused across every flow, so connecting an account
+   binds to the wrong flow and requests only the base scope → the provider
+   rejects auth ("no supported scopes"). Enforced by `component-id-uuid`.
+
+0c. **Key `source` and `config.transform` by the component's REAL inPort name** —
+   read it from the component.json `inPorts` of the component you are wiring INTO.
+   It is `in` for most components, but NOT all (salesforce CreateLead/UpdateLead →
+   `lead`, CreateContact/UpdateContact → `contact`). **Why it matters:** a wrong
+   key uploads fine and even passes the variables check, but the engine rejects
+   flow START with an opaque 400 "Malformed transformation" that names no
+   component. Enforced by `inport-key-match`.
+
+0d. **Don't invent `config.properties.account`** in newly generated flows —
+   binding happens at import time (`appmixer e2e import`, optionally
+   `--account <accountId>`). Flows exported from a live instance
+   (`appmixer e2e export`) DO carry that instance's account IDs — leave them
+   in place; the import ignores IDs that don't exist on the target instance and
+   rebinds a live account instead.
+
+1. **Flow name starts with `E2E `** and is descriptive.
+2. **Required components present**: `OnStart`, `AfterAll`, `ProcessE2EResults`
+   (wired per the template).
+3. **NEVER assert on Raw Output** — `$.comp-id.out` / `$.comp-id.channels` always
+   contains something, so the assertion is meaningless. Assert a SPECIFIC field,
+   e.g. `$.comp-id.out.id`.
+4. **Use the REAL output port name** — it is not always `out` (e.g. Slack
+   `ListChannels` uses `channels`, `utils.files.SaveFile` uses `file`). Read
+   `outPorts[*].name` in `component.json`. A link to a non-existent port uploads
+   and starts fine but the listener NEVER receives a message — the flow stalls
+   with zero errors until AfterAll times out. Enforced by `outport-exists`
+   (both links and `$.id.port.…` variable paths).
+5. **List/outputType components need a single-item `outputType`** in the flow
+   transform so the component emits one item and individual fields like
+   `$.comp-id.out.id` are accessible — assert on those fields **directly** (do NOT
+   route through SetVariable/CodeBlock). **Read the component's
+   `inspector.inputs.outputType.options` and use a value that is actually
+   declared there** — connectors differ (`first` vs `object` = "one item at a
+   time"); a value the runtime happens to accept but the inspector doesn't
+   declare renders as a validation error in the designer. The validator allows
+   `$.comp.out.field` precisely when the flow sets a single-item outputType.
+   Note: with `first` an empty result throws CancelError; with per-record modes
+   (`object` microsoft-style, `item` xero-style) an empty result emits NOTHING
+   (flow stalls until AfterAll timeout) — filter for data you created in the
+   same flow so the result is never empty.
+5b. **Connectors without `first` (e.g. xero: `item`/`items`/`file`)** — prefer the
+   array mode (`items`/`array`) for components under test and assert the wrapper
+   field notEmpty (`$.comp.<port>.items` / `.result` for `array`): it always
+   emits, so an empty result fails LOUDLY in the Assert instead of hanging
+   AfterAll.
+5c. **Per-record modes must NOT feed the middle of a chain** — `item`/`object`
+   emit one message PER RECORD, so every downstream component re-executes once
+   per record (real case: ListTenants in `item` mode on an account with two
+   Xero organisations ran the entire pipeline twice, in both orgs). Mid-chain,
+   use `items`/`array` (single message) and extract the first record on the
+   consumer with a `g_jsonPath "$[0].<field>"` modifier. Enforced by
+   `outputtype-fanout`.
+6. **Assert variable paths must resolve to a scalar** (string/number/boolean) —
+   never an object or array; use `g_jsonPath` / `g_first` to extract a leaf.
+6b. **Never reference deeper than the sender's STATIC outPort contract** —
+   `$.x.out.response.opportunityid` resolves at RUNTIME (the flow even passes),
+   but if the sender declares only `response`/`status`/`statusText`
+   (e.g. MakeApiCall), the designer's variable picker cannot offer the deep path
+   and renders a red invalid-variable chip. Reference the deepest DECLARED path
+   and extract the leaf with a modifier:
+   `"variable": "$.x.out.response", "functions": [{ "name": "g_jsonPath",
+   "params": [{ "value": "$.opportunityid" }] }]` (note: `params`, not `args`).
+   Dynamic outPorts (options generated by a live `source` call, e.g. entity
+   triggers) DO offer leaf fields — reference those directly. Enforced by
+   `static-outport-deep-path`.
+7. **Input fields** should use realistic values that satisfy the component's
+   `inPorts[0].schema` (required fields set, no generic placeholders).
+8. **No numeric array indexing** in variable paths (`$.x.out.items.0.id` does NOT
+   resolve) — use a modifier (`g_jsonPath "$[0].field"`, `g_first`, `g_last`).
+9. **Bind every modifier in `lambda`** — a field that defines `modifiers` must have
+   a non-empty lambda value (`{{{var-id}}}`); Assert clause `field` must not be
+   empty. An empty binding silently ignores the modifier.
+9b. **String-typed inputs take STRINGS — serialize arrays/objects as JSON** —
+   key-value inspector inputs (MakeApiCall `headers`/`parameters`) declare
+   `"type": "string"` in the schema; the runtime parses either form, but a raw
+   array (`"headers": [{ "key": "Prefer", "value": "return=representation" }]`)
+   fails the designer's schema validation with a red "must be string" chip.
+   Write `"headers": "[{\"key\": \"Prefer\", \"value\": \"return=representation\"}]"`.
+   Enforced by `lambda-string-schema`.
+10. **Assert assertions** are only `equal`, `notEmpty`, `regex`.
+11. **Prefer modifiers over CodeBlock** (g_jsonPath/g_first/g_now+g_addTimeSpan/…);
+    CodeBlock is a last resort.
+12. **No hardcoded dates** — compute with `g_now` + `g_addTimeSpan` (determinism).
+13. **Clean up what you create** — a flow that Creates a resource should Delete it.
+14. **Layout flows as a left→right staircase** — grid minimums **MIN_DX = 208**
+    (horizontal gap between components) and **MIN_DY = 128** (vertical). Pattern: a
+    tested component and **its** Assert share the same **y**; the Assert sits at the
+    component's **x + MIN_DX**. The next tested component steps down to **y + MIN_DY**
+    (and right), so each component→Assert pair gets its own row. OnStart/SetVariable
+    lead in on the first row; AfterAll → cleanup (Delete) → ProcessE2EResults follow
+    to the right after the last Assert. Connected components either share a row
+    (Δy = 0) or are ≥ MIN_DY apart; never backward/overlapping edges. Enforced
+    (as warnings) by `layout`.
+15. **Cover every component** — each connector **action** should appear in at least
+    one flow. `component-coverage` excludes `trigger: true` components, so it only
+    flags uncovered **actions** — but triggers CAN and SHOULD be E2E-covered too,
+    using the provoke pattern below.
+16. **Never verify a Create via full-text search** — search endpoints
+    (`searchTerm`-style inputs) read an eventually-consistent index: a record
+    created a second earlier is deterministically missing (and archived/deleted
+    records are often excluded by default). Verify with Get-by-ID or a
+    consistent list filter (`where Name=="…"` + `includeArchived` in Xero) —
+    list endpoints read the primary store.
+17. **Unique names per run where the API enforces uniqueness** — contact names,
+    option/category names etc. reject duplicates. Either make the name unique
+    per run (append `{{{mod}}}` bound to `$.<onStart>.out.started`, or
+    `g_now`/timestamp modifiers) or create+archive/delete in the same flow so
+    the name is reusable. NEVER create per-run instances of org-capped
+    resources (e.g. Xero allows max 2 active tracking categories per org) —
+    reuse an existing one via `items[0]` instead.
+18. **Trigger flows (provoke pattern)** — the trigger sits **sourceless** in the
+    flow next to the normal OnStart chain; an action in the same flow provokes the
+    event it listens for:
+    - webhook trigger: `OnStart → SetVariable → Wait 1m → Create/Update/Delete
+      (provokes) …` + `Trigger → Assert → cleanup` — the Wait lets the provider-side
+      subscription propagate before provoking; the trigger's subscription itself is
+      created during flow start, before OnStart fires.
+    - polling trigger (e.g. event-start): create data the first poll will match
+      (an ongoing/imminent item) — no Wait needed.
+    - Webhook notifications can take **minutes** to arrive (MS Graph: ~5 measured)
+      — set the AfterAll `timeout` to 420 and expect the runner to wait, not fail.
+    - Cleanup should consume the TRIGGER's output (`$.trigger.out.id`) — it then
+      doubles as the assertion that the trigger fired.
+    - **No native action component for the provoke?** Use the connector's
+      `MakeApiCall` in the provoke lane. Extract values from its response with
+      `$.<makeApiCallId>.out.body` + a `g_jsonPath` modifier (its out port is
+      `{status, body}` — there is no `response` field, and deep paths like
+      `.out.body.order.id` are designer-invalid). Chain as many calls as the
+      provoke needs (create → lookup → mutate), each step reading ids from the
+      previous step's `body`.
+    - **Transition-fired webhooks**: many events fire on a STATE TRANSITION, not
+      on a state (orders/paid, fulfilled, closed…). The provoke must create the
+      entity in a NON-target state and then explicitly transition it — and watch
+      for API defaults that silently pre-satisfy the target state (Shopify:
+      API-created orders default to `financial_status: paid` even when omitted,
+      so orders/paid never fires unless you create with `pending` and then POST
+      a `sale` transaction). If a created-as-X entity doesn't fire "X" events,
+      that's why.
+    - **Event not provokable via API at all** (real storefront/UI action:
+      checkout sessions, customer-portal steps)? Still generate the flow —
+      trigger lane + `OnStart → Wait` (validators require OnStart) — and add a
+      sticky `note` in the flow JSON with numbered manual steps to fire the
+      event, plus a longer AfterAll `timeout` (600) so a human has time to click
+      through. The flow then serves as a repeatable manual verification harness.
+    - **Verify the trigger's topic fires at all** before writing the flow: a
+      generic "updated" topic can be dead for the whole real journey (per-step
+      topics fire instead) — see the multi-topic trigger pattern in
+      `07-component-types.md`. A wrong topic produces a flow that registers
+      fine and times out forever.
+
+(Failures 1-10 — including 5c, 6b and 9b — fail validation; 11-18 are warnings
+or generation guidance.)
+
+## Adding / changing a rule
+
+The validator suite lives in the appmixer CLI repo (`src/validators/rules/*.js`):
+each rule exports `{ name, description, run(ctx) }` and calls `ctx.addFailure` /
+`ctx.addWarning`; shared check logic lives in `src/validators/rules/lib/`. Add a
+new file there to add a rule — the suite auto-discovers it.
+
+## Next step
+
+Publish the connector and upload the flows per `12-e2e-upload.md` (part of the `test-connector` skill).
+
+---
+
+# Publish & Prepare for E2E
+
+Publish a connector to a live Appmixer instance and prepare it for E2E runs
+(auth account, validation). Flow upload is `appmixer e2e import`'s job — it
+createOrUpdates every flow from the local JSON by its E2E identity
+(customFields `category`/`connector`/`name`), injects the E2E stores, binds
+accounts (+ validity preflight) and validates variables server-side. Running
+is `appmixer e2e run` (see `13-e2e-run.md`).
+
+## Prerequisites
+
+- **`appmixer` CLI** — installed (`npm i -g appmixer`) at version **2.6.0 or
+  newer** (the first with the `e2e` commands). This is the ONLY dependency —
+  there is no other tooling and no required environment variable.
+  **Verify the version before anything else** and stop with an upgrade hint
+  when it is too old:
+
+  ```bash
+  V=$(appmixer --version 2>/dev/null) || { echo "appmixer CLI not installed — npm i -g appmixer"; exit 1; }
+  [ "$(printf '%s\n2.6.0\n' "$V" | sort -V | head -1)" = "2.6.0" ] \
+    || { echo "appmixer >= 2.6.0 required (found $V) — npm i -g appmixer@latest"; exit 1; }
+  ```
+- **CLI configured against the target instance:**
+  ```bash
+  appmixer url https://api.your-instance.com
+  appmixer login your@email.com          # the e2e user — see Step 1
+  ```
+  If the CLI is not configured yet, ask the user for the API URL and the e2e
+  user's credentials and run the two commands. Every command in this skill
+  (publish, `e2e import/run/...`) uses this session.
+- **Run from the connector workspace** — the current directory (or a parent)
+  contains `src/<vendor>/<connector>/`; the e2e commands resolve the
+  workspace from the cwd (`--connectors-dir <dir>` overrides it when running
+  from elsewhere — see the worktree section below). `<vendor>` is the
+  namespace directory under `src/` — `appmixer` is only the default; a
+  workspace can hold several vendors side by side. Bare connector names are
+  searched across all vendor dirs; when ambiguous, qualify as
+  `<vendor>/<connector>`.
+- Test flow JSON files in `artifacts/test-flows/` (generated per `11-e2e-flow-generation.md`, shipped with `build-connector`)
+
+**⚠️ Instance check:** the CLI session decides WHICH INSTANCE every command
+talks to; a wrong one looks like auth breakage (fresh tokens get 401 "Invalid
+JWT", flow/store listings return foreign IDs/empty lists). Before anything
+else, confirm `appmixer url` prints the instance you expect — abort if it
+doesn't.
+
+> **Optional env overrides (CI, dedicated e2e user):** the e2e commands also
+> honor `APPMIXER_TOKEN` (pre-obtained JWT) and the `APPMIXER_SKILL_*`
+> variables (`_API_URL`, `_USERNAME`, `_PASSWORD`, `_ACCOUNT_ID`,
+> `_CONNECTORS_DIR`, `_UI_URL`) — CLI features documented in the CLI README.
+> When any are exported they take precedence over the CLI session; make sure
+> they point at the same instance and user, or unset them.
+
+## Quick Start
+
+```bash
+# 1. Publish the connector (as the e2e user — see Step 1)
+cd src/<vendor>   # from the workspace root
+appmixer pack <connector>
+appmixer publish <vendor>.<connector>.zip   # pack outputs <vendor>.<connector>.zip
+
+# 2. Make sure an auth account exists for the connector (Step 2)
+appmixer account ls --json
+
+# 3. Import the flows — local validation, upload, store injection, account
+#    binding and server-side variable validation in one step (exit 1 = fix first)
+appmixer e2e import src/<vendor>/<connector>/artifacts/test-flows
+
+# 4. Run each flow by its ID (see 13-e2e-run.md)
+appmixer e2e list -c <vendor>:<connector> --json
+appmixer e2e run <flowId> --fix
+```
+
+## Workflow
+
+### Step 1: Publish Connector
+
+**⚠️ Components are per-user copies.** `appmixer publish`/`remove` act on the copies
+owned by whoever the CLI is logged in as — if that is NOT the user who runs the
+E2E flows, the publish looks successful but the e2e user's designer, flows and
+API keep serving **their own stale copy**. ALWAYS make sure the CLI login is
+the e2e user before publishing (idempotent, do it every session — "already
+logged in" may mean logged in as someone else):
+
+```bash
+appmixer url https://api.your-instance.com
+appmixer login <e2e-user@email>     # prompts for the password
+# non-interactive alternative: printf '%s\n' "$PASSWORD" | appmixer login <e2e-user@email>
+```
+
+**Run the workspace validators for the WHOLE connector first** (when the
+workspace ships them — the appmixer-connectors repo does; skip otherwise) —
+pre-commit only validates CHANGED files, so long-standing bugs (e.g. a dynamic
+outPort source missing a required input → empty variable pickers / invalid
+chips in the designer) survive for months until someone runs the full check:
+
+```bash
+node scripts/validate.js --connector <connector>   # from the workspace root
+# triage the failures for the components you are about to test; legacy findings
+# on untouched components are threshold-gated and may be left alone
+```
+
+**⚠️ Run the validators from `dev`, not from the branch.** The validator set
+lives in the repo, so a branch cut before a validator was added never runs it
+and reports a clean connector. Real case: a branch predating
+`component-icon-svg` and `tick-requires-tick-flag` validated clean while 14 icon
+failures waited on the other side of the rebase. Rebase first, or copy the
+missing `scripts/validators/*.js` in from `dev` before trusting a clean run.
+
+**"Legacy findings may be left alone" applies to the repo-wide run, not to
+commits.** The pre-commit hook validates every CHANGED file strictly, with no
+thresholds, so a one-line fix in a connector that carries pre-existing debt is
+blocked by that debt rather than by your change. Either clear it, or commit with
+`--no-verify` and say so in your report.
+
+Pack and publish (absolute zip path — `pack` writes the zip into the CWD and stale
+zips from earlier sessions may exist elsewhere in the repo; a relative `publish`
+after a cwd reset silently publishes the wrong one):
+
+```bash
+cd src/<vendor>   # from the workspace root
+rm -f <vendor>.<connector>.zip
+appmixer pack <connector>
+appmixer publish "$PWD/<vendor>.<connector>.zip"
+```
+
+**⚠️ `appmixer remove` can fail with a transient 502/504 (Bad Gateway / Gateway
+Timeout) — the remove did NOT happen.** A publish right after appends a stale
+duplicate instead of refreshing (see the stale-snapshot section). Retry every
+failed remove until it prints `… removed.`, and only then publish.
+
+**Verify what the server actually stored** (as the e2e user):
+`GET /components/<full.component.name>` returns the stored component **zip** — unzip
+it and compare a marker (version, a changed URL) with your local component.json.
+The zip may legitimately contain the SAME file several times (each publish of an
+existing version appends a copy): that is harmless **only when all copies are
+byte-identical AND carry your marker** — otherwise remove + publish again:
+
+```bash
+# Reuse the CLI's stored login token and API URL (aligned with the e2e user in Step 1)
+TOKEN=$(node -e "console.log(require(require('os').homedir()+'/.config/configstore/appmixer.json').token)")
+BASE_URL=$(node -e "console.log(require(require('os').homedir()+'/.config/configstore/appmixer.json')['appmixer-url'].default.url)")
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BASE_URL/components/<vendor>.<connector>.<module>.<Component>" -o /tmp/comp.zip
+python3 - <<'EOF'
+import zipfile
+z = zipfile.ZipFile('/tmp/comp.zip')
+infos = [i for i in z.infolist() if i.filename.endswith('component.json')]
+contents = [z.read(i) for i in infos]
+marker = b'<some string unique to your change>'
+print(f'copies={len(contents)} identical={all(c == contents[0] for c in contents)} '
+      f'marker_in_all={all(marker in c for c in contents)}')
+EOF
+```
+
+### Step 2: Ensure Auth Account Exists
+
+List existing accounts (filter by service yourself — service is
+`<vendor>:<connector>`, nested connectors often authenticate at the top level,
+e.g. `appmixer:microsoft`):
+
+```bash
+appmixer account ls --json
+```
+
+**Creating an account is a user step.** The reliable path is a human
+authenticating in the Appmixer designer UI ("Connect account" on any component
+of the connector) — ask the user to do it and then re-list. Injecting an
+account directly (`appmixer account create <file>` with
+`{ "name": ..., "service": "<vendor>:<connector>", "token": {...}, "profileInfo": {} }`)
+also works, but mind the engine's requirements:
+
+- **OAuth2 scopes**: the engine validates scopes on account creation and reads
+  them from **`token.scope` (singular, array)** — `token.scopes` or a top-level
+  `scopes` field is silently ignored and the request fails with `400 "Scopes
+  provided have missing required scopes"`. Fill `token.scope` with the scope
+  array from the connector's `auth.js` if the token payload doesn't carry it.
+- **Service config must exist** (`GET /service-config/<vendor>:<connector>` must
+  return a `clientId`) — the engine instantiates the connector's auth module during
+  account creation and needs it. Without it the API fails with an opaque 500.
+  Set it first: `PUT /service-config/<vendor>:<connector>
+  {"clientId":"...","clientSecret":"..."}` (or via Backoffice > Services).
+- **500 wrapping `Request failed with status code 404`** on account creation means
+  the connector's `requestProfileInfo` makes an HTTP call that fails server-side
+  (e.g. the service has no userinfo endpoint). Fix the connector: derive profile
+  info without HTTP (decode JWT claims locally) or guard the call — then
+  remove + republish the connector (stale auth-module snapshots survive plain
+  publishes; a worker restart may be needed).
+
+Test the account is valid:
+```bash
+appmixer account test <accountId>
+# Should return {"ok":true}
+```
+
+**API-key connectors: check the key's SCOPES, not just its validity.** The runner
+diagnoses missing OAuth scopes; for API keys there is no such safety net, and a
+key can authenticate perfectly while every interesting endpoint answers 403. Real
+case: a Deepgram key listed projects happily and returned `403 … does not have
+the required scope` on every project-scoped endpoint, blocking five flows. Have
+the connector document which key scopes its components need (a line in the
+connector README) and check the E2E key against that list before running
+anything.
+
+Replacing the account also replaces the **tenant** behind it: a new key can
+belong to a different project or workspace, so the data the flows expect — records
+to find, request history to poll — is simply not there, and the failures look
+nothing like an auth problem.
+
+**⚠️ `{"ok":true}` may prove nothing.** The test runs the connector's
+`validateAccessToken`, and some connectors (e.g. salesforce) only compare a stored
+expiry date — a revoked/dead token still returns ok. Confirm with a REAL service
+call: hit a cheap component source endpoint with the account bound, the way the
+designer does:
+
+```bash
+TOKEN=$(node -e "console.log(require(require('os').homedir()+'/.config/configstore/appmixer.json').token)")
+BASE_URL=$(node -e "console.log(require(require('os').homedir()+'/.config/configstore/appmixer.json')['appmixer-url'].default.url)")
+curl -s -X POST "$BASE_URL/component/<vendor>/<connector>/<module>/<ListComponent>?outPort=out" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"componentId":"<any-component-id-with-this-account>","flowId":"<flowId>"}'
+# Options/data back = token really works. 401/403 (Bad_OAuth_Token, INVALID_SESSION_ID) = dead account.
+```
+
+Dead-account symptom downstream: flow START fails with 400 wrapping an inner 401
+AxiosError whose `config.url` points at the service (trigger `start()` calls), or
+components fail mid-run with 401/403. When several accounts exist for the service,
+test each and pin the working one with `appmixer e2e import --account <accountId>`.
+
+### Step 3: Flow Upload & Account Binding — `appmixer e2e import` Does It
+
+`appmixer e2e import <file|dir>` handles the whole upload-and-bind cycle:
+
+- **createOrUpdate by identity**: flows are identified on the instance by
+  customFields `category: "E2E_test_flow"`, `connector` (a ref like
+  `appmixer:google:gdrive`, derived from the file path or given via
+  `--connector`) and `name` (the flow's test-case name). A matching flow is
+  stopped and updated in place (`?forceUpdate=true`); flows are never deleted
+  and recreated. Legacy flows carrying only the category are matched by
+  display name and adopted (the identity fields are written on update).
+- Sets a description, strips server-only fields, enforces fail-fast
+  `errorHandling`.
+- **E2E stores**: creates `E2E Failed Tests` / `E2E Succeeded Tests` if missing
+  and injects their IDs into ProcessE2EResults.
+- **Account binding**: binds an account to every connector component
+  (precedence: `--account <id>` / `APPMIXER_SKILL_ACCOUNT_ID` override > the
+  component's own `config.properties.account` > first flow-authored account
+  that exists on the instance > first existing account of the service), then
+  validity-tests every bound account — a plain flow PUT always drops bindings,
+  which is why re-import after every edit is the rule.
+- **Server-side variable validation**: checks every transform variable against
+  what the designer's variables-fetch endpoint offers ("red chip" detection).
+  Any INVALID variable fails the import with exit 1.
+- Local validation (`appmixer e2e validate` rules) runs first by default;
+  `--no-validate` skips it.
+
+**Uploading without running** (rare — e.g. handing a flow to someone in the
+designer): `appmixer flow import <file>` creates the flow as-is — no E2E
+tagging, no store injection, no account binding. The user must then connect
+accounts in the designer by hand (or bind per component:
+`appmixer auth bind <componentId> <accountId>`).
+
+**Account IDs in flow JSONs are tolerated but instance-specific.** Flows
+exported from a live instance (`appmixer e2e export`) carry that instance's
+`config.properties.account` values — do not strip them (they keep the file in
+sync with the export output), but never rely on them either: they are
+meaningless on any other tenant and rot when accounts are deleted. Binding is
+always re-done at import time, which ignores flow-authored IDs that don't
+exist on the target instance and rebinds a live account
+(`appmixer e2e import --account <accountId>` overrides everything).
+
+**⚠️ Recipients are NOT injected.** If you want ProcessE2EResults to notify
+someone, set `recipients` in the flow JSON's ProcessE2EResults lambda yourself.
+
+### Step 4: Validate Before Running
+
+#### 4a: Validate Flow JSONs Locally
+
+`appmixer e2e import` runs this automatically; run it standalone while
+iterating on flow JSONs:
+
+```bash
+appmixer e2e validate src/<vendor>/<connector>/artifacts/test-flows
+```
+
+This catches issues like:
+- Assert testing Raw Output (meaningless — always passes)
+- Missing AfterAll connections
+- Variable path referencing non-existent components
+- Required input fields not provided
+- ProcessE2EResults missing storeIds
+
+**Common issues in generated flows to check manually:**
+
+1. **Missing required fields** — The generator sometimes omits fields in `inPorts[0].schema.required`. Cross-check every Create component's transform against `component.json` and ensure all required fields are present.
+
+2. **Hardcoded IDs that don't exist on the test account** — Dynamic-select fields (stage ID, view ID, pipeline ID) may be hardcoded with placeholder values like `1` or `12345`. These will 403/404 at runtime. Fetch real IDs from the API or use upstream List* components.
+
+3. **Wrong `view_id` for Find* components** — If a component uses a view-based search (e.g. `FindDeals`), the generated flow may use `view_id: 1`. Always verify a valid view ID exists.
+
+#### 4b: Validate Variable References (Automatic at Import)
+
+`appmixer e2e import` performs this check automatically after upload and fails
+with exit 1 on any INVALID variable (with hints about what IS offered). For a
+manual deep-dive on a live flow:
+
+```bash
+appmixer flow variables "$FLOW_ID" --json
+```
+
+This calls the variables-fetch endpoint (`POST /variables/$FLOW_ID/fetch`) —
+the SAME endpoint the designer uses to render variable chips. Compare every
+variable used in the flow's `config.transform.*` / `lambda` values against what
+the response offers: a transform variable that is NOT among the offered ones
+renders as an invalid (red) chip in the designer and typically never resolves
+at runtime.
+
+Response internals: with `compress=true` the offered variables are deduplicated
+into `dynamicComponentVariables[]` and each
+`components.<id>.links.in.<sender>.<port>.variables` carries `refs` — indices
+into that array; entry values look like `{{{$.<id>.<port>.<field>}}}`.
+`variables.errors` entries mean the source's options call failed.
+
+**NEVER assert on Raw Output** (`$.comp-id.out`) — it always contains something, making the assertion meaningless. Always test specific fields (e.g. `$.comp-id.out.ManualJournalID` notEmpty).
+
+## Auth — When `appmixer login` Is Not Possible
+
+With the default setup the e2e commands reuse the CLI's stored login token —
+no extra auth happens. For an account that cannot `appmixer login` (SSO-only,
+or `POST /user/auth` rejects the password), provide a pre-obtained JWT via the
+`APPMIXER_TOKEN` env var — it takes precedence over everything:
+
+```bash
+export APPMIXER_TOKEN=<jwt>
+```
+
+## Running Outside the Workspace (worktrees, CI)
+
+The e2e commands resolve the workspace by walking up from the cwd (or
+from the flow path). When you must run from elsewhere — or target a specific
+git worktree different from your cwd — set the override explicitly:
+
+```bash
+appmixer e2e import  <dir> --connectors-dir /path/to/worktree
+appmixer e2e validate <dir> --connectors-dir /path/to/worktree
+# or once per shell: export APPMIXER_SKILL_CONNECTORS_DIR=/path/to/worktree
+```
+
+## Stale Worker OAuth State After Re-authentication
+
+Engine workers also cache per-account OAuth state (the refresh-token lineage).
+After a user re-authenticates an OAuth account to gain NEW permissions (e.g.
+Epic: re-consent after adding app APIs), workers still holding the old lineage
+keep minting **fresh access tokens with the OLD entitlements** — the token's
+`iat` looks current, yet some calls 403 while identical calls from another
+worker succeed (search 200 + read 403 within one flow run; scratch flows
+pass/fail per worker). Rebinding accounts, new flowIds or new componentIds do
+NOT help. Fix: **restart the engine workers**, or create a brand-new account
+(new accountId) and rebind. Real case: epic GetAppointment, 2026-07-17.
+
+## Stale Component Definition / Code After Publish
+
+`appmixer publish` **does not refresh already-existing component versions** — neither
+their definitions (`inPorts`/`outPorts`/inspector) nor their **runtime code,
+including shared files like `lib.js`** that components `require()`. Each
+(component, version) is snapshotted at first publish; re-publishing the connector
+only adds NEW components/versions.
+
+Symptoms:
+- `/components` returns old `inPorts`/`outPorts`/`source` URLs after a "successful" publish.
+- Newly added components work while an old sibling crashes at runtime with
+  `Cannot read properties of undefined (reading 'someApiFn')` — its frozen snapshot
+  pre-dates a function you added to `lib.js`.
+- Flow start rejected with 400 `Component transformation validation error` because
+  stale inPort schemas are validated against current flow transforms.
+
+**Fix: remove + publish, as the e2e user** (see Step 1 — removes/publishes by a
+different CLI login do NOT touch the e2e user's copies), for every affected component:
+
+```bash
+appmixer remove <vendor>.<connector>.<module>.<Component>
+sleep 1
+appmixer publish "$PWD/<vendor>.<connector>.zip"
+```
+
+Whack-a-mole warning: each publish of an existing version **appends a duplicate
+copy** into the stored package of every non-removed component — removing A+B and
+publishing refreshes A+B but appends a dupe to the just-cleaned C+D. Duplicates
+are harmless **when byte-identical** (verify with the zipfile snippet in Step 1);
+only content that differs across copies needs another remove+publish round. And
+retry any `appmixer remove` that fails with 502/504 — a gateway error means the
+remove did NOT happen.
+
+Alternative when definitions refuse to update in place: **bump the component
+`version`** in component.json (new version = new snapshot) and update the flows'
+`version` pins to match.
+
+Verify after:
+```bash
+TOKEN=...
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "$BASE_URL/components?limit=500" | python3 -c "
+import sys,json; items=json.loads(sys.stdin.read()); items=items if isinstance(items,list) else items.get('components',[])
+for i in items:
+    if i.get('name')=='<vendor>.<connector>.<module>.<Component>':
+        print(json.dumps({k:i[k] for k in ['inPorts','outPorts']}, indent=2)[:400]); break
+"
+```
+
+## Known Gotchas
+
+### Stores are created at import
+The `E2E Failed Tests` and `E2E Succeeded Tests` stores must exist with their
+IDs injected into ProcessE2EResults — `appmixer e2e import` creates and
+injects them automatically; there is nothing to do manually.
+(`appmixer store ls` / `appmixer store create <name>` exist for manual work;
+`appmixer e2e results [--clean]` reads/prunes the stored per-test-case results.)
+
+### Flows must be stopped before PUT update
+`PUT /flows/:flowId` rejects updates on running flows. `appmixer e2e import` handles this automatically (stop → update → re-bind accounts). Never update a running flow manually without stopping first.
+
+### Dynamic output ports show "Raw Output" — fix source URL
+If the variables check shows a component only exposes "Raw Output" instead of individual fields, the component's `generateOutputPortOptions` is failing. Common causes:
+1. **The source call fails server-side** — reproduce it directly (the way the designer does) and read the actual error:
+   ```bash
+   curl -s -X POST "$BASE_URL/component/<vendor>/<connector>/<module>/<SourceComponent>?outPort=out" \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"messages":{"in":{...}},"transform":"./transformers#...","componentId":"<comp-id>","flowId":"<flow-id>"}'
+   ```
+2. **Missing `dummy` for required fields**: If inPort schema has required fields not needed for schema generation, send `"dummy"` as their value in source messages.
+3. **`ignoreAuth=true` — only for sources that genuinely need NO auth.** ⚠️ Do NOT
+   cargo-cult it: with `ignoreAuth=true` the engine calls the source component
+   WITHOUT the account, so a source that needs auth (describe/list endpoints reading
+   `context.auth.accessToken` / `context.profileInfo.instanceUrl`) builds its URL from
+   `undefined` and fails with 500 `"Invalid URL"` — the designer then renders red
+   **"Invalid URL" chips** in the inspector and all output variables show as invalid.
+   The designer sends the caller's bound account automatically; auth-requiring
+   sources must keep the default (no `ignoreAuth`).
+After fixing, re-publish the connector (remove + publish — see the stale-snapshot section) and re-run the flow.
+
+### The variables check reads designer offerings, not runtime data
+It validates that every transform variable is among what the designer's
+variables-fetch endpoint offers (red-chip detection). It does NOT validate
+runtime VALUES — a variable like `$.codeblock.out.result.field` can be offered
+yet empty at runtime. Always confirm by running the flow.
+
+## Key API Endpoints
+
+| Action | Method | Endpoint |
+|--------|--------|----------|
+| List E2E flows | GET | `/flows?filter=customFields.category:E2E_test_flow&limit=500` |
+| Get flow | GET | `/flows/:flowId?projection=flow` (always use projection!) |
+| Create flow | POST | `/flows` |
+| Update flow | PUT | `/flows/:flowId?forceUpdate=true` |
+| Assign account | PUT | `/auth/component/:componentId/:accountId` |
+| List accounts | GET | `/accounts` |
+| Test account | POST | `/accounts/:accountId/test` |
+| Get stores | GET | `/stores` |
+| Validate variables | POST | `/variables/:flowId/fetch?compress=true` |
+
+## References
+
+- **API details**: the appmixer CLI's `src/api/` modules are the single source of truth for Appmixer API calls; the raw endpoints are in the table above
+
+---
+
+# Run E2E Flows
+
+Execute E2E test flows against a live Appmixer instance and evaluate results.
+
+The heavy lifting is done by the **`appmixer e2e` commands** built into the
+appmixer CLI (deterministic, no LLM). **You (the agent) are the fix loop**:
+when `appmixer e2e run --fix` exits with a `NEEDS_FIX` brief, you diagnose it,
+edit the local flow JSON, re-import it, and re-run. Uploading, store setup and
+account binding are `appmixer e2e import`'s job; `appmixer e2e run` only runs
+a flow that already lives on the instance.
+
+**Assumes the connector is already published** (`appmixer pack` + `publish` per
+`12-e2e-upload.md`) and the flows are imported (`appmixer e2e import`, also in
+`12-e2e-upload.md`).
+
+## Prerequisites
+
+- **`appmixer` CLI** — installed (`npm i -g appmixer`) at version **2.6.0 or
+  newer**. The ONLY dependency — no other tooling, no required environment
+  variable. Verify it first (the version-gate snippet is in
+  `12-e2e-upload.md` Prerequisites; quick probe: `appmixer e2e run --help`).
+- **CLI configured** — `appmixer url` + `appmixer login` as the e2e user (see
+  `12-e2e-upload.md` Prerequisites; that doc also lists the optional
+  `APPMIXER_TOKEN`/`APPMIXER_SKILL_*` env overrides for CI).
+- Connector published on the instance; an auth account exists for it
+- Flows imported (`appmixer e2e import` — see `12-e2e-upload.md`)
+- **Design conventions** — the fix loop consults
+  `references/09-testing.md` in this skill's directory (no setup needed).
+
+## The runner
+
+```bash
+appmixer e2e run <flowId> [--fix] [--max-attempts <n>] [--timeout <seconds>] [--json]
+```
+
+The argument is a **flow ID on the instance** — get it from
+`appmixer e2e list -c <connector-ref> --json` (connector refs look like
+`appmixer:todoist` or `appmixer:google:gdrive`). Options:
+`--fix` (enable the deterministic fix loop — use it in agent workflows),
+`--max-attempts <n>` (deterministic fix attempts, `--fix` only, default 5),
+`--timeout <seconds>` (per-run completion timeout, default 480), `--json`
+(machine-readable result object on the last line).
+
+The runner starts the flow, monitors **the logs of the current run only** (the
+run boundary is anchored on the server's own log timestamps, so previous runs
+can never leak into the result), waits for completion, and reports OK or the
+list of errors. With `--fix` it also triages failures deterministically —
+rebinds accounts on token errors, re-runs on transient infra failures — and
+emits a structured FIX BRIEF when no deterministic rule matches.
+
+**Fail-fast error handling is enforced at import:** `appmixer e2e import`
+injects `errorHandling: { autoRetry: false, onError: "stopFlow" }` into any
+component that doesn't already carry it (flow-authored settings win), so the
+first component error stops the flow instead of silently auto-retrying. On
+older engines that reject the property, the import strips it and re-uploads
+automatically.
+
+**Exit codes:**
+
+| Code | Meaning | Your action |
+|------|---------|-------------|
+| `0` | Flow passed | Next flow |
+| `1` | Failed — errors/timeout; with `--fix` also: config error, retry budget spent, no account, **missing OAuth scopes** | Report to user — a scope failure prints the exact scopes to re-authenticate with |
+| `2` | `NEEDS_FIX` — structured brief printed as JSON (`--fix` only) | Fix the flow JSON, re-import, re-run (see below) |
+
+The last line of every run is machine-parsable:
+`RESULT | PASSED\|FAILED\|NEEDS_FIX | <flow name> | <designer URL>`.
+The designer URL opens the flow in the instance UI. It is built from
+`APPMIXER_SKILL_UI_URL` (no host derivation from the API URL); when unset, the
+runner prints the flowId instead of a link. Progress output goes to stderr;
+results (`RESULT |` line, FIX BRIEF, `--json` payload) go to stdout.
+
+**Unbound accounts fail fast:** without `--fix`, the runner refuses to start a
+flow whose connector components have no valid account bound and tells you to
+run `appmixer e2e import` (which binds accounts and validity-tests them).
+
+**Auth failures are detected automatically:**
+- **Preflight at import** — every bound account is validity-tested
+  (`POST /accounts/:id/test`) by `appmixer e2e import`; an expired/revoked token
+  fails the import with the account id, before anything runs. ⚠️ This test runs
+  the connector's `validateAccessToken`, which in some connectors (salesforce)
+  only compares a stored expiry date — a dead token can still pass preflight and
+  surface as runtime 401/403 (`Bad_OAuth_Token`, `INVALID_SESSION_ID`) or as a
+  flow-start 400 wrapping an inner 401 from the trigger's `start()` call. In
+  that case try the service's OTHER accounts and pin the working one.
+- **Scopes (`--fix`)** — a TokenError that persists after one account rebind
+  means the bound account's token lacks the component's required scopes (read
+  from its `component.json`). The runner hard-fails with the exact scopes —
+  pass that to the user; only a human OAuth re-consent fixes it. After the
+  re-consent, pin the new account with `appmixer e2e import --account
+  <accountId>` if the old scope-less account still exists next to it.
+
+**A pinned account is authoritative:** with `appmixer e2e import --account
+<accountId>` (or the `APPMIXER_SKILL_ACCOUNT_ID` env override), the import
+overrides flow-authored `config.properties.account` values both in the
+uploaded flow definition and in the auth grants — a stale account hardcoded in
+the flow JSON can never shadow it. (Unpinned imports keep flow-authored
+accounts — that is how multi-account flows work — but only when the ID exists
+on the target instance; foreign/deleted IDs, e.g. from a flow exported off
+another tenant, are ignored and a live account is bound instead.)
+
+**Clean timeouts are triaged by flow type (`--fix`):** a timeout with zero
+errors means some Assert never fired.
+- **Flow with an external trigger** (a sourceless non-utils component): the event
+  just may not have arrived yet — latency varies from seconds to many minutes.
+  The runner re-runs once deterministically; only a second clean timeout
+  surfaces as NEEDS_FIX.
+- **OnStart-only flow** (every component wired): nothing can "arrive later", so
+  the runner does NOT retry — it reports NEEDS_FIX immediately with
+  `assertsFired`/`assertsSilent` in the brief. A silent assert points at its
+  upstream: typically a per-record `outputType` that emitted NOTHING on an empty
+  result, or a link/variable referencing a non-existent outPort (run the
+  `outport-exists` / `outputtype-fanout` validators on the flow).
+
+**Transient infra errors re-run once (`--fix`):** errors matching quota-server /
+ECONNREFUSED / ETIMEDOUT patterns (e.g. `Error while calling quota server:
+connect ECONNREFUSED …`) trigger one plain re-run (triage rule
+`infra-transient`); if the error repeats, the runner hard-fails with an
+instance-outage message instead of burning the fix budget.
+
+**A killed runner stops the flow:** on runner timeout, SIGINT or SIGTERM the
+runner stops the flow (best-effort, 10 s cap) before exiting, so no run leaks a
+running flow with live trigger subscriptions.
+
+**Overall runner timeout is `AGENT_TIMEOUT_MS` (default 10 min).** With two
+482 s WAIT windows plus stop overhead, the default expires DURING the second
+window — an external event arriving after ~9 min is lost to "Runner timeout
+exceeded". For trigger flows waiting on slow external events (manual
+storefront/UI steps, provider-side latency in the tens of minutes), export
+`AGENT_TIMEOUT_MS=1500000` (or more) before invoking the runner.
+
+## The fix loop (you)
+
+On exit code 2 (`--fix`) the runner prints a `NEEDS_FIX` JSON brief: `reason`,
+`errors` (componentType + message), `recentLogs` (current-run only), `flowId`,
+`flowName`, `connector`, and — for clean timeouts —
+`assertsFired`/`assertsSilent` (component IDs). The local file lives at
+`src/<vendor>/<connector>/artifacts/test-flows/` (the `connector` field of the
+brief maps `appmixer:google:gdrive` → `src/appmixer/google/gdrive/`); match it
+by the flow name. Then:
+
+1. **Diagnose from the brief.** Typical failure classes:
+   - HTTP errors (4xx/5xx) from connector components
+   - Assert failures (wrong field values, missing fields) — Assert output has
+     `success` and `error` arrays
+   - Variable reference errors (invalid paths in `config.transform.*` / `lambda`)
+   - Component errors (bad config); `"Component error"` on ProcessE2EResults
+     usually means an upstream Assert or AfterAll failed
+   - `"timeout"` in AfterAll = not all Asserts fired — something upstream is stuck
+   - **Flow start rejected: `Component transformation validation error` /
+     `Malformed transformation`** (the response names no component) — some
+     component's `source`/`config.transform` is keyed on a port name that is not
+     one of its inPorts. Most components use `in`, but not all (salesforce
+     CreateLead → `lead`, CreateContact → `contact`). Check every component's
+     `component.json` inPorts; the `inport-key-match` validator catches this
+     statically.
+   - **Flow start rejected: 400 wrapping an inner 401/AxiosError with a service
+     URL** — the engine called the service during start (trigger `start()`) with a
+     dead/wrong account; see the auth notes above. `Cannot read properties of
+     undefined (reading 'fn')` in an OLD component after a publish = stale
+     per-version code snapshot — remove + republish that component (see
+     `12-e2e-upload.md` "Stale Component Definition / Code After Publish").
+2. **Read the failing component's `component.json`** to confirm expected
+   inputs/outputs before changing variable paths.
+3. **Fix the flow JSON on disk**: variable paths, assert expressions, input
+   mappings, modifiers. Consult `references/09-testing.md` for flow design
+   patterns.
+4. **If the component source itself is broken**, fix it in the connector and
+   re-publish (`appmixer pack && appmixer publish`) before re-running.
+5. **Validate** the edited flow:
+   ```bash
+   appmixer e2e validate <flow.json>
+   ```
+6. **Re-import and re-run:**
+   ```bash
+   appmixer e2e import <flow.json>
+   appmixer e2e run <flowId> --fix
+   ```
+   (Import updates the flow in place by identity — the flowId stays the same.)
+
+### Fix rules (hard requirements)
+
+- **Never delete and recreate flows** — `appmixer e2e import` always updates in
+  place by identity.
+- **Do NOT change the flow name or component IDs** — the name is part of the
+  flow's identity (`customFields.name`); IDs are referenced by variable paths.
+- **Removing a component or assert is a LAST RESORT.** Only when the underlying
+  API feature is confirmed unsupported in this environment. If you do, report it
+  loudly: `⚠️ REMOVED COMPONENT: <id> — <reason>` — never remove silently.
+- Always read the flow JSON from disk before editing — never work from memory of
+  a previous version.
+- When fixing variable paths, verify the referenced component ID exists in the
+  flow and the field matches the component's output schema.
+- **Max 5 fix iterations per flow.** Still failing → report remaining errors to
+  the user and stop.
+
+## Running all flows of a connector
+
+Import the directory once, then run each flow by ID:
+
+```bash
+appmixer e2e import src/<vendor>/<connector>/artifacts/test-flows
+appmixer e2e list -c <vendor>:<connector> --json    # → [{ flowId, ... }, ...]
+for id in $(appmixer e2e list -c <vendor>:<connector> --json | jq -r '.[].flowId'); do
+    appmixer e2e run "$id" --fix | tee -a /tmp/e2e-run.log
+done
+grep '^RESULT |' /tmp/e2e-run.log
+appmixer e2e results -c <vendor>:<connector> --json   # stored per-test-case results; exit 1 = failures
+```
+
+Never run flows **in parallel** — parallel runs against one instance cause
+noisy logs and account contention. Apply the fix loop to each failing flow
+before moving on.
+
+**Always end your report to the user with the summary table** built from the
+`RESULT |` lines — one row per flow: name, status, designer URL.
+
+## Flow Completion Detection
+
+Flows are monitored via **log polling**, not flow stage:
+
+- **ProcessE2EResults in logs** = flow completed. The runner stops the flow and parses results.
+- **Component errors in logs** = tracked and reported. OnError/StopFlow errors are **ignored** (noisy infrastructure artifacts).
+- E2E flows don't auto-stop after ProcessE2EResults — the runner handles stopping.
+- Only logs of **the current run** count: the run boundary is the newest log
+  timestamp that existed before start (+1 ms), taken from the server's own
+  clock; hits without a parseable timestamp are excluded.
+
+Do NOT use `OnError + StopFlow` components in test flows — they cause spurious lock errors on some instances and add noise to logs.
+
+## Known Gotchas
+
+### Polling triggers baseline on their first tick — the flow must be RUNNING when the event lands
+A `tick()` trigger records the current item set on its first poll after flow
+start and only emits items that appear LATER. The runner stops the flow between
+its retry windows, so an event that becomes visible during that stopped gap is
+swallowed by the next run's fresh baseline — with slow provider latency (e.g.
+Shopify lists an abandoned checkout ~10 min after the customer leaves) the
+runner's stop/start windows can miss it forever. Workaround for such flows:
+start the flow directly (`appmixer flow start <flowId>`), keep it running until
+the event is visible, verify the emission in `/logs` manually, then stop the
+flow (`appmixer flow stop <flowId>`). Note the flow-authored AfterAll timeout
+still applies — a very late event yields a recorded "timeout" result even
+though the trigger emission proves the component works; restart the flow just
+before the event if you need a clean PASSED record.
+
+### Webhook registration fails with 422/404 "Invalid topic"
+Two distinct causes, in triage order: (1) the auth token lacks the topic's
+required scope — fix by granting the scope upstream; (2) the topic does not
+exist on that API surface — some providers expose certain topics only via a
+different registration channel (Shopify: most `returns/*` topics are
+GraphQL-`webhookSubscriptionCreate`-only; REST rejects them). Probe the topic
+with a direct API call before touching the component code.
+
+### Stale logs from previous runs
+The runner filters strictly by a server-side run boundary — errors from
+previous runs (including log entries with no timestamp) cannot appear in its
+results or the FIX BRIEF. When reading `/logs` **manually**, always check
+`gridTimestamp` yourself.
+
+### `GET /flows` default limit is 100
+**Always use `limit=500`** in list queries: `GET /flows?filter=...&limit=500`.
+(`appmixer e2e list` does this for you.)
+
+### `GET /flows/:flowId` Elasticsearch errors
+**Always use `?projection=stage` for status checks** and `?projection=flow` for the definition.
+
+### Search/Find race conditions after Create
+Many APIs have eventual consistency on search indexes. A record created 1 second ago may not appear in search results yet:
+- **Best approach:** Search for a pre-existing test record instead of a just-created one
+- **Alternative:** Insert `appmixer.utils.timers.Wait` with `interval: "1m"` (minimum unit is minutes). CodeBlock CANNOT delay — it runs synchronously in isolated-vm (`evalSync`), `await`/`setTimeout`/Promises are unavailable and error out.
+- **Alternative:** Use GetById between Create and Find to add natural delay
+
+### Duplicate records on re-runs
+Previous test runs may leave records behind if cleanup failed:
+1. Stop any running flows first
+2. Check if the API rejects duplicates
+3. Clean up leftover test data from previous runs via the connector's API
+
+### CodeBlock output wraps results under `result`
+`appmixer.utils.controls.CodeBlock` wraps the return value under a `result` field. Access it via `$.code-block-id.out.result`. Deep access like `$.code-block-id.out.result.field` does NOT work — return simple strings/numbers only.
+
+### CodeBlock code syntax
+CodeBlock runs in `isolated-vm`, **synchronously** (`evalSync`) — no `await`, no `setTimeout`, no Promises. Input variables are exposed on **`$data`** (e.g. `$data.body`), not as bare identifiers. Bare `return` statements are illegal. Use expressions directly (e.g., `'value-' + Date.now()`) or IIFEs — a single expression that evaluates to a value.
+
+### Assert failures do NOT stop the flow — and `equal` reads `expected`, not `value`
+A failed assertion is logged in the Assert result payload (`error[]`) as a plain info message; the flow continues and ProcessE2EResults still completes. The runner scans Assert payloads (`collectAssertFailures`) so these fail the run — but when reading logs manually, always check the Assert `success`/`error` arrays, not just component errors. Common authoring bug: `{"assertion": "equal", "field": ..., "value": "200"}` — the Assert component reads the comparison value from the key **`expected`**; with `value` it compares against `undefined` and fails with the misleading message "expected undefined to equal 200".
+
+### Log parsing
+The `/logs` API returns raw Elasticsearch hits. Error details are in `hits[]._source.err` as a **JSON string** (not object). Parse `err.response.data` for the actual error message.
+
+### Deterministic test design
+Tests must pass on repeated runs without input changes:
+- **Create + Delete cleanup**: If the API rejects duplicates, the test MUST delete created resources at the end.
+- **Unique inputs via modifiers**: Use `g_timestamp` or `g_uuid4` modifier functions for unique identifiers.
+- **Avoid hardcoded dates**: Use `g_now` + `g_addTimeSpan` modifiers to compute future dates dynamically.
+
+## Key API Endpoints
+
+Prefer the CLI (`appmixer e2e list/run/results`, `appmixer flow start/stop`);
+raw endpoints for manual debugging:
+
+| Action | Method | Endpoint |
+|--------|--------|----------|
+| List E2E flows | GET | `/flows?filter=customFields.category:E2E_test_flow&limit=500` |
+| Get flow status | GET | `/flows/:flowId?projection=stage` |
+| Start flow | POST | `/flows/:flowId/coordinator` `{"command":"start"}` |
+| Stop flow | POST | `/flows/:flowId/coordinator` `{"command":"stop"}` |
+| Get logs | GET | `/logs?flowId=:flowId&from=0&size=100` |
+
+## References
+
+- **Flow design patterns**: `references/09-testing.md` — read before diagnosing or fixing flows
+- **API details**: the appmixer CLI's `src/api/` modules are the single source of truth for Appmixer API calls (auth, flows, accounts, logs, stores); raw endpoints are listed in the table above
+- **Triage rules**: `src/e2e-runner/triage.js` in the appmixer CLI repo — add deterministic rules there for repeatable failure classes (keeps fixes rare)
+
+---
+
+# Async Components (jobs that finish later)
+
+Some provider operations do not finish inside one request: transcription,
+enrichment, rendering, video encoding, a human approval. The component must
+return control immediately **and still deliver the result into the same flow**.
+
+This file covers the two shapes that work and the four that do not.
+
+## Decision rule
+
+| The provider offers | Use | Reference implementation |
+|---------------------|-----|--------------------------|
+| A callback / webhook URL parameter | **Self-callback** — `"webhook": true` + `context.getWebhookUrl()` | `clearbit/enrichment/FindPerson`, `plivo/sms/SendSMSAndWaitForReply`, `twilio/calls/ForwardCall`, `utils/tasks/RequestApproval` |
+| Only a status endpoint to poll | **Continuation chain** — `context.setTimeout` | `gladia/core/TranscribeAudio`, `akamai/lib.js` |
+
+Prefer the self-callback whenever the provider supports one: it delivers in
+seconds, while polling inherits whatever visibility lag the provider's job/log
+API has (Deepgram's request log lags 12–17 minutes — see `09-testing.md`).
+
+---
+
+## 1. Self-callback
+
+The component hands the provider **its own** webhook URL, so the same component
+that started the job is the one the provider reports back to. No trigger, no
+second flow, no polling.
+
+```
+receive(in) ──▶ submit job, callback = context.getWebhookUrl() ──▶ out { job id + echo }
+                                       │
+provider finishes, POSTs the result ───┘
+receive(webhook) ──▶ look up the echo by job id ──▶ done { result + echo }
+```
+
+### component.json
+
+```json
+{
+    "webhook": true,
+    "outPorts": [
+        { "name": "out",  "schema": { "…": "job id + the echoed input" } },
+        { "name": "done", "schema": { "…": "the result + the same echo" } }
+    ]
+}
+```
+
+`"webhook": true` is what makes `context.getWebhookUrl()` available inside
+`receive()`. The component stays a **plain action** — no `trigger`, no `tick`.
+
+### Behavior
+
+```javascript
+const jobKey = (requestId) => `job-${requestId}`;
+
+module.exports = {
+
+    async receive(context) {
+
+        // ── the provider calling back ──────────────────────────────────
+        if (context.messages.webhook) {
+
+            const body = (context.messages.webhook.content || {}).data || {};
+            const requestId = (body.metadata || {}).request_id;
+
+            // The submit branch stashed this job's input under its id; replaying
+            // it here is what lets downstream tell parallel jobs apart.
+            const submitted = (requestId && await context.stateGet(jobKey(requestId))) || {};
+
+            await context.sendJson({
+                ...submitted,
+                request_id: requestId,
+                result: body.result
+            }, 'done');
+
+            if (requestId) {
+                await context.stateUnset(jobKey(requestId));
+            }
+
+            // Acknowledge, or the provider keeps retrying the callback.
+            return context.response();
+        }
+
+        // ── the submit ─────────────────────────────────────────────────
+        const { audioUrl, correlationId } = context.messages.in.content;
+
+        const response = await lib.apiRequest(context, {
+            method: 'POST',
+            path: '/v1/jobs',
+            params: { callback: context.getWebhookUrl() },
+            data: { url: audioUrl }
+        });
+
+        const requestId = (response.data || {}).request_id;
+        const echo = { audioUrl, correlationId };
+
+        if (requestId) {
+            await context.stateSet(jobKey(requestId), echo);
+        }
+
+        return context.sendJson({ ...echo, request_id: requestId }, 'out');
+    }
+};
+```
+
+### The echo is mandatory, not a nicety
+
+**One component instance has ONE callback URL.** It is keyed by flow and
+component — not by message. Ten parallel jobs all report back to the same place
+and arrive in completion order, so the fifth `done` may belong to the eighth
+input, and the webhook branch cannot see the message that started the job.
+
+Nothing is *mixed up* — each callback carries its own payload — but without the
+state-keyed echo a downstream component cannot tell which result belongs to
+which input. So:
+
+- Stash the job's inputs in component state under the provider's job id at
+  submit time, replay them on the callback, and `stateUnset` afterwards.
+- Namespace the key (`job-${id}`) so it cannot collide with other component
+  state.
+- Give the user a **Correlation ID** input — any value of their own (an order
+  number, a file name, a record id) — and echo it on **both** ports.
+
+### Do not expose the callback URL as an input
+
+It looks helpful and it is a footgun: the moment a user fills it in, the
+provider delivers elsewhere and the `done` port silently never fires. None of
+the four reference components expose one. A user who wants the result somewhere
+else sends `done` onward to an HTTP component.
+
+---
+
+## 2. Continuation chain (no callback available)
+
+When the provider only offers "submit, then poll status", do not sleep in the
+component — schedule a continuation with `context.setTimeout` and let the worker
+go. State travels in the timeout payload.
+
+```javascript
+async receive(context) {
+
+    // A continuation scheduled by a previous invocation.
+    if (context.messages.timeout) {
+        const { jobId, deadline, pollIntervalMs } = context.messages.timeout.content;
+        const { data } = await lib.apiRequest(context, { path: `/jobs/${jobId}` });
+
+        if (data.status === 'done') {
+            return context.sendJson(data, 'out');
+        }
+        if (Date.now() > deadline) {
+            throw new context.CancelError(`Job ${jobId} did not finish in time.`);
+        }
+        return context.setTimeout({ jobId, deadline, pollIntervalMs }, pollIntervalMs);
+    }
+
+    // The submit.
+    const { data } = await lib.apiRequest(context, { method: 'POST', path: '/jobs', data: payload });
+    return context.setTimeout({
+        jobId: data.id,
+        deadline: Date.now() + timeoutSeconds * 1000,
+        pollIntervalMs
+    }, pollIntervalMs);
+}
+```
+
+**Appmixer will not schedule a continuation shorter than one minute** — that is
+both the floor and a sensible default for the poll interval.
+
+---
+
+## Anti-patterns
+
+| Do not | Why |
+|--------|-----|
+| Block on the provider's synchronous endpoint | The provider holds the connection until the job is done: one worker per job, and a gateway timeout past the provider's ceiling (Deepgram: 504 after 10 minutes, 20 for Whisper) |
+| Use `tick()` to deliver the completion | A tick emit has no message scope — it cannot continue the branch that started the job, and it cannot see the input that produced it |
+| Make a separate polling trigger the completion path | Couples two flows, and inherits the provider's log/visibility lag (measured: 12–17 min vs. 4 s by callback) |
+| Expose the callback URL as a component input | Setting it silently kills the `done` port |
+
+A polling trigger is still legitimate **on its own** — for jobs submitted
+outside Appmixer. It just must not be the way an action component gets its own
+result back.
+
+## Testing an async component
+
+E2E-test both ports in one flow: assert the job id on `out` **and** the result
+on `done`, and wire both asserts into `AfterAll` so the flow cannot pass while
+the callback path is broken. Size the `AfterAll` window for the provider's real
+job duration.
+
+If the component takes a Correlation ID, assert it comes back on `done` — that
+is the only cheap way to catch a broken echo before a user hits it with ten
+parallel jobs.

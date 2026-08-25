@@ -19,7 +19,11 @@ const { execFileSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const OUTPUT = path.join(ROOT, '.github', 'copilot-instructions.md');
-const TARBALL_URL = 'https://codeload.github.com/Appmixer-ai/appmixer-skills/tar.gz/refs/heads/main';
+// The DEV branch, on purpose: this repo's dev tracks the skills repo's dev,
+// the same alignment the validators follow (CLI dev -> appmixer@dev). Releases
+// flow dev -> main in the skills repo, so main would lag behind the rules
+// agents are actually building against here.
+const TARBALL_URL = 'https://codeload.github.com/Appmixer-ai/appmixer-skills/tar.gz/refs/heads/dev';
 
 const HEADER = '<!-- DO NOT EDIT — generated from the Appmixer-ai/appmixer-skills repository\n'
     + '     (instructions/*.md) by scripts/build-instructions.js.\n'
