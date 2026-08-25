@@ -9,9 +9,10 @@
     "openApiSpec": "https://docs.airtop.ai/openapi.json",
     "baseUrl": "https://api.airtop.ai/api/v1",
     "auth": {
-        "type": "apiKey",
-        "header": "Authorization: Bearer <api-key>",
-        "validateEndpoint": "GET /api/v1/sessions?limit=1"
+        "status": "done",
+        "storedAs": "appmixer:airtop",
+        "tokenValid": true,
+        "accountId": "6a8da10544249be6241ce1ad"
     },
     "steps": {
         "build": {
@@ -31,40 +32,121 @@
                 "appmixer test component ./src/appmixer/airtop/core/CreateSession -i '{\"in\":{\"timeoutMinutes\":3}}'"
             ]
         },
-        "e2e": {
-            "status": "BLOCKED",
-            "reason": "Same missing API key. The flows are generated and pass the local static validator; importing and running them needs a published connector plus a connected Airtop account on the instance.",
-            "flowsGenerated": [
-                "src/appmixer/airtop/artifacts/test-flows/test-flow-session-lifecycle.json",
-                "src/appmixer/airtop/artifacts/test-flows/test-flow-browser-interaction.json"
-            ],
-            "validateResult": "appmixer e2e validate src/appmixer/airtop/artifacts/test-flows -> Validation passed (26 validators, 2 flow files)",
-            "nextCommands": [
-                "cd src/appmixer && appmixer pack airtop && appmixer publish appmixer.airtop.zip",
-                "appmixer e2e import src/appmixer/airtop/artifacts/test-flows",
-                "appmixer e2e run <flowId>"
-            ]
-        },
-        "ship": {
-            "status": "not started",
-            "notes": "No push, no PR. Committed locally on branch feature/airtop-connector only."
-        }
+        "e2e": "done",
+        "ship": "in-progress",
+        "cliTests": "done"
     },
     "components": [
-        { "name": "CreateSession", "type": "Create", "endpoint": "POST /sessions" },
-        { "name": "GetSession", "type": "Get", "endpoint": "GET /sessions/{id}" },
-        { "name": "FindSessions", "type": "Find (outputType)", "endpoint": "GET /sessions" },
-        { "name": "TerminateSession", "type": "Delete", "endpoint": "DELETE /sessions/{id}" },
-        { "name": "CreateWindow", "type": "Create", "endpoint": "POST /sessions/{sessionId}/windows" },
-        { "name": "QueryPage", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/page-query" },
-        { "name": "ClickElement", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/click" },
-        { "name": "TypeText", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/type" },
-        { "name": "TakeScreenshot", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/screenshot" },
-        { "name": "MakeApiCall", "type": "Action", "endpoint": "any" }
+        {
+            "name": "CreateSession",
+            "type": "Create",
+            "endpoint": "POST /sessions"
+        },
+        {
+            "name": "GetSession",
+            "type": "Get",
+            "endpoint": "GET /sessions/{id}"
+        },
+        {
+            "name": "FindSessions",
+            "type": "Find (outputType)",
+            "endpoint": "GET /sessions"
+        },
+        {
+            "name": "TerminateSession",
+            "type": "Delete",
+            "endpoint": "DELETE /sessions/{id}"
+        },
+        {
+            "name": "CreateWindow",
+            "type": "Create",
+            "endpoint": "POST /sessions/{sessionId}/windows"
+        },
+        {
+            "name": "QueryPage",
+            "type": "Action",
+            "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/page-query"
+        },
+        {
+            "name": "ClickElement",
+            "type": "Action",
+            "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/click"
+        },
+        {
+            "name": "TypeText",
+            "type": "Action",
+            "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/type"
+        },
+        {
+            "name": "TakeScreenshot",
+            "type": "Action",
+            "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/screenshot"
+        },
+        {
+            "name": "MakeApiCall",
+            "type": "Action",
+            "endpoint": "any"
+        }
     ],
     "openIssues": [
         "E2E validator warnings (non-blocking): CreateSession and TerminateSession have no dedicated Assert in the browser-interaction flow; CreateWindow has no Close Window cleanup component (terminating the session releases the window); several optional inputs are untested.",
         "No Close Window / Load URL / Hover / Scroll / Monitor / PaginatedExtraction components yet - candidates for a 1.1.0 bundle.",
         "Airtop rate limits are not documented; quota.js uses a conservative 10 requests/second per user."
-    ]
+    ],
+    "target": {
+        "instance": "https://api-dev-automated-00001.dev.appmixer.ai",
+        "e2eUser": "test@appmixer.ai",
+        "pushRemote": "origin",
+        "prRepo": "Appmixer-ai/appmixer-connectors",
+        "prBase": "dev"
+    },
+    "cliTestResults": {
+        "FindSessions": "PASS — both ports exercised: notFound with no sessions, out with result[] + count when one exists",
+        "MakeApiCall": "PASS — GET /sessions returned HTTP 200",
+        "CreateSession": "PASS (after fix) — now emits status running, not initializing",
+        "GetSession": "PASS",
+        "CreateWindow": "PASS — returns windowId and echoes sessionId for chaining",
+        "QueryPage": "PASS — returned \"Wikipedia The Free Encyclopedia\", 15 credits",
+        "TakeScreenshot": "PASS — base64 data URL returned",
+        "TypeText": "PASS — 27 credits",
+        "ClickElement": "PASS — 485 credits (by far the most expensive operation)",
+        "TerminateSession": "PASS — returns {} per the Delete contract"
+    },
+    "fixesApplied": [
+        "CreateSession emitted the session immediately, while Airtop still reports status \"initializing\". The session is unusable until \"running\": CreateWindow and every page operation answer HTTP 404 before then. This passed the CLI test only because GetSession was run manually in between; in a real flow (create session -> open window) it failed every time. CreateSession now polls GET /sessions/{id} every 2 s until the session reports running, with a 120 s ceiling and a CancelError if the session ends first.",
+        "E2E flow test-flow-session-lifecycle.json filtered FindSessions on status \"running\" while the session was still initializing, so FindSessions took the notFound port. Its Assert never fired, AfterAll never completed, and TerminateSession never ran — leaking a billed session on every run. The status filter was removed so the lookup is deterministic."
+    ],
+    "notes": [
+        "INSTANCE ARTIFACT, not a connector defect: the first flow start after every publish fails with TokenError \"Missing type property: apiKey | oauth | oauth2\" (observed at 14:16 after the first publish and 14:24 after the republish). A re-run with no publish in between passes with 0 errors. Budget one throwaway run after publishing, or re-run before believing a NEEDS_FIX.",
+        "Airtop credit costs measured live: QueryPage 15, TypeText 27, ClickElement 485. ClickElement is by far the most expensive operation — keep it out of flows that run often.",
+        "The account is on a free plan: session listings report recordingState \"free_plan_disabled\", so the CreateSession `record` option cannot be exercised on this account.",
+        "The session-lifecycle Assert on FindSessions is weak — it asserts the whole result array is notEmpty, which stringifies to \"[object Object],...\". It passes, but a future revision should assert a specific field instead.",
+        "appmixer test component binds a FIXED port 2300; two component tests cannot run concurrently (EADDRINUSE)."
+    ],
+    "e2e": {
+        "instance": "https://api-dev-automated-00001.dev.appmixer.ai",
+        "accountId": "6a8da10544249be6241ce1ad",
+        "flows": {
+            "E2E Airtop - Session Lifecycle": {
+                "flowId": "6a6a200b-fa8b-4e16-9ea9-f14d07bcab99",
+                "verdict": "PASSED",
+                "assertions": 4,
+                "failures": 0
+            },
+            "E2E Airtop - Browser Interaction": {
+                "flowId": "7852000a-7df4-46ec-b204-fdaeea8e5362",
+                "verdict": "PASSED",
+                "assertions": 6,
+                "failures": 0
+            }
+        },
+        "verifiedVia": "appmixer e2e results --json (failed[] empty); no running sessions left behind afterwards",
+        "totalAssertions": 10
+    },
+    "results": {
+        "cliTests": "PASS — 10 of 10 components verified against the live Airtop API (1 required a code fix)",
+        "e2e": "PASS — 2 of 2 flows, 10 assertions, 0 failures",
+        "validator": "0 failures, 1 warning (writable-fields-readable on CreateSession — deliberate, see notes)",
+        "lint": "clean"
+    }
 }
