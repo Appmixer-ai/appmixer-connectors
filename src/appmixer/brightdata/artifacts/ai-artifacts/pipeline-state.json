@@ -1,0 +1,66 @@
+{
+    "connector": "appmixer.brightdata",
+    "vendor": "appmixer",
+    "module": "brightdata",
+    "mode": "unattended",
+    "budget": {
+        "maxMinutes": 60,
+        "maxFixAttempts": 3
+    },
+    "target": {
+        "instance": null,
+        "e2eUser": "test@appmixer.ai",
+        "pushRemote": null,
+        "branch": "feature/brightdata-connector",
+        "prRepo": "Appmixer-ai/appmixer-connectors",
+        "prBase": "dev"
+    },
+    "steps": {
+        "preflight": "done",
+        "build": "done",
+        "review": "done",
+        "cliTests": "blocked",
+        "e2e": "blocked",
+        "ship": "not-started"
+    },
+    "blockers": {
+        "cliTests": {
+            "reason": "No Bright Data API credentials anywhere — not in ~/.config/configstore/appmixer.json and not on any instance. Every component calls api.brightdata.com with an account API token, so no component can be exercised.",
+            "resume": [
+                "Obtain a Bright Data API token (Bright Data control panel -> Account settings -> API tokens).",
+                "appmixer test auth login src/appmixer/brightdata/auth.js",
+                "appmixer test auth validate ./src/appmixer/brightdata/auth.js",
+                "Then run the CLI test loop per the test-connector skill, component order: ListZones, MakeApiCall, ScrapeUrl, FindSearchResults, TriggerDatasetCollection, GetSnapshotStatus, FindSnapshotRecords."
+            ]
+        },
+        "e2e": {
+            "reason": "Same missing credentials, plus the flows carry account-specific placeholders that a human must confirm before the first live run.",
+            "resume": [
+                "Publish the connector, then: appmixer e2e import src/appmixer/brightdata/artifacts/test-flows",
+                "appmixer e2e run <flowId> and read the ProcessE2EResults payload (a PASSED runner verdict alone is not proof).",
+                "Before running, replace the placeholder zone/dataset values listed under notes with the real ones on the account."
+            ]
+        }
+    },
+    "notes": [
+        "Build-only run: the user pre-approved a run with no credentials. No appmixer test/publish/e2e-import/e2e-run command was executed and no HTTP call was made to Bright Data.",
+        "The two E2E flows were generated now so a later credentialed run can import and execute them unchanged.",
+        "Account-specific values baked into the flows and needing human confirmation before the first live run: Web Unlocker zone 'web_unlocker1', SERP zone 'serp_api1' (these are Bright Data's default zone names, not verified against a real account) and Web Scraper dataset id 'gd_l1viktl72bvl7bjuj0' with a LinkedIn profile URL as input.",
+        "The dataset flow spends real Bright Data credits (one Web Scraper collection) and waits 5 minutes for the snapshot to become ready; AfterAll timeout is 600 s. If a collection routinely needs longer, raise the Wait interval rather than the assert.",
+        "FindSnapshotRecords declares no schema-level required inputs on purpose: snapshotId feeds the component's own dynamic outPort source, and the e2e rule 'dynamic-source-static-input' rejects a required source input bound to a modifier. It is still enforced at run time with a CancelError.",
+        "Bright Data publishes no single hard rate limit; quota.js uses a conservative 10 requests/second sliding window. Revisit once real 429 behaviour is observed."
+    ],
+    "results": {
+        "validator": "0 failures, 0 warnings (node scripts/validate.js --connector brightdata)",
+        "lint": "clean (eslint 8.57.1, run with --no-ignore because the worktree lives under a dot-directory; 0 problems, CRLF warnings excluded)",
+        "review": "2 findings, both fixed: duplicated POST /request + auth-header construction in ScrapeUrl and FindSearchResults (extracted to lib.zoneRequest / lib.authHeaders), and dynamic-source required inputs bound to live inputs instead of the documented 'dummy' literal.",
+        "cliTests": "BLOCKED — no credentials",
+        "e2eFlows": {
+            "E2E Bright Data - Zones, Scrape, Search and API Call": "generated, appmixer e2e validate passed — NOT run (no credentials)",
+            "E2E Bright Data - Dataset Snapshot Lifecycle": "generated, appmixer e2e validate passed — NOT run (no credentials)"
+        },
+        "e2eValidate": "Validation passed (26 validators, 2 flow files); remaining output is warnings only (optional-input coverage and the successStoreId/failedStoreId that are injected at upload time)",
+        "e2eCoverage": "7 of 7 components; the connector has no triggers",
+        "pr": null
+    }
+}

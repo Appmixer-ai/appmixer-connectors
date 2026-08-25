@@ -1,0 +1,76 @@
+{
+    "name": "appmixer.brightdata.core.ListZones",
+    "label": "List Zones",
+    "description": "List all active zones on your Bright Data account, so you know which zone name to pass to the scraping components.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:brightdata"
+    },
+    "quota": {
+        "manager": "appmixer:brightdata",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "outputType": {
+                        "type": "string"
+                    }
+                }
+            },
+            "inspector": {
+                "inputs": {
+                    "outputType": {
+                        "type": "select",
+                        "index": 1,
+                        "label": "Output Type",
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/brightdata/core/ListZones?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkJyaWdodCBEYXRhIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMxQTU2RkYiIHN0cm9rZS13aWR0aD0iMyI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMTkiLz48ZWxsaXBzZSBjeD0iMjQiIGN5PSIyNCIgcng9IjguNSIgcnk9IjE5Ii8+PHBhdGggZD0iTTUgMjRoMzhNOSAxMy41aDMwTTkgMzQuNWgzMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxjaXJjbGUgY3g9IjM1LjUiIGN5PSIxMi41IiByPSI1LjUiIGZpbGw9IiMxQTU2RkYiLz48L3N2Zz4="
+}

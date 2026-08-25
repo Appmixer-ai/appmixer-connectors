@@ -1,0 +1,101 @@
+{
+    "name": "appmixer.brightdata.core.TriggerDatasetCollection",
+    "label": "Trigger Dataset Collection",
+    "description": "Start an asynchronous Web Scraper API collection for a Bright Data dataset and return the snapshot ID used to monitor and download the results.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:brightdata"
+    },
+    "quota": {
+        "manager": "appmixer:brightdata",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "datasetId": {
+                        "type": "string"
+                    },
+                    "input": {
+                        "type": "string"
+                    },
+                    "includeErrors": {
+                        "type": "boolean"
+                    },
+                    "customOutputFields": {
+                        "type": "string"
+                    },
+                    "notifyUrl": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "datasetId",
+                    "input"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "datasetId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Dataset ID",
+                        "tooltip": "The scraper dataset to run, for example <code>gd_l1viktl72bvl7bjuj0</code>. Find it on the dataset page in the Bright Data control panel."
+                    },
+                    "input": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Input",
+                        "tooltip": "A JSON array of input objects, one per item to collect, for example <code>[{\"url\": \"https://www.linkedin.com/in/elad-moshe\"}]</code>. The accepted keys are listed on the dataset's API page."
+                    },
+                    "includeErrors": {
+                        "type": "toggle",
+                        "index": 3,
+                        "label": "Include Errors",
+                        "tooltip": "Also include failed inputs in the snapshot, each with an error description, instead of dropping them silently."
+                    },
+                    "customOutputFields": {
+                        "type": "text",
+                        "index": 4,
+                        "label": "Custom Output Fields",
+                        "tooltip": "Pipe separated list of the only fields you want in the snapshot, for example <code>name|url|followers</code>. Leave empty to get every field."
+                    },
+                    "notifyUrl": {
+                        "type": "text",
+                        "index": 5,
+                        "label": "Notify URL",
+                        "tooltip": "Optional webhook URL that Bright Data calls once the snapshot is ready."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "snapshotId": {
+                        "type": "string",
+                        "title": "Snapshot ID",
+                        "example": "s_m4x7enmven8djfqak"
+                    },
+                    "datasetId": {
+                        "type": "string",
+                        "title": "Dataset ID",
+                        "example": "gd_l1viktl72bvl7bjuj0"
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkJyaWdodCBEYXRhIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiMxQTU2RkYiIHN0cm9rZS13aWR0aD0iMyI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMTkiLz48ZWxsaXBzZSBjeD0iMjQiIGN5PSIyNCIgcng9IjguNSIgcnk9IjE5Ii8+PHBhdGggZD0iTTUgMjRoMzhNOSAxMy41aDMwTTkgMzQuNWgzMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxjaXJjbGUgY3g9IjM1LjUiIGN5PSIxMi41IiByPSI1LjUiIGZpbGw9IiMxQTU2RkYiLz48L3N2Zz4="
+}
