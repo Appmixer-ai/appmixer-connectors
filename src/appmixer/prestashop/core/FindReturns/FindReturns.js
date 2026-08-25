@@ -11,15 +11,23 @@ function firstValue(field) {
     return field != null ? String(field) : '';
 }
 
+// PrestaShop does not expose merchandise returns (RMA records) through the Webservice API in
+// any version (1.7, 8, 9). The return journey is therefore reconstructed from the order state
+// history: a history entry belongs to the return journey when its order state uses the
+// 'refund' email template or its name mentions a return/refund.
+const RETURN_NAME_PATTERN = /return|refund|rembours|vr[aá][tc]|rma/i;
+
+function isReturnState(state) {
+    return firstValue(state.template) === 'refund' || RETURN_NAME_PATTERN.test(firstValue(state.name));
+}
+
 const schema = {
-    id: { type: 'string', title: 'Return ID' },
+    id: { type: 'string', title: 'History Entry ID' },
     id_order: { type: 'string', title: 'Order ID' },
     id_customer: { type: 'string', title: 'Customer ID' },
     state: { type: 'string', title: 'State ID' },
     state_name: { type: 'string', title: 'State' },
-    question: { type: 'string', title: 'Question' },
-    date_add: { type: 'string', title: 'Created Date' },
-    date_upd: { type: 'string', title: 'Updated Date' }
+    date_add: { type: 'string', title: 'Created Date' }
 };
 
 module.exports = {
@@ -32,43 +40,69 @@ module.exports = {
             return lib.getOutputPortOptions(context, outputType, schema, { label: 'Returns' });
         }
 
-        const params = {
-            display: 'full',
-            sort: '[date_add_DESC]',
-            limit: 100
-        };
+        // Resolve order states and keep only the return/refund related ones.
+        const statesData = await lib.psRequest(context, {
+            path: '/order_states',
+            params: { display: 'full' }
+        });
+        const returnStates = {};
+        for (const state of statesData.order_states || []) {
+            if (isReturnState(state)) {
+                returnStates[String(state.id)] = firstValue(state.name);
+            }
+        }
+
+        // Collect the orders whose history should be inspected.
+        let orders = [];
         if (orderId) {
-            params['filter[id_order]'] = orderId;
-        }
-        if (customerId) {
-            params['filter[id_customer]'] = customerId;
+            const orderData = await lib.psRequest(context, { path: `/orders/${orderId}` });
+            if (orderData.order) {
+                orders = [orderData.order];
+            }
+        } else {
+            const params = {
+                display: 'full',
+                sort: '[date_add_DESC]',
+                date: 1,
+                limit: 100
+            };
+            if (customerId) {
+                params['filter[id_customer]'] = customerId;
+            }
+            const data = await lib.psRequest(context, { path: '/orders', params });
+            orders = data.orders || [];
         }
 
-        const data = await lib.psRequest(context, { path: '/order_returns', params });
-        const returns = data.order_returns || [];
+        const records = [];
+        for (const order of orders) {
+            const historyData = await lib.psRequest(context, {
+                path: '/order_histories',
+                params: {
+                    'filter[id_order]': order.id,
+                    display: 'full',
+                    sort: '[date_add_ASC]',
+                    date: 1
+                }
+            });
+            for (const history of historyData.order_histories || []) {
+                const stateName = returnStates[String(history.id_order_state)];
+                if (stateName === undefined) {
+                    continue;
+                }
+                records.push({
+                    id: String(history.id),
+                    id_order: String(order.id),
+                    id_customer: String(order.id_customer),
+                    state: String(history.id_order_state),
+                    state_name: stateName,
+                    date_add: history.date_add
+                });
+            }
+        }
 
-        if (returns.length === 0) {
+        if (records.length === 0) {
             return context.sendJson({}, 'notFound');
         }
-
-        // Resolve the readable name of each return state to describe the return journey.
-        const stateNames = {};
-        try {
-            const statesData = await lib.psRequest(context, {
-                path: '/order_return_states',
-                params: { display: 'full' }
-            });
-            for (const state of statesData.order_return_states || []) {
-                stateNames[String(state.id)] = firstValue(state.name);
-            }
-        } catch (err) {
-            await context.log({ step: 'Could not load order return states', error: err.message });
-        }
-
-        const records = returns.map(item => ({
-            ...item,
-            state_name: stateNames[String(item.state)] || ''
-        }));
 
         return lib.sendArrayOutput({ context, records, outputType });
     }

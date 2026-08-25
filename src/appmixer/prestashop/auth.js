@@ -32,10 +32,13 @@ module.exports = {
             const shopUrl = (context.shopUrl || '').replace(/\/+$/, '');
             const credentials = Buffer.from(`${context.apiKey}:`).toString('base64');
 
+            // Intentionally no output_format=JSON: PrestaShop 8 has a core bug in the JSON
+            // serializer of the /api/ resource listing (apostrophe in a resource description
+            // crashes WebserviceOutputJSON with a 500). The default XML listing works fine and
+            // we only care about the 200 vs 401 distinction here.
             await context.httpRequest({
                 method: 'GET',
                 url: `${shopUrl}/api/`,
-                params: { output_format: 'JSON' },
                 headers: {
                     'Authorization': `Basic ${credentials}`
                 }

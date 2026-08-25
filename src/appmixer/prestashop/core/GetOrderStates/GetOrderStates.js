@@ -47,7 +47,8 @@ module.exports = {
             params: {
                 'filter[id_order]': orderId,
                 display: 'full',
-                sort: '[date_add_ASC]'
+                sort: '[date_add_ASC]',
+                date: 1
             }
         });
 

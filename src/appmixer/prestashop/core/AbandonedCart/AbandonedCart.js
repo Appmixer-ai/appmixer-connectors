@@ -12,6 +12,7 @@ module.exports = {
             params: {
                 display: 'full',
                 sort: '[date_upd_DESC]',
+                date: 1,
                 limit: 100
             }
         });
@@ -47,6 +48,7 @@ module.exports = {
             params: {
                 display: 'full',
                 sort: '[date_upd_DESC]',
+                date: 1,
                 limit: 20
             }
         });

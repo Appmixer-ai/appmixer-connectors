@@ -36,6 +36,7 @@ module.exports = {
                 'filter[id_customer]': customerId,
                 display: 'full',
                 sort: '[date_add_DESC]',
+                date: 1,
                 limit: 100
             }
         });
