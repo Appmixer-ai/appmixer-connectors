@@ -1,0 +1,63 @@
+{
+    "connector": "appmixer.ai.huggingface",
+    "vendor": "appmixer",
+    "module": "ai/huggingface",
+    "mode": "build-and-review-only",
+    "budget": {
+        "maxMinutes": 60,
+        "maxFixAttempts": 3
+    },
+    "target": {
+        "instance": null,
+        "e2eUser": "test@appmixer.ai",
+        "pushRemote": null,
+        "branch": "feature/huggingface-connector",
+        "prRepo": null,
+        "prBase": "dev"
+    },
+    "steps": {
+        "preflight": "done",
+        "build": "done",
+        "review": "done",
+        "cliTests": "BLOCKED",
+        "e2e": "BLOCKED",
+        "ship": "not started"
+    },
+    "blockers": {
+        "cliTests": "No Hugging Face User Access Token exists in ~/.config/configstore/appmixer.json or on any instance. A human must create a token at https://huggingface.co/settings/tokens (fine-grained token needs the 'Make calls to Inference Providers' permission; a classic 'read' token also works) and register it with the CLI.",
+        "e2e": "Same missing token, plus the connector has never been published to a live instance. E2E flow JSONs are generated and pass the local validator, but have never been imported or run."
+    },
+    "next": [
+        "appmixer test auth login src/appmixer/ai/huggingface/auth.js -n appmixer:ai:huggingface   # the -n flag is REQUIRED for ai/ connectors: without it the CLI ENOENTs looking for service.json",
+        "appmixer test component ./src/appmixer/ai/huggingface/GetModel -i '{\"in\":{\"modelId\":\"google-bert/bert-base-uncased\"}}'   # cheapest first: Hub API calls cost no inference credits",
+        "then FindModels and MakeApiCall (also Hub-only, free), then the four Inference Providers components (SendPrompt, CreateEmbeddings, ClassifyText, SummarizeText) which DO consume credits, and GenerateImage last (slowest and most expensive)",
+        "cd src/appmixer/ai && appmixer pack huggingface && appmixer publish appmixer.ai.huggingface.zip   # publish TWICE - this instance is known to land only part of a bundle on the first publish",
+        "appmixer e2e import src/appmixer/ai/huggingface/artifacts/test-flows",
+        "appmixer e2e run <flowId>   # then read the ProcessE2EResults payload - the runner reports PASSED without checking asserts"
+    ],
+    "notes": [
+        "This run was explicitly scoped BUILD + REVIEW ONLY by the operator. No credentials existed, so no `appmixer test`, `appmixer publish`, `appmixer e2e import/run`, `appmixer account create`, and no authenticated HTTP call to the Hugging Face API was made. Nothing in this connector has been executed against the live API.",
+        "API surface was researched from current public docs only. Key finding: the router's OpenAI-compatible /v1 surface covers chat completions ONLY - there is NO /v1/embeddings. Embeddings, classification, summarization and text-to-image therefore go through the hf-inference task routes on router.huggingface.co. The legacy api-inference.huggingface.co host is deliberately unused.",
+        "Two response shapes must be unwrapped and are the most likely source of a first-run CLI test failure: text-classification returns [[{label, score}]] (double-nested) and summarization returns [{summary_text}] (single-nested). Both are handled, but neither has been verified against a live response.",
+        "Text-to-image response Content-Type is not documented; GenerateImage accepts any image/* content type and also handles the {data:[{b64_json}]} and {output:[url]} JSON variants used by non-hf-inference providers.",
+        "The `direction` query param on Hub GET /api/models could not be verified against current docs or the current Python client - it is historically supported and harmless if ignored (results would just come back ascending).",
+        "FindModels builds its own query string rather than passing `params` to axios, because the Hub expects `filter` as a REPEATED key and the default axios serializer emits the `filter[]=` bracket form. This was a review finding, fixed before commit.",
+        "E2E validator warning `create-without-cleanup` on CreateEmbeddings is a false positive - an embedding is a computed value, not a persisted resource, so there is nothing to delete.",
+        "E2E validator `component-coverage` warnings in the run output refer to OTHER connectors in the workspace (requesty, voyageai). All 8 huggingface components ARE covered by the two generated flows.",
+        "Assertion values chosen to be deterministic: all-MiniLM-L6-v2 has exactly 384 dimensions; sst-2 returns POSITIVE for the sample sentence; SendPrompt uses temperature 0. If the E2E run later fails on the SendPrompt regex, the likely cause is the model appending punctuation, not a connector defect."
+    ],
+    "results": {
+        "validator": "0 failures, 0 warnings (node scripts/validate.js --connector ai/huggingface)",
+        "lint": "clean (eslint 8.57.1 via the parent repo's node_modules; the worktree has no node_modules of its own; run with --no-ignore because the worktree path contains a dot-directory)",
+        "review": "8 components audited against the review-connector standards; 7 validator findings and 1 hand-review finding, all fixed; 0 remaining",
+        "cliTests": "BLOCKED - not run, no token",
+        "e2eFlows": {
+            "E2E Hugging Face - Hub Models and API Call": "GENERATED, validator passed, NEVER RUN (covers FindModels, GetModel, MakeApiCall)",
+            "E2E Hugging Face - Inference Tasks": "GENERATED, validator passed, NEVER RUN (covers SendPrompt, SummarizeText, ClassifyText, CreateEmbeddings, GenerateImage)"
+        },
+        "e2eValidate": "Validation passed (26 validators, 2 flow files); warnings are informational only",
+        "e2eCoverage": "8 of 8 components; connector has no triggers",
+        "commit": "dd2cd2c8 on feature/huggingface-connector (build + review); flows and state committed separately",
+        "pr": null
+    }
+}
