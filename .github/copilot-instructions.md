@@ -1,21 +1,42 @@
-<!-- DO NOT EDIT — generated from .github/instructions/* by scripts/build-instructions.js -->
+<!-- DO NOT EDIT — generated from the Appmixer-ai/appmixer-skills repository
+     (instructions/*.md) by scripts/build-instructions.js.
+     To change the content, open a PR against appmixer-skills, then re-run
+     the script here to refresh this file. -->
 
 # Appmixer Development & Component Creation Guidelines
+
+> These instructions are the canonical connector-design rules the
+> [appmixer-skills](https://github.com/Appmixer-ai/appmixer-skills) follow. They
+> are maintained in `instructions/` at the repo root and synced into each
+> skill's `references/` directory (`node scripts/sync-references.mjs`) — edit
+> them there, never the copies. Complete example files live in `examples/`.
+> For real-world example connectors to learn from, see
+> https://github.com/appmixer-ai/appmixer-connectors.
 
 ## Overview
 
 Appmixer is a workflow engine with a web user interface that allows end-users to create business processes using a drag-and-drop UI without writing code. This comprehensive guide covers connector development, authentication, component creation, and best practices for both AI assistance and human developers.
 
-## Project Structure
+## Workspace Structure
+
+Connectors are developed in a local workspace — any directory containing
+`src/<vendor>/<connector>/`. The `<vendor>` segment is a namespace: `appmixer`
+is only the default, a customer workspace can use its own vendor name(s), and
+several vendors can live side by side. Component names mirror the disk layout:
+`<vendor>.<connector>.<module>.<Component>` ↔
+`src/<vendor>/<connector>/<module>/<Component>/`.
 
 ```
 src/
-├── appmixer/           # Source code for connectors
-└── examples/           # Example components (not for production)
-test/
-├── utils.js           # Appmixer stub for testing
-└── [test files]
+└── <vendor>/           # Source code for connectors (default vendor: appmixer)
+    └── <connector>/
 ```
+
+(Reference workspaces like the appmixer-connectors repo may carry extra
+tooling — test runners, validators, example components — but none of it is
+required.)
+
+---
 
 ---
 
@@ -177,6 +198,8 @@ module.exports = {
 
 ---
 
+---
+
 # Part 2: Authentication
 
 ## Overview
@@ -190,104 +213,10 @@ Appmixer supports multiple authentication methods. The `auth.js` file defines ho
 For services that use API keys or tokens.
 
 **Generic Example**:
-```javascript
-module.exports = {
-    type: 'apiKey',
-    definition: {
-        tokenType: 'authentication-token',
-
-        // Authentication fields shown to user
-        auth: {
-            domain: {
-                type: 'text',
-                name: 'Domain',
-                tooltip: 'Your subdomain (e.g., "example" for example.service.com)'
-            },
-            apiKey: {
-                type: 'text',
-                name: 'API Key',
-                tooltip: 'Find your API key in your account settings'
-            }
-        },
-
-        // How to extract account name from profile
-        accountNameFromProfileInfo: 'contact.email',
-
-        // Fetch user profile information
-        requestProfileInfo: async (context) => {
-            return context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.service.com/api/v1/me`,
-                auth: {
-                    user: context.apiKey,
-                    password: 'X'
-                }
-            });
-        },
-
-        // Validate credentials
-        validate: async (context) => {
-            const credentials = `${context.apiKey}:X`;
-            const encoded = Buffer.from(credentials).toString('base64');
-
-            await context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.service.com/api/v1/me`,
-                headers: {
-                    'Authorization': `Basic ${encoded}`
-                }
-            });
-
-            return true; // If request succeeds, credentials are valid
-        }
-    }
-};
-```
+See [`examples/auth/api-key.js`](examples/auth/api-key.js).
 
 **Real-World Example (Freshdesk)**:
-```javascript
-module.exports = {
-    type: 'apiKey',
-    definition: {
-        tokenType: 'authentication-token',
-        auth: {
-            domain: {
-                type: 'text',
-                name: 'Domain',
-                tooltip: 'Your Freshdesk subdomain - e.g. if the domain is <i>https://example.freshdesk.com</i> just type <b>example</b> inside this field'
-            },
-            apiKey: {
-                type: 'text',
-                name: 'API Key',
-                tooltip: 'Log into your Freshdesk account and find <i>Your API Key</i> in Profile settings page.'
-            }
-        },
-        accountNameFromProfileInfo: 'contact.email',
-        requestProfileInfo: async (context) => {
-            return context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
-                auth: {
-                    user: context.apiKey,
-                    password: 'X'
-                }
-            });
-        },
-        validate: async context => {
-            const credentials = `${context.apiKey}:X`;
-            const encoded = Buffer.from(credentials).toString('base64');
-            await context.httpRequest({
-                method: 'GET',
-                url: `https://${context.domain}.freshdesk.com/api/v2/agents/me`,
-                headers: {
-                    'Authorization': `Basic ${encoded}`
-                }
-            });
-            return true;
-        }
-    }
-};
-```
+See [`examples/auth/api-key-freshdesk.js`](examples/auth/api-key-freshdesk.js).
 
 ### OAuth 2.0 Authentication
 
@@ -348,211 +277,12 @@ This format is simpler and works when the service follows standard OAuth 2.0 con
 For services that require custom OAuth logic or have non-standard endpoints:
 
 **Generic Example**:
-```javascript
-module.exports = {
-    type: 'oauth2',
-    definition: () => ({
-        clientId: 'your-client-id',
-        clientSecret: 'your-client-secret',
-        scope: ['profile', 'email'],
-
-        // Extract account info from profile
-        accountNameFromProfileInfo: (context) => context.profileInfo.email,
-        emailFromProfileInfo: (context) => context.profileInfo.email,
-
-        // Authorization URL
-        authUrl: (context) => {
-            const params = new URLSearchParams({
-                client_id: 'your-client-id',
-                redirect_uri: context.callbackUrl,
-                response_type: 'code',
-                scope: context.scope.join(' '),
-                state: context.ticket,
-                access_type: 'offline'
-            });
-            return `https://service.com/oauth/authorize?${params}`;
-        },
-
-        // Exchange authorization code for access token
-        requestAccessToken: async (context) => {
-            const response = await context.httpRequest({
-                method: 'POST',
-                url: 'https://service.com/oauth/token',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                data: {
-                    code: context.authorizationCode,
-                    client_id: 'your-client-id',
-                    client_secret: 'your-client-secret',
-                    redirect_uri: context.callbackUrl,
-                    grant_type: 'authorization_code'
-                }
-            });
-
-            return {
-                accessToken: response.data.access_token,
-                accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000),
-                refreshToken: response.data.refresh_token
-            };
-        },
-
-        // Get user profile
-        requestProfileInfo: async (context) => {
-            const response = await context.httpRequest({
-                method: 'GET',
-                url: 'https://service.com/api/v1/userinfo',
-                headers: { Authorization: `Bearer ${context.accessToken}` }
-            });
-            return response.data;
-        },
-
-        // Refresh expired access token
-        refreshAccessToken: async (context) => {
-            const response = await context.httpRequest({
-                method: 'POST',
-                url: 'https://service.com/oauth/token',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                data: {
-                    client_id: 'your-client-id',
-                    client_secret: 'your-client-secret',
-                    refresh_token: context.refreshToken,
-                    grant_type: 'refresh_token'
-                }
-            });
-
-            return {
-                accessToken: response.data.access_token,
-                accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000)
-            };
-        },
-
-        // Validate access token
-        validateAccessToken: async (context) => {
-            const response = await context.httpRequest({
-                method: 'GET',
-                url: 'https://service.com/api/v1/tokeninfo',
-                params: { access_token: context.accessToken }
-            });
-            return !!response.data.expires_in;
-        }
-    })
-};
-```
+See [`examples/auth/oauth2-generic.js`](examples/auth/oauth2-generic.js).
 
 **Real-World Example (Google OAuth2)**:
-```javascript
-module.exports = {
-    type: 'oauth2',
-    definition: () => {
-        return {
-            clientId: initData.clientId,
-            clientSecret: initData.clientSecret,
-            scope: ['profile', 'email'],
+See [`examples/auth/oauth2-google.js`](examples/auth/oauth2-google.js).
 
-            accountNameFromProfileInfo: function(context) {
-                return context.profileInfo.email;
-            },
-
-            emailFromProfileInfo: function(context) {
-                return context.profileInfo.email;
-            },
-
-            authUrl: function(context) {
-                const params = new URLSearchParams({
-                    client_id: initData.clientId,
-                    redirect_uri: context.callbackUrl,
-                    response_type: 'code',
-                    scope: context.scope.join(' '),
-                    state: context.ticket,
-                    access_type: 'offline',
-                    approval_prompt: 'force'
-                }).toString();
-
-                return `https://accounts.google.com/o/oauth2/auth?${params}`;
-            },
-
-            requestAccessToken: async function(context) {
-                const data = {
-                    code: context.authorizationCode,
-                    client_id: initData.clientId,
-                    client_secret: initData.clientSecret,
-                    redirect_uri: context.callbackUrl,
-                    grant_type: 'authorization_code'
-                };
-
-                const response = await context.httpRequest({
-                    method: 'POST',
-                    url: 'https://oauth2.googleapis.com/token',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    data
-                });
-
-                return {
-                    accessToken: response.data.access_token,
-                    accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000),
-                    refreshToken: response.data.refresh_token
-                };
-            },
-
-            requestProfileInfo: async function(context) {
-                const response = await context.httpRequest({
-                    method: 'GET',
-                    url: 'https://www.googleapis.com/oauth2/v2/userinfo',
-                    headers: {
-                        Authorization: `Bearer ${context.accessToken}`
-                    }
-                });
-
-                if (!response.data) {
-                    throw new Error('Failed to retrieve profile info');
-                }
-
-                return response.data;
-            },
-
-            refreshAccessToken: async function(context) {
-                const data = {
-                    client_id: initData.clientId,
-                    client_secret: initData.clientSecret,
-                    refresh_token: context.refreshToken,
-                    grant_type: 'refresh_token'
-                };
-
-                const response = await context.httpRequest({
-                    method: 'POST',
-                    url: 'https://oauth2.googleapis.com/token',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    data
-                });
-
-                return {
-                    accessToken: response.data.access_token,
-                    accessTokenExpDate: new Date(Date.now() + response.data.expires_in * 1000)
-                };
-            },
-
-            validateAccessToken: async function(context) {
-                const response = await context.httpRequest({
-                    method: 'GET',
-                    url: 'https://www.googleapis.com/oauth2/v2/tokeninfo',
-                    params: {
-                        access_token: context.accessToken
-                    }
-                });
-
-                if (response.data.expires_in) {
-                    return !!response.data.expires_in;
-                }
-
-                return false;
-            }
-        };
-    }
-};
-```
+---
 
 ---
 
@@ -568,6 +298,8 @@ Files: `<connector>/jobs.js`, `<connector>/routes.js`, `<connector>/plugin.js`
 ```js
 context.log(level, message, [data]);
 ```
+
+---
 
 ---
 
@@ -588,6 +320,8 @@ Each component consists of:
 ## General Principles
 
 - For components that require an ID as input, there must be another component that returns the entity from which the ID can be obtained. For example, if a connector has a GetEmail component that takes emailId as input, then there must also be a FindEmails component that returns one or more email entities containing the emailId.
+
+---
 
 ---
 
@@ -890,6 +624,8 @@ Output port fields should include `example` values so users see realistic sample
 
 ---
 
+---
+
 # Part 6: Component Behavior (JavaScript)
 
 The behavior file contains the component's logic.
@@ -968,6 +704,8 @@ module.exports = {
 
 ---
 
+---
+
 # Part 7: Component Types and Patterns
 
 ## 1. Action Components
@@ -989,225 +727,13 @@ Action components perform operations when triggered by input data. They don't ru
 - **IMPORTANT**: Do NOT include `limit` or `offset` fields in component inputs - these are not supported by Appmixer Find components
 
 **Example component.json structure**:
-```json
-{
-    "name": "appmixer.service.core.FindTasks",
-    "label": "Find Tasks",
-    "description": "Search for tasks based on specified criteria. This component will return a maximum of 500 records",
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "query": { "type": "string" },
-                    "status": { "type": "string" },
-                    "outputType": { "type": "string", "default": "array" }
-                }
-            },
-            "inspector": {
-                "inputs": {
-                    "query": {
-                        "type": "text",
-                        "index": 1,
-                        "label": "Search Query",
-                        "tooltip": "Search term to find tasks"
-                    },
-                    "status": {
-                        "type": "select",
-                        "index": 2,
-                        "label": "Status",
-                        "options": [
-                            { "label": "All", "value": "" },
-                            { "label": "Open", "value": "open" },
-                            { "label": "Completed", "value": "completed" }
-                        ]
-                    },
-                    "outputType": {
-                        "type": "select",
-                        "label": "Output Type",
-                        "index": 3,
-                        "defaultValue": "array",
-                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
-                        "options": [
-                            { "label": "First Item Only", "value": "first" },
-                            { "label": "All items at once", "value": "array" },
-                            { "label": "One item at a time", "value": "object" },
-                            { "label": "Store to CSV file", "value": "file" }
-                        ]
-                    }
-                }
-            }
-        }
-    ],
-    "outPorts": [
-        {
-            "name": "out",
-            "source": {
-                "url": "/component/appmixer/service/core/FindTasks?outPort=out",
-                "data": {
-                    "properties": {
-                        "generateOutputPortOptions": true
-                    },
-                    "messages": {
-                        "in/outputType": "inputs/in/outputType"
-                        // Fake any other required inputs here if needed
-                    }
-                }
-            }
-        },
-        {
-            "name": "notFound"
-        }
-    ]
-}
-```
+See [`examples/find-tasks/component.json`](examples/find-tasks/component.json).
 
 **Example behavior pattern with lib support**:
-```javascript
-'use strict';
-
-const lib = require('../../lib');
-
-// schema of the single item
-const schema = {
-    'id': { 'type': 'string', 'title': 'Task Id' },
-    'name': { 'type': 'string', 'title': 'Name' },
-    'status': { 'type': 'string', 'title': 'Status' }
-};
-
-module.exports = {
-    async receive(context) {
-        const { searchQuery, outputType } = context.messages.in.content;
-
-        if (context.properties.generateOutputPortOptions) {
-            return lib.getOutputPortOptions(context, outputType, schema, { label: 'Tasks', value: 'tasks' });
-        }
-
-        // any required inputs validation can be done here
-
-        let url = 'https://api.service.com/tasks';
-        const params = {};
-
-        if (searchQuery) {
-            params.q = searchQuery;
-        }
-
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            params
-        });
-
-        const tasks = data.tasks || [];
-
-        if (tasks.length === 0) {
-            return context.sendJson({}, 'notFound');
-        }
-
-        return lib.sendArrayOutput({ context, records: tasks, outputType });
-    }
-};
-```
+See [`examples/find-tasks/FindTasks.js`](examples/find-tasks/FindTasks.js).
 
 **lib.js helper utilities**:
-```javascript
-const pathModule = require('path');
-
-const DEFAULT_PREFIX = '{{connector_name}}-objects-export';
-
-module.exports = {
-    async sendArrayOutput({
-                              context,
-                              outputPortName = 'out',
-                              outputType = 'array',
-                              records = []
-                          }) {
-        if (outputType === 'first') {
-            if (records.length === 0) {
-                throw new context.CancelError('No records available for first output type');
-            }
-            await context.sendJson(
-                { ...records[0], index: 0, count: records.length },
-                outputPortName
-            );
-        } else if (outputType === 'object') {
-            for (let index = 0; index < records.length; index++) {
-                await context.sendJson(
-                    { ...records[index], index, count: records.length },
-                    outputPortName
-                );
-            }
-        } else if (outputType === 'array') {
-            await context.sendJson({ result: records, count: records.length }, outputPortName);
-        } else if (outputType === 'file') {
-            const csvString = toCsv(records);
-            let buffer = Buffer.from(csvString, 'utf8');
-            const componentName = context.flowDescriptor[context.componentId].label || context.componentId;
-            const fileName = `${context.config.outputFilePrefix || DEFAULT_PREFIX}-${componentName}.csv`;
-            const savedFile = await context.saveFileStream(pathModule.normalize(fileName), buffer);
-            await context.log({ step: 'File was saved', fileName, fileId: savedFile.fileId });
-            await context.sendJson({ fileId: savedFile.fileId }, outputPortName);
-        } else {
-            throw new context.CancelError('Unsupported outputType ' + outputType);
-        }
-    },
-
-    getOutputPortOptions(context, outputType, itemSchema, { label, value }) {
-        if (outputType === 'object' || outputType === 'first') {
-            const options = Object.keys(itemSchema)
-                .reduce((res, field) => {
-                    const schema = itemSchema[field];
-                    const { title: label, ...schemaWithoutTitle } = schema;
-                    res.push({ label, value: field, schema: schemaWithoutTitle });
-                    return res;
-                }, [{
-                    label: 'Current Item Index',
-                    value: 'index',
-                    schema: { type: 'integer' }
-                }, {
-                    label: 'Items Count',
-                    value: 'count',
-                    schema: { type: 'integer' }
-                }]);
-            return context.sendJson(options, 'out');
-        }
-
-        if (outputType === 'array') {
-            return context.sendJson([{
-                label,
-                value,
-                schema: {
-                    type: 'array',
-                    items: { type: 'object', properties: itemSchema }
-                }
-            }], 'out');
-        }
-
-        if (outputType === 'file') {
-            return context.sendJson([{ label: 'File ID', value: 'fileId' }], 'out');
-        }
-    }
-};
-
-const toCsv = (array) => {
-    const headers = Object.keys(array[0]);
-    return [
-        headers.join(','),
-        ...array.map(items => {
-            return Object.values(items).map(property => {
-                if (typeof property === 'object') {
-                    return JSON.stringify(property);
-                }
-                return property;
-            }).join(',');
-        })
-    ].join('\n');
-};
-```
+See [`examples/find-tasks/lib.js`](examples/find-tasks/lib.js).
 
 ### outputType Helper Functions (REQUIRED)
 
@@ -1217,7 +743,7 @@ Components with `outputType` (Find/List) **MUST** use standardized lib.js helper
 - `sendArrayOutput({ context, outputPortName = 'out', outputType, records })` - handles all output types
 - `getOutputPortOptions(context, outputType, schema, { label })` - dynamic output schema
 
-**Canonical implementation:** Copy from `appmixer-cli/src/ai/src/templates/libs/lib.js`
+**Canonical implementation:** copy [`examples/find-tasks/lib.js`](examples/find-tasks/lib.js)
 
 **Required behavior pattern:**
 ```javascript
@@ -1240,8 +766,7 @@ module.exports = {
 **Critical rules:**
 - For the `'array'` outputType, always use `result` as the array output field name and include the total count: `{ result: records, count: records.length }`
 - Never use `records` or custom field names for consistency
-- lib.js MUST exist in connector root if component has outputType
-- Run `npm run validate-outputtype` to check compliance
+- lib.js MUST exist in connector root if component has outputType — follow this rule even when the workspace has no tooling to enforce it
 
 ### List (Items) Components
 
@@ -1257,73 +782,7 @@ module.exports = {
 - **IMPORTANT**: Do NOT include `limit` or `offset` fields in component inputs - these are not supported by Appmixer List components
 
 **Example component.json structure**:
-```json
-{
-    "name": "appmixer.googleForms.core.ListForms",
-    "author": "Appmixer <info@appmixer.com>",
-    "description": "Fetches a list of Google Forms.",
-    "version": "1.0.0",
-    "auth": {
-        "service": "appmixer:googleForms",
-        "scope": [
-            "https://www.googleapis.com/auth/drive.readonly"
-        ]
-    },
-    "quota": {
-        "manager": "appmixer:googleForms",
-        "resources": "forms.api",
-        "scope": {
-            "userId": "{{userId}}"
-        }
-    },
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "outputType": {
-                        "type": "string"
-                    }
-                }
-            },
-            "inspector": {
-                "inputs": {
-                    "outputType": {
-                        "type": "select",
-                        "label": "Output Type",
-                        "index": 2,
-                        "defaultValue": "array",
-                        "options": [
-                            { "label": "First Item Only", "value": "first" },
-                            { "label": "All items at once", "value": "array" },
-                            { "label": "One item at a time", "value": "object" },
-                            { "label": "Store to CSV file", "value": "file" }
-                        ]
-                    }
-                }
-            }
-        }
-    ],
-    "outPorts": [
-        {
-            "name": "out",
-            "source": {
-                "url": "/component/appmixer/googleForms/core/ListForms?outPort=out",
-                "data": {
-                    "properties": {
-                        "generateOutputPortOptions": true
-                    },
-                    "messages": {
-                        "in/outputType": "inputs/in/outputType"
-                        // Fake any other required inputs here if needed
-                    }
-                }
-            }
-        }
-    ]
-}
-```
+See [`examples/list-forms/component.json`](examples/list-forms/component.json).
 
 ### Get (Item) Components
 
@@ -1337,50 +796,7 @@ module.exports = {
 - Throws error if item not found
 
 **Example component.json structure**:
-```json
-{
-    "name": "appmixer.service.core.GetTask",
-    "label": "Get Task",
-    "description": "Retrieve a specific task by ID.",
-    "inPorts": [
-        {
-            "name": "in",
-            "inspector": {
-                "inputs": {
-                    "taskId": {
-                        "type": "text",
-                        "index": 1,
-                        "label": "Task ID",
-                        "tooltip": "The unique identifier of the task"
-                    }
-                }
-            },
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "taskId": { "type": "string" }
-                },
-                "required": ["taskId"]
-            }
-        }
-    ],
-    "outPorts": [
-        {
-            "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
-                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
-                    "description": { "type": "string", "title": "Description", "example": "Milk, eggs, bread" },
-                    "status": { "type": "string", "title": "Status", "example": "open" },
-                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
-                }
-            }
-        }
-    ]
-}
-```
+See [`examples/get-task/component.json`](examples/get-task/component.json).
 
 **Example behavior pattern**:
 ```javascript
@@ -1417,74 +833,7 @@ module.exports = {
 - Requires fields specific to the entity type
 
 **Example component.json structure**:
-```json
-{
-    "name": "appmixer.service.core.CreateTask",
-    "label": "Create Task",
-    "description": "Create a new task in the service",
-    "inPorts": [
-        {
-            "name": "in",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "title": { "type": "string" },
-                    "description": { "type": "string" },
-                    "priority": { "type": "string" },
-                    "dueDate": { "type": "string", "format": "date" }
-                },
-                "required": ["title"]
-            },
-            "inspector": {
-                "inputs": {
-                    "title": {
-                        "type": "text",
-                        "index": 1,
-                        "label": "Title",
-                        "tooltip": "Task title"
-                    },
-                    "description": {
-                        "type": "textarea",
-                        "index": 2,
-                        "label": "Description",
-                        "tooltip": "Task description"
-                    },
-                    "priority": {
-                        "type": "select",
-                        "index": 3,
-                        "label": "Priority",
-                        "options": [
-                            { "label": "Low", "value": "low" },
-                            { "label": "Medium", "value": "medium" },
-                            { "label": "High", "value": "high" }
-                        ]
-                    },
-                    "dueDate": {
-                        "type": "date",
-                        "index": 4,
-                        "label": "Due Date",
-                        "tooltip": "When the task should be completed"
-                    }
-                }
-            }
-        }
-    ],
-    "outPorts": [
-        {
-            "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
-                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
-                    "status": { "type": "string", "title": "Status", "example": "open" },
-                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
-                }
-            }
-        }
-    ]
-}
-```
+See [`examples/create-task/component.json`](examples/create-task/component.json).
 
 ### Delete (Item) Components
 
@@ -1579,228 +928,23 @@ Trigger components monitor for events and start workflows when conditions are me
 **Pattern**: `New{EntityName}` or `{EntityName}Created` (e.g., `NewTask`, `TaskCreated`)
 
 **Example component.json structure**:
-```json
-{
-    "name": "appmixer.service.core.NewTask",
-    "label": "New Task",
-    "description": "Triggers when a new task is created",
-    "trigger": true,
-    "tick": true,
-    "outPorts": [
-        {
-            "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string", "title": "Task ID", "example": "1001" },
-                    "title": { "type": "string", "title": "Title", "example": "Buy groceries" },
-                    "created_at": { "type": "string", "format": "date-time", "title": "Created Date", "example": "2025-01-15T10:30:00Z" }
-                }
-            }
-        }
-    ]
-}
-```
+See [`examples/polling-trigger/component.json`](examples/polling-trigger/component.json).
 
 **Behavior file pattern**:
-```javascript
-'use strict';
-
-module.exports = {
-
-    async tick(context) {
-
-        const { projectId } = context.properties;
-
-        // Fetch items from API
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.service.com/projects/${projectId}/tasks`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            }
-        });
-
-        // Load previously known items from state
-        const state = await context.loadState();
-        const known = state.known ? new Set(state.known) : null;
-
-        // Find new items by comparing with known items
-        const tasks = data.tasks || [];
-        const newItems = [];
-        const actual = [];
-
-        for (const task of tasks) {
-            actual.push(task.id);
-            if (known && !known.has(task.id)) {
-                newItems.push(task);
-            }
-        }
-
-        // Send new items to output port
-        for (const item of newItems) {
-            await context.sendJson(item, 'out');
-        }
-
-        // Save current state for next tick
-        await context.saveState({ known: actual });
-    }
-};
-```
+See [`examples/polling-trigger/NewTask.js`](examples/polling-trigger/NewTask.js).
 
 **State Management Pattern using lib.js helper**:
-```javascript
-'use strict';
-const lib = require('../../lib');
-
-module.exports = {
-
-    async tick(context) {
-
-        const { projectId } = context.properties;
-
-        const { data } = await context.httpRequest({
-            method: 'GET',
-            url: `https://api.service.com/projects/${projectId}/tasks`,
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            }
-        });
-
-        // Use lib helper for state comparison
-        const known = Array.isArray(context.state.known) ? new Set(context.state.known) : null;
-        const { diff, actual } = lib.getNewItems(known, data.tasks, 'id');
-
-        if (diff.length) {
-            await Promise.all(diff.map(task => context.sendJson(task, 'out')));
-        }
-
-        await context.saveState({ known: actual });
-    }
-};
-```
+See [`examples/polling-trigger/NewTaskWithLib.js`](examples/polling-trigger/NewTaskWithLib.js).
 
 #### 2. Webhook Triggers (`webhook: true`)
 
 Webhook triggers receive HTTP callbacks from external services. They require lifecycle methods to register/unregister webhooks.
 
 **component.json structure**:
-```json
-{
-    "name": "appmixer.service.core.UpdatedContact",
-    "label": "Updated Contact",
-    "description": "Triggers when a contact is updated.",
-    "author": "Appmixer <info@appmixer.com>",
-    "webhook": true,
-    "auth": {
-        "service": "appmixer:service"
-    },
-    "properties": {
-        "schema": {
-            "properties": {
-                "listId": { "type": "string" }
-            }
-        },
-        "inspector": {
-            "inputs": {
-                "listId": {
-                    "type": "select",
-                    "label": "List",
-                    "index": 1,
-                    "source": {
-                        "url": "/component/appmixer/service/core/ListLists?outPort=out",
-                        "data": {
-                            "transform": "./transformers#listsToSelectArray"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "outPorts": [
-        {
-            "name": "out",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "id": { "type": "string", "title": "Contact ID", "example": "c-1001" },
-                    "email": { "type": "string", "title": "Email", "example": "jane@example.com" },
-                    "updated_at": { "type": "string", "format": "date-time", "title": "Updated Date", "example": "2025-01-15T10:30:00Z" }
-                }
-            }
-        }
-    ]
-}
-```
+See [`examples/webhook-trigger/component.json`](examples/webhook-trigger/component.json).
 
 **Behavior file pattern**:
-```javascript
-'use strict';
-
-module.exports = {
-
-    async start(context) {
-
-        // Register webhook with external service when flow starts
-        const webhookUrl = context.getWebhookUrl();
-        const { listId } = context.properties;
-
-        const { data } = await context.httpRequest({
-            method: 'POST',
-            url: 'https://api.service.com/webhooks',
-            headers: {
-                'Authorization': `Bearer ${context.auth.accessToken}`
-            },
-            data: {
-                url: webhookUrl,
-                events: ['contact.updated'],
-                listId: listId
-            }
-        });
-
-        // Save webhook ID for cleanup
-        return context.saveState({ webhookId: data.id });
-    },
-
-    async receive(context) {
-
-        // Handle incoming webhook payload
-        if (context.messages.webhook) {
-            const payload = context.messages.webhook.content.data;
-
-            // Optionally fetch additional data from API
-            const { data } = await context.httpRequest({
-                method: 'GET',
-                url: `https://api.service.com/contacts/${payload.contactId}`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`
-                }
-            });
-
-            await context.sendJson(data, 'out');
-
-            // IMPORTANT: Always return context.response() to acknowledge webhook
-            return context.response();
-        }
-    },
-
-    async stop(context) {
-
-        // Clean up: unregister webhook when flow stops
-        const { webhookId } = await context.loadState();
-
-        if (webhookId) {
-            await context.httpRequest({
-                method: 'DELETE',
-                url: `https://api.service.com/webhooks/${webhookId}`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`
-                }
-            });
-        }
-    }
-};
-```
+See [`examples/webhook-trigger/UpdatedContact.js`](examples/webhook-trigger/UpdatedContact.js).
 
 #### 2b. Plugin-based Triggers (shared global endpoint + `addListener`)
 
@@ -1830,89 +974,17 @@ Trigger component instance (one per flow)
 
 `plugin.js` — entrypoint executed once when the connector is installed onto the Appmixer server. Loads routes (and optionally jobs):
 
-```javascript
-'use strict';
-module.exports = async context => {
-    require('./routes')(context);
-    context.log('info', '[MYSERVICE] Plugin initialized.');
-};
-```
+See [`examples/plugin-webhook/plugin.js`](examples/plugin-webhook/plugin.js).
 
 `routes.js` — registers the HTTP endpoint(s) and the listener-added validator:
 
-```javascript
-'use strict';
-
-module.exports = async context => {
-
-    // Runs every time a trigger calls context.addListener().
-    // Use it to validate params, transform them, or perform per-subscription
-    // setup against the upstream API.
-    context.onListenerAdded(async listener => {
-        // listener.eventName, listener.params  — mutable
-        // throw to reject the subscription
-    });
-
-    context.http.router.register({
-        method: 'POST',
-        path: '/events',                        // → /plugins/<vendor>/<service>/events
-        options: {
-            auth: false,
-            handler: async (req, h) => {
-                if (!isValidSignature(context, req)) {
-                    return h.response(undefined).code(401);
-                }
-
-                // Optional verification handshake (GET hub.challenge etc.)
-                if (req.payload?.challenge) {
-                    return { challenge: req.payload.challenge };
-                }
-
-                // Parse the payload then dispatch per-listener.
-                await context.triggerListeners({
-                    eventName: extractEventName(req.payload),
-                    payload: extractEventBody(req.payload),
-                    filter: listener => listener.params.userId === extractUserId(req.payload)
-                });
-                return {};
-            }
-        }
-    });
-};
-```
+See [`examples/plugin-webhook/routes.js`](examples/plugin-webhook/routes.js).
 
 The endpoint URL is `<API_BASE>/plugins/<vendor>/<service>/<path>` — derived from the connector's directory path. **No `context.getWebhookUrl()` is involved** — the admin configures this single URL on the upstream service once.
 
 **Trigger component pattern**
 
-```javascript
-'use strict';
-
-module.exports = {
-
-    async start(context) {
-
-        // (Optional) Upstream-side per-subscription setup. Mandatory only if
-        // the upstream needs to know "this user wants events" — e.g. Meta's
-        // POST /{waba-id}/subscribed_apps.
-
-        await context.addListener(`channel:${context.properties.channelId}`, {
-            userId: context.profileInfo.userId,
-            accessToken: context.auth.accessToken
-        });
-    },
-
-    async stop(context) {
-        await context.removeListener(`channel:${context.properties.channelId}`);
-    },
-
-    async receive(context) {
-        if (!context.messages.webhook) return;
-        const data = context.messages.webhook.content.data;     // payload passed in via triggerListeners
-        await context.sendJson(data, 'out');
-    }
-};
-```
+See [`examples/plugin-webhook/NewEvent.js`](examples/plugin-webhook/NewEvent.js).
 
 **Key APIs**
 
@@ -1959,76 +1031,7 @@ Some triggers use both webhook and tick - webhooks for real-time events and tick
 ```
 
 **Behavior file pattern**:
-```javascript
-'use strict';
-
-module.exports = {
-
-    async start(context) {
-
-        const { id, expirationTime } = await registerWebhook(context);
-
-        return context.saveState({
-            webhookId: id,
-            expirationTime: Date.parse(expirationTime)
-        });
-    },
-
-    async receive(context) {
-
-        if (context.messages.webhook) {
-            const payload = context.messages.webhook.content.data;
-            await context.sendJson(payload, 'out');
-            return context.response();
-        }
-    },
-
-    async tick(context) {
-
-        // Use tick to refresh webhook before expiration
-        let lock;
-        try {
-            lock = await context.lock(context.componentId);
-            const state = await context.loadState();
-            const { webhookId, expirationTime } = state;
-
-            if (!webhookId) return;
-
-            // Refresh 3 days before expiration
-            const renewDate = expirationTime - (3 * 24 * 60 * 60 * 1000);
-            const now = Date.now();
-
-            if (now >= renewDate) {
-                const { data } = await context.httpRequest({
-                    method: 'POST',
-                    url: `https://api.service.com/webhooks/${webhookId}/refresh`,
-                    headers: {
-                        'Authorization': `Bearer ${context.auth.accessToken}`
-                    }
-                });
-                state.expirationTime = Date.parse(data.expirationTime);
-                await context.saveState(state);
-            }
-        } finally {
-            if (lock) await lock.unlock();
-        }
-    },
-
-    async stop(context) {
-
-        const { webhookId } = await context.loadState();
-        if (webhookId) {
-            await context.httpRequest({
-                method: 'DELETE',
-                url: `https://api.service.com/webhooks/${webhookId}`,
-                headers: {
-                    'Authorization': `Bearer ${context.auth.accessToken}`
-                }
-            });
-        }
-    }
-};
-```
+See [`examples/hybrid-trigger/NewRecord.js`](examples/hybrid-trigger/NewRecord.js).
 
 ### Trigger Naming Conventions
 
@@ -2308,6 +1311,8 @@ Components referenced in a `source.url` **only** with `generateOutputPortOptions
 
 ---
 
+---
+
 # Part 8: Best Practices
 
 ## Code Style Guidelines (For All)
@@ -2318,7 +1323,7 @@ Components referenced in a `source.url` **only** with `generateOutputPortOptions
 - Use camelCase for variable names in JavaScript behavior files (destructure with aliases if needed)
 - Remove all unused variables and imports
 - Property names in component.json must NEVER use a pipe `|` (e.g., `lockType`, not `lock|type`)
-- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding). CI enforces camelCase only on changed/new inputs via `npm run validate:changed`.
+- **New input** property names should be camelCase (no underscore `_`). Existing snake_case inputs are fine and must NOT be renamed — that is a breaking change for connector users (input re-binding).
 - Property names in component.json must exactly match those used in `context.messages.in.content`
 
 ## Development Guidelines (For All)
@@ -2636,26 +1641,30 @@ const file = await context.saveFileStream(outFilename, data);
 return context.sendJson({ fileId: file.fileId, input: text, fileSize: file.length }, 'out');
 ```
 
+---
+
 # Testing Guidelines
 
 ### Unit Tests
 
 - Use `mocha` for unit tests
-- Place tests in `src/appmixer/<connector_name>/artifacts/test/` directory (colocated with connector source)
+- Place tests in `src/<vendor>/<connector_name>/artifacts/test/` directory (colocated with connector source)
 - Use `assert` from Node.js for assertions
 - Name test files with `.test.js` extension (e.g., `AIAgent.test.js`)
 
-When working on a single connector, you can run tests with:
+When working on a single connector, run its tests with mocha directly:
 
 ```bash
-npm run test-unit -- src/appmixer/<connector_name>/artifacts/test/*.test.js
+npx mocha src/<vendor>/<connector_name>/artifacts/test/*.test.js
 ```
 
-The test suite automatically discovers and runs all test files in the `artifacts/test/` directories across all connectors.
+(Workspaces may ship their own test runner script — e.g. the appmixer-connectors
+repo's `npm run test-unit` discovers all `artifacts/test/` files — but plain
+mocha works everywhere.)
 
 ### End-to-End (E2E) Test Flows
 
-E2E test flows are automated workflow tests stored as `test-flow*.json` files in the connector's root directory (`src/appmixer/<connector_name>/`). These flows test the complete integration by executing components in a realistic sequence.
+E2E test flows are automated workflow tests stored as `test-flow*.json` files in the connector's root directory (`src/<vendor>/<connector_name>/`). These flows test the complete integration by executing components in a realistic sequence.
 
 **Important**: Connectors should have **multiple smaller test flows** rather than one large flow. Each flow should test a specific feature or workflow (e.g., `test-flow-crud.json`, `test-flow-search.json`, `test-flow-webhooks.json`). This approach makes tests easier to maintain, debug, and understand.
 
@@ -3357,214 +2366,7 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
 
 #### Example Test Flow Pattern
 
-```json
-{
-    "name": "E2E Service - crud",
-    "description": "End-to-end test for Service connector - tests CRUD operations",
-    "flow": {
-        "start": {
-            "type": "appmixer.utils.controls.OnStart",
-            "x": 64,
-            "y": 16,
-            "source": {},
-            "version": "1.0.0",
-            "config": {}
-        },
-        "create-item": {
-            "type": "appmixer.service.core.CreateItem",
-            "x": 256,
-            "y": 16,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "start": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "start": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "name": {}
-                                },
-                                "lambda": {
-                                    "name": "E2E Test Item"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "get-item": {
-            "type": "appmixer.service.core.GetItem",
-            "x": 448,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "create-item": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "create-item": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "itemId": {
-                                        "var-1": {
-                                            "variable": "$.create-item.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "itemId": "{{{var-1}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "assert-item": {
-            "type": "appmixer.utils.test.Assert",
-            "x": 832,
-            "y": 144,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "get-item": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "get-item": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "expression": {
-                                        "name-check": {
-                                            "variable": "$.get-item.out.name",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "expression": {
-                                        "AND": [
-                                            {
-                                                "field": "{{{name-check}}}",
-                                                "assertion": "equal",
-                                                "expected": "E2E Test Item"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "after-all": {
-            "type": "appmixer.utils.test.AfterAll",
-            "x": 1024,
-            "y": 80,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "assert-item": ["out"]
-                }
-            },
-            "config": {
-                "properties": {
-                    "timeout": 30
-                }
-            }
-        },
-        "delete-item": {
-            "type": "appmixer.service.core.DeleteItem",
-            "x": 1216,
-            "y": 80,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "after-all": ["out"]
-                }
-            },
-            "config": {
-                "transform": {
-                    "in": {
-                        "after-all": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "itemId": {
-                                        "var-1": {
-                                            "variable": "$.create-item.out.id",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "itemId": "{{{var-1}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "process-results": {
-            "type": "appmixer.utils.test.ProcessE2EResults",
-            "x": 1408,
-            "y": 80,
-            "version": "1.0.0",
-            "source": {
-                "in": {
-                    "delete-item": ["out"]
-                }
-            },
-            "config": {
-                "properties": {
-                    "successStoreId": "64f6f1f9193228000754082f",
-                    "failedStoreId": "64f6f1f0193228000754082e"
-                },
-                "transform": {
-                    "in": {
-                        "delete-item": {
-                            "out": {
-                                "type": "json2new",
-                                "modifiers": {
-                                    "recipients": {},
-                                    "testCase": {},
-                                    "result": {
-                                        "result-var": {
-                                            "variable": "$.after-all.out",
-                                            "functions": []
-                                        }
-                                    }
-                                },
-                                "lambda": {
-                                    "recipients": "jirka@client.io",
-                                    "testCase": "E2E Service - crud",
-                                    "result": "{{{result-var}}}"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-```
+See [`examples/e2e-test-flow.json`](examples/e2e-test-flow.json).
 
 #### Creating a Test Flow: Step-by-Step
 
@@ -3584,7 +2386,7 @@ The `result` property MUST use `{{{uuid}}}` pattern referencing `$.after-all.out
     - Identify what to assert
 
 3. **Create JSON File**
-    - Name: `src/appmixer/<connector>/test-flow-<feature>.json`
+    - Name: `src/<vendor>/<connector>/test-flow-<feature>.json`
     - Use descriptive feature names: `crud`, `search`, `webhooks`, `list`, etc.
 
 4. **Add Required Components**
@@ -3662,27 +2464,437 @@ Good examples to reference:
 
 ---
 
-# Development instructions for Agents
-## Updating copilot-instructions.md with New Learnings
+---
 
-As you work on the codebase, you will discover important information, edge cases, and best practices that aren't yet documented:
+# Trigger `test(context)` Method
 
-1. **Capture insights**: When you encounter something non-obvious (e.g., a gotcha, a useful tip, an undocumented behavior), note it
-2. **Update this file**: Add the information to the appropriate section in copilot-instructions.md
-3. **Be concise**: Keep additions brief and actionable
-4. **Include context**: Explain *why* the information matters, not just *what* it is
+How to add a `test(context)` method to **trigger** components so the designer's Flow Test Mode
+can produce a representative output **without** starting the flow and **without** waiting
+for a real event.
 
-### Example Additions
+## What `test()` is
 
-Instead of:
-> "The email quota endpoint sometimes times out"
+When a flow is run in **Test Mode** with no explicit `payload`/`inputData`, the trigger's
+`start()`/`stop()`/`tick()` are **skipped**. The engine resolves test data via a fallback chain:
 
-Write:
-> "The email quota endpoint can timeout if the database is under heavy load. If you see timeout errors in tests, increase the Prisma query timeout in `.env` or check for long-running queries in `npx prisma studio`"
+1. the component's `test(context)` method — **this method**, called first
+2. a search of recent run logs for an output from this component/flow
+3. deterministic samples generated from the outPort JSON Schema
+4. empty `receive()` / error
 
-Commit these updates as documentation improvements:
+Steps 2–3 are weak: logs exist only after a production run, and schema samples produce
+synthetic IDs (`"sample"`, `0`) that downstream API components reject on the first hop.
+So `test()` is what makes Test Mode actually useful.
+
+Key facts about how the engine calls it:
+- The context is created from the component (with an **empty message**), so it carries the
+  component's config — **`context.auth` and `context.properties` are fully available**.
+- **`context.state` is empty** — the flow was never started, so no `tick()` has ever saved a
+  cursor. `test()` must not rely on reading state (and must not write it, see Hard rules).
+- `test()` runs inside a `try/catch`. If it **throws**, the error is logged and the chain
+  falls through to the log/schema fallbacks. **Throw on "no example available" — never
+  return null, send nothing, or fabricate fake data** (see Hard rule 5).
+
+## Where `test()` lives
+
+`test()` is just another exported method in the trigger's behavior file, next to
+`tick()`/`receive()`. **No `component.json` change is needed** — the engine detects the method
+automatically:
+
+```javascript
+'use strict';
+
+module.exports = {
+
+    async tick(context) { /* production polling logic */ },
+
+    async test(context) { /* one read-only fetch + sendJson, see below */ }
+};
 ```
-docs(agents): add note about email quota endpoint timeouts
 
-Updates copilot-instructions.md with debugging guidance for common timeout issues.
+## Core principle: `test()` and `tick()`/`receive()` must share code
+
+This is the most important rule and the reason this guide exists. `test()` only has value if
+its output is **byte-for-byte the same shape** as what the trigger emits in production. The way
+to guarantee that — and to keep it true as the connector evolves — is to make `test()` and
+`tick()`/`receive()` **call the same functions**, not re-implement the same logic side by side.
+
+**Maximize shared code. `test()` should be a thin wrapper, not a parallel implementation.**
+
+Factor the production path into helpers that both entry points reuse:
+- **the upstream request** (URL, auth, headers, query building, pagination parsing), and
+- **the record→output mapping** (`fields` object).
+
+Ideally `test()` adds only: a different query (newest-first, single item), a "take the first
+record" line, and a `throw` when empty. Everything else flows through the shared helpers.
+
+❌ **Anti-pattern**: `test()` re-declares the base URL, auth config, query param logic and the
+HTTP call, duplicating `tick()`. The two **will** drift — someone fixes a header or a mapped
+field in `tick()` and forgets `test()`, and the test silently emits a stale/wrong shape.
+
+✅ **Pattern:** one `requestX(context, query, opts)` helper does the fetch + map and returns
+mapped records (+ next page); `tick()` loops/dedups/saves state around it, `test()` calls it
+once with a newest-first query and emits `records[0]`.
+
+Use the built-in **`context.httpRequest`** for the HTTP call (axios-compatible options/response:
+`{ method, url, params, data, headers }` → `{ data, status, headers }`). It needs no extra
+dependency in your connector's `package.json` and goes through the platform's HTTP stack.
+
+```javascript
+// shared by BOTH tick() and test() — request shape + mapping live in one place
+async function requestTickets(context, urlOrParams, normalizedEmbed) {
+    const { auth } = context;
+    const url = typeof urlOrParams === 'string'
+        ? urlOrParams
+        : `https://${auth.domain}.example.com/api/v2/tickets?${urlOrParams.toString()}`;
+    const credentials = Buffer.from(`${auth.apiKey}:X`).toString('base64');
+    const res = await context.httpRequest({
+        url, headers: { Authorization: `Basic ${credentials}` }
+    });
+    const records = (res.data || []).map(t => mapTicket(t, normalizedEmbed));
+    const match = (res.headers.link || '').match(/<([^>]+)>;\s*rel="next"/);
+    return { records, nextUrl: match ? match[1] : null };
+}
 ```
+
+If the connector already exposes a polling helper (`lib.listNewMessages`, etc.), reuse it
+directly with empty state instead of writing a new request. Only extract a new helper when the
+logic is inlined in `tick()`/`receive()`.
+
+**SDK-based connectors.** Some connectors don't issue raw HTTP at all — they call a vendor SDK
+(`asana`, `@slack/web-api`, `googleapis`, …) that builds the request *and* maps the response.
+There's then no URL/auth/query/mapping to extract: **the SDK call itself is the shared seam.**
+`test()` must call the **exact same SDK methods** `tick()`/`receive()` uses (e.g. the same
+`list` + `findById` pair) so the emitted object is identical — the server does the mapping. The
+only new code is usually a tiny "pick the newest record" selector. Don't wrap the SDK in a new
+`context.httpRequest` helper just to satisfy the "share a helper" rule; reusing the same SDK
+methods already satisfies it. See `src/appmixer/asana` (`asana-commons.pickLatest()` + each
+trigger's `test()`).
+
+## Hard rules
+
+1. **Read-only against upstream.** Only `GET`/list. No `POST`/`PUT`/`PATCH`/`DELETE`, no
+   `markAsRead`, `acknowledge`, `commit`, or anything that mutates remote state.
+2. **No state writes — any scope.** Do NOT call `context.saveState`/`stateSet`/`stateUnset`/
+   `stateClear`/`stateInc`/`stateAddToSet`/`stateRemoveFromSet`, nor the `context.flow.*` or
+   `context.service.*` variants. Test Mode keeps the flow `stopped` and runs no shutdown
+   cleanup, so any write leaks (component state lingers — worse for `"state": {"persistent": true}`
+   triggers; service state leaks into other users' production runs). Use local variables for
+   any dedup/cursor logic. When reusing a polling helper that takes state, pass `{ known: [] }`
+   or `{ cursor: null }` so it returns the freshest item.
+3. **Respect `context.properties`.** If the trigger filters (query, channelId, …), `test()`
+   must return an item matching the same filters, or the test is misleading.
+4. **Emit exactly one item** via `context.sendJson(item, '<port>')`, shaped **identically** to
+   what `tick()`/`receive()` emits. Never use `sendArray`/`sendArrayOutput`.
+5. **Throw, don't fabricate, when there's no real example.** Two cases: (a) the inbox/channel is
+   empty right now, or (b) — more fundamental — the trigger is webhook-only and the upstream
+   exposes **no API to fetch a representative sample** (e.g. WhatsApp received messages / status
+   updates). In both, `throw new context.CancelError('<why + how to trigger it for real>')`.
+   **Never hand-craft synthetic data** — fake IDs, phone numbers, `wamid.TEST…`, canned message
+   bodies. It makes the test pass while testing nothing and emits data that matches no real run,
+   which is worse than no `test()` at all. (Only exception: Group E timer triggers, whose payload
+   is legitimately *computed* — real dates — not invented.)
+6. **No quota abuse.** Reuse the same lib helpers `tick()` uses so the call goes through the
+   same quota manager and rate limiter.
+
+## Procedure
+
+1. **Confirm it's a trigger.** `component.json` has `properties` (not `inPorts`) and the
+   behavior file has `tick()` or `start()/receive()/stop()`. Actions are out of scope (they
+   are tested via `inputData` → `receive()`).
+2. **Find the outPort name** in `component.json` `outPorts[].name` (e.g. freshdesk → `ticket`,
+   slack → `message`). `sendJson` must use this exact name.
+3. **Refactor the production path into shared helpers FIRST** (see Core principle). Read
+   `tick()`/`receive()` and pull out (a) the upstream **request** (URL/auth/query/pagination)
+   and (b) the record→`fields` **mapping** into functions, then make `tick()`/`receive()` call
+   them. Do this even if it means touching working code — the shared seam is the whole point.
+   If a connector polling helper already exists, skip this and reuse it.
+4. **Verify `tick()`/`receive()` still behaves identically** after the refactor (lint + the
+   existing tests/E2E). `test()` is worthless if the refactor changed production output.
+5. **Write `async test(context)` as a thin wrapper:** resolve properties with the same helper,
+   call the shared request with a **newest-first, single-item** query (`per_page=1`/`limit=1`,
+   `order_by=<created>` `desc`) honoring `context.properties` filters, then `sendJson(records[0],
+   '<port>')`. **No cursor, no `saveState`.** `throw` if empty.
+   - **Branching triggers.** If `tick()`/`receive()` takes a different code path depending on a
+     property (e.g. `TaskCompleted`: a single-item lookup when `task` is set vs a project-wide
+     scan when it isn't), `test()` must **mirror the same branch selection** so its output
+     matches whichever path production would take for that config — don't collapse the branches
+     into one.
+6. **Verify** (see "Verifying your test() method" below): run lint/validate, then invoke
+   `test()` either via the CLI `--test` flag or via Flow Test Mode on a live instance.
+
+## Verifying your `test()` method
+
+Run the workspace's lint/validators first when it provides them (the
+appmixer-connectors repo ships `npm run lint` + `npm run validate`). Then verify the method actually emits a realistic item. Two options:
+
+**Option 1 — Appmixer CLI** (requires a CLI version that supports the `--test` flag; check with
+`appmixer test component --help`):
+
+```bash
+# one-time: store auth credentials for the connector
+appmixer test auth login ./src/<vendor>/<connector>/auth.js
+
+# invoke test() directly (skips start/stop/tick/receive, exactly like Flow Test Mode)
+appmixer test component ./src/<vendor>/<connector>/<path-to-trigger> --test
+```
+
+Without stored auth data the CLI fails before `test()` is even called.
+
+**Option 2 — live instance** (works with any CLI version): pack & publish the connector
+(`appmixer pack` + `appmixer publish`), build a small flow with the trigger connected to a
+downstream component, and run **Test** in the designer without starting the flow. The trigger's
+output in the test run should show a real, fetchable item (not `"sample"` / `0` placeholders —
+those mean the engine fell back to schema samples because `test()` threw or is missing).
+
+## Trigger groups
+
+| Group | Description | `test()` approach |
+|-------|-------------|-------------------|
+| **A** Polling list+dedup | `tick()` lists latest, dedups vs state (e.g. `freshdesk.NewTicket`, `gmail.NewEmail`, `github.NewIssue`, `wordpress.*`, `asana.*`) | Reuse the same fetch+map path, queried newest-first (`desc` + `limit 1`), emit first item. ⚠️ If the polling helper has a baseline/init phase that suppresses first-run output (e.g. gmail), don't call it with empty state — add a small `fetchLatest` helper that shares the mapping. For SDK-based connectors (`asana`) reuse the same SDK `list`+`findById` calls — the SDK is the shared seam (see "SDK-based connectors" above). |
+| **B** Per-flow webhook | `start()` registers a per-flow webhook (e.g. `calendly`, `shopify`, `xero`, `hubspot`, `microsoft.mail`) | Do NOT register. Add a shared `lib.fetchLatestExample(context, type, properties)` once per connector, fetch newest record via REST, reshape into the webhook payload. |
+| **C** Plugin-based (global URL + `addListener`) | app-level webhook, `plugin.js`/`routes.js` fan out (e.g. `slack`, `whatsapp`, `meta.*`) | Skip `addListener`, fetch one recent matching event via REST, return it in the exact shape `routes.js` puts on the wire. **If the upstream has no API to fetch such an event** (e.g. WhatsApp received messages / message-status updates), do NOT fabricate one — `throw new context.CancelError(...)` explaining it can only be triggered by a real event (see Hard rule 5). |
+| **D** Generic webhook (`utils.http.Webhook*`) | no schema/upstream | **Do not implement.** Rely on log search or user-provided `payload`; document in the description. |
+| **E** Scheduler/timer (`utils.timers.SchedulerTrigger`) | no external API | Return a synthetic well-formed payload (current/next dates). |
+| **F** Form (`utils.forms.FormTrigger`) | dynamic schema from `properties.fields.ADD` | Walk fields, synthesize a plausible value per `field.type`. |
+
+### Group A example (canonical — `freshdesk.NewTicket`)
+
+The shared pieces live in the connector's `lib.js` so every component issues requests the same
+way: `apiCall()` (auth + base URL on top of `context.httpRequest`), `mapTicket()` (raw ticket →
+output `fields`) and `requestTickets()` (one page: fetch + map + pagination parsing). `tick()`
+and `test()` both go through `requestTickets()`; `test()` adds only the newest-first query and
+`records[0]`. See `src/appmixer/freshdesk/lib.js` + `tickets/NewTicket/NewTicket.js`.
+
+```javascript
+// lib.js — single source of truth for request shape, mapping and pagination
+async function apiCall(context, { method = 'GET', url, params, data, headers = {} } = {}) {
+    const baseUrl = `https://${context.auth.domain}.freshdesk.com/api/v2`;
+    const credentials = Buffer.from(`${context.auth.apiKey}:X`).toString('base64');
+    return context.httpRequest({
+        method,
+        url: /^https?:\/\//.test(url) ? url : `${baseUrl}${url}`,
+        headers: { Authorization: `Basic ${credentials}`, ...headers },
+        params, data
+    });
+}
+
+async function requestTickets(context, urlOrParams, normalizedEmbed = []) {
+    const url = typeof urlOrParams === 'string' ? urlOrParams : `/tickets?${urlOrParams.toString()}`;
+    const res = await apiCall(context, { url });
+    const records = (res.data || []).map(ticket => mapTicket(ticket, normalizedEmbed));
+    const match = (res.headers.link || '').match(/<([^>]+)>;\s*rel="next"/);
+    return { records, nextUrl: match ? match[1] : null };
+}
+
+// NewTicket.js
+async test(context) {
+    const normalizedEmbed = getNormalizedEmbed(context);
+
+    const params = new URLSearchParams({
+        order_by: 'created_at', order_type: 'desc', per_page: '1'
+    });
+    if (normalizedEmbed.length > 0) {
+        params.set('include', normalizedEmbed.join(','));
+    }
+
+    const { records } = await requestTickets(context, params, normalizedEmbed);
+    if (!records.length) {
+        throw new Error('No recent tickets to use as test data.');
+    }
+    return context.sendJson(records[0], 'ticket');
+}
+```
+
+### Group B example (`calendly.events.InviteeCreated`)
+
+The production `receive()` just forwards the webhook body, so there's no fetch+map to share with
+it — instead the reuse is **across the connector's webhook triggers**. Add `fetchLatestExample()`
++ `toWebhookShape()` to the connector's shared `lib.js` once (older connectors use a
+`*-commons.js` file — for NEW code always use `lib.js`, the repository convention);
+each trigger's `test()` is a thin wrapper.
+See `src/appmixer/calendly/calendly-commons.js` + `events/InviteeCreated/InviteeCreated.js`.
+
+```javascript
+// calendly-commons.js — shared by every Calendly webhook trigger's test()
+async fetchLatestExample(context) {
+    const { accessToken, profileInfo: { resource } } = context.auth;
+    const headers = { 'Authorization': `Bearer ${accessToken}` };
+    const events = await context.httpRequest({
+        method: 'GET', url: 'https://api.calendly.com/scheduled_events', headers,
+        params: { user: resource.uri, sort: 'start_time:desc', count: 1 }
+    });
+    const event = (events.data.collection || [])[0];
+    if (!event) return null;
+    const invitees = await context.httpRequest({
+        method: 'GET', url: `${event.uri}/invitees`, headers, params: { count: 1 }
+    });
+    return (invitees.data.collection || [])[0] || null;
+}
+// toWebhookShape(context, invitee, 'invitee.created') -> the exact body the webhook delivers
+
+// InviteeCreated.js
+async test(context) {
+    const invitee = await commons.fetchLatestExample(context);
+    if (!invitee) throw new Error('No recent invitees to use as test data.');
+    return context.sendJson(commons.toWebhookShape(context, invitee, 'invitee.created'), 'out');
+}
+```
+
+### Group C example (`slack.list.NewChannelMessageRT`)
+
+Plugin trigger: events normally arrive via `context.addListener`. `test()` skips that and reuses
+the **same `conversations.history` call the polling `slack.list.NewChannelMessage` trigger uses**,
+honoring the same `ignoreBotMessages` filter as `receive()`.
+See `src/appmixer/slack/list/NewChannelMessageRT/NewChannelMessageRT.js`.
+
+```javascript
+const { WebClient } = require('@slack/web-api');
+const Entities = require('html-entities').AllHtmlEntities;
+
+async test(context) {
+    const { channelId, ignoreBotMessages } = context.properties;
+    const web = new WebClient(context.auth.accessToken);
+    const { messages } = await web.conversations.history({ channel: channelId, limit: 1 });
+    const sample = (messages || [])[0];
+    if (!sample) throw new Error('No recent messages in the channel to use as test data.');
+    if (ignoreBotMessages && sample.subtype === 'bot_message') {
+        throw new Error('The most recent message is a bot message.');
+    }
+    sample.text = new Entities().decode(sample.text);
+    return context.sendJson(sample, 'message');
+}
+```
+
+### Group E example (`utils.timers.SchedulerTrigger`)
+
+No external API — `test()` returns a synthetic but well-formed payload. The key is still code
+sharing: the schedule computation (`getNextRun()`) is the same function `start()`/`receive()`
+use, so the emitted dates respect the user's configured schedule, timezone and end date.
+See `src/appmixer/utils/timers/SchedulerTrigger/SchedulerTrigger.js`.
+
+```javascript
+async test(context) {
+    const { timezone = 'GMT' } = context.properties;
+    if (timezone && !isValidTimezone(timezone)) {
+        throw new context.CancelError('Invalid timezone');
+    }
+
+    const now = moment().toISOString();
+    // Same computation start()/receive() use — no timeout set, no state touched.
+    const nextDate = this.getNextRun(context, { now, previousDate: null, firstTime: true });
+    if (!nextDate) {
+        throw new Error('No next run within the configured schedule (end date reached).');
+    }
+
+    return context.sendJson({
+        previousDate: null,
+        nextDateGMT: nextDate.toISOString(),
+        nextDateLocal: moment(nextDate).tz(timezone).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        timezone
+    }, 'out');
+}
+```
+
+### Group F example (`utils.forms.FormTrigger`)
+
+The output schema is dynamic (defined by `context.properties.fields.ADD`), so `test()` walks the
+configured fields and synthesizes a plausible value per `field.type`. Match what a real
+submission produces: HTML forms submit **strings** (only checkbox is normalized to a boolean by
+`receive()`), and prefer the field's configured `defaultValue` for realism.
+See `src/appmixer/utils/forms/FormTrigger/FormTrigger.js`.
+
+```javascript
+test(context) {
+    const fields = (context.properties.fields && context.properties.fields.ADD) || [];
+    if (!fields.length) {
+        throw new Error('No form fields defined.');
+    }
+
+    const entry = {};
+    fields.forEach((field, index) => {
+        const name = 'field_' + index;
+        if (field.type === 'checkbox') {
+            entry[name] = true;
+            return;
+        }
+        if (field.defaultValue) {
+            entry[name] = field.defaultValue;
+            return;
+        }
+        switch (field.type) {
+            case 'number': entry[name] = '42'; break;
+            case 'date': entry[name] = '2026-01-01'; break;
+            case 'email': entry[name] = 'user@example.com'; break;
+            case 'color': entry[name] = '#336699'; break;
+            case 'password': entry[name] = 'secret'; break;
+            default: entry[name] = field.label || 'Sample text';
+        }
+    });
+
+    return context.sendJson(entry, 'entry');
+}
+```
+
+## Per-trigger checklist
+
+- [ ] **`test()` shares the request + mapping path with `tick()`/`receive()`** — no duplicated
+      URL/auth/query/mapping. `test()` is a thin wrapper; the production path was refactored into
+      shared helpers and still behaves identically.
+- [ ] No state writes (component / flow / service), no upstream mutations
+- [ ] Honors `context.properties` filters
+- [ ] Emits exactly one item, shape matches `tick()`/`receive()` exactly, correct port name
+- [ ] Throws (not returns null) when no example exists
+- [ ] Workspace lint/validators pass (when provided), and `test()` verified via CLI `--test` or
+      Flow Test Mode on a live instance (see "Verifying your test() method")
+
+## Reference connectors
+
+Worked examples across the groups:
+
+**Group A — polling list+dedup:**
+- **`freshdesk.NewTicket`** (`src/appmixer/freshdesk/tickets/NewTicket/`) — *extract from inlined
+  logic.* `tick()` had the request + mapping inlined, so they were pulled into `lib.requestTickets()`
+  + `lib.mapTicket()` and now `tick()` and `test()` both call them. Also has **dynamic** outPorts
+  (via `GenerateTicketsOutput`), so the schema fallback is weak and `test()` carries real value.
+  The sibling triggers `UpdatedTicket` (cursor on `updated_at`) and `DeletedTicket`
+  (`filter=deleted`, own mapping) follow the same shape; `NewConversation` shares
+  fetch/filter/emit helpers between `tick()` and `test()`.
+- **`google.gmail.NewEmail`** (`src/appmixer/google/gmail/NewEmail/` + `../lib.js`) — *reuse an
+  existing lib helper.* The per-message fetch+normalize was factored into `lib.fetchMessage()`
+  (reused by both `listNewMessages()` and a new `lib.fetchLatestExample()`); `test()` is a 4-line
+  wrapper. Note the gotcha: `listNewMessages()` suppresses output on first run (baseline-only
+  init phase), so `test()` could **not** just call it with empty state — it needed the dedicated
+  `fetchLatestExample()` that lists newest-first and honors `query`. Watch for this whenever the
+  polling helper has init/baseline semantics.
+- **`asana.*`** (`src/appmixer/asana/` — `NewTask`, `NewSubtask`, `NewStory`, `NewComment`,
+  `NewTag`, `TagAdded`, `TaskCompleted`, `NewProject`, `NewTeam`) — *SDK-based, no HTTP helper.*
+  Every `tick()` lists via the `asana` SDK, dedups vs state, then re-fetches each hit with
+  `<resource>.findById(gid)` and emits that. `test()` calls the **same** list + `findById`, so
+  the shape is identical; the one shared addition is `asana-commons.pickLatest()` (newest by
+  `created_at`/`gid`). `NewComment` keeps the `type === 'comment'` filter; `TagAdded` reads the
+  task's `tags`; `TaskCompleted` mirrors both of `tick()`'s branches (single `task` vs
+  project-wide scan) — a worked example of the branching-trigger rule.
+
+**Group B — per-flow webhook:**
+- **`calendly.events.InviteeCreated`** (`src/appmixer/calendly/events/InviteeCreated/` +
+  `../../calendly-commons.js`) — `receive()` only forwards the webhook body, so the reuse is
+  *across the connector's webhook triggers*: `fetchLatestExample()` (REST, newest invitee) +
+  `toWebhookShape()` live in commons; `test()` is a thin wrapper that reshapes the REST record
+  into the exact body the webhook delivers.
+
+**Group C — plugin-based (global URL + `addListener`):**
+- **`slack.list.NewChannelMessageRT`** (`src/appmixer/slack/list/NewChannelMessageRT/`) — `test()`
+  skips `addListener` and reuses the same `conversations.history` call the polling
+  `slack.list.NewChannelMessage` trigger uses, honoring the same `ignoreBotMessages` filter as
+  `receive()`.
+
+**Group E — scheduler/timer:**
+- **`utils.timers.SchedulerTrigger`** (`src/appmixer/utils/timers/SchedulerTrigger/`) — `test()`
+  reuses the same `getNextRun()` computation as `start()`/`receive()` and emits the next-run
+  payload without setting any timeout or touching state.
+
+**Group F — form (dynamic schema):**
+- **`utils.forms.FormTrigger`** (`src/appmixer/utils/forms/FormTrigger/`) — `test()` synthesizes
+  one entry from `properties.fields.ADD`, matching the exact shape a real POST submission
+  produces (`field_<index>` keys, string values, checkbox → boolean, `defaultValue` preferred).

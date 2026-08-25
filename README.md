@@ -20,12 +20,11 @@ agent skills that build, test, and review connectors end-to-end
 (`build-connector`, `test-connector`, `review-connector`), installable as a
 Claude Code plugin. Start there.
 
-This repo additionally carries repo-specific instruction files for AI
-assistants (Copilot, Claude, CodeRabbit) in `.github/instructions/` — numbered
-for reading order, covering connector structure, auth, component types, best
-practices, and testing. A combined version is auto-generated at
-`.github/copilot-instructions.md` — do not edit it directly; rebuild with
-`node scripts/build-instructions.js` after editing the sources.
+The instruction content AI assistants read here (`.github/copilot-instructions.md`,
+the path Copilot loads automatically) is **generated from appmixer-skills** —
+do not edit it directly. To change it, open a PR against the skills repo's
+`instructions/`, then refresh the generated file with
+`node scripts/build-instructions.js`.
 
 ## Developing a connector — commit hooks
 
