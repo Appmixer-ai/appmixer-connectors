@@ -7,6 +7,7 @@ const MAX_URLS = 20;
 // Schema of a single extracted page.
 const schema = {
     'url': { 'type': 'string', 'title': 'URL' },
+    'title': { 'type': 'string', 'title': 'Title' },
     'raw_content': { 'type': 'string', 'title': 'Content' },
     'images': { 'type': 'array', 'title': 'Images', 'items': { 'type': 'string' } },
     'favicon': { 'type': 'string', 'title': 'Favicon' }
