@@ -148,12 +148,12 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/mongodb/service.json',
-            'appmixer/mysql/service.json',
-            'appmixer/mssql/service.json',
-            'appmixer/postgres/service.json',
-            'appmixer/redis/service.json',
-            'appmixer/snowflake/service.json'
+            'appmixer/mongodb/bundle.json',
+            'appmixer/mysql/bundle.json',
+            'appmixer/mssql/bundle.json',
+            'appmixer/postgres/bundle.json',
+            'appmixer/redis/bundle.json',
+            'appmixer/snowflake/bundle.json'
         ],
         reason: 'Database connectors that talk to their engine over a native driver/SQL protocol, not an HTTP REST API. There is no endpoint/method/headers surface for a generic "call any endpoint" helper to target.'
     },
@@ -161,8 +161,8 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/kafka/service.json',
-            'appmixer/rabbitmq/service.json'
+            'appmixer/kafka/bundle.json',
+            'appmixer/rabbitmq/bundle.json'
         ],
         reason: 'Message brokers consumed/produced over their native wire protocol (AMQP / Kafka), not HTTP. A generic REST MakeApiCall does not apply.'
     },
@@ -170,34 +170,28 @@ module.exports = [
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/utils/service.json',
-            'appmixer/system/service.json'
+            'appmixer/utils/bundle.json',
+            'appmixer/system/bundle.json'
         ],
         reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
     },
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
-        paths: ['appmixer/aws/service.json'],
-        reason: 'AWS spans many services (S3, Lambda, SNS, ...) each with its own host and SigV4 request signing; there is no single base URL or generic authorized call a MakeApiCall could expose. Per-service modules wrap the operations instead.'
-    },
-    {
-        validator: 'connector-has-makeapicall',
-        messageIncludes: 'no MakeApiCall component',
-        paths: ['appmixer/evernote/service.json'],
+        paths: ['appmixer/evernote/bundle.json'],
         reason: 'Evernote authenticates with OAuth 1.0a request signing (HMAC-SHA1) and a Thrift-based API, not a plain Bearer/API-key REST surface, so a generic header-based MakeApiCall cannot sign arbitrary requests.'
     },
     {
         validator: 'connector-has-makeapicall',
         messageIncludes: 'no MakeApiCall component',
         paths: [
-            'appmixer/azureCognitiveServices/service.json',
-            'appmixer/deepai/service.json',
-            'appmixer/screenshotapi/service.json',
-            'appmixer/ringring/service.json',
-            'appmixer/exchangeratesapi/service.json',
-            'appmixer/freeforexapi/service.json',
-            'appmixer/vatcomply/service.json'
+            'appmixer/azureCognitiveServices/bundle.json',
+            'appmixer/deepai/bundle.json',
+            'appmixer/screenshotapi/bundle.json',
+            'appmixer/ringring/bundle.json',
+            'appmixer/exchangeratesapi/bundle.json',
+            'appmixer/freeforexapi/bundle.json',
+            'appmixer/vatcomply/bundle.json'
         ],
         reason: 'No connector-level auth.js — these are keyless public APIs or thin multi-module wrappers where credentials (if any) are supplied per component. There is no stored connector credential for a generic "authorized API call" to attach, so MakeApiCall has nothing to authorize.'
     },
@@ -303,6 +297,26 @@ module.exports = [
         reason: 'The limit input is a long-published part of these components and existing flows set it. Removing it is a breaking change deferred to a future major version. Surfaced now only because the 4.8.0 quality pass touched these files.'
     },
     {
+        validator: 'delete-returns-empty',
+        paths: ['postgres/db/DeleteRow/component.json'],
+        reason: 'Pre-existing published component: DeleteRow deletes by WHERE filter (potentially many rows) and returns { rowCount }, declared as an outPort option that existing flows map. Switching to the standard empty-object return is a breaking output change deferred to a future major version.'
+    },
+    {
+        validator: 'delete-update-shape',
+        messageIncludes: 'at least one required input',
+        paths: [
+            'postgres/db/DeleteRow/component.json',
+            'postgres/db/UpdateRow/component.json'
+        ],
+        reason: 'SQL row components have no single entity-ID input by design: the target rows are selected by an arbitrary WHERE filter expression (and the required "table" lives in properties, which the validator does not count). Requiring the filter would break the legitimate "update/delete all rows" case.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'ignoreAuth=true',
+        paths: ['postgres/db/CreateRow/component.json'],
+        reason: 'The newRow outPort source calls ListColumns, which runs a live information_schema query against the connected database and therefore needs the caller\'s auth account. Adding ignoreAuth=true would make the designer call it unauthenticated and fail with Invalid URL chips.'
+    },
+    {
         validator: 'dynamic-outport-required-inputs',
         messageIncludes: 'ignoreAuth=true',
         paths: [
@@ -326,5 +340,16 @@ module.exports = [
             'hubspot/engagements/FindNotes/component.json'
         ],
         reason: 'Every hubspot dynamic outPort source resolves through the live HubSpot properties API (GetContactsProperties / GetDealsProperties / GetCompaniesProperties, either directly or via componentStaticCall inside the component\'s own generateOutputPortOptions). These calls need an authenticated session; adding ignoreAuth=true would make the dropdown request unauthenticated and fail with 500 Invalid URL chips in the designer.'
+    },
+    {
+        validator: 'dynamic-outport-required-inputs',
+        messageIncludes: 'missing "ignoreAuth=true"',
+        paths: [
+            'salesforce/crm/AccountStatusChange/component.json',
+            'salesforce/crm/ContactStatusChange/component.json',
+            'salesforce/crm/LeadStatusChange/component.json',
+            'salesforce/crm/RecordFieldChange/component.json'
+        ],
+        reason: 'These trigger outPort sources resolve through the live Salesforce describe API (GetObjectFields / ListObjects), which reads context.auth.accessToken and context.profileInfo.instanceUrl. With ignoreAuth=true the engine calls the source without the account, the URL is built from undefined and the designer renders 500 "Invalid URL" chips (observed on dev-automated-00001, 2026-08-19). The designer sends the caller\'s bound account automatically, so the sources must keep authenticated calls.'
     }
 ];
