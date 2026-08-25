@@ -20,8 +20,8 @@
         "build": "done",
         "review": "done",
         "cliTests": "done",
-        "e2e": "not-started",
-        "ship": "not started"
+        "e2e": "done",
+        "ship": "in-progress"
     },
     "next": [
         "appmixer test auth login src/appmixer/ai/huggingface/auth.js -n appmixer:ai:huggingface   # the -n flag is REQUIRED for ai/ connectors: without it the CLI ENOENTs looking for service.json",
@@ -58,7 +58,8 @@
         "e2eValidate": "Validation passed (26 validators, 2 flow files) — re-verified after the flow rebinding",
         "e2eCoverage": "8 of 8 components; connector has no triggers",
         "commit": "dd2cd2c8 on feature/huggingface-connector (build + review); flows and state committed separately",
-        "pr": null
+        "pr": null,
+        "e2e": "PASS — 2 of 2 flows, 13 assertions, 0 failures, verified from the results store"
     },
     "auth": {
         "status": "done",
@@ -83,5 +84,27 @@
         "Added the fal.ai {images:[{url}]} response shape (findImageUrl/findImageBase64 now cover images[].url, images[] as string, output[], data[].url, data[].b64_json and image_url).",
         "Provider-aware request body: hf-inference keeps the {inputs, parameters} transformers shape; every other provider takes the prompt at top level.",
         "E2E flow test-flow-inference-tasks.json: GenerateImage was bound to black-forest-labs/FLUX.1-schnell with no provider, which would 404 under the new routing. Rebound to fal-ai/flux/schnell + provider fal-ai in config.transform lambda, with a matching modifiers entry."
-    ]
+    ],
+    "e2e": {
+        "instance": "https://api-dev-automated-00001.dev.appmixer.ai",
+        "accountId": "6a8d9e574d9255f210e134ff",
+        "published": "appmixer pack + appmixer publish (twice)",
+        "flows": {
+            "E2E Hugging Face - Hub Models and API Call": {
+                "flowId": "ff5fbf6d-1edb-47a9-b230-0be30b38adae",
+                "verdict": "PASSED",
+                "assertions": 5,
+                "failures": 0,
+                "evidence": "FindModels regex bert-base-uncased; MakeApiCall 200 + petrappmixer not empty; GetModel id equality + fill-mask not empty"
+            },
+            "E2E Hugging Face - Inference Tasks": {
+                "flowId": "af10765b-a491-4272-9216-f00411cbe297",
+                "verdict": "PASSED",
+                "assertions": 8,
+                "failures": 0,
+                "evidence": "SendPrompt regex Lisbon + 37 tokens; CreateEmbeddings 384 equals 384; SummarizeText regex Eiffel; GenerateImage fileId not empty + image/jpeg matches ^image/; ClassifyText POSITIVE equals POSITIVE"
+            }
+        },
+        "verifiedVia": "appmixer e2e results --json (exit 0, failed[] empty) — not the runner PASSED line alone"
+    }
 }
