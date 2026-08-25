@@ -23,8 +23,9 @@ Claude Code plugin. Start there.
 The instruction content AI assistants read here (`.github/copilot-instructions.md`,
 the path Copilot loads automatically) is **generated from appmixer-skills** —
 do not edit it directly. To change it, open a PR against the skills repo's
-`instructions/`, then refresh the generated file with
-`node scripts/build-instructions.js`.
+`instructions/` — a scheduled workflow (`sync-instructions`) then regenerates
+the file here and opens a sync PR automatically (manual refresh:
+`node scripts/build-instructions.js`).
 
 ## Developing a connector — commit hooks
 
