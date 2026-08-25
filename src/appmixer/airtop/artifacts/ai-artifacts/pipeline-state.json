@@ -1,0 +1,70 @@
+{
+    "connector": "airtop",
+    "vendor": "appmixer",
+    "module": "core",
+    "connectorPath": "src/appmixer/airtop",
+    "branch": "feature/airtop-connector",
+    "updatedAt": "2026-08-25",
+    "apiDocs": "https://docs.airtop.ai/api-reference/airtop-api",
+    "openApiSpec": "https://docs.airtop.ai/openapi.json",
+    "baseUrl": "https://api.airtop.ai/api/v1",
+    "auth": {
+        "type": "apiKey",
+        "header": "Authorization: Bearer <api-key>",
+        "validateEndpoint": "GET /api/v1/sessions?limit=1"
+    },
+    "steps": {
+        "build": {
+            "status": "done",
+            "notes": "10 components generated under core/. service.json, bundle.json, auth.js, quota.js, lib.js, icon.svg in place. Real Airtop logo used as the icon."
+        },
+        "review": {
+            "status": "done",
+            "notes": "review-connector checks applied. node scripts/validate.js --connector airtop: 0 failures, 1 warning (writable-fields-readable on CreateSession - the Airtop session GET response only echoes the session configuration under a field the API marks DEPRECATED, so those inputs are deliberately not surfaced on the output). eslint: 0 issues across 13 JS files."
+        },
+        "cli-tests": {
+            "status": "BLOCKED",
+            "reason": "No Airtop API key exists in ~/.config/configstore/appmixer.json or on the instance. A human must obtain an API key from https://portal.airtop.ai/ and run: appmixer test auth login src/appmixer/airtop/auth.js",
+            "nextCommands": [
+                "appmixer test auth login src/appmixer/airtop/auth.js",
+                "appmixer test auth validate ./src/appmixer/airtop/auth.js",
+                "appmixer test component ./src/appmixer/airtop/core/CreateSession -i '{\"in\":{\"timeoutMinutes\":3}}'"
+            ]
+        },
+        "e2e": {
+            "status": "BLOCKED",
+            "reason": "Same missing API key. The flows are generated and pass the local static validator; importing and running them needs a published connector plus a connected Airtop account on the instance.",
+            "flowsGenerated": [
+                "src/appmixer/airtop/artifacts/test-flows/test-flow-session-lifecycle.json",
+                "src/appmixer/airtop/artifacts/test-flows/test-flow-browser-interaction.json"
+            ],
+            "validateResult": "appmixer e2e validate src/appmixer/airtop/artifacts/test-flows -> Validation passed (26 validators, 2 flow files)",
+            "nextCommands": [
+                "cd src/appmixer && appmixer pack airtop && appmixer publish appmixer.airtop.zip",
+                "appmixer e2e import src/appmixer/airtop/artifacts/test-flows",
+                "appmixer e2e run <flowId>"
+            ]
+        },
+        "ship": {
+            "status": "not started",
+            "notes": "No push, no PR. Committed locally on branch feature/airtop-connector only."
+        }
+    },
+    "components": [
+        { "name": "CreateSession", "type": "Create", "endpoint": "POST /sessions" },
+        { "name": "GetSession", "type": "Get", "endpoint": "GET /sessions/{id}" },
+        { "name": "FindSessions", "type": "Find (outputType)", "endpoint": "GET /sessions" },
+        { "name": "TerminateSession", "type": "Delete", "endpoint": "DELETE /sessions/{id}" },
+        { "name": "CreateWindow", "type": "Create", "endpoint": "POST /sessions/{sessionId}/windows" },
+        { "name": "QueryPage", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/page-query" },
+        { "name": "ClickElement", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/click" },
+        { "name": "TypeText", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/type" },
+        { "name": "TakeScreenshot", "type": "Action", "endpoint": "POST /sessions/{sessionId}/windows/{windowId}/screenshot" },
+        { "name": "MakeApiCall", "type": "Action", "endpoint": "any" }
+    ],
+    "openIssues": [
+        "E2E validator warnings (non-blocking): CreateSession and TerminateSession have no dedicated Assert in the browser-interaction flow; CreateWindow has no Close Window cleanup component (terminating the session releases the window); several optional inputs are untested.",
+        "No Close Window / Load URL / Hover / Scroll / Monitor / PaginatedExtraction components yet - candidates for a 1.1.0 bundle.",
+        "Airtop rate limits are not documented; quota.js uses a conservative 10 requests/second per user."
+    ]
+}
