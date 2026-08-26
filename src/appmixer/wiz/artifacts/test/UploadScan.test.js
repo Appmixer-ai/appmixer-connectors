@@ -377,10 +377,13 @@ describe('wiz.uploadScan', () => {
         });
 
         it('should skip processing when documents-upload-batch has items (upload in progress)', async () => {
-            // Simulate an upload already in progress
+            // Simulate an upload already in progress: a batch prepared just now by
+            // another receive() (a batch older than the lock TTL is crash leftover
+            // and IS resumed - see UploadScanDrain.test.js).
             await context.stateSet('documents-upload-batch', [
                 { id: '1', data: 'doc1' }
             ]);
+            await context.stateSet('documents-upload-batch-startedAt', Date.now());
             await context.stateSet('documents', [
                 { id: '2', data: 'doc2' }
             ]);

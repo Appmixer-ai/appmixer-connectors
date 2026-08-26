@@ -173,6 +173,36 @@ describe('wiz UploadScan bounded drain', function() {
         void state;
     });
 
+    it('never re-uploads a batch another receive() is still uploading', async () => {
+        // The pre-lock "upload already in progress" check races with the receive()
+        // that prepared the batch; a live E2E burst of 25 documents uploaded 60.
+        const { httpRequest, state } = createMockWiz();
+        const context = createWizContext({ httpRequest, config: FAST_CONFIG, properties: { threshold: 10 } });
+        await context.stateSet('metadata', { filename: 'stress.json', integrationId: 'integration-1' });
+        await context.stateSet('documents-upload-batch',
+            Array.from({ length: 10 }, (unused, i) => ({ id: `inflight-${i}`, data: { n: i } })));
+        await context.stateSet('documents-upload-batch-startedAt', Date.now());
+
+        const documents = await UploadScan.prepareForSend(context, { threshold: 10 });
+
+        assert.deepStrictEqual(documents, [], 'a fresh in-flight batch must not be handed out twice');
+        assert.strictEqual(state.uploads.length, 0);
+    });
+
+    it('resumes a batch left behind by a crashed run', async () => {
+        const { httpRequest } = createMockWiz();
+        const context = createWizContext({ httpRequest, config: FAST_CONFIG, properties: { threshold: 10 } });
+        await context.stateSet('metadata', { filename: 'stress.json', integrationId: 'integration-1' });
+        await context.stateSet('documents-upload-batch',
+            Array.from({ length: 3 }, (unused, i) => ({ id: `orphan-${i}`, data: { n: i } })));
+        // Older than the lock TTL: nobody can still be uploading it.
+        await context.stateSet('documents-upload-batch-startedAt', Date.now() - (16 * 60 * 1000));
+
+        const documents = await UploadScan.prepareForSend(context, { threshold: 10 });
+
+        assert.strictEqual(documents.length, 3, 'a stale batch is crash leftover and must be resumed');
+    });
+
     it('logs a warning once the backlog grows past 5000 documents', async () => {
         const { httpRequest } = createMockWiz();
         const context = createWizContext({

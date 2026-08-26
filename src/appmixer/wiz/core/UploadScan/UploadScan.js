@@ -9,11 +9,20 @@ const MAX_LOCK_RETRY_DELAY = 5000; // 5s
 const MAX_LOCK_TTL = 15 * 60 * 1000; // 15 min
 const MAX_LOCK_MAX_RETRY_COUNT = 40;
 
+// A prepared upload batch belongs to the receive() that is uploading it. Only a
+// batch older than this can be a leftover of a crashed run and may be resumed —
+// resuming a batch another receive() is still uploading sends it to Wiz twice.
+const UPLOAD_BATCH_STALE_MS = MAX_LOCK_TTL;
+
 // Delay before a scheduled drain continuation fires. Draining a large backlog
 // happens one batch per receive() (see processAllDocuments) — the rest of the
 // backlog is picked up by a follow-up context.setTimeout message instead of
 // looping inside a single receive() call.
-const DRAIN_CONTINUATION_DELAY = 2000; // 2s
+// Delay of a scheduled drain continuation. The engine's timeout scheduler works
+// at a ~1 minute granularity — a shorter timeout is simply never delivered (the
+// same reason gladia/googleAds pin their continuations to >= 60s), which would
+// strand the rest of the backlog until the next message arrives.
+const DRAIN_CONTINUATION_DELAY = 60 * 1000; // 60s
 
 // Log a warning when the pending-documents state grows past this size — the
 // backlog lives in a single state document and is read back in full on every
@@ -121,20 +130,29 @@ module.exports = {
     async prepareForSend(context, { threshold, timeoutTrigger = false }) {
 
         const entriesToUpload = await context.stateGet('documents-upload-batch');
+        // A batch left in state is a crash leftover only once it is older than the
+        // lock TTL; until then it belongs to the receive() that is uploading it.
+        let resumableBatch = false;
         if (entriesToUpload) {
             if (entriesToUpload.length > 0) {
-                await context.log({
-                    step: 'pre-upload: skipping, upload already in progress',
-                    message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
-                });
-                return [];
+                const startedAt = await context.stateGet('documents-upload-batch-startedAt');
+                if (startedAt && Date.now() - startedAt < UPLOAD_BATCH_STALE_MS) {
+                    await context.log({
+                        step: 'pre-upload: skipping, upload already in progress',
+                        message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`
+                    });
+                    return [];
+                }
+                resumableBatch = true;
             } else {
                 // Empty batch from previous interrupted run, clean it up
                 await context.stateUnset('documents-upload-batch');
+                await context.stateUnset('documents-upload-batch-startedAt');
             }
         }
 
-        if (threshold && !timeoutTrigger && (await context.stateGet('documents') || []).length < threshold) {
+        if (!resumableBatch && threshold && !timeoutTrigger
+            && (await context.stateGet('documents') || []).length < threshold) {
             await context.log({ step: 'pre-upload: skipping, not enough documents' });
             return [];
         }
@@ -148,11 +166,24 @@ module.exports = {
             const entriesToUpload = await context.stateGet('documents-upload-batch');
             let documents = [];
 
-            if (entriesToUpload) {
+            if (entriesToUpload && entriesToUpload.length > 0) {
+                // The batch is either being uploaded by another receive() right now
+                // (the pre-lock check above races with it) or left behind by a crash.
+                const startedAt = await context.stateGet('documents-upload-batch-startedAt');
+                const age = startedAt ? Date.now() - startedAt : Infinity;
+                if (age < UPLOAD_BATCH_STALE_MS) {
+                    await context.log({
+                        step: 'pre-upload: skipping, upload already in progress',
+                        message: `Found ${entriesToUpload.length} documents in documents-upload-batch.`,
+                        batchAge: startedAt ? age : undefined
+                    });
+                    return [];
+                }
                 documents = entriesToUpload.map(entry => entry.data);
                 await context.log({
                     step: 'documents-upload-batch docs',
-                    message: `Prepared ${documents.length} documents for upload.`
+                    message: `Resuming ${documents.length} documents left by an interrupted upload.`,
+                    batchAge: startedAt ? age : undefined
                 });
 
             } else {
@@ -166,11 +197,13 @@ module.exports = {
                     const batchEntries = entries.slice(-threshold);
                     await context.stateSet('documents', entries.slice(0, -threshold));
                     await context.stateSet('documents-upload-batch', batchEntries);
+                    await context.stateSet('documents-upload-batch-startedAt', Date.now());
                     entries = batchEntries;
                 } else {
                     // Process all entries (no threshold, or below-threshold timeout drain)
                     if (entries.length > 0) {
                         await context.stateSet('documents-upload-batch', entries);
+                        await context.stateSet('documents-upload-batch-startedAt', Date.now());
                     }
                     await context.stateUnset('documents');
                 }
@@ -203,6 +236,7 @@ module.exports = {
             await this.sendDocuments(context, { documents });
         } finally {
             await context.stateUnset('documents-upload-batch');
+            await context.stateUnset('documents-upload-batch-startedAt');
             lock?.unlock();
         }
     },
