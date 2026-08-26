@@ -158,14 +158,17 @@ module.exports = {
             } else {
                 let entries = (await context.stateGet('documents') || []);
 
-                if (!timeoutTrigger && threshold && entries.length >= threshold) {
-                    // Split: keep extras, process last `threshold` entries
+                if (threshold && entries.length >= threshold) {
+                    // Split: keep extras, process last `threshold` entries. This
+                    // applies to the scheduled (timeout) drain too — one huge
+                    // backlog must not become a single oversized PUT; the
+                    // remainder continues via the drain-continuation timeout.
                     const batchEntries = entries.slice(-threshold);
                     await context.stateSet('documents', entries.slice(0, -threshold));
                     await context.stateSet('documents-upload-batch', batchEntries);
                     entries = batchEntries;
                 } else {
-                    // Process all entries (timeout drain or at/below threshold)
+                    // Process all entries (no threshold, or below-threshold timeout drain)
                     if (entries.length > 0) {
                         await context.stateSet('documents-upload-batch', entries);
                     }

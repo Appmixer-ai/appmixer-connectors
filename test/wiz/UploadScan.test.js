@@ -107,7 +107,27 @@ describe('wiz UploadScan bounded drain', function() {
         assert.strictEqual((await context.stateGet('documents')).length, 1);
     });
 
-    it('scheduled drain (timeout) uploads everything in a single batch and re-schedules itself', async () => {
+    it('scheduled drain with a threshold batches the backlog instead of one oversized PUT', async () => {
+        const { httpRequest, state } = createMockWiz();
+        const context = createWizContext({
+            httpRequest,
+            config: FAST_CONFIG,
+            properties: { threshold: 100, scheduleValue: 1, scheduleType: 'hours' }
+        });
+        await seedBacklog(context, 250);
+        await context.stateSet('timeoutId', 'sched-1');
+
+        await receiveTimeout(context, 'sched-1', {});
+        const iterations = await drainViaContinuations(context);
+
+        // 250 docs, threshold 100: 100 + 100 + final 50 (below-threshold remainder
+        // is still drained because this is a timeout drain).
+        assert.strictEqual(iterations, 2, 'two continuation invocations after the scheduled drain');
+        assert.deepStrictEqual(state.uploads.map(u => u.dataSources.length), [100, 100, 50]);
+        assert.strictEqual(((await context.stateGet('documents')) || []).length, 0, 'backlog fully drained');
+    });
+
+    it('scheduled drain without a threshold uploads everything in a single batch and re-schedules itself', async () => {
         const { httpRequest, state } = createMockWiz();
         const context = createWizContext({
             httpRequest,
