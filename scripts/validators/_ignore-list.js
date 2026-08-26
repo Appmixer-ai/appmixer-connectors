@@ -171,9 +171,10 @@ module.exports = [
         messageIncludes: 'no MakeApiCall component',
         paths: [
             'appmixer/utils/bundle.json',
+            'appmixer/utils/test/bundle.json',
             'appmixer/system/bundle.json'
         ],
-        reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call.'
+        reason: 'Internal/utility connectors (flow control, converters, storage, engine events) with no external service or stored credentials — there is no third-party API to call. utils/test is the E2E-flow harness module (Assert, AfterAll, ProcessE2EResults) and talks only to the engine and the internal stores.'
     },
     {
         validator: 'connector-has-makeapicall',
