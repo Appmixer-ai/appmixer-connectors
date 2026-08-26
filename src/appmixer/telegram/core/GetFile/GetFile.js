@@ -29,10 +29,12 @@ module.exports = {
         let response;
 
         try {
+            // arraybuffer, not stream: saveFileStream takes a Buffer, and Telegram caps
+            // Bot API downloads at 20MB, so holding the file in memory is bounded.
             response = await context.httpRequest({
                 method: 'GET',
                 url: downloadUrl,
-                responseType: 'stream'
+                responseType: 'arraybuffer'
             });
         } catch (error) {
             // The download link expires - Telegram guarantees it for at least one hour -
@@ -43,7 +45,7 @@ module.exports = {
         // Telegram stores files under a type-prefixed path such as "documents/file_12.pdf";
         // the trailing segment is the only name it exposes.
         const resolvedName = fileName || file.file_path.split('/').pop() || telegramFileId;
-        const savedFile = await context.saveFileStream(resolvedName, response.data);
+        const savedFile = await context.saveFileStream(resolvedName, Buffer.from(response.data));
 
         return context.sendJson({
             fileId: savedFile.fileId,
