@@ -38,13 +38,23 @@ name: Claude Maya Review (connector code review)
 #   * a separate trusted step posts the review, so a prompt injection planted in
 #     connector source cannot drive arbitrary API calls with the PAT.
 #
+# AFTER THE REVIEW:
+#   * the review body links back to this workflow run, whose job summary carries
+#     the run statistics (result, duration, turns, tokens, cost in USD), and
+#     repeats the headline duration/cost inline,
+#   * if the review found error-level findings the PR is converted back to
+#     DRAFT (see DRAFT_ON below: `error` | `any` | `never`). It is never marked
+#     ready again automatically — that stays the author's call once the errors
+#     are addressed.
+#
 # Re-requesting a review from apx-maya re-runs the whole thing (posting a
 # review clears the request, so this is the natural "review again" gesture).
 #
 # Testing: use "Run workflow" (workflow_dispatch) with a PR number.
 #
 # Required secrets: ANTHROPIC_API_KEY, MAYA_GH_TOKEN (PAT of the apx-maya
-# account, scope `repo` — it posts the review under that identity).
+# account, scope `repo` — it posts the review, and converts the PR to draft,
+# under that identity; the account needs write access for the draft flip).
 
 on:
   workflow_run:
@@ -61,6 +71,7 @@ permissions: {}
 env:
   SKILLS_REF: dev          # Appmixer-ai/appmixer-skills branch to review with
   CLI_DIST_TAG: dev        # npm dist-tag of the appmixer CLI to install
+  DRAFT_ON: error          # convert the PR to draft on: error | any | never
 
 jobs:
   resolve-event:
@@ -323,6 +334,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Claude review the connector changes
+        id: claude
         if: steps.scope.outputs.has_scope == 'true'
         uses: anthropics/claude-code-action@51705da45eecce209d4700538bf8377d5b5fc695 # v1.0.152
         with:
@@ -438,6 +450,103 @@ jobs:
             5. Stop. Do not loop, do not modify files, do not open or comment on
                anything.
 
+      - name: Collect the Claude run statistics
+        id: stats
+        # Parsed here (not at the end) so the review comment can quote the
+        # duration and cost; the full table still lands in the job summary in
+        # the last step. `always()` so a failed review run still reports cost.
+        if: always() && steps.scope.outputs.has_scope == 'true'
+        env:
+          # The action reports where it wrote the log; the RUNNER_TEMP path is
+          # the fallback for when that output is empty (e.g. the step failed).
+          EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          set -euo pipefail
+          STATS_FILE="${EXECUTION_FILE:-$RUNNER_TEMP/claude-execution-output.json}"
+          export STATS_FILE
+          if [ ! -f "$STATS_FILE" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No Claude execution output at $STATS_FILE."
+            exit 0
+          fi
+          node - <<'NODE'
+          const fs = require('fs');
+          const d = JSON.parse(fs.readFileSync(process.env.STATS_FILE, 'utf8'));
+          const r = (Array.isArray(d) ? d : []).find((x) => x.type === 'result') || {};
+          const u = r.usage || {};
+          const n = (v) => (v == null ? '-' : Number(v).toLocaleString('en-US'));
+          // GITHUB_OUTPUT is line-based: keep free-form fields to one safe line.
+          const safe = (v) => String(v ?? '-').replace(/[^\w.: -]/g, '').slice(0, 80) || '-';
+          const secs = (r.duration_ms || 0) / 1000;
+
+          const out = {
+              found: 'true',
+              result: safe(r.subtype),
+              duration: secs >= 60
+                  ? `${Math.floor(secs / 60)}m ${Math.round(secs % 60)}s`
+                  : `${secs.toFixed(1)}s`,
+              turns: n(r.num_turns),
+              input_tokens: n(u.input_tokens),
+              cache_tokens: n((u.cache_read_input_tokens || 0) + (u.cache_creation_input_tokens || 0)),
+              output_tokens: n(u.output_tokens),
+              // Empty when the API did not report a cost — callers must cope.
+              cost: r.total_cost_usd == null ? '' : r.total_cost_usd.toFixed(4)
+          };
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,
+              Object.entries(out).map(([k, v]) => `${k}=${v}`).join('\n') + '\n');
+          console.log(out);
+          NODE
+
+      - name: Convert the PR to draft when the review found blocking issues
+        id: draft
+        if: steps.scope.outputs.has_scope == 'true'
+        # A review that found errors means the PR is not ready for a human
+        # reviewer's time — flip it back to draft so it drops out of the review
+        # queue. Never the reverse: only the author marks it ready again.
+        #
+        # Deliberately BEFORE the review is posted, so the review body can say
+        # why the PR changed state. Non-fatal: if apx-maya lacks write access
+        # the review is still posted.
+        env:
+          GH_TOKEN: ${{ secrets.MAYA_GH_TOKEN }}
+          REPO: ${{ github.repository }}
+          NUM: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          F=/tmp/maya-review.json
+          DRAFTED=false
+          REASON=""
+
+          if [ "$DRAFT_ON" = "never" ]; then
+            echo "DRAFT_ON=never — leaving the PR state alone."
+          elif [ ! -s "$F" ] || ! jq -e . "$F" >/dev/null 2>&1; then
+            echo "No readable findings file — leaving the PR state alone."
+          else
+            ERRORS=$(jq '[.findings[]? | select(.severity == "error")] | length' "$F")
+            ALL=$(jq '[.findings[]?] | length' "$F")
+            if [ "$DRAFT_ON" = "any" ]; then
+              N="$ALL"; REASON="$ALL finding(s)"
+            else
+              N="$ERRORS"; REASON="$ERRORS error-level finding(s)"
+            fi
+
+            if [ "$N" -eq 0 ]; then
+              echo "Nothing blocking (errors=$ERRORS, findings=$ALL) — the PR keeps its state."
+            elif [ "$(gh pr view "$NUM" --repo "$REPO" --json isDraft --jq '.isDraft')" = "true" ]; then
+              echo "PR #$NUM is already a draft — nothing to do."
+            elif gh pr ready "$NUM" --repo "$REPO" --undo; then
+              echo "PR #$NUM converted to draft ($REASON)."
+              DRAFTED=true
+            else
+              echo "::warning::Could not convert PR #$NUM to draft — does apx-maya have write access?"
+            fi
+          fi
+
+          {
+            echo "drafted=$DRAFTED"
+            echo "draft_reason=$REASON"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Post the review as apx-maya
         if: steps.scope.outputs.has_scope == 'true'
         # TRUSTED step: reads the structured file Claude produced and posts ONE
@@ -451,13 +560,18 @@ jobs:
           NUM: ${{ steps.pr.outputs.number }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
           MAX_INLINE: "30"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_COST: ${{ steps.stats.outputs.cost }}
+          RUN_DURATION: ${{ steps.stats.outputs.duration }}
+          DRAFTED: ${{ steps.draft.outputs.drafted }}
+          DRAFT_REASON: ${{ steps.draft.outputs.draft_reason }}
         run: |
           set -euo pipefail
           F=/tmp/maya-review.json
 
           if [ ! -s "$F" ] || ! jq -e . "$F" >/dev/null 2>&1; then
             gh pr comment "$NUM" --repo "$REPO" \
-              --body "🤖 **Connector review** — the review ran but produced no readable findings file. See the workflow run logs."
+              --body "🤖 **Connector review** — the review ran but produced no readable findings file. See the [workflow run]($RUN_URL) for the logs and the run statistics."
             exit 0
           fi
 
@@ -525,6 +639,15 @@ jobs:
           lines.push('');
           if (review.summary) { lines.push(review.summary); lines.push(''); }
 
+          if (process.env.DRAFTED === 'true') {
+              lines.push('> [!IMPORTANT]');
+              lines.push(`> This PR was moved back to **draft** because the review found `
+                  + `${process.env.DRAFT_REASON || 'blocking issues'}.`);
+              lines.push('> Address them and press **Ready for review** — then re-request a review '
+                  + 'from `apx-maya` to run this again.');
+              lines.push('');
+          }
+
           if (sorted.length) {
               lines.push('| Severity | Component | Rule | Finding | Suggested fix |');
               lines.push('|---|---|---|---|---|');
@@ -562,6 +685,14 @@ jobs:
               + `[appmixer-skills@${process.env.SKILLS_REF}](https://github.com/Appmixer-ai/appmixer-skills/tree/${process.env.SKILLS_REF}) `
               + `and the \`dev\` appmixer CLI. Read-only — no code was changed.</sub>`);
 
+          // Run link first — the job summary behind it carries the full stats
+          // table; the duration/cost are repeated here so the common case needs
+          // no click.
+          const stats = [`[Run details](${process.env.RUN_URL})`];
+          if (process.env.RUN_DURATION) stats.push(process.env.RUN_DURATION);
+          if (process.env.RUN_COST) stats.push(`$${process.env.RUN_COST}`);
+          lines.push(`<sub>${stats.join(' · ')}</sub>`);
+
           const body = lines.join('\n');
           fs.writeFileSync('/tmp/review-payload.json', JSON.stringify({
               commit_id: process.env.HEAD_SHA,
@@ -596,30 +727,45 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: claude-execution-output
-          path: ${{ runner.temp }}/claude-execution-output.json
+          path: ${{ steps.claude.outputs.execution_file || format('{0}/claude-execution-output.json', runner.temp) }}
           if-no-files-found: warn
 
       - name: Run summary
         if: always()
+        # The statistics the review comment links to — parsed by the `stats`
+        # step above, rendered here at the end of the job summary.
+        env:
+          FOUND: ${{ steps.stats.outputs.found }}
+          RESULT: ${{ steps.stats.outputs.result }}
+          DURATION: ${{ steps.stats.outputs.duration }}
+          TURNS: ${{ steps.stats.outputs.turns }}
+          INPUT_TOKENS: ${{ steps.stats.outputs.input_tokens }}
+          CACHE_TOKENS: ${{ steps.stats.outputs.cache_tokens }}
+          OUTPUT_TOKENS: ${{ steps.stats.outputs.output_tokens }}
+          COST: ${{ steps.stats.outputs.cost }}
+          DRAFTED: ${{ steps.draft.outputs.drafted }}
+          DRAFT_REASON: ${{ steps.draft.outputs.draft_reason }}
+          PR_URL: ${{ steps.pr.outputs.url }}
         run: |
-          F="$RUNNER_TEMP/claude-execution-output.json"
-          if [ ! -f "$F" ]; then
+          set -euo pipefail
+          if [ "${FOUND:-}" != "true" ]; then
             echo "No Claude execution output found (the review step may have been skipped — e.g. the PR touches no connector sources, or apx-maya was not a requested reviewer)." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
-          const d = require(process.env.RUNNER_TEMP + '/claude-execution-output.json');
-          const r = d.find((x) => x.type === 'result') || {};
-          const u = r.usage || {};
-          const s = (n) => (n == null ? '-' : n);
-          const sec = (ms) => ((ms || 0) / 1000).toFixed(1) + 's';
-          console.log('## 🤖 Claude run summary\n');
-          console.log('| Metric | Value |');
-          console.log('|---|---|');
-          console.log(`| Result | ${s(r.subtype)} |`);
-          console.log(`| Duration | ${sec(r.duration_ms)} |`);
-          console.log(`| Turns | ${s(r.num_turns)} |`);
-          console.log(`| Input tokens | ${s(u.input_tokens)} |`);
-          console.log(`| Output tokens | ${s(u.output_tokens)} |`);
-          console.log(`| Cost (USD) | ${r.total_cost_usd == null ? '-' : r.total_cost_usd.toFixed(4)} |`);
-          NODE
+          {
+            echo "## 🤖 Claude run summary"
+            echo
+            echo "| Metric | Value |"
+            echo "|---|---|"
+            echo "| Result | $RESULT |"
+            echo "| Duration | $DURATION |"
+            echo "| Turns | $TURNS |"
+            echo "| Input tokens | $INPUT_TOKENS |"
+            echo "| Cached input tokens | $CACHE_TOKENS |"
+            echo "| Output tokens | $OUTPUT_TOKENS |"
+            echo "| Cost (USD) | \$${COST:-–} |"
+            echo "| Pull request | $PR_URL |"
+            if [ "${DRAFTED:-false}" = "true" ]; then
+              echo "| PR state | converted to **draft** ($DRAFT_REASON) |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
