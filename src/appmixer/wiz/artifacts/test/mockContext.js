@@ -1,6 +1,6 @@
 'use strict';
 
-const { createMutexLock } = require('../utils');
+const { createMutexLock } = require('../../../../../test/utils.js');
 
 /**
  * Lean mock of the component context for the wiz tests. State is array-backed

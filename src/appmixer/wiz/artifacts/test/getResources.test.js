@@ -6,9 +6,9 @@ const { createMockWiz } = require('./mockWiz');
 const { createWizContext } = require('./mockContext');
 
 const resources = require(path.join(
-    __dirname, '../../src/appmixer/wiz/core/FindCloudResources/resources.exposed.js'));
+    __dirname, '../../core/FindCloudResources/resources.exposed.js'));
 const FindCloudResources = require(path.join(
-    __dirname, '../../src/appmixer/wiz/core/FindCloudResources/FindCloudResources.js'));
+    __dirname, '../../core/FindCloudResources/FindCloudResources.js'));
 
 describe('wiz getResources pagination', () => {
 

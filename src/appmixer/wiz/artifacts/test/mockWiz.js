@@ -12,6 +12,8 @@
  *                      component's own stop conditions are what terminates)
  *   inProgressPolls  - systemActivity polls reporting IN_PROGRESS before SUCCESS
  *   failStatusForever- systemActivity never leaves IN_PROGRESS
+ *   statusErrors     - GraphQL errors every systemActivity poll answers with
+ *                      (e.g. [{ message: 'Resource not found' }])
  *   latency          - ms added to every request (simulates a slow tenant)
  */
 function createMockWiz(options = {}) {
@@ -21,6 +23,7 @@ function createMockWiz(options = {}) {
         pageScript = null,
         inProgressPolls = 0,
         failStatusForever = false,
+        statusErrors = null,
         latency = 0
     } = options;
 
@@ -65,6 +68,9 @@ function createMockWiz(options = {}) {
 
         if (query.includes('systemActivity')) {
             state.statusPolls++;
+            if (statusErrors) {
+                return { data: { data: { systemActivity: null }, errors: statusErrors } };
+            }
             if (failStatusForever || state.statusPolls <= inProgressPolls) {
                 return {
                     data: {

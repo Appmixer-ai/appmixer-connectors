@@ -5,7 +5,7 @@ const path = require('path');
 const { createMockWiz } = require('./mockWiz');
 const { createWizContext } = require('./mockContext');
 
-const UploadScan = require(path.join(__dirname, '../../src/appmixer/wiz/core/UploadScan/UploadScan.js'));
+const UploadScan = require(path.join(__dirname, '../../core/UploadScan/UploadScan.js'));
 
 // Fast polling so tests do not sleep for real.
 const FAST_CONFIG = { statusPollingInterval: '1', statusNumberOfAttempts: '3', uploadLockRetryDelay: '1' };
