@@ -7,7 +7,18 @@ const moment = require('moment');
 // acquisition wait far longer than a receive() is allowed to run.
 const MAX_LOCK_RETRY_DELAY = 5000; // 5s
 const MAX_LOCK_TTL = 15 * 60 * 1000; // 15 min
-const MAX_LOCK_MAX_RETRY_COUNT = 60;
+const MAX_LOCK_MAX_RETRY_COUNT = 40;
+
+// Delay before a scheduled drain continuation fires. Draining a large backlog
+// happens one batch per receive() (see processAllDocuments) — the rest of the
+// backlog is picked up by a follow-up context.setTimeout message instead of
+// looping inside a single receive() call.
+const DRAIN_CONTINUATION_DELAY = 2000; // 2s
+
+// Log a warning when the pending-documents state grows past this size — the
+// backlog lives in a single state document and is read back in full on every
+// receive(), so unbounded growth degrades exactly under burst conditions.
+const DOCUMENTS_BACKLOG_WARNING = 5000;
 
 const getLockConfiguration = (context) => {
 
@@ -38,6 +49,21 @@ module.exports = {
         const { threshold, scheduleValue } = context.properties;
 
         if (context.messages.timeout) {
+            const timeoutContent = context.messages.timeout.content || {};
+
+            if (timeoutContent.drainContinuation) {
+                // Follow-up of a previous drain (see processAllDocuments). Do not
+                // touch the schedule — just process the next batch of the backlog.
+                const entries = await context.stateGet('documents') || [];
+                if (entries.length > 0) {
+                    await this.processAllDocuments(context, {
+                        threshold: timeoutContent.threshold,
+                        timeoutTrigger: timeoutContent.timeoutTrigger
+                    });
+                }
+                return;
+            }
+
             await this.scheduleDrain(context);
             const entries = await context.stateGet('documents') || [];
             if (entries.length > 0) {
@@ -54,6 +80,14 @@ module.exports = {
             const entries = await context.stateGet('documents') || [];
 
             await context.log({ step: 'receive', entries: entries.length });
+            if (entries.length >= DOCUMENTS_BACKLOG_WARNING) {
+                await context.log({
+                    step: 'receive',
+                    warning: `Pending documents backlog reached ${entries.length} entries. ` +
+                        'The backlog is stored in a single component state document; consider a lower threshold ' +
+                        'or a more frequent schedule so uploads keep up with the incoming rate.'
+                });
+            }
 
             if (!scheduleValue || (threshold && entries.length >= threshold)) {
                 await this.processAllDocuments(context, { threshold });
@@ -61,12 +95,26 @@ module.exports = {
         }
     },
 
+    // Process exactly ONE batch of the backlog. If more qualifying documents
+    // remain, schedule a drain-continuation timeout instead of recursing — a
+    // single receive() must never drain the whole backlog (with locks and status
+    // polling per batch it would easily exceed the engine's receive() timeout
+    // and RabbitMQ's consumer timeout; see appmixer-components issue #2793).
     async processAllDocuments(context, { threshold, timeoutTrigger = false } = {}) {
         const documents = await this.prepareForSend(context, { threshold, timeoutTrigger });
         await this.processSend(context, { documents });
         const entries = await context.stateGet('documents') || [];
-        if (threshold && entries.length >= threshold || timeoutTrigger && entries.length) {
-            await this.processAllDocuments(context, { threshold, timeoutTrigger });
+        const backlogRemains = (threshold && entries.length >= threshold) || (timeoutTrigger && entries.length > 0);
+        if (backlogRemains) {
+            await context.log({
+                step: 'drain-continuation-scheduled',
+                remainingEntries: entries.length,
+                delay: DRAIN_CONTINUATION_DELAY
+            });
+            await context.setTimeout(
+                { drainContinuation: true, threshold, timeoutTrigger },
+                DRAIN_CONTINUATION_DELAY
+            );
         }
     },
 
@@ -164,7 +212,7 @@ module.exports = {
 
         const timeoutId = await context.stateGet('timeoutId');
 
-        if (timeoutId && context.messages.timeout.timeoutId !== timeoutId) {
+        if (timeoutId && context.messages?.timeout && context.messages.timeout.timeoutId !== timeoutId) {
             // Handle the case when a timeout was scheduled but the system crashed before the
             // corresponding timeoutId was saved into the state. The original timeout then fired
             // again, state was 'JsonSent', and a new timeout was scheduled for the second time.

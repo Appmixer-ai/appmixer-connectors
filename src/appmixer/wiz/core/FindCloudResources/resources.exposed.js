@@ -269,7 +269,10 @@ module.exports = {
     // records already accumulated on earlier pages.
     async getResources(context, { PAGE_SIZE = 500, limit, filterBy }) {
 
-        const effectiveLimit = Math.min(parseInt(limit, 10) || DEFAULT_LIMIT, MAX_LIMIT);
+        // Clamp to [1, MAX_LIMIT] — a zero/negative/non-numeric limit falls back
+        // to the default instead of leaking an invalid `first` into the GraphQL query.
+        const parsedLimit = parseInt(limit, 10);
+        const effectiveLimit = Math.min(parsedLimit > 0 ? parsedLimit : DEFAULT_LIMIT, MAX_LIMIT);
 
         let nextPageToken = null;
         let totalRecordsCount = 0;

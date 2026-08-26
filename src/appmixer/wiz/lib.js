@@ -41,11 +41,15 @@ const systemActivityQuery = `query SystemActivity($id: ID!) {
 // Upper bounds so a hung Wiz endpoint or a misconfigured connector cannot hold a
 // single receive() call for an unbounded amount of time.
 const DEFAULT_REQUEST_TIMEOUT = 60 * 1000; // 60s
-const MAX_REQUEST_TIMEOUT = 5 * 60 * 1000; // 5 min
+const MAX_REQUEST_TIMEOUT = 2 * 60 * 1000; // 2 min
 const DEFAULT_STATUS_ATTEMPTS = 20;
 const MAX_STATUS_ATTEMPTS = 60;
 const DEFAULT_STATUS_POLLING_INTERVAL = 3000; // 3s
 const MAX_STATUS_POLLING_INTERVAL = 10 * 1000; // 10s
+// Total wall-clock budget for one getStatus() polling session. The per-knob caps
+// above bound each attempt, but only a joint deadline bounds the whole poll
+// (attempts × (request + sleep)) below the engine's receive() timeout.
+const MAX_STATUS_TOTAL_TIME = 5 * 60 * 1000; // 5 min
 
 module.exports = {
 
@@ -58,6 +62,17 @@ module.exports = {
             return DEFAULT_REQUEST_TIMEOUT;
         }
         return Math.min(configured, MAX_REQUEST_TIMEOUT);
+    },
+
+    // Wall-clock deadline for a whole getStatus() polling session. Configurable
+    // via `statusMaxTotalTime` (ms) but always capped by MAX_STATUS_TOTAL_TIME.
+    getStatusDeadline(context) {
+
+        const configured = parseInt(context?.config?.statusMaxTotalTime, 10);
+        const total = (!configured || configured <= 0)
+            ? MAX_STATUS_TOTAL_TIME
+            : Math.min(configured, MAX_STATUS_TOTAL_TIME);
+        return Date.now() + total;
     },
 
     async makeApiCall({ context, method = 'GET', data }) {
@@ -135,7 +150,7 @@ module.exports = {
         return data.data.requestSecurityScanUpload.upload;
     },
 
-    getStatus: async function(context, id, attempts = 0) {
+    getStatus: async function(context, id, attempts = 0, deadline = null) {
 
         // Both knobs come from connector config; cap them so a large value cannot
         // turn a single receive() into a tens-of-minutes sleep-poll.
@@ -147,6 +162,9 @@ module.exports = {
             parseInt(context.config.statusPollingInterval, 10) || DEFAULT_STATUS_POLLING_INTERVAL,
             MAX_STATUS_POLLING_INTERVAL
         );
+        if (!deadline) {
+            deadline = this.getStatusDeadline(context);
+        }
 
         context.log({ stage: 'retrieving-upload-status', systemActivityId: id, attempts, maxAttempts, pollingInterval });
         const { data } = await this.makeApiCall({
@@ -162,11 +180,13 @@ module.exports = {
 
         if (data.errors || data?.data?.systemActivity?.status === 'IN_PROGRESS') {
             attempts++;
-            if (attempts <= maxAttempts) {
+            // Retry only while both the attempt budget and the wall-clock deadline
+            // allow it — a slow endpoint must not extend the poll past the deadline.
+            if (attempts < maxAttempts && Date.now() + pollingInterval < deadline) {
                 await new Promise(r => setTimeout(r, pollingInterval));
-                return await this.getStatus(context, id, attempts);
+                return await this.getStatus(context, id, attempts, deadline);
             } else {
-                throw new context.CancelError(`Exceeded max attempts systemActivity: ${id}`);
+                throw new context.CancelError(`Exceeded max attempts or time budget for systemActivity: ${id}`);
             }
         }
         return data?.data?.systemActivity || {};
