@@ -1,0 +1,303 @@
+{
+    "name": "appmixer.telegram.core.ForwardMessage",
+    "label": "Forward Message",
+    "description": "Forwards a message from one chat to another, keeping the original author attribution. The bot must be a member of both chats.",
+    "author": "Appmixer <info@appmixer.com>",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:telegram"
+    },
+    "quota": {
+        "manager": "appmixer:telegram",
+        "resources": "requests",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "chatId": {
+                        "type": "string"
+                    },
+                    "fromChatId": {
+                        "type": "string"
+                    },
+                    "messageId": {
+                        "type": "integer"
+                    },
+                    "disableNotification": {
+                        "type": "boolean"
+                    },
+                    "protectContent": {
+                        "type": "boolean"
+                    },
+                    "messageThreadId": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "chatId",
+                    "fromChatId",
+                    "messageId"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "chatId": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Chat ID",
+                        "tooltip": "Numeric chat ID (for example <i>-1002345678901</i> for a group or channel) or a public <i>@channelusername</i>. The bot must be a member of the chat. Chat IDs are emitted by the New Message trigger."
+                    },
+                    "fromChatId": {
+                        "type": "text",
+                        "index": 2,
+                        "label": "From Chat ID",
+                        "tooltip": "Chat the message is forwarded from - numeric ID or @channelusername."
+                    },
+                    "messageId": {
+                        "type": "number",
+                        "index": 3,
+                        "label": "Message ID",
+                        "tooltip": "ID of the message in the source chat."
+                    },
+                    "disableNotification": {
+                        "type": "toggle",
+                        "index": 4,
+                        "label": "Disable Notification",
+                        "tooltip": "Deliver the message silently - recipients get no sound notification."
+                    },
+                    "protectContent": {
+                        "type": "toggle",
+                        "index": 5,
+                        "label": "Protect Content",
+                        "tooltip": "Block forwarding and saving of the sent message."
+                    },
+                    "messageThreadId": {
+                        "type": "number",
+                        "index": 6,
+                        "label": "Thread ID",
+                        "tooltip": "Target a specific topic in a forum supergroup."
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "message_id": {
+                        "type": "integer",
+                        "title": "Message ID",
+                        "example": 1042
+                    },
+                    "message_thread_id": {
+                        "type": "integer",
+                        "title": "Thread ID",
+                        "example": 12
+                    },
+                    "from": {
+                        "type": "object",
+                        "title": "From",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "User ID",
+                                "example": 6412345678
+                            },
+                            "is_bot": {
+                                "type": "boolean",
+                                "title": "Is Bot",
+                                "example": false
+                            },
+                            "first_name": {
+                                "type": "string",
+                                "title": "First Name",
+                                "example": "Jana"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "title": "Last Name",
+                                "example": "Novakova"
+                            },
+                            "username": {
+                                "type": "string",
+                                "title": "Username",
+                                "example": "jana_novakova"
+                            },
+                            "language_code": {
+                                "type": "string",
+                                "title": "Language Code",
+                                "example": "cs"
+                            }
+                        },
+                        "example": {
+                            "id": 6412345678,
+                            "is_bot": false,
+                            "first_name": "Jana",
+                            "username": "jana_novakova"
+                        }
+                    },
+                    "chat": {
+                        "type": "object",
+                        "title": "Chat",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "title": "Chat ID",
+                                "example": -1002345678901
+                            },
+                            "type": {
+                                "type": "string",
+                                "title": "Chat Type",
+                                "example": "supergroup"
+                            },
+                            "title": {
+                                "type": "string",
+                                "title": "Title",
+                                "example": "Product Team"
+                            },
+                            "username": {
+                                "type": "string",
+                                "title": "Username",
+                                "example": "product_team"
+                            },
+                            "first_name": {
+                                "type": "string",
+                                "title": "First Name",
+                                "example": "Jana"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "title": "Last Name",
+                                "example": "Novakova"
+                            }
+                        },
+                        "example": {
+                            "id": -1002345678901,
+                            "type": "supergroup",
+                            "title": "Product Team"
+                        }
+                    },
+                    "date": {
+                        "type": "integer",
+                        "title": "Date (Unix Time)",
+                        "example": 1756200000
+                    },
+                    "edit_date": {
+                        "type": "integer",
+                        "title": "Edit Date (Unix Time)",
+                        "example": 1756200600
+                    },
+                    "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "example": "Hello from your workflow!"
+                    },
+                    "caption": {
+                        "type": "string",
+                        "title": "Caption",
+                        "example": "Quarterly report"
+                    },
+                    "photo": {
+                        "type": "array",
+                        "title": "Photo Sizes",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "file_id": {
+                                    "type": "string",
+                                    "title": "File ID"
+                                },
+                                "file_unique_id": {
+                                    "type": "string",
+                                    "title": "File Unique ID"
+                                },
+                                "width": {
+                                    "type": "integer",
+                                    "title": "Width"
+                                },
+                                "height": {
+                                    "type": "integer",
+                                    "title": "Height"
+                                },
+                                "file_size": {
+                                    "type": "integer",
+                                    "title": "File Size"
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "file_id": "AgACAgIAAxkBAAIB",
+                                "file_unique_id": "AQADr8gxG9c",
+                                "width": 1280,
+                                "height": 720,
+                                "file_size": 84213
+                            }
+                        ]
+                    },
+                    "document": {
+                        "type": "object",
+                        "title": "Document",
+                        "properties": {
+                            "file_id": {
+                                "type": "string",
+                                "title": "File ID"
+                            },
+                            "file_unique_id": {
+                                "type": "string",
+                                "title": "File Unique ID"
+                            },
+                            "file_name": {
+                                "type": "string",
+                                "title": "File Name"
+                            },
+                            "mime_type": {
+                                "type": "string",
+                                "title": "MIME Type"
+                            },
+                            "file_size": {
+                                "type": "integer",
+                                "title": "File Size"
+                            }
+                        },
+                        "example": {
+                            "file_id": "BQACAgIAAxkBAAIB",
+                            "file_unique_id": "AgADr8gxG9c",
+                            "file_name": "report.pdf",
+                            "mime_type": "application/pdf",
+                            "file_size": 24518
+                        }
+                    },
+                    "reply_to_message": {
+                        "type": "object",
+                        "title": "Reply To Message",
+                        "properties": {
+                            "message_id": {
+                                "type": "integer",
+                                "title": "Message ID"
+                            },
+                            "text": {
+                                "type": "string",
+                                "title": "Text"
+                            }
+                        },
+                        "example": {
+                            "message_id": 1041,
+                            "text": "What is the status?"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMjQwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IlRlbGVncmFtIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InRnYiIgeDE9IjEyMCIgeTE9IjI0MCIgeDI9IjEyMCIgeTI9IjAiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiMxRDkzRDIiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOEIwRTMiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMjAiIHI9IjEyMCIgZmlsbD0idXJsKCN0Z2IpIi8+PHBhdGggZmlsbD0iI2M4ZGFlYSIgZD0iTTk4IDE3NWMtMy44ODggMC0zLjIyNy0xLjQ2OC00LjU2OC01LjE3TDgyIDEzMi4yMDcgMTcwIDgweiIvPjxwYXRoIGZpbGw9IiNhOWM5ZGQiIGQ9Ik05OCAxNzVjMyAwIDQuMzI1LTEuMzcyIDYtM2wxNi0xNS41NTgtMTkuOTU4LTEyLjAzNXoiLz48cGF0aCBmaWxsPSIjZjZmYmZlIiBkPSJNMTAwLjA0IDE0NC40MWw0OC4zNiAzNS43MjljNS41MTkgMy4wNDUgOS41MDQgMS40NjggMTAuODc5LTUuMTI4bDE5LjY4NS05Mi43NjNjMi4wMTUtOC4wODYtMy4wOC0xMS43NTQtOC4zNi05LjM1N2wtMTE1LjU5IDQ0LjU4NWMtNy44OSAzLjE2NS03Ljg0MyA3LjU2Ny0xLjQzOCA5LjUyOGwyOS42NjMgOS4yNTkgNjguNjczLTQzLjMyNWMzLjI0Mi0xLjk2NiA2LjIxOC0uOTEgMy43NzYgMS4yNTh6Ii8+PC9zdmc+"
+}
