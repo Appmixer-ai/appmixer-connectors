@@ -17,6 +17,19 @@ Primary integration use cases for Appmixer workflows:
 - Webhook Events: https://developers.strava.com/docs/webhooks/
 
 ## Authentication Method (OAuth 2.0)
+
+> **The app owner needs a paid Strava subscription.** Since Strava's Developer
+> Program Standard Tier change, an API application whose owning athlete has no
+> active Strava subscription is switched to *Inactive*, and **every** v3
+> endpoint answers `403 Forbidden` with
+> `{"resource":"Application","field":"Status","code":"Inactive"}` — including
+> `GET /athlete`, which `requestProfileInfo` calls, so connecting an account
+> fails outright. The OAuth handshake itself still succeeds and a real token is
+> issued, which makes this look like a connector bug; it is not. Fix: give the
+> owning account a subscription and reactivate the app in the API Settings
+> Dashboard (https://www.strava.com/settings/api). There is no free tier.
+> This is what blocks E2E runs on a fresh Strava app.
+
 Strava uses standard OAuth 2.0 with refresh tokens. The authorization response returns an `access_token`, `refresh_token`, `expires_at`, and an embedded `athlete` object.
 
 ### Required Data
