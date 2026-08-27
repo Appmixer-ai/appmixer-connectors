@@ -137,7 +137,7 @@ module.exports = {
             402: 'Payment required (402). Your Deepgram project is out of credits. Top up your balance at https://console.deepgram.com.',
             413: payloadTooLarge,
             429: 'Too many requests (429). The project concurrency limit was exceeded. Retry with backoff or reduce parallel calls.',
-            504: 'Gateway timeout (504). Processing exceeded the 10-minute ceiling (20 minutes for Whisper). Use the Transcribe Audio (Async) component for long audio.'
+            504: 'Gateway timeout (504). Processing exceeded the 10-minute ceiling (20 minutes for Whisper).'
         };
 
         const parts = [];
