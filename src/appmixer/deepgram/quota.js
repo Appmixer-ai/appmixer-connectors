@@ -13,10 +13,17 @@ module.exports = {
             scope: 'userId'
         },
         {
-            // Processing endpoints (/v1/listen, /v1/speak, /v1/read) are limited by
-            // *concurrency*, not by request rate - Deepgram allows roughly 10 in-flight
-            // requests per project. A sliding window cannot express that: 100 long-running
-            // transcriptions can still start together and all get 429s. Cap in-flight work.
+            // Caps how many processing calls (/v1/listen, /v1/speak, /v1/read) are
+            // in the air at once, which smooths a burst of a hundred simultaneous
+            // submits into something Deepgram will accept.
+            //
+            // It does NOT cap in-flight *jobs*. A concurrency slot is held for the
+            // duration of receive(), and Transcribe Audio now submits and returns in
+            // about two seconds instead of blocking until the transcript is ready -
+            // the job keeps running on Deepgram's side long after the slot is free.
+            // Appmixer quotas cannot express "10 outstanding callbacks"; a project
+            // that pushes past Deepgram's own concurrency limit gets a 429, which
+            // lib.normalizeError turns into an actionable message.
             limit: 10,
             throttling: 'limit-concurrency',
             queueing: 'fifo',
@@ -24,7 +31,8 @@ module.exports = {
             scope: 'userId'
         },
         {
-            // Keep a rate ceiling on the processing endpoints as well.
+            // Keep a rate ceiling on the processing endpoints as well. This is the
+            // rule that actually bounds how fast jobs can be handed to Deepgram.
             limit: 100,
             window: 1000 * 60,
             throttling: 'window-sliding',

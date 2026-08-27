@@ -14,8 +14,48 @@ function kvToObj(arr) {
     return out;
 }
 
-// Namespaced so a pending job can never collide with other component state.
-const jobKey = (requestId) => `job-${requestId}`;
+// The job's input rides back in the callback URL, NOT in component state.
+//
+// One component instance has one callback URL, so ten parallel jobs all report
+// to the same place in completion order and the webhook branch cannot see the
+// message that started the job — something has to carry the input across. State
+// keyed by request id looks like the obvious carrier and is the wrong one:
+//
+//   - Deepgram starts processing the moment it accepts the job, so the callback
+//     races the state write that follows the submit. Measured margin on a 26 s
+//     clip is ~0.5 s; a 1 s clip and a loaded state store close it. Losing that
+//     race drops the echo AND leaves the entry behind forever, because the
+//     callback's unset runs before the submit's set.
+//   - A retried callback finds the entry already consumed and delivers a second
+//     `done` with no echo at all.
+//   - There is no TTL on component state, so a job that never calls back leaks
+//     its entry permanently.
+//
+// The URL has none of those problems: it is per-job by construction, it is
+// unaffected by write latency, and a retried callback carries the same echo.
+// `utils/forms/FormAction` and `google/drive` use the same mechanism.
+const ECHO_PARAM = 'echo';
+
+function buildCallbackUrl(context, echo) {
+    const base = context.getWebhookUrl();
+    const separator = base.indexOf('?') === -1 ? '?' : '&';
+    return `${base}${separator}${ECHO_PARAM}=${encodeURIComponent(JSON.stringify(echo))}`;
+}
+
+function readEcho(context) {
+    const query = (context.messages.webhook.content || {}).query || {};
+    const raw = query[ECHO_PARAM];
+    if (!raw) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+    } catch (e) {
+        // A malformed echo must not cost the transcript - deliver what we have.
+        return {};
+    }
+}
 
 module.exports = {
 
@@ -27,44 +67,50 @@ module.exports = {
         if (context.messages.webhook) {
 
             const body = (context.messages.webhook.content || {}).data || {};
-            const alternative = body.results
-                && body.results.channels
-                && body.results.channels[0]
-                && body.results.channels[0].alternatives
-                && body.results.channels[0].alternatives[0];
-
-            // One component instance has ONE callback URL, so ten parallel jobs all report
-            // back here and finish in whatever order Deepgram completes them. The submit
-            // branch stashed each job's input under its request ID; replaying it here is
-            // what lets a downstream component tell the transcripts apart.
             const requestId = (body.metadata || {}).request_id;
-            const submitted = (requestId && await context.stateGet(jobKey(requestId))) || {};
 
-            // A failed job must be visible, not an empty transcript: Deepgram reports
-            // failures in the callback body (`err_code`/`err_msg`, or no `results` at
-            // all). Surface it on the `done` port so downstream asserts/branches see it.
-            const failure = body.err_code
-                ? `${body.err_code}${body.err_msg ? `: ${body.err_msg}` : ''}`
-                : (!body.results ? 'Deepgram delivered no results for this job.' : null);
-            if (failure) {
-                await context.log({ step: 'transcription-failed', requestId, failure, body });
+            // Anything can POST to a webhook URL. Without this guard a stray or replayed
+            // request emits a `done` carrying an empty transcript, which downstream
+            // cannot tell from a real one. Acknowledge it and drop it.
+            if (!requestId) {
+                await context.log('warn', 'Ignoring a callback with no metadata.request_id.', { body });
+                return context.response();
             }
 
-            await context.sendJson({
-                ...submitted,
-                request_id: requestId,
-                transcript: alternative ? alternative.transcript : '',
-                ...(failure ? { error: failure } : {}),
-                metadata: body.metadata || {},
-                results: body.results || {}
-            }, 'done');
+            try {
+                const alternative = body.results
+                    && body.results.channels
+                    && body.results.channels[0]
+                    && body.results.channels[0].alternatives
+                    && body.results.channels[0].alternatives[0];
 
-            if (requestId) {
-                await context.stateUnset(jobKey(requestId));
+                // A failed job must be visible, not an empty transcript: Deepgram reports
+                // failures in the callback body (`err_code`/`err_msg`, or no `results` at
+                // all). Surface it on the `done` port so downstream asserts/branches see it.
+                const failure = body.err_code
+                    ? `${body.err_code}${body.err_msg ? `: ${body.err_msg}` : ''}`
+                    : (!body.results ? 'Deepgram delivered no results for this job.' : null);
+                if (failure) {
+                    await context.log('error', 'Transcription failed.', { requestId, failure, body });
+                }
+
+                await context.sendJson({
+                    ...readEcho(context),
+                    request_id: requestId,
+                    transcript: alternative ? alternative.transcript : '',
+                    ...(failure ? { error: failure } : {}),
+                    metadata: body.metadata || {},
+                    results: body.results || {}
+                }, 'done');
+            } finally {
+                // Acknowledge even if the emit threw: without a 2xx Deepgram redelivers,
+                // and a redelivery re-runs whatever just failed. Delivery is at-least-once
+                // either way - the echo above is carried in the URL precisely so a repeat
+                // is a complete duplicate rather than a degraded one.
+                await context.response();
             }
 
-            // Acknowledge, otherwise Deepgram retries the callback.
-            return context.response();
+            return;
         }
 
         const input = context.messages.in.content;
@@ -77,6 +123,8 @@ module.exports = {
         if (!audioUrl && !fileId) {
             throw new context.CancelError('Provide either an Audio URL or a File to transcribe.');
         }
+
+        const echo = { audioUrl, fileId, correlationId };
 
         const params = lib.cleanParams({
             model: model || 'nova-3',
@@ -95,10 +143,11 @@ module.exports = {
             // minutes). Delivering it anywhere else is a downstream component's job.
             // AFTER the extraParams spread on purpose: a user-supplied `callback` would
             // redirect the delivery and the `done` port would silently never fire.
-            callback: context.getWebhookUrl()
+            callback: buildCallbackUrl(context, echo)
         });
 
         let data;
+        let stream;
         const headers = {};
 
         if (audioUrl) {
@@ -107,24 +156,41 @@ module.exports = {
         } else {
             const fileInfo = await context.getFileInfo(fileId);
             headers['Content-Type'] = lib.guessAudioContentType(fileInfo && fileInfo.filename);
-            data = await context.getFileReadStream(fileId);
+            stream = await context.getFileReadStream(fileId);
+            data = stream;
         }
 
-        const response = await lib.apiRequest(context, {
-            method: 'POST',
-            path: '/v1/listen',
-            params,
-            headers,
-            data
-        });
+        let response;
+        try {
+            response = await lib.apiRequest(context, {
+                method: 'POST',
+                path: '/v1/listen',
+                params,
+                headers,
+                data
+            });
+        } catch (error) {
+            // The upload stream is ours to close. Left open on a 413/429/5xx it holds a
+            // file descriptor until GC, and an auto-retried component opens another one
+            // on every attempt.
+            if (stream && typeof stream.destroy === 'function') {
+                stream.destroy();
+            }
+            throw error;
+        }
 
         // Deepgram answers the submit immediately with just { request_id }; the transcript
         // follows on the `done` port once the callback arrives.
         const requestId = (response.data || {}).request_id;
-        const echo = { audioUrl, fileId, correlationId };
 
-        if (requestId) {
-            await context.stateSet(jobKey(requestId), echo);
+        // No request id means the job was never linked to this flow: the callback (if any
+        // arrives) cannot be attributed and `out` would carry request_id: undefined into
+        // the rest of the flow. Fail loudly instead.
+        if (!requestId) {
+            throw new context.CancelError(
+                'Deepgram accepted the request but returned no request_id, so the transcript '
+                + 'cannot be delivered on the "done" port. Retry the job.'
+            );
         }
 
         return context.sendJson({ ...echo, request_id: requestId }, 'out');
