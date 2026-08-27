@@ -13,14 +13,20 @@ const DEFAULT_PREFIX = 'telegram-objects-export';
 // registration rather than overwriting each other's allowed_updates.
 const ALLOWED_UPDATES = ['message', 'edited_message', 'channel_post', 'edited_channel_post', 'callback_query'];
 
-// Bots may upload at most 50 MB through the Bot API.
+// Bots may upload at most 50 MB through the Bot API, but sendPhoto is capped lower.
+// Keyed by method so the guard can never be paired with the wrong ceiling.
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+const UPLOAD_LIMITS = {
+    sendPhoto: 10 * 1024 * 1024,
+    sendDocument: MAX_UPLOAD_BYTES
+};
 
 module.exports = {
 
     API_BASE_URL,
     ALLOWED_UPDATES,
     MAX_UPLOAD_BYTES,
+    UPLOAD_LIMITS,
 
     /**
      * @param {object} auth - context.auth, or the context itself inside auth.js
@@ -226,8 +232,12 @@ module.exports = {
             throw new context.CancelError('Invalid File. Failed to read the file from storage.');
         }
 
-        if (fileInfo.length > MAX_UPLOAD_BYTES) {
-            throw new context.CancelError('Maximum upload size for a Telegram bot is 50MB.');
+        const maxBytes = UPLOAD_LIMITS[method] || MAX_UPLOAD_BYTES;
+
+        if (fileInfo.length > maxBytes) {
+            throw new context.CancelError(
+                `Maximum upload size for ${method} is ${Math.round(maxBytes / (1024 * 1024))}MB.`
+            );
         }
 
         const stream = await context.getFileReadStream(fileId);

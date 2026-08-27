@@ -30,7 +30,7 @@
         },
         "3a-cli-tests": {
             "status": "done",
-            "detail": "11 of 13 components tested via `appmixer test component` against the live bot. 11 pass. 1 defect found and fixed (GetFile stream -> arraybuffer, commit fcad6b96). Remaining components covered by E2E instead.",
+            "detail": "10 of 13 components tested via `appmixer test component` against the live bot. 10 pass. 1 defect found and fixed (GetFile stream -> arraybuffer, commit fcad6b96). The remaining 3 components are not reachable from the CLI and are covered by E2E instead.",
             "passed": [
                 "MakeApiCall",
                 "SendMessage",
@@ -44,7 +44,7 @@
                 "DeleteMessage"
             ],
             "notTestableViaCli": {
-                "SendDocument/SendPhoto multipart upload": "appmixer test component uses an ephemeral per-invocation file store, so a file saved by one invocation is gone in the next. Covered by the media E2E flow instead.",
+                "SendPhoto / SendDocument multipart upload": "appmixer test component uses an ephemeral per-invocation file store, so a file saved by one invocation is gone in the next. The multipart branch of lib.sendMedia is covered by SendDocument in the media E2E flow; SendPhoto is driven with a URL there, so its own upload branch is exercised only through that shared helper.",
                 "AnswerCallbackQuery": "needs a real callback_query_id, which only a human button press produces.",
                 "NewMessage / NewCallbackQuery": "triggers - covered by E2E."
             }
@@ -73,6 +73,7 @@
     },
     "remaining": [],
     "notes": [
-        "E2E Assert clauses render a modifier binding as a string, so a boolean expectation never matches - it fails with the confusing 'expected true to equal true'. Write \"true\"/\"false\" as strings."
+        "E2E Assert clauses render a modifier binding as a string, so a boolean expectation never matches - it fails with the confusing 'expected true to equal true'. Write \"true\"/\"false\" as strings.",
+        "Review feedback from vtalas addressed: stray file_0.jpg removed, dynamic outPort source uses the \"dummy\" literal, all five flows carry a notes sticky, upload limits are per-method, and ForwardMessage declares forward_origin."
     ]
 }
