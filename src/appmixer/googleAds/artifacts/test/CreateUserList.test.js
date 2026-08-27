@@ -1,6 +1,7 @@
 const assert = require('assert');
 const testUtils = require('../../../../../test/utils');
 const CreateUserList = require('../../core/CreateUserList/CreateUserList');
+const { applyGoogleAdsConfig } = require('./helpers');
 
 describe('CreateUserList', () => {
 
@@ -9,6 +10,7 @@ describe('CreateUserList', () => {
     beforeEach(() => {
         context = testUtils.createMockContext();
         context.messages = { in: { content: {} } };
+        applyGoogleAdsConfig(context);
     });
 
     it('throws when name is missing', async () => {

@@ -18,49 +18,53 @@ module.exports = async (context) => {
 
         const { eventName, params } = listener;
 
+        // Retry on lock contention. Each ContactPropertyChanged listener contributes a distinct
+        // propertyName, so two listeners of the same subscriptionType starting concurrently must not
+        // drop each other's subscription — wait for the lock instead of silently giving up.
+        let lock;
         try {
-            const lock = await context.lock(eventName);
+            lock = await context.lock(eventName, {
+                ttl: 1000 * 30,
+                retryDelay: 500,
+                maxRetryCount: 20
+            });
 
-            try {
-                const subscriptionType = eventName.split(':')[0];
-                const subscriptions = getSubscriptionsByType(subscriptionType, context);
-                const results = await getHubSpotSubscriptions(context, params);
-                const currentActiveSubs = results.filter(s => s.enabled).map(s => s.eventType);
+            const subscriptionType = eventName.split(':')[0];
+            const subscriptions = getSubscriptionsByType(subscriptionType, context, params);
+            const results = await getHubSpotSubscriptions(context, params);
 
-                let subscriptionsToCreate = [];
-                subscriptions.forEach(s => {
-                    if (!currentActiveSubs.includes(s.subscriptionDetails.subscriptionType)) {
-                        subscriptionsToCreate.push(s);
-                    }
-                });
+            // Reconcile on the full (eventType, propertyName) pair. HubSpot models each watched
+            // property as its own subscription, so comparing eventType alone would treat every
+            // propertyChange property as already-subscribed once any one of them exists.
+            const subKey = (eventType, propertyName) => `${eventType}:${propertyName || ''}`;
+            const existingByKey = new Map();
+            results.forEach(r => existingByKey.set(subKey(r.eventType, r.propertyName), r));
 
-                if (!subscriptionsToCreate.length) {
-                    return {};
+            const subscriptionsToCreate = [];
+            for (const sub of subscriptions) {
+                const { subscriptionType: evType, propertyName } = sub.subscriptionDetails;
+                const existing = existingByKey.get(subKey(evType, propertyName));
+                if (!existing) {
+                    subscriptionsToCreate.push(sub);
+                } else if (!existing.enabled) {
+                    // Re-enable a disabled subscription for this exact property — don't stop at the
+                    // first one, every desired property must end up active.
+                    await activateHubSpotSubscription(context, params, existing.id);
                 }
+            }
 
-                // If deletion or creation, check if we need to enable or create the subscription
-                for (const sub of subscriptionsToCreate) {
-                    const existingSub = results.find(r => r.eventType === sub.subscriptionDetails.subscriptionType);
-                    if (existingSub) {
-                        // Enable the existing subscription
-                        await activateHubSpotSubscription(context, params, existingSub.id);
-                        return;
-                    }
-                }
-
+            if (subscriptionsToCreate.length) {
                 const { data } = await createHubSpotSubscriptions(context, params, subscriptionsToCreate);
                 return data;
+            }
 
-            } catch (err) {
-                context.log('error', 'hubspot-plugin-listener-added-error', { listener, error: err.message });
-                throw err;
-            } finally {
-                await lock.unlock();
-            }
+            return {};
+
         } catch (err) {
-            if (err.message !== 'locked') {
-                throw err;
-            }
+            context.log('error', 'hubspot-plugin-listener-added-error', { listener, error: err.message });
+            throw err;
+        } finally {
+            await lock?.unlock();
         }
     });
 
@@ -92,27 +96,13 @@ module.exports = async (context) => {
                 // Note on batching: The batch size can vary, but will be under 100 notifications.
                 // See: https://legacydocs.hubspot.com/docs/methods/webhooks/webhooks-overview
                 for (const [subscriptionType, subscriptionEvents] of Object.entries(eventsBySubscriptionType)) {
-                    // Skipping propertyChange events for properties that are not watched.
-                    const filteredEvents = [];
-                    if (subscriptionType.endsWith('propertyChange')) {
-                        let watchedProperties = [];
-                        if (subscriptionType === 'deal.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_DEAL;
-                        } else if (subscriptionType === 'contact.propertyChange') {
-                            watchedProperties = WATCHED_PROPERTIES_CONTACT;
-                        } else {
-                            throw new Error(`Unsupported subscriptionType: ${subscriptionType}`);
-                        }
-
-                        subscriptionEvents.forEach(event => {
-                            if (watchedProperties.includes(event.propertyName)) {
-                                filteredEvents.push(event);
-                            }
-                        });
-                    } else {
-                        // For creation events, we don't need to filter.
-                        filteredEvents.push(...subscriptionEvents);
-                    }
+                    // Pass all events through — no property allowlist filtering here.
+                    // The false-trigger problem (creation also firing update) is handled downstream
+                    // in triggerListenersDelayed(), which checks if the object was just created
+                    // and skips propertyChange events that arrived within the same creation window.
+                    // Filtering here would silently drop any property not in the hardcoded list
+                    // (e.g. lifecyclestage, custom properties), breaking user-configured subscriptions.
+                    const filteredEvents = [...subscriptionEvents];
                     const eventsByObjectId = _.keyBy(filteredEvents, 'objectId');
                     const objectIds = Object.keys(eventsByObjectId);
                     if (!objectIds.length) {
@@ -158,25 +148,37 @@ module.exports = async (context) => {
 // See https://github.com/clientIO/appmixer-components/issues/1700#issuecomment-2605687394
 async function triggerListenersDelayed(context, eventName, payload) {
 
-    // If this is an update event, check if the object was created in the last 5 seconds
-    // If it was, skip the update event
+    // If this is an update event, filter out per-objectId any objects that were just created.
+    // HubSpot sends propertyChange events alongside a creation event for the same object —
+    // we skip only those specific objects, not the entire payload.
     if (eventName.includes('.propertyChange:')) {
-        const objectId = Object.keys(payload)[0];
         const subscriptionType = eventName.split(':')[0];
         const subscriptionTypeCreated = subscriptionType.replace('.propertyChange', '.creation');
         const portalId = eventName.split(':')[1];
-        // Looking for the created timestamp in the database for the same object.
-        const createdTimestamp = await context.service.stateGet(`${portalId}:${subscriptionTypeCreated}:${objectId}`);
-        if (createdTimestamp && payload[objectId].occurredAt <= createdTimestamp) {
-            // This is an update event for an object that was created in the last 5 seconds.
+
+        const filteredPayload = {};
+        for (const [objectId, event] of Object.entries(payload)) {
+            // Looking for the created timestamp in the database for the same object.
+            const createdTimestamp = await context.service.stateGet(`${portalId}:${subscriptionTypeCreated}:${objectId}`);
+            if (createdTimestamp && event.occurredAt <= createdTimestamp) {
+                // This propertyChange arrived with a creation event — skip this object only.
+                continue;
+            }
+            filteredPayload[objectId] = event;
+        }
+
+        if (!Object.keys(filteredPayload).length) {
             return;
         }
+
+        await context.triggerListeners({ eventName, payload: filteredPayload });
+        return;
     }
 
     await context.triggerListeners({ eventName, payload });
 }
 
-function getSubscriptionsByType(subscriptionType, context) {
+function getSubscriptionsByType(subscriptionType, context, params = {}) {
 
     let subscriptions = [];
 
@@ -189,7 +191,13 @@ function getSubscriptionsByType(subscriptionType, context) {
             }
         }));
     } else if (subscriptionType === 'contact.propertyChange') {
-        subscriptions = WATCHED_PROPERTIES_CONTACT.map(propertyName => ({
+        // Start with the default watched properties.
+        const propertySet = new Set(WATCHED_PROPERTIES_CONTACT);
+        // If a specific property was requested (e.g. by ContactPropertyChanged), ensure it is included.
+        if (params.propertyName) {
+            propertySet.add(params.propertyName);
+        }
+        subscriptions = Array.from(propertySet).map(propertyName => ({
             enabled: true,
             subscriptionDetails: {
                 subscriptionType,

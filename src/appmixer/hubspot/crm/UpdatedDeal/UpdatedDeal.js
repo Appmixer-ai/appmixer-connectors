@@ -1,22 +1,10 @@
 'use strict';
 const BaseSubscriptionComponent = require('../../BaseSubscriptionComponent');
-const { WATCHED_PROPERTIES_DEAL, getObjectProperties } = require('../../commons');
+const { getObjectProperties } = require('../../commons');
 
 const subscriptionType = 'deal.propertyChange';
 
 class UpdatedDeal extends BaseSubscriptionComponent {
-
-    getSubscriptions() {
-
-        const subscriptions = WATCHED_PROPERTIES_DEAL.map((propertyName) => ({
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType,
-                propertyName
-            }
-        }));
-        return subscriptions;
-    }
 
     async receive(context) {
 
@@ -36,18 +24,13 @@ class UpdatedDeal extends BaseSubscriptionComponent {
 
             for (const [dealId, event] of Object.entries(eventsByObjectId)) {
                 const cacheKey = 'hubspot-deal-updated-' + dealId;
-                // Only track changes in these properties. These are the ones present in the CreateDeal inspector.
-                // Even if we limit the subscriptions for these properties only, we need this for flows that
-                // are already running and all the subscriptions.
-                if (WATCHED_PROPERTIES_DEAL.includes(event.propertyName)) {
-                    const cached = await context.staticCache.get(cacheKey);
-                    if (cached && event.occurredAt <= cached) {
-                        continue;
-                    }
-                    // Cache the event for 5s to avoid duplicates
-                    await context.staticCache.set(cacheKey, event.occurredAt, context.config?.eventCacheTTL || 5000);
-                    events[dealId] = { occurredAt: event.occurredAt };
+                const cached = await context.staticCache.get(cacheKey);
+                if (cached && event.occurredAt <= cached) {
+                    continue;
                 }
+                // Cache the event for 5s to avoid duplicates
+                await context.staticCache.set(cacheKey, event.occurredAt, context.config?.eventCacheTTL || 5000);
+                events[dealId] = { occurredAt: event.occurredAt };
             }
         } finally {
             await lock?.unlock();
@@ -94,6 +77,20 @@ class UpdatedDeal extends BaseSubscriptionComponent {
         await context.sendArray(results, 'deal');
 
         return context.response();
+    }
+
+    async test(context) {
+
+        const { pipeline: filterPipeline, dealstage: filterStage } = context.properties;
+        const filters = [];
+        if (filterPipeline) {
+            filters.push({ propertyName: 'pipeline', operator: 'EQ', value: filterPipeline });
+        }
+        if (filterStage) {
+            filters.push({ propertyName: 'dealstage', operator: 'EQ', value: filterStage });
+        }
+        const record = await this.fetchLatestExample(context, 'deals', { sortProperty: 'lastmodifieddate', filters });
+        return context.sendJson(record, 'deal');
     }
 }
 

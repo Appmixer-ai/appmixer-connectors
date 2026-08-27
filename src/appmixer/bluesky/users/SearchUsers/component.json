@@ -1,0 +1,92 @@
+{
+    "name": "appmixer.bluesky.users.SearchUsers",
+    "author": "Appmixer <info@appmixer.com>",
+    "label": "Search Users",
+    "description": "Search for Bluesky users by a query string. Returns up to 25 matching users.",
+    "version": "1.0.0",
+    "auth": {
+        "service": "appmixer:bluesky"
+    },
+    "quota": {
+        "manager": "appmixer:bluesky",
+        "resources": "xrpc",
+        "scope": {
+            "userId": "{{userId}}"
+        }
+    },
+    "inPorts": [
+        {
+            "name": "in",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "outputType": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "query"
+                ]
+            },
+            "inspector": {
+                "inputs": {
+                    "query": {
+                        "type": "text",
+                        "index": 1,
+                        "label": "Search Query",
+                        "tooltip": "Text to search for users by handle or display name."
+                    },
+                    "outputType": {
+                        "type": "select",
+                        "label": "Output Type",
+                        "index": 2,
+                        "defaultValue": "array",
+                        "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
+                        "options": [
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    ],
+    "outPorts": [
+        {
+            "name": "out",
+            "source": {
+                "url": "/component/appmixer/bluesky/users/SearchUsers?outPort=out&ignoreAuth=true",
+                "data": {
+                    "properties": {
+                        "generateOutputPortOptions": true
+                    },
+                    "messages": {
+                        "in/query": "any",
+                        "in/outputType": "inputs/in/outputType"
+                    }
+                }
+            }
+        },
+        {
+            "name": "notFound"
+        }
+    ],
+    "icon": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjUzMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogPHBhdGggZD0ibTEzNS43MiA0NC4wM2M2Ni40OTYgNDkuOTIxIDEzOC4wMiAxNTEuMTQgMTY0LjI4IDIwNS40NiAyNi4yNjItNTQuMzE2IDk3Ljc4Mi0xNTUuNTQgMTY0LjI4LTIwNS40NiA0Ny45OC0zNi4wMjEgMTI1LjcyLTYzLjg5MiAxMjUuNzIgMjQuNzk1IDAgMTcuNzEyLTEwLjE1NSAxNDguNzktMTYuMTExIDE3MC4wNy0yMC43MDMgNzMuOTg0LTk2LjE0NCA5Mi44NTQtMTYzLjI1IDgxLjQzMyAxMTcuMyAxOS45NjQgMTQ3LjE0IDg2LjA5MiA4Mi42OTcgMTUyLjIyLTEyMi4zOSAxMjUuNTktMTc1LjkxLTMxLjUxMS0xODkuNjMtNzEuNzY2LTIuNTE0LTcuMzc5Ny0zLjY5MDQtMTAuODMyLTMuNzA3Ny03Ljg5NjQtMC4wMTc0LTIuOTM1Ny0xLjE5MzcgMC41MTY2OS0zLjcwNzcgNy44OTY0LTEzLjcxNCA0MC4yNTUtNjcuMjMzIDE5Ny4zNi0xODkuNjMgNzEuNzY2LTY0LjQ0NC02Ni4xMjgtMzQuNjA1LTEzMi4yNiA4Mi42OTctMTUyLjIyLTY3LjEwOCAxMS40MjEtMTQyLjU1LTcuNDQ5MS0xNjMuMjUtODEuNDMzLTUuOTU2Mi0yMS4yODItMTYuMTExLTE1Mi4zNi0xNi4xMTEtMTcwLjA3IDAtODguNjg3IDc3Ljc0Mi02MC44MTYgMTI1LjcyLTI0Ljc5NXoiIGZpbGw9IiMxMTg1ZmUiLz4KPC9zdmc+Cg=="
+}

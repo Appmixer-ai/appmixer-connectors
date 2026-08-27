@@ -23,8 +23,8 @@ const USER_LIST_SCHEMA = {
     'name': { 'type': 'string', 'title': 'Name' },
     'description': { 'type': 'string', 'title': 'Description' },
     'membershipStatus': { 'type': 'string', 'title': 'Membership Status' },
-    'sizeForDisplay': { 'type': 'integer', 'title': 'Size For Display' },
-    'sizeForSearch': { 'type': 'integer', 'title': 'Size For Search' },
+    'sizeForDisplay': { 'type': 'string', 'title': 'Size For Display' },
+    'sizeForSearch': { 'type': 'string', 'title': 'Size For Search' },
     'type': { 'type': 'string', 'title': 'Type' }
 };
 
@@ -34,7 +34,6 @@ module.exports = {
 
         const {
             customerId,
-            developerToken,
             loginCustomerId,
             searchQuery,
             outputType = 'array'
@@ -48,11 +47,9 @@ module.exports = {
         }
 
         lib.ensureRequired(customerId, 'Customer ID is required!', context);
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
 
         const rows = await lib.searchStream(context, {
             customerId,
-            developerToken,
             loginCustomerId,
             query: searchQuery || DEFAULT_QUERY
         });

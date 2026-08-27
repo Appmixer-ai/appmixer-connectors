@@ -1,0 +1,687 @@
+{
+    "name": "E2E Freshdesk - Solutions Lifecycle",
+    "description": "End-to-end test for Freshdesk connector - tests Solution Category, Folder and Article CRUD lifecycle (Create, Get, Update, Delete).",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "gen-ts": {
+            "type": "appmixer.utils.controls.CodeBlock",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "code": {},
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "code": "'E2E Freshdesk Solutions ' + Date.now()",
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "toggle": false
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-category": {
+            "type": "appmixer.freshdesk.solutionCategories.CreateCategory",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "gen-ts": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "gen-ts": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "a1b2c3d4-0001-4000-8000-000000000001": {
+                                            "variable": "$.gen-ts.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{a1b2c3d4-0001-4000-8000-000000000001}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-category": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 832,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-category": [
+                        "category"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-category": {
+                            "category": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0002-4000-8000-000000000001": {
+                                            "variable": "$.create-category.category.id",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0002-4000-8000-000000000002": {
+                                            "variable": "$.create-category.category.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0002-4000-8000-000000000001}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0002-4000-8000-000000000002}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-folder": {
+            "type": "appmixer.freshdesk.solutionFolders.CreateFolder",
+            "x": 1024,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-category": [
+                        "category"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-category": {
+                            "category": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "categoryId": {
+                                        "a1b2c3d4-0003-4000-8000-000000000001": {
+                                            "variable": "$.create-category.category.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "a1b2c3d4-0003-4000-8000-000000000002": {
+                                            "variable": "$.gen-ts.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "categoryId": "{{{a1b2c3d4-0003-4000-8000-000000000001}}}",
+                                    "name": "{{{a1b2c3d4-0003-4000-8000-000000000002}}} Folder",
+                                    "visibility": 1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-folder": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1216,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-folder": [
+                        "folder"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-folder": {
+                            "folder": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0004-4000-8000-000000000001": {
+                                            "variable": "$.create-folder.folder.id",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0004-4000-8000-000000000002": {
+                                            "variable": "$.create-folder.folder.categoryId",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0004-4000-8000-000000000003": {
+                                            "variable": "$.create-category.category.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0004-4000-8000-000000000001}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{a1b2c3d4-0004-4000-8000-000000000002}}}",
+                                                "expected": "{{{a1b2c3d4-0004-4000-8000-000000000003}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-article": {
+            "type": "appmixer.freshdesk.solutionArticles.CreateArticle",
+            "x": 1408,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-folder": [
+                        "folder"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-folder": {
+                            "folder": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "a1b2c3d4-0005-4000-8000-000000000001": {
+                                            "variable": "$.create-folder.folder.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {
+                                        "a1b2c3d4-0005-4000-8000-000000000002": {
+                                            "variable": "$.gen-ts.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{a1b2c3d4-0005-4000-8000-000000000001}}}",
+                                    "title": "{{{a1b2c3d4-0005-4000-8000-000000000002}}} Article",
+                                    "description": "<p>E2E test article content</p>",
+                                    "status": 2
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create-article": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1600,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-article": [
+                        "article"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-article": {
+                            "article": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0006-4000-8000-000000000001": {
+                                            "variable": "$.create-article.article.id",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0006-4000-8000-000000000002": {
+                                            "variable": "$.create-article.article.folderId",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0006-4000-8000-000000000003": {
+                                            "variable": "$.create-folder.folder.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0006-4000-8000-000000000001}}}"
+                                            },
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{a1b2c3d4-0006-4000-8000-000000000002}}}",
+                                                "expected": "{{{a1b2c3d4-0006-4000-8000-000000000003}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-article": {
+            "type": "appmixer.freshdesk.solutionArticles.UpdateArticle",
+            "x": 1792,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-article": [
+                        "article"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-article": {
+                            "article": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "articleId": {
+                                        "a1b2c3d4-0007-4000-8000-000000000001": {
+                                            "variable": "$.create-article.article.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "title": {
+                                        "a1b2c3d4-0007-4000-8000-000000000002": {
+                                            "variable": "$.gen-ts.out.result",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "articleId": "{{{a1b2c3d4-0007-4000-8000-000000000001}}}",
+                                    "title": "{{{a1b2c3d4-0007-4000-8000-000000000002}}} Article Updated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update-article": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1984,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-article": [
+                        "article"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-article": {
+                            "article": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-0008-4000-8000-000000000001": {
+                                            "variable": "$.update-article.article.id",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-0008-4000-8000-000000000002": {
+                                            "variable": "$.update-article.article.title",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0008-4000-8000-000000000001}}}"
+                                            },
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{a1b2c3d4-0008-4000-8000-000000000002}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "get-article": {
+            "type": "appmixer.freshdesk.solutionArticles.GetArticle",
+            "x": 2176,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-article": [
+                        "article"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-article": {
+                            "article": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "articleId": {
+                                        "a1b2c3d4-0009-4000-8000-000000000001": {
+                                            "variable": "$.create-article.article.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "articleId": "{{{a1b2c3d4-0009-4000-8000-000000000001}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-get-article": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 2368,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "get-article": [
+                        "article"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "get-article": {
+                            "article": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "a1b2c3d4-000a-4000-8000-000000000001": {
+                                            "variable": "$.create-article.article.id",
+                                            "functions": []
+                                        },
+                                        "a1b2c3d4-000a-4000-8000-000000000002": {
+                                            "variable": "$.get-article.article.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "equal",
+                                                "field": "{{{a1b2c3d4-000a-4000-8000-000000000001}}}",
+                                                "expected": "{{{a1b2c3d4-000a-4000-8000-000000000002}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 2560,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create-category": [
+                        "out"
+                    ],
+                    "assert-create-folder": [
+                        "out"
+                    ],
+                    "assert-create-article": [
+                        "out"
+                    ],
+                    "assert-update-article": [
+                        "out"
+                    ],
+                    "assert-get-article": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-article": {
+            "type": "appmixer.freshdesk.solutionArticles.DeleteArticle",
+            "x": 2752,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "articleId": {
+                                        "a1b2c3d4-000b-4000-8000-000000000001": {
+                                            "variable": "$.create-article.article.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "articleId": "{{{a1b2c3d4-000b-4000-8000-000000000001}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-folder": {
+            "type": "appmixer.freshdesk.solutionFolders.DeleteFolder",
+            "x": 2944,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-article": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-article": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "folderId": {
+                                        "a1b2c3d4-000c-4000-8000-000000000001": {
+                                            "variable": "$.create-folder.folder.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "folderId": "{{{a1b2c3d4-000c-4000-8000-000000000001}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "delete-category": {
+            "type": "appmixer.freshdesk.solutionCategories.DeleteCategory",
+            "x": 3136,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-folder": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "delete-folder": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "categoryId": {
+                                        "a1b2c3d4-000d-4000-8000-000000000001": {
+                                            "variable": "$.create-category.category.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "categoryId": "{{{a1b2c3d4-000d-4000-8000-000000000001}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 3328,
+            "y": 16,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "delete-category": [
+                        "deleted"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "69cd26f6e2b144c4b022fd1e",
+                    "failedStoreId": "69cd26f6e92e34e939fd2d1a"
+                },
+                "transform": {
+                    "in": {
+                        "delete-category": {
+                            "deleted": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "david.durman@appmixer.ai",
+                                    "testCase": "E2E Freshdesk - Solutions Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

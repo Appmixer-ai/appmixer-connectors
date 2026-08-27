@@ -1,0 +1,182 @@
+{
+    "err": "{\"message\":\"Component properties validation error\",\"error\":{\"componentId\":\"process-results\",\"componentType\":\"appmixer.utils.test.ProcessE2EResults\",\"errors\":[{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"successStoreId\"},\"message\":\"must have required property 'successStoreId'\"},{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"failedStoreId\"},\"message\":\"must have required property 'failedStoreId'\"}]},\"data\":{\"componentId\":\"process-results\",\"componentType\":\"appmixer.utils.test.ProcessE2EResults\",\"errors\":[{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"successStoreId\"},\"message\":\"must have required property 'successStoreId'\"},{\"instancePath\":\"\",\"schemaPath\":\"#/required\",\"keyword\":\"required\",\"params\":{\"missingProperty\":\"failedStoreId\"},\"message\":\"must have required property 'failedStoreId'\"}]},\"code\":\"GRID_ERR_VAL_PROPERTIES\",\"name\":\"ValidationFlowError\",\"stack\":\"ValidationFlowError: Component properties validation error\\n    at Factory.validateProperties (/usr/src/appmixer/engine/src/component/Factory.js:542:19)\\n    at Factory.getComponentConfig (/usr/src/appmixer/engine/src/component/Factory.js:476:34)\\n    at /usr/src/appmixer/engine/src/component/Factory.js:349:32\\n    at async Method.call (/usr/src/appmixer/lib/lock/method.js:34:28)\\n    at async Factory.getComponent (/usr/src/appmixer/engine/src/component/Factory.js:266:21)\"}",
+    "flow": {
+        "after-all": {
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            },
+            "source": {
+                "in": {
+                    "assert-customers-returned": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 992,
+            "y": 16
+        },
+        "assert-customers-returned": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-accessible-customers": {
+                            "out": {
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{ffd2083a-8729-4300-8910-147d96b3a34b}}}",
+                                                "type": "number"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "expression": {
+                                        "ffd2083a-8729-4300-8910-147d96b3a34b": {
+                                            "functions": [],
+                                            "variable": "$.list-accessible-customers.out.count"
+                                        }
+                                    }
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-accessible-customers": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.Assert",
+            "x": 720,
+            "y": 16
+        },
+        "list-accessible-customers": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "before-all": {},
+                        "set-variables": {
+                            "out": {
+                                "lambda": {
+                                    "loginCustomerId": ""
+                                },
+                                "modifiers": {
+                                    "loginCustomerId": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.googleAds.core.ListAccessibleCustomers",
+            "x": 480,
+            "y": 16
+        },
+        "on-start": {
+            "config": {},
+            "source": {},
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16
+        },
+        "process-results": {
+            "config": {
+                "properties": {},
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "lambda": {
+                                    "recipients": "test@appmixer.com",
+                                    "result": "{{{result-var}}}",
+                                    "testCase": "E2E GoogleAds - Customer Access"
+                                },
+                                "modifiers": {
+                                    "recipients": {},
+                                    "result": {
+                                        "result-var": {
+                                            "functions": [],
+                                            "variable": "$.after-all.out"
+                                        }
+                                    },
+                                    "testCase": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1216,
+            "y": 16
+        },
+        "set-variables": {
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "name": "loginCustomerId",
+                                                "text": "",
+                                                "type": "text"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "type": "json2new"
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 256,
+            "y": 16
+        }
+    },
+    "name": "E2E GoogleAds - Customer Access",
+    "notes": {},
+    "wizard": {
+        "fields": []
+    }
+}

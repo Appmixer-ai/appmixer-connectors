@@ -132,80 +132,31 @@ module.exports = {
             'items': {
                 'type': 'object',
                 'properties': {
-                    'id': {
-                        'type': 'string'
-                    },
-                    'form_id': {
-                        'type': 'string'
-                    },
-                    'title': {
-                        'type': 'string'
-                    },
-                    'created_at': {
-                        'type': 'string'
-                    },
-                    'updated_at': {
-                        'type': 'string'
-                    },
-                    'fields': {
-                        'type': 'string'
-                    },
-                    'list_type': {
-                        'type': 'string'
-                    },
-                    'status': {
-                        'type': 'string'
-                    },
-                    'url': {
-                        'type': 'string'
-                    },
-                    'isProtected': {
-                        'type': 'boolean'
-                    }
+                    'id': { 'type': 'string', 'example': '3028431756781' },
+                    'form_id': { 'type': 'string', 'example': '242678198603467' },
+                    'title': { 'type': 'string', 'example': 'Monthly Summary Report' },
+                    'created_at': { 'type': 'string', 'example': '2025-01-15 10:30:00' },
+                    'updated_at': { 'type': 'string', 'example': '2025-09-04 22:23:43' },
+                    'fields': { 'type': 'string', 'example': 'field1,field2' },
+                    'list_type': { 'type': 'string', 'example': 'grid' },
+                    'status': { 'type': 'string', 'example': 'ENABLED' },
+                    'url': { 'type': 'string', 'example': 'https://www.jotform.com/report/3028431756781' },
+                    'isProtected': { 'type': 'boolean', 'example': false }
                 }
             }
         }
     }],
 
-    objectOutputOptions: [{
-        'label': 'Id',
-        'value': 'id'
-    },
-    {
-        'label': 'Form Id',
-        'value': 'form_id'
-    },
-    {
-        'label': 'Title',
-        'value': 'title'
-    },
-    {
-        'label': 'Created At',
-        'value': 'created_at'
-    },
-    {
-        'label': 'Updated At',
-        'value': 'updated_at'
-    },
-    {
-        'label': 'Fields',
-        'value': 'fields'
-    },
-    {
-        'label': 'List Type',
-        'value': 'list_type'
-    },
-    {
-        'label': 'Status',
-        'value': 'status'
-    },
-    {
-        'label': 'Url',
-        'value': 'url'
-    },
-    {
-        'label': 'Is Protected',
-        'value': 'isProtected'
-    }
+    objectOutputOptions: [
+        { 'label': 'Id', 'value': 'id', 'schema': { 'type': 'string', 'example': '3028431756781' } },
+        { 'label': 'Form Id', 'value': 'form_id', 'schema': { 'type': 'string', 'example': '242678198603467' } },
+        { 'label': 'Title', 'value': 'title', 'schema': { 'type': 'string', 'example': 'Monthly Summary Report' } },
+        { 'label': 'Created At', 'value': 'created_at', 'schema': { 'type': 'string', 'example': '2025-01-15 10:30:00' } },
+        { 'label': 'Updated At', 'value': 'updated_at', 'schema': { 'type': 'string', 'example': '2025-09-04 22:23:43' } },
+        { 'label': 'Fields', 'value': 'fields', 'schema': { 'type': 'string', 'example': 'field1,field2' } },
+        { 'label': 'List Type', 'value': 'list_type', 'schema': { 'type': 'string', 'example': 'grid' } },
+        { 'label': 'Status', 'value': 'status', 'schema': { 'type': 'string', 'example': 'ENABLED' } },
+        { 'label': 'Url', 'value': 'url', 'schema': { 'type': 'string', 'example': 'https://www.jotform.com/report/3028431756781' } },
+        { 'label': 'Is Protected', 'value': 'isProtected', 'schema': { 'type': 'boolean', 'example': false } }
     ]
 };

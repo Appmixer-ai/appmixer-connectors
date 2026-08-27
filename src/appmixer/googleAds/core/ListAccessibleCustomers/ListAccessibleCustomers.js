@@ -6,21 +6,29 @@ module.exports = {
 
     async receive(context) {
 
-        const { developerToken, loginCustomerId } = context.messages.in.content;
-
-        lib.ensureRequired(developerToken, 'Developer Token is required!', context);
+        const { loginCustomerId } = context.messages.in.content;
 
         const { data } = await context.httpRequest({
             method: 'GET',
             url: `${lib.API_BASE_URL}/customers:listAccessibleCustomers`,
-            headers: lib.buildHeaders(context, { developerToken, loginCustomerId })
+            headers: lib.buildHeaders(context, { loginCustomerId })
         });
 
         const resourceNames = data.resourceNames || [];
 
+        // Parse resourceNames to extract customer IDs
+        // Format: 'customers/{customerId}'
+        const customers = resourceNames.map(resourceName => {
+            const id = resourceName.replace('customers/', '');
+            return {
+                id,
+                resourceName
+            };
+        });
+
         return context.sendJson({
-            resourceNames,
-            count: resourceNames.length
+            customers,
+            count: customers.length
         }, 'out');
     }
 };

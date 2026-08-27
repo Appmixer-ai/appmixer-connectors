@@ -1,92 +1,102 @@
 'use strict';
-const axios = require('axios');
-const Promise = require('bluebird');
-const { normalizeMultiselectInput } = require('../../lib');
+const { normalizeMultiselectInput, requestTickets } = require('../../lib');
+
+function getNormalizedEmbed(context) {
+    const { embed } = context.properties;
+    return embed ? normalizeMultiselectInput(embed, context, 'Embed fields') : [];
+}
 
 module.exports = {
 
     async tick(context) {
 
-        const { auth } = context;
-        const { embed } = context.properties;
+        const normalizedEmbed = getNormalizedEmbed(context);
 
-        // Normalize the multiselect field
-        const normalizedEmbed = embed ?
-            normalizeMultiselectInput(embed, context, 'Embed fields') : [];
+        const state = context.state || {};
+        const lookbackMs = 2 * 60 * 1000;
 
-        let since = new Date();
-        let updated = new Set();
+        const cursorUpdatedAt = state.cursorUpdatedAt
+            ? new Date(state.cursorUpdatedAt)
+            : new Date(Date.now() - lookbackMs);
 
-        const limit = 100;
-        const perPage = 100;
-        const pages = Math.ceil(limit / perPage);
+        // Start slightly before the cursor to avoid missing boundary updates
+        const from = new Date(cursorUpdatedAt.getTime() - lookbackMs).toISOString();
 
-        const url = `https://${auth.domain}.freshdesk.com/api/v2/tickets`;
-        const requestObject = {
-            auth: {
-                username: auth.apiKey,
-                password: 'X'
-            },
-            params: {
-                per_page: 100,
-                order_by: 'updated_at'
-            }
-        };
-
-        if (normalizedEmbed.length > 0) {
-            requestObject.params.include = normalizedEmbed.join(',');
-        }
-
-        let tickets = [];
-
-        for (let i = 1; i <= pages; i++ ) {
-            requestObject.params.page = i;
-            const { data } = await axios.get(url, requestObject);
-            if (data.length === 0) {
-                break;
-            }
-            tickets = tickets.concat(data);
-        }
-
-        tickets = tickets.slice(0, limit);
-
-        const sinceToCompare = context.state.since || since;
-
-        tickets.forEach(ticket => {
-            const updatedAt = new Date(ticket.updated_at);
-            if (updatedAt > sinceToCompare) {
-                updated.add(ticket);
-            }
+        const params = new URLSearchParams({
+            updated_since: from,
+            order_by: 'updated_at',
+            order_type: 'asc',
+            per_page: '100'
         });
-
-        if (updated.size) {
-            await Promise.map(updated, ticket => {
-                const fields = {
-                    id: ticket.id,
-                    created_at: ticket.created_at,
-                    due_by: ticket.due_by,
-                    subject: ticket.subject,
-                    type: ticket.type,
-                    status: ticket.status,
-                    priority: ticket.priority,
-                    agentId: ticket.responder_id,
-                    ticketJson: ticket
-                };
-
-                if (normalizedEmbed.includes('requester')) {
-                    fields.requesterId = ticket.requester.id;
-                    fields.requesterName = ticket.requester.name;
-                    fields.requesterEmail = ticket.requester.email;
-                }
-
-                if (normalizedEmbed.includes('description')) {
-                    fields.description = ticket.description_text;
-                }
-
-                return context.sendJson(fields, 'ticket');
-            });
+        if (normalizedEmbed.length > 0) {
+            params.set('include', normalizedEmbed.join(','));
         }
 
-        await context.saveState({ since });
+        const isFirstRun = !state.cursorUpdatedAt;
+
+        let nextUrl = params;
+        let maxUpdatedAt = state.cursorUpdatedAt || null;
+        let maxTicketId = state.cursorTicketId || 0;
+
+        while (nextUrl) {
+            const { records, nextUrl: next } = await requestTickets(context, nextUrl, normalizedEmbed);
+
+            for (const fields of records) {
+                const updatedAt = fields.updatedAt;
+                const ticketId = fields.id;
+
+                // Strict cursor check with tie-breaker on id.
+                // On the first run, skip emission entirely (baseline-only behavior).
+                const isAfterCursor =
+                    !isFirstRun && (
+                        updatedAt > state.cursorUpdatedAt ||
+                        (updatedAt === state.cursorUpdatedAt && ticketId > (state.cursorTicketId || 0))
+                    );
+
+                if (!isAfterCursor) continue;
+
+                await context.sendJson(fields, 'ticket');
+
+                if (
+                    !maxUpdatedAt ||
+                    updatedAt > maxUpdatedAt ||
+                    (updatedAt === maxUpdatedAt && ticketId > maxTicketId)
+                ) {
+                    maxUpdatedAt = updatedAt;
+                    maxTicketId = ticketId;
+                }
+            }
+
+            nextUrl = next;
+        }
+
+        // Always persist cursor even when no results, to prevent gaps if polling interval exceeds lookback window.
+        const cursorToSave = maxUpdatedAt || cursorUpdatedAt.toISOString();
+        await context.saveState({ cursorUpdatedAt: cursorToSave, cursorTicketId: maxTicketId });
+    },
+
+    // Flow Test Mode: emit one realistic ticket without starting the flow.
+    // Reuses the same requestTickets()/mapTicket() path as tick() — the only difference
+    // is the query (most recently updated first, single page) and that no cursor/state is touched.
+    async test(context) {
+
+        const normalizedEmbed = getNormalizedEmbed(context);
+
+        const params = new URLSearchParams({
+            order_by: 'updated_at',
+            order_type: 'desc',
+            per_page: '1'
+        });
+        if (normalizedEmbed.length > 0) {
+            params.set('include', normalizedEmbed.join(','));
+        }
+
+        const { records } = await requestTickets(context, params, normalizedEmbed);
+
+        if (!records.length) {
+            throw new Error('No recent tickets to use as test data.');
+        }
+
+        await context.sendJson(records[0], 'ticket');
     }
 };

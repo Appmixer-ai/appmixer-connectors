@@ -1,0 +1,190 @@
+{
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": -208,
+            "y": 80,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "list-channels": {
+            "type": "appmixer.slack.list.ListChannels",
+            "x": 128,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-channel-id": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-channels": {
+                            "channels": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "86178af0-a25e-4a96-9b79-df50e4e6fef6": {
+                                            "variable": "$.list-channels.channels.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{86178af0-a25e-4a96-9b79-df50e4e6fef6}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-channels": [
+                        "channels"
+                    ]
+                }
+            }
+        },
+        "assert-channel-name": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 448,
+            "y": 144,
+            "version": "1.0.0",
+            "config": {
+                "transform": {
+                    "in": {
+                        "list-channels": {
+                            "channels": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "3ead8694-3f67-4db7-b2c4-95b1eb4115cc": {
+                                            "variable": "$.list-channels.channels.name",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "assertion": "notEmpty",
+                                                "field": "{{{3ead8694-3f67-4db7-b2c4-95b1eb4115cc}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "source": {
+                "in": {
+                    "list-channels": [
+                        "channels"
+                    ]
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 640,
+            "y": 80,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-channel-id": [
+                        "out"
+                    ],
+                    "assert-channel-name": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 832,
+            "y": 80,
+            "version": "1.0.1",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "69d7a34d8c93c638d53aaf8d",
+                    "failedStoreId": "69d7a34d8c93c638d53aaf8c"
+                },
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "ef50e9cb-272d-42bf-8344-1c2bfffd010d": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "test@appmixer.ai",
+                                    "testCase": "E2E Slack - Channels",
+                                    "result": "{{{ef50e9cb-272d-42bf-8344-1c2bfffd010d}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

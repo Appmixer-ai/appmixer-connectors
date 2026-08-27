@@ -26,27 +26,16 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                 <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
             </div> 
             <div style="margin: 10px 0;"> 
-                <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                    src="https://png.pngtree.com/svg/20151126/alarm_clock_small_icon_637578.png"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
             </div> 
             <div style="margin: 15px 0;"> 
-                <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                    src="http://cdn.onlinewebfonts.com/svg/img_405324.png"> 
+                <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                 <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
             </div> 
             <div style="width: 100%; text-align: center;"> 
-                <button style="margin: 0 5px; border: none; outline: none; display: inline-block; width: 120px; 
-                                   padding: 8px 0; border-radius: 3px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); 
-                                   background: #307EFF;"></span> 
-                    <a href="{{task_dashboard_confirm}}" style="text-decoration: none; letter-spacing: 0.2em; 
-                                                                    font-size: 12px; color: white !important;"> APPROVE </a> 
-                </button> 
-                <button style="margin: 0 5px; border: none; outline: none; display: inline-block; width: 120px; padding: 8px 0; 
-                                   border-radius: 3px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); background: #FF4365;"></span> 
-                    <a href="{{task_dashboard_reject}}" style="text-decoration: none; letter-spacing: 0.2em; font-size: 12px; 
-                                                                   color: white !important;"> REJECT </a> 
-                </button> 
+                <a href="{{task_dashboard_confirm}}" style="display:inline-block; margin:0 5px; padding:12px 28px; background:#307EFF; color:#fff; border-radius:6px; text-decoration:none; font-size:14px; font-weight:600; letter-spacing:0.05em;">APPROVE</a> 
+                <a href="{{task_dashboard_reject}}" style="display:inline-block; margin:0 5px; padding:12px 28px; background:#FF4365; color:#fff; border-radius:6px; text-decoration:none; font-size:14px; font-weight:600; letter-spacing:0.05em;">REJECT</a> 
             </div> 
             <a href="{{task_dashboard_link_approver}}" style="font-size: 15px;display: block; margin: 28px auto; 
                                                                   text-align: center; text-decoration: none; color: #307EFF;">Visit Dashboard</a> 
@@ -69,13 +58,11 @@ const prepareMessage = (context, emailForApproval, data, variables) => {
                     <p style="width: 100%;color: #050505;font-size: 13px;text-align: left;">{{{task_description}}}</p> 
                 </div> 
                 <div style="margin: 10px 0;"> 
-                    <img alt="clock" style="width: 16px; height: 16px; vertical-align: sub;" 
-                        src="https://png.pngtree.com/svg/20151126/alarm_clock_small_icon_637578.png"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128336;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{task_decision_by}}</span> 
                 </div> 
                 <div style="margin: 15px 0;"> 
-                    <img alt="person" style="width: 14px; height: 14px; vertical-align: sub;" 
-                        src="http://cdn.onlinewebfonts.com/svg/img_405324.png"> 
+                    <span style="font-size: 14px; vertical-align: sub;">&#128100;</span> 
                     <span style="margin-left: 6px; font-size: 12px;">{{requester_email}}</span> 
                 </div> 
                 <a href="{{task_dashboard_link_requester}}" style="font-size: 15px;display: block; margin: 28px auto; 
@@ -220,7 +207,11 @@ module.exports = {
         const body = context.messages.task.content;
 
         if (body.decisionBy) {
-            body.decisionBy = new Date(body.decisionBy).toISOString();
+            const decisionBy = new Date(body.decisionBy);
+            if (decisionBy.getTime() <= Date.now()) {
+                throw new context.CancelError('Decision by must be a future date.');
+            }
+            body.decisionBy = decisionBy.toISOString();
         }
 
         const task = await context.callAppmixer({

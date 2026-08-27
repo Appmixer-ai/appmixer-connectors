@@ -6,16 +6,6 @@ const subscriptionType = 'contact.creation';
 
 class NewContact extends BaseSubscriptionComponent {
 
-    getSubscriptions() {
-
-        return [{
-            enabled: true,
-            subscriptionDetails: {
-                subscriptionType: this.subscriptionType
-            }
-        }];
-    }
-
     async receive(context) {
 
         const eventsByObjectId = context.messages.webhook.content.data;
@@ -71,6 +61,12 @@ class NewContact extends BaseSubscriptionComponent {
         await context.sendArray(data.results, 'contact');
 
         return context.response();
+    }
+
+    async test(context) {
+
+        const record = await this.fetchLatestExample(context, 'contacts');
+        return context.sendJson(record, 'contact');
     }
 }
 

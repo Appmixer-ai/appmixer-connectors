@@ -1,0 +1,434 @@
+{
+    "name": "E2E Freshdesk - Contact Lifecycle",
+    "description": "End-to-end test for Freshdesk connector - tests Contact CRUD lifecycle (Create, Find, Update, Delete)",
+    "flow": {
+        "on-start": {
+            "type": "appmixer.utils.controls.OnStart",
+            "x": 64,
+            "y": 16,
+            "source": {},
+            "version": "1.0.0",
+            "config": {}
+        },
+        "set-variables": {
+            "type": "appmixer.utils.controls.SetVariable",
+            "x": 448,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "on-start": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "on-start": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "variables": {}
+                                },
+                                "lambda": {
+                                    "variables": {
+                                        "ADD": [
+                                            {
+                                                "type": "text",
+                                                "name": "contactName",
+                                                "text": "E2E Test Contact"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "contactEmail",
+                                                "text": "e2e-freshdesk-contact@appmixer-test.com"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "name": "updatedName",
+                                                "text": "E2E Test Contact Updated"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "create-contact": {
+            "type": "appmixer.freshdesk.contacts.CreateContact",
+            "x": 640,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "set-variables": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "set-variables": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "name": {
+                                        "var-contact-name": {
+                                            "variable": "$.set-variables.out.contactName",
+                                            "functions": []
+                                        }
+                                    },
+                                    "email": {
+                                        "var-contact-email": {
+                                            "variable": "$.set-variables.out.contactEmail",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "name": "{{{var-contact-name}}}",
+                                    "email": "{{{var-contact-email}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "find-contacts": {
+            "type": "appmixer.freshdesk.contacts.FindContacts",
+            "x": 832,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "contact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "contact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "email": {
+                                        "var-find-email": {
+                                            "variable": "$.create-contact.contact.email",
+                                            "functions": []
+                                        }
+                                    },
+                                    "outputType": {}
+                                },
+                                "lambda": {
+                                    "email": "{{{var-find-email}}}",
+                                    "outputType": "first"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "update-contact": {
+            "type": "appmixer.freshdesk.contacts.UpdateContact",
+            "x": 1024,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-contacts": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-contacts": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-update-contact-id": {
+                                            "variable": "$.create-contact.contact.id",
+                                            "functions": []
+                                        }
+                                    },
+                                    "name": {
+                                        "var-updated-name": {
+                                            "variable": "$.set-variables.out.updatedName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{var-update-contact-id}}}",
+                                    "name": "{{{var-updated-name}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-create": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 16,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "create-contact": [
+                        "contact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "create-contact": {
+                            "contact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-created-id": {
+                                            "variable": "$.create-contact.contact.id",
+                                            "functions": []
+                                        },
+                                        "field-created-name": {
+                                            "variable": "$.create-contact.contact.name",
+                                            "functions": []
+                                        },
+                                        "expected-created-name": {
+                                            "variable": "$.set-variables.out.contactName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-created-id}}}",
+                                                "assertion": "notEmpty"
+                                            },
+                                            {
+                                                "field": "{{{field-created-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-created-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-find": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "find-contacts": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "find-contacts": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-found-name": {
+                                            "variable": "$.find-contacts.out.name",
+                                            "functions": []
+                                        },
+                                        "expected-found-name": {
+                                            "variable": "$.set-variables.out.contactName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-found-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-found-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "assert-update": {
+            "type": "appmixer.utils.test.Assert",
+            "x": 1200,
+            "y": 272,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "update-contact": [
+                        "contact"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "update-contact": {
+                            "contact": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "expression": {
+                                        "field-updated-name": {
+                                            "variable": "$.update-contact.contact.name",
+                                            "functions": []
+                                        },
+                                        "expected-updated-name": {
+                                            "variable": "$.set-variables.out.updatedName",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "expression": {
+                                        "AND": [
+                                            {
+                                                "field": "{{{field-updated-name}}}",
+                                                "assertion": "equal",
+                                                "expected": "{{{expected-updated-name}}}"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "after-all": {
+            "type": "appmixer.utils.test.AfterAll",
+            "x": 1392,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "assert-create": [
+                        "out"
+                    ],
+                    "assert-find": [
+                        "out"
+                    ],
+                    "assert-update": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "timeout": 30
+                }
+            }
+        },
+        "delete-contact": {
+            "type": "appmixer.freshdesk.contacts.DeleteContact",
+            "x": 1584,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "after-all": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "transform": {
+                    "in": {
+                        "after-all": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "contactId": {
+                                        "var-delete-contact-id": {
+                                            "variable": "$.create-contact.contact.id",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "contactId": "{{{var-delete-contact-id}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "process-results": {
+            "type": "appmixer.utils.test.ProcessE2EResults",
+            "x": 1776,
+            "y": 144,
+            "version": "1.0.0",
+            "source": {
+                "in": {
+                    "delete-contact": [
+                        "out"
+                    ]
+                }
+            },
+            "config": {
+                "properties": {
+                    "successStoreId": "69cd26f6e2b144c4b022fd1e",
+                    "failedStoreId": "69cd26f6e92e34e939fd2d1a"
+                },
+                "transform": {
+                    "in": {
+                        "delete-contact": {
+                            "out": {
+                                "type": "json2new",
+                                "modifiers": {
+                                    "recipients": {},
+                                    "testCase": {},
+                                    "result": {
+                                        "result-var": {
+                                            "variable": "$.after-all.out",
+                                            "functions": []
+                                        }
+                                    }
+                                },
+                                "lambda": {
+                                    "recipients": "jirka@client.io",
+                                    "testCase": "E2E Freshdesk - Contact Lifecycle",
+                                    "result": "{{{result-var}}}"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

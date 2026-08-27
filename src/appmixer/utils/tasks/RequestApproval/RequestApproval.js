@@ -21,7 +21,11 @@ module.exports = {
         const body = context.messages.task.content;
 
         if (body.decisionBy) {
-            body.decisionBy = new Date(body.decisionBy).toISOString();
+            const decisionBy = new Date(body.decisionBy);
+            if (decisionBy.getTime() <= Date.now()) {
+                throw new context.CancelError('Decision by must be a future date.');
+            }
+            body.decisionBy = decisionBy.toISOString();
         }
 
         const task = await context.callAppmixer({

@@ -1,23 +1,55 @@
 'use strict';
 
+function kvToObj(arr) {
+    if (!arr || !Array.isArray(arr)) return {};
+    const out = {};
+    for (const row of arr) {
+        if (!row || typeof row !== 'object') continue;
+        const key = row.key;
+        if (typeof key !== 'string' || key.length === 0) continue;
+        out[key] = row.value;
+    }
+    return out;
+}
+
+
 const { API_VERSION } = require('../../lib');
 
 module.exports = {
     async receive(context) {
-        const { url, method, body } = context.messages.in.content;
+        const { url, method, headers: headersKV, parameters: parametersKV, body } = context.messages.in.content;
+
+        const extraHeaders = kvToObj(headersKV);
+        const queryParams = kvToObj(parametersKV);
+
+        const baseUrl = 'https://api.notion.com/v1';
+        const targetUrl = url.startsWith('http://') || url.startsWith('https://')
+            ? url
+            : `${baseUrl}${url.startsWith('/') ? url : '/' + url}`;
 
         const requestOptions = {
             method: method,
-            url: url,
+            url: targetUrl,
             headers: {
                 'Authorization': `Bearer ${context.auth.accessToken}`,
                 'Content-Type': 'application/json',
-                'Notion-Version': API_VERSION //api version from lib.js
+                'Notion-Version': API_VERSION, //api version from lib.js
+                ...extraHeaders
             }
         };
 
+        let parsedBody;
         if (body) {
-            requestOptions.data = JSON.parse(body);
+            try {
+                parsedBody = typeof body === 'object' ? body : JSON.parse(body);
+            } catch (e) {
+                throw new context.CancelError('Request Body must be valid JSON.');
+            }
+            requestOptions.data = parsedBody;
+        }
+
+        if (Object.keys(queryParams).length > 0) {
+            requestOptions.params = queryParams;
         }
 
         const response = await context.httpRequest(requestOptions);

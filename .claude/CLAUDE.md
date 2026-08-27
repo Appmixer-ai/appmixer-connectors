@@ -19,14 +19,22 @@ npm run test-unit -- test/<connector_name>
 # Linting
 npm run lint
 
-# Repository validation
+# Validation while developing a connector (strict: thresholds ignored,
+# prints every failure and warning) — ALWAYS prefer this scoped form
+node scripts/validate.js --connector <connector_name>
+
+# Strict validation of files changed on the branch (used by pre-commit)
+node scripts/validate.js --changed
+
+# Repository-wide validation (threshold/ratchet mode — legacy debt is
+# tolerated, so new issues in your connector can hide under a threshold)
 npm run validate
 
 # Validate outputType components
 npm run validate-outputtype
 ```
 
-Run `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
+When working on a single connector, always validate with `--connector <name>`; use `--changed` when changes span multiple connectors. Run repo-wide `npm run validate` after major refactors so bundle metadata, component schema/inspector pairs, and quota resource references stay in sync.
 
 ### Connector Structure
 
@@ -100,9 +108,24 @@ See: `.github/copilot-instructions.md` section "Component Behavior (JavaScript) 
 
 ### Output Port Schema
 
-Use **either** `schema` or `options` in outPorts, **NOT both**.
+Use **either** `schema` or `options` in outPorts, **NOT both**. JSON Schema (`schema`) is PREFERRED over the `options[]` array form.
 
-See: `.github/copilot-instructions.md` section "Output Port Schema Definition"
+Add a realistic `example` (singular, not `examples` array) on each leaf property — it powers the variable picker preview.
+
+```json
+"outPorts": [{
+    "name": "out",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "id": { "type": "string", "title": "ID", "example": "1001" },
+            "completed": { "type": "boolean", "title": "Completed", "example": false }
+        }
+    }
+}]
+```
+
+See: `.github/copilot-instructions.md` sections "Output Port Schema Definition" and "Output Port Examples"
 
 ## Testing Components
 
@@ -119,9 +142,7 @@ See: `.github/copilot-instructions.md` section "Testing Guidelines"
 ## E2E Test Flows
 
 Required components in order:
-1. `OnStart` → `BeforeAll` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
-
-**BeforeAll is REQUIRED** — resets Assert/AfterAll state between runs.
+1. `OnStart` → `SetVariable` → Components under test → `Assert` → `AfterAll` → Cleanup → `ProcessE2EResults`
 
 **Critical:**
 - Assertion types: `equal`, `notEmpty`, `regex` only

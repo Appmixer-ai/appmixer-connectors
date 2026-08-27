@@ -22,9 +22,6 @@
                     "customerId": {
                         "type": "string"
                     },
-                    "developerToken": {
-                        "type": "string"
-                    },
                     "loginCustomerId": {
                         "type": "string"
                     },
@@ -37,8 +34,7 @@
                     }
                 },
                 "required": [
-                    "customerId",
-                    "developerToken"
+                    "customerId"
                 ]
             },
             "inspector": {
@@ -49,35 +45,41 @@
                         "tooltip": "Google Ads customer ID, with or without dashes.",
                         "index": 1
                     },
-                    "developerToken": {
-                        "type": "text",
-                        "label": "Developer Token",
-                        "tooltip": "Google Ads API developer token.",
-                        "index": 2
-                    },
                     "loginCustomerId": {
                         "type": "text",
                         "label": "Login Customer ID",
-                        "tooltip": "Optional manager account customer ID, with or without dashes.",
-                        "index": 3
+                        "tooltip": "The Google Ads Manager Account (MCC) ID. Required when accessing accounts managed through an MCC hierarchy. Format: 10-digit number, e.g. 1234567890. See https://developers.google.com/google-ads/api/docs/concepts/call-structure#login-customer-id",
+                        "index": 2
                     },
                     "searchQuery": {
                         "type": "textarea",
                         "label": "GAQL Query",
                         "tooltip": "Optional GAQL query override. Leave empty to use the default user list query. Example: WHERE user_list.name = 'My Audience'",
-                        "index": 4
+                        "index": 3
                     },
                     "outputType": {
                         "type": "select",
                         "label": "Output Type",
-                        "index": 5,
+                        "index": 4,
                         "defaultValue": "array",
                         "tooltip": "Choose whether you want to receive the result set as one complete list, or first item only or one item at a time or stream the items to a file.",
                         "options": [
-                            { "label": "First Item Only", "value": "first" },
-                            { "label": "All items at once", "value": "array" },
-                            { "label": "One item at a time", "value": "object" },
-                            { "label": "Store to CSV file", "value": "file" }
+                            {
+                                "label": "First Item Only",
+                                "value": "first"
+                            },
+                            {
+                                "label": "All items at once",
+                                "value": "array"
+                            },
+                            {
+                                "label": "One item at a time",
+                                "value": "object"
+                            },
+                            {
+                                "label": "Store to CSV file",
+                                "value": "file"
+                            }
                         ]
                     }
                 }
@@ -88,15 +90,14 @@
         {
             "name": "out",
             "source": {
-                "url": "/component/appmixer/googleAds/core/FindUserLists?outPort=out",
+                "url": "/component/appmixer/googleAds/core/FindUserLists?outPort=out&ignoreAuth=true",
                 "data": {
                     "properties": {
                         "generateOutputPortOptions": true
                     },
                     "messages": {
                         "in/outputType": "inputs/in/outputType",
-                        "in/customerId": "any",
-                        "in/developerToken": "any"
+                        "in/customerId": "any"
                     }
                 }
             }

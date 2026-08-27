@@ -1,5 +1,25 @@
 'use strict';
 
+/**
+ * Normalize a single answer item. If the `answer` field is an object keyed by
+ * numeric strings (e.g. matrix fields: { "1": [...], "2": [...] }), convert it
+ * to an ordered array so it can be iterated in a flow.
+ */
+function normalizeAnswerItem(item) {
+    if (!item || typeof item !== 'object') return item;
+    const answer = item.answer;
+    if (answer && typeof answer === 'object' && !Array.isArray(answer)) {
+        const keys = Object.keys(answer);
+        if (keys.length > 0 && keys.every(k => /^\d+$/.test(k))) {
+            return {
+                ...item,
+                answer: keys.sort((a, b) => parseInt(a) - parseInt(b)).map(k => answer[k])
+            };
+        }
+    }
+    return item;
+}
+
 module.exports = {
 
     receive: async function(context) {
@@ -25,7 +45,7 @@ module.exports = {
             ...data,
             content: {
                 ...data.content,
-                answers: Object.values(data.content.answers || {})
+                answersList: Object.values(data.content.answers || {}).map(normalizeAnswerItem)
             }
         };
 
