@@ -50,7 +50,16 @@ name: Claude Maya Review (connector code review)
 # Re-requesting a review from apx-maya re-runs the whole thing (posting a
 # review clears the request, so this is the natural "review again" gesture).
 #
-# Testing: use "Run workflow" (workflow_dispatch) with a PR number.
+# RUNNING IT EXPLICITLY: "Run workflow" (workflow_dispatch) with a PR number
+# reviews any open PR, from `dev`, regardless of what the PR's own branch
+# contains — the workflow definition comes from the dispatch ref, and the review
+# checks out refs/pull/<n>/head. A manual run is SELF-AUTHORIZING: dispatching
+# already requires write access on this repo, exactly the permission needed to
+# request a review from apx-maya, so it does not additionally require the review
+# request and it bypasses the iteration cap. It is the way out when the
+# re-request gesture is unavailable (e.g. apx-maya is still listed as a
+# requested reviewer because a previous review was posted under a different
+# identity, so the request was never cleared).
 #
 # Required secrets: ANTHROPIC_API_KEY, MAYA_GH_TOKEN (PAT of the apx-maya
 # account, scope `repo` — it posts the review, and converts the PR to draft,
@@ -149,12 +158,16 @@ jobs:
         #
         # ITERATION GUARD: posting a review clears the request, so a re-request
         # is always a deliberate human (or apx-vero) action. MAX_ROUNDS is a
-        # backstop against a misconfigured bot re-requesting in a loop.
+        # backstop against a misconfigured bot re-requesting in a loop. Counted
+        # by the review BODY marker rather than by author, so the guard still
+        # works when MAYA_GH_TOKEN belongs to some other account.
         env:
           GH_TOKEN: ${{ secrets.MAYA_GH_TOKEN }}
           REPO: ${{ github.repository }}
           NUM: ${{ needs.resolve-event.outputs.number }}
+          EVENT_NAME: ${{ github.event_name }}
           MAX_ROUNDS: "10"
+          REVIEW_MARKER: "## 🤖 Connector review"
         run: |
           set -euo pipefail
 
@@ -167,20 +180,30 @@ jobs:
           HEAD_SHA=$(jq -r '.headRefOid' /tmp/pr.json)
           REQUESTED=$(jq -r '[.reviewRequests[]? | select(.login == "apx-maya")] | length' /tmp/pr.json)
 
+          # A manual run is its own authorization: workflow_dispatch requires
+          # write access, the same permission that requesting a review takes.
+          MANUAL=false
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            MANUAL=true
+            echo "Manual run — the review request and the iteration cap are not required."
+          fi
+
           PROCEED=true
           if [ "$STATE" != "OPEN" ]; then
             echo "PR #$NUM is not OPEN (state=$STATE) — skipping."; PROCEED=false
           fi
-          if [ "$REQUESTED" -eq 0 ]; then
+          if [ "$REQUESTED" -eq 0 ] && [ "$MANUAL" != "true" ]; then
             echo "apx-maya is not a requested reviewer on PR #$NUM — skipping."; PROCEED=false
           fi
 
-          if [ "$PROCEED" = "true" ]; then
+          if [ "$PROCEED" = "true" ] && [ "$MANUAL" != "true" ]; then
+            # By marker OR by author: the review is this workflow's regardless of
+            # which account MAYA_GH_TOKEN actually posts under.
             ROUNDS=$(gh api --paginate "repos/$REPO/pulls/$NUM/reviews" \
-              --jq '[.[] | select(.user.login == "apx-maya")] | length' \
+              --jq "[.[] | select(.user.login == \"apx-maya\" or ((.body // \"\") | startswith(\$ENV.REVIEW_MARKER)))] | length" \
               | awk '{s+=$1} END {print s+0}')
             if [ "$ROUNDS" -ge "$MAX_ROUNDS" ]; then
-              echo "PR #$NUM already has $ROUNDS apx-maya reviews (>= MAX_ROUNDS=$MAX_ROUNDS) — iteration cap reached, skipping."
+              echo "PR #$NUM already has $ROUNDS connector reviews (>= MAX_ROUNDS=$MAX_ROUNDS) — iteration cap reached, skipping."
               PROCEED=false
             fi
           fi
