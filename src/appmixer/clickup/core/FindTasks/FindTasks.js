@@ -55,6 +55,8 @@ module.exports = {
 
         if (outputType === 'object' || outputType === 'first') {
             return context.sendJson([
+                { label: 'Current Item Index', value: 'index', schema: { type: 'integer' } },
+                { label: 'Items Count', value: 'count', schema: { type: 'integer' } },
                 { label: 'Task ID', value: 'id' },
                 { label: 'Name', value: 'name' },
                 { label: 'Status', value: 'status.status' },
@@ -153,7 +155,8 @@ module.exports = {
                             }
                         }
                     }
-                }
+                },
+                { label: 'Items Count', value: 'count', schema: { type: 'integer' } }
             ], outputPortName);
         } else if (outputType === 'file') {
             return context.sendJson([
