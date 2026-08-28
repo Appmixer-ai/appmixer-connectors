@@ -10,8 +10,7 @@ module.exports = {
             datasetId,
             input,
             includeErrors,
-            customOutputFields,
-            notifyUrl
+            customOutputFields
         } = context.messages.in.content;
 
         if (!datasetId) {
@@ -38,13 +37,6 @@ module.exports = {
         }
         if (customOutputFields) {
             params.custom_output_fields = customOutputFields;
-        }
-        if (notifyUrl) {
-            // Bright Data pairs the webhook target (`endpoint`) with the flag that
-            // turns the notification on (`notify`); sending one without the other
-            // silently does nothing.
-            params.endpoint = notifyUrl;
-            params.notify = true;
         }
 
         const response = await lib.makeRequest({
