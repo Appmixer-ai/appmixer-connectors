@@ -2,8 +2,9 @@
 
 const lib = require('../../lib');
 
-// Appmixer will not schedule a continuation shorter than one minute, so that is
-// both the default and the floor for the polling interval.
+// Appmixer rounds any context.setTimeout delay below one minute up to one
+// minute, and does it silently, so one minute is both the floor and the only
+// sensible poll interval here. Every duration below is derived from it.
 const MIN_POLL_INTERVAL_SECONDS = 60;
 
 function parseCsv(value) {
@@ -151,11 +152,13 @@ module.exports = {
             return context.sendJson(created, 'out');
         }
 
-        const timeoutSeconds = Number(pollingTimeout) > 0 ? Number(pollingTimeout) : 300;
-        const pollIntervalSeconds = Math.max(
-            Number(context.config && context.config.pollIntervalSeconds) || MIN_POLL_INTERVAL_SECONDS,
-            MIN_POLL_INTERVAL_SECONDS
-        );
+        const pollIntervalSeconds = MIN_POLL_INTERVAL_SECONDS;
+
+        // The first poll cannot happen sooner than one interval from now. A
+        // shorter timeout than that would spend a minute waiting only to fail
+        // on a deadline that had already passed, so it is raised to one poll.
+        const requestedTimeout = Number(pollingTimeout) > 0 ? Number(pollingTimeout) : 300;
+        const timeoutSeconds = Math.max(requestedTimeout, pollIntervalSeconds);
 
         return context.setTimeout({
             jobId,
