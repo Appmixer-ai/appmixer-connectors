@@ -5,7 +5,8 @@ module.exports = {
 
     async receive(context) {
 
-        const { goalId, name, type, stepsStart, stepsEnd, unit, owners, taskIds, listIds } = context.messages.in.content;
+        const { goalId, name, type, stepsStart, stepsEnd, unit, owners, taskIds, listIds } =
+            context.messages.in.content;
         if (!goalId) {
             throw new context.CancelError('Goal ID is required!');
         }

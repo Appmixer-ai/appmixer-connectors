@@ -9,12 +9,12 @@ module.exports = {
         const generateOutputPortOptions = context.properties.generateOutputPortOptions;
         const { teamId, startDate, endDate, outputType } = context.messages.in.content;
 
-        if (!teamId) {
-            throw new context.CancelError('Team ID is required!');
-        }
-
         if (generateOutputPortOptions) {
             return this.getOutputPortOptions(context, outputType);
+        }
+
+        if (!teamId) {
+            throw new context.CancelError('Team ID is required!');
         }
 
         const clickUpClient = new ClickUpClient(context);

@@ -14,6 +14,6 @@ module.exports = {
 
         await clickUpClient.request('DELETE', `/key_result/${keyResultId}`);
 
-        return context.sendJson({ keyResultId }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

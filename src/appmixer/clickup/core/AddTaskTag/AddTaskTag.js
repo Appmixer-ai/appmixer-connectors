@@ -15,7 +15,7 @@ module.exports = {
 
         const clickUpClient = new ClickUpClient(context);
 
-        await clickUpClient.request('POST', `/task/${taskId}/tag/${tagName}`, { data: {} });
+        await clickUpClient.request('POST', `/task/${taskId}/tag/${encodeURIComponent(tagName)}`, { data: {} });
 
         return context.sendJson({}, 'out');
     }

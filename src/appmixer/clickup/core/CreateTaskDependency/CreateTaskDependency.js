@@ -15,8 +15,9 @@ module.exports = {
 
         const clickUpClient = new ClickUpClient(context);
 
-        const result = await clickUpClient.request('POST', `/task/${taskId}/dependency`, { data: { depends_on: dependsOnTaskId } });
+        await clickUpClient.request('POST', `/task/${taskId}/dependency`, { data: { depends_on: dependsOnTaskId } });
 
-        return context.sendJson(result, 'out');
+        // ClickUp answers 200 with an empty body — there is nothing to hand downstream.
+        return context.sendJson({}, 'out');
     }
 };

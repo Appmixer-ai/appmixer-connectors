@@ -12,7 +12,8 @@ module.exports = {
         if (!fieldId) {
             throw new context.CancelError('Field ID is required!');
         }
-        if (!value) {
+        // Deliberately not a truthiness check: 0, false and '' are valid custom field values.
+        if (value === undefined || value === null) {
             throw new context.CancelError('Value is required!');
         }
 

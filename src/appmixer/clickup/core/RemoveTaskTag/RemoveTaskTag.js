@@ -15,7 +15,7 @@ module.exports = {
 
         const clickUpClient = new ClickUpClient(context);
 
-        await clickUpClient.request('DELETE', `/task/${taskId}/tag/${tagName}`);
+        await clickUpClient.request('DELETE', `/task/${taskId}/tag/${encodeURIComponent(tagName)}`);
 
         return context.sendJson({}, 'out');
     }

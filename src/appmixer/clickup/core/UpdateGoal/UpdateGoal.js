@@ -22,6 +22,6 @@ module.exports = {
 
         await clickUpClient.request('PUT', `/goal/${goalId}`, { data: body });
 
-        return context.sendJson({ goalId }, 'out');
+        return context.sendJson({}, 'out');
     }
 };

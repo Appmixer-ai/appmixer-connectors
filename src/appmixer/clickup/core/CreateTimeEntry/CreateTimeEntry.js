@@ -19,8 +19,13 @@ module.exports = {
 
         const clickUpClient = new ClickUpClient(context);
 
+        const startMs = Date.parse(start);
+        if (Number.isNaN(startMs)) {
+            throw new context.CancelError(`Start is not a valid date: ${start}`);
+        }
+
         const body = {
-            start: Date.parse(start),
+            start: startMs,
             duration: duration * 60 * 1000,
             tid: taskId || undefined,
             description: description || undefined,

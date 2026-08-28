@@ -5,7 +5,8 @@ module.exports = {
 
     async receive(context) {
 
-        const { teamId, timeEntryId, description, start, duration, billable, taskId, tags } = context.messages.in.content;
+        const { teamId, timeEntryId, description, start, duration, billable, taskId, tags } =
+            context.messages.in.content;
 
         if (!teamId) {
             throw new context.CancelError('Team ID is required!');
