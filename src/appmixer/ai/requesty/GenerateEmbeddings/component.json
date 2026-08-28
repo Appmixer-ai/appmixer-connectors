@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.ai.requesty.CreateEmbedding",
-    "label": "Create Embedding",
-    "description": "Creates an embedding vector representing the input text using a Requesty-routed embedding model.",
+    "name": "appmixer.ai.requesty.GenerateEmbeddings",
+    "label": "Generate Embeddings",
+    "description": "Generates embeddings for text data using a Requesty-routed embedding model. The text is split into chunks and an embedding is returned for each chunk.<br/>The returned embeddings is an array of the form: <code>[{ \"index\": 0, \"text\": \"chunk1\", \"vector\": [1.1, 1.2, 1.3] }]</code>.<br/>TIP: use the <b>JSONata modifier</b> to convert the embeddings array into custom formats. For convenience, the component also returns the first vector in the embeddings array which is useful when querying vector databases to find relevant chunks.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -21,30 +21,36 @@
             "schema": {
                 "type": "object",
                 "properties": {
+                    "text": {
+                        "type": "string",
+                        "maxLength": 512000
+                    },
                     "model": {
                         "type": "string"
                     },
-                    "input": {
-                        "type": "string"
+                    "chunkSize": {
+                        "type": "integer"
                     },
-                    "encodingFormat": {
-                        "type": "string",
-                        "enum": [
-                            "float",
-                            "base64"
-                        ]
+                    "chunkOverlap": {
+                        "type": "integer"
                     }
                 },
                 "required": [
-                    "model",
-                    "input"
+                    "text",
+                    "model"
                 ]
             },
             "inspector": {
                 "inputs": {
+                    "text": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Text",
+                        "tooltip": "Enter the text to generate embeddings for. The text will be split into chunks and embeddings will be generated for each chunk. The maximum length is 512,000 characters. If you need more than 512,000 characters, use the 'Generate Embeddings From File' component."
+                    },
                     "model": {
                         "type": "text",
-                        "index": 1,
+                        "index": 2,
                         "label": "Model",
                         "tooltip": "The provider-prefixed embedding model identifier to use (for example <code>openai/text-embedding-3-small</code>). The list is populated from your account's available models.",
                         "source": {
@@ -54,27 +60,19 @@
                             }
                         }
                     },
-                    "input": {
-                        "type": "textarea",
-                        "index": 2,
-                        "label": "Input",
-                        "tooltip": "The text to generate an embedding for."
-                    },
-                    "encodingFormat": {
-                        "type": "select",
+                    "chunkSize": {
+                        "type": "number",
                         "index": 3,
-                        "label": "Encoding Format",
-                        "tooltip": "The format to return the embeddings in.",
-                        "options": [
-                            {
-                                "label": "Float",
-                                "value": "float"
-                            },
-                            {
-                                "label": "Base64",
-                                "value": "base64"
-                            }
-                        ]
+                        "label": "Chunk Size",
+                        "defaultValue": 500,
+                        "tooltip": "Maximum size of each chunk for text splitting. The default is 500."
+                    },
+                    "chunkOverlap": {
+                        "type": "number",
+                        "index": 4,
+                        "label": "Chunk Overlap",
+                        "defaultValue": 50,
+                        "tooltip": "Overlap between chunks for text splitting to maintain context. The default is 50."
                     }
                 }
             }
@@ -85,38 +83,63 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Model",
-                    "value": "model",
+                    "label": "Embeddings",
+                    "value": "embeddings",
                     "schema": {
-                        "type": "string",
-                        "example": "openai/text-embedding-3-small"
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "integer"
+                                },
+                                "text": {
+                                    "type": "string"
+                                },
+                                "vector": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "number"
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "index": 0,
+                                "text": "chunk1",
+                                "vector": [
+                                    1.1,
+                                    1.2,
+                                    1.3
+                                ]
+                            },
+                            {
+                                "index": 1,
+                                "text": "chunk2",
+                                "vector": [
+                                    2.1,
+                                    2.2,
+                                    2.3
+                                ]
+                            }
+                        ]
                     }
                 },
                 {
-                    "label": "Embedding",
-                    "value": "embedding",
+                    "label": "First Vector",
+                    "value": "firstVector",
                     "schema": {
                         "type": "array",
                         "items": {
                             "type": "number"
                         },
-                        "example": [0.0023064255, -0.009327292, 0.015797347]
-                    }
-                },
-                {
-                    "label": "Prompt Tokens",
-                    "value": "usage.prompt_tokens",
-                    "schema": {
-                        "type": "number",
-                        "example": 8
-                    }
-                },
-                {
-                    "label": "Total Tokens",
-                    "value": "usage.total_tokens",
-                    "schema": {
-                        "type": "number",
-                        "example": 8
+                        "example": [
+                            -0.0120379254,
+                            -0.0376950279,
+                            -0.0133513855,
+                            -0.0365983546
+                        ]
                     }
                 }
             ]

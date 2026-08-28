@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.ai.requesty.MakeApiCall",
-    "label": "Make API Call",
-    "description": "Performs an arbitrary authorized API call to the Requesty API.",
+    "name": "appmixer.ai.requesty.GenerateEmbeddingsFromFile",
+    "label": "Generate Embeddings From File",
+    "description": "Generates embeddings for a text file using a Requesty-routed embedding model. The file is split into 1MB parts, each part is split into chunks and an embedding is returned for each chunk. The component emits one embeddings array per file part.<br/>The returned embeddings is an array of the form: <code>[{ \"index\": 0, \"text\": \"chunk1\", \"vector\": [1.1, 1.2, 1.3] }]</code>.<br/>TIP: use the <b>JSONata modifier</b> to convert the embeddings array into custom formats.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -21,96 +21,57 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "url": {
+                    "fileId": {
                         "type": "string"
                     },
-                    "method": {
-                        "type": "string",
-                        "enum": [
-                            "GET",
-                            "POST",
-                            "PUT",
-                            "PATCH",
-                            "DELETE"
-                        ]
-                    },
-                    "parameters": {
+                    "model": {
                         "type": "string"
                     },
-                    "body": {
-                        "type": "string"
+                    "chunkSize": {
+                        "type": "integer"
                     },
-                    "headers": {
-                        "type": "string"
+                    "chunkOverlap": {
+                        "type": "integer"
                     }
                 },
                 "required": [
-                    "url",
-                    "method"
+                    "fileId",
+                    "model"
                 ]
             },
             "inspector": {
                 "inputs": {
-                    "url": {
-                        "type": "text",
+                    "fileId": {
+                        "type": "filepicker",
                         "index": 1,
-                        "label": "API Endpoint Path",
-                        "tooltip": "Enter the API endpoint path relative to <code>https://router.requesty.ai</code> (for example <code>/v1/chat/completions</code>). A full URL is accepted as long as it points to the Requesty origin; any other host is rejected."
+                        "label": "File ID",
+                        "tooltip": "The text file to generate embeddings for. Use plain text or CSV files only."
                     },
-                    "method": {
-                        "type": "select",
+                    "model": {
+                        "type": "text",
                         "index": 2,
-                        "label": "HTTP Method",
-                        "defaultValue": "GET",
-                        "tooltip": "Select the HTTP method for the API call.",
-                        "options": [
-                            {
-                                "label": "GET",
-                                "value": "GET"
-                            },
-                            {
-                                "label": "POST",
-                                "value": "POST"
-                            },
-                            {
-                                "label": "PUT",
-                                "value": "PUT"
-                            },
-                            {
-                                "label": "PATCH",
-                                "value": "PATCH"
-                            },
-                            {
-                                "label": "DELETE",
-                                "value": "DELETE"
+                        "label": "Model",
+                        "tooltip": "The provider-prefixed embedding model identifier to use (for example <code>openai/text-embedding-3-small</code>). The list is populated from your account's available models.",
+                        "source": {
+                            "url": "/component/appmixer/ai/requesty/ListModels?outPort=out",
+                            "data": {
+                                "transform": "./ListModels#toSelectArray"
                             }
-                        ]
+                        }
                     },
-                    "parameters": {
-                        "type": "key-value",
-                        "keyLabel": "Key",
-                        "valueLabel": "Value",
-                        "addLabel": "Add item",
-                        "removeLabel": "Remove item",
-                        "label": "Query Parameters",
+                    "chunkSize": {
+                        "type": "number",
                         "index": 3,
-                        "tooltip": "Optional query parameters."
+                        "label": "Chunk Size",
+                        "defaultValue": 500,
+                        "tooltip": "Maximum size of each chunk for text splitting. The default is 500."
                     },
-                    "body": {
-                        "type": "textarea",
+                    "chunkOverlap": {
+                        "type": "number",
                         "index": 4,
-                        "label": "Request Body",
-                        "tooltip": "Enter the request body as a JSON object (supports nested objects, arrays, and non-string values)."
-                    },
-                    "headers": {
-                        "type": "key-value",
-                        "keyLabel": "Key",
-                        "valueLabel": "Value",
-                        "addLabel": "Add item",
-                        "removeLabel": "Remove item",
-                        "label": "Request Headers",
-                        "index": 5,
-                        "tooltip": "Optional additional request headers."
+                        "label": "Chunk Overlap",
+                        "defaultValue": 50,
+                        "tooltip": "Overlap between chunks for text splitting to maintain context. The default is 50."
                     }
                 }
             }
@@ -121,19 +82,63 @@
             "name": "out",
             "options": [
                 {
-                    "label": "Status Code",
-                    "value": "status"
-                },
-                {
-                    "label": "Response Headers",
-                    "value": "headers"
-                },
-                {
-                    "label": "Response Body",
-                    "value": "body",
+                    "label": "Embeddings",
+                    "value": "embeddings",
                     "schema": {
-                        "type": "object",
-                        "properties": {}
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "integer"
+                                },
+                                "text": {
+                                    "type": "string"
+                                },
+                                "vector": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "number"
+                                    }
+                                }
+                            }
+                        },
+                        "example": [
+                            {
+                                "index": 0,
+                                "text": "chunk1",
+                                "vector": [
+                                    1.1,
+                                    1.2,
+                                    1.3
+                                ]
+                            },
+                            {
+                                "index": 1,
+                                "text": "chunk2",
+                                "vector": [
+                                    2.1,
+                                    2.2,
+                                    2.3
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "label": "First Vector",
+                    "value": "firstVector",
+                    "schema": {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        },
+                        "example": [
+                            -0.0120379254,
+                            -0.0376950279,
+                            -0.0133513855,
+                            -0.0365983546
+                        ]
                     }
                 }
             ]

@@ -43,24 +43,18 @@ module.exports = {
         // Remove undefined optional parameters.
         Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
-        const { data: response } = await context.httpRequest({
-            method: 'POST',
-            url: `${lib.getBaseUrl()}/chat/completions`,
-            headers: {
-                accept: 'application/json',
-                'content-type': 'application/json',
-                Authorization: `Bearer ${context.auth.apiKey}`
-            },
-            data
-        });
+        const response = await lib.request(context, 'POST', '/chat/completions', data);
 
-        // Collapse the choices array to its first element so downstream fields
-        // such as choices.message.content resolve directly.
-        const outputData = {
-            ...response,
-            choices: response.choices?.[0]
-        };
+        const choice = response.choices?.[0];
 
-        return context.sendJson(outputData, 'out');
+        return context.sendJson({
+            answer: choice?.message?.content ?? '',
+            prompt,
+            finishReason: choice?.finish_reason,
+            id: response.id,
+            model: response.model,
+            created: response.created,
+            usage: response.usage
+        }, 'out');
     }
 };

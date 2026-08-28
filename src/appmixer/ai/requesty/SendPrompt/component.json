@@ -1,7 +1,7 @@
 {
-    "name": "appmixer.ai.requesty.ChatCompletion",
-    "label": "Chat Completion",
-    "description": "Generates a model response for the given chat conversation through the Requesty OpenAI-compatible router.",
+    "name": "appmixer.ai.requesty.SendPrompt",
+    "label": "Send Prompt",
+    "description": "Sends a prompt to a model routed through Requesty and returns the answer.",
     "author": "Appmixer <info@appmixer.com>",
     "version": "1.0.0",
     "private": false,
@@ -21,13 +21,13 @@
             "schema": {
                 "type": "object",
                 "properties": {
-                    "model": {
+                    "prompt": {
                         "type": "string"
                     },
                     "instructions": {
                         "type": "string"
                     },
-                    "prompt": {
+                    "model": {
                         "type": "string"
                     },
                     "temperature": {
@@ -47,15 +47,27 @@
                     }
                 },
                 "required": [
-                    "model",
-                    "prompt"
+                    "prompt",
+                    "model"
                 ]
             },
             "inspector": {
                 "inputs": {
+                    "prompt": {
+                        "type": "textarea",
+                        "index": 1,
+                        "label": "Prompt",
+                        "tooltip": "The text input that the model will use to generate a response."
+                    },
+                    "instructions": {
+                        "type": "textarea",
+                        "index": 2,
+                        "label": "Instructions",
+                        "tooltip": "The system instructions that the assistant uses. For example 'Be precise and concise.'"
+                    },
                     "model": {
                         "type": "text",
-                        "index": 1,
+                        "index": 3,
                         "label": "Model",
                         "tooltip": "The provider-prefixed model identifier to use (for example <code>openai/gpt-4o</code> or <code>anthropic/claude-3-5-sonnet-latest</code>). The list is populated from your account's available models.",
                         "source": {
@@ -64,18 +76,6 @@
                                 "transform": "./ListModels#toSelectArray"
                             }
                         }
-                    },
-                    "instructions": {
-                        "type": "textarea",
-                        "index": 2,
-                        "label": "System Instructions",
-                        "tooltip": "The system instructions that the assistant uses. For example 'Be precise and concise.'"
-                    },
-                    "prompt": {
-                        "type": "textarea",
-                        "index": 3,
-                        "label": "Prompt",
-                        "tooltip": "The text input that the model will use to generate a response."
                     },
                     "temperature": {
                         "group": "advanced",
@@ -128,6 +128,30 @@
             "name": "out",
             "options": [
                 {
+                    "label": "Answer",
+                    "value": "answer",
+                    "schema": {
+                        "type": "string",
+                        "example": "Here is the answer to your question..."
+                    }
+                },
+                {
+                    "label": "Prompt",
+                    "value": "prompt",
+                    "schema": {
+                        "type": "string",
+                        "example": "Summarize the following text in one sentence."
+                    }
+                },
+                {
+                    "label": "Finish Reason",
+                    "value": "finishReason",
+                    "schema": {
+                        "type": "string",
+                        "example": "stop"
+                    }
+                },
+                {
                     "label": "ID",
                     "value": "id",
                     "schema": {
@@ -149,22 +173,6 @@
                     "schema": {
                         "type": "number",
                         "example": 1709251200
-                    }
-                },
-                {
-                    "label": "Result",
-                    "value": "choices.message.content",
-                    "schema": {
-                        "type": "string",
-                        "example": "Here is the answer to your question..."
-                    }
-                },
-                {
-                    "label": "Finish Reason",
-                    "value": "choices.finish_reason",
-                    "schema": {
-                        "type": "string",
-                        "example": "stop"
                     }
                 },
                 {

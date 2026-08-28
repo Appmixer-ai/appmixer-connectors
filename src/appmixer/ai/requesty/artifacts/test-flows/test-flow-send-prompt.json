@@ -1,7 +1,7 @@
 {
-    "name": "E2E Requesty - Create Embedding",
+    "name": "E2E Requesty - Send Prompt",
     "flow": {
-        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
+        "78c50d16-f237-44b6-8354-c632a2198f7c": {
             "type": "appmixer.utils.controls.OnStart",
             "x": 208,
             "y": 320,
@@ -11,13 +11,13 @@
                 "onError": "stopFlow"
             }
         },
-        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
+        "7d606d0b-97ce-42fc-bc63-3b1003058088": {
             "type": "appmixer.utils.controls.SetVariable",
             "x": 400,
             "y": 320,
             "source": {
                 "in": {
-                    "489eba08-520b-4f0e-aa1d-fc3892db60f1": [
+                    "78c50d16-f237-44b6-8354-c632a2198f7c": [
                         "out"
                     ]
                 }
@@ -25,7 +25,7 @@
             "config": {
                 "transform": {
                     "in": {
-                        "489eba08-520b-4f0e-aa1d-fc3892db60f1": {
+                        "78c50d16-f237-44b6-8354-c632a2198f7c": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -37,12 +37,12 @@
                                             {
                                                 "type": "text",
                                                 "name": "model",
-                                                "text": "openai/text-embedding-3-small"
+                                                "text": "openai/gpt-4o-mini"
                                             },
                                             {
                                                 "type": "text",
-                                                "name": "input",
-                                                "text": "The quick brown fox jumps over the lazy dog."
+                                                "name": "prompt",
+                                                "text": "Respond with the single word: PONG"
                                             }
                                         ]
                                     }
@@ -57,13 +57,13 @@
                 "onError": "stopFlow"
             }
         },
-        "e34ea85a-34ab-4af9-be91-92a531b55575": {
-            "type": "appmixer.ai.requesty.CreateEmbedding",
+        "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": {
+            "type": "appmixer.ai.requesty.SendPrompt",
             "x": 592,
             "y": 320,
             "source": {
                 "in": {
-                    "ab92255b-23a6-4e72-a4e1-1e10230bc044": [
+                    "7d606d0b-97ce-42fc-bc63-3b1003058088": [
                         "out"
                     ]
                 }
@@ -71,26 +71,26 @@
             "config": {
                 "transform": {
                     "in": {
-                        "ab92255b-23a6-4e72-a4e1-1e10230bc044": {
+                        "7d606d0b-97ce-42fc-bc63-3b1003058088": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "model": {
                                         "var-model": {
                                             "functions": [],
-                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.model"
+                                            "variable": "$.7d606d0b-97ce-42fc-bc63-3b1003058088.out.model"
                                         }
                                     },
-                                    "input": {
-                                        "var-input": {
+                                    "prompt": {
+                                        "var-prompt": {
                                             "functions": [],
-                                            "variable": "$.ab92255b-23a6-4e72-a4e1-1e10230bc044.out.input"
+                                            "variable": "$.7d606d0b-97ce-42fc-bc63-3b1003058088.out.prompt"
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "model": "{{{var-model}}}",
-                                    "input": "{{{var-input}}}"
+                                    "prompt": "{{{var-prompt}}}"
                                 }
                             }
                         }
@@ -102,13 +102,13 @@
                 "onError": "stopFlow"
             }
         },
-        "edd59a4f-b9fe-43f7-93f7-e422636c82e2": {
+        "045ef488-0e02-4ae8-a058-78f377621d80": {
             "type": "appmixer.utils.test.Assert",
             "x": 784,
             "y": 448,
             "source": {
                 "in": {
-                    "e34ea85a-34ab-4af9-be91-92a531b55575": [
+                    "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": [
                         "out"
                     ]
                 }
@@ -116,18 +116,18 @@
             "config": {
                 "transform": {
                     "in": {
-                        "e34ea85a-34ab-4af9-be91-92a531b55575": {
+                        "6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
                                     "expression": {
-                                        "var-model": {
+                                        "var-id": {
                                             "functions": [],
-                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.model"
+                                            "variable": "$.6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce.out.id"
                                         },
-                                        "var-tokens": {
+                                        "var-content": {
                                             "functions": [],
-                                            "variable": "$.e34ea85a-34ab-4af9-be91-92a531b55575.out.usage.total_tokens"
+                                            "variable": "$.6aafdd4b-713c-4bfa-bcf1-afd72f91c6ce.out.answer"
                                         }
                                     }
                                 },
@@ -136,11 +136,11 @@
                                         "AND": [
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{var-model}}}"
+                                                "field": "{{{var-id}}}"
                                             },
                                             {
                                                 "assertion": "notEmpty",
-                                                "field": "{{{var-tokens}}}"
+                                                "field": "{{{var-content}}}"
                                             }
                                         ]
                                     }
@@ -155,13 +155,13 @@
                 "onError": "stopFlow"
             }
         },
-        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
+        "f7410503-7252-48b2-8f5c-b076efab36c2": {
             "type": "appmixer.utils.test.AfterAll",
             "x": 976,
             "y": 448,
             "source": {
                 "in": {
-                    "edd59a4f-b9fe-43f7-93f7-e422636c82e2": [
+                    "045ef488-0e02-4ae8-a058-78f377621d80": [
                         "out"
                     ]
                 }
@@ -176,13 +176,13 @@
                 "onError": "stopFlow"
             }
         },
-        "cc3a522a-99d9-44a0-baa0-760f6df45062": {
+        "cf9cc16d-c11a-4f74-b6bb-0fb31a11c605": {
             "type": "appmixer.utils.test.ProcessE2EResults",
             "x": 1168,
             "y": 448,
             "source": {
                 "in": {
-                    "e46d0969-4101-4a43-abb8-45f37f41bdb6": [
+                    "f7410503-7252-48b2-8f5c-b076efab36c2": [
                         "out"
                     ]
                 }
@@ -191,7 +191,7 @@
                 "properties": {},
                 "transform": {
                     "in": {
-                        "e46d0969-4101-4a43-abb8-45f37f41bdb6": {
+                        "f7410503-7252-48b2-8f5c-b076efab36c2": {
                             "out": {
                                 "type": "json2new",
                                 "modifiers": {
@@ -200,13 +200,13 @@
                                     "result": {
                                         "result-var": {
                                             "functions": [],
-                                            "variable": "$.e46d0969-4101-4a43-abb8-45f37f41bdb6.out"
+                                            "variable": "$.f7410503-7252-48b2-8f5c-b076efab36c2.out"
                                         }
                                     }
                                 },
                                 "lambda": {
                                     "recipients": "test@appmixer.com",
-                                    "testCase": "E2E Requesty - Create Embedding",
+                                    "testCase": "E2E Requesty - Send Prompt",
                                     "result": "{{{result-var}}}"
                                 }
                             }
