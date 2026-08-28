@@ -2,7 +2,15 @@
     "name": "E2E Clickup - task details",
     "description": "Task read/update plus task tags: CreateTask, GetTask, UpdateTask, AddTaskTag, RemoveTaskTag.",
     "type": "automation",
-    "notes": {},
+    "notes": {
+        "22222222-e2e0-4000-8000-000000000001": {
+            "content": "## \u26a0\ufe0f SetTaskCustomField is NOT covered here\n\nIt is the only component of the connector without E2E coverage.\n\n**Why:** ClickUp's public API (v2) has no endpoint that creates a custom field \u2014 fields can only be added in the ClickUp UI. The E2E workspace (*Appmixer App* \u2192 space *Team Space test appmixer* \u2192 list *Test list 1*, `901506393256`) has none, so `GET /list/901506393256/field` returns `{\"fields\": []}` and the component has no field id to write to.\n\n### To cover it\n1. Open the list (https://app.clickup.com/9015365726/v/li/901506393256) in **List view**, click **+** at the right end of the column header row and add a **Text** field named `E2E Test Field`.\n2. Confirm it is visible to the API: `GET /list/901506393256/field` returns the field with its `id`.\n3. Add `SetTaskCustomField` after `UpdateTask` here, then a `GetTask` and an Assert on the stored value.\n\nNote that the task output ports do not declare `custom_fields` yet \u2014 that has to be added to CreateTask / GetTask / UpdateTask / FindTasks first, otherwise the assert cannot reference the value.",
+            "height": 384,
+            "width": 384,
+            "x": 64,
+            "y": -448
+        }
+    },
     "flow": {
         "ae79062f-4132-468e-8709-fe54c653cb19": {
             "type": "appmixer.utils.controls.OnStart",
