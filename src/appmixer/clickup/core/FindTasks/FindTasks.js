@@ -89,6 +89,20 @@ module.exports = {
                         }
                     }
                 },
+                {
+                    label: 'Custom Fields', value: 'custom_fields', schema: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string', title: 'Field ID' },
+                                name: { type: 'string', title: 'Name' },
+                                type: { type: 'string', title: 'Type' },
+                                value: { type: 'string', title: 'Value' }
+                            }
+                        }
+                    }
+                },
                 { label: 'Due Date', value: 'due_date' },
                 { label: 'URL', value: 'url' },
                 { label: 'List ID', value: 'list.id' },
@@ -140,6 +154,19 @@ module.exports = {
                                                 username: { type: 'string', title: 'Username' },
                                                 email: { type: 'string', title: 'Email' }
                                             }
+                                        }
+                                    }
+                                },
+                                custom_fields: {
+                                    title: 'Custom Fields',
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            id: { type: 'string', title: 'Field ID' },
+                                            name: { type: 'string', title: 'Name' },
+                                            type: { type: 'string', title: 'Type' },
+                                            value: { type: 'string', title: 'Value' }
                                         }
                                     }
                                 },
